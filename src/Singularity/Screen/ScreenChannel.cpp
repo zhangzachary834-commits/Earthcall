@@ -1,4 +1,5 @@
 #include "ScreenChannel.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Screen/Renderer.hpp"
@@ -10,9 +11,37 @@ namespace Screen {
 ScreenChannel::ScreenChannel() = default;
 
 void ScreenChannel::syncRegister(LawManager& laws) {
-    if (find(laws)) return;
-    auto channel = std::make_shared<ScreenChannel>();
-    laws.add(channel);
+    // Idempotent-by-replacement, including after a test/channel teardown.
+    // ActionModel sees only this sink; Object and texture storage stay below
+    // the Screen boundary.
+    registerPixelWriteSink([](Singular& subject, int face, double u, double v,
+                              const glm::vec3& color, std::string& reason) {
+        auto* object = dynamic_cast<Object*>(&subject);
+        if (!object) {
+            reason = "pixel target is not an Object";
+            return false;
+        }
+        if (!object->writeSurfacePixel(face, glm::vec2(u, v), color)) {
+            reason = "face or UV is outside the target's paintable surface";
+            return false;
+        }
+        return true;
+    });
+    registerPixelPropertySink([](Singular& subject, const std::string& propertyName,
+                                 int face, const OntoMath::Piecewise& selector,
+                                 std::string& reason) {
+        auto* object = dynamic_cast<Object*>(&subject);
+        if (!object) {
+            reason = "pixel-property target is not an Object";
+            return false;
+        }
+        return object->elevateSurfaceRegionProperty(propertyName, face, selector, reason);
+    });
+
+    if (!find(laws)) {
+        auto channel = std::make_shared<ScreenChannel>();
+        laws.add(channel);
+    }
 }
 
 ScreenChannel* ScreenChannel::find(LawManager& laws) {

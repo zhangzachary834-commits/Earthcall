@@ -93,3 +93,9 @@ Bugs:
 22. Earlier there was an issue where if the cubes slid off from a gradually steepening slope in the perlin noise world, it would at a certain point just teleport back to the original location. Not sure if this is still happening, recent tests suggests it may be fixed already but I need to verify again to be sure.
 
 23. There's an issue sometimes when I try to load a conglomerate save file when another conglomerate is already loaded, it crashes. I tried loading the far lands zone after having had chess_app loaded (or something like that, maybe I forgot the exact files and exact order), and it crashed.
+
+24. in chess world, Game Over condition has cases where it fires when its not supposed to, stopping my ability to finish the game. I tested by playing out a chess game and then suddenly near the mid-late game, pieces stopped being selectable and movable. I investigated the action nodes and saw selection was failing, suspected "game over" was firing prematurely since its one of the few conditions with the power to cause a systemic stop like this, and then I did an experiment and removed the "game over" condition from both select and move for pawns. It restored my ability to select and move the pawns. I will investigate the Laws that write GameOver = true to find out waht's going on.
+
+BRUHHHHHHHH LIKE BLACK WAS IN A TERRIBLE POSITION AND I WAS ALMOST WINNING AGAINST BLACK ZACH (i was playing with mysefl xd) BUT SUDDENLY IT JUST STOPPED WORKING
+
+BROOOOOOOOOO THE PROGRAM FORESAW BLACKS DEFEAT AND RESIGNED ON BEHALF OF BLACK

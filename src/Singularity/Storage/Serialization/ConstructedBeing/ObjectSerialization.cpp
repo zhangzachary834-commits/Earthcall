@@ -61,14 +61,35 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["tags"] = obj.getTags();
     }
 
-    // Face colours (legacy / baseline tint) are migrated to Material; 
-    // we omit them from new ecform serializations to complete the substrate split.
+    // Face colours (legacy / baseline tint) are being migrated to Material,
+    // but that migration is not finished — Shape2D/Text2D's flat, untextured
+    // fallback (Object::draw2DObject) still reads faceColors[0] directly, not
+    // any Material. Omitting this field from serialization (as a prior pass
+    // here intended, to "complete the substrate split") silently regressed
+    // every such object's authored colour to the raw C++ default the moment
+    // it round-tripped through a Zone identity store: faceColors[6][3]'s
+    // in-class initializer is {1,0,0},{1,0,0},{0,1,0},{0,1,0},{0,0,1},{0,0,1}
+    // (a legacy cube-face default), so an authored white 2D plate came back
+    // red. Found 2026-09-07 via the Basic Pixel Changer canvas and ~14 other
+    // Zone identity files with the same gap. Serialize it until the render
+    // side actually stops reading it — remove this again only alongside that
+    // migration, not before.
+    j["faceColors"] = nlohmann::json::array({
+        {obj.faceColors[0][0], obj.faceColors[0][1], obj.faceColors[0][2]},
+        {obj.faceColors[1][0], obj.faceColors[1][1], obj.faceColors[1][2]},
+        {obj.faceColors[2][0], obj.faceColors[2][1], obj.faceColors[2][2]},
+        {obj.faceColors[3][0], obj.faceColors[3][1], obj.faceColors[3][2]},
+        {obj.faceColors[4][0], obj.faceColors[4][1], obj.faceColors[4][2]},
+        {obj.faceColors[5][0], obj.faceColors[5][1], obj.faceColors[5][2]}
+    });
 
     // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
         nlohmann::json dyn = nlohmann::json::object();
         for (const auto& entry : obj.dynamicProperties()) {
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+            PropertyValue live = entry.second;
+            obj.getDynamicProperty(entry.first, live);
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
         }
         j["authoredProperties"] = std::move(dyn);
     }
@@ -296,4 +317,3 @@ void from_json(const nlohmann::json& j, Object& obj){
     //     }
     // }
 }
-

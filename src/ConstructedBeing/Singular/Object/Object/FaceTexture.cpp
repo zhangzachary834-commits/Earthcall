@@ -3,6 +3,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 void FaceTexture::create(uint32_t initColorRGBA) {
     pixels.resize(size * size * 4);
@@ -130,6 +131,79 @@ glm::vec4 FaceTexture::blendPixels(const glm::vec4& src, const glm::vec4& dst, i
     }
 
     return result;
+}
+
+bool FaceTexture::writePixel(const glm::vec2& uv, const glm::vec3& color) {
+    if (size <= 0 || !std::isfinite(uv.x) || !std::isfinite(uv.y) ||
+        uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f || uv.y > 1.0f) {
+        return false;
+    }
+    const std::size_t expected = static_cast<std::size_t>(size) * size * 4;
+    if (pixels.size() != expected) return false;
+
+    const int x = std::min(size - 1, static_cast<int>(std::floor(uv.x * size)));
+    const int y = std::min(size - 1, static_cast<int>(std::floor(uv.y * size)));
+    return writeRegion(x, y, x + 1, y + 1, std::vector<glm::vec3>{color});
+}
+
+bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
+                              const std::vector<glm::vec3>& colors) {
+    if (size <= 0 || x0 < 0 || y0 < 0 || x1 <= x0 || y1 <= y0 ||
+        x1 > size || y1 > size ||
+        colors.size() != static_cast<std::size_t>(x1 - x0) * (y1 - y0)) {
+        return false;
+    }
+    std::vector<glm::ivec2> coordinates;
+    coordinates.reserve(colors.size());
+    for (int y = y0; y < y1; ++y)
+        for (int x = x0; x < x1; ++x) coordinates.emplace_back(x, y);
+    return writeSamples(coordinates, colors);
+}
+
+bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
+                               const std::vector<glm::vec3>& colors) {
+    if (size <= 0 || coordinates.size() != colors.size()) return false;
+    for (const glm::ivec2& xy : coordinates) {
+        if (xy.x < 0 || xy.y < 0 || xy.x >= size || xy.y >= size) return false;
+    }
+    for (const glm::vec3& color : colors) {
+        if (!std::isfinite(color.r) || !std::isfinite(color.g) ||
+            !std::isfinite(color.b)) {
+            return false;
+        }
+    }
+    const std::size_t expected = static_cast<std::size_t>(size) * size * 4;
+    if (pixels.size() != expected) return false;
+    const auto channel = [](float value) {
+        return static_cast<uint8_t>(std::lround(value * 255.0f));
+    };
+
+    auto write = [&](std::vector<uint8_t>& buffer) {
+        if (buffer.size() != expected) return false;
+        std::size_t i = 0;
+        for (const glm::ivec2& xy : coordinates) {
+            const glm::vec3 clamped = glm::clamp(
+                colors[i++], glm::vec3(0.0f), glm::vec3(1.0f));
+            const std::size_t offset = static_cast<std::size_t>(xy.y * size + xy.x) * 4;
+            buffer[offset] = channel(clamped.r);
+            buffer[offset + 1] = channel(clamped.g);
+            buffer[offset + 2] = channel(clamped.b);
+            buffer[offset + 3] = 255;
+        }
+        return true;
+    };
+
+    if (useLayers) {
+        if (activeLayer < 0 || activeLayer >= static_cast<int>(layers.size()) ||
+            !write(layers[activeLayer])) {
+            return false;
+        }
+        compositeLayers();
+    } else if (!write(pixels)) {
+        return false;
+    }
+    uploadToGPU();
+    return true;
 }
 
 void FaceTexture::saveStrokeState() {

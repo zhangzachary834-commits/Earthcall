@@ -368,6 +368,10 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         case ActionNode::Kind::AuthorZone:  structural("AuthorZone mints a Zone"); break;
         case ActionNode::Kind::AddRelation: structural("AddRelation mints a Relation"); break;
         case ActionNode::Kind::PlayAudio:   break;   // reaches a channel, writes no property
+        case ActionNode::Kind::WritePixel:  break;   // reaches Screen; elevated samples announce separately
+        case ActionNode::Kind::ElevatePixels:
+            structural("ElevatePixels grants a surface Property");
+            break;
     }
 
     for (const auto& child : node.children) analyzeAction(child, out);

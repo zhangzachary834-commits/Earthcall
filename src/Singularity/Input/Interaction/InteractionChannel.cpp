@@ -13,6 +13,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <limits>
@@ -195,6 +196,15 @@ void InteractionChannel::observe(const Sense& sense,
             surface.face = 0;
             surface.normal = glm::vec3(0.0f, 0.0f, 1.0f); // faces the camera
             surface.point = glm::vec3(sense.pointerX, sense.pointerY, 0.0f);
+            const glm::vec4 rect = hit2D->getRect2D();
+            const float width = rect.z - rect.x;
+            const float height = rect.w - rect.y;
+            bestUV.x = width > 0.0f
+                           ? std::clamp((sense.pointerX - rect.x) / width, 0.0f, 1.0f)
+                           : 0.0f;
+            bestUV.y = height > 0.0f
+                           ? std::clamp((sense.pointerY - rect.y) / height, 0.0f, 1.0f)
+                           : 0.0f;
         }
     }
 

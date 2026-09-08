@@ -126,6 +126,8 @@ const char* ActionNode::kindName(Kind k) {
         case Kind::PlayAudio: return "PlayAudio";
         case Kind::AuthorZone: return "AuthorZone";
         case Kind::AddRelation: return "AddRelation";
+        case Kind::WritePixel: return "WritePixel";
+        case Kind::ElevatePixels: return "ElevatePixels";
     }
     return "Unknown";
 }
@@ -318,6 +320,17 @@ nlohmann::json ActionNode::toJson() const {
             if (!input.empty()) j["input"] = input.toString();
             if (!propertyName.empty()) j["propertyName"] = propertyName;
             break;
+        case Kind::WritePixel:
+            j["pixelFacePath"] = pixelFacePath.toString();
+            j["pixelUPath"] = pixelUPath.toString();
+            j["pixelVPath"] = pixelVPath.toString();
+            j["pixelColorPath"] = pixelColorPath.toString();
+            break;
+        case Kind::ElevatePixels:
+            j["propertyName"] = propertyName;
+            j["pixelFacePath"] = pixelFacePath.toString();
+            j["selector"] = mapFunction.toJson();
+            break;
         case Kind::AuthorZone:
             if (!createType.empty()) j["createType"] = createType;
             if (!propertyName.empty()) j["propertyName"] = propertyName;
@@ -388,6 +401,11 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
     if (j.contains("spawnPlacementPath")) n.spawnPlacementPath = PropertyPath::parse(j["spawnPlacementPath"].get<std::string>());
     if (j.contains("spawnShapeKindPath")) n.spawnShapeKindPath = PropertyPath::parse(j["spawnShapeKindPath"].get<std::string>());
     if (j.contains("spawnColorPath")) n.spawnColorPath = PropertyPath::parse(j["spawnColorPath"].get<std::string>());
+    if (j.contains("pixelFacePath")) n.pixelFacePath = PropertyPath::parse(j["pixelFacePath"].get<std::string>());
+    if (j.contains("pixelUPath")) n.pixelUPath = PropertyPath::parse(j["pixelUPath"].get<std::string>());
+    if (j.contains("pixelVPath")) n.pixelVPath = PropertyPath::parse(j["pixelVPath"].get<std::string>());
+    if (j.contains("pixelColorPath")) n.pixelColorPath = PropertyPath::parse(j["pixelColorPath"].get<std::string>());
+    if (j.contains("selector")) n.mapFunction = OntoMath::Piecewise::fromJson(j["selector"]);
     n.eventType = j.value("eventType", std::string());
     n.publishSubject = j.value("publishSubject", std::string());
     n.publishObject = j.value("publishObject", std::string());
@@ -668,6 +686,90 @@ ECA::ActionExecutor ActionNode::compile() const {
                     ECA::Event{"audio-synthesized", &subject, nullptr, std::time(nullptr)}
                 );
                 emitEffect("PlayAudio", true);
+            };
+        }
+        case Kind::WritePixel: {
+            const PropertyPath facePath = pixelFacePath;
+            const PropertyPath uPath = pixelUPath;
+            const PropertyPath vPath = pixelVPath;
+            const PropertyPath colorPath = pixelColorPath;
+            return [facePath, uPath, vPath, colorPath](const ECA::Event&,
+                                                       Singular& subject) {
+                const PixelWriteSink& sink = pixelWriteSink();
+                if (!sink) {
+                    emitEffect("WritePixel", false, "no screen pixel channel bound");
+                    return;
+                }
+
+                PropertyValue faceValue, uValue, vValue, colorValue;
+                double face = 0.0, u = 0.0, v = 0.0;
+                if (!lawGetValue(subject, facePath, faceValue) ||
+                    !propertyValueToNumber(faceValue, face)) {
+                    emitEffect("WritePixel", false,
+                               "face '" + facePath.toString() + "' does not read");
+                    return;
+                }
+                if (!lawGetValue(subject, uPath, uValue) ||
+                    !propertyValueToNumber(uValue, u)) {
+                    emitEffect("WritePixel", false,
+                               "u '" + uPath.toString() + "' does not read");
+                    return;
+                }
+                if (!lawGetValue(subject, vPath, vValue) ||
+                    !propertyValueToNumber(vValue, v)) {
+                    emitEffect("WritePixel", false,
+                               "v '" + vPath.toString() + "' does not read");
+                    return;
+                }
+                if (!lawGetValue(subject, colorPath, colorValue) ||
+                    !std::holds_alternative<glm::vec3>(colorValue)) {
+                    emitEffect("WritePixel", false,
+                               "color '" + colorPath.toString() + "' does not read a vec3");
+                    return;
+                }
+
+                std::string reason;
+                if (!sink(subject, static_cast<int>(face), u, v,
+                          std::get<glm::vec3>(colorValue), reason)) {
+                    emitEffect("WritePixel", false,
+                               reason.empty() ? "screen pixel write refused" : reason);
+                    return;
+                }
+                Core::EventBus::instance().publish(
+                    ECA::Event{"surface-pixel-written", &subject, nullptr,
+                               std::time(nullptr)});
+                emitEffect("WritePixel", true);
+            };
+        }
+        case Kind::ElevatePixels: {
+            const std::string name = propertyName;
+            const PropertyPath facePath = pixelFacePath;
+            const OntoMath::Piecewise selector = mapFunction;
+            return [name, facePath, selector](const ECA::Event&, Singular& subject) {
+                const PixelPropertySink& sink = pixelPropertySink();
+                if (!sink) {
+                    emitEffect("ElevatePixels", false, "no screen property channel bound");
+                    return;
+                }
+                if (name.empty()) {
+                    emitEffect("ElevatePixels", false, "no property name authored");
+                    return;
+                }
+                PropertyValue faceValue;
+                double face = 0.0;
+                if (!lawGetValue(subject, facePath, faceValue) ||
+                    !propertyValueToNumber(faceValue, face)) {
+                    emitEffect("ElevatePixels", false,
+                               "face '" + facePath.toString() + "' does not read");
+                    return;
+                }
+                std::string reason;
+                if (!sink(subject, name, static_cast<int>(face), selector, reason)) {
+                    emitEffect("ElevatePixels", false,
+                               reason.empty() ? "pixel-property elevation refused" : reason);
+                    return;
+                }
+                emitEffect("ElevatePixels", true);
             };
         }
         case Kind::AuthorZone: {
@@ -991,7 +1093,11 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("AddProperty", false, "would shadow first-mover '" + name + "'");
                     return;
                 }
-                being->setDynamicProperty(name, initial);
+                if (!being->setDynamicProperty(name, initial)) {
+                    emitEffect("AddProperty", false,
+                               "initial value was refused by projected property '" + name + "'");
+                    return;
+                }
                 emitEffect("AddProperty", true);
             };
         }
@@ -1166,6 +1272,10 @@ std::string ActionNode::describe() const {
             return "synthesize(" + std::to_string(children.size()) + " composed actions)";
         case Kind::PlayAudio:
             return kindName(kind);
+        case Kind::WritePixel:
+            return "write pixel from " + pixelColorPath.toString();
+        case Kind::ElevatePixels:
+            return "elevate OntoMath region as property '" + propertyName + "'";
         case Kind::AuthorZone:
             return "author zone '" + createType + "'";
         case Kind::AddRelation:
@@ -1294,6 +1404,15 @@ void ActionNode::collectPaths(std::vector<PropertyPath>& out) const {
             add(spawnShapeKindPath);
             add(spawnColorPath);
             return;
+        case Kind::WritePixel:
+            add(pixelFacePath);
+            add(pixelUPath);
+            add(pixelVPath);
+            add(pixelColorPath);
+            break;
+        case Kind::ElevatePixels:
+            add(pixelFacePath);
+            break;
         default:
             break;
     }
@@ -1422,6 +1541,13 @@ void judge(const ActionNode& node, const std::vector<std::string>& written,
         // scope for "can the world be rewound".
         case ActionNode::Kind::Publish:
         case ActionNode::Kind::PlayAudio:
+            return;
+
+        case ActionNode::Kind::WritePixel:
+            obstacles.push_back("WritePixel: the surface sample it overwrote is not in the law text");
+            return;
+        case ActionNode::Kind::ElevatePixels:
+            obstacles.push_back("ElevatePixels: granting a surface Property changes the being's vocabulary");
             return;
 
         case ActionNode::Kind::Set:
@@ -1689,6 +1815,19 @@ ActionNode ActionNode::playAudio(const std::string& freqPath, const std::string&
     n.path = PropertyPath::parse(freqPath);
     n.input = PropertyPath::parse(ampPath);
     n.propertyName = waveType;
+    return n;
+}
+
+ActionNode ActionNode::writePixel(const std::string& facePath,
+                                  const std::string& uPath,
+                                  const std::string& vPath,
+                                  const std::string& colorPath) {
+    ActionNode n;
+    n.kind = Kind::WritePixel;
+    n.pixelFacePath = PropertyPath::parse(facePath);
+    n.pixelUPath = PropertyPath::parse(uPath);
+    n.pixelVPath = PropertyPath::parse(vPath);
+    n.pixelColorPath = PropertyPath::parse(colorPath);
     return n;
 }
 

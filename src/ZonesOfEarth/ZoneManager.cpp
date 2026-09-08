@@ -1041,6 +1041,20 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 // applyFormationRelations is idempotent by type + endpoint ids,
                 // so re-running it adds only what is genuinely missing.
                 applyZoneJson(*live, zj, /*replaceObjects=*/snapshotRestore);
+                // Tried and reverted (2026-09-07): re-running from_json on an
+                // object that is already live corrupts it. from_json is only
+                // safe on a just-constructed Object — a live one may already
+                // carry Rete facts, selection flags, and other runtime state
+                // from_json knows nothing about and will not preserve.
+                // chess_click_geometry_test caught this immediately: every
+                // piece stopped registering isSelected after a click, because
+                // reapplying from_json here ran during Chess's own boot
+                // hydration + load sequence, which — unlike this file's own
+                // tests — actually ticks Laws in between. See faceColors'
+                // fix in ObjectSerialization.cpp's to_json instead: the real
+                // gap was that field never round-tripping through ANY save at
+                // all, so the store itself carries the right value from its
+                // very first write and no runtime merge is needed here.
                 return;
             }
             if (!snapshotRestore && SaveSystem::zoneIdentityExists(id)) {
@@ -1056,6 +1070,17 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     // discard `zj` whole; replaceObjects=false keeps the
                     // store's objects authoritative.
                     applyZoneJson(*z, zj, /*replaceObjects=*/false);
+                    // The store wins per-FIELD, not per-object: a field the
+                    // World authors after this identity snapshot was taken —
+                    // faceColors added to an object the snapshot predates,
+                    // say — must not regress to a hardcoded default just
+                    // because the snapshot never recorded it. See
+                    // mergeZoneObjectsFromJson's own comment for the mechanism.
+                    if (zj.contains("world")) {
+                        mergeZoneObjectsFromJson(zj["world"], *z);
+                    } else if (zj.contains("objects")) {
+                        mergeZoneObjectsFromJson(zj, *z);
+                    }
                     return;
                 }
             }

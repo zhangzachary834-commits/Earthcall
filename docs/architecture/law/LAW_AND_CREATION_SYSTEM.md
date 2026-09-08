@@ -217,10 +217,12 @@ from it — manifesto requirement satisfied structurally).
 
 ```cpp
 struct ActionNode {
+    // Serialized as integers and append-only. Current values are 0..22.
     enum class Kind { Set, Add, Scale, Lerp, Drive, Sequence, Parallel, Spawn,
-                      Map, Flow, Publish,
-                      Create, AddProperty, AddElement,           // landed
-                      RemoveProperty, RemoveElement, Destroy };  // landed
+                      Map, Flow, Publish, Create, AddProperty, AddElement,
+                      RemoveProperty, RemoveElement, Destroy, Synthesize,
+                      PlayAudio, AuthorZone, AddRelation, WritePixel,
+                      ElevatePixels };
     Kind kind = Kind::Set;
 
     PropertyPath path;                             // what changes
@@ -241,6 +243,14 @@ struct ActionNode {
     ECA::ActionExecutor compile() const;
 };
 ```
+
+`WritePixel` and `ElevatePixels` are Screen-modality acts, not new domain kinds.
+`WritePixel` reads face, local `u`/`v`, and color from PropertyPaths. `ElevatePixels`
+grants a Person-named Property whose sample membership is the defined set of an authored
+OntoMath `Piecewise`; the program supplies local `u` and `v`, never a rigid region preset.
+An exact sample can also be elevated with the authored name
+`surface.pixel.<face>.<x>.<y>`. This satisfies granular reach without pretending each raw
+display sample is always an ontological being.
 
 **Creation from nothing (landed).** `Spawn` instantiates a *remembered* thing — an
 `ObjectConcept` captured from a selection, so a law could only ever make what someone

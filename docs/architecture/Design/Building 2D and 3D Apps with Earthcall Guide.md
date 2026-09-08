@@ -434,10 +434,25 @@ act and must follow the attribution and round-trip discipline in
 
 ## 5. Building in 2D
 
-### 5.1 What exists now
+### 5.1 What exists now: First-Mover Screen parameterizations
 
-`ShapeKind::Shape2D` and `ShapeKind::Text2D` are existing append-only Screen
-parameterizations. They are not domain categories.
+`ShapeKind::Shape2D` (12) and `ShapeKind::Text2D` (13) are append-only Screen parameterizations
+in C++. They are not domain categories.
+
+**Architectural Doctrine on `ShapeKind` (Zach):**
+`ShapeKind` is a parameterization substrate RESERVED FOR FIRST MOVERS (seed bootstrapping,
+engine tooling, foreign interop, and migration):
+1. **Not the load-bearing substrate:** `ShapeKind` must never become the main load-bearing
+   substrate for Persons' world authoring. What things *are* in Earthcall (in 2D as in 3D)
+   is authored in-world by Persons out of first-principles OntoMath (symbolic math, continuous
+   scalar/vector fields, implicit distance functions over $\mathbb{R}^2$ and $\mathbb{R}^3$),
+   Formations, and Laws—never carved into C++ enums (Refusals 1, 3, 7;
+   `INTERACTION_AS_LAW.md`; `ONTOMATH_FRAMEWORK.md`).
+2. **Total legibility from metal to Persons:** No shape kind or 2D/3D parameter admitted
+   here may be any less legible from the metal (GPU/shaders/buffers) to the program
+   (C++/PropertyBridge) and Persons (Law text and inspection) than any other Singular or its
+   fellow visual property-bearing Singulars. Every property carried by these shapes must be
+   registered, observable, and governable under the Law system (Refusal 6: No Black Box).
 
 A `Shape2D` is currently a screen-space, axis-aligned rectangle. Its useful properties
 include:
@@ -501,14 +516,20 @@ are not mature.
 - The “Professional 2D Design” and Creator Console Paint surfaces are intentionally
   disabled because their old tools were detached from Zone and would present controls
   that do nothing.
-- The general authored shape is currently a rectangle; rich authored paths, curves,
-  arbitrary 2D topology, and an OntoMath-native 2D shape taxonomy are not complete.
+- The general First-Mover 2D shape in `ShapeKind` is currently a rectangle (`Shape2D`); rich
+  authored paths, curves, arbitrary 2D topology, and an OntoMath-native 2D shape taxonomy are
+  not complete. Per the architectural doctrine, expanding 2D geometric form must occur through
+  first-principles OntoMath fields and functions over $\mathbb{R}^2$ and Formations rather than
+  appending further shape kinds to the C++ enum.
 - WebGPU native line width is one pixel in the current path; thick strokes need geometry,
   not a pretend width setting.
 - Text entry, IME, caret behavior, touch, and multi-pointer interaction are not built.
+  `Text2D` acts as an orthographic quad carrier for text rendering, while the true human-facing
+  ontology of text and language belongs to `Lexeme` beings and semantic Relations.
 - There is no finished responsive-layout Law library.
-- Pixel buffers and stroke history are not yet fully exposed as Law-addressable authored
-  beings.
+- Individual pixels and OntoMath-selected pixel sets can now be elevated as live,
+  Law-addressable Properties, and `WritePixel` can act through the Screen channel. Whole
+  pixel buffers, authored resolution, and stroke history are not yet fully exposed.
 
 These are limits of the current manifestation and tools, not permission to build a
 parallel UI framework.
@@ -521,8 +542,14 @@ parallel UI framework.
 
 The current `ShapeKind` vocabulary includes cube, polyhedron, sphere, cylinder, cone,
 ellipsoid, ovoid, paraboloid, torus, rounded box, implicit Field, Bézier Patch, Shape2D,
-and Text2D. The enum is append-only and serialized as integers. These values are ways the
-substrate carries geometry; they are not domain kinds such as “building” or “robot.”
+and Text2D. The enum is append-only and serialized as integers.
+
+Under Earthcall's architectural doctrine, these values are strictly **First-Mover
+substrate parameterizations** (for seed bootstrapping, engine tooling, foreign interop,
+and migration). They must never become the main load-bearing substrate for Persons'
+world authoring. What things are in Earthcall is authored in-world through first-principles
+OntoMath expressions, Formations, and Laws; these enum values are merely how the substrate
+carries geometry and screen-space carriers with total legibility from metal to Persons.
 
 Use:
 
@@ -662,10 +689,13 @@ selected pixel region may be a Singular because a Person has given it identity a
 governable role. This is not a retreat from granular control; it is the industry-optimal
 route to it—symbolic and sparse authored truth compiled into batched GPU work.
 
-The current code has not reached this model fully. `FaceTexture` still owns raw pixels,
-layers, and stroke history as source-level structures; Laws can reach face color and
-some layer structure, but not every pixel or stroke. Texture resolution is still a
-fixed implementation default in places. This is explicit debt, not the intended ceiling.
+The selective-promotion step is now real. `AddProperty` can elevate
+`surface.pixel.<face>.<x>.<y>` as one live `vec3` Property, while `ElevatePixels` gives an
+arbitrarily named Property to the defined set of a Person-authored OntoMath `Piecewise`
+over local `u` and `v`. No rectangular or other named-region enum determines its bounds.
+The dense `FaceTexture` remains virtual until that authoring act, and Screen writes wake
+elevated Properties that contain the changed sample. Texture resolution and stroke history
+remain explicit debt, not the intended ceiling.
 
 ### 7.5 2D-to-3D gradients
 
@@ -812,6 +842,8 @@ The current action tree can:
 - `Destroy` an Object;
 - `Synthesize` a construction from ordinary action children;
 - `PlayAudio` through the registered Audio channel;
+- `WritePixel` through the registered Screen channel;
+- `ElevatePixels` to grant a named Property whose sample set is defined by OntoMath;
 - author a Zone;
 - `AddRelation` between existing beings.
 
@@ -1041,7 +1073,8 @@ Use these rules:
   semantic authoring.
 - Batch manifestations when geometry and resolved Material are identical; preserve
   per-instance transforms and authored identity.
-- Promote meaningful pixel regions to beings and keep unpromoted samples virtual.
+- Promote meaningful pixels and OntoMath-defined sets to Properties (and to beings when
+  they need identity); keep unpromoted samples virtual.
 - Avoid allocation or shader recompilation for value-only changes that uniforms can
   carry.
 - Treat bounds as doctrine. A design that needs unbounded chain rounds, call depth, or
@@ -1063,10 +1096,10 @@ the prototype.
 
 | Area | Current truth | Frontier required by Zach’s intent |
 |---|---|---|
-| 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button is proven | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, pixel regions, and layouts |
+| 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button and pixel writer are proven; pixel-set bounds are OntoMath | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, and layouts |
 | 3D authoring | primitives, polyhedra, implicit Fields, Patches, Creator Console, Concepts, and Law creation exist | close live Shape Generator audit; deeper authored CAD/topology/continuity Law libraries |
 | Form | geometry, OntoMath, Materials, and Formations carry much of it | settle first-order Form ontology and authoring without reintroducing a hardcoded class hierarchy |
-| Materials/pixels | Materials are beings; face colors/layer controls are partly Law-visible; textures persist | Law-visible granular pixels/strokes, authorable resolution, sparse regions, and full no-black-box coverage |
+| Materials/pixels | Materials are beings; textures persist; a pixel or OntoMath-selected set can be elevated as a live Property and written by Law | authorable resolution, authored stroke history/provenance, GPU compilation for large dynamic selections, and full no-black-box coverage |
 | Relations/Formations | first-class endpoints, weights, history, attachments, rooted Categories, and persistence exist | make them load-bearing across more engine actions; settle remaining manifesto/runtime definition tensions |
 | Categories | direct `instance-of` queries and rooted Category pattern exist | category home/registry, inherited closure propagation, conflict/diamond policy |
 | Concepts | Object set capture/instantiate and anchored Relations exist | generalize `ObjectConcept` toward Singular creation without duplicating ontology |
@@ -1151,7 +1184,7 @@ libraries can do beyond Earthcall’s view.
 | If you are about to… | Stop and author… |
 |---|---|
 | add `class Button`, `class Robot`, or `class ArtStyle` | Object(s), Category, Relations, Formation, Concept, Laws |
-| add `WidgetKind::Slider` or `ShapeKind::Cathedral` | Category beings; reserve enums for substrate parameterizations |
+| add `WidgetKind::Slider` or `ShapeKind::Cathedral` | Category beings; reserve `ShapeKind` for First-Mover parameterizations, never as a load-bearing authoring crutch |
 | create `src/UI/` or `src/Apps/` | interaction or foreign channel under Singularity only if a true modality bridge is needed; authored app stays in Zones |
 | store `type: "button"` as the classification | `instance-of -> category.control.button` |
 | put behavior in a renderer or input callback | channel publishes sense; Law decides and acts |

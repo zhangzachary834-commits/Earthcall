@@ -578,6 +578,15 @@ public:
     // record it in the object's own faceColors slot so the "color" property
     // reads back what was painted.
     void setFaceColor(int faceIndex, float r, float g, float b);
+    // Replace one UV-addressed sample on this Object's own material.  The
+    // copy-on-write boundary prevents a pixel act from repainting every Object
+    // that happened to share the same Material being.
+    bool writeSurfacePixel(int faceIndex, const glm::vec2& uv,
+                           const glm::vec3& color);
+    bool elevateSurfaceRegionProperty(const std::string& propertyName,
+                                      int faceIndex,
+                                      const OntoMath::Piecewise& selector,
+                                      std::string& reason);
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
@@ -737,6 +746,17 @@ public:
     const std::string& getEntityName() const { return _entityName; }
 
 private:
+    // Authored elevation grammar:
+    //   surface.pixel.<face>.<x>.<y>                 -> vec3
+    // Named sets use an authored `surface.selection.<property-name>`
+    // definition whose OntoMath defined-set over local u/v selects samples;
+    // their property value is a row-major list<vec3>. Merely having that
+    // authored definition + property is what elevates the set.
+    bool readAuthoredPropertyProjection(Earthcall::StringId id,
+                                        PropertyValue& out) const override;
+    bool recognizesAuthoredPropertyProjection(Earthcall::StringId id) const override;
+    bool writeAuthoredPropertyProjection(Earthcall::StringId id,
+                                         const PropertyValue& value) override;
     // Registers the first-mover properties (position/rotation/center/shape.*)
     // that make this Object legible to PropertyPath and the Law system.
     // Defined in Object.cpp.
