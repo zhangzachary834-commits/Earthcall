@@ -1667,6 +1667,9 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
 
             auto id_str = builder.CreateString(o->getIdentifier());
             auto name_str = builder.CreateString(o->getObjectType());
+            // owner_identifier: the composite address's other half (Sol's
+            // Invariant 2) — see applyMatterFlatBuffer's read-side comment.
+            auto owner_id_str = builder.CreateString(zone->getIdentifier());
             // materialId is semantic/Material state — Material::toJson
             // already round-trips it (and faceTextures, and faceColors
             // below) through the JSON path. Not written here any more:
@@ -1801,7 +1804,8 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 &fbs_center,
                 &fbs_axis,
                 &fbs_target_rot,
-                o->getRotationResponsiveness()
+                o->getRotationResponsiveness(),
+                owner_id_str
             );
             entity_offsets.push_back(entity);
         }
@@ -1832,36 +1836,119 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
     const auto* chunk = Earthcall::Schema::GetSaveChunk(buffer.data());
     if (!chunk || !chunk->entities()) return;
 
-    std::unordered_map<std::string, std::shared_ptr<Object>> objMap;
+    // Resolve by (owner Zone/Home identifier, bare object id) — the
+    // canonical composite address (Sol's Invariant 2, agent intercom
+    // "Basic Pixel Changer Zone Identity Bug 9-7-26", 2026-09-08). Bare id
+    // alone is not unique: the real basic_pixel_changer.ecmatter had 382
+    // duplicate bare ids across Zones, including two records for
+    // "basic-pixel-canvas" itself — one correct, one the legacy cube-face
+    // red default — and whichever the old bare-id map's insertion visited
+    // last silently won, overwriting a correct semantic-JSON-loaded value
+    // with a stale one every time, regardless of which was right.
+    //
+    // byBareId also tracks every live (zoneId, Object) pair sharing a bare
+    // id, so a LEGACY entity with no owner_identifier can still be resolved
+    // when — and only when — that id is unambiguous among currently-live
+    // objects; when it is not, this refuses (skips, logs every candidate)
+    // rather than guessing which one was meant. No iteration order, no
+    // unordered_map replacement, no last-record-wins.
+    std::unordered_map<std::string, std::shared_ptr<Object>> byComposite;
+    std::unordered_map<std::string, std::vector<std::pair<std::string, std::shared_ptr<Object>>>> byBareId;
     for (const auto& zone : _zones) {
         if (!zone) continue;
+        const std::string zoneId = zone->getIdentifier();
         for (const auto& o : zone->getOwnedObjects()) {
-            if (o) objMap[o->getIdentifier()] = o;
+            if (!o) continue;
+            const std::string objId = o->getIdentifier();
+            byComposite[zoneId + "::" + objId] = o;
+            byBareId[objId].push_back({zoneId, o});
         }
     }
 
-    for (const auto* entity : *chunk->entities()) {
+    // Pass 1: resolve every entity to (Object, composite key) WITHOUT
+    // mutating anything yet, so a composite key that resolves more than
+    // once in THIS buffer (a literal duplicate record — the real
+    // basic_pixel_changer.ecmatter's two "basic-pixel-canvas" entities are
+    // exactly this, both legacy/ownerless) can be refused in its entirety
+    // rather than letting whichever the loop reaches second silently win.
+    const auto* entities = chunk->entities();
+    std::vector<std::shared_ptr<Object>> resolvedObj(entities->size());
+    std::vector<std::string> resolvedKey(entities->size());
+    std::unordered_map<std::string, int> keyCount;
+    for (size_t i = 0; i < entities->size(); ++i) {
+        const auto* entity = entities->Get(i);
         if (!entity || !entity->id()) continue;
         const std::string id = entity->id()->str();
-        auto it = objMap.find(id);
-        if (it == objMap.end()) continue;
-        auto& o = it->second;
+
+        std::shared_ptr<Object> o;
+        std::string key;
+        if (entity->owner_identifier() && entity->owner_identifier()->size() > 0) {
+            auto it = byComposite.find(entity->owner_identifier()->str() + "::" + id);
+            if (it != byComposite.end()) {
+                o = it->second;
+                key = entity->owner_identifier()->str() + "::" + id;
+            }
+            // else: the named owner does not match any live Zone holding
+            // this bare id right now. That is not necessarily staleness —
+            // loadTestObservation deliberately re-parents a dump's objects
+            // into a freshly-named "test.<stem>" Zone, different from
+            // whatever Zone owned them when the .ecmatter was written, so a
+            // legitimately-moved object's owner_identifier will never match
+            // post-move. Fall through to the same unambiguous-bare-id
+            // resolution a legacy (ownerless) record gets, rather than
+            // refusing outright: owner_identifier disambiguates when there
+            // IS a live collision, it does not veto a resolution that is
+            // otherwise perfectly safe.
+        }
+        if (!o) {
+            auto it = byBareId.find(id);
+            if (it != byBareId.end()) {
+                if (it->second.size() == 1) {
+                    o = it->second.front().second;
+                    key = it->second.front().first + "::" + id;
+                } else {
+                    std::string candidates;
+                    for (const auto& c : it->second) {
+                        if (!candidates.empty()) candidates += ", ";
+                        candidates += c.first;
+                    }
+                    std::cerr << "[ZoneManager] applyMatterFlatBuffer: entity '" << id
+                              << "' has no exact owner match and matches " << it->second.size()
+                              << " live objects across Zones (" << candidates
+                              << ") — refusing to guess, skipping this entity.\n";
+                }
+            }
+        }
+        if (!o) continue;
+        resolvedObj[i] = o;
+        resolvedKey[i] = key;
+        ++keyCount[key];
+    }
+
+    // Pass 2: apply fields, but only for entities whose composite key was
+    // unique in this buffer. Sol's Invariant 3: "do not use iteration
+    // order, unordered_map replacement, or last-record-wins anywhere."
+    std::unordered_set<std::string> loggedDuplicates;
+    for (size_t i = 0; i < entities->size(); ++i) {
+        auto& o = resolvedObj[i];
+        if (!o) continue;
+        const std::string& key = resolvedKey[i];
+        if (keyCount[key] > 1) {
+            if (loggedDuplicates.insert(key).second) {
+                std::cerr << "[ZoneManager] applyMatterFlatBuffer: composite key '" << key
+                          << "' appears " << keyCount[key] << " times in this matter buffer — "
+                          << "refusing all of them rather than guessing which is authoritative.\n";
+            }
+            continue;
+        }
+        const auto* entity = entities->Get(i);
 
         // Material ID, face textures, and face colors are semantic/Material
         // state (Material::toJson already round-trips all three), not
-        // physical matter — deliberately not applied from this sidecar (see
-        // the comment below the geometry fields). materialId/faceColors/
-        // faceTextures are still READABLE here for old buffers, only never
-        // acted on: this schema field stays append-only rather than
-        // removed. Found 2026-09-08 (Sol, GPT-5.6): objMap above resolves
-        // by bare object id across every Zone with no owning-Zone
-        // disambiguation, and a legacy .ecmatter can carry more than one
-        // Entity for the same bare id (basic_pixel_changer.ecmatter had
-        // two records for "basic-pixel-canvas" — one correct white, one
-        // the legacy cube-face red default) — whichever the loop visits
-        // last silently overwrote whatever the semantic JSON path had
-        // already loaded correctly, applied at the very end of loadState's
-        // "physical-matter" stage, after Zones/laws/Ourverse.
+        // physical matter — deliberately not applied from this sidecar.
+        // materialId/faceColors/faceTextures are still READABLE here for
+        // old buffers, only never acted on: this schema field stays
+        // append-only rather than removed.
 
         // 1. Transform & Pose
         if (entity->transform() && entity->transform()->size() == 16) {

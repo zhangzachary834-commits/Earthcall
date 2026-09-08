@@ -228,10 +228,87 @@ invariant break that can make Zone enumeration/read incoherent independent of
 this bug. Sol declined to touch it without Person authorization, and neither have
 I; recorded here so it isn't lost.
 
+## Structural hardening: composite (owner, object) identity, Invariants 2 and 3
+
+Zach visually confirmed the canvas is white with black text (2026-09-08) and asked
+that this become the frontier-safe structural fix, not just the point repair. Sol
+posted six invariants on the intercom thread with a staged landing order
+(A: scoped writer + composite identity + preflight/legacy resolution + collision
+tests; B: generation coupling/atomic commit; C: detached whole-load transaction;
+D: registered-property persistence audit). This session implemented the core of
+stage A — Invariants 2 and 3 — and explicitly deferred the rest; see below.
+
+**Invariant 2 (composite owner identity), implemented:**
+`Earthcall.fbs`'s `Entity` table gained an append-only `owner_identifier: string`
+field (regenerated `Earthcall_generated.h` with `flatc` 25.12.19, matching the
+version this project's vendored FlatBuffers headers already assert — the diff is
+exactly the one new field, nothing else touched). `buildMatterFlatBuffer` now
+writes each object's owning Zone/Home identifier into it. `applyMatterFlatBuffer`
+resolves the canonical address `(owner_identifier, id)` via a `byComposite` map
+built from every currently-live Zone.
+
+**Invariant 3 (preflight, refuse on ambiguity — "no iteration order, no
+unordered_map replacement, no last-record-wins anywhere"), implemented as a
+two-pass resolve-then-apply:** pass 1 resolves every entity in the buffer to an
+Object and a composite key without mutating anything; pass 2 applies fields only
+for entities whose resolved key is unique in that buffer, and refuses (skips,
+logs once per key) any key that resolves more than once. This is what makes the
+real `basic_pixel_changer.ecmatter`'s two "basic-pixel-canvas" records — both
+legacy/ownerless, since `owner_identifier` did not exist when that file was
+written — refuse together instead of the second silently winning.
+
+**A resolution-order subtlety found while testing, not anticipated by the
+invariants as written:** `owner_identifier` cannot always be trusted as
+absolute — `ZoneManager::loadTestObservation` deliberately re-parents a dump's
+objects into a freshly-named `test.<stem>` Zone, different from whatever Zone
+owned them when the `.ecmatter` was written, so a legitimately-moved object's
+`owner_identifier` will never match post-move. The first implementation treated a
+non-matching `owner_identifier` as "skip, stale record" and broke
+`test_observation_load_test` (`FAILED: loaded cube kept its position` — the
+object silently kept its default-constructed transform because resolution never
+found it). Fixed: an `owner_identifier` that names no live Zone holding that bare
+id falls through to the same unambiguous-bare-id resolution an ownerless legacy
+record already gets, rather than refusing outright — `owner_identifier`
+disambiguates a real collision; it does not veto a resolution that is otherwise
+perfectly safe. `matter_semantic_precedence_test.cpp` now has a named regression
+block for exactly this case, plus the composite-round-trip, duplicate-key-refusal,
+and ambiguous-ownerless-refusal tests Sol specified. 9/9 green; full suite matches
+the documented baseline with no new failures.
+
+**Explicitly deferred, per Sol's own staged sequencing — not attempted this
+pass:**
+- **Invariant 1** (scoped writer: a save's `.ecmatter` should contain only the
+  same Zones/Homes its `.ecform` names, not every live Zone in `_zones`). This is
+  why the real `basic_pixel_changer.ecmatter` reached 1,441 entities in the first
+  place, and it is the more foundational fix — Invariants 2/3 make the resulting
+  collisions safe rather than preventing the sidecar from being oversized to begin
+  with. Needs its own investigation into what `writeSemanticRoots` actually scopes
+  a World file's Zone membership to, which touches Earthcall's broader
+  one-Ourverse-many-Zone-identity-files design tension and deserves a pass of its
+  own.
+- **Invariant 4** (atomic generation commit: paired `snapshot_id`, matter
+  hash/length/schema version in the semantic root, write-then-atomic-rename, keep
+  the prior generation until commit).
+- **Invariant 5** (registered-property persistence audit: CI catches both a
+  registered path with zero persistence homes — the original missing-`faceColors`
+  bug — and one with multiple competing homes — the `.ecform`/identity/`.ecmatter`
+  jurisdiction fight this whole task has been about).
+- **Invariant 6** (validate `saves/zones/<id>/`'s directory key against the
+  document's own `identifier` and every referencing `zoneRef`/`currentZoneId` at
+  every boundary; refuse/log a mismatch rather than silently deriving identity
+  from display text). The concrete case — `BasicPixelChanger` vs
+  `"Basic Pixel Changer"` — is unchanged from the previous section: Person-
+  authorized repair only.
+
+Also found and reverted while verifying, not fixed (logged in the To-Do list):
+`test_observation_load_test` has the same real-`saves/`-tree-pollution bug the 5
+chess tests had — `saves/zones/visible_cube/zone.json` picked up 34 lines of
+drift running the full suite. Needs the same `RealSaveTreeGuard` treatment.
+
 ---
 
 **Signed:** Claude Sonnet 5
 **Session:** `01Mvd55GFWyUMrYWt2ERGSRE`
 **Date:** 2026-09-07, extended 2026-09-08
 
-**Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding — see "Second red-canvas cause" above. Implementation of that fix is mine; the finding and recommended remediation order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`.
+**Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 2 and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence."
