@@ -11,6 +11,8 @@
 #include <atomic>
 #include <fstream>
 #include <unordered_map>
+#include <array>
+#include <optional>
 #include "json.hpp"
 
 namespace ECA {
@@ -21,7 +23,8 @@ enum class LogCategory {
     Person,
     State,
     Language,
-    Audio
+    Audio,
+    Count
 };
 
 enum class LogLevel {
@@ -89,9 +92,9 @@ private:
     std::atomic<LogLevel> _level{LogLevel::Summary};
 
     mutable std::mutex _categoryLevelMutex;
-    std::unordered_map<LogCategory, LogLevel> _categoryLevels;
+    std::array<std::optional<LogLevel>, static_cast<std::size_t>(LogCategory::Count)> _categoryLevels;
 
-    std::unordered_map<LogCategory, CategoryStreams> _streams;
+    std::array<CategoryStreams, static_cast<std::size_t>(LogCategory::Count)> _streams;
     std::ofstream _legacyLawLogFile;    // Mirror for logs/law_audit.log compatibility
     std::ofstream _legacyLawJsonlFile;  // Mirror for logs/law_audit.jsonl compatibility
 

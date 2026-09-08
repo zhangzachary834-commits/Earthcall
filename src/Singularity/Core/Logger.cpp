@@ -44,7 +44,9 @@ std::ios_base::openmode Logger::openModeFor(const std::string& path) const {
 }
 
 void Logger::ensureCategoryStreams(LogCategory cat) {
-    if (_streams.find(cat) != _streams.end()) return;
+    std::size_t idx = static_cast<std::size_t>(cat);
+    if (idx >= static_cast<std::size_t>(LogCategory::Count)) return;
+    if (_streams[idx].logFile.is_open()) return;
 
     std::string catName = categoryToString(cat);
     std::string dirPath = "logs/" + catName;
@@ -53,15 +55,12 @@ void Logger::ensureCategoryStreams(LogCategory cat) {
     std::string logPath = dirPath + "/" + catName + ".log";
     std::string jsonlPath = dirPath + "/" + catName + ".jsonl";
 
-    CategoryStreams cs;
-    cs.logFile.open(logPath, openModeFor(logPath));
-    cs.jsonlFile.open(jsonlPath, openModeFor(jsonlPath));
+    _streams[idx].logFile.open(logPath, openModeFor(logPath));
+    _streams[idx].jsonlFile.open(jsonlPath, openModeFor(jsonlPath));
 
-    if (!cs.logFile.is_open() || !cs.jsonlFile.is_open()) {
+    if (!_streams[idx].logFile.is_open() || !_streams[idx].jsonlFile.is_open()) {
         std::cerr << "[Logger] Warning: Could not open log files in " << dirPath << "\n";
     }
-
-    _streams[cat] = std::move(cs);
 }
 
 Logger::Logger() {
@@ -106,14 +105,18 @@ void Logger::shutdown() {
 }
 
 void Logger::setCategoryLevel(LogCategory cat, LogLevel level) {
+    std::size_t idx = static_cast<std::size_t>(cat);
+    if (idx >= static_cast<std::size_t>(LogCategory::Count)) return;
     std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    _categoryLevels[cat] = level;
+    _categoryLevels[idx] = level;
 }
 
 LogLevel Logger::categoryLevel(LogCategory cat) const {
+    std::size_t idx = static_cast<std::size_t>(cat);
+    if (idx >= static_cast<std::size_t>(LogCategory::Count)) return _level.load();
+
     std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    auto it = _categoryLevels.find(cat);
-    if (it != _categoryLevels.end()) return it->second;
+    if (_categoryLevels[idx].has_value()) return _categoryLevels[idx].value();
     return _level.load();
 }
 
@@ -163,10 +166,11 @@ void Logger::log(LogCategory cat, const std::string& type, const std::string& me
 
 #ifdef __EMSCRIPTEN__
     // Direct output in single-threaded WebAssembly build
-    auto it = _streams.find(cat);
-    if (it != _streams.end()) {
-        if (it->second.logFile.is_open()) {
-            it->second.logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
+    std::size_t idx = static_cast<std::size_t>(cat);
+    if (idx < static_cast<std::size_t>(LogCategory::Count)) {
+        CategoryStreams& cs = _streams[idx];
+        if (cs.logFile.is_open()) {
+            cs.logFile << "[" << entry.timestamp << "] [" << entry.type << "] " << entry.message << "\n";
         }
     }
     if (cat == LogCategory::Laws && _legacyLawLogFile.is_open()) {
@@ -201,9 +205,9 @@ void Logger::backgroundWorker() {
         }
 
         if (batch.empty() && !_running) {
-            for (auto& pair : _streams) {
-                if (pair.second.logFile.is_open()) pair.second.logFile.flush();
-                if (pair.second.jsonlFile.is_open()) pair.second.jsonlFile.flush();
+            for (auto& cs : _streams) {
+                if (cs.logFile.is_open()) cs.logFile.flush();
+                if (cs.jsonlFile.is_open()) cs.jsonlFile.flush();
             }
             if (_legacyLawLogFile.is_open()) _legacyLawLogFile.flush();
             if (_legacyLawJsonlFile.is_open()) _legacyLawJsonlFile.flush();
@@ -211,10 +215,12 @@ void Logger::backgroundWorker() {
         }
 
         for (const auto& entry : batch) {
-            auto it = _streams.find(entry.category);
-            if (it == _streams.end()) continue;
+            std::size_t idx = static_cast<std::size_t>(entry.category);
+            if (idx >= static_cast<std::size_t>(LogCategory::Count)) continue;
 
-            CategoryStreams& cs = it->second;
+            CategoryStreams& cs = _streams[idx];
+            if (!cs.logFile.is_open() && !cs.jsonlFile.is_open()) continue;
+
             if (cs.linesWritten >= kMaxLinesPerRun) {
                 if (!cs.budgetNoticeWritten) {
                     cs.budgetNoticeWritten = true;
@@ -263,11 +269,11 @@ void Logger::backgroundWorker() {
             }
         }
 
-        for (auto& pair : _streams) {
-            if (pair.second.linesSinceFlush >= 256) {
-                if (pair.second.logFile.is_open()) pair.second.logFile.flush();
-                if (pair.second.jsonlFile.is_open()) pair.second.jsonlFile.flush();
-                pair.second.linesSinceFlush = 0;
+        for (auto& cs : _streams) {
+            if (cs.linesSinceFlush >= 256) {
+                if (cs.logFile.is_open()) cs.logFile.flush();
+                if (cs.jsonlFile.is_open()) cs.jsonlFile.flush();
+                cs.linesSinceFlush = 0;
             }
         }
         if (_legacyLawLogFile.is_open()) _legacyLawLogFile.flush();
