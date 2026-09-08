@@ -536,6 +536,19 @@ public:
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
 
+    // Is a live relation-state fact already keyed on this being and type?
+    //
+    // assertFact does NOT deduplicate — it pushes a fact and an id every call —
+    // and three paths now assert edge facts (the first-tick seed, the
+    // relation-formed handler, and the back-seed when a relation type first
+    // enters play). Without this they stack duplicates into every alpha memory
+    // that matches, which is a standing per-tick propagation tax and, over a
+    // session of relations forming and dissolving, unbounded.
+    //
+    // Compares the SUBJECT POINTER, never dereferencing it: this is called on
+    // paths where a relation's far endpoint may already be destroyed.
+    bool hasRelationStateFact(const Singular* subject, const std::string& relationType) const;
+
     // `source` defaults to Foreign deliberately: a caller that has not said
     // where its predicate came from has not earned the assumption that it can
     // be reasoned about.
@@ -876,6 +889,21 @@ private:
     // connectToEventBus() is what keeps the facts current afterwards.
     // ------------------------------------------------------------------
     void seedStateFacts(Singular* being);
+    // One edge fact, asserted WITHOUT consulting _seededSubjects.
+    //
+    // That set guards the property snapshot above, which is genuinely
+    // once-per-being. Edge seeding was made to share the gate and should never
+    // have: a being's properties are a snapshot, its edges are a stream. Once
+    // the being was known, every relation formed afterwards was silently
+    // dropped — FORMATION_RETE.md §1.2(a), the defect that made every
+    // continuous `Related` law permanently deaf. Two concerns, now separated.
+    //
+    // `endpoint` is the being the fact is keyed on; the far end is never
+    // dereferenced (see seedStateFacts for why that matters).
+    void assertRelationStateFact(Singular* endpoint, const std::string& relationType);
+    // Catch up the edges that already existed when a relation type first
+    // enters the seeding vocabulary — the second shape of the same defect.
+    void backSeedRelationStateFacts(const std::unordered_set<std::string>& types);
     std::unordered_set<std::string> _seededSubjects;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is

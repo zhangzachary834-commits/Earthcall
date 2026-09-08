@@ -1,9 +1,9 @@
 # Zone identity store: field-level merge, not whole-object replacement
 
-**Status:** fixed and regression-tested
-**Created:** 2026-09-07 by Claude, investigating a report from Zach
-**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/ZonesOfEarth/ZoneManager.cpp` (`admitFromJson`'s identity-store branch)
-**Test:** `tests/zones/zone_identity_test.cpp` (new block at the end)
+**Status:** fixed and regression-tested across three independent causes; the app-level check is still open (see the Person Verification List)
+**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause found by GPT-5.6 Sol (Codex) on the agent intercom.
+**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/ZonesOfEarth/ZoneManager.cpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` no longer touching materialId/faceTextures/faceColors), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
+**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
 
 ---
 
@@ -130,39 +130,108 @@ explicit "re-sync from World" action is Zach's call, not assumed here. Flagging
 it rather than deciding it: nothing today exercises the alternative, and no Person
 has asked for it.
 
-## A related but distinct gap found while verifying: `faceColors` never round-trips at all
+## `faceColors` never round-tripped at all — fixed
 
 Watching a fresh `saves/zones/BasicPixelChanger/` identity file get written (Zach
-reloaded the World live, past the fix above) showed it *still* has no `faceColors`
-key — not staleness, but because `Object::to_json`
-(`ObjectSerialization.cpp`) has no `faceColors` write at all; only `from_json`
-reads it. This means every identity-store snapshot, past and future, omits
-`faceColors` unconditionally, which is why the field-level merge above is a
-permanent necessity for this field, not a one-time fix for an old file. It also
-means a Person who changes an object's `faceColors` live via a Law (not by
-re-authoring the World) will lose that change on the next app restart — the
-in-memory value is correct until then, but never reaches disk. Not fixed here
-(out of scope for what was asked), but worth a future pass adding `faceColors` to
-`to_json` if a Person ever reports a live color change not surviving a restart.
+reloaded the World live, past the field-level-merge fix above) showed it *still*
+had no `faceColors` key — not staleness, but because `Object::to_json`
+(`ObjectSerialization.cpp`) had no `faceColors` write at all; only `from_json`
+read it, as a deliberate-but-incomplete step of an in-progress "migrate paint to
+Material" substrate split. `Shape2D`'s flat/untextured fallback
+(`Object::draw2DObject`) still reads `faceColors[0]` directly, so the omission
+was actively destroying data for anything not yet migrated off it — not just the
+pixel-changer canvas; the same gap was found in ~14 of ~25 `saves/zones/*/zone.json`
+files, including `SynthesisStudio` and `Chess`.
+
+**Fixed**: `to_json` now serializes `faceColors` unconditionally, matching every
+other field in that function. Flagged in its own comment as provisional pending
+an eventual migration of 2D flat-plate rendering to read `Material.baseColor`
+instead — that migration is NOT attempted here; it would touch every 2D object's
+authored colour across every affected zone and needs its own sign-off. Until then,
+this fix is what makes the identity store carry the correct value at all.
 
 ## Addendum: the test-isolation bug found while investigating this
 
-Verifying the fix required running `chess_extended_rules_test`, which pointed
+Verifying the fix required running the 5 `chess_*_test` binaries, which pointed
 `SaveSystem::setSaveRoot` directly at the real repo `saves/` tree — so
 `BootedEngineHarness`'s `hydrateFromZoneStore()` loaded every real Zone identity
 (Chess, FarLands, SynthesisStudio, both Homes), and a subsequent load's "preserve
 unsaved work" write-back re-serialized all of them with fresh relation-event
-timestamps, silently drifting real save files on every test run. Caught via
-`git status`/`git diff` before anything was committed; the polluted files were
-reverted with `git checkout`. Fixed by copying `saves/zones/`, `saves/homes/`,
-and only the one world file the test needs into a disposable temp sandbox before
-calling `setSaveRoot`, matching `unsaved_preserve_test`/`world_switch_test`'s
-existing pattern. `synthesis_studio_app_test` did not need this — it parses its
-save file directly into local objects and never touches `SaveSystem`/
-`ZoneManager`. See the To-Do list's Housekeeping entry.
+timestamps, silently drifting real save files on every test run — compounded
+across repeated runs to over 14,000 duplicate lines in `saves/zones/Chess/zone.json`
+at one point. Caught via `git status`/`git diff` before anything was committed;
+the polluted files were reverted with `git checkout` each time it recurred.
+
+A first fix — copy `saves/zones/`, `saves/homes/`, and the one needed world file
+into a disposable sandbox, point `SaveSystem` there — traded that bug for a
+different, never-fully-explained one: against an otherwise byte-identical copy,
+`chess_click_geometry_test` saw every piece at `(0,0,0)` and every Law answer
+`conditions-failed`, regardless of which real subdirectories were included in the
+copy (even after adding the one that looked most likely, `saves/persons/`, First
+Mover identity). Rather than keep guessing which piece of state secretly depends
+on the tree's real absolute path, landed instead: `TestSupport::RealSaveTreeGuard`
+(`tests/support/test_harness.hpp`) runs each test against the REAL tree exactly
+as it always ran (so there is no surface for an unexplained difference to appear
+on), backing up `saves/zones/` and `saves/homes/` first and restoring them
+unconditionally when the guard goes out of scope. All 5 chess tests pass now, or
+fail identically to the documented baseline (`chess_extended_rules_test`'s
+pawn-promotion assertion is the one pre-existing, unrelated failure).
+`synthesis_studio_app_test` needed no fix — it parses its save file directly into
+local objects and never touches `SaveSystem`/`ZoneManager`. See the To-Do list's
+Housekeeping entry.
+
+## Second red-canvas cause, found by Sol on the agent intercom 2026-09-08
+
+Even with both fixes above, Zach reported the canvas still red after a full
+quit/relaunch. GPT-5.6 Sol (session `01a0707e-f743-71b1-8fb9-63975012e66d`) found
+the actual remaining mechanism by decoding the real `.ecmatter` FlatBuffer sidecar
+directly: `ZoneManager::applyMatterFlatBuffer` runs in `loadState`'s
+`"physical-matter"` stage, which is explicitly ordered AFTER the semantic
+JSON/Zone-identity load ("Ourverse semantic root hydrated after Zones and laws").
+It resolves objects with a single `std::unordered_map<std::string, Object*>` keyed
+by bare object identifier across EVERY live Zone at once — no owning-Zone or Home
+disambiguation — and then unconditionally applies `material_id`/`face_textures`/
+`face_colors` from whatever FlatBuffer `Entity` matches, last one in iteration
+order winning. Sol found the real `basic_pixel_changer.ecmatter` sidecar
+carries 1,441 entities for what should be a handful of objects, with 382 bare ids
+appearing more than once — including two records for `basic-pixel-canvas` itself,
+one correctly white and one the legacy cube-face red default. Whichever the loop
+visited last silently overwrote whatever the semantic JSON path had already
+loaded correctly, every single time, regardless of how correct that JSON path was.
+
+**Fixed** (Sol's "immediate compatibility fix", implemented here): `material_id`,
+`face_textures`, and `face_colors` are semantic/Material state —
+`Material::toJson` already round-trips all three correctly through the JSON path
+— so `applyMatterFlatBuffer` no longer applies any of them, and
+`buildMatterFlatBuffer` no longer writes real values into those FlatBuffer slots
+(left as empty/0 offsets rather than removed from the schema, so an old buffer
+that still carries real data in those fields stays *readable*, just inert —
+Sol's instruction: "leave schema slots readable/append-only"). New regression
+test: `tests/zones/matter_semantic_precedence_test.cpp` — a hand-built legacy
+matter buffer with real red `face_colors` for an object whose semantic state says
+white, fed through the real `applyMatterFlatBuffer`, must finish white; a freshly
+built matter buffer must carry no `face_colors` data at all.
+
+**Not fixed, and flagged by Sol as Person-authorized-only**: the 382 duplicate
+bare object ids are a general problem, not unique to this one canvas — any object
+whose bare id repeats across Zones is exposed to the same last-writer-wins
+collision for whatever fields still route through the matter buffer (geometry,
+transform). Sol's recommended structural fix (not attempted): add an owning
+Zone/Home stable id to each sidecar `Entity` (an append-only FlatBuffer field) and
+resolve by `(owner-id, object-id)`; add save-time and load-time duplicate-key
+validation; regression-test the actual precedence against the real `.ecform` +
+`.ecmatter` pair, not only a synthetic buffer. Separately, Sol also found that
+`saves/zones/BasicPixelChanger/zone.json`'s own `identifier` field reads
+`"Basic Pixel Changer"` (the display name) while the folder and every
+`zoneRef`/`currentZoneId` reference use `"BasicPixelChanger"` — an identity
+invariant break that can make Zone enumeration/read incoherent independent of
+this bug. Sol declined to touch it without Person authorization, and neither have
+I; recorded here so it isn't lost.
 
 ---
 
 **Signed:** Claude Sonnet 5
 **Session:** `01Mvd55GFWyUMrYWt2ERGSRE`
-**Date:** 2026-09-07
+**Date:** 2026-09-07, extended 2026-09-08
+
+**Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding — see "Second red-canvas cause" above. Implementation of that fix is mine; the finding and recommended remediation order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`.

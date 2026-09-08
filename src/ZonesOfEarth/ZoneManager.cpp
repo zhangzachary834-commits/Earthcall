@@ -1667,7 +1667,15 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
 
             auto id_str = builder.CreateString(o->getIdentifier());
             auto name_str = builder.CreateString(o->getObjectType());
-            auto mat_id_str = builder.CreateString(o->materialId());
+            // materialId is semantic/Material state — Material::toJson
+            // already round-trips it (and faceTextures, and faceColors
+            // below) through the JSON path. Not written here any more:
+            // see applyMatterFlatBuffer's read-side comment for why this
+            // sidecar carrying it was actively harmful, not merely
+            // redundant. Left as an empty (0) FlatBuffers offset rather
+            // than removed from the schema, so old buffers that still
+            // carry a real value stay readable — applyMatterFlatBuffer
+            // just never acts on it any more.
 
             // 1. Transform matrix (16 floats)
             glm::mat4 t = o->getTransform();
@@ -1768,28 +1776,9 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 field_offset = Earthcall::Schema::CreateFieldData(builder, &f_ext, root_node);
             }
 
-            // 6. Face Textures (from the object's resolved material)
-            std::vector<flatbuffers::Offset<Earthcall::Schema::FaceTexture>> fts;
-            auto mat = materials.get(o->materialId());
-            if (mat) {
-                for (size_t f = 0; f < mat->faceTextures.size(); ++f) {
-                    const auto& ft = mat->faceTextures[f];
-                    if (!ft.pixels.empty()) {
-                        auto pix_vec = builder.CreateVector(ft.pixels);
-                        fts.push_back(Earthcall::Schema::CreateFaceTexture(
-                            builder, static_cast<int>(f), ft.size, pix_vec));
-                    }
-                }
-            }
-            auto fts_vec = fts.empty() ? 0 : builder.CreateVector(fts);
-
-            // 7. Face Colors
-            std::vector<Earthcall::Schema::Vec3> fbs_colors;
-            for (int f = 0; f < 6; ++f) {
-                fbs_colors.push_back(Earthcall::Schema::Vec3(
-                    o->faceColors[f][0], o->faceColors[f][1], o->faceColors[f][2]));
-            }
-            auto fbs_colors_vec = builder.CreateVectorOfStructs(fbs_colors);
+            // Face textures and face colors: not written here any more —
+            // see the comment above materialId. Left as empty (0)
+            // FlatBuffers offsets.
 
             Earthcall::Schema::Vec3 fbs_center(o->getCenter().x, o->getCenter().y, o->getCenter().z);
             Earthcall::Schema::Vec3 fbs_axis(o->getAuthoritativeAxis().x, o->getAuthoritativeAxis().y, o->getAuthoritativeAxis().z);
@@ -1804,11 +1793,11 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 patch_offset,
                 smooth_offset,
                 field_offset,
-                fts_vec,
-                fbs_colors_vec,
+                0, // face_textures — semantic/Material state, see comment above
+                0, // face_colors — semantic/Material state, see comment above
                 0, // sdf_nodes
                 0, // laws
-                mat_id_str,
+                0, // material_id — semantic/Material state, see comment above
                 &fbs_center,
                 &fbs_axis,
                 &fbs_target_rot,
@@ -1858,10 +1847,21 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
         if (it == objMap.end()) continue;
         auto& o = it->second;
 
-        // 0. Material ID
-        if (entity->material_id() && entity->material_id()->size() > 0) {
-            o->setMaterialId(entity->material_id()->str());
-        }
+        // Material ID, face textures, and face colors are semantic/Material
+        // state (Material::toJson already round-trips all three), not
+        // physical matter — deliberately not applied from this sidecar (see
+        // the comment below the geometry fields). materialId/faceColors/
+        // faceTextures are still READABLE here for old buffers, only never
+        // acted on: this schema field stays append-only rather than
+        // removed. Found 2026-09-08 (Sol, GPT-5.6): objMap above resolves
+        // by bare object id across every Zone with no owning-Zone
+        // disambiguation, and a legacy .ecmatter can carry more than one
+        // Entity for the same bare id (basic_pixel_changer.ecmatter had
+        // two records for "basic-pixel-canvas" — one correct white, one
+        // the legacy cube-face red default) — whichever the loop visits
+        // last silently overwrote whatever the semantic JSON path had
+        // already loaded correctly, applied at the very end of loadState's
+        // "physical-matter" stage, after Zones/laws/Ourverse.
 
         // 1. Transform & Pose
         if (entity->transform() && entity->transform()->size() == 16) {
@@ -1966,35 +1966,8 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
             o->setFieldShape(node, extent);
         }
 
-        // 6. Face Textures
-        if (entity->face_textures()) {
-            auto mat = materials.get(o->materialId());
-            if (mat) {
-                for (const auto* ft : *entity->face_textures()) {
-                    if (!ft || !ft->pixels()) continue;
-                    int fIdx = ft->face_index();
-                    int sz = ft->size();
-                    if (fIdx >= 0 && fIdx < static_cast<int>(mat->faceTextures.size()) && sz > 0) {
-                        auto& oft = mat->faceTextures[fIdx];
-                        oft.size = sz;
-                        oft.pixels.assign(ft->pixels()->begin(), ft->pixels()->end());
-                        oft.updateWholeGPU();
-                    }
-                }
-            }
-        }
-
-        // 6. Face Colors
-        if (entity->face_colors()) {
-            for (size_t f = 0; f < entity->face_colors()->size() && f < 6; ++f) {
-                const auto* c = entity->face_colors()->Get(f);
-                if (c) {
-                    o->faceColors[f][0] = c->x();
-                    o->faceColors[f][1] = c->y();
-                    o->faceColors[f][2] = c->z();
-                }
-            }
-        }
+        // Face textures and face colors: not applied. See the comment
+        // above the Material-ID field at the top of this loop.
     }
 }
 

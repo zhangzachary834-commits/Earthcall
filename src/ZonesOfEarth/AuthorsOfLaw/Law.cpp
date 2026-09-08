@@ -934,6 +934,18 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     return true;
 }
 
+bool ReteNetwork::hasRelationStateFact(const Singular* subject,
+                                       const std::string& relationType) const {
+    if (!subject) return false;
+    for (const FactPtr& fact : _facts) {
+        if (!fact || !fact->isState) continue;
+        if (fact->type != "relation-state") continue;
+        if (fact->subject != subject) continue;      // pointer compare only
+        if (fact->attribute == relationType) return true;
+    }
+    return false;
+}
+
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
     std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
@@ -1527,6 +1539,33 @@ void LawManager::connectToEventBus() {
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
             seedStateFacts(e.subject);
+        }
+
+        // The edge itself, for BOTH endpoints.
+        //
+        // seedStateFacts(e.subject) above is not this. On "relation-formed"
+        // the subject is the RELATION being (RelationManager.cpp: `echo.subject
+        // = r.get()`), so that call snapshots the Relation's own properties —
+        // correct, and worth keeping — while emitting no relation-state fact
+        // for either endpoint. And because seedStateFacts is gated by
+        // _seededSubjects, an already-known endpoint returned immediately even
+        // when it was passed one.
+        //
+        // So no edge formed after a being's first tick was ever indexed, and a
+        // continuous `Related` law compiles terminals — which means it never
+        // falls through to the sweep, never receives a candidate, and never
+        // re-checks. Deaf, permanently, with nothing reported anywhere.
+        // FORMATION_RETE.md §1.2(a); guarded by rete_relation_state_test.
+        if (e.type == "relation-formed" && e.subject) {
+            if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
+                if (_relationTypesInPlay.count(relation->type)) {
+                    // Both ends are safe to name HERE, and only here: an edge
+                    // being formed this instant has two live endpoints. The
+                    // back-seed below cannot assume that and does not.
+                    assertRelationStateFact(relation->a(), relation->type);
+                    assertRelationStateFact(relation->b(), relation->type);
+                }
+            }
         }
     });
 
@@ -2251,20 +2290,77 @@ void LawManager::seedStateFacts(Singular* being) {
     // mentions can wake no node — this is a provably-IMPOSSIBLE narrowing, the
     // only kind PROPHETIC_RETE.md §2 permits, and it keeps a graph of hundreds
     // of edges from asserting a fact per edge per being.
+    // BOTH ENDPOINTS, not only the source. This loop used to read
+    // `relation->a() != being`, so the network could traverse a->b and never
+    // b->a — the one structural gap FORMATION_RETE.md §2 names. A law whose
+    // condition looked along an edge from the far side matched nobody, and
+    // said nothing about it.
+    //
+    // Comparing `relation->b()` is a POINTER compare and does not dereference
+    // the far end, which is what keeps the guarantee below intact.
     if (!_relationTypesInPlay.empty()) {
         for (Relation* relation : Universe::instance().relations()) {
-            if (!relation || relation->a() != being) continue;
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
             if (!_relationTypesInPlay.count(relation->type)) continue;
-            auto edgeFact = std::make_shared<ReteFact>();
-            edgeFact->type = "relation-state";
-            edgeFact->subject = being;
-            edgeFact->subjectId = subjectId;
-            edgeFact->attribute = relation->type;
-            edgeFact->isState = true;
-            edgeFact->dirty = false;
-            _rete.assertFact(edgeFact);
+            assertRelationStateFact(being, relation->type);
         }
     }
+}
+
+// Emit edge facts for relation types that have only just entered play.
+//
+// Iterates BEINGS and asks which relations touch each of them, rather than
+// iterating relations and naming their endpoints. That is not a stylistic
+// choice: the being comes from the Universe provider, so it is alive and safe
+// to dereference for its identifier, whereas a relation's endpoint may already
+// have been destroyed — control_patterns_test holds several such edges, left
+// behind by scoped Objects, and naming one would take the whole engine down.
+// The far end is compared by POINTER and never read.
+//
+// Bounded: runs only on the compile that first introduces a type, and the
+// vocabulary only grows, so the whole session pays one pass per distinct
+// relation type. This must stay off the per-tick path — see the To-Do item
+// about moving per-frame seeding to admission.
+void LawManager::backSeedRelationStateFacts(const std::unordered_set<std::string>& types) {
+    if (types.empty()) return;
+    const std::vector<Relation*> relations = Universe::instance().relations();
+    if (relations.empty()) return;
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (Relation* relation : relations) {
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
+            if (!types.count(relation->type)) continue;
+            assertRelationStateFact(being, relation->type);
+        }
+    }
+}
+
+// One edge fact for one endpoint. Shared by the first-tick seed above, the
+// relation-formed handler, and the back-seed in compileConditionsToRete, so
+// the three cannot drift into asserting differently shaped facts — the same
+// reasoning as ReteNetwork's alphaToken/joinedToken helpers.
+//
+// Deliberately NOT gated by _seededSubjects: see the header.
+void LawManager::assertRelationStateFact(Singular* endpoint, const std::string& relationType) {
+    if (!endpoint) return;
+    const std::string subjectId = endpoint->getIdentifier();
+    if (subjectId.empty()) return;
+    // Idempotent. An alpha filters on `attribute` alone, so a second identical
+    // fact wakes exactly the nodes the first already woke and tells them
+    // nothing new — it only makes every future propagation scan longer.
+    // Skipping it is not a narrowing: the fact it would have added is already
+    // live and already in those memories.
+    if (_rete.hasRelationStateFact(endpoint, relationType)) return;
+    auto edgeFact = std::make_shared<ReteFact>();
+    edgeFact->type = "relation-state";
+    edgeFact->subject = endpoint;
+    edgeFact->subjectId = subjectId;
+    edgeFact->attribute = relationType;
+    edgeFact->isState = true;
+    edgeFact->dirty = false;
+    _rete.assertFact(edgeFact);
 }
 
 void LawManager::syncReteCompilation(Law& law) {
@@ -2295,7 +2391,24 @@ void LawManager::compileConditionsToRete(Law& law) {
     // Every relation type this law names joins the seeding vocabulary. Only
     // grows: a type that was in play stays in play for the session, which
     // costs a few facts and can never make a law deaf.
-    if (law.conditionModel()) law.conditionModel()->collectRelationTypes(_relationTypesInPlay);
+    //
+    // But growing the vocabulary is not enough on its own. seedStateFacts only
+    // emits edge facts for types ALREADY in play when it ran, and it runs once
+    // per being — so a law authored after the world was seeded named a type
+    // nobody had ever emitted a fact for, and was deaf to every edge that
+    // already existed. Same defect as the relation-formed handler above, one
+    // step removed: FORMATION_RETE.md §1.2(a) calls this its second shape.
+    //
+    // So: back-seed the types this compile is the FIRST to name.
+    if (law.conditionModel()) {
+        std::unordered_set<std::string> named;
+        law.conditionModel()->collectRelationTypes(named);
+        std::unordered_set<std::string> newlyInPlay;
+        for (const std::string& type : named) {
+            if (_relationTypesInPlay.insert(type).second) newlyInPlay.insert(type);
+        }
+        if (!newlyInPlay.empty()) backSeedRelationStateFacts(newlyInPlay);
+    }
     // Stamped first, and unconditionally: the paths below that give up early
     // (no model, nothing compilable) are still a complete answer for THIS
     // revision, and re-deciding it every tick would be a standing tax.
