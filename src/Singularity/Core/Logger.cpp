@@ -65,6 +65,10 @@ void Logger::ensureCategoryStreams(LogCategory cat) {
 }
 
 Logger::Logger() {
+    for (size_t i = 0; i < static_cast<size_t>(LogCategory::Count); ++i) {
+        _categoryLevels[i].store(-1);
+    }
+
     std::filesystem::create_directories("logs");
 
     // Mirror for backwards compatibility with legacy law audit logs
@@ -106,14 +110,16 @@ void Logger::shutdown() {
 }
 
 void Logger::setCategoryLevel(LogCategory cat, LogLevel level) {
-    std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    _categoryLevels[cat] = level;
+    if (static_cast<size_t>(cat) < static_cast<size_t>(LogCategory::Count)) {
+        _categoryLevels[static_cast<size_t>(cat)].store(static_cast<int>(level));
+    }
 }
 
 LogLevel Logger::categoryLevel(LogCategory cat) const {
-    std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    auto it = _categoryLevels.find(cat);
-    if (it != _categoryLevels.end()) return it->second;
+    if (static_cast<size_t>(cat) < static_cast<size_t>(LogCategory::Count)) {
+        int val = _categoryLevels[static_cast<size_t>(cat)].load();
+        if (val != -1) return static_cast<LogLevel>(val);
+    }
     return _level.load();
 }
 
