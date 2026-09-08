@@ -5,6 +5,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <future>
 
 namespace Core {
 struct EventBusTestFriend {
@@ -109,22 +110,18 @@ void testReentrantPublish() {
 void testAsyncPublish() {
     std::cout << "[Test] Async Publish\n";
 
-    std::atomic<int> receivedValue{0};
+    std::promise<int> promise;
+    auto future = promise.get_future();
 
-    EventBus::instance().subscribe<AsyncEvent>([&receivedValue](const AsyncEvent& e) {
-        receivedValue = e.value;
+    EventBus::instance().subscribe<AsyncEvent>([&promise](const AsyncEvent& e) {
+        promise.set_value(e.value);
     });
 
     EventBus::instance().publishAsync(AsyncEvent{99});
 
-    // Value shouldn't be set immediately if relying solely on the background worker
-    // Wait a brief moment to allow the worker thread to process it
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-    // Or we can manually force tick to process jobs inline if worker is disabled or slow
-    EventBus::instance().tick();
-
-    assert(receivedValue == 99);
+    // Wait deterministically for the background worker thread to process the job
+    assert(future.wait_for(std::chrono::seconds(2)) == std::future_status::ready && "Async publish timed out!");
+    assert(future.get() == 99);
 
     std::cout << "  ✓ Async delivery successful\n";
     EventBusTestFriend::clear();
