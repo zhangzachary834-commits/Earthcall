@@ -36,6 +36,38 @@
             "v": "Basic Pixel Canvas"
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "material.default",
         "objectID": "basic-pixel-canvas",

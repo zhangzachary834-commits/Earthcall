@@ -1,12 +1,12 @@
 # Earthcall — read this before writing code
 
-Earthcall is a Person-centered ontology that orders the engine attached to it. 
+Earthcall is a Person-centered ontology that orders the engine attached to it.
 The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
-**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because 
+**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because
 it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 
-Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas). 
+Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas).
 
 ---
 ## The Seven Refusals.
@@ -38,9 +38,9 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
    `Singularity/TransferPolicy`'s existing Kernel/Governable/Gated tiers — do not build a
    second permission system, one was built here and deleted. → `ontology/NO_BLACK_BOX.md`
 7. **No new methods to define variable behavior**: The order of behavior, representation, and resource allocation
-   depend on Person-authored Laws, represented by data. Methods should be the absolute invariants necessary to represent 
-   all artifacts of human intention. As such, they should only be used if the thing in question is a First Mover, a 
-    whether a developer tool or an irreducible component of the Singularity's Sense-Act substrate. (Zach wrote Refusal 7 by hand, not Opus 5)
+   depend on Person-authored Laws, represented by data. Methods should be the absolute invariants necessary to represent
+   all artifacts of human intention. As such, they should only be used if the thing in question is a First Mover, a
+   whether a developer tool or an irreducible component of the Singularity's Sense-Act substrate. (Zach wrote Refusal 7 by hand, not Opus 5)
 
 The general form of all seven: **no subsystem may define what a thing IS.** Subsystems
 define how the machine senses and acts. What things are is authored by Persons, in-world,
@@ -162,13 +162,13 @@ widening the baseline.
 - **Say what you made.** If you write into a save file, or generate beings directly, tell
   the Person which file and which beings, and who is recorded as their author. This is the
   one rule with no technical enforcement at all.
-- **If you are making a design or technical decision, always choose the frontier, industry optimal approach for the task over the easier-looking, basic one.** Don't spend grueling hours trying to re-invent a solution to a problem that already has a known and optimal solution—not unless you are able to suggest novel and innovative approaches. For example, when we were creating Laws, Claude Fable volunteered the Rete algorithm so we didn't try to create some brute force one from scratch.   
-- **Mention the things human developers told you that you're drawing from.** Don't just write a document, spend some time addressing what the person said that you're responding to. 
+- **If you are making a design or technical decision, always choose the frontier, industry optimal approach for the task over the easier-looking, basic one.** Don't spend grueling hours trying to re-invent a solution to a problem that already has a known and optimal solution—not unless you are able to suggest novel and innovative approaches. For example, when we were creating Laws, Claude Fable volunteered the Rete algorithm so we didn't try to create some brute force one from scratch.
+- **Mention the things human developers told you that you're drawing from.** Don't just write a document, spend some time addressing what the person said that you're responding to.
   This makes authorial intent better and easier to track the progress toward the telos that we the people intend for the design.
   Now, you can still write in a register as if the idea is your own. That is good. It is good to internalize ideas and bring it to their fulfillment. But you must make the ideas origination clear—what parts were from real people, what parts are originated from you, and where you are extending the person's idea.
   Leave room for the possibility that you may have independently re-derived something, in which case it would "originate" with you in a real way but still be within the human thread.
-- **Save files are sacred.** They are the flesh and blood of Earthcall that the ontological skeleton is meant to support—the entire reason for refusal #1 and #3. 
-  They're meant to hold, and will hold, profound human meaning and relationships. Handle this "data"—stored, represented information—with profound, surgical care. You must ensure they are always preserved across architectural shifts, and only ever modified with authorization from their owner/stakeholder Persons. 
+- **Save files are sacred.** They are the flesh and blood of Earthcall that the ontological skeleton is meant to support—the entire reason for refusal #1 and #3.
+  They're meant to hold, and will hold, profound human meaning and relationships. Handle this "data"—stored, represented information—with profound, surgical care. You must ensure they are always preserved across architectural shifts, and only ever modified with authorization from their owner/stakeholder Persons.
 
 ---
 
@@ -181,7 +181,7 @@ Two companions hold what once lived here, created to keep AGENTS.md concise. Bot
 | `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 59 tests mean, the deliberate failure, the tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
 | `docs/ENGINEERING_DISCIPLINE.md` | End-to-End Coherence, the Integrity Check, Substance over Surface, Stewardship of Telos, Transparent Failure, State & Boundary Stewardship, Grace for the Inheritor, the Crucible of Scale — plus the working notes (scratch probes, "run things", bounds are doctrine) |
 
-Two from ENGINEERING_DISCIPLINE worth naming and often skipped: **don't claim a doc is verified because 
+Two from ENGINEERING_DISCIPLINE worth naming and often skipped: **don't claim a doc is verified because
 you read the source—run things**, and **after finishing, ask whether anything you changed has a caller, consumer, or test that now lies.**
 
 ---
@@ -193,13 +193,14 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - **If your work leaves anything only a Person can confirm — a control to click, a thing to look at, a feel to judge — write the check into `docs/Agenda/Tasks/Person Verification List.md` before you finish.** Not the To-Do list, not an audit. This applies to every session, not just ones asked "what's next", and it is the rule agents miss most: that file has one commit in its life and Zach wrote it. A green suite is not a witness. — Zach's instruction, hoisted here 2026-09-02 because line 6 of the To-Do list was never being read.
 
 ## Document Conventions
-- Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`. 
+- Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`.
 - Always sign your name, session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
-- Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.  
+- Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.
 
 ## Housekeeping & progress
-- When finished, update this document and companions so nothing goes stale. 
+- When finished, update this document and companions so nothing goes stale.
 - Make sure AGENTS.md is concise and **under 200 lines.** If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
 - At the end of each pass, if there are any visible changes Persons (like me, Zach) should see as a result of your work, you should note them and explain what exaxtly we should see under what conditions. Note any unfinished tasks for future passes
+
