@@ -88,7 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Socket.IO & Real-Time Sync ---
 function initSocketIO() {
     App.socket = io({ transports: ['websocket', 'polling'] });
+    registerSocketHandlers();
+    startRTTPingLoop();
+}
 
+function registerSocketHandlers() {
     App.socket.on('connect', () => {
         setConnectionStatus(true);
         showToast("Connected to Earthcall Backend", "success");
@@ -114,8 +118,9 @@ function initSocketIO() {
         addEventToLog(eventData);
         recordTelemetryEvent();
     });
+}
 
-    // Lightweight RTT Ping loop
+function startRTTPingLoop() {
     setInterval(() => {
         if (App.connected && App.socket) {
             const start = performance.now();

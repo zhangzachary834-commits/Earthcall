@@ -17,6 +17,7 @@ A **framework name is not a directory name.** `Integration/` stays
 | [`ourverse/`](ourverse/) | Ourverse the being; second-person frameworks |
 | [`migration/`](migration/) | In-flight plans: game-elimination, keyboard, security, semantic network, leftover UI todo |
 | [`Integration/`](Integration/) | Foreign-app integration (docs twin of `src/Singularity/Foreign/`) |
+| [`interrelations/`](interrelations/) | Cross-checks between architectural systems (e.g. Rete + Semantics, UI + Multiplayer, Substrate + IR) |
 
 Bare filenames in older notes (`NEW_KIND_FRAMEWORK.md`) mean the file in the
 folder above. Prefer the folder-qualified path from now on.
