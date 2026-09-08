@@ -154,3 +154,9 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 - [ ] **Synthesis Studio — laws that watch relations formed during play.** Open the Studio in `earthcall_webgpu` (`Run Earthcall.command`). Any behaviour that depends on a relation being formed *while you play* — the slider, note-reactive lights, ink reaching a newly drawn stroke — should now respond on the tick the relation forms, where before it would have stayed dead for the rest of the session. Confirm nothing that already worked has started firing *too* eagerly.
 - [ ] **Chess and Go — no over-firing.** Both are relation-heavy. Play a few moves in each and confirm pieces behave as before: rung 0 makes laws hear *more*, so the risk to look for is a law that now fires when it should not, not one that stays quiet.
 - [ ] **A relation you form and then break.** Form a relation in-world, watch the dependent law take hold, then dissolve it and confirm the law stops. Nothing retracts the stale fact by design (it is safe — the law re-checks the live graph), so this is the check that the safety actually holds in the running app rather than only in the test.
+
+## Robust Native File I/O & File Types (FileChannel)
+
+*Landed 2026-09-08, Gemini Spark. Hardened `@file-channel` with atomic write swaps, append mode, DoS bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](../Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)*
+
+- [ ] **Author Law interacting with `@file-channel`.** Open the Law Authoring / Creator Console. Point `@file-channel.path` at a file (e.g. `saves/test.json` or an image/sound) and verify that `@file-channel.mimeType`, `@file-channel.fileType`, `@file-channel.size`, and `@file-channel.jsonValid` reflect the file's properties accurately.

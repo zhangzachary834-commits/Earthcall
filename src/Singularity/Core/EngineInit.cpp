@@ -29,6 +29,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Storage/FileChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -105,6 +106,9 @@ void Engine::initLogic() {
 
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
+
+    // Register first-mover FileChannel (native computer filesystem sense and act)
+    Singularity::Storage::FileChannel::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

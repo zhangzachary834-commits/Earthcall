@@ -125,6 +125,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - Make the physics laws inside the first mover fixtures either actually work, or remove redundant functionality and wire them up to the originals instead.
 
 ### Modalities · integration · substrate
+- ✅ **Robust Native File I/O & Wide File Type Classification (2026-09-08)** — done and verified (2026-09-08): Hardened FileChannel with atomic write swaps, append mode, DoS max file size bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)
 - Implement Voice, Sound, and Audio primitives.
 - Finish migrating to WebGPU.
 - Human Language-Symbolic processing `Formation`s.
