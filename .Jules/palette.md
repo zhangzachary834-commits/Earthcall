@@ -7,3 +7,6 @@
 ## 2024-11-21 - [Focus dropping on disabled buttons]
 **Learning:** If a user clicks or presses a button that modifies state in a way that causes the button to become disabled (such as submitting an utterance that clears the input), focus is dropped to the document `<body>`. This completely disrupts the keyboard navigation flow.
 **Action:** When disabling the currently focused element due to a state change, explicitly shift focus to the next logical element (e.g., the input field) using `.focus()`.
+## 2024-03-24 - Overlay Dismissal Focus Drop
+**Learning:** When dismissing full-screen overlays (like `#start-overlay` in `web_ui/wasm.html`), if the focused element is hidden (e.g., `display: none`), keyboard focus silently drops back to the document `<body>`. This breaks keyboard navigation flow for screen readers and power users.
+**Action:** Always add `tabindex="-1"` to the primary application container or canvas that replaces the overlay, and explicitly call `.focus()` on it immediately after hiding the overlay to preserve logical navigation state.
