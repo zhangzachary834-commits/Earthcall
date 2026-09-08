@@ -34,12 +34,20 @@ EventBus& EventBus::instance() {
 void EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    auto& vec = _listeners[type];
-    vec.emplace_back(ListenerEntry{priority, listener});
+    auto& ptr = _listeners[type];
+
+    std::vector<ListenerEntry> new_vec;
+    if (ptr) {
+        new_vec = *ptr;
+    }
+
+    new_vec.emplace_back(ListenerEntry{priority, listener});
     // Keep highest priority first for deterministic ordering.
-    std::sort(vec.begin(), vec.end(), [](const ListenerEntry& a, const ListenerEntry& b){
+    std::sort(new_vec.begin(), new_vec.end(), [](const ListenerEntry& a, const ListenerEntry& b){
         return a.priority > b.priority;
     });
+
+    ptr = std::make_shared<const std::vector<ListenerEntry>>(std::move(new_vec));
 }
 
 void EventBus::shutdown()
