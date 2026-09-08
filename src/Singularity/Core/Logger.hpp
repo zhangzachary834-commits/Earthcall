@@ -16,15 +16,17 @@
 namespace ECA {
 
 enum class LogCategory {
-    Laws,
-    System,
-    Person,
-    State,
-    Language,
-    Audio
+    Laws = 0,
+    System = 1,
+    Person = 2,
+    State = 3,
+    Language = 4,
+    Audio = 5
 };
+constexpr size_t kNumLogCategories = 6;
 
 enum class LogLevel {
+    Unset = -1,
     Off = 0,
     Summary = 1,
     Verbose = 2
@@ -83,15 +85,15 @@ private:
         std::size_t linesWritten = 0;
         std::size_t linesSinceFlush = 0;
         bool budgetNoticeWritten = false;
+        bool initialized = false;
     };
 
     std::string _activeWorld = "Unknown";
     std::atomic<LogLevel> _level{LogLevel::Summary};
 
-    mutable std::mutex _categoryLevelMutex;
-    std::unordered_map<LogCategory, LogLevel> _categoryLevels;
+    std::atomic<LogLevel> _categoryLevels[kNumLogCategories];
 
-    std::unordered_map<LogCategory, CategoryStreams> _streams;
+    CategoryStreams _streams[kNumLogCategories];
     std::ofstream _legacyLawLogFile;    // Mirror for logs/law_audit.log compatibility
     std::ofstream _legacyLawJsonlFile;  // Mirror for logs/law_audit.jsonl compatibility
 
