@@ -42,6 +42,12 @@ void EventBus::subscribe(const std::type_index& type, const Listener& listener, 
     });
 }
 
+void EventBus::clear()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _listeners.clear();
+}
+
 void EventBus::shutdown()
 {
     if (!_running) return;

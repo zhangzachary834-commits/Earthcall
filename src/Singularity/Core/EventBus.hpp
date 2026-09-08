@@ -149,6 +149,9 @@ public:
     void shutdown(); // gracefully stop worker thread
 
 private:
+    friend struct EventBusTestFriend;
+    void clear();    // remove all listeners (for testing only)
+
     // Listener registry keyed by event type ---------------------------------
     std::unordered_map<std::type_index, std::vector<ListenerEntry>> _listeners;
     std::mutex   _mutex;
