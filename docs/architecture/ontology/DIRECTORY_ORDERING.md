@@ -115,23 +115,9 @@ Earthcall/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
-  CMakeLists.txt  .gitmodules  Makefile.legacy                      the toolchain
+  CMakeLists.txt  .gitmodules                                       the toolchain
   build/  logs/                                                     output (ignored)
-  TestLab/  TestLabAI/                                               strays (§6)
 ```
-
-`migrate_saves.cpp`, formerly listed here as a root-level stray, was moved to
-`scratch/scripts/migrate/migrate_saves.cpp` on 2026-08-13 — it built no CMake target, so it was a
-one-off tool rather than live source, matching the same "move, never discard" precedent
-as `scratch/attic/` below. On 2026-08-14 the scratch root was subdivided (`probes/`,
-`legacy/`, `scripts/`, `fixtures/`, `audits/`, `experiments/`); see `scratch/README.md`.
-
-`scratch/attic/` holds what used to sit loose at `sight-cpp/`'s root — one-off
-probes (`test_parse.cpp`, `test_variant.cpp`), fixtures (`save.json`), logs, and
-five stale compiled binaries that were tracked (`dump_save`, `pack_save`,
-`earthcall_webgpu`, `test_parse`, `test_parse2`). They were moved rather than
-deleted: a refactor may relocate, never discard. Untracking the binaries is a
-separate decision for a separate commit.
 
 ---\
 
@@ -213,9 +199,9 @@ regrouping has thinned it.
 |---|---|---|
 | `third_party/`, `local_deps/`, `imgui/` | vendored foreign source | permanent. Foreign code is foreign; pretending otherwise would be the mirror error of the one this document fixes. |
 | `build/`, `logs/` | machine-specific output | permanent, and git-ignored. |
+| `TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 | `docs/`, `tests/`, `examples/`, `scripts/`, `scratch/`, `saves/`, `web_ui/` | the workshop — things *about* the world rather than *in* it | permanent. `SUBSTRATE_ORDERING.md` contemplates a future where the world reads its own tests and docs as beings; until it does, they are workshop. |
 | `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
-| `../../../TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 
 ---\
 
