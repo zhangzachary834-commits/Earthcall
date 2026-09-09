@@ -33,6 +33,7 @@
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -121,6 +122,9 @@ void Engine::initLogic() {
 
     // Register first-mover StreamChannel (FIFO named pipes, process streams, real-time pipes)
     Singularity::Storage::StreamChannel::syncRegister(*_lawManager);
+
+    // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
+    Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

@@ -180,3 +180,12 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 *Landed 2026-09-08, Gemini Spark. Built `@vfs` resolving `save://`, `zone://`, `home://`, `recording://`, custom prefix mounts, and `memory://` zero-disk ephemeral RAM files, transparently integrated into `FileChannel`. → [full task](../Specific%20Tasks/Virtual_File_System_VFS/Virtual_File_System_VFS.md)*
 
 - [ ] **Test Universal URI Resolution & In-RAM Files.** In Creator Console, point `@file-channel.path := "memory://test_scratch"` or `"save://worlds/my_world.json"` and execute read/write; verify `memory://` files never touch disk while `save://` resolves portably across platforms.
+
+## File Watcher & Live Hot-Reloading (@file-watcher)
+
+*Landed 2026-09-08, Gemini Spark. Built `@file-watcher` Sense-Act first mover with configurable directory scanning, extension filters, and ECA edge events (`file-modified`, `file-created`, `file-deleted`) for real-time asset, shader, and rule hot-reloading. → [full task](../Specific%20Tasks/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md)*
+
+- [ ] **Live File Hot-Reloading.** In the Creator Console, inspect `@file-watcher`:
+  - Set `@file-watcher.watchPath := "saves"` (or a specific directory/file).
+  - Open a file in that directory in an external editor (VS Code, TextEdit) and modify or save it.
+  - Observe that `@file-watcher.lastEventType` immediately updates to `"file-modified"` and publishes `ECA::Event("file-modified")` without requiring an app reload or manual polling.

@@ -11,6 +11,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
 #include <chrono>
@@ -182,6 +183,9 @@ namespace Core {
                 if (recorder->isRecording()) {
                     recorder->stepFrame(fbW, fbH);
                 }
+            }
+            if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
+                watcher->tick();
             }
         }
     }
