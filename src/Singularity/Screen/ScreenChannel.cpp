@@ -1,4 +1,5 @@
 #include "ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -99,6 +100,27 @@ void ScreenChannel::buildProperties() {
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
+
+    const auto readOnlyBool = [this](const char* name, bool (ScreenChannel::*getter)() const) {
+        registerProperty(
+            std::make_unique<ComputedProperty<ScreenChannel, bool>>(name, this, getter));
+    };
+    boolean("recording", &ScreenChannel::recording);
+    boolean("screen.recording", &ScreenChannel::recording);
+    boolean("snapshot", &ScreenChannel::snapshotTrigger);
+    boolean("screen.snapshot", &ScreenChannel::snapshotTrigger);
+    readOnlyBool("hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
+    readOnlyBool("screen.hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
+    readOnlyBool("hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
+    readOnlyBool("screen.hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
+}
+
+bool ScreenChannel::getHasScreenCapturePermission() const {
+    return ScreenRecorder::hasScreenCapturePermission();
+}
+
+bool ScreenChannel::getHasAccessibilityPermission() const {
+    return ScreenRecorder::hasAccessibilityPermission();
 }
 
 } // namespace Screen

@@ -126,6 +126,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 ### Modalities · integration · substrate
 - ✅ **Robust Native File I/O & Wide File Type Classification (2026-09-08)** — done and verified (2026-09-08): Hardened FileChannel with atomic write swaps, append mode, DoS max file size bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)
+- ✅ **Screen Recorder in the Singularity with macOS Permissions & Accessibility Handling (2026-09-08)** — done and verified (2026-09-08): Implemented ScreenRecorder under Singularity/Screen with multi-mode capture (in-engine viewport, host display, window), PPM/PNG/raw stream formats, CGPreflightScreenCaptureAccess TCC and AXIsProcessTrusted accessibility handling with automatic fallback to viewport. → [full task](Specific%20Tasks/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)
 - Implement Voice, Sound, and Audio primitives.
 - Finish migrating to WebGPU.
 - Human Language-Symbolic processing `Formation`s.

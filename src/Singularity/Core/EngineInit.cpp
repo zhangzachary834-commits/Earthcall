@@ -29,6 +29,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
@@ -109,6 +110,9 @@ void Engine::initLogic() {
 
     // Register first-mover FileChannel (native computer filesystem sense and act)
     Singularity::Storage::FileChannel::syncRegister(*_lawManager);
+
+    // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
+    Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

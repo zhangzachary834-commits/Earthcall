@@ -10,6 +10,7 @@
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
 #include <chrono>
@@ -176,6 +177,11 @@ namespace Core {
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
                                   static_cast<int>(stats.cachedMeshesCount));
+            }
+            if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                if (recorder->isRecording()) {
+                    recorder->stepFrame(fbW, fbH);
+                }
             }
         }
     }
