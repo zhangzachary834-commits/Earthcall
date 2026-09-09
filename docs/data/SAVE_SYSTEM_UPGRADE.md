@@ -9,14 +9,14 @@ The save system has been completely reorganized to provide structured storage, e
 ```
 saves/
 ├── worlds/         # Session snapshots (camera, laws, zoneRefs)
-├── zones/          # Zone identity — one directory per Zone
-├── homes/          # Home identity — dwelling memory (saves/homes/<id>/home.json)
 ├── avatars/        # Avatar saves
 ├── persons/        # Registered Person / user profiles
 ├── designs/        # Design system saves
 ├── backups/        # Automatic backups (including before-load.json)
 ├── custom/         # Custom saves
 ├── integrations/   # Integration and external adapter saves
+├── zones/          # Zone identity — one directory per Zone
+├── homes/          # Home identity — dwelling memory (saves/homes/<id>/home.json)
 └── logs/           # Save logs and metadata
 ```
 
@@ -25,14 +25,14 @@ saves/
 Defined in `SaveSystem::SaveType`:
 
 - **`WORLD`**: Session snapshots (camera, laws, working-set refs). Not the Zone identity.
-- **`ZONE`**: Per-Zone identity directory under `saves/zones/<id>/`
-- **`HOME`**: Per-Home identity directory under `saves/homes/<id>/` — dwelling memory, including the Material beings (FaceTextures) the Home's objects name. Not a Zone file.
 - **`AVATAR`**: Avatar saves (character data, body parts, mesh customizations)
 - **`PERSON`**: Registered Person profiles and identity ledgers
 - **`DESIGN`**: Design system saves (layers, tool states)
 - **`BACKUP`**: Automatic timestamped backups
 - **`CUSTOM`**: Custom saves for specific purposes
 - **`INTEGRATION`**: External application and bridge state saves
+- **`ZONE`**: Per-Zone identity directory under `saves/zones/<id>/`
+- **`HOME`**: Per-Home identity directory under `saves/homes/<id>/` — dwelling memory, including the Material beings (FaceTextures) the Home's objects name. Not a Zone file.
 
 ## Key Features
 
