@@ -361,6 +361,17 @@ bool Zone::removeObject(Object* obj) {
                            [obj](const std::shared_ptr<Object>& p) { return p.get() == obj; });
     if (it == _objects.end()) return false;
 
+    // The world's SHAPE just changed, so anything derived from "who exists and
+    // what do they carry" is now stale. addObject has always said so; this did
+    // not, and the omission was invisible only because nothing read the counter
+    // — it had no consumers at all until the vocabulary index
+    // (FORMATION_RETE.md §8 rung 2). Without this a being removed outside the
+    // unmaking path stays in the index, and the index holds RAW pointers, so
+    // the next sweep reads freed memory rather than merely a stale answer.
+    // reapUnmadeBeings bumps too; both paths must, because either can be the
+    // one that runs.
+    Universe::instance().bumpStructuralRevision();
+
     Core::EventBus::instance().publish(
         ECA::Event{"object-destroyed", obj, nullptr, std::time(nullptr)});
 

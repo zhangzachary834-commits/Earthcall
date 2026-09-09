@@ -251,17 +251,30 @@ void Law::rebuildRequiredProperties() {
     }
 }
 
+// Does this being carry a property by this name, at all?
+//
+// Named once because TWO things now ask it: couldApplyTo below, and the
+// vocabulary index the sweep is narrowed by (LawManager::refreshVocabularyIndex,
+// FORMATION_RETE.md §8 rung 2). If the index tested membership even slightly
+// differently — only the dynamic map, say — it would omit beings the filter
+// would have kept, and an omitted candidate is a law that goes deaf with
+// nothing reported. Widen where uncertain, never narrow: PROPHETIC_RETE.md §2.
+//
+// Same reasoning as ReteNetwork::alphaFeedsAnyBeta, which its header calls
+// "named once so backfill and propagation cannot drift apart."
+bool beingCarriesProperty(const Singular& being, const std::string& name) {
+    if (const_cast<Singular&>(being).findProperty(name)) return true;
+    // Authored properties are as real as first-mover ones: a law that reads a
+    // granted `warmth` must still reach the beings a previous law granted it to.
+    PropertyValue ignored;
+    return const_cast<Singular&>(being).getDynamicProperty(name, ignored);
+}
+
 bool Law::couldApplyTo(Singular& being) const {
     // No stated requirements = no filter. A law of pure kind-tests or pure
     // quantification really is about every being, and must keep sweeping.
     for (const std::string& name : _requiredProperties) {
-        if (being.findProperty(name)) continue;
-        // Authored properties are as real as first-mover ones: a law that
-        // reads a granted `warmth` must still reach the beings a previous
-        // law granted it to.
-        PropertyValue ignored;
-        if (being.getDynamicProperty(name, ignored)) continue;
-        return false;
+        if (!beingCarriesProperty(being, name)) return false;
     }
     return true;
 }
@@ -986,15 +999,18 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
                       _dirtyFacts.end());
 }
 
-void ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+bool ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+    bool found = false;
     for (const auto& fact : _facts) {
         if (fact->isState && fact->subjectId == subjectId && fact->attribute == attribute) {
+            found = true;
             if (!fact->dirty) {
                 fact->dirty = true;
                 _dirtyFacts.push_back(fact);
             }
         }
     }
+    return found;
 }
 
 void ReteNetwork::evaluateDirty() {
@@ -1532,7 +1548,33 @@ void LawManager::connectToEventBus() {
         // in the engine. It answers "no" only where the abstract
         // interpretation PROVED no; see LawManager::propheticHears.
         if (!propheticHears(name)) return;
-        _rete.markFactDirty(owner->getIdentifier(), name);
+        if (!_rete.markFactDirty(owner->getIdentifier(), name)) {
+            // No fact existed for this (being, property). Not "unchanged" —
+            // UNKNOWN. seedStateFacts runs once per being, ever, so a property
+            // granted after that being was first seen had nothing to dirty and
+            // would never acquire a fact: the reactive path could not see it,
+            // and a WhileTrue law reading it never reached that being again.
+            // Deaf, permanently, with nothing reported — the failure
+            // PROPHETIC_RETE.md §2 forbids, and the same shape as the relation
+            // deafness of §1.2(a). Found by vocabulary_index_test §B.
+            //
+            // Only for beings the network has already met: one it has not is
+            // the first-tick seed's job, and asserting here would race it.
+            const std::string subjectId = owner->getIdentifier();
+            if (_seededSubjects.count(subjectId)) {
+                if (Property* prop = owner->findProperty(name)) {
+                    auto stateFact = std::make_shared<ReteFact>();
+                    stateFact->type = "property-state";
+                    stateFact->subject = owner;
+                    stateFact->subjectId = subjectId;
+                    stateFact->attribute = prop->name();
+                    stateFact->value = propertyValueToJson(prop->value());
+                    stateFact->isState = true;
+                    stateFact->dirty = false;
+                    _rete.assertFact(stateFact);
+                }
+            }
+        }
         _dirty = true;
     });
 
@@ -1719,6 +1761,17 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             seedStateFacts(being);
         }
     }
+
+    // Once per tick, for every law — not once per law. This is the whole point
+    // of the index: the world is walked a single time here, and each sweeping
+    // law below then reads a candidate list instead of rebuilding
+    // Universe::beings() for itself. In a frame where nothing was made,
+    // unmade, or granted a property, it returns on an integer compare.
+    //
+    // It must run BEFORE the continuous pass, and after seeding: a being
+    // admitted this tick has to be in the index the same tick, or the law that
+    // wants it waits a frame — a widening, but a needless one.
+    refreshVocabularyIndex();
 
     auto T2 = glfwGetTime();
 
@@ -1984,6 +2037,43 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
     maybeStartDriveSession(law, subject);
 }
 
+// Rebuild the vocabulary index, but only when the world's shape has moved.
+//
+// One pass over the beings for ALL laws, replacing one pass PER LAW. In a
+// steady frame — nothing made, unmade, or granted a property — this is a single
+// integer compare and returns immediately.
+//
+// The index is keyed on the property names some law requires. That set only
+// grows within a session and is cheap to check, so a law authored later cannot
+// find a name missing from the index: a new name forces a rebuild too, exactly
+// as a structural change does. Missing a name would omit candidates, and an
+// omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
+// conservative in the safe direction and rebuilds when unsure.
+void LawManager::refreshVocabularyIndex() const {
+    std::unordered_set<std::string> wanted;
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        for (const std::string& name : law->requiredProperties()) wanted.insert(name);
+    }
+
+    const uint64_t revision = Universe::instance().structuralRevision();
+    if (revision == _vocabularyBuiltAt && wanted == _indexedNames) return;
+
+    _vocabularyIndex.clear();
+    _indexedNames = std::move(wanted);
+    _vocabularyBuiltAt = revision;
+    if (_indexedNames.empty()) return;
+
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (const std::string& name : _indexedNames) {
+            if (beingCarriesProperty(*being, name)) {
+                _vocabularyIndex[name].push_back(being);
+            }
+        }
+    }
+}
+
 // Who a law sweeps when it has no targets Formation: not everyone, but
 // everyone who CARRIES ITS VOCABULARY (see Law::requiredProperties).
 std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
@@ -2000,14 +2090,39 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    std::vector<Singular*> beings = Universe::instance().beings();
-    if (law.requiredProperties().empty()) return beings;   // truly about everyone
-    beings.erase(std::remove_if(beings.begin(), beings.end(),
-                                [&law](Singular* being) {
-                                    return !being || !law.couldApplyTo(*being);
-                                }),
-                 beings.end());
-    return beings;
+    const auto& required = law.requiredProperties();
+    if (required.empty()) return Universe::instance().beings();  // truly about everyone
+
+    // Self-guarding: an integer compare when tick() already refreshed, a full
+    // rebuild when this was reached some other way. Never a stale read.
+    refreshVocabularyIndex();
+
+    // Seed from the RAREST required name and filter that, instead of walking
+    // the world. Every required name must hold, so the smallest of their member
+    // lists is already a superset of the answer — and picking the smallest is
+    // the cheap, metric-free stand-in for §5's cost model, where fan-out is
+    // what an edge weight is supposed to measure. When §5 lands with a real
+    // value-per-cost ranking, this is the call site that grows it.
+    //
+    // A name absent from the index means NOBODY carries it, so the law has no
+    // subjects — the fast path for a law nothing can satisfy. That is a sound
+    // narrowing (provably IMPOSSIBLE, the only kind §3.0 permits), not a guess:
+    // the index was built with the same predicate couldApplyTo uses.
+    const std::vector<Singular*>* seed = nullptr;
+    for (const std::string& name : required) {
+        auto it = _vocabularyIndex.find(name);
+        if (it == _vocabularyIndex.end()) return {};
+        if (!seed || it->second.size() < seed->size()) seed = &it->second;
+    }
+    if (!seed) return Universe::instance().beings();   // index not built yet
+
+    std::vector<Singular*> chosen;
+    chosen.reserve(seed->size());
+    for (Singular* being : *seed) {
+        // couldApplyTo still decides. The index only proposes.
+        if (being && law.couldApplyTo(*being)) chosen.push_back(being);
+    }
+    return chosen;
 }
 
 // ---------------------------------------------------------------------------

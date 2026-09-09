@@ -1,9 +1,9 @@
 # Zone identity store: field-level merge, not whole-object replacement
 
-**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A complete (1, 2, 3), Stage B/C/D and Invariant 6 open
-**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1.
-**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
-**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
+**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A+B complete (1, 2, 3, 4), Stage C/D and Invariant 6 open
+**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1, then again with Invariant 4.
+**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer; `commitMatterGeneration`/`readVerifiedMatterGeneration`/`atomicWriteFile`/`sha256Hex` — atomic generation coupling; `saveState`/`saveStateWithLog`/`loadState`'s physical-matter stage/`loadTestObservation` rewired to use it), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
+**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/zones/matter_generation_commit_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
 
 ---
 
@@ -328,11 +328,87 @@ Housekeeping entries in the To-Do list for the two false leads that cost real
 time chasing: a `git stash`/pop leaving a stale object file, and an unrelated
 pre-existing `synthesis_studio_living_test` failure).
 
-**Explicitly deferred, per Sol's own staged sequencing — not attempted this
-pass:**
-- **Invariant 4** (atomic generation commit: paired `snapshot_id`, matter
-  hash/length/schema version in the semantic root, write-then-atomic-rename, keep
-  the prior generation until commit).
+## Invariant 4: atomic generation commit (2026-09-09)
+
+Sol's third invariant: "generations are atomic." `saveState` and `saveStateWithLog`
+previously wrote `.ecform` and `.ecmatter` as two independent, non-atomic writes —
+worse, in the WRONG order (`.ecform` first, naming a matter file that did not exist
+yet on disk). A crash between the two, or a partial write of either, left a root
+that named matter that was truncated, stale, or simply absent, with no way for a
+loader to tell the difference from a legitimate empty/no-matter world.
+
+**Fixed:** `.ecform` and `.ecmatter` now share an opaque, **content-addressed**
+`snapshotId` (the first 16 hex characters of the matter buffer's own SHA-256).
+Content-addressing was the frontier choice here, not a from-scratch design — it is
+the same idea git, IPFS, and Nix store paths already lean on, and it makes several
+of Sol's requirements fall out for free: the matter file is written+flushed under a
+name nothing else on disk can already claim, so a half-written attempt can never
+collide with a real generation; saving unchanged matter twice reuses the same file
+instead of rewriting it; and there is no counter or clock to keep synchronized
+across processes. Landing order, exactly as Sol specified:
+
+1. `commitMatterGeneration` writes the matter bytes to `<stem>.<snapshotId>.ecmatter`
+   via write-temp-then-atomic-rename (`atomicWriteFile`), so a crash mid-write of
+   the matter file itself never leaves a truncated file under a name a root could
+   ever reference — flushed and closed before anything else happens.
+2. The semantic root's JSON gains a `matterGeneration` object: `snapshotId`,
+   `sha256`, `byteLength`, and a `schemaVersion` (currently `1`, incremented only if
+   the matter payload's meaning changes in a way an old reader could misinterpret —
+   the FlatBuffers schema itself stays append-only per AGENTS.md and does not need
+   its own version bump for that).
+3. The root itself commits via `atomicWriteFile` — write-temp-then-rename — so the
+   root's own commit is likewise never observable half-written.
+4. Only *after* the root's rename has succeeded does `commitMatterGeneration` look
+   at what the *previous* on-disk root named and delete that generation's matter
+   file, if it differs from the new one. A failed step 1 or 3 leaves the previous
+   generation's file and the previous root both fully intact and still loadable —
+   "keep the prior generation until the new pointer commits, clean only
+   afterward," Sol's words exactly.
+
+On load (`loadState`'s `physical-matter` stage, and `loadTestObservation`'s matter
+step), `readVerifiedMatterGeneration` is consulted first: if the root names a
+`matterGeneration`, the generation file it names must exist, and its byte length
+and SHA-256 must match what the root recorded, and its `schemaVersion` must not be
+newer than this build understands — any failure refuses loudly (`std::cerr` plus
+`_saveLoad.lastLoadReport`) and hydrates **no** physical matter for that load,
+rather than falling through to the legacy splitter and silently re-migrating over
+top of a corruption that should have been surfaced. A root with **no**
+`matterGeneration` key at all — every save ever written before this change — is
+untouched: it falls through to the exact `SaveSystem::readMatterData(filename)`
+call this code path always made, so no existing save requires any migration to
+stay readable.
+
+**Deliberately scoped to `saveState` and `saveStateWithLog`** — the two paths a
+Person's own Save/Quick Save/Save As actually run. The legacy JSON splitter
+(`loadState`'s one-time migration of a pre-split World) still writes its matter via
+the old fixed-name `SaveSystem::writeMatterData` and was left alone: it already
+writes matter before form (Sol's ordering requirement was already true there by
+accident), it is a rare one-shot event rather than an ongoing write path, and
+Sol's own landing note was "A-C should be reviewable independently" — extending
+generation-coupling to that one remaining fixed-name writer is a small, separable
+follow-up, not required to close the gap the real bug traced to.
+
+**Test:** `tests/zones/matter_generation_commit_test.cpp` — drives the real
+`ZoneManager::saveState`/`loadState` against a sandboxed save root (no repo save
+file touched). Proves: a fresh save names a generation whose file matches its
+recorded hash/length; a full round-trip through a second `ZoneManager` hydrates the
+saved transform; changing the matter content mints a new generation and removes
+the superseded file only after the new root commits; saving unchanged content
+reuses the same content-addressed generation (no duplicate file, nothing deleted);
+a hand-tampered root naming a hash-mismatched generation refuses to hydrate with no
+crash, does **not** fall through to rebuilding a fresh legacy `.ecmatter`, and —
+Sol's specified case — the real, untampered generation file is left completely
+intact and still verifiable by its correct hash; and a root naming a generation
+whose file was deleted out from under it refuses the same way. 18/18 checks green.
+
+Fixing this surfaced two existing tests (`substrate_split_test`,
+`save_roundtrip_test`) that asserted a literal `"<stem>.ecmatter"` path existed
+after a save — true under the old fixed-name writer, no longer true by design.
+Both were updated to resolve the generation-named file via the `.ecform`'s own
+`matterGeneration.snapshotId` instead of asserting a name never actually promised
+in the schema; both pass in full afterward (30/30 and 28/28).
+
+**Not this pass, per Sol's own sequencing:**
 - **Invariant 5** (registered-property persistence audit: CI catches both a
   registered path with zero persistence homes — the original missing-`faceColors`
   bug — and one with multiple competing homes — the `.ecform`/identity/`.ecmatter`
@@ -349,9 +425,22 @@ Also found and reverted while verifying, not fixed (logged in the To-Do list):
 chess tests had — `saves/zones/visible_cube/zone.json` picked up 34 lines of
 drift running the full suite. Needs the same `RealSaveTreeGuard` treatment.
 
+Also found while verifying Invariant 4, unrelated to it (logged in the To-Do
+list): `zone_boot_hydration_relations_test` and `chess_extended_rules_test` both
+fail against the current committed `saves/worlds/chess_app.json` — the former
+expects exactly 35 `instance-of` relations and gets 118, the latter asserts a
+specific pawn-promotion outcome that no longer holds. Confirmed unrelated to this
+task: `git log -- saves/worlds/chess_app.json` shows the file's last change
+predates this session entirely, `git diff` shows this session made no change to
+it, and neither test's failing assertion touches physical-matter data at all
+(relation counts, promoted-piece role) — the real save file has simply grown
+(more zones, 1,576 objects vs. whatever these tests were last calibrated
+against) through legitimate concurrent work landing elsewhere. Both tests' fixed
+expectations are stale, not the save file wrong.
+
 ---
 
-**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1 pass — different session, same model, per the intercom's own rule that these are different agents)
-**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09
+**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1 and Invariant 4 passes — different session, same model, per the intercom's own rule that these are different agents)
+**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09 (twice)
 
 **Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 1, 2, and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence." Also thanks to Claude Opus 5 (session `01F9nK3F`), concurrently restructuring the Law/Rete engine in the same checkout, for proactively confirming on the intercom that their work touches none of `Singularity/Storage`, ruling that out as the source of several test failures that turned out to be resource contention between two agent sessions building on the same machine.

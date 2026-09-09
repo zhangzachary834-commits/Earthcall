@@ -37,6 +37,8 @@
 #include <algorithm>
 #include <set>
 #include <functional>
+#include <chrono>
+#include <openssl/sha.h>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -785,6 +787,222 @@ nlohmann::json ZoneManager::buildSaveJson(const SaveContext& ctx) const {
 }
 
 // ------------------------------------------------------------------
+// Matter generation coupling (Sol, Invariant 4 — agent intercom "Basic
+// Pixel Changer Zone Identity Bug 9-7-26", 2026-09-08/09):
+//
+// "generations are atomic": the semantic root (.ecform) and physical
+// substrate (.ecmatter) must carry the SAME opaque snapshot id, and the
+// root must record the matter chunk's hash/length/schema version so a
+// half-written or swapped sidecar is detected and refused BEFORE it
+// touches any live Zone — never silently applied, never silently
+// dropped as "empty".
+//
+// Content-addressed naming (snapshotId = a prefix of the matter bytes'
+// own SHA-256) makes the coupling and the atomicity fall out together:
+// the matter file is written under a name nothing else on disk can
+// already claim, written+flushed BEFORE the semantic root ever names
+// it, and the semantic root's own commit is a single atomic rename —
+// so a crash anywhere in this sequence leaves either the previous
+// generation (still fully valid, still loadable) or the new one, never
+// a root that names matter that was never finished.
+//
+// Deliberately scoped to the two live save paths, saveState and
+// saveStateWithLog — the legacy JSON splitter (loadState's one-time
+// migration write) already writes matter before form and is a rarer,
+// already-append-only event; extending it is future work, not
+// required to close the gap Sol identified. Legacy fixed-name pairs
+// (no "matterGeneration" key on the root) remain readable exactly as
+// before — this is additive, not a forced migration of any existing
+// save.
+namespace {
+constexpr int kMatterSchemaVersion = 1;
+
+// Mirrors Singularity::Storage::FileChannel::computeSha256's exact
+// OpenSSL + hex-encoding approach. Not called directly: FileChannel is a
+// Law (Singularity::Storage), and ZonesOfEarth depending on a Law just to
+// borrow a hash utility would be a backward dependency edge for a
+// one-function need.
+std::string sha256Hex(const std::vector<uint8_t>& data) {
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(data.data(), data.size(), hash);
+    static const char hexDigits[] = "0123456789abcdef";
+    std::string out;
+    out.reserve(SHA256_DIGEST_LENGTH * 2);
+    for (unsigned char byte : hash) {
+        out.push_back(hexDigits[(byte >> 4) & 0x0F]);
+        out.push_back(hexDigits[byte & 0x0F]);
+    }
+    return out;
+}
+
+// Writes `bytes` to `finalPath` via write-temp-then-atomic-rename, so a
+// crash mid-write never leaves a truncated file at `finalPath` itself.
+// Returns false (finalPath untouched) on any failure.
+bool atomicWriteFile(const std::filesystem::path& finalPath, const std::vector<uint8_t>& bytes) {
+    std::filesystem::path tmp = finalPath;
+    tmp += ".tmp-" + std::to_string(reinterpret_cast<uintptr_t>(&bytes)) + "-" +
+           std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    {
+        std::ofstream out(tmp, std::ios::binary);
+        if (!out.is_open()) return false;
+        out.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+        out.flush();
+        if (!out) { std::error_code ec; std::filesystem::remove(tmp, ec); return false; }
+    }
+    std::error_code ec;
+    std::filesystem::rename(tmp, finalPath, ec);
+    if (ec) {
+        // Cross-device or other rename failure: fall back to copy+remove,
+        // still finishing with the destination fully written before any
+        // caller can observe it under its final name.
+        std::filesystem::copy_file(tmp, finalPath, std::filesystem::copy_options::overwrite_existing, ec);
+        std::filesystem::remove(tmp, ec);
+        if (ec) return false;
+    }
+    return true;
+}
+
+bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& text) {
+    std::vector<uint8_t> bytes(text.begin(), text.end());
+    return atomicWriteFile(finalPath, bytes);
+}
+
+// Commits `matterBytes` as a new generation of `ecformPath`'s matter
+// sidecar and stamps `j` with the metadata needed to verify it on load.
+// Matter is written+flushed FIRST, under a content-addressed name; the
+// caller commits the semantic root (which now names this generation)
+// LAST. On success, removes the previous generation named in `j`'s prior
+// "matterGeneration" (if any and if different) — cleanup happens only
+// after the new root's atomic rename has already succeeded, per Sol's
+// "keep the prior generation until the new pointer commits."
+void commitMatterGeneration(const std::filesystem::path& ecformPath,
+                             const std::vector<uint8_t>& matterBytes,
+                             nlohmann::json& j) {
+    if (matterBytes.empty()) return;
+
+    const std::string hash = sha256Hex(matterBytes);
+    const std::string snapshotId = hash.substr(0, 16);
+    const std::string stem = ecformPath.stem().string();
+    const std::filesystem::path matterPath =
+        ecformPath.parent_path() / (stem + "." + snapshotId + ".ecmatter");
+
+    std::error_code ec;
+    if (!std::filesystem::exists(matterPath, ec)) {
+        // Content-addressed: if a prior save already produced byte-identical
+        // matter, its generation file is already correct and untouched.
+        if (!atomicWriteFile(matterPath, matterBytes)) {
+            std::cerr << "[ZoneManager] commitMatterGeneration: failed to write "
+                      << matterPath << " — leaving prior generation as the "
+                      << "semantic root's committed reference.\n";
+            return;
+        }
+    }
+
+    // Read the CURRENT on-disk root's prior generation (not `j`, which for
+    // saveStateWithLog is built fresh each call and never carries one) so
+    // cleanup targets the actual predecessor, not this call's own value.
+    std::string previousGenerationId;
+    {
+        std::error_code readEc;
+        if (std::filesystem::exists(ecformPath, readEc)) {
+            std::ifstream in(ecformPath);
+            if (in.is_open()) {
+                try {
+                    nlohmann::json prior = nlohmann::json::parse(in, nullptr, false);
+                    if (!prior.is_discarded() && prior.contains("matterGeneration")) {
+                        previousGenerationId = prior["matterGeneration"].value("snapshotId", std::string{});
+                    }
+                } catch (...) { /* malformed prior root: nothing to clean up */ }
+            }
+        }
+    }
+
+    j["matterGeneration"] = {
+        {"snapshotId", snapshotId},
+        {"sha256", hash},
+        {"byteLength", matterBytes.size()},
+        {"schemaVersion", kMatterSchemaVersion}
+    };
+
+    if (!previousGenerationId.empty() && previousGenerationId != snapshotId) {
+        std::filesystem::path oldMatterPath =
+            ecformPath.parent_path() / (stem + "." + previousGenerationId + ".ecmatter");
+        std::error_code rmEc;
+        std::filesystem::remove(oldMatterPath, rmEc);
+        // Not finding it is fine (already cleaned, or the root predates
+        // generation coupling); a real removal failure is logged, not fatal —
+        // an orphaned old generation is disk waste, not a correctness bug.
+        if (rmEc && std::filesystem::exists(oldMatterPath)) {
+            std::cerr << "[ZoneManager] commitMatterGeneration: could not remove "
+                      << "superseded generation " << oldMatterPath << ": " << rmEc.message() << "\n";
+        }
+    }
+}
+
+// Read-side counterpart of commitMatterGeneration. `j` is the already-
+// parsed semantic root. Returns the verified matter bytes, or empty if
+// `j` names no generation at all (the legacy-compat signal — caller
+// falls back to the fixed-name .ecmatter path unchanged). Refuses (logs,
+// returns empty, mutates nothing) on any missing/mismatched/truncated/
+// future-schema sidecar — the world is never partially hydrated from a
+// generation that failed verification.
+std::vector<uint8_t> readVerifiedMatterGeneration(const std::filesystem::path& ecformPath,
+                                                   const nlohmann::json& j) {
+    if (!j.contains("matterGeneration")) return {};
+    const auto& gen = j["matterGeneration"];
+    const std::string snapshotId = gen.value("snapshotId", std::string{});
+    const std::string expectedHash = gen.value("sha256", std::string{});
+    const std::size_t expectedLength = gen.value("byteLength", std::size_t{0});
+    const int schemaVersion = gen.value("schemaVersion", 0);
+
+    if (snapshotId.empty()) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' names a matterGeneration with no snapshotId — refusing.\n";
+        return {};
+    }
+    if (schemaVersion > kMatterSchemaVersion) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' names matter schema version " << schemaVersion
+                  << ", newer than this build understands (" << kMatterSchemaVersion
+                  << ") — refusing rather than misreading it.\n";
+        return {};
+    }
+
+    const std::filesystem::path matterPath =
+        ecformPath.parent_path() / (ecformPath.stem().string() + "." + snapshotId + ".ecmatter");
+    std::error_code ec;
+    if (!std::filesystem::exists(matterPath, ec)) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: '" << ecformPath
+                  << "' names generation '" << snapshotId << "' but " << matterPath
+                  << " is missing — refusing to hydrate physical matter.\n";
+        return {};
+    }
+
+    std::ifstream in(matterPath.string(), std::ios::binary);
+    if (!in.is_open()) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: could not open " << matterPath << "\n";
+        return {};
+    }
+    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+
+    if (bytes.size() != expectedLength) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << matterPath
+                  << " is " << bytes.size() << " bytes, root expected " << expectedLength
+                  << " — truncated or swapped sidecar, refusing.\n";
+        return {};
+    }
+    const std::string actualHash = sha256Hex(bytes);
+    if (actualHash != expectedHash) {
+        std::cerr << "[ZoneManager] readVerifiedMatterGeneration: " << matterPath
+                  << " hash mismatch (root names " << expectedHash << ", file hashes to "
+                  << actualHash << ") — refusing.\n";
+        return {};
+    }
+    return bytes;
+}
+} // namespace
+
+// ------------------------------------------------------------------
 // saveState
 // ------------------------------------------------------------------
 void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
@@ -793,22 +1011,24 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     // load rewind Home as a side effect.
     if (!isBeforeLoadSnapshot(filename)) persistZones();
     nlohmann::json j = buildSaveJson(ctx);
-    
+
     std::filesystem::path p(filename);
     if (!isBeforeLoadSnapshot(filename) && p.extension() != ".ecform") {
         p.replace_extension(".ecform");
     }
-    std::ofstream out(p.string());
-    out << j.dump(2);
-    
-    // Also save matching .ecmatter if not a before-load snapshot
+
+    // Invariant 4 (Sol): matter is written+flushed under its own
+    // content-addressed name BEFORE the semantic root commits, and the
+    // root's own commit is the atomic rename below — never a plain
+    // ofstream that a crash mid-write can leave truncated in place.
     if (!isBeforeLoadSnapshot(filename)) {
-        p.replace_extension(".ecmatter");
         std::vector<uint8_t> matter = buildMatterFlatBuffer();
-        if (!matter.empty()) {
-            std::ofstream mOut(p, std::ios::binary);
-            if (mOut) mOut.write(reinterpret_cast<const char*>(matter.data()), matter.size());
-        }
+        commitMatterGeneration(p, matter, j);
+    }
+
+    if (!atomicWriteFile(p, j.dump(2))) {
+        std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
+        return;
     }
 
     logIo("SAVE " + p.string() + ": " +
@@ -843,18 +1063,24 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
         }
     }
     
-    // 1. Semantic Text Substrate (.ecform)
+    // Invariant 4 (Sol): the matter generation must be written+flushed
+    // and named inside `j` BEFORE the semantic root commits, not after —
+    // resolve the .ecform's destination path the same way writeSaveData
+    // will (same helper, same sanitized label/folder) so the matter file
+    // lands beside it under the correct stem.
+    const std::string ecformPath = SaveSystem::makeFilename(actualName, SaveSystem::SaveType::WORLD, ".ecform");
+    if (!ecformPath.empty()) {
+        std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
+        commitMatterGeneration(std::filesystem::path(ecformPath), matterBuffer, j);
+    }
+
+    // Semantic Text Substrate (.ecform), now carrying matterGeneration
+    // metadata for whatever matter was committed above.
     const std::string path = SaveSystem::writeSaveData(j, actualName, SaveSystem::SaveType::WORLD);
     if (path.empty()) {
         _saveLoad.lastSaveReport = "Save refused or failed for '" + actualName + "'.";
         logIo("SAVE FAILED '" + actualName + "'");
         return;
-    }
-
-    // 2. Physical Binary Substrate (.ecmatter via FlatBuffers)
-    std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
-    if (!matterBuffer.empty()) {
-        SaveSystem::writeMatterData(matterBuffer, actualName, SaveSystem::SaveType::WORLD);
     }
 
     _saveLoad.lastSaveReport = "Wrote " + path;
@@ -1364,10 +1590,28 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             logIo("Ourverse semantic root hydrated after Zones and laws.");
         });
         stage("physical-matter", [&] {
-            std::vector<uint8_t> matterBytes = SaveSystem::readMatterData(filename);
+            // Invariant 4 (Sol): a root that names a matterGeneration must
+            // be verified (generation file exists, byte length + sha256 +
+            // schema version all match) before its matter is ever applied
+            // to a live Zone. Absence of the key is the legacy-compat
+            // signal — read the fixed-name .ecmatter exactly as before.
+            const bool namesGeneration = j.contains("matterGeneration");
+            std::vector<uint8_t> matterBytes = namesGeneration
+                ? readVerifiedMatterGeneration(std::filesystem::path(filename), j)
+                : SaveSystem::readMatterData(filename);
             if (!matterBytes.empty()) {
                 applyMatterFlatBuffer(matterBytes);
                 logIo("Physical matter (.ecmatter) hydrated successfully.");
+            } else if (namesGeneration) {
+                // A named generation that failed verification is refused,
+                // not silently re-migrated — falling through to the legacy
+                // splitter below would paper over exactly the failure this
+                // invariant exists to surface. See stderr for which check
+                // failed (missing file, length, hash, or schema version).
+                _saveLoad.lastLoadReport = "REFUSED matter generation for '" + filename +
+                    "': verification failed (see stderr). Physical matter was not hydrated; "
+                    "the current world's physical state for this file was not replaced.";
+                std::cerr << "[load] " << _saveLoad.lastLoadReport << "\n";
             } else if (!snapshotRestore && looksLikeWorld) {
                 // Legacy JSON splitter: transparent migration on load
                 std::filesystem::path p(filename);
@@ -1608,8 +1852,12 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
             globalObjects.push_back(obj);
         }
 
-        // Step 2: Physical matter injection (.ecmatter FlatBuffer)
-        std::vector<uint8_t> matterBytes = SaveSystem::readMatterData(filename);
+        // Step 2: Physical matter injection (.ecmatter FlatBuffer).
+        // Invariant 4 (Sol): honor generation metadata here too, since this
+        // file may equally have been written by saveState/saveStateWithLog.
+        std::vector<uint8_t> matterBytes = j.contains("matterGeneration")
+            ? readVerifiedMatterGeneration(std::filesystem::path(filename), j)
+            : SaveSystem::readMatterData(filename);
         if (!matterBytes.empty()) {
             applyMatterFlatBuffer(matterBytes);
         }

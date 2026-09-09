@@ -2,12 +2,13 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0 and 1 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
+**Status:** **Rungs 0, 1 and 2 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
-remaining quantifier cost is not removable by indexing. Rungs 2–7 remain specified, not
-implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
+remaining quantifier cost is not removable by indexing. Rung 2 built the vocabulary index and
+fixed a fourth deafness; its Formation half stays blocked behind §3.4's concept-Singulars.
+Rungs 3–7 remain specified, not implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
 decisions that are Zach's alone; §9.3 is answered, the rest are open.
 
 **Companion docs:** `PROPHETIC_RETE.md` (§2's widen-never-narrow rule, which governs every
@@ -497,8 +498,50 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    writes and answer a quantifier falsely, which makes laws deaf: the narrowing
    `PROPHETIC_RETE.md` §2 forbids. The precondition is complete write coverage, and that is a
    rung of its own.
-2. **Categories as authored Formations**, replacing the implicit `couldApplyTo` vocabulary
-   filter — with §3.0's IMPOSSIBLE-only pruning rule written into the code, not just here.
+2. ⚠️ **Categories as authored Formations**, replacing the implicit `couldApplyTo` vocabulary
+   filter. *Built 2026-09-09 (Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`) — the INDEX
+   half. The Formation half is blocked; see below.*
+
+   **Measured before building, as rung 1 taught.** With 8 `OnBecomeTrue` laws over 1000 beings
+   of which only 8 could ever match, `sweepSubjects` cost **7.6 ms/tick and fitted k = 0.82
+   against POPULATION with the matching set held constant** — the sweep paid for the whole world
+   to find eight beings, and ~99% of it could not have matched. Against law count, k = 0.92. So
+   the O(L×N) §3.0 describes is real.
+
+   **Built:** a vocabulary index on `LawManager`, one entry per property NAME some law requires,
+   holding the beings that carry it. Rebuilt when `Universe::structuralRevision()` moves or when
+   the set of required names changes; `sweepSubjects` seeds from the **rarest** required name and
+   filters that, instead of walking the world. Only names laws ask for are indexed — Magic Sets
+   in miniature (§4C), the goal restricting what the engine bothers to know.
+   **Measured after: 7.6 → 4.6 ms/tick at 8 laws, 15.2 → 8.7 ms at 16, k against population
+   0.82 → 0.69.** The residual O(N) is the per-frame `seedStateFacts` pass over all beings —
+   already on the To-Do list as *"move seeding to admission"*, and the next thing worth removing.
+
+   **§3.0's IMPOSSIBLE-only rule is honored by construction.** The index is built with
+   `beingCarriesProperty`, the *same* predicate `couldApplyTo` uses — extracted and named once so
+   the two cannot drift, the same reasoning as `ReteNetwork::alphaFeedsAnyBeta`. A name absent
+   from the index means nobody carries it, which is a provably-IMPOSSIBLE narrowing rather than an
+   observation about current members. And `sweepSubjects` still runs `couldApplyTo` over whatever
+   the index proposes: **the index only proposes.**
+
+   `refreshVocabularyIndex()` is `const` over `mutable` state and `sweepSubjects` calls it
+   itself, so correctness cannot depend on call order — a stale index would return `{}` for an
+   unindexed name, which is a law reaching nobody.
+
+   **Prerequisite fixed:** `Zone::removeObject` did not bump `structuralRevision()` — only the
+   unmaking path did. The counter had **no readers at all** before this rung, so nothing had ever
+   noticed. The index holds raw pointers, so that hole was a dangling read, not a stale answer.
+
+   **NOT a Formation, and blocked rather than skipped.** §3.4 records why: under Zach's revised
+   definition a purely branching taxonomy is not a Formation, `RelationManager::add` refuses the
+   `subcategory-of` cycles that would close the loop, and the bridge needs concept-Singulars.
+   Separately, `Formation::addMember` walks the relation graph per member
+   (`reintegrateRelationsFor`), which a per-structural-change rebuild cannot afford. The index is
+   therefore Kernel-tier derived state, named as such in `Law.hpp` per Refusal 6, until the
+   concept-Singular bridge exists.
+
+   Guarded by `tests/law/vocabulary_index_test.cpp` (seven worlds an index gets wrong) and
+   `tests/law/category_index_scaling_test.cpp` (the measurement).
 3. **Alpha subscription for named `@referents`.** O(1) per referent, no joins; removes the
    widening at `ConditionModel.cpp:500`.
 4. **Category-level overlap** (§3.1), including the quantitative subkind via the existing
@@ -560,6 +603,20 @@ joins they exist for.
 | Structural support for Layers 2–3 (Relations of Relations, Formations of Relations) | verified — `Relation.hpp:46`, `Formation::addMember`, `relationTypeTag` |
 | Prophetic index keeps quantified conditions reachable on the reactive path | verified — `PropheticRete.cpp:496–506`: demands do not propagate, `readNames` do |
 
+**2026-09-09, rung 2.** A **fourth** deafness of the same family as §1.2(a), found by
+`vocabulary_index_test` §B and confirmed pre-existing by re-running it against a clean tree:
+`seedStateFacts` snapshots a being's properties **once per being, ever**, and
+`markFactDirty` only dirties facts that already exist — so a property **granted at runtime** had
+no fact to dirty and never acquired one. A `WhileTrue` law reading that property stayed
+permanently deaf to that being, silently. Fixed: `markFactDirty` now reports whether it marked
+anything, and the property-change hook asserts the missing state fact for an already-seeded being.
+The scan was already linear over the fact list, so the answer costs nothing.
+
+Also learned, and worth stating because it is easy to assume otherwise:
+`Law::rebuildRequiredProperties` collects paths from the **action** as well as the condition, and
+keys on each path's **root** segment. A law's stated vocabulary is what it reads *and writes*, so
+an `IsKind` law still requires `shape` if its action writes `shape.fillet`.
+
 *Update 2026-09-08.* The probe was a scratch file excluded from the build glob and is now
 gone; rung 0 landed `tests/law/rete_relation_state_test.cpp` in its place, as this section
 asked. Each of rung 0's three changes was reverted individually and the matching test section
@@ -591,8 +648,7 @@ against a 1.653 ms baseline** with the fix in.
 
 ---
 
-*Rung 1 measured and the transient-`Moment` quadratic fixed by Claude Opus 5, session
-`session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
+*Rungs 1 and 2 by Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
 *Rung 0 implemented, and §3.4 / §9.3 / §10 updated, by Claude Opus 5, session
 `session_01K1PtKNZtSDU9XGwKZQ7ZzF`, 2026-09-08.*
 *Revised by Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`, 2026-09-08T02:30:47-07:00.*

@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0 and 1 of 7 done (2026-09-08, 2026-09-09). Rungs 2–7 specified.
+**Status:** rungs 0, 1 and 2 of 7 done (2026-09-08, 2026-09-09). Rung 2's Formation half and rungs 3–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -93,10 +93,55 @@ vocabulary entirely — *"the boundary, not an oversight"* — so a memo keyed o
 stale on those writes and makes laws deaf. That is the narrowing `PROPHETIC_RETE.md` §2 forbids.
 The precondition is complete write coverage.
 
+## Rung 2 — ✅ the index half, 2026-09-09
+
+*Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.* Measured first, as rung 1 taught.
+
+**The waste, measured.** 8 `OnBecomeTrue` laws over 1000 beings where only 8 could ever match:
+**7.6 ms/tick, k = 0.82 against POPULATION** with the matching set held fixed. The sweep cost the
+whole world to find eight beings. Against law count, k = 0.92 — so O(L×N), exactly as §3.0 says.
+
+**Built.** A vocabulary index on `LawManager`: one entry per property name some law requires,
+holding the beings that carry it, rebuilt when `Universe::structuralRevision()` moves or the set
+of required names changes. `sweepSubjects` seeds from the **rarest** required name — the cheap
+metric-free stand-in for §5's fan-out cost model — and filters that instead of walking the world.
+**After: 7.6 → 4.6 ms at 8 laws, 15.2 → 8.7 ms at 16, k 0.82 → 0.69.** The residual O(N) is the
+per-frame `seedStateFacts` pass, already a To-Do item (*"move seeding to admission"*).
+
+**Safety.** The index is built with `beingCarriesProperty`, the same predicate `couldApplyTo`
+uses, extracted and named once so they cannot drift — if the index tested membership even
+slightly differently it would omit candidates, and an omitted candidate is a silently deaf law.
+`sweepSubjects` still runs `couldApplyTo` over whatever the index proposes: the index only
+proposes. `refreshVocabularyIndex()` is `const` over `mutable` state and `sweepSubjects` calls it
+itself, so correctness does not depend on call order.
+
+**Prerequisite fixed.** `Zone::removeObject` never bumped `structuralRevision()` — only the
+unmaking path did — and the counter had **no readers at all** before this rung, so nothing had
+ever noticed. The index holds raw pointers, which made that a dangling read rather than a stale
+answer.
+
+**A fourth deafness found and fixed.** `vocabulary_index_test` §B failed on a clean tree:
+`seedStateFacts` snapshots properties **once per being ever**, and `markFactDirty` only dirties
+facts that already exist — so a property **granted at runtime** never acquired a fact, and a
+`WhileTrue` law reading it stayed permanently deaf to that being. Same family as rung 0's
+relation deafness. `markFactDirty` now reports whether it marked anything and the hook asserts
+the missing fact; the scan was already linear, so the answer is free.
+
+**Also learned:** `rebuildRequiredProperties` collects paths from the **action** as well as the
+condition and keys on the path's **root** — a law's vocabulary is what it reads *and writes*.
+
+**Still blocked (the Formation half).** Making these authored Category Formations needs §3.4's
+concept-Singular bridge, and `Formation::addMember` walks the relation graph per member, which a
+per-structural-change rebuild cannot afford. The index is Kernel-tier derived state, named as
+such in `Law.hpp` per Refusal 6, until that bridge exists.
+
+**Guarded by** `tests/law/vocabulary_index_test.cpp` (seven worlds an index gets wrong) and
+`tests/law/category_index_scaling_test.cpp` (the measurement).
+
 ## Next rungs
 
-2. **Categories as authored Formations**, replacing `couldApplyTo`'s implicit vocabulary filter.
-   Blocked by two things now written down: Zach's revised Formation definition means a taxonomy
+2. ~~**Categories as authored Formations**~~ — index half done 2026-09-09 (above). The Formation
+   half remains blocked by two things: Zach's revised Formation definition means a taxonomy
    of `instance-of`/`subcategory-of` is *purely branching* and therefore **not a Formation**, and
    `RelationManager::add` rejects cycles in `subcategory-of`, so the loop cannot be closed from
    inside the taxonomy — it needs the concept-Singular bridge (`ObjectConcept`, whose
