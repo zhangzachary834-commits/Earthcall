@@ -497,6 +497,15 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
 }
 
+void WebGpuRenderer::reloadShaders() {
+    for (auto& kv : _sdfPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
+    }
+    _sdfPipes.clear();
+    _programCache.clear();
+}
+
 // Build-on-first-use so only the combinations the app actually draws exist.
 WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blend blend,
                                                 DepthMode depth) {

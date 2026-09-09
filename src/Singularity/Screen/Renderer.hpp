@@ -248,6 +248,9 @@ public:
         return false;
     }
 
+    // Live hot-reloading: clears and recompiles shader pipelines from disk.
+    virtual void reloadShaders() {}
+
 protected:
     // The hooks a backend actually implements. The state above (model stack,
     // recorded camera, viewport) is shared and lives here.

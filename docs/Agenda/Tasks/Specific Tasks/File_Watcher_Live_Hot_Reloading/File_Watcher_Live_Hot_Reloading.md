@@ -40,9 +40,9 @@ In Earthcall's Sense-Act ontology, storage channels must not merely wait for man
    - `watcher.pollIntervalMs`: configurable scan period (default: 250ms) to prevent disk thrashing.
 
 6. **Exposed Law Properties (Refusal #6 Compliant)**:
-   - Controls: `watcher.enabled`, `watcher.watchPath`, `watcher.recursive`, `watcher.filterExtension`, `watcher.pollIntervalMs`.
-   - Triggers: `watcher.checkNow` (forces an immediate synchronous scan).
-   - Telemetry: `watcher.lastModifiedFile`, `watcher.lastEventType`, `watcher.lastEventTimestamp`, `watcher.totalEventsPublished`, `watcher.filesTracked`, `watcher.status`, `watcher.lastError`.
+   - Controls: `watcher.enabled`, `watcher.watchPath`, `watcher.recursive`, `watcher.filterExtension`, `watcher.pollIntervalMs`, `watcher.autoReload`.
+   - Triggers: `watcher.checkNow` (forces an immediate synchronous scan), `watcher.reloadShaders` (triggers manual shader pipeline recompilation).
+   - Telemetry: `watcher.lastModifiedFile`, `watcher.lastEventType`, `watcher.lastEventTimestamp`, `watcher.totalEventsPublished`, `watcher.filesTracked`, `watcher.reloadCount`, `watcher.lastReloadTarget`, `watcher.status`, `watcher.lastError`.
 
 ## Verification
 - Headless test suite `tests/singularity/file_watcher_test.cpp`:
@@ -50,4 +50,5 @@ In Earthcall's Sense-Act ontology, storage channels must not merely wait for man
   - Verified Case 2: New file creation detection (`file-created` event, tracked file counter increment).
   - Verified Case 3: File deletion detection (`file-deleted` event, tracked file counter decrement).
   - Verified Case 4: File extension filtering (`.wgsl` filter restricts tracking to matching files).
-  - Result: 4/4 tests passed (100%).
+  - Verified Case 5: Automatic shader/rule hot-reloading (`watcher.lastReloadTarget`, `watcher.reloadCount`, and manual `watcher.reloadShaders` trigger).
+  - Result: 5/5 tests passed (100%).
