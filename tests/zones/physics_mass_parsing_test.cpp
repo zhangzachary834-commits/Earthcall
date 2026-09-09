@@ -33,6 +33,11 @@ int main() {
     obj->setAttribute("mass", "nan");
     assert(Physics::getObjectMass(obj.get(), 5.0f) == 5.0f);
 
+    // Case 6: Out of range mass attribute (string that represents a value too large for float)
+    // This will throw an std::out_of_range exception in std::stof which is caught and handled
+    obj->setAttribute("mass", "1e1000000");
+    assert(Physics::getObjectMass(obj.get(), 5.0f) == 5.0f);
+
     // Null object test
     assert(Physics::getObjectMass(nullptr, 3.14f) == 3.14f);
 
