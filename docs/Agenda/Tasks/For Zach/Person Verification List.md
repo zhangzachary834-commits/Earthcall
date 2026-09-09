@@ -189,3 +189,6 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
   - Set `@file-watcher.watchPath := "saves"` (or a specific directory/file).
   - Open a file in that directory in an external editor (VS Code, TextEdit) and modify or save it.
   - Observe that `@file-watcher.lastEventType` immediately updates to `"file-modified"` and publishes `ECA::Event("file-modified")` without requiring an app reload or manual polling.
+
+
+- [ ] **Synthesis Studio / Living Instrument** (Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-08 23:37 PDT): Load `synthesis_studio_living`; confirm this is the clean room, with no canvas-spam imports, while your original Studio remains intact. Play all twelve HUD/desk notes, change octaves 3–6 and Solo/Fifth/Major/Minor with each voice, and judge tuning, dynamics, responsiveness, and the shared pad/meter/resonator hue. Drag the expression field from lower left to upper right and feel whether bloom, motion, and dynamics follow your hand coherently. Turn Sound Ink on, play a note, enable Draw, and drag slowly over the easel; confirm its marks carry that note's color and sound on hover. Save, quit, reopen, and confirm the expression, harmony, octave, and marks remain yours. Judge the constellation's movement, text readability, and layout in your usual window size.
