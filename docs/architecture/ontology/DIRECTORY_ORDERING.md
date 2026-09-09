@@ -55,7 +55,7 @@ not — which is the proof they were never directories, only shipping labels.
 TOP LEVEL = the ontology + the modality layer.
 
   A directory may sit at the top level if and only if it names
-    (a) a kind of being        — ConstructedBeing, Person, Relation, ZonesOfEarth, Identity, Time
+    (a) a kind of being        — ConstructedBeing, Identity, Person, Relation, Time, ZonesOfEarth
     (b) a mode of the machine  — Singularity (and its modalities beneath)
 
   The Person-facing authorship surface is not a top-level region. Tools, chat,
@@ -84,16 +84,14 @@ never flatters itself.*
 Earthcall/
   src/                     the one source root — all languages
     ConstructedBeing/      Singular (Object · Lexeme · Property) · Material
+    Identity/              First Mover register, identity ledger, key pairs, claims
     Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager · Formation
-    ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
     Singularity/           the modality layer — where language stops mattering
-      Core/                Engine · EventBus · CreationChannel
       Audio/               the Sound modality (AudioSystem)
-      Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
-      Network/             WebSocketClient.cpp · WebSocketServer.cpp
-                             py/  engine_server.py · events.py
-      OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
+      Core/                Engine · EventBus · CreationChannel
+      Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
+      FirstMoverOntology/  FirstMoverWindowTools, Legacy, TalkingRobotGuyAPI
       Foreign/             the Foreign software modality (ForeignChannel at the root)
                              Adapters/  MacOSAccessibilityAdapter
                              API/       EarthcallAPI, SecurityManager
@@ -105,13 +103,15 @@ Earthcall/
                              Mouse/        MouseHandler
                              Locomotion/   LocomotionChannel
                              Interaction/  InteractionChannel, ControlPatterns
+      Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
+      Network/             WebSocketClient.cpp · WebSocketServer.cpp
+                             py/  engine_server.py · events.py
+      OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
+      Physical/            the Physical hardware modality (PhysicalChannel)
       Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
       Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
-      Physical/            the Physical hardware modality (PhysicalChannel)
-      FirstMoverWindowTools/ CreatorConsole, CreationTools, Controls, Chat, Tools
-    Identity/              First Mover register, identity ledger, key pairs, claims
     Time/                  Moment (instant or interval); the world clock itself lives on Universe
-    Legacy/                the graveyard — not yet ontologically placed
+    ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
