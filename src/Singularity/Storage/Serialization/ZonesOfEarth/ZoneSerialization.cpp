@@ -11,6 +11,11 @@
 #include <utility>
 
 extern MaterialManager materials;
+
+std::string zoneIdFromJson(const nlohmann::json& zj) {
+    return zj.value("identifier", zj.value("name", std::string{}));
+}
+
 // ------------------------------------------------------------------
 // Zone object bag — on disk still `{"objects":[...]}` (the old World shape).
 // ------------------------------------------------------------------
@@ -263,17 +268,34 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
 }
 
 std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
-    const std::string name = zj.value("name", zj.value("identifier", "Untitled Zone"));
+    // Identity, not display: MUST agree with zoneIdFromJson, the same
+    // resolution every admission/dedup check in ZoneManager.cpp uses to
+    // ask "is a Zone with this id already live?" Before this fix, this
+    // function preferred "name" while zoneIdFromJson preferred
+    // "identifier" — a record whose two fields differed (the common case
+    // once identity/name are actually distinct concepts, e.g. the
+    // BasicPixelChanger/"Basic Pixel Changer" case, or the
+    // Basic2DButtonZone/"Basic 2D Button Zone" one that surfaced this)
+    // could never be recognized as already-live, so every load of a
+    // World naming it minted a fresh duplicate live Zone object sharing
+    // the same eventual getIdentifier() as one already there — exactly
+    // the ambiguity applyMatterFlatBuffer's Invariant 3 refusal surfaced.
+    const std::string identifier = zoneIdFromJson(zj);
+    const std::string safeIdentifier = identifier.empty() ? "Untitled Zone" : identifier;
+    const std::string displayName = zj.value("name", safeIdentifier);
     std::string kind;
     if (zj.contains("qualities") && zj["qualities"].is_object()) {
         kind = zj["qualities"].value("kind", std::string{});
     }
     if (kind.empty()) kind = zj.value("kind", std::string{});
     const bool dwelling = (kind == Zone::kHomeKind || kind == Zone::kCommunityHomeKind
-                           || name == "Home" || zj.value("being", std::string{}) == "home");
+                           || safeIdentifier == "Home" || zj.value("being", std::string{}) == "home");
     std::shared_ptr<Zone> zone = dwelling
-        ? std::shared_ptr<Zone>(std::make_shared<Home>(name, "strict"))
-        : std::make_shared<Zone>(name, "strict");
+        ? std::shared_ptr<Zone>(std::make_shared<Home>(safeIdentifier, "strict"))
+        : std::make_shared<Zone>(safeIdentifier, "strict");
+    if (!displayName.empty() && displayName != safeIdentifier) {
+        zone->setName(displayName);
+    }
     applyZoneJson(*zone, zj, true);
     return zone;
 }

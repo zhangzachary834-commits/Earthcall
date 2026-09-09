@@ -1,9 +1,9 @@
 # Zone identity store: field-level merge, not whole-object replacement
 
-**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A+B complete (1, 2, 3, 4), Stage C/D and Invariant 6 open
-**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1, then again with Invariant 4.
-**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer; `commitMatterGeneration`/`readVerifiedMatterGeneration`/`atomicWriteFile`/`sha256Hex` — atomic generation coupling; `saveState`/`saveStateWithLog`/`loadState`'s physical-matter stage/`loadTestObservation` rewired to use it), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
-**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/zones/matter_generation_commit_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
+**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A+B complete (1, 2, 3, 4), Stage C/D open; Invariant 6 is now implemented in general form (Zone gained a real identifier/name split) — the one remaining concrete case (`BasicPixelChanger`) is still Person-authorized-only
+**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1, then Invariant 4, then Zone's identifier/name split (Invariant 6, general form).
+**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`, `zoneIdFromJson`, `makeZoneFromJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer; `commitMatterGeneration`/`readVerifiedMatterGeneration`/`atomicWriteFile`/`sha256Hex` — atomic generation coupling; `saveState`/`saveStateWithLog`/`loadState`'s physical-matter stage/`loadTestObservation` rewired to use it), `src/ZonesOfEarth/Zone/Zone.hpp`/`.cpp` (`_identifier` field, `setName`, `propIdentifier`, `getIdentifier()` now returns `_identifier` not `_name`), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
+**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/zones/matter_generation_commit_test.cpp`, `tests/zones/zone_identifier_name_split_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
 
 ---
 
@@ -408,17 +408,102 @@ Both were updated to resolve the generation-named file via the `.ecform`'s own
 `matterGeneration.snapshotId` instead of asserting a name never actually promised
 in the schema; both pass in full afterward (30/30 and 28/28).
 
+## Invariant 6, made concrete: Zone gained a real identifier/name split (2026-09-09)
+
+Zach saw this one live, in the running app, immediately after Invariant 4 landed —
+pasted a wall of new console output: `applyMatterFlatBuffer` refusing dozens of
+entities because their bare id matched "2 live objects" or even "3 live objects
+across Zones" that were printed with the **identical name** — `(Basic 2D Button
+Zone, Basic 2D Button Zone, Basic 2D Button Zone)`, `(Perlin Noise Floor Zone,
+Perlin Noise Floor Zone)`. Nothing crashed and nothing corrupted — Invariant 3's
+refusal was doing exactly its job — but it was surfacing a real, distinct bug: the
+same Zone identifier was live as more than one `Zone` object at once.
+
+**Root cause, confirmed on disk, not inferred:**
+
+```
+saves/zones/Basic 2D Button Zone/zone.json -> identifier: "Basic 2D Button Zone"  name: "Basic 2D Button Zone"
+saves/zones/Basic2DButtonZone/zone.json    -> identifier: "Basic2DButtonZone"     name: "Basic 2D Button Zone"
+```
+
+Both records are legitimately on disk. `zoneIdFromJson` (the resolution every
+admission/dedup check in `ZoneManager.cpp` uses to ask "is a Zone with this id
+already live?") preferred the `identifier` field. But `makeZoneFromJson` — the
+function that actually *constructs* the live `Zone` object — preferred `name`
+instead, the opposite priority. So the `Basic2DButtonZone` folder's record
+resolved to dedup-key `"Basic2DButtonZone"`, yet the Zone it actually built
+reported `getIdentifier() == "Basic 2D Button Zone"` (name-first) — colliding
+with the *other*, self-consistent folder's Zone without either dedup check ever
+recognizing it as the same being. Every load of any World naming this Zone across
+a session minted another duplicate. This is the general form of the
+`BasicPixelChanger`/`"Basic Pixel Changer"` case Sol flagged for Invariant 6 — not
+a one-off stale save, a structural inconsistency in the code between two
+independently-written copies of the same field-priority decision.
+
+Underneath that: `Zone` had no way to *not* collide even if the code agreed with
+itself. `Zone::getIdentifier()` simply returned `_name` (`Zone.hpp`) — there was
+no second field. Zach's direction: "Yes Zone should absolutely have a real
+identifier/name split. It's a Singular" — i.e. this is exactly the kind of
+structural role distinction the Singular ontology already exists to hold (as
+`Object` holds `objectID` for stable address, though even `Object` doesn't
+separately hold a display label — this is a new pattern for `Zone` specifically,
+not a copy of an existing one).
+
+**Fixed:**
+- `Zone` gained a genuine `_identifier` field, distinct from `_name` (display).
+  The constructor still takes one string, exactly as every existing call site
+  already calls it, and initializes BOTH to that string — so identity for every
+  Zone ever constructed the ordinary way is bit-for-bit unchanged. `getIdentifier()`
+  now returns `_identifier`, not `_name`. A new `setName()` lets a Zone's display
+  diverge from its identity post-construction without ever touching identity
+  itself — used in exactly one place.
+- `zoneIdFromJson` moved out of `ZoneManager.cpp` into
+  `ZoneSerialization.hpp`/`.cpp` as the ONE shared resolution — a second,
+  independently-written copy is exactly the mechanism that drifted out of sync
+  before, so there is now nowhere for a second copy to be written by accident.
+- `makeZoneFromJson` now resolves identity via that same shared `zoneIdFromJson`
+  (identifier-first) to construct the Zone, then calls `setName()` only if the
+  record's own `name` field differs from that identity — display and identity are
+  now actually two separate reads of the JSON, not one field doing both jobs.
+- `identifier` is registered as a new read-only property (`propIdentifier`) beside
+  the existing read-only `name` — Refusal 6, no black box: a Zone's stable address
+  is now itself law-visible, not just its display.
+- Did NOT touch `saves/zones/Basic2DButtonZone/zone.json` or any other real save
+  file — per CLAUDE.md, save files are sacred, Person-authorized changes only. The
+  fix alone resolves the *collision*: the two records now correctly resolve to two
+  DISTINCT identities (`Basic2DButtonZone` and `Basic 2D Button Zone`) instead of
+  colliding into one. Whether these two on-disk records ought to actually be the
+  *same* Zone (deduplicated/merged) is a content-level, Person-authorized decision,
+  not a code bug — flagged here, not resolved, exactly like `BasicPixelChanger`.
+
+**Test:** `tests/zones/zone_identifier_name_split_test.cpp`, 10/10 green — direct
+`makeZoneFromJson` checks (divergent record resolves identity from `identifier`,
+keeps `name` as display, agrees with `zoneIdFromJson`), a no-behavior-change check
+for the ordinary single-string constructor, and the real shape driven through
+`ZoneManager::hydrateFromZoneStore()` twice (once for boot, once standing in for a
+later load) over two sandboxed identity folders shaped exactly like the real
+`Basic2DButtonZone`/`Basic 2D Button Zone` pair — exactly one live Zone per
+identity afterward, not a collision.
+
+**Confirmed against the real save tree too** (read-only, via the already-guarded
+`zone_boot_hydration_relations_test`): loading the real `chess_app.json` now
+reports "26 zone(s), 1575 object(s)" where it reported "27 zone(s), 1576
+object(s)" immediately before this fix — one fewer of exactly this kind of phantom
+duplicate. Its own `instanceOf == 35` assertion is unrelated stale-fixture drift
+(see the note further down) and still fails, unaffected by this fix either way.
+
 **Not this pass, per Sol's own sequencing:**
 - **Invariant 5** (registered-property persistence audit: CI catches both a
   registered path with zero persistence homes — the original missing-`faceColors`
   bug — and one with multiple competing homes — the `.ecform`/identity/`.ecmatter`
   jurisdiction fight this whole task has been about).
-- **Invariant 6** (validate `saves/zones/<id>/`'s directory key against the
-  document's own `identifier` and every referencing `zoneRef`/`currentZoneId` at
-  every boundary; refuse/log a mismatch rather than silently deriving identity
-  from display text). The concrete case — `BasicPixelChanger` vs
-  `"Basic Pixel Changer"` — is unchanged from the previous section: Person-
-  authorized repair only.
+- **Invariant 6, remaining sliver**: Zone now has a real identifier/name split
+  (see the section above), which closes the general mechanism — but validating
+  `saves/zones/<id>/`'s directory KEY itself against the document's internal
+  `identifier` (they can still differ, as `BasicPixelChanger`'s folder vs its
+  document's `"Basic Pixel Changer"` identifier does) is not yet a load-time
+  refuse/log check anywhere. The concrete repair of that one file is unchanged
+  from the previous section: Person-authorized only.
 
 Also found and reverted while verifying, not fixed (logged in the To-Do list):
 `test_observation_load_test` has the same real-`saves/`-tree-pollution bug the 5
@@ -440,7 +525,12 @@ expectations are stale, not the save file wrong.
 
 ---
 
-**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1 and Invariant 4 passes — different session, same model, per the intercom's own rule that these are different agents)
-**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09 (twice)
+**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1, Invariant 4, and Zone identifier/name split passes — different session, same model, per the intercom's own rule that these are different agents)
+**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09 (three times)
 
 **Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 1, 2, and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence." Also thanks to Claude Opus 5 (session `01F9nK3F`), concurrently restructuring the Law/Rete engine in the same checkout, for proactively confirming on the intercom that their work touches none of `Singularity/Storage`, ruling that out as the source of several test failures that turned out to be resource contention between two agent sessions building on the same machine.
+
+Zone's identifier/name split is credited to Zach directly: seeing the live console
+output and being asked whether to pursue it, he answered without hesitation —
+"Yes Zone should absolutely have a real identifier/name split. Its a Singular" —
+naming both the fix and its ontological grounding in one sentence.

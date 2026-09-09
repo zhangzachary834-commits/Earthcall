@@ -1,6 +1,7 @@
 # Building 2D and 3D Apps with Earthcall Guide
 
-**Status:** Done and structurally verified on 2026-09-06.
+**Status:** Done and structurally verified on 2026-09-06; SDF/pixel-doctrine revision
+verified on 2026-09-09.
 
 **Request from Zachary Zhang:** Expand his draft skeleton into the full guide agents and
 humans need to build 2D and 3D applications in Earthcall: where resources live, how they
@@ -28,6 +29,31 @@ The visual-atomicity promotion rule, phased frontier, conventional-framework tra
 and worked blueprints are Codex’s extensions in service of Zach’s stated intent; the guide
 records this distinction explicitly.
 
+## 2026-09-09 SDF and granular-pixel revision
+
+Zach added three direct requirements: teach people how to build essentially any nuanced
+bounded form from SDF/OntoMath composition; forbid applications from relying on
+`ShapeKind` enums except in focused tests; and state plainly that granular pixel mastery
+is still under development.
+
+The guide now contains a practical signed-field chapter covering the sign convention,
+exact distance versus a general implicit zero set, local coordinates and bounds, every
+current SDF leaf and CSG operator, the current Creator Console and Law authoring routes,
+a compound lantern recipe, and a cross-channel/save-round-trip verification protocol. It
+also distinguishes the unavoidable current `ShapeKind::Field` carrier from the authored
+mathematical truth: engine migration and manifestation plumbing may transport that value,
+but application identity and behavior must not depend on it.
+
+The visual-atomicity section now labels complete OntoMath-defined pixel-color regions as
+**under development**. Existing `WritePixel`, individual pixel Properties, and
+`ElevatePixels` are documented as first rungs rather than completion. Direct field-to-color
+compilation, continuously changing regions, GPU-scale evaluation, authored resolution and
+history, and the finished Person-facing authoring surface remain open.
+
+`AGENTS.md` now routes any 2D/3D app, SDF, nuanced-shape, pixel-region, or visual-style work
+to this guide before implementation. The router addition was accompanied by concise
+reflowing so `AGENTS.md` remains below its own 200-line limit.
+
 ## Verification
 
 - Read against `AGENTS.md`, `docs/BUILD_AND_ENVIRONMENT.md`, and
@@ -42,6 +68,14 @@ records this distinction explicitly.
   sandbox: each hit its explicit timeout (240 s and 120 s respectively) while macOS
   reported denied/invalid `hiservices` and `/bin/ps` access. They are recorded as
   unresolved environment-constrained timeouts, not passes and not diagnosed regressions.
+- For the 2026-09-09 revision, reconciled every SDF leaf, operator, expression token,
+  authoring control, registered `field.*` path, persistence precedence, and pixel status
+  claim against the current implementation and its focused tests.
+- `geometry_ontomath_test` and `basic_pixel_changer_test` passed. The focused
+  `webgpu_sdf_parity_test` returned `FAIL: no WebGPU device` in this sandbox, so GPU parity
+  remains an environment-limited non-verdict here rather than a claimed pass.
+- The revised `AGENTS.md` is 198 lines, below its required 200-line ceiling, and
+  `git diff --check` reports no whitespace errors.
 - No runtime claim was added as a substitute for Person verification, and no app or save
   file was modified.
 
@@ -50,3 +84,6 @@ intent. Codex (GPT-5.6 Sol) performed the synthesis and named extensions above.
 
 **Signed:** Codex (GPT-5.6 Sol) · session
 `01a077ed-8d0f-7882-9e63-7748558bd59a` · 2026-09-06 11:23 PDT
+
+**Revision signed:** Codex (GPT-5.6 Sol) · session
+`01a077ed-8d0f-7882-9e63-7748558bd59a` · 2026-09-09 12:07 PDT

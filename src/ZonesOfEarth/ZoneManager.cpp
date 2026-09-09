@@ -416,9 +416,10 @@ bool isObservationZone(const Zone& zone) {
     return it != q.end() && it->second == "test-observation";
 }
 
-std::string zoneIdFromJson(const nlohmann::json& zj) {
-    return zj.value("identifier", zj.value("name", std::string{}));
-}
+// zoneIdFromJson now lives in ZoneSerialization.cpp/.hpp — the single
+// shared resolution makeZoneFromJson and every admission check here must
+// agree on (see that header's comment for why a second copy is exactly
+// how this drifted before).
 
 const char* kZoneIdentityFormat = "zone-identity-v1";
 
