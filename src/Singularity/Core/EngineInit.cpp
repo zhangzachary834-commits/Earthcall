@@ -31,6 +31,8 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
+#include "Singularity/Storage/StreamChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -113,6 +115,12 @@ void Engine::initLogic() {
 
     // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
     Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
+
+    // Register first-mover VirtualFileSystem (VFS uniform URI scheme and in-RAM files)
+    Singularity::Storage::VirtualFileSystem::syncRegister(*_lawManager);
+
+    // Register first-mover StreamChannel (FIFO named pipes, process streams, real-time pipes)
+    Singularity::Storage::StreamChannel::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {

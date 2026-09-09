@@ -1,4 +1,5 @@
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "json.hpp"
@@ -318,7 +319,9 @@ bool FileChannel::isPathAllowed(const std::string& targetPath, bool isWrite) con
     if (targetPath.empty()) return false;
     if (targetPath.find('\0') != std::string::npos) return false;
 
-    std::string sanitized = targetPath;
+    if (VirtualFileSystem::isMemory(targetPath)) return true;
+
+    std::string sanitized = VirtualFileSystem::resolve(targetPath);
     // Tilde expansion outside sandbox mode
     if (!_sandboxMode && (sanitized.rfind("~/", 0) == 0 || sanitized == "~")) {
         const char* home = std::getenv("HOME");
@@ -358,9 +361,11 @@ bool FileChannel::isPathAllowed(const std::string& targetPath, bool isWrite) con
 
 bool FileChannel::checkOSPermissions(const std::string& targetPath, bool isWrite) const {
     if (targetPath.empty()) return false;
+    if (VirtualFileSystem::isMemory(targetPath)) return true;
 
     try {
-        fs::path p(targetPath);
+        std::string actualPath = VirtualFileSystem::resolve(targetPath);
+        fs::path p(actualPath);
         fs::path absPath = fs::absolute(p).lexically_normal();
         std::string absStr = absPath.string();
 
@@ -446,8 +451,34 @@ bool FileChannel::executeRead() {
         return false;
     }
 
+    // In-memory virtual file
+    if (VirtualFileSystem::isMemory(_path)) {
+        std::string memData;
+        if (!VirtualFileSystem::instance().readMemoryFile(_path, memData)) {
+            _status = "error: file not found";
+            _lastError = "Memory file not found: " + _path;
+            _errorCode = "not_found";
+            _lastOperationSuccess = false;
+            return false;
+        }
+        if (_encoding == "base64") {
+            _content = base64Encode(memData);
+        } else if (_encoding == "hex") {
+            _content = hexEncode(memData);
+        } else {
+            _content = std::move(memData);
+        }
+        _bytesRead = static_cast<double>(_content.size());
+        _status = "read-success";
+        _lastError = "";
+        _errorCode = "none";
+        _lastOperationSuccess = true;
+        return true;
+    }
+
+    std::string resolvedPath = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    fs::path absPath = fs::absolute(fs::path(_path)).lexically_normal();
+    fs::path absPath = fs::absolute(fs::path(resolvedPath)).lexically_normal();
     if (!fs::exists(absPath, ec)) {
         _status = "error: file not found";
         _lastError = "File not found: " + _path;
@@ -567,8 +598,32 @@ bool FileChannel::executeWrite() {
         return false;
     }
 
+    // In-memory virtual file write
+    if (VirtualFileSystem::isMemory(_path)) {
+        std::string payload = _content;
+        if (_encoding == "base64") {
+            payload = base64Decode(_content);
+        } else if (_encoding == "hex") {
+            payload = hexDecode(_content);
+        }
+        if (_writeMode == "append") {
+            std::string existing;
+            VirtualFileSystem::instance().readMemoryFile(_path, existing);
+            VirtualFileSystem::instance().writeMemoryFile(_path, existing + payload);
+        } else {
+            VirtualFileSystem::instance().writeMemoryFile(_path, payload);
+        }
+        _bytesWritten = static_cast<double>(payload.size());
+        _status = "write-success";
+        _lastError = "";
+        _errorCode = "none";
+        _lastOperationSuccess = true;
+        return true;
+    }
+
+    std::string resolvedPath = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    fs::path absPath = fs::absolute(fs::path(_path)).lexically_normal();
+    fs::path absPath = fs::absolute(fs::path(resolvedPath)).lexically_normal();
     if (fs::exists(absPath, ec) && fs::is_directory(absPath, ec)) {
         _status = "error: path is directory";
         _lastError = "Cannot write file content onto a directory: " + _path;
@@ -715,8 +770,26 @@ bool FileChannel::executeDelete() {
         return false;
     }
 
+    if (VirtualFileSystem::isMemory(_path)) {
+        bool del = VirtualFileSystem::instance().deleteMemoryFile(_path);
+        if (del) {
+            _status = "delete-success";
+            _lastError = "";
+            _errorCode = "none";
+            _lastOperationSuccess = true;
+            return true;
+        } else {
+            _status = "error: file not found";
+            _lastError = "Memory file not found: " + _path;
+            _errorCode = "not_found";
+            _lastOperationSuccess = false;
+            return false;
+        }
+    }
+
+    std::string resolvedPath = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    fs::path absPath = fs::absolute(fs::path(_path)).lexically_normal();
+    fs::path absPath = fs::absolute(fs::path(resolvedPath)).lexically_normal();
     if (!fs::exists(absPath, ec)) {
         _status = "error: file not found";
         _lastError = "File not found: " + _path;
@@ -1038,30 +1111,43 @@ void FileChannel::propSetContentHex(const std::string& v) {
 
 bool FileChannel::propExists() const {
     if (_path.empty()) return false;
+    if (VirtualFileSystem::isMemory(_path)) {
+        return VirtualFileSystem::instance().memoryFileExists(_path);
+    }
+    std::string physical = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    return fs::exists(fs::path(_path), ec);
+    return fs::exists(fs::path(physical), ec);
 }
 
 bool FileChannel::propIsDirectory() const {
     if (_path.empty()) return false;
+    if (VirtualFileSystem::isMemory(_path)) return false;
+    std::string physical = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    return fs::is_directory(fs::path(_path), ec);
+    return fs::is_directory(fs::path(physical), ec);
 }
 
 bool FileChannel::propIsRegularFile() const {
     if (_path.empty()) return false;
+    if (VirtualFileSystem::isMemory(_path)) {
+        return VirtualFileSystem::instance().memoryFileExists(_path);
+    }
+    std::string physical = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    return fs::is_regular_file(fs::path(_path), ec);
+    return fs::is_regular_file(fs::path(physical), ec);
 }
 
 bool FileChannel::propIsSymlink() const {
     if (_path.empty()) return false;
+    if (VirtualFileSystem::isMemory(_path)) return false;
+    std::string physical = VirtualFileSystem::resolve(_path);
     std::error_code ec;
-    return fs::is_symlink(fs::path(_path), ec);
+    return fs::is_symlink(fs::path(physical), ec);
 }
 
 bool FileChannel::propIsWritable() const {
     if (_path.empty()) return false;
+    if (VirtualFileSystem::isMemory(_path)) return true;
     return checkOSPermissions(_path, true);
 }
 
@@ -1075,8 +1161,12 @@ bool FileChannel::propIsBinary() const {
 
 double FileChannel::propSize() const {
     if (!_path.empty()) {
+        if (VirtualFileSystem::isMemory(_path)) {
+            return static_cast<double>(VirtualFileSystem::instance().memoryFileSize(_path));
+        }
+        std::string physical = VirtualFileSystem::resolve(_path);
         std::error_code ec;
-        fs::path absPath = fs::absolute(fs::path(_path)).lexically_normal();
+        fs::path absPath = fs::absolute(fs::path(physical)).lexically_normal();
         if (fs::exists(absPath, ec) && !fs::is_directory(absPath, ec)) {
             auto sz = fs::file_size(absPath, ec);
             if (!ec) return static_cast<double>(sz);
