@@ -15,10 +15,9 @@ saves/
 ├── persons/        # Registered Person / user profiles
 ├── designs/        # Design system saves
 ├── backups/        # Automatic backups (including before-load.json)
-├── logs/           # Save logs and metadata
-├── formations/     # Formation saves (legacy)
-├── integration/    # Integration and external adapter saves
-└── objects/        # Object saves (legacy)
+├── custom/         # Custom saves
+├── integrations/   # Integration and external adapter saves
+└── logs/           # Save logs and metadata
 ```
 
 ## Save Types
@@ -65,8 +64,9 @@ enum class SaveType {
     DESIGN,      // Design system saves
     BACKUP,      // Automatic backups
     CUSTOM,      // Custom saves
-    INTEGRATION, // Integration system saves
-    ZONE         // Per-Zone identity directory
+    INTEGRATION, // Integration system saves (web apps, external windows, etc.)
+    ZONE,        // Per-Zone identity directory under saves/zones/<id>/
+    HOME         // Per-Home identity directory under saves/homes/<id>/ — dwelling memory, not a Zone file
 };
 
 // Folder and filename utilities
