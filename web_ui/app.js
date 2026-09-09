@@ -73,12 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
         inputField.focus();
     }
     
-    emitBtn.addEventListener('click', emitUtterance);
-    
-    inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            emitUtterance();
-        }
+    const form = document.getElementById('logos-interface');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        emitUtterance();
     });
 
     inputField.addEventListener('input', () => {
