@@ -1,9 +1,9 @@
 # Zone identity store: field-level merge, not whole-object replacement
 
-**Status:** fixed and regression-tested across three independent causes; the app-level check is still open (see the Person Verification List)
-**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause found by GPT-5.6 Sol (Codex) on the agent intercom.
-**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/ZonesOfEarth/ZoneManager.cpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` no longer touching materialId/faceTextures/faceColors), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
-**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
+**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A complete (1, 2, 3), Stage B/C/D and Invariant 6 open
+**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1.
+**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
+**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
 
 ---
 
@@ -275,17 +275,61 @@ block for exactly this case, plus the composite-round-trip, duplicate-key-refusa
 and ambiguous-ownerless-refusal tests Sol specified. 9/9 green; full suite matches
 the documented baseline with no new failures.
 
+## Invariant 1 (scoped writer) — the actual reason the sidecar reached 1,441 entities
+
+Zach asked me to keep going on Sol's staged plan. This is the piece that was
+missing to CLOSE the hole rather than just make its consequences safe:
+Invariants 2/3 (above) make a bare-id collision refuse instead of silently
+picking a winner, but they don't stop `buildMatterFlatBuffer` from dumping
+every live Zone's objects into a matter buffer meant for one World in the
+first place.
+
+`buildMatterFlatBuffer` is called from four places. Two of them —
+`saveState`/`saveStateWithLog`, an ordinary Save/Quick Save — are actually
+FINE unscoped: `buildSaveJson` embeds every live `_zones` into the `.ecform`
+side too, at the exact same call, so both artifacts already agree on
+membership there. The one call site that is NOT symmetric — and the one that
+actually caused the bug — is `loadState`'s "Legacy JSON splitter": the first
+time a plain-JSON World (no `.ecmatter` yet) is loaded, it mints one via
+`buildMatterFlatBuffer()`, but by then `_zones` holds whatever boot-time
+`hydrateFromZoneStore()` already pulled in (every Zone under `saves/zones/`)
+PLUS whatever this specific load just admitted — a strict superset of the
+handful of Zones the loaded World's own `zones`/`zoneRefs` actually name.
+
+**Fixed:** `buildMatterFlatBuffer` gained an optional
+`std::optional<std::unordered_set<std::string>> scopeZoneIds` parameter
+(default `std::nullopt` = every live Zone, preserving the two symmetric call
+sites unchanged). The legacy-splitter call site now computes the exact set of
+Zone ids the just-loaded World's own `zones`/`zoneRefs` name and passes that
+as the scope; an empty scope (a degenerate World naming no Zone at all) skips
+minting a matter file entirely rather than falling back to "no filter," which
+would silently reintroduce the exact bug this closes. Also added a lighter
+form of Sol's requested membership assertion — `buildMatterFlatBuffer` itself
+logs loudly (not a hard `assert()`; a Storage-mechanism sanity check must not
+abort a Person's save) if a caller's scope names a Zone id that isn't
+currently live, since that would otherwise silently mean the matter buffer is
+just missing that Zone's physical state with no signal at all.
+
+**Test:** new `tests/zones/matter_scoped_writer_test.cpp` reproduces the real
+shape directly — a "Bystander" Zone stands in for boot-hydration bloat, a
+legacy World naming only "OnlyZone" is loaded through the real
+`ZoneManager::loadState`, and the resulting `.ecmatter` is decoded from disk
+and asserted to contain exactly OnlyZone's object, not Bystander's. 4/4 green.
+
+**Stage A (Invariants 1, 2, 3) is now complete.** Full suite re-verified
+clean at 126 tests (the suite has grown from 111 to 126 since this task
+started, from concurrent work — Formation Rete performance fixes from Opus 5,
+a Harmonic Save Studio pass, File Watcher/VFS work — none of which touch
+`Singularity/Storage`, `.ecform`/`.ecmatter`, or `ZoneManager.cpp`; confirmed
+directly with Opus 5 on the intercom before concluding several failures seen
+in one `-j4` run were resource contention from two concurrent agent sessions
+building/testing on the same machine, not real regressions — see the
+Housekeeping entries in the To-Do list for the two false leads that cost real
+time chasing: a `git stash`/pop leaving a stale object file, and an unrelated
+pre-existing `synthesis_studio_living_test` failure).
+
 **Explicitly deferred, per Sol's own staged sequencing — not attempted this
 pass:**
-- **Invariant 1** (scoped writer: a save's `.ecmatter` should contain only the
-  same Zones/Homes its `.ecform` names, not every live Zone in `_zones`). This is
-  why the real `basic_pixel_changer.ecmatter` reached 1,441 entities in the first
-  place, and it is the more foundational fix — Invariants 2/3 make the resulting
-  collisions safe rather than preventing the sidecar from being oversized to begin
-  with. Needs its own investigation into what `writeSemanticRoots` actually scopes
-  a World file's Zone membership to, which touches Earthcall's broader
-  one-Ourverse-many-Zone-identity-files design tension and deserves a pass of its
-  own.
 - **Invariant 4** (atomic generation commit: paired `snapshot_id`, matter
   hash/length/schema version in the semantic root, write-then-atomic-rename, keep
   the prior generation until commit).
@@ -307,8 +351,7 @@ drift running the full suite. Needs the same `RealSaveTreeGuard` treatment.
 
 ---
 
-**Signed:** Claude Sonnet 5
-**Session:** `01Mvd55GFWyUMrYWt2ERGSRE`
-**Date:** 2026-09-07, extended 2026-09-08
+**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1 pass — different session, same model, per the intercom's own rule that these are different agents)
+**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09
 
-**Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 2 and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence."
+**Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 1, 2, and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence." Also thanks to Claude Opus 5 (session `01F9nK3F`), concurrently restructuring the Law/Rete engine in the same checkout, for proactively confirming on the intercom that their work touches none of `Singularity/Storage`, ruling that out as the source of several test failures that turned out to be resource contention between two agent sessions building on the same machine.

@@ -2,9 +2,12 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rung 0 of §8 is built and green** (2026-09-08) — relation-state facts now have an
-incremental update path and both endpoints, which closes §1.2(a). Rungs 1–7 remain specified,
-not implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
+**Status:** **Rungs 0 and 1 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
+relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
+§1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
+`Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
+remaining quantifier cost is not removable by indexing. Rungs 2–7 remain specified, not
+implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
 decisions that are Zach's alone; §9.3 is answered, the rest are open.
 
 **Companion docs:** `PROPHETIC_RETE.md` (§2's widen-never-narrow rule, which governs every
@@ -60,9 +63,9 @@ implemented as "rank is depth from the root along `grounds`."
 
 | Mechanism | Honest? | Swift? |
 |---|---|---|
-| `ForAny` / `ForAll` quantifiers | yes — correct results | **no** — a hidden quadratic (§1.2b) |
+| `ForAny` / `ForAll` quantifiers | yes — correct results | **no** — ~5.5x an equivalent `Compare` at 320 beings, measured (§1.2b) |
 | `ForAnyPair` / `ForAllPair` | — | **burned on purpose** (§1.3) |
-| `Related` — the designated replacement | **no** — provably deaf (§1.2a) | yes |
+| `Related` — the designated replacement | ~~**no** — provably deaf (§1.2a)~~ **fixed, rung 0** | yes |
 
 So a multi-subject condition today is either *honest but quadratic* or *fast but deaf*.
 There is no third option. That is the real finding.
@@ -109,7 +112,12 @@ This is the same class of bug as the comment at `Law.cpp:2227`, which describes 
 time (`Law.cpp:2297`), so a law authored *after* beings were seeded names a relation type
 nobody ever seeded facts for.
 
-**(b) Quantifiers are a hidden quadratic. — read, not yet measured.**
+**(b) Quantifiers are a hidden quadratic. — MEASURED 2026-09-09; real, but not the dominant
+one.** The description below is correct and stands. What measurement added: the engine's
+dominant quadratic was elsewhere entirely (transient `Moment` destruction — §8 rung 1(i)), it
+was masking this one, and with it removed a bare `ForAll` fits k ≈ 1.83 against an identical
+`Compare` law at ≈ 1.50. It is also **not removable by indexing**, because the cost sits in the
+per-subject re-evaluation `applyTo` must do for safety. See §8 rung 1.
 `ForAny`/`ForAll` compile to a closure that loops `Universe::instance().beings()`
 (`ConditionModel.cpp:424`) — a vector the provider **rebuilds on every call**. In
 `compileToRete`, quantifiers fall through to the leaf path, where `targetAttr` is set only
@@ -442,8 +450,53 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    Still open, and still coordinating with the To-Do item *"Idle tick is O(beings) due to
    per-frame Rete fact seeding — move seeding to admission"*: admission is the right home for
    relation formation too, and the back-seed is deliberately kept off the per-tick path.
-1. **Give quantifiers a real index** — defect (b). Today they are an unfiltered alpha
-   wrapping a Universe scan. Measure first (§10).
+1. ⚠️ **Give quantifiers a real index** — defect (b). *Measured 2026-09-09 (Opus 5, session
+   `session_01F9nK3FZ7VR4PFPTUWfYyvm`). The measurement changed the conclusion, and the rung is
+   left MEASURED AND BOUNDED rather than fixed.* Three things came out of it:
+
+   **(i) The dominant quadratic was not the quantifier.** `ReteNetwork::retractFactsAbout`
+   scans the whole fact table, and it is called from `Singular::notifyBeingReleased`, which
+   fires for *every* `Singular` destructor — and `ECA::Event` carries `Moment timestamp{}` **by
+   value** while `Moment` **is** a `Singular`. So every transient Event paid a full fact-table
+   scan: one in `conditionsSatisfied`, one in `publishAppliedEvent`, and one **per alpha node
+   per fact** in the `ECA::Event dummy` inside the compiled alpha predicate
+   (`ConditionModel.cpp`). An ordinary WhileTrue `Compare` law with no quantifier anywhere
+   fitted **k = 2.00** against population. Fixed with a participant set
+   (`ReteNetwork::_factParticipants`) so the call answers "this being never had facts" in O(1):
+   **320 beings, 593 ms/tick → 63 ms/tick, k 2.00 → ~1.5.** Engine-wide, not law-shape specific.
+
+   **(ii) The quantifier penalty is real, and smaller.** With that removed, a bare `ForAll`
+   fits **k ≈ 1.83** against an identical `Compare` law at **≈ 1.50** — about 5.5× slower at 320
+   beings, with the gap widening in N. Two measurements had to be thrown away first: one whose
+   action `set` a constant, so `propertyValueUnchanged` kept the fact table quiet and the
+   per-fact predicate never ran again; and one using `ForAny` over a population where every
+   being satisfied the inner condition, so it short-circuited on the **first** being and never
+   scanned. `ForAll` over a satisfying population is the shape that actually walks N.
+
+   **(iii) No index can remove it, and trying made it worse.** The cost is in **evaluation**,
+   not candidate selection: `Law::applyTo` re-evaluates `conditionsSatisfied` per subject, and
+   that re-check is precisely what makes a widened candidate set safe (§6). Dropping a bare
+   quantifier from the index was measured at **413 → 718 ms** at 320 beings — losing terminals
+   sends the law to the sweep, which evaluates the condition *twice* per subject, once in
+   `tick()`'s continuous loop and again inside `applyTo`. What was kept is narrow: a quantifier
+   **conjunct** is skipped inside `All` (it is a constant, not a filter — `targetAttr` is set
+   only for `Compare` and `Related`, so its alpha admits or rejects every fact together), with a
+   guard for the case where *every* conjunct is skipped and `currents` would otherwise return
+   the sentinel `0` as though it were a node id. A quantifier **disjunct** inside `Any`, and a
+   **bare** quantifier, keep their node — measured, that is the cheaper of two bad options.
+
+   Guarded by `tests/law/quantifier_scaling_test.cpp`, which asserts the control has not gone
+   quadratic again and that the quantifier gap does not widen.
+
+1b. **The memo that would actually fix (ii) — BLOCKED, not merely unwritten.** A quantifier's
+   answer is subject-independent, so it could be computed once per world-state and reused,
+   keyed on a revision that bumps on any property write. **Do not build this yet.**
+   `PropertyPath.cpp` states plainly that a direct C++ setter (`obj.setPosition(...)`) writes
+   the transform without passing through the property vocabulary at all — *"it is the boundary,
+   not an oversight"*. A memo keyed on property writes would therefore go stale on exactly those
+   writes and answer a quantifier falsely, which makes laws deaf: the narrowing
+   `PROPHETIC_RETE.md` §2 forbids. The precondition is complete write coverage, and that is a
+   rung of its own.
 2. **Categories as authored Formations**, replacing the implicit `couldApplyTo` vocabulary
    filter — with §3.0's IMPOSSIBLE-only pruning rule written into the code, not just here.
 3. **Alpha subscription for named `@referents`.** O(1) per referent, no joins; removes the
@@ -502,7 +555,8 @@ joins they exist for.
 | Qualified roots name one being; no free variables | verified — `ActionModel.cpp:206` |
 | `Related` deaf to runtime-formed relations | **FIXED 2026-09-08**, rung 0. Was probe-proven; the probe no longer existed on disk (`scratch/` is ignored) and has been replaced by the registered test `tests/law/rete_relation_state_test.cpp`, which reproduces the same witness — `shape.fillet` 0.500 when the law hears, 0.000 when deaf — and additionally covers the far-endpoint and late-authored-law shapes |
 | Pair quantifiers existed and were burned | verified — `ConditionModel.hpp:37`, and the `fromJson` audit-log message |
-| Quantifiers compile to an unfiltered Universe-scanning alpha; O(N²) on the sweep path | **read, not measured** — `ConditionModel.cpp:424`, leaf path of `compileToRete`, `collectPaths` early return, `sweepSubjects` "no requirements = no filter". The `lag` target would witness it |
+| Quantifiers compile to an unfiltered Universe-scanning alpha | **MEASURED 2026-09-09** — real but not dominant: bare `ForAll` k ≈ 1.83 against an identical `Compare` at ≈ 1.50, ~5.5× at 320 beings. Not removable by indexing; see §8 rung 1 |
+| **The engine's dominant quadratic was transient `Moment` destruction, not quantifiers** | **MEASURED AND FIXED 2026-09-09** — `ECA::Event` holds a `Moment` by value, `Moment` is a `Singular`, and every `Singular` destructor scanned the whole fact table through `retractFactsAbout`. A plain `Compare` law fitted k = 2.00. 593 ms → 63 ms per tick at 320 beings. Guarded by `tests/law/quantifier_scaling_test.cpp` |
 | Structural support for Layers 2–3 (Relations of Relations, Formations of Relations) | verified — `Relation.hpp:46`, `Formation::addMember`, `relationTypeTag` |
 | Prophetic index keeps quantified conditions reachable on the reactive path | verified — `PropheticRete.cpp:496–506`: demands do not propagate, `readNames` do |
 
@@ -537,6 +591,8 @@ against a 1.653 ms baseline** with the fix in.
 
 ---
 
+*Rung 1 measured and the transient-`Moment` quadratic fixed by Claude Opus 5, session
+`session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
 *Rung 0 implemented, and §3.4 / §9.3 / §10 updated, by Claude Opus 5, session
 `session_01K1PtKNZtSDU9XGwKZQ7ZzF`, 2026-09-08.*
 *Revised by Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`, 2026-09-08T02:30:47-07:00.*

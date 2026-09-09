@@ -192,3 +192,15 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 
 
 - [ ] **Synthesis Studio / Living Instrument** (Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-08 23:37 PDT): Load `synthesis_studio_living`; confirm this is the clean room, with no canvas-spam imports, while your original Studio remains intact. Play all twelve HUD/desk notes, change octaves 3–6 and Solo/Fifth/Major/Minor with each voice, and judge tuning, dynamics, responsiveness, and the shared pad/meter/resonator hue. Drag the expression field from lower left to upper right and feel whether bloom, motion, and dynamics follow your hand coherently. Turn Sound Ink on, play a note, enable Draw, and drag slowly over the easel; confirm its marks carry that note's color and sound on hover. Save, quit, reopen, and confirm the expression, harmony, octave, and marks remain yours. Judge the constellation's movement, text readability, and layout in your usual window size.
+
+## Formation Rete rung 1 — the engine got ~9x faster on law-heavy worlds
+
+*Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`. Every transient
+`ECA::Event` was destroying a `Moment` — which is a `Singular` — and each destruction scanned the
+whole Rete fact table. Measured at 320 beings: **593 ms/tick → 63 ms/tick**. This is a speed
+change to the tick every law application pays, so what needs a Person is that nothing MOVED
+differently, only faster. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+- [ ] **A law-heavy world should feel faster, and behave identically.** Open `chess_app`, Synthesis Studio, and Far Lands in `earthcall_webgpu` (`Run Earthcall.command`). Watch the F3 `LawManager::tick` figure — it should be markedly lower than you remember on the same world. Then play: pieces move legally, pads sound, terrain loads. The risk to look for is a law that no longer fires, or one that fires when it should not.
+- [ ] **Beings that leave the world while laws watch them.** The fix makes "this being never had facts" an O(1) answer, so the check that matters is the opposite case: delete objects a law is actively targeting, in a busy zone, and confirm nothing crashes and no law keeps acting on the deleted thing. That path is where a wrong answer would show as a dangling read rather than a slow frame.
+- [ ] **`frame_lag_test` wants re-recording, and only you should authorize it.** The `LawManager::tick` baseline in `tests/singularity/frame_lag_baseline.txt` was recorded before this fix and is now far above what the engine costs. Leaving it means the file overstates the cost; changing it means editing a baseline, which `AGENTS.md` says never to do to quiet a line. This one is not being quieted — it is genuinely faster — but it is your call to re-record.

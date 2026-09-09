@@ -672,6 +672,12 @@ private:
     static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
     std::vector<FactPtr> _facts;
+    // Every being that has ever been a fact's subject or object, so
+    // retractFactsAbout can answer "this one has no facts" in O(1) instead of
+    // scanning the table. It fires on EVERY Singular destructor — including
+    // the `Moment` inside every transient `ECA::Event` — so that scan was the
+    // engine's real quadratic. A SUPERSET on purpose: see retractFactsAbout.
+    std::unordered_set<const Singular*> _factParticipants;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;

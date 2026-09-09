@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rung 0 of 7 built and green (2026-09-08). Rungs 1–7 specified.
+**Status:** rungs 0 and 1 of 7 done (2026-09-08, 2026-09-09). Rungs 2–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -49,11 +49,52 @@ passing beside them.
 
 **Measured:** `LawManager::tick` at 0.154 ms against a 1.653 ms baseline.
 
+## Rung 1 — ✅ measured 2026-09-09, and it changed the answer
+
+*Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.* The spec marked §1.2(b) *"read, not
+measured"* and said measure first. Doing that produced three findings, in order of size.
+
+**(i) The dominant quadratic was not the quantifier — it was every law.** `ECA::Event` carries
+`Moment timestamp{}` **by value**, and `Moment` **is** a `Singular`. Every `Singular` destructor
+calls `Singular::notifyBeingReleased` → `ReteNetwork::retractFactsAbout`, which scans the whole
+fact table. So every transient `Event` paid a full scan: one in `conditionsSatisfied`, one in
+`publishAppliedEvent`, and one **per alpha node per fact** in the `ECA::Event dummy` inside the
+compiled alpha predicate. An ordinary `WhileTrue` `Compare` law with no quantifier anywhere
+fitted **k = 2.00** against population.
+
+Fixed with `ReteNetwork::_factParticipants`, a deliberate superset so the call can answer "this
+being never had facts" in O(1). **320 beings: 593 ms/tick → 63 ms/tick, k 2.00 → ~1.5.**
+Engine-wide — it is paid by every law application in every world.
+
+**(ii) The quantifier penalty is real, and smaller.** Bare `ForAll` k ≈ 1.83 against an identical
+`Compare` at ≈ 1.50; ~5.5× at 320 beings, widening in N.
+
+**(iii) It is not removable by indexing, and trying made it worse.** The cost is in *evaluation*,
+not candidate selection — `applyTo` re-evaluates `conditionsSatisfied` per subject, and that
+re-check is exactly what makes a widened candidate set safe. Dropping a bare quantifier from the
+index measured **413 → 718 ms**: losing terminals sends the law to the sweep, which evaluates the
+condition *twice* per subject. Kept narrowly: quantifier **conjuncts** are skipped inside `All`
+(they are constants, not filters), with a guard for the all-conjuncts-skipped case that would
+otherwise return the sentinel `0` as a node id. Disjuncts and bare quantifiers keep their node.
+
+**Two measurements were wrong before they were right,** and both would have flattered the engine:
+the first `set` a constant, so `propertyValueUnchanged` kept the fact table quiet and the per-fact
+predicate never ran again; the second used `ForAny` over a population where every being satisfied
+the inner condition, so it short-circuited on the first being and never scanned.
+
+**Guarded by** `tests/law/quantifier_scaling_test.cpp` — asserts the control has not gone
+quadratic again, and that the quantifier gap does not widen. Thresholds are loose on purpose: the
+fitted exponent is machine-load sensitive (1.43–1.54 quiet, 1.68 under a concurrent build).
+
+**Rung 1b — the real quantifier fix, BLOCKED not unwritten.** A quantifier's answer is
+subject-independent and could be memoized on a world-revision key. Do not build it yet:
+`PropertyPath.cpp` states that a direct C++ setter (`obj.setPosition(...)`) bypasses the property
+vocabulary entirely — *"the boundary, not an oversight"* — so a memo keyed on property writes goes
+stale on those writes and makes laws deaf. That is the narrowing `PROPHETIC_RETE.md` §2 forbids.
+The precondition is complete write coverage.
+
 ## Next rungs
 
-1. **Quantifiers** — §1.2(b): `ForAny`/`ForAll` compile to an alpha with no attribute filter
-   whose predicate scans the whole Universe, and on the sweep path give O(N²) per tick. The spec
-   marks it *read, not measured*; **measure with the `lag` target before optimizing**.
 2. **Categories as authored Formations**, replacing `couldApplyTo`'s implicit vocabulary filter.
    Blocked by two things now written down: Zach's revised Formation definition means a taxonomy
    of `instance-of`/`subcategory-of` is *purely branching* and therefore **not a Formation**, and

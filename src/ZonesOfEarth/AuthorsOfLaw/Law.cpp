@@ -722,6 +722,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     if (fact->subject && fact->subjectId.empty()) {
         fact->subjectId = fact->subject->getIdentifier();
     }
+    // Both participants, because retractFactsAbout matches on either.
+    if (fact->subject) _factParticipants.insert(fact->subject);
+    if (fact->object)  _factParticipants.insert(fact->object);
     _facts.push_back(fact);
     const FactPtr& f = fact;
 
@@ -1022,6 +1025,28 @@ void ReteNetwork::evaluateDirty() {
 std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     std::vector<std::string> orphanedSubjects;
     if (!being) return orphanedSubjects;
+    // THE HOT GUARD. This is called from Singular::notifyBeingReleased, which
+    // fires for EVERY Singular destructor — and `ECA::Event` carries a
+    // `Moment timestamp{}` by value, while `Moment` IS a Singular. So every
+    // transient Event destroys a Singular: one in conditionsSatisfied, one in
+    // publishAppliedEvent, and — worst — one per alpha node per fact, in the
+    // `ECA::Event dummy` inside the compiled alpha predicate
+    // (`ConditionModel.cpp`).
+    //
+    // Without this check each of those paid a full scan of _facts, so a law
+    // applying to N beings over a fact table of N cost O(N²) with no scan of
+    // the world in sight. Measured before the guard: a plain WhileTrue Compare
+    // law fitted k = 2.00 against population; after, it is linear. This is the
+    // quadratic FORMATION_RETE.md §1.2(b) went looking for in quantifiers —
+    // the quantifier arm and the Compare control were within 3% of each other.
+    //
+    // _factParticipants is a deliberate SUPERSET: assertFact adds, and only
+    // this function removes. A stale entry costs one scan that finds nothing,
+    // which is exactly today's behaviour; a missing entry would silently keep
+    // a dangling fact, so the set may never be pruned anywhere else.
+    if (_factParticipants.find(being) == _factParticipants.end()) {
+        return orphanedSubjects;
+    }
     std::unordered_set<std::string> removedIds;
     std::unordered_set<std::string> subjects;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
@@ -1041,6 +1066,9 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
                                 }),
                  _facts.end());
     orphanedSubjects.assign(subjects.begin(), subjects.end());
+    // The being is gone; nothing may assert about it again without going
+    // through assertFact, which would re-add it.
+    _factParticipants.erase(being);
     if (removedIds.empty()) return orphanedSubjects;
 
     for (auto& alpha : _alphaNodes) {
@@ -1074,6 +1102,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _factParticipants.clear();
     _dirtyFacts.clear();
     _agenda.clear();
     for (auto& alpha : _alphaNodes) alpha.memory.clear();

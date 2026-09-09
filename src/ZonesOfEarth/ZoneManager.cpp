@@ -1372,7 +1372,37 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 // Legacy JSON splitter: transparent migration on load
                 std::filesystem::path p(filename);
                 std::string stem = p.stem().string();
-                std::vector<uint8_t> newMatter = buildMatterFlatBuffer();
+
+                // Invariant 1 (Sol, agent intercom "Basic Pixel Changer Zone
+                // Identity Bug 9-7-26", 2026-09-08): scope the freshly-minted
+                // matter buffer to exactly the Zones THIS legacy file names
+                // (its own "zones"/"zoneRefs"), not every Zone hydrated into
+                // _zones this session — boot hydration alone can pull in
+                // every Zone under saves/zones/. This is the actual
+                // mechanism by which the real basic_pixel_changer.ecmatter
+                // reached 1,441 entities: a World naming one Zone, migrated
+                // while dozens of unrelated Zones were also live.
+                std::unordered_set<std::string> scopeIds;
+                if (j.contains("zones") && j["zones"].is_array()) {
+                    for (const auto& zj : j["zones"]) {
+                        const std::string zid = zoneIdFromJson(zj);
+                        if (!zid.empty()) scopeIds.insert(zid);
+                    }
+                }
+                if (j.contains("zoneRefs") && j["zoneRefs"].is_array()) {
+                    for (const auto& ref : j["zoneRefs"]) {
+                        std::string zid;
+                        if (ref.is_string()) zid = ref.get<std::string>();
+                        else if (ref.is_object()) zid = ref.value("identifier", std::string{});
+                        if (!zid.empty()) scopeIds.insert(zid);
+                    }
+                }
+                // An empty scope means this legacy file named no Zone at
+                // all — degenerate, not "fall back to everything": that
+                // fallback is exactly the bug this scoping exists to close.
+                std::vector<uint8_t> newMatter = scopeIds.empty()
+                    ? std::vector<uint8_t>{}
+                    : buildMatterFlatBuffer(scopeIds);
                 if (!newMatter.empty()) {
                     SaveSystem::writeMatterData(newMatter, stem, SaveSystem::SaveType::WORLD);
                     std::filesystem::path formPath(filename);
@@ -1655,13 +1685,15 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
 // ------------------------------------------------------------------
 // buildMatterFlatBuffer – Serialize physical geometry to FlatBuffer (.ecmatter)
 // ------------------------------------------------------------------
-std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
+std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer(
+        const std::optional<std::unordered_set<std::string>>& scopeZoneIds) const {
     flatbuffers::FlatBufferBuilder builder(4096);
-    
+
     std::vector<flatbuffers::Offset<Earthcall::Schema::Entity>> entity_offsets;
-    
+
     for (const auto& zone : _zones) {
         if (!zone) continue;
+        if (scopeZoneIds && !scopeZoneIds->count(zone->getIdentifier())) continue;
         for (const auto& o : zone->getOwnedObjects()) {
             if (!o) continue;
 
@@ -1808,6 +1840,28 @@ std::vector<uint8_t> ZoneManager::buildMatterFlatBuffer() const {
                 owner_id_str
             );
             entity_offsets.push_back(entity);
+        }
+    }
+
+    // Sol's Invariant 1 assertion: "the semantic root and its sidecar must
+    // have the same membership set." This function cannot see the .ecform
+    // side, so it checks the one divergence it CAN see directly — a caller
+    // naming a Zone id in scopeZoneIds that was never actually live to
+    // contribute objects, which would otherwise silently mean that Zone's
+    // physical state is just absent from the buffer with no signal at all.
+    // Logged loudly, not a hard crash: a Storage-mechanism sanity check must
+    // not abort a Person's save.
+    if (scopeZoneIds) {
+        std::unordered_set<std::string> seenZoneIds;
+        for (const auto& zone : _zones) {
+            if (zone) seenZoneIds.insert(zone->getIdentifier());
+        }
+        for (const auto& wanted : *scopeZoneIds) {
+            if (!seenZoneIds.count(wanted)) {
+                std::cerr << "[ZoneManager] buildMatterFlatBuffer: scope named Zone '"
+                          << wanted << "' which is not currently live — its physical "
+                          << "state (if any) will be absent from this matter buffer.\n";
+            }
         }
     }
 
