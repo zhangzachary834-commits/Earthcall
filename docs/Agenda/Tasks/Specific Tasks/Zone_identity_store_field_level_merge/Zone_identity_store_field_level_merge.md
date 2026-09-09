@@ -1,9 +1,9 @@
 # Zone identity store: field-level merge, not whole-object replacement
 
-**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A+B complete (1, 2, 3, 4), Stage C/D open; Invariant 6 is now implemented in general form (Zone gained a real identifier/name split) — the one remaining concrete case (`BasicPixelChanger`) is still Person-authorized-only
-**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1, then Invariant 4, then Zone's identifier/name split (Invariant 6, general form).
-**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`, `zoneIdFromJson`, `makeZoneFromJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer; `commitMatterGeneration`/`readVerifiedMatterGeneration`/`atomicWriteFile`/`sha256Hex` — atomic generation coupling; `saveState`/`saveStateWithLog`/`loadState`'s physical-matter stage/`loadTestObservation` rewired to use it), `src/ZonesOfEarth/Zone/Zone.hpp`/`.cpp` (`_identifier` field, `setName`, `propIdentifier`, `getIdentifier()` now returns `_identifier` not `_name`), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`)
-**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/zones/matter_generation_commit_test.cpp`, `tests/zones/zone_identifier_name_split_test.cpp`, `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
+**Status:** the reported bug is fixed and regression-tested across three independent causes (app-level check still open, see Person Verification List); structural hardening (Sol's 6 invariants) is at Stage A+B complete (1, 2, 3, 4); Invariant 6 is now fully landed (general Zone identifier/name split, plus storage-boundary directory-key validation) with two real save-file inconsistencies it caught fixed/archived with Zach's authorization; Stage C/D (Invariants 5, and Invariant 3's stronger "detached whole-load transaction" form) open
+**Created:** 2026-09-07 by Claude, investigating a report from Zach. Extended 2026-09-08 with a second root cause and 6-invariant plan from GPT-5.6 Sol (Codex) on the agent intercom. Extended 2026-09-09 with Invariant 1, then Invariant 4, then Zone's identifier/name split (Invariant 6 general form), then Invariant 6's storage-boundary validation (Stage 0+1 of Sol's follow-up plan).
+**Code:** `src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp` (`mergeZoneObjectsFromJson`, `applyZoneJson`, `zoneIdFromJson`, `makeZoneFromJson`), `src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp` (`to_json`'s `faceColors`), `src/Singularity/Storage/Schema/Earthcall.fbs`/`Earthcall_generated.h` (`Entity.owner_identifier`, append-only), `src/Singularity/Storage/SaveSystem.hpp`/`.cpp` (`IdentityRecord`, `listZoneIdentityRecords`/`listHomeIdentityRecords`; `listZoneIdentities`/`listHomeIdentities` now return directory keys, not document-parsed identifiers), `src/ZonesOfEarth/ZoneManager.cpp`/`.hpp` (`admitFromJson`'s identity-store branch, including its Home-vs-Zone write-routing fix; `hydrateFromZoneStore`'s directory-key validation; `applyMatterFlatBuffer`/`buildMatterFlatBuffer` — semantic fields removed, composite-address resolution, scoped writer; `commitMatterGeneration`/`readVerifiedMatterGeneration`/`atomicWriteFile`/`sha256Hex` — atomic generation coupling; `saveState`/`saveStateWithLog`/`loadState`'s physical-matter stage/`loadTestObservation` rewired to use it), `src/ZonesOfEarth/Zone/Zone.hpp`/`.cpp` (`_identifier` field, `setName`, `propIdentifier`, `getIdentifier()` now returns `_identifier` not `_name`), `tests/support/test_harness.hpp` (`RealSaveTreeGuard`, its `GuardCurrentRoot` tag, `hashDirectoryTree`)
+**Test:** `tests/zones/zone_identity_test.cpp`, `tests/zones/matter_semantic_precedence_test.cpp`, `tests/zones/matter_scoped_writer_test.cpp`, `tests/zones/matter_generation_commit_test.cpp`, `tests/zones/zone_identifier_name_split_test.cpp`, `tests/zones/zone_identity_boundary_test.cpp`, `tests/zones/test_observation_load_test.cpp` (now guarded), `tests/law/chess_*_test.cpp` (sandboxing only, not the bug itself)
 
 ---
 
@@ -492,23 +492,107 @@ object(s)" immediately before this fix — one fewer of exactly this kind of pha
 duplicate. Its own `instanceOf == 35` assertion is unrelated stale-fixture drift
 (see the note further down) and still fails, unaffected by this fix either way.
 
+## Sol's Stage 0 + 1: sealed the test leak, finished Invariant 6 at the storage boundary (2026-09-09)
+
+After the identifier/name split above, Sol replied on the intercom with a fuller
+staged plan (Stage 0 through 4). This pass landed Stage 0 and 1 together, exactly
+as Sol asked ("Please land 0+1 as one bounded pass").
+
+**Stage 0 — sealed `test_observation_load_test`'s real-`saves/`-tree leak.**
+`dump_test_save` (via `ZoneManager::saveState`) calls `persistZones()`
+unconditionally, and this test never pointed `SaveSystem` at a sandbox, so its
+write landed in the real `saves/zones/visible_cube/` tree — the same bug class as
+the 5 chess tests, logged since 2026-09-08, not yet fixed. `RealSaveTreeGuard`
+gained a second constructor, tagged `GuardCurrentRoot`, for exactly this shape: a
+test that never names a real `saves/worlds/...` file at all but still risks
+writing into the real tree because nothing ever redirected `SaveSystem`. Also
+added `hashDirectoryTree` (`tests/support/test_harness.hpp`) — a content
+signature over a directory's files, not cryptographic (test-only, defends against
+drift not an adversary) — and the test now snapshots `saves/zones`+`saves/homes`
+before entering a `try` block that owns the guard, and asserts the hash is
+byte-identical afterward whether the guarded section completed normally or threw.
+21/21 checks pass; `git status saves/` is clean before and after.
+
+**Stage 1 — Invariant 6 at the storage boundary.** The general identifier/name
+split (previous section) fixed *within-document* divergence. Sol's Stage 1 asks
+about a different divergence: the *directory key* (the folder a Zone/Home
+identity was actually enumerated from) versus the *document's own* claimed
+identity — Sol's own words: "do not return a document identifier and then use it
+to reconstruct a possibly different path." `SaveSystem::listZoneIdentities()`
+and `listHomeIdentities()` did exactly that: each returned `j.value("identifier",
+j.value("name", ...))` — the DOCUMENT's content — which `ZoneManager` then fed
+back into `readZoneIdentity()`/`readHomeIdentity()` to reconstruct a path via
+`sanitizeLabel()`. If a document's own identifier differs from the folder it
+actually lives in, that round-trip resolves a DIFFERENT folder (or none at all).
+
+**Fixed:**
+- New `SaveSystem::IdentityRecord{directoryKey, document}` and
+  `listZoneIdentityRecords()`/`listHomeIdentityRecords()` — directoryKey is
+  always the literal folder name, never re-derived from content. The existing
+  `listZoneIdentities()`/`listHomeIdentities()` (still used for the Load World
+  window's display list) now return directory keys too, built by mapping over
+  the new records function, closing the anti-pattern at its only other call site.
+- `ZoneManager::hydrateFromZoneStore()` now validates every record BEFORE
+  constructing anything: (1) the document's own resolved identity (via the same
+  shared `zoneIdFromJson` from the section above) must equal the directory key it
+  was read from; (2) two different directory entries — Home or Zone, one shared
+  identity namespace — may not claim the same identity. Either failure refuses
+  with a structured message naming the path, directory key, document identity,
+  and (for a duplicate) every claimant — zero writes, no phantom live Zone, per
+  Sol's acceptance criterion. Neither check picks a "first winner" by iteration
+  order: a duplicate refuses ALL claimants, the same posture Invariant 3 already
+  takes on a duplicate composite matter key.
+- Found and fixed a real, previously-invisible bug this validation surfaced
+  immediately: `admitFromJson`'s fallback branch (first-ever identity write for a
+  Zone named in a session file) called `writeZoneIdentity` unconditionally, never
+  checking whether the constructed being was a `Home` — `persistZones()` already
+  correctly routes Homes to `writeHomeIdentity`; this one code path didn't. Fixed
+  to match.
+
+**Two real save-file inconsistencies this validation caught, both Person-authorized:**
+1. **`saves/zones/BasicPixelChanger/zone.json`** — exactly the case Sol found on
+   2026-09-08: folder `BasicPixelChanger`, document `identifier: "Basic Pixel
+   Changer"` (a space). Zach authorized the one-line fix (edit the field, not the
+   folder — the canonical `saves/worlds/basic_pixel_changer.ecform`/`.json` already
+   reference `BasicPixelChanger` with no space in `currentZoneId`/`zoneRefs`, so
+   this made the identity-store record agree with what already-correct World
+   files expected).
+2. **A duplicate on Zach's own Home, found while testing the above** —
+   `saves/zones/Home/zone.json` (32 objects, stale) and
+   `saves/homes/Home/home.json` (104 objects, the one `persistZones()` has
+   actually been maintaining) both claimed identity `"Home"`. This was the exact
+   `admitFromJson` write-routing bug above, fired at some point in Zach's own
+   history. Silently harmless before (the old code just skipped the second
+   "Home" it saw); with the new validation active it would have refused the
+   REAL Home entirely at next boot. Zach authorized moving the stale file aside
+   (not deleting): `git mv saves/zones/Home saves/backups/Home.orphaned-2026-09-09`,
+   with its `identifier`/`name` fields inside also updated to match, so it no
+   longer claims "Home" and causes no recurring refusal log. Nothing in the real
+   `saves/homes/Home/home.json` was touched.
+
+**Test:** `tests/zones/zone_identity_boundary_test.cpp`, 10/10 green, entirely
+against sandboxed temp-root fixtures — per Sol's explicit instruction, the real
+`BasicPixelChanger`/`Home` files were never read by this test; it reproduces
+their exact shape synthetically. Covers: the real mismatch shape refuses under
+both the directory key and the document's identifier, with the on-disk record
+completely untouched and a repeated hydration pass still refusing identically; a
+matching identity still hydrates (control case); a Home entry and a Zone entry
+claiming the same identity refuses both; a document with no identifier or name
+at all refuses without crashing.
+
 **Not this pass, per Sol's own sequencing:**
 - **Invariant 5** (registered-property persistence audit: CI catches both a
   registered path with zero persistence homes — the original missing-`faceColors`
   bug — and one with multiple competing homes — the `.ecform`/identity/`.ecmatter`
   jurisdiction fight this whole task has been about).
-- **Invariant 6, remaining sliver**: Zone now has a real identifier/name split
-  (see the section above), which closes the general mechanism — but validating
-  `saves/zones/<id>/`'s directory KEY itself against the document's internal
-  `identifier` (they can still differ, as `BasicPixelChanger`'s folder vs its
-  document's `"Basic Pixel Changer"` identifier does) is not yet a load-time
-  refuse/log check anywhere. The concrete repair of that one file is unchanged
-  from the previous section: Person-authorized only.
+- **Invariant 3's stronger "detached whole-load transaction" form** (Stage C of
+  Sol's follow-up plan) and **closing the legacy-splitter generation edge**
+  (Stage 4) — both explicitly gated by Sol on posting the `ValidatedLoadPlan`
+  boundary to the intercom first, for review before landing.
 
-Also found and reverted while verifying, not fixed (logged in the To-Do list):
-`test_observation_load_test` has the same real-`saves/`-tree-pollution bug the 5
-chess tests had — `saves/zones/visible_cube/zone.json` picked up 34 lines of
-drift running the full suite. Needs the same `RealSaveTreeGuard` treatment.
+`Invariant 6` itself — both the general identifier/name split and the
+storage-boundary directory-key validation — is now fully landed (see the two
+sections above).
 
 Also found while verifying Invariant 4, unrelated to it (logged in the To-Do
 list): `zone_boot_hydration_relations_test` and `chess_extended_rules_test` both
@@ -525,8 +609,14 @@ expectations are stale, not the save file wrong.
 
 ---
 
-**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1, Invariant 4, and Zone identifier/name split passes — different session, same model, per the intercom's own rule that these are different agents)
-**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09 (three times)
+**Signed:** Claude Sonnet 5 (session `01Mvd55GFWyUMrYWt2ERGSRE` through 2026-09-08; session `01MsayKP3NYfQAyBtyQ8xeA1` for the 2026-09-09 Invariant 1, Invariant 4, Zone identifier/name split, and Stage 0+1 passes — different session, same model, per the intercom's own rule that these are different agents)
+**Date:** 2026-09-07, extended 2026-09-08, extended 2026-09-09 (four times)
+
+Both real-save-file authorizations in this pass — the `BasicPixelChanger`
+identifier fix and moving the stale `Home` duplicate aside — were given
+explicitly by Zach in-session before either file was touched, per CLAUDE.md's
+"Save files are sacred... only ever modified with authorization from their
+owner/stakeholder Persons."
 
 **Diagnosis credited to:** Codex (GPT-5.6 Sol), session `01a0707e-f743-71b1-8fb9-63975012e66d`, for the `.ecmatter` matter/semantic precedence finding and the six-invariant structural-hardening plan — see "Second red-canvas cause" and "Structural hardening" above. Implementation (Invariants 1, 2, and 3) is mine; the findings, invariant framing, and staged landing order are Sol's, posted on `agent intercom/communication-threads/Basic Pixel Changer Zone Identity Bug 9-7-26.md`. Sol's own framing: "Zach originated the demand that this never become a bureaucracy again and that serialization follow the Singular ontology; I am extending that human direction into the invariants and landing sequence." Also thanks to Claude Opus 5 (session `01F9nK3F`), concurrently restructuring the Law/Rete engine in the same checkout, for proactively confirming on the intercom that their work touches none of `Singularity/Storage`, ruling that out as the source of several test failures that turned out to be resource contention between two agent sessions building on the same machine.
 

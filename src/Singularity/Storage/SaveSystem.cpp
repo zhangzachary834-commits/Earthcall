@@ -943,8 +943,8 @@ nlohmann::json readZoneIdentity(const std::string& identifier) {
     return readSaveData(path);
 }
 
-std::vector<std::string> listZoneIdentities() {
-    std::vector<std::string> out;
+std::vector<IdentityRecord> listZoneIdentityRecords() {
+    std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return out;
     std::error_code ec;
@@ -955,14 +955,16 @@ std::vector<std::string> listZoneIdentities() {
         if (!std::filesystem::exists(zoneFile, ec)) continue;
         if (std::filesystem::file_size(zoneFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(zoneFile.string());
-        std::string id;
-        if (j.is_object()) {
-            id = j.value("identifier", j.value("name", std::string{}));
-        }
-        if (id.empty()) id = entry.path().filename().string();
-        out.push_back(std::move(id));
+        out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }
-    std::sort(out.begin(), out.end());
+    std::sort(out.begin(), out.end(),
+              [](const IdentityRecord& a, const IdentityRecord& b) { return a.directoryKey < b.directoryKey; });
+    return out;
+}
+
+std::vector<std::string> listZoneIdentities() {
+    std::vector<std::string> out;
+    for (auto& rec : listZoneIdentityRecords()) out.push_back(std::move(rec.directoryKey));
     return out;
 }
 
@@ -1027,8 +1029,8 @@ nlohmann::json readHomeIdentity(const std::string& identifier) {
     return readSaveData(path);
 }
 
-std::vector<std::string> listHomeIdentities() {
-    std::vector<std::string> out;
+std::vector<IdentityRecord> listHomeIdentityRecords() {
+    std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::HOME);
     if (folder.empty()) return out;
     std::error_code ec;
@@ -1039,14 +1041,16 @@ std::vector<std::string> listHomeIdentities() {
         if (!std::filesystem::exists(homeFile, ec)) continue;
         if (std::filesystem::file_size(homeFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(homeFile.string());
-        std::string id;
-        if (j.is_object()) {
-            id = j.value("identifier", j.value("name", std::string{}));
-        }
-        if (id.empty()) id = entry.path().filename().string();
-        out.push_back(std::move(id));
+        out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }
-    std::sort(out.begin(), out.end());
+    std::sort(out.begin(), out.end(),
+              [](const IdentityRecord& a, const IdentityRecord& b) { return a.directoryKey < b.directoryKey; });
+    return out;
+}
+
+std::vector<std::string> listHomeIdentities() {
+    std::vector<std::string> out;
+    for (auto& rec : listHomeIdentityRecords()) out.push_back(std::move(rec.directoryKey));
     return out;
 }
 

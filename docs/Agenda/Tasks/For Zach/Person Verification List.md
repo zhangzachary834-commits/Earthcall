@@ -222,3 +222,32 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 - [ ] **Reload `synthesis_studio_living` (or whatever world showed the refusal spam) and watch the console.** Before this fix, loading it logged dozens of `applyMatterFlatBuffer: entity '...' has no exact owner match and matches 2/3 live objects across Zones (same name printed more than once)` lines — a real duplicate-live-Zone bug, not a cosmetic one. That spam should be gone or much reduced. Any REMAINING "matches N live objects" line naming genuinely different-named Zones is a separate, pre-existing ambiguity (Invariant 3 working as designed on legacy ownerless records) — not this bug.
 - [ ] **Objects that live in "Basic 2D Button Zone" or "Perlin Noise Floor Zone" should now show their authored geometry/position**, not a default transform — those were the two names actually colliding in what you pasted. If either still looks wrong, say so; it would mean a second, different cause in the same area.
 - [ ] **`saves/zones/BasicPixelChanger/`'s folder/identifier mismatch is still there, untouched.** This fix closes the general mechanism (Zone can now HAVE a differing identifier/name without colliding with another Zone), but did not rewrite any save file. If you want that one file's `identifier` field corrected to match its folder key, that's a one-line, low-risk edit but needs your explicit go-ahead since it's a save file.
+
+## Model Context Protocol (MCP) Server Bridge (@modelcontextprotocol)
+
+*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 16 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). → [full task](../Specific%20Tasks/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
+
+- [x] **Wire the server into Claude Desktop's config.** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Added an `earthcall` entry under `mcpServers` in `~/Library/Application Support/Claude/claude_desktop_config.json` (backed up first to `claude_desktop_config.json.bak-20260909135837` alongside it), pointing at `scripts/mcp-server.js` with `EARTHCALL_WS_URL=ws://localhost:8080`. Verified `node scripts/mcp-server.js` starts cleanly and logs `Server initialized and listening over stdio.`; verified `@modelcontextprotocol/sdk` is present in `node_modules`; verified the edited config is still valid JSON and every pre-existing key survived untouched. **Quit and reopen Claude Desktop** for it to pick up the new server — it wasn't running when this was made, so no restart was forced on you.
+- [ ] **Run MCP Server & Test Live Tool Execution.** (the config wiring above is done — this is the live end-to-end check only you can confirm)
+  1. In terminal: `export PATH="/opt/homebrew/bin:$PATH"`
+  2. Start Earthcall in one window (`Run Earthcall.command`).
+  3. Restart Claude Desktop, or run `node scripts/mcp-server.js` directly, or configure Cursor's `mcpServers` the same way:
+     ```json
+     {
+       "mcpServers": {
+         "earthcall": {
+           "command": "node",
+           "args": ["/Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js"]
+         }
+       }
+     }
+     ```
+  4. Ask the AI assistant to inspect the live world (`earthcall_get_state`), spawn a cube or sphere (`earthcall_spawn_object`), or author a law (`earthcall_author_law`). Confirm the object appears live in Earthcall!
+
+## Zone identity boundary (Invariant 6, Stage 1) — found a real duplicate on your own Home
+
+*Landed 2026-09-09, Claude Sonnet 5, session `01MsayKP3NYfQAyBtyQ8xeA1`, per Sol's staged plan on the agent intercom. → [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
+
+- [ ] **Reload your world and confirm Home looks exactly as it did before** — all 104 objects, nothing missing. While implementing this, I found `saves/zones/Home/zone.json` (a stale, 32-object duplicate) sitting alongside the real `saves/homes/Home/home.json` (104 objects, the one your saves have actually been updating). Both claimed the identity "Home" — harmless before because the old code silently ignored the second one it saw, but the new validation this pass adds would have made your ACTUAL Home refuse to load entirely. You authorized moving the stale one aside (not deleting it): it's now at `saves/backups/Home.orphaned-2026-09-09/zone.json`, fully intact and recoverable, just no longer claiming the "Home" identity. Nothing about your live Home should look any different — please confirm.
+- [ ] **The Basic Pixel Changer canvas should still work exactly as before.** You separately authorized a one-line fix to `saves/zones/BasicPixelChanger/zone.json`'s `identifier` field (was `"Basic Pixel Changer"` with a space, mismatching its folder; now `"BasicPixelChanger"`, matching). This was the same class of bug Sol originally found in this file back on 2026-09-08. Reload it and confirm the canvas still opens and paints as it did after that first fix.
+- [ ] **If you ever see a console line starting `[ZoneManager] hydrateFromZoneStore: REFUSED`**, that means a Zone or Home identity file's folder name doesn't match its own internal `identifier` field, or two identity files are claiming the same identity — the new validation this pass adds. It will name the exact file(s) involved. That Zone simply won't load until the file is fixed; nothing is silently guessed at or auto-repaired. Send me the message if you see one and don't recognize why.

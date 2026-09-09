@@ -34,6 +34,7 @@
 #include <cmath>
 #include <cstring>
 #include <unordered_set>
+#include <unordered_map>
 #include <algorithm>
 #include <set>
 #include <functional>
@@ -550,10 +551,80 @@ void ZoneManager::persistZones() const {
 }
 
 void ZoneManager::hydrateFromZoneStore() {
-    std::unordered_set<std::string> loaded;
-    auto admit = [&](const std::string& id, nlohmann::json zj) {
-        if (!zj.is_object() || id.empty() || loaded.count(id)) return;
-        loaded.insert(id);
+    // Invariant 6, storage boundary (Sol, agent intercom "Basic Pixel
+    // Changer Zone Identity Bug 9-7-26", 2026-09-09, Stage 1): the
+    // directory key each identity was actually enumerated under must stay
+    // explicit all the way through admission — never re-derived from the
+    // document's own content, which can diverge from the folder it lives
+    // in (saves/zones/BasicPixelChanger/ once carried a document identifier
+    // of "Basic Pixel Changer", a space-containing display string; fixed
+    // 2026-09-09 with Zach's authorization, but nothing structurally
+    // prevented a future save from drifting the same way again).
+    //
+    // Two checks, both refuse before ANY live Zone is constructed — zero
+    // writes, no phantom live Zone, per Sol's acceptance criterion:
+    //   1. the document's own resolved identity must equal the directory
+    //      key it was read from;
+    //   2. two different directory entries may not both claim the same
+    //      stable identity.
+    // Neither check picks a "first winner" by iteration/directory order —
+    // that is exactly the last-record-wins shape Sol's invariants forbid
+    // elsewhere. A duplicate identity refuses EVERY directory claiming it,
+    // the same way a duplicate composite matter key refuses every entity
+    // sharing it (matter_semantic_precedence_test.cpp).
+    const auto homeRecords = SaveSystem::listHomeIdentityRecords();
+    const auto zoneRecords = SaveSystem::listZoneIdentityRecords();
+
+    struct Claimant { std::string path; std::string directoryKey; };
+    std::unordered_map<std::string, std::vector<Claimant>> claimants; // identity -> [claimant,...]
+    auto validate = [&](const std::string& directoryKey, const nlohmann::json& zj, const std::string& path) {
+        if (!zj.is_object() || directoryKey.empty()) return;
+        const std::string documentIdentity = zoneIdFromJson(zj);
+        if (documentIdentity.empty()) {
+            std::cerr << "[ZoneManager] hydrateFromZoneStore: REFUSED '" << path
+                      << "' (directory key '" << directoryKey << "') — the document names no "
+                         "identifier or name at all. Zero writes, no phantom live Zone.\n";
+            return;
+        }
+        if (documentIdentity != directoryKey) {
+            std::cerr << "[ZoneManager] hydrateFromZoneStore: REFUSED '" << path
+                      << "' — directory key '" << directoryKey << "' does not match the "
+                         "document's own identifier ('" << documentIdentity << "'). Zero writes, "
+                         "no phantom live Zone. This is a save-file inconsistency and needs a "
+                         "Person-authorized repair (edit the file's \"identifier\" field, or "
+                         "rename the folder, so the two agree) — never auto-derived or "
+                         "auto-renamed.\n";
+            return;
+        }
+        claimants[documentIdentity].push_back(Claimant{path, directoryKey});
+    };
+    for (const auto& rec : homeRecords) {
+        validate(rec.directoryKey, rec.document,
+                 SaveSystem::homeDirectory(rec.directoryKey) + "/home.json");
+    }
+    for (const auto& rec : zoneRecords) {
+        validate(rec.directoryKey, rec.document,
+                 SaveSystem::zoneDirectory(rec.directoryKey) + "/zone.json");
+    }
+
+    std::unordered_set<std::string> admittable;
+    for (const auto& [identity, claimList] : claimants) {
+        if (claimList.size() == 1) {
+            admittable.insert(identity);
+            continue;
+        }
+        std::string listed;
+        for (std::size_t i = 0; i < claimList.size(); ++i) {
+            if (i) listed += ", ";
+            listed += "'" + claimList[i].path + "'";
+        }
+        std::cerr << "[ZoneManager] hydrateFromZoneStore: REFUSED identity '" << identity
+                  << "' — claimed by " << claimList.size() << " identity records ("
+                  << listed << "). Zero writes, no phantom live Zone; refusing all of "
+                     "them rather than guessing which is authoritative.\n";
+    }
+
+    auto admit = [&](const std::string& id, const nlohmann::json& zj) {
         std::shared_ptr<Zone> live;
         for (auto& z : _zones) {
             if (z && z->getIdentifier() == id) {
@@ -591,11 +662,14 @@ void ZoneManager::hydrateFromZoneStore() {
         }
     };
     // Homes first: dwelling memory lives under saves/homes/, not zones/.
-    for (const auto& id : SaveSystem::listHomeIdentities()) {
-        admit(id, SaveSystem::readHomeIdentity(id));
+    // Each record's directoryKey IS its identity here — validate() already
+    // refused anything where that wasn't true, so no re-derivation from
+    // document content happens at admission time either.
+    for (const auto& rec : homeRecords) {
+        if (admittable.count(rec.directoryKey)) admit(rec.directoryKey, rec.document);
     }
-    for (const auto& id : SaveSystem::listZoneIdentities()) {
-        admit(id, SaveSystem::readZoneIdentity(id));
+    for (const auto& rec : zoneRecords) {
+        if (admittable.count(rec.directoryKey)) admit(rec.directoryKey, rec.document);
     }
     globalObjects.clear();
     for (const auto& z : _zones) {
@@ -1314,7 +1388,21 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             auto z = makeZoneFromJson(zj);
             addZone(z);
             if (!snapshotRestore && !isObservationZone(*z)) {
-                SaveSystem::writeZoneIdentity(id, zoneToJson(*z));
+                // A session's embedded zones[] can equally name a Home
+                // (e.g. a first save from a fresh Person, before Home has
+                // ever been persisted on its own). Route to the SAME store
+                // persistZones() uses — writeZoneIdentity unconditionally
+                // here used to leak a Home's first identity write into
+                // saves/zones/ instead of saves/homes/, so the SAME "Home"
+                // ended up claimed by both stores. Invariant 6's boundary
+                // validation (hydrateFromZoneStore) now refuses a stable
+                // identity claimed by more than one identity record rather
+                // than silently tolerating it, which is what surfaced this.
+                if (z->isHome()) {
+                    SaveSystem::writeHomeIdentity(id, zoneToJson(*z));
+                } else {
+                    SaveSystem::writeZoneIdentity(id, zoneToJson(*z));
+                }
             }
         };
 
