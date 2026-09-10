@@ -137,6 +137,23 @@ static void testLoadPersonPathTraversalSanitization() {
     std::cout << "  loadPerson path traversal sanitization OK\n";
 }
 
+static void testLoadPersonMalformedJson() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    // Write a malformed JSON file directly to the save folder
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/Malformed.json");
+    file << "{ this is not valid json }";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("Malformed", loaded);
+    assert(!success); // Should fail and catch exception
+
+    std::cout << "  loadPerson exception handling (malformed json) OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -145,6 +162,7 @@ int main() {
     testLoadNonExistentPerson();
     testGetAllRegisteredPersons();
     testLoadPersonPathTraversalSanitization();
+    testLoadPersonMalformedJson();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
