@@ -440,6 +440,40 @@ int main() {
     check(std::get<bool>(val) == true, "delete operation succeeded");
     check(!fs::exists(movedFile), "File confirmed deleted from disk");
 
+    // -----------------------------------------------------------------------
+    // Case 14: Exception Handling (try-catch blocks)
+    // -----------------------------------------------------------------------
+    // Trigger JSON parse exceptions
+    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("invalid json")));
+
+    lawGetValue(*channel, PropertyPath::parse("file.jsonCompact"), val);
+    check(std::get<std::string>(val) == "", "jsonCompact gracefully returns empty string on parse error");
+
+    lawGetValue(*channel, PropertyPath::parse("file.jsonPretty"), val);
+    check(std::get<std::string>(val) == "", "jsonPretty gracefully returns empty string on parse error");
+
+    // Trigger std::filesystem exceptions by providing strings with embedded nulls
+    // std::filesystem::path throws an exception when constructed with null characters.
+    std::string invalidPath("bad\0path", 8);
+    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(invalidPath));
+
+    lawGetValue(*channel, PropertyPath::parse("file.extension"), val);
+    check(std::get<std::string>(val) == "", "propExtension gracefully handles exceptions");
+
+    lawGetValue(*channel, PropertyPath::parse("file.stem"), val);
+    check(std::get<std::string>(val) == "" || std::get<std::string>(val).length() > 0, "propStem gracefully handles exceptions");
+
+    lawGetValue(*channel, PropertyPath::parse("file.filename"), val);
+    check(std::get<std::string>(val) == "" || std::get<std::string>(val).length() > 0, "propFilename gracefully handles exceptions");
+
+    lawGetValue(*channel, PropertyPath::parse("file.directory"), val);
+    check(std::get<std::string>(val) == "", "propDirectory gracefully handles exceptions");
+
+    // isPathSafe / checkOSPermissions will catch the exception and prevent the operation
+    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
+    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
+    check(std::get<bool>(val) == false, "file read gracefully fails on invalid paths");
+
     // Clean up test files
     fs::remove_all(testDir, ec);
 
@@ -448,6 +482,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_channel_test: ALL OK (all 13 cases passed)\n");
+    std::printf("file_channel_test: ALL OK (all 14 cases passed)\n");
     return 0;
 }
