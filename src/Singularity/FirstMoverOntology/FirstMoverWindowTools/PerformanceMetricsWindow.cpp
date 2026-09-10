@@ -69,7 +69,7 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
 
         // Calculate AST evals per frame
         static uint32_t lastAstEvals = 0;
-        uint32_t currentAstEvals = OntoMath::g_astEvaluations.load(std::memory_order_relaxed);
+        uint32_t currentAstEvals = OntoMath::g_astEvaluationsTotal.load(std::memory_order_relaxed) + (OntoMath::t_astEvaluations & 1023);
         uint32_t astDiff = currentAstEvals - lastAstEvals;
         lastAstEvals = currentAstEvals;
 
