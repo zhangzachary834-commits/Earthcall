@@ -664,6 +664,31 @@ void ConditionNode::collectRelationTypes(std::unordered_set<std::string>& out) c
     for (const auto& child : children) child.collectRelationTypes(out);
 }
 
+namespace {
+// An "@name"-rooted path that is neither @event nor @world — see the header.
+bool isPlainReferentRoot(const PropertyPath& p) {
+    if (p.segments.empty()) return false;
+    const std::string& root = p.segments.front();
+    if (root.size() < 2 || root[0] != '@') return false;
+    return root != "@event" && root != "@world";
+}
+}  // namespace
+
+bool ConditionNode::isHoistableGate() const {
+    if (kind != Kind::Compare) return false;
+    // BOTH sides must be subject-independent. A comparison of the gate against
+    // the subject's own property is about the subject after all.
+    if (!isPlainReferentRoot(path)) return false;
+    if (!operandPath.empty() && !isPlainReferentRoot(operandPath)) return false;
+    return true;
+}
+
+void ConditionNode::collectHoistableGates(std::vector<const ConditionNode*>& out) const {
+    if (isHoistableGate()) { out.push_back(this); return; }
+    if (kind != Kind::All) return;   // see the header: only conjunction
+    for (const auto& child : children) child.collectHoistableGates(out);
+}
+
 bool ConditionNode::readsQualifiedRoot() const {
     const auto qualified = [](const PropertyPath& p) {
         return !p.segments.empty() && !p.segments.front().empty() &&

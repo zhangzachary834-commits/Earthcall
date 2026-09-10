@@ -899,6 +899,19 @@ private:
     // order; tick() still calls it once up front so the per-law call is an
     // integer compare rather than N passes over the world.
     void refreshVocabularyIndex() const;
+
+    // Do this law's subject-independent gates hold right now?
+    //
+    // False means the law's candidate set is EMPTY this tick, whatever the
+    // population — so the subject loop can be skipped entirely instead of
+    // walking every being to be refused by each one. See
+    // ConditionNode::isHoistableGate for what qualifies and what deliberately
+    // does not.
+    //
+    // Returns true whenever it cannot prove otherwise: no gates, an unreadable
+    // referent, or an action that could move the gate mid-sweep. Widening is
+    // the safe direction; a wrong `false` here silences a law completely.
+    bool gatesHold(const Law& law) const;
     // Members are RAW pointers, so this must be rebuilt whenever the world's
     // shape changes. Universe::structuralRevision() is that signal, and
     // Zone::removeObject had to be taught to bump it before this could be

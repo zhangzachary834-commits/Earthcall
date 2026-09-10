@@ -2,13 +2,14 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0, 1 and 2 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
+**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
 remaining quantifier cost is not removable by indexing. Rung 2 built the vocabulary index and
 fixed a fourth deafness; its Formation half stays blocked behind §3.4's concept-Singulars.
-Rungs 3–7 remain specified, not implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
+Rung 3 hoisted subject-independent gates and found a fifth deafness. Rungs 4–7 remain
+specified, not implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
 decisions that are Zach's alone; §9.3 is answered, the rest are open.
 
 **Companion docs:** `PROPHETIC_RETE.md` (§2's widen-never-narrow rule, which governs every
@@ -542,8 +543,39 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
 
    Guarded by `tests/law/vocabulary_index_test.cpp` (seven worlds an index gets wrong) and
    `tests/law/category_index_scaling_test.cpp` (the measurement).
-3. **Alpha subscription for named `@referents`.** O(1) per referent, no joins; removes the
-   widening at `ConditionModel.cpp:500`.
+3. ✅ **Alpha subscription for named `@referents`** — *built 2026-09-09 (Opus 5, session
+   `session_01F9nK3FZ7VR4PFPTUWfYyvm`), though not in the shape this line predicted.*
+
+   **What measurement rejected first.** The obvious target looked like `resolveLawRoot`
+   (`MathBinding.hpp`), which rebuilds `Universe::beings()` and then linear-scans it comparing
+   `getIdentifier()` strings — per read, per subject, per tick. Measured, it is a few ms of a tick
+   costing hundreds. **Not optimized**: treating it would have been treating a symptom nobody feels.
+
+   **What the widening actually costs.** Rung 1 established that a qualified root, like a
+   quantifier, is *subject-independent* — `@gate.open > 0` is one truth about the world, the same
+   for every subject. So it can never narrow a candidate set; it can only decide the law all at
+   once. When it is **false the correct candidate set is empty**, and the engine was discovering
+   that one refusal per subject, every tick. Measured: a law behind a **shut** gate cost
+   **278 ms/tick at 480 beings, fitting k = 1.67 against population**, while firing nothing.
+
+   **Built:** `LawManager::gatesHold` evaluates a law's subject-independent conjuncts once and
+   skips the subject loop entirely when one is false. **278 ms → 0.18 ms at 480 beings; k 1.67 →
+   0.72.** A shut gate is now effectively free.
+
+   **Four things it deliberately refuses to hoist**, each of which would be a silent narrowing:
+   `@event.*` (resolves through the application event, only set inside `applyTo`); `@world.*`
+   (the channel reading is handed the *subject*, so it is not subject-independent); a gate under
+   `Any` (a false disjunct decides nothing) or under `Not`; and **any law whose action writes
+   through a qualified root** — that law can move its own gate mid-sweep, so the per-subject
+   answers legitimately differ. `gatesHold` returns true whenever it cannot prove otherwise.
+
+   **And it may not simply skip.** Skipping the subject loop also skips releasing everyone the law
+   was holding, so an `OnBecomeTrue` law would return from a shut gate still believing its
+   subjects held — no false→true edge, and it never fires again. The release is O(held), not
+   O(world). Guarded by `gate_hoist_test` §B.
+
+   Guarded by `tests/law/gate_hoist_test.cpp` (six ways the hoist could silence a law) and
+   `tests/law/referent_resolution_test.cpp` (the measurement).
 4. **Category-level overlap** (§3.1), including the quantitative subkind via the existing
    `Range::mayIntersect`.
 5. **The instance-side slow adapter** — capped, two-rate clock, candidates only.
@@ -603,6 +635,20 @@ joins they exist for.
 | Structural support for Layers 2–3 (Relations of Relations, Formations of Relations) | verified — `Relation.hpp:46`, `Formation::addMember`, `relationTypeTag` |
 | Prophetic index keeps quantified conditions reachable on the reactive path | verified — `PropheticRete.cpp:496–506`: demands do not propagate, `readNames` do |
 
+**2026-09-09, rung 3 — a FIFTH deafness, and the oldest one yet.** `gate_hoist_test` §B failed
+with **both** rung 2's index and rung 3's hoist disabled, so it is neither. A law's required
+vocabulary is a path's **root** segment (`shape` for `shape.fillet`), but `Object` registers the
+property under its whole dotted name — `shape.fillet`, `shape.r`, `shape.kind`
+(`ObjectProperties.cpp`); **there is no property called `shape`**. So `couldApplyTo` answered no
+for every being in the world, and **any law on the sweep path touching `shape.*`, in its condition
+or merely in its action, reached nobody at all** — registered, enabled, authored, condition
+satisfiable, and silent.
+
+`ConditionModel::compileToRete` had already hit this exact bug on the *alpha* path and fixed it
+with a `rootOf` helper whose comment reads "any condition over a shape parameter matched nothing at
+all". The sweep half was never given the same treatment. `beingCarriesProperty` now also matches a
+dotted-name prefix, which widens — the only safe direction.
+
 **2026-09-09, rung 2.** A **fourth** deafness of the same family as §1.2(a), found by
 `vocabulary_index_test` §B and confirmed pre-existing by re-running it against a clean tree:
 `seedStateFacts` snapshots a being's properties **once per being, ever**, and
@@ -648,7 +694,7 @@ against a 1.653 ms baseline** with the fix in.
 
 ---
 
-*Rungs 1 and 2 by Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
+*Rungs 1, 2 and 3 by Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
 *Rung 0 implemented, and §3.4 / §9.3 / §10 updated, by Claude Opus 5, session
 `session_01K1PtKNZtSDU9XGwKZQ7ZzF`, 2026-09-08.*
 *Revised by Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`, 2026-09-08T02:30:47-07:00.*

@@ -263,11 +263,42 @@ void Law::rebuildRequiredProperties() {
 // Same reasoning as ReteNetwork::alphaFeedsAnyBeta, which its header calls
 // "named once so backfill and propagation cannot drift apart."
 bool beingCarriesProperty(const Singular& being, const std::string& name) {
-    if (const_cast<Singular&>(being).findProperty(name)) return true;
+    Singular& b = const_cast<Singular&>(being);
+    if (b.findProperty(name)) return true;
     // Authored properties are as real as first-mover ones: a law that reads a
     // granted `warmth` must still reach the beings a previous law granted it to.
     PropertyValue ignored;
-    return const_cast<Singular&>(being).getDynamicProperty(name, ignored);
+    if (b.getDynamicProperty(name, ignored)) return true;
+
+    // A PROPERTY'S NAME MAY ITSELF BE DOTTED, and this is where that bites.
+    //
+    // rebuildRequiredProperties stores a path's ROOT segment — `shape` for
+    // `shape.fillet` — but Object registers the property under the whole dotted
+    // name (`shape.fillet`, `shape.r`, `shape.kind`; ObjectProperties.cpp).
+    // There is no property called `shape`. So an exact-name test answered NO
+    // for every being in the world, couldApplyTo rejected all of them, and any
+    // law on the SWEEP path that touched `shape.*` — in its condition or, just
+    // as easily, in its action — reached nobody at all. Silently: the law was
+    // registered, enabled, authored, and its condition was satisfiable.
+    //
+    // ConditionModel::compileToRete already hit this exact bug on the alpha
+    // path and fixed it there with a `rootOf` helper, whose comment says "any
+    // condition over a shape parameter matched nothing at all". The sweep half
+    // was never given the same treatment. Found by gate_hoist_test §B.
+    //
+    // Matching the root WIDENS — a being with `shape.r` now answers yes to
+    // `shape` — which is the only safe direction (PROPHETIC_RETE.md §2), and
+    // couldApplyTo is a candidate filter that lawGetValue re-checks anyway.
+    const std::string prefix = name + ".";
+    for (Property* prop : b.listProperties()) {
+        if (!prop) continue;
+        const std::string& propName = prop->name();
+        if (propName.size() > prefix.size() &&
+            propName.compare(0, prefix.size(), prefix) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Law::couldApplyTo(Singular& being) const {
@@ -1873,6 +1904,29 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         if (!law->isEnabled() || !law->isAuthored()) continue;
 
         const std::string lawId = law->getIdentifier();
+
+        // THE GATE. A subject-independent conjunct decides this law for the
+        // whole population at once (FORMATION_RETE.md §8 rung 3), so a shut
+        // gate means an empty candidate set and there is nothing to walk.
+        //
+        // But it may not simply `continue`. Every subject the law was holding
+        // has just stopped holding, and if that release is skipped their
+        // conditionMemory stays true — so when the gate reopens there is no
+        // false->true edge and an OnBecomeTrue law never fires again. Silent
+        // deafness, bought with a performance win, which is the trade this
+        // whole document exists to refuse. Releasing is O(held), not O(world).
+        if (!gatesHold(*law)) {
+            std::vector<std::string> released;
+            for (const auto& [subjectId, held] : law->conditionMemory()) {
+                if (held) released.push_back(subjectId);
+            }
+            for (const std::string& subjectId : released) {
+                law->rememberConditionState(subjectId, false);
+                law->forgetOnset(subjectId);
+            }
+            continue;
+        }
+
         auto termIt = _reteTerminals.find(lawId);
         // Terminals alone do not license the reactive path: it answers from
         // state facts, and state facts are only as current as the change feed
@@ -2035,6 +2089,46 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
 
     if (result != Law::ApplicationResult::Applied) return;
     maybeStartDriveSession(law, subject);
+}
+
+bool LawManager::gatesHold(const Law& law) const {
+    const ConditionNode* model = law.conditionModel();
+    if (!model) return true;
+
+    std::vector<const ConditionNode*> gates;
+    model->collectHoistableGates(gates);
+    if (gates.empty()) return true;
+
+    // THE GUARD THAT MAKES HOISTING SOUND. Evaluating a gate once for the whole
+    // sweep assumes nothing moves it during that sweep. The law's own actions
+    // are the one thing that certainly runs between subjects — so if this law
+    // writes through ANY qualified root, it could flip its own gate partway,
+    // and the per-subject answers would legitimately differ. Refuse to hoist.
+    //
+    // Other laws cannot interfere: a tick runs one law's sweep to completion
+    // before the next, and events a law fires become facts for the NEXT round.
+    if (law.actionModel()) {
+        std::vector<PropertyPath> writes;
+        law.actionModel()->collectPaths(writes);
+        for (const PropertyPath& w : writes) {
+            if (!w.segments.empty() && !w.segments.front().empty() &&
+                w.segments.front()[0] == '@') {
+                return true;
+            }
+        }
+    }
+
+    // A gate ignores its subject, so ANY Singular answers it identically — and
+    // the law itself is one, always alive, and never a member of the world it
+    // is asked about. Deliberately not a member of the population: a world may
+    // legitimately be empty at this moment.
+    ECA::Event probe;
+    probe.type = "law-gate";
+    Singular& standIn = const_cast<Law&>(law);
+    for (const ConditionNode* gate : gates) {
+        if (!gate->compile()(probe, standIn)) return false;
+    }
+    return true;
 }
 
 // Rebuild the vocabulary index, but only when the world's shape has moved.

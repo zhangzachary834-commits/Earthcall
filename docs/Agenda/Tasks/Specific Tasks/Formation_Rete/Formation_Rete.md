@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0, 1 and 2 of 7 done (2026-09-08, 2026-09-09). Rung 2's Formation half and rungs 3–7 specified.
+**Status:** rungs 0–3 of 7 done (2026-09-08, 2026-09-09). Rung 2's Formation half and rungs 4–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -138,6 +138,42 @@ such in `Law.hpp` per Refusal 6, until that bridge exists.
 **Guarded by** `tests/law/vocabulary_index_test.cpp` (seven worlds an index gets wrong) and
 `tests/law/category_index_scaling_test.cpp` (the measurement).
 
+## Rung 3 — ✅ 2026-09-09, but not the shape the spec predicted
+
+*Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.*
+
+**Rejected by measurement first.** The obvious target was `resolveLawRoot`, which rebuilds
+`Universe::beings()` and linear-scans it comparing identifier strings, per read per subject per
+tick. Measured: a few ms of a tick costing hundreds. **Not optimized** — that would have been
+treating a symptom nobody feels.
+
+**The real cost was the widening.** Rung 1 established that a qualified root is
+subject-independent: `@gate.open > 0` is one truth about the world. It can never narrow a
+candidate set; it can only decide the law at once. When false the correct answer is **nobody** —
+and the engine was discovering that one refusal per subject, every tick. A law behind a **shut**
+gate cost **278 ms/tick at 480 beings, k = 1.67**, while firing nothing.
+
+**Built.** `LawManager::gatesHold` evaluates the subject-independent conjuncts once and skips the
+subject loop when one is false. **278 ms → 0.18 ms; k 1.67 → 0.72.**
+
+**Refuses to hoist** — each would be a silent narrowing: `@event.*` (only meaningful inside
+`applyTo`), `@world.*` (the reading is handed the subject), a gate under `Any` or `Not`, and any
+law whose **action writes a qualified root** — it can move its own gate mid-sweep. Returns true
+whenever it cannot prove otherwise.
+
+**And it may not simply skip:** skipping the loop also skips releasing held subjects, so an
+`OnBecomeTrue` law would come back from a shut gate still believing they held — no false→true
+edge, never fires again. Release is O(held).
+
+**A fifth deafness, and the oldest.** `gate_hoist_test` §B failed with rung 2 AND rung 3 both
+disabled. A law's vocabulary is a path **root** (`shape`), but `Object` registers properties under
+their whole dotted names (`shape.fillet`, `shape.r`) — **there is no property named `shape`**. So
+`couldApplyTo` said no to every being, and **any sweep-path law touching `shape.*` reached
+nobody**, silently. `ConditionModel` had already fixed this exact bug on the alpha path with a
+`rootOf` helper; the sweep half never got it. `beingCarriesProperty` now matches dotted prefixes.
+
+**Guarded by** `tests/law/gate_hoist_test.cpp` and `tests/law/referent_resolution_test.cpp`.
+
 ## Next rungs
 
 2. ~~**Categories as authored Formations**~~ — index half done 2026-09-09 (above). The Formation
@@ -147,7 +183,7 @@ such in `Law.hpp` per Refusal 6, until that bridge exists.
    inside the taxonomy — it needs the concept-Singular bridge (`ObjectConcept`, whose
    `RelationTemplate::bAnchorId` is already "relate to this concept in advance"). Also needs
    `Zone::removeObject` to bump `Universe::structuralRevision()`, which today it does not.
-3–7. Alpha subscription for named `@referents`; category-level overlap; the instance-side slow
+4–7. Category-level overlap (§3.1) via the existing `Range::mayIntersect`; the instance-side slow
    adapter; reified path Relations and Law-as-traverser; departure reporting on the reactive path.
 
 ## ⚑ AUTHOR — open, Zach's
