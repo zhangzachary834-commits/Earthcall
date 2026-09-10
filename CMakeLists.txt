@@ -373,13 +373,13 @@ if(NOT EMSCRIPTEN)
                 )
             else()
                 set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             # uuid (non-Apple only, and NOTFOUND-guarded) already comes in
             # transitively via earthcall_core's PUBLIC link libraries above.
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         endif()
 
         # Shared fixtures (test_save_helper.hpp, test_harness.hpp). Source files live under

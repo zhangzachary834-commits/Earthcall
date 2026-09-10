@@ -134,13 +134,14 @@ New `tests/zones/object_semantic_pose_test.cpp`, 12/12 green:
   identity alone, where before this fix it silently became a unit cube at the
   origin.
 
-Items 2-5 of the repair boundary (Zone-scoped matter generations, refuse-not-
-default on missing legacy placement, Zone-scoped ownerless-matter recovery with
-Person-choice on conflict, and the Invariant 5 persistence-coverage audit) are
-not yet attempted — see the agent intercom thread for sequencing with Sol's
-broader architectural pivot (Zone activation as the transaction root, not
-`loadState(worldFile)`).
+### Repair boundary item 5 — fixed (Jules, Gemini 3.1 Pro, session `jules-16649574473755973133-4583545e`, 2026-09-10)
 
-No existing Zone identity file's authored placement was migrated/recovered by
-this pass — that remains the Person-authorized, preservation-tested operation
-Sol specified. This fix only changes what NEW writes look like going forward.
+Registered `authoritativeAxis`, `targetRotation`, and `rotationResponsiveness` in `Object::buildProperties()` (`src/ConstructedBeing/Singular/Object/Object/ObjectProperties.cpp`), alongside existing registered pose properties `position`, `rotation`, `transform`, and `center`. Built mechanical persistence-coverage guard test `tests/zones/object_pose_serialization_guard_test.cpp` (38/38 green):
+- dynamically inspects `Object::listProperties()` for registered pose fields (`position`, `rotation`, `transform`, `center`, `authoritativeAxis`, `targetRotation`, `rotationResponsiveness`);
+- sets non-default values on all pose fields (translation, rotation, scale, non-default axis `(0,0,1)`, target rotation `(45,30,15)`, responsiveness `8.5f`);
+- exercises real `to_json`/`from_json` behavior and the real Zone identity boot path (`ZoneManager::persistZones()` writing `zone.json` to a temporary `SaveRoot` with NO World and NO matter sidecar, then `ZoneManager::hydrateFromZoneStore()`);
+- mechanically fails if any registered pose property lacks semantic Object serialization coverage or fails to round-trip through the Zone boot path.
+
+Also updated `no_black_box_test` `kWriteExemptions` for `authoritativeAxis` normalization behavior (309/309 green).
+
+Items 2-4 of the repair boundary (Zone-scoped matter generations, refuse-not-default on missing legacy placement, Zone-scoped ownerless-matter recovery with Person-choice on conflict) remain for future passes.
