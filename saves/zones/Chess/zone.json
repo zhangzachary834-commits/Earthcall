@@ -77,6 +77,16 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "subcategory-of",
@@ -155,6 +165,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "instance-of",
@@ -233,6 +253,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "instance-of",
@@ -311,6 +341,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "instance-of",
@@ -389,6 +429,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "instance-of",
@@ -418,6 +468,38 @@
           }
         },
         "baseline": "ground",
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.board",
         "objectID": "object.chess.board",
@@ -483,6 +565,38 @@
             "v": 0.36
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.white",
         "objectID": "piece-white-rook-0-0",
@@ -548,6 +662,38 @@
             "v": 0.32
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 5,
         "materialId": "material.chess.white",
         "objectID": "piece-white-knight-1-0",
@@ -613,6 +759,38 @@
             "v": 0.4
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 4,
         "materialId": "material.chess.white",
         "objectID": "piece-white-bishop-2-0",
@@ -678,6 +856,38 @@
             "v": 0.42
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 6,
         "materialId": "material.chess.white",
         "objectID": "piece-white-queen-3-0",
@@ -743,6 +953,38 @@
             "v": 0.48
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 3,
         "materialId": "material.chess.white",
         "objectID": "piece-white-king-4-0",
@@ -808,6 +1050,38 @@
             "v": 0.4
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 4,
         "materialId": "material.chess.white",
         "objectID": "piece-white-bishop-5-0",
@@ -873,6 +1147,38 @@
             "v": 0.32
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 5,
         "materialId": "material.chess.white",
         "objectID": "piece-white-knight-6-0",
@@ -938,6 +1244,38 @@
             "v": 0.36
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.white",
         "objectID": "piece-white-rook-7-0",
@@ -1003,6 +1341,38 @@
             "v": 0.36
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.black",
         "objectID": "piece-black-rook-0-7",
@@ -1068,6 +1438,38 @@
             "v": 0.32
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 5,
         "materialId": "material.chess.black",
         "objectID": "piece-black-knight-1-7",
@@ -1133,6 +1535,38 @@
             "v": 0.4
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 4,
         "materialId": "material.chess.black",
         "objectID": "piece-black-bishop-2-7",
@@ -1198,6 +1632,38 @@
             "v": 0.42
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 6,
         "materialId": "material.chess.black",
         "objectID": "piece-black-queen-3-7",
@@ -1263,6 +1729,38 @@
             "v": 0.48
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 3,
         "materialId": "material.chess.black",
         "objectID": "piece-black-king-4-7",
@@ -1328,6 +1826,38 @@
             "v": 0.4
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 4,
         "materialId": "material.chess.black",
         "objectID": "piece-black-bishop-5-7",
@@ -1393,6 +1923,38 @@
             "v": 0.32
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 5,
         "materialId": "material.chess.black",
         "objectID": "piece-black-knight-6-7",
@@ -1458,6 +2020,38 @@
             "v": 0.36
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.black",
         "objectID": "piece-black-rook-7-7",
@@ -1523,6 +2117,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-0-1",
@@ -1588,6 +2214,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-0-6",
@@ -1653,6 +2311,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-1-1",
@@ -1718,6 +2408,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-1-6",
@@ -1783,6 +2505,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-2-1",
@@ -1848,6 +2602,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-2-6",
@@ -1913,6 +2699,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-3-1",
@@ -1978,6 +2796,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-3-6",
@@ -2043,6 +2893,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-4-1",
@@ -2108,6 +2990,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-4-6",
@@ -2173,6 +3087,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-5-1",
@@ -2238,6 +3184,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-5-6",
@@ -2303,6 +3281,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-6-1",
@@ -2368,6 +3378,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-6-6",
@@ -2433,6 +3475,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.white",
         "objectID": "piece-white-pawn-7-1",
@@ -2498,6 +3572,38 @@
             "v": 0.22
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.chess.black",
         "objectID": "piece-black-pawn-7-6",
@@ -2535,6 +3641,38 @@
             "v": 0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.white",
         "objectID": "object.chess.seat.white",
@@ -2572,6 +3710,38 @@
             "v": 1
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.chess.black",
         "objectID": "object.chess.seat.black",
@@ -2617,6 +3787,38 @@
             "v": 130.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "hud.chess.promo.queen",
@@ -2662,6 +3864,38 @@
             "v": 90.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "hud.chess.promo.knight",
@@ -2707,6 +3941,38 @@
             "v": 80.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "hud.chess.promo.rook",
@@ -2752,6 +4018,38 @@
             "v": 90.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "hud.chess.promo.bishop",

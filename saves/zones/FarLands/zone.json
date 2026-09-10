@@ -77,6 +77,16 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "subcategory-of",
@@ -155,6 +165,16 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
         }
       ],
       "type": "instance-of",
@@ -184,6 +204,38 @@
           }
         },
         "baseline": "ground",
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 10,
         "materialId": "material.farlands.terrain",
         "objectID": "object.farlands.terrain",
@@ -213,6 +265,38 @@
             "v": "Spawn Observation Dais"
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 3,
         "materialId": "material.farlands.safezone",
         "objectID": "object.farlands.dais",
@@ -242,6 +326,38 @@
             "v": "Far Lands Horizon Beacon"
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 9,
         "materialId": "material.farlands.rock",
         "objectID": "object.farlands.beacon",
@@ -287,6 +403,38 @@
             "v": "Harmonic Resonance Core"
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.farlands.beacon",
         "objectID": "object.farlands.resonance_crystal",
@@ -352,6 +500,38 @@
             "v": 5.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.farlands.dark",
         "objectID": "state.farlands",
@@ -397,6 +577,38 @@
             "v": 0.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.title",
@@ -442,6 +654,38 @@
             "v": 0.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.subtitle",
@@ -487,6 +731,38 @@
             "v": 0.0
           }
         },
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.hint",

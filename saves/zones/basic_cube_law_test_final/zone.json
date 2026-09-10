@@ -232,6 +232,38 @@
   "world": {
     "objects": [
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-3.member-0",
         "objectID": "concept-1.birth-3.member-0",
@@ -255,6 +287,38 @@
         "zOrder2D": 0
       },
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-4.member-0",
         "objectID": "concept-1.birth-4.member-0",
@@ -278,6 +342,38 @@
         "zOrder2D": 0
       },
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-5.member-0",
         "objectID": "concept-1.birth-5.member-0",
@@ -301,6 +397,38 @@
         "zOrder2D": 0
       },
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-6.member-0",
         "objectID": "concept-1.birth-6.member-0",
@@ -324,6 +452,38 @@
         "zOrder2D": 0
       },
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.concept-1.birth-7.member-0",
         "objectID": "concept-1.birth-7.member-0",
@@ -347,6 +507,38 @@
         "zOrder2D": 0
       },
       {
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-8.member-0",
         "objectID": "concept-1.birth-8.member-0",

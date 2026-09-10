@@ -1,6 +1,6 @@
 # Singular serialization topology
 
-**Status:** Phase 7 landed — sessions orchestrate concrete Singular roots through a versioned semantic envelope; legacy `playerBody` remains a read-only compatibility bridge.
+**Status:** Phase 7 landed as transitional compatibility infrastructure, but the target is REOPENED: ordinary persistence must be Zone-centered and must not require a conglomerate session/world file. Legacy `playerBody` remains a read-only compatibility bridge.
 **Agenda section:** Singular · Relation · Formation  
 **Author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:00 PDT
 
@@ -16,6 +16,49 @@ requirements, rather than treating folder movement as a cosmetic cleanup.
 The extension originated here is a concrete code boundary: serialization is arranged
 by *persistence root and hydration phase*. That respects C++ inheritance while refusing
 to imply that a Relation is owned by the directory containing either endpoint.
+
+## Authorial correction — Zone, not session, is the lived persistence boundary
+
+**Recorded by:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`,
+2026-09-09 14:04 PDT
+
+Zach clarified the intended experience after observing the Go Zone boot with shapes but
+without its face textures or functioning Laws: he never wanted a Person to save or load a
+named conglomerate “world” under Assets. A Person should open the Creator Console's Zone
+window, choose **Move to Zone**, arrive in a complete functioning Zone, and save that Zone
+there. Some Zones currently fail even to appear until their old world file is loaded; that
+is a direct violation, not an optional UX improvement.
+
+The Phase 7 session envelope therefore remains useful only as a compatibility, recovery,
+observation, or import/export container. It is not the normal persistence authority and
+must not become the transaction boundary for the next load architecture. This corrects
+my own implementation drift: the human thread above named the conglomerate bureaucracy
+correctly, but later phases still strengthened its orchestration instead of retiring it
+from the Person's ordinary path.
+
+The target contract is now:
+
+1. Boot enumerates every valid Zone/Home identity into the Zone catalog without requiring
+   any world/session file to be selected.
+2. **Move to Zone** transactionally gathers that Zone's semantic dependency closure:
+   Objects, Materials (including face textures), authored Laws and triggers, Categories,
+   Formation/Relation records, and its verified physical-matter generation.
+3. A Law or Material remains its own Singular persistence root. Zone completeness is
+   expressed by stable references/Formation membership, not by pretending the Zone owns
+   the being or by copying it into a private bag.
+4. The Zone becomes active only after the whole closure validates. A missing dependency
+   leaves the current Zone intact and reports exactly what is absent.
+5. **Save Zone** commits only the active Zone's changed closure; it neither asks for a
+   world name nor serializes every live Zone. A convenience **Save All Dirty Zones** may
+   commit several independent Zone transactions, never one conglomerate identity.
+6. Zone-scoped Laws become eligible with the Zone's activation and cannot act during
+   partial hydration. Ourverse metalaws remain governed by their own root and standing.
+7. Assets ceases to be the normal Save/Load office. It may remain an asset/material/import
+   browser; legacy world-file loading moves behind an explicitly named compatibility or
+   import surface until every authored file has a preservation-tested migration path.
+
+No existing save is to be deleted, merged, or rewritten merely because this target has
+been clarified. Existing world files are sacred migration sources.
 
 ## The rule
 
