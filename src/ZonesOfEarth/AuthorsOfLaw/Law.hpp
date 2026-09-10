@@ -743,6 +743,22 @@ private:
     // the `Moment` inside every transient `ECA::Event` — so that scan was the
     // engine's real quadratic. A SUPERSET on purpose: see retractFactsAbout.
     std::unordered_set<const Singular*> _factParticipants;
+    // Which relation types each being already has a relation-state fact for.
+    //
+    // DERIVED STATE, and its invalidation is declared here because the last
+    // time it was not, the answer was a linear scan that turned seeding into
+    // O(beings x relations x facts):
+    //   depends on  : the relation-state facts in _facts
+    //   maintained  : assertFact inserts; retractFactsAbout erases that being;
+    //                 every bulk retraction path clears outright
+    //   rebuilt     : never — maintained, not rebuilt
+    //
+    // It may UNDER-report ("no fact" when there is one), which costs one
+    // duplicate fact and nothing else. It must never OVER-report: that would
+    // skip asserting a fact that does not exist, and a missing relation-state
+    // fact is a deaf `Related` law — the defect rung 0 exists to fix. That
+    // asymmetry is why the bulk paths clear rather than try to be precise.
+    std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateIndex;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;

@@ -769,6 +769,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     // Both participants, because retractFactsAbout matches on either.
     if (fact->subject) _factParticipants.insert(fact->subject);
     if (fact->object)  _factParticipants.insert(fact->object);
+    if (fact->subject && fact->isState && fact->type == "relation-state") {
+        _relationStateIndex[fact->subject].insert(fact->attribute);
+    }
     _facts.push_back(fact);
     const FactPtr& f = fact;
 
@@ -907,6 +910,7 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
 
 void ReteNetwork::retractFirst(std::size_t count) {
     if (count == 0) return;
+    _relationStateIndex.clear();
     if (count >= _facts.size()) {
         count = _facts.size();
     }
@@ -953,6 +957,7 @@ void ReteNetwork::retractFirst(std::size_t count) {
 }
 
 bool ReteNetwork::retractFact(const std::string& factId) {
+    _relationStateIndex.clear();
     auto oldSize = _facts.size();
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
         return fact->id == factId;
@@ -984,16 +989,20 @@ bool ReteNetwork::retractFact(const std::string& factId) {
 bool ReteNetwork::hasRelationStateFact(const Singular* subject,
                                        const std::string& relationType) const {
     if (!subject) return false;
-    for (const FactPtr& fact : _facts) {
-        if (!fact || !fact->isState) continue;
-        if (fact->type != "relation-state") continue;
-        if (fact->subject != subject) continue;      // pointer compare only
-        if (fact->attribute == relationType) return true;
-    }
-    return false;
+    // O(1). This was a linear scan of _facts, and seedStateFacts calls it once
+    // per (being, relation) — so seeding a world cost
+    // O(beings x relations x facts), and LawManager::tick fitted k = 1.31
+    // against population where it had been 1.075. frame_lag_test caught that as
+    // an ALGORITHMIC REGRESSION. The index is the fix.
+    auto it = _relationStateIndex.find(subject);
+    return it != _relationStateIndex.end() && it->second.count(relationType) != 0;
 }
 
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
+    // Indexed by POINTER, asked for by id — so the cheap correct move is to
+    // forget everything and let assertFact rebuild. Under-reporting costs a
+    // duplicate fact; over-reporting would cost a deaf law.
+    _relationStateIndex.clear();
     std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
         if (fact->isState && fact->subjectId == subjectId) {
@@ -1116,6 +1125,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     // The being is gone; nothing may assert about it again without going
     // through assertFact, which would re-add it.
     _factParticipants.erase(being);
+    _relationStateIndex.erase(being);
     if (removedIds.empty()) return orphanedSubjects;
 
     for (auto& alpha : _alphaNodes) {
@@ -1150,6 +1160,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
 void ReteNetwork::clearFacts() {
     _facts.clear();
     _factParticipants.clear();
+    _relationStateIndex.clear();
     _dirtyFacts.clear();
     _agenda.clear();
     for (auto& alpha : _alphaNodes) alpha.memory.clear();

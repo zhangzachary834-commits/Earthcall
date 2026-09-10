@@ -526,6 +526,68 @@ the world on every evaluation, and a relation may outlive its endpoints.
 
 ---
 
+## 9d. An ALGORITHMIC REGRESSION flag, bisected — and what a marginal metric is worth
+
+Before starting rung 5 I checked where the cost now sits, and `frame_lag_test` was flagging:
+
+```
+EXP-FAIL  LawManager::tick grows as n^k, k = 1.316
+          (aspiration 1.150, baseline 0.957)  <- ALGORITHMIC REGRESSION
+```
+
+`AGENTS.md` is explicit that `LAG` means *your change*, so this stopped the rung. Absolute cost was
+**0.181 ms against a 1.653 ms baseline** — 9x faster — but scaling worse, which is the half that
+matters as worlds grow.
+
+**Attribution, by construction rather than by argument.** Six configurations, each built and run:
+
+| Configuration | k | verdict |
+|---|---|---|
+| `70134bfa` — parent of rung 0, pre-session | **1.075** | passes |
+| `b9620781` — rung 0 | **0.942** | passes, fitted on real signal |
+| `3fee6d71` — rung 1 | **0.946** | passes |
+| `8171aa49` — mid-range, mostly other sessions' work | — | **"too little to fit a growth curve to"** (0.0020 ms) |
+| HEAD, rung 2's index bypassed | 1.325 | fails |
+| HEAD, rung 1's participant guard bypassed | 1.310 | fails |
+| HEAD, rung 3 stashed | 1.416 | fails — the **worst** reading |
+| HEAD, everything on | 1.316 | fails |
+
+**No configuration I can build attributes the rise to my changes.** Disabling each of rungs 1, 2
+and 3 individually leaves k between 1.31 and 1.42, and the *worst* number came from removing rung 3.
+Both of my own commits measure ~0.94.
+
+**And the metric is not monotonic**, which is the finding that matters. Between rung 1 and HEAD the
+tick's shape-test cost fell to **0.0020 ms** — so low that `frame_lag_test` refused to fit a curve
+at all and said so — and then rose again. A quantity that vanishes and reappears across a
+35-commit window is not tracking one algorithm's complexity; it is tracking **what the measured
+world contains**, and that window includes `REFORMATION OF THE SAVE SYSTEM BUREAUCRACY`,
+`Formation Rete and Save system`, `Zone work`, and two AST/MathNode performance commits, almost
+none of them mine. In the same window `whole frame` (1.113 → 1.281), `Zone::update` (1.137 → 1.176)
+and `physics` (1.279 → 1.327) all drifted above baseline too — and I have touched none of them.
+
+**A candidate explanation I can argue but have not proven:** this session closed five silent
+deafnesses, so laws now reach beings they previously did not. More laws doing more work is a
+*higher* tick cost and a steeper curve, bought deliberately. That would make part of this rise the
+price of correctness rather than a defect. I flag it as a hypothesis because my hypotheses have a
+bad record here (§9c), and because the workload change above is sufficient on its own.
+
+**What I conclude, and what I refuse to conclude.** The flag is real and should not be quieted; the
+baseline it compares against was recorded 2026-08-28, before two weeks of heavy change by three
+sessions, and `AGENTS.md` rightly forbids widening a baseline to silence a line. But nothing I can
+construct attributes it to the law-engine work, and the metric's own instability at these
+magnitudes (0.002–0.2 ms) means an exponent fitted here carries less information than its two
+decimal places suggest. **A fitted exponent over a quantity near the timer floor is a number with
+the confidence of a measurement and the content of a guess** — the profiling analogue of §7's
+counter with no reader.
+
+**One change came out of the hunt and stayed.** `hasRelationStateFact` — rung 0's idempotence
+check — was a linear scan of the fact table, called once per (being, relation) by `seedStateFacts`,
+making seeding O(beings × relations × facts). It is now O(1) behind an index whose invalidation is
+*declared at its declaration*, in the form §7 argues for. **It did not move the exponent**, and I
+am recording that rather than implying it did; it is kept on the complexity argument alone.
+
+---
+
 ## 10. Counter-ledger: what this work did *not* establish
 
 - **The blast radius of finding 5 in authored worlds is unmeasured.** I proved every sweep-path law
@@ -555,6 +617,10 @@ the world on every evaluation, and a relation may outlive its endpoints.
 - **Rung 4's 4x is unfixed, and knowingly so.** Category-scoped laws still walk the relation graph
   once per candidate per tick. The index that would fix it is blocked on a signal that does not
   exist; §9c argues that building it anyway would have been the sixth deafness.
+- **The `LawManager::tick` exponent regression is unresolved and unattributed.** §9d gives six
+  measured configurations; none blames the law-engine work, and the window is dominated by other
+  sessions' commits. It should not be closed on that basis alone — it should be re-measured once
+  the concurrent save-system work settles, against a re-recorded baseline that a Person authorises.
 - **No save file was read or written by any of this work.**
 
 ---
