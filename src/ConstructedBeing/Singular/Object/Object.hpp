@@ -409,7 +409,7 @@ public:
     void setCenter(const glm::vec3& c) { center = c; }
     glm::vec3 getWorldCenter() const { return glm::vec3(getTransform() * glm::vec4(center, 1.0f)); }
 
-    const glm::vec3& getAuthoritativeAxis() const { return authoritativeAxis; }
+    glm::vec3 getAuthoritativeAxis() const { return authoritativeAxis; }
     void setAuthoritativeAxis(const glm::vec3& axis);
 
     glm::vec3 getRotationEulerDegrees() const { return rotationEulerDegrees; }
@@ -419,7 +419,7 @@ public:
     void addTargetRotationDegrees(const glm::vec3& deltaDegrees);
 
     float getRotationResponsiveness() const { return rotationResponsiveness; }
-    void setRotationResponsiveness(float responsiveness);
+    void setRotationResponsiveness(const float& responsiveness);
 
     bool hasPendingRotation() const;
     bool updateRotation(float dt);
