@@ -12,6 +12,7 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
 #include <chrono>
@@ -186,6 +187,10 @@ namespace Core {
             }
             if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
                 watcher->tick();
+            }
+            if (auto* mic = Singularity::Audio::AudioRecorder::find(*_lawManager)) {
+                double dt = Universe::instance().dt();
+                mic->tick(dt > 0.0 ? dt : 0.016);
             }
         }
     }

@@ -34,6 +34,7 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -125,6 +126,9 @@ void Engine::initLogic() {
 
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Register first-mover AudioRecorder (microphone audio capture and streaming recording)
+    Singularity::Audio::AudioRecorder::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
