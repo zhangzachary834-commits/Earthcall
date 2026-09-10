@@ -484,6 +484,7 @@ public:
         _hasComplex = false;
         _hasField = false;
         _hasPatch = false;
+        _smoothMesh.reset();
         switch (k) {
             case ShapeKind::Cube:
             case ShapeKind::Polyhedron:
@@ -652,7 +653,7 @@ public:
         fieldData.children[1]->offset = off;
         rebuildGeometryCaches();
     }
-    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); }
+    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); _smoothMesh.reset(); }
 
     // Polyhedron-specific methods
     void setPolyhedronData(const PolyhedronData& data);
