@@ -52,7 +52,12 @@ public:
     int       cachedMeshesCount = 0;
     bool      wireframe = false;
     bool      heightGridDdaEnabled = true;
+    bool      recording = false;
+    bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
+
+    bool getHasScreenCapturePermission() const;
+    bool getHasAccessibilityPermission() const;
 
 private:
     void buildProperties() override;

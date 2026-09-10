@@ -389,7 +389,7 @@ assembled by hand.
 ## 7.4 Meanwhile, the lag question got a real answer
 
 A concurrent session's `tests/singularity/frame_lag_test.cpp` and
-`docs/audits/2026-08-24_frame_lag_probe.md` landed while this was being written, and they
+`docs/audits/rendering_optimization/2026-08-24_frame_lag_probe.md` landed while this was being written, and they
 resolve something §6 left hanging. `ce5c1cbe`, titled "Attempt to fix chess lag," turned out to
 contain the `Singular` copy/move slicing fix and no performance change — §6 called that a happy
 accident. The probe now says what the lag actually is: **`Physics::updateBodies` is all-pairs

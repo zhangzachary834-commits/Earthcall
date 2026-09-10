@@ -597,16 +597,53 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
 // ---------------------------------------------------------------------------
 namespace {
 
-// Empirically measured (2026-08-31, scratch/probes/measure_perlin_lipschitz.cpp):
-// sup |glm::perlin(a) - glm::perlin(b)| / |a-b| for small |a-b|, sampled at four
-// step scales (1e-2 .. 1e-5) over 4e6 random point pairs each, broadly across
-// [-20,20]^3 -- the domain the noise floor's argument (p*0.008+offset) actually
-// reaches. Measured max: 3.7257, stable across step scales (not growing as the
-// step shrinks, which is the sign of a genuine local-slope bound rather than a
-// finite-difference artifact). Used with a ~1.6x margin, the same style of
-// margin kPerlinBound documents above (measured 1.123 sup vs a used 1.905),
-// since this is an empirical corroboration, not a closed-form proof.
-constexpr float kPerlinLipschitz = 6.0f;
+// A true heightfield f(p) = y - h(x,z) requires more than the outer syntax:
+// h must be independent of the ambient y coordinate. This analysis is
+// deliberately conservative. Unknown structure answers "depends" so an
+// optimization can only fail open to the generic implicit-field path.
+bool dependsOnAmbientY(const OntoMath::MathNode& n) {
+    using Op = OntoMath::MathNode::Op;
+
+    if (n.op == Op::ScalarLeaf) {
+        for (const auto& term : n.scalarForm.terms) {
+            if (term.mentions("y")) return true;
+        }
+        return false;
+    }
+
+    if (n.op == Op::ValueLeaf) {
+        return n.variableName == "y" ||
+               n.variableName == OntoMath::kAmbientPointVar;
+    }
+
+    if (n.op == Op::Component) {
+        if (n.children.size() != 1 || !n.children[0]) return true;
+        const OntoMath::MathNode& child = *n.children[0];
+        if (child.op == Op::ValueLeaf &&
+            child.variableName == OntoMath::kAmbientPointVar) {
+            return n.stringArg == "y";
+        }
+        if (child.op == Op::VectorConstruct && child.children.size() == 3) {
+            std::size_t axis = 3;
+            if (n.stringArg == "x") axis = 0;
+            else if (n.stringArg == "y") axis = 1;
+            else if (n.stringArg == "z") axis = 2;
+            if (axis >= child.children.size() || !child.children[axis]) return true;
+            return dependsOnAmbientY(*child.children[axis]);
+        }
+        return dependsOnAmbientY(child);
+    }
+
+    if (n.op == Op::Unsupported || n.op == Op::Stochastic ||
+        n.op == Op::Raycast || n.op == Op::LineIntegral) {
+        return true;
+    }
+
+    for (const auto& child : n.children) {
+        if (!child || dependsOnAmbientY(*child)) return true;
+    }
+    return false;
+}
 
 // A conservative PER-AXIS Lipschitz bound for `n`: |n(a) - n(b)| <=
 // dot(L, abs(a-b)) for nearby a,b, i.e. L.x/.y/.z bound n's sensitivity to
@@ -619,8 +656,9 @@ constexpr float kPerlinLipschitz = 6.0f;
 // real Perlin-floor save file's noise argument is the full 3D point).
 //
 // Handles only the operations a realistically-authored heightfield composes
-// (constants, the point/its axes, Component, VectorConstruct, Add/Sub,
-// Scale-by-constant, Noise); anything else REFUSES (nullopt) rather than
+// (constants, the point/its axes, Component, VectorConstruct, Add/Sub, and
+// Scale-by-constant); nonlinear/unknown operations such as Noise REFUSE
+// (nullopt) rather than
 // guess, which computeHeightGrid treats as "this field gets no acceleration"
 // -- always safe, never an unsound tightened bound.
 std::optional<glm::vec3> estimateLipschitz(const OntoMath::MathNode& n) {
@@ -715,10 +753,12 @@ std::optional<glm::vec3> estimateLipschitz(const OntoMath::MathNode& n) {
             return std::nullopt;
         }
         case Op::Noise: {
-            if (n.children.size() != 1 || !n.children[0]) return std::nullopt;
-            auto argL = estimateLipschitz(*n.children[0]);
-            if (!argL) return std::nullopt;
-            return kPerlinLipschitz * (*argL);
+            // The former value (6.0) was a sampled maximum with margin, not a
+            // closed-form bound on the exact glm::perlin implementation. A
+            // min/max grid uses this number to declare entire ray segments
+            // empty, so empirical corroboration is insufficient authority.
+            // Refuse acceleration until the implemented function has a proof.
+            return std::nullopt;
         }
         default:
             return std::nullopt;
@@ -740,6 +780,11 @@ bool isHeightfieldExpr(const SdfNode& n, const OntoMath::MathNode** outH) {
          a.children[0]->op == OntoMath::MathNode::Op::ValueLeaf &&
          a.children[0]->variableName == OntoMath::kAmbientPointVar);
     if (!isY) return false;
+    // The real Perlin-floor save currently feeds the whole ambient point to
+    // Noise, so its right subtree reads p.y. Calling that h(x,z) made the
+    // renderer assert df/dy=1 when the authored mathematics says otherwise.
+    // Refuse specialization unless y-independence is structurally proved.
+    if (dependsOnAmbientY(*root.children[1])) return false;
     if (outH) *outH = root.children[1].get();
     return true;
 }

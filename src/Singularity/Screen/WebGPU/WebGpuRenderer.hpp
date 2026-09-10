@@ -17,6 +17,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
 #include <webgpu/webgpu.h>
+#include <array>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <functional>
@@ -127,6 +128,7 @@ public:
     TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                 uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
+    void reloadShaders() override;
 
     // CPU-GPU micro-mastery pool & persistent mesh cache
     Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }
@@ -237,7 +239,7 @@ private:
 
     // Window surface, when running live (null for offscreen/tests).
     WGPUSurface  _surface  = nullptr;
-    WGPUInstance _instance = nullptr;
+    WGPUInstance _instance = nullptr; // surface lifecycle and async timestamp maps
     // The surface texture acquired for THIS frame. Held from beginFrame until
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
@@ -249,6 +251,34 @@ private:
     glm::mat4 _viewProj{1.0f};
     glm::mat4 _model{1.0f};
     glm::vec3 _eyePos{0.0f};
+
+    // Optional execution timing. Query writes bracket the main command encoder's
+    // render pass; each result is copied into a small readback ring and consumed
+    // on a later frame. That delay is intentional: waiting here would recreate
+    // the queue stall this instrumentation exists to distinguish.
+    struct GpuTimestampSlot {
+        WGPUBuffer resolve = nullptr;
+        WGPUBuffer readback = nullptr;
+        bool mapPending = false;
+        bool mapReady = false;
+        WGPUMapAsyncStatus mapStatus = WGPUMapAsyncStatus_Error;
+    };
+    static constexpr size_t kGpuTimestampReadbackSlots = 4;
+    WGPUQuerySet _gpuTimestampQuerySet = nullptr;
+    std::array<GpuTimestampSlot, kGpuTimestampReadbackSlots> _gpuTimestampSlots{};
+    bool _gpuTimestampQueriesEnabled = false;
+    float _gpuTimestampPeriodNs = 0.0f;
+    float _latestGpuMainPassMs = 0.0f;
+    bool _hasGpuMainPassTiming = false;
+    int _timestampSlotForFrame = -1;
+    size_t _nextTimestampSlot = 0;
+    bool initGpuTimestampQueries(bool deviceCapability);
+    void releaseGpuTimestampQueries();
+    void collectGpuTimestampResults();
+    void beginGpuTimestampFrame();
+    void endGpuTimestampFrame();
+    static void onGpuTimestampMap(WGPUMapAsyncStatus status, WGPUStringView message,
+                                  void* userdata1, void* userdata2);
 
     // Resources created per draw must outlive the submit; released in endFrame.
     std::vector<WGPUBuffer>      _frameBuffers;
@@ -310,6 +340,9 @@ private:
         glm::vec4 baseColor;
         glm::vec4 shading;
         glm::vec4 extents;
+        // misc = (isProvenHeightfield, surfaceEps, insideMarchLength, damping).
+        // The proof bit is separate from damping: generic gradient marching is
+        // not permission to use heightfield-only early exits.
         glm::vec4 misc;
         uint32_t paramOffset;
         // Min/max heightfield grid (Phase C): this instance's cells live at

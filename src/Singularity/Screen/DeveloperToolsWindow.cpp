@@ -3,6 +3,9 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+
+
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -73,62 +76,84 @@ void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* en
     // Rendering::stepCreationTools from Engine::update — this window is
     // the test-save loader, not a first-mover step hiding in a render.
 
-    if (ImGui::Begin("Developer: Test World Saves", open)) {
-        static std::vector<TestSaveRow> testSaves;
-        static bool scanned = false;
-        if (!scanned) {
-            testSaves = scanTestSaves();
-            scanned = true;
-        }
 
-        ImGui::TextWrapped(
-            "Observe a test dump in-world. Home is not replaced. You are moved "
-            "into a Zone named test.<save> facing the loaded beings.");
-        ImGui::TextDisabled("Grave / Toggle Dev Mode. *_final.json files have spawned objects.");
+    if (ImGui::Begin("Developer Tools", open)) {
+        if (ImGui::CollapsingHeader("Interaction Diagnostics", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (engine && engine->getLawManager()) {
+                if (auto* chan = Singularity::Input::InteractionChannel::find(*engine->getLawManager())) {
+                    ImGui::Text("Hovered ID: %s", chan->hoveredId.c_str());
+                    ImGui::Text("Pressed ID: %s", chan->pressedId.c_str());
+                    ImGui::Text("Left Down: %s", chan->leftDown ? "true" : "false");
+                    ImGui::Text("Dragging: %s", chan->dragging ? "true" : "false");
+                    ImGui::Text("_liveLeftDown: %s", chan->liveLeftDown() ? "true" : "false");
+                    ImGui::Text("_pendingLeftEdges: %zu", chan->pendingLeftEdges().size());
+                    ImGui::Text("WantCaptureMouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");
 
-        if (ImGui::Button("Refresh Test Saves")) {
-            scanned = false;
-        }
-
-        ImGui::Separator();
-
-        if (testSaves.empty()) {
-            ImGui::TextDisabled("No JSON dumps in saves/tests/. Run the law tests to dump them.");
-        }
-
-        for (const auto& row : testSaves) {
-            ImGui::PushID(row.filename.c_str());
-            if (ImGui::Button("Observe")) {
-                SaveContext ctx;
-                ctx.camera = engine->getCamera();
-                ctx.mouseHandler = engine->getMouseHandler();
-                static float dummyColor[3] = {1.0f, 1.0f, 1.0f};
-                ctx.currentColor = dummyColor;
-                ctx.person = engine->getPerson();
-                ctx.lawManager = engine->getLawManager();
-                ctx.worldTime = engine->worldTimePtr();
-                ctx.unpackForAuthoring = false;
-                mgr.loadTestObservation("saves/tests/" + row.filename, ctx);
-                forgetStaleObjectHandles(mgr, engine->getPerson());
-            }
-            ImGui::SameLine();
-            ImGui::TextUnformatted(row.filename.c_str());
-            if (row.objectCount >= 0) {
-                ImGui::SameLine();
-                if (row.objectCount == 0) {
-                    ImGui::TextDisabled("(law seed, no objects)");
+                    int rawState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+                    ImGui::Text("glfwGetMouseButton (RAW): %s", rawState == GLFW_PRESS ? "PRESS" : "RELEASE");
                 } else {
-                    ImGui::TextDisabled("(%d object%s)", row.objectCount,
-                                        row.objectCount == 1 ? "" : "s");
+                    ImGui::TextDisabled("InteractionChannel not found.");
                 }
             }
-            ImGui::PopID();
         }
 
-        const std::string& report = mgr.getSaveLoadState().lastLoadReport;
-        if (!report.empty()) {
+        if (ImGui::CollapsingHeader("Test World Saves")) {
+            static std::vector<TestSaveRow> testSaves;
+            static bool scanned = false;
+            if (!scanned) {
+                testSaves = scanTestSaves();
+                scanned = true;
+            }
+
+            ImGui::TextWrapped(
+                "Observe a test dump in-world. Home is not replaced. You are moved "
+                "into a Zone named test.<save> facing the loaded beings.");
+            ImGui::TextDisabled("Grave / Toggle Dev Mode. *_final.json files have spawned objects.");
+
+            if (ImGui::Button("Refresh Test Saves")) {
+                scanned = false;
+            }
+
             ImGui::Separator();
-            ImGui::TextWrapped("%s", report.c_str());
+
+            if (testSaves.empty()) {
+                ImGui::TextDisabled("No JSON dumps in saves/tests/. Run the law tests to dump them.");
+            }
+
+            for (const auto& row : testSaves) {
+                ImGui::PushID(row.filename.c_str());
+                if (ImGui::Button("Observe")) {
+                    SaveContext ctx;
+                    ctx.camera = engine->getCamera();
+                    ctx.mouseHandler = engine->getMouseHandler();
+                    static float dummyColor[3] = {1.0f, 1.0f, 1.0f};
+                    ctx.currentColor = dummyColor;
+                    ctx.person = engine->getPerson();
+                    ctx.lawManager = engine->getLawManager();
+                    ctx.worldTime = engine->worldTimePtr();
+                    ctx.unpackForAuthoring = false;
+                    mgr.loadTestObservation("saves/tests/" + row.filename, ctx);
+                    forgetStaleObjectHandles(mgr, engine->getPerson());
+                }
+                ImGui::SameLine();
+                ImGui::TextUnformatted(row.filename.c_str());
+                if (row.objectCount >= 0) {
+                    ImGui::SameLine();
+                    if (row.objectCount == 0) {
+                        ImGui::TextDisabled("(law seed, no objects)");
+                    } else {
+                        ImGui::TextDisabled("(%d object%s)", row.objectCount,
+                                            row.objectCount == 1 ? "" : "s");
+                    }
+                }
+                ImGui::PopID();
+            }
+
+            const std::string& report = mgr.getSaveLoadState().lastLoadReport;
+            if (!report.empty()) {
+                ImGui::Separator();
+                ImGui::TextWrapped("%s", report.c_str());
+            }
         }
     }
     ImGui::End();

@@ -251,17 +251,30 @@ void Law::rebuildRequiredProperties() {
     }
 }
 
+// Does this being carry a property by this name, at all?
+//
+// Named once because TWO things now ask it: couldApplyTo below, and the
+// vocabulary index the sweep is narrowed by (LawManager::refreshVocabularyIndex,
+// FORMATION_RETE.md §8 rung 2). If the index tested membership even slightly
+// differently — only the dynamic map, say — it would omit beings the filter
+// would have kept, and an omitted candidate is a law that goes deaf with
+// nothing reported. Widen where uncertain, never narrow: PROPHETIC_RETE.md §2.
+//
+// Same reasoning as ReteNetwork::alphaFeedsAnyBeta, which its header calls
+// "named once so backfill and propagation cannot drift apart."
+bool beingCarriesProperty(const Singular& being, const std::string& name) {
+    if (const_cast<Singular&>(being).findProperty(name)) return true;
+    // Authored properties are as real as first-mover ones: a law that reads a
+    // granted `warmth` must still reach the beings a previous law granted it to.
+    PropertyValue ignored;
+    return const_cast<Singular&>(being).getDynamicProperty(name, ignored);
+}
+
 bool Law::couldApplyTo(Singular& being) const {
     // No stated requirements = no filter. A law of pure kind-tests or pure
     // quantification really is about every being, and must keep sweeping.
     for (const std::string& name : _requiredProperties) {
-        if (being.findProperty(name)) continue;
-        // Authored properties are as real as first-mover ones: a law that
-        // reads a granted `warmth` must still reach the beings a previous
-        // law granted it to.
-        PropertyValue ignored;
-        if (being.getDynamicProperty(name, ignored)) continue;
-        return false;
+        if (!beingCarriesProperty(being, name)) return false;
     }
     return true;
 }
@@ -722,6 +735,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     if (fact->subject && fact->subjectId.empty()) {
         fact->subjectId = fact->subject->getIdentifier();
     }
+    // Both participants, because retractFactsAbout matches on either.
+    if (fact->subject) _factParticipants.insert(fact->subject);
+    if (fact->object)  _factParticipants.insert(fact->object);
     _facts.push_back(fact);
     const FactPtr& f = fact;
 
@@ -934,6 +950,18 @@ bool ReteNetwork::retractFact(const std::string& factId) {
     return true;
 }
 
+bool ReteNetwork::hasRelationStateFact(const Singular* subject,
+                                       const std::string& relationType) const {
+    if (!subject) return false;
+    for (const FactPtr& fact : _facts) {
+        if (!fact || !fact->isState) continue;
+        if (fact->type != "relation-state") continue;
+        if (fact->subject != subject) continue;      // pointer compare only
+        if (fact->attribute == relationType) return true;
+    }
+    return false;
+}
+
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
     std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
@@ -971,15 +999,18 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
                       _dirtyFacts.end());
 }
 
-void ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+bool ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+    bool found = false;
     for (const auto& fact : _facts) {
         if (fact->isState && fact->subjectId == subjectId && fact->attribute == attribute) {
+            found = true;
             if (!fact->dirty) {
                 fact->dirty = true;
                 _dirtyFacts.push_back(fact);
             }
         }
     }
+    return found;
 }
 
 void ReteNetwork::evaluateDirty() {
@@ -1010,6 +1041,28 @@ void ReteNetwork::evaluateDirty() {
 std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     std::vector<std::string> orphanedSubjects;
     if (!being) return orphanedSubjects;
+    // THE HOT GUARD. This is called from Singular::notifyBeingReleased, which
+    // fires for EVERY Singular destructor — and `ECA::Event` carries a
+    // `Moment timestamp{}` by value, while `Moment` IS a Singular. So every
+    // transient Event destroys a Singular: one in conditionsSatisfied, one in
+    // publishAppliedEvent, and — worst — one per alpha node per fact, in the
+    // `ECA::Event dummy` inside the compiled alpha predicate
+    // (`ConditionModel.cpp`).
+    //
+    // Without this check each of those paid a full scan of _facts, so a law
+    // applying to N beings over a fact table of N cost O(N²) with no scan of
+    // the world in sight. Measured before the guard: a plain WhileTrue Compare
+    // law fitted k = 2.00 against population; after, it is linear. This is the
+    // quadratic FORMATION_RETE.md §1.2(b) went looking for in quantifiers —
+    // the quantifier arm and the Compare control were within 3% of each other.
+    //
+    // _factParticipants is a deliberate SUPERSET: assertFact adds, and only
+    // this function removes. A stale entry costs one scan that finds nothing,
+    // which is exactly today's behaviour; a missing entry would silently keep
+    // a dangling fact, so the set may never be pruned anywhere else.
+    if (_factParticipants.find(being) == _factParticipants.end()) {
+        return orphanedSubjects;
+    }
     std::unordered_set<std::string> removedIds;
     std::unordered_set<std::string> subjects;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
@@ -1029,6 +1082,9 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
                                 }),
                  _facts.end());
     orphanedSubjects.assign(subjects.begin(), subjects.end());
+    // The being is gone; nothing may assert about it again without going
+    // through assertFact, which would re-add it.
+    _factParticipants.erase(being);
     if (removedIds.empty()) return orphanedSubjects;
 
     for (auto& alpha : _alphaNodes) {
@@ -1062,6 +1118,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _factParticipants.clear();
     _dirtyFacts.clear();
     _agenda.clear();
     for (auto& alpha : _alphaNodes) alpha.memory.clear();
@@ -1491,7 +1548,33 @@ void LawManager::connectToEventBus() {
         // in the engine. It answers "no" only where the abstract
         // interpretation PROVED no; see LawManager::propheticHears.
         if (!propheticHears(name)) return;
-        _rete.markFactDirty(owner->getIdentifier(), name);
+        if (!_rete.markFactDirty(owner->getIdentifier(), name)) {
+            // No fact existed for this (being, property). Not "unchanged" —
+            // UNKNOWN. seedStateFacts runs once per being, ever, so a property
+            // granted after that being was first seen had nothing to dirty and
+            // would never acquire a fact: the reactive path could not see it,
+            // and a WhileTrue law reading it never reached that being again.
+            // Deaf, permanently, with nothing reported — the failure
+            // PROPHETIC_RETE.md §2 forbids, and the same shape as the relation
+            // deafness of §1.2(a). Found by vocabulary_index_test §B.
+            //
+            // Only for beings the network has already met: one it has not is
+            // the first-tick seed's job, and asserting here would race it.
+            const std::string subjectId = owner->getIdentifier();
+            if (_seededSubjects.count(subjectId)) {
+                if (Property* prop = owner->findProperty(name)) {
+                    auto stateFact = std::make_shared<ReteFact>();
+                    stateFact->type = "property-state";
+                    stateFact->subject = owner;
+                    stateFact->subjectId = subjectId;
+                    stateFact->attribute = prop->name();
+                    stateFact->value = propertyValueToJson(prop->value());
+                    stateFact->isState = true;
+                    stateFact->dirty = false;
+                    _rete.assertFact(stateFact);
+                }
+            }
+        }
         _dirty = true;
     });
 
@@ -1516,6 +1599,7 @@ void LawManager::connectToEventBus() {
             _rete.retractStateFactsBySubject(e.subject->getIdentifier());
         }
 
+        
         auto fact = std::make_shared<ReteFact>();
         fact->type = e.type;
         fact->subject = e.subject;
@@ -1526,6 +1610,33 @@ void LawManager::connectToEventBus() {
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
             seedStateFacts(e.subject);
+        }
+
+        // The edge itself, for BOTH endpoints.
+        //
+        // seedStateFacts(e.subject) above is not this. On "relation-formed"
+        // the subject is the RELATION being (RelationManager.cpp: `echo.subject
+        // = r.get()`), so that call snapshots the Relation's own properties —
+        // correct, and worth keeping — while emitting no relation-state fact
+        // for either endpoint. And because seedStateFacts is gated by
+        // _seededSubjects, an already-known endpoint returned immediately even
+        // when it was passed one.
+        //
+        // So no edge formed after a being's first tick was ever indexed, and a
+        // continuous `Related` law compiles terminals — which means it never
+        // falls through to the sweep, never receives a candidate, and never
+        // re-checks. Deaf, permanently, with nothing reported anywhere.
+        // FORMATION_RETE.md §1.2(a); guarded by rete_relation_state_test.
+        if (e.type == "relation-formed" && e.subject) {
+            if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
+                if (_relationTypesInPlay.count(relation->type)) {
+                    // Both ends are safe to name HERE, and only here: an edge
+                    // being formed this instant has two live endpoints. The
+                    // back-seed below cannot assume that and does not.
+                    assertRelationStateFact(relation->a(), relation->type);
+                    assertRelationStateFact(relation->b(), relation->type);
+                }
+            }
         }
     });
 
@@ -1651,6 +1762,17 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
 
+    // Once per tick, for every law — not once per law. This is the whole point
+    // of the index: the world is walked a single time here, and each sweeping
+    // law below then reads a candidate list instead of rebuilding
+    // Universe::beings() for itself. In a frame where nothing was made,
+    // unmade, or granted a property, it returns on an integer compare.
+    //
+    // It must run BEFORE the continuous pass, and after seeding: a being
+    // admitted this tick has to be in the index the same tick, or the law that
+    // wants it waits a frame — a widening, but a needless one.
+    refreshVocabularyIndex();
+
     auto T2 = glfwGetTime();
 
     if (_rete.hasDirtyFacts()) {
@@ -1659,7 +1781,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
 
     std::vector<Law::ApplicationRecord> records;
-    for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
+    for (int round = 0; round < _maxChainRounds && _dirty; ++round) { if(round == 7) std::cout << "MAX CHAIN ROUNDS HIT!" << std::endl;
         _dirty = false;
         // Facts asserted before this round are consumed by it; facts asserted
         // DURING it (laws firing events from applyTo) survive into the next
@@ -1915,6 +2037,43 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
     maybeStartDriveSession(law, subject);
 }
 
+// Rebuild the vocabulary index, but only when the world's shape has moved.
+//
+// One pass over the beings for ALL laws, replacing one pass PER LAW. In a
+// steady frame — nothing made, unmade, or granted a property — this is a single
+// integer compare and returns immediately.
+//
+// The index is keyed on the property names some law requires. That set only
+// grows within a session and is cheap to check, so a law authored later cannot
+// find a name missing from the index: a new name forces a rebuild too, exactly
+// as a structural change does. Missing a name would omit candidates, and an
+// omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
+// conservative in the safe direction and rebuilds when unsure.
+void LawManager::refreshVocabularyIndex() const {
+    std::unordered_set<std::string> wanted;
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        for (const std::string& name : law->requiredProperties()) wanted.insert(name);
+    }
+
+    const uint64_t revision = Universe::instance().structuralRevision();
+    if (revision == _vocabularyBuiltAt && wanted == _indexedNames) return;
+
+    _vocabularyIndex.clear();
+    _indexedNames = std::move(wanted);
+    _vocabularyBuiltAt = revision;
+    if (_indexedNames.empty()) return;
+
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (const std::string& name : _indexedNames) {
+            if (beingCarriesProperty(*being, name)) {
+                _vocabularyIndex[name].push_back(being);
+            }
+        }
+    }
+}
+
 // Who a law sweeps when it has no targets Formation: not everyone, but
 // everyone who CARRIES ITS VOCABULARY (see Law::requiredProperties).
 std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
@@ -1931,14 +2090,39 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    std::vector<Singular*> beings = Universe::instance().beings();
-    if (law.requiredProperties().empty()) return beings;   // truly about everyone
-    beings.erase(std::remove_if(beings.begin(), beings.end(),
-                                [&law](Singular* being) {
-                                    return !being || !law.couldApplyTo(*being);
-                                }),
-                 beings.end());
-    return beings;
+    const auto& required = law.requiredProperties();
+    if (required.empty()) return Universe::instance().beings();  // truly about everyone
+
+    // Self-guarding: an integer compare when tick() already refreshed, a full
+    // rebuild when this was reached some other way. Never a stale read.
+    refreshVocabularyIndex();
+
+    // Seed from the RAREST required name and filter that, instead of walking
+    // the world. Every required name must hold, so the smallest of their member
+    // lists is already a superset of the answer — and picking the smallest is
+    // the cheap, metric-free stand-in for §5's cost model, where fan-out is
+    // what an edge weight is supposed to measure. When §5 lands with a real
+    // value-per-cost ranking, this is the call site that grows it.
+    //
+    // A name absent from the index means NOBODY carries it, so the law has no
+    // subjects — the fast path for a law nothing can satisfy. That is a sound
+    // narrowing (provably IMPOSSIBLE, the only kind §3.0 permits), not a guess:
+    // the index was built with the same predicate couldApplyTo uses.
+    const std::vector<Singular*>* seed = nullptr;
+    for (const std::string& name : required) {
+        auto it = _vocabularyIndex.find(name);
+        if (it == _vocabularyIndex.end()) return {};
+        if (!seed || it->second.size() < seed->size()) seed = &it->second;
+    }
+    if (!seed) return Universe::instance().beings();   // index not built yet
+
+    std::vector<Singular*> chosen;
+    chosen.reserve(seed->size());
+    for (Singular* being : *seed) {
+        // couldApplyTo still decides. The index only proposes.
+        if (being && law.couldApplyTo(*being)) chosen.push_back(being);
+    }
+    return chosen;
 }
 
 // ---------------------------------------------------------------------------
@@ -2250,20 +2434,77 @@ void LawManager::seedStateFacts(Singular* being) {
     // mentions can wake no node — this is a provably-IMPOSSIBLE narrowing, the
     // only kind PROPHETIC_RETE.md §2 permits, and it keeps a graph of hundreds
     // of edges from asserting a fact per edge per being.
+    // BOTH ENDPOINTS, not only the source. This loop used to read
+    // `relation->a() != being`, so the network could traverse a->b and never
+    // b->a — the one structural gap FORMATION_RETE.md §2 names. A law whose
+    // condition looked along an edge from the far side matched nobody, and
+    // said nothing about it.
+    //
+    // Comparing `relation->b()` is a POINTER compare and does not dereference
+    // the far end, which is what keeps the guarantee below intact.
     if (!_relationTypesInPlay.empty()) {
         for (Relation* relation : Universe::instance().relations()) {
-            if (!relation || relation->a() != being) continue;
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
             if (!_relationTypesInPlay.count(relation->type)) continue;
-            auto edgeFact = std::make_shared<ReteFact>();
-            edgeFact->type = "relation-state";
-            edgeFact->subject = being;
-            edgeFact->subjectId = subjectId;
-            edgeFact->attribute = relation->type;
-            edgeFact->isState = true;
-            edgeFact->dirty = false;
-            _rete.assertFact(edgeFact);
+            assertRelationStateFact(being, relation->type);
         }
     }
+}
+
+// Emit edge facts for relation types that have only just entered play.
+//
+// Iterates BEINGS and asks which relations touch each of them, rather than
+// iterating relations and naming their endpoints. That is not a stylistic
+// choice: the being comes from the Universe provider, so it is alive and safe
+// to dereference for its identifier, whereas a relation's endpoint may already
+// have been destroyed — control_patterns_test holds several such edges, left
+// behind by scoped Objects, and naming one would take the whole engine down.
+// The far end is compared by POINTER and never read.
+//
+// Bounded: runs only on the compile that first introduces a type, and the
+// vocabulary only grows, so the whole session pays one pass per distinct
+// relation type. This must stay off the per-tick path — see the To-Do item
+// about moving per-frame seeding to admission.
+void LawManager::backSeedRelationStateFacts(const std::unordered_set<std::string>& types) {
+    if (types.empty()) return;
+    const std::vector<Relation*> relations = Universe::instance().relations();
+    if (relations.empty()) return;
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (Relation* relation : relations) {
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
+            if (!types.count(relation->type)) continue;
+            assertRelationStateFact(being, relation->type);
+        }
+    }
+}
+
+// One edge fact for one endpoint. Shared by the first-tick seed above, the
+// relation-formed handler, and the back-seed in compileConditionsToRete, so
+// the three cannot drift into asserting differently shaped facts — the same
+// reasoning as ReteNetwork's alphaToken/joinedToken helpers.
+//
+// Deliberately NOT gated by _seededSubjects: see the header.
+void LawManager::assertRelationStateFact(Singular* endpoint, const std::string& relationType) {
+    if (!endpoint) return;
+    const std::string subjectId = endpoint->getIdentifier();
+    if (subjectId.empty()) return;
+    // Idempotent. An alpha filters on `attribute` alone, so a second identical
+    // fact wakes exactly the nodes the first already woke and tells them
+    // nothing new — it only makes every future propagation scan longer.
+    // Skipping it is not a narrowing: the fact it would have added is already
+    // live and already in those memories.
+    if (_rete.hasRelationStateFact(endpoint, relationType)) return;
+    auto edgeFact = std::make_shared<ReteFact>();
+    edgeFact->type = "relation-state";
+    edgeFact->subject = endpoint;
+    edgeFact->subjectId = subjectId;
+    edgeFact->attribute = relationType;
+    edgeFact->isState = true;
+    edgeFact->dirty = false;
+    _rete.assertFact(edgeFact);
 }
 
 void LawManager::syncReteCompilation(Law& law) {
@@ -2294,7 +2535,24 @@ void LawManager::compileConditionsToRete(Law& law) {
     // Every relation type this law names joins the seeding vocabulary. Only
     // grows: a type that was in play stays in play for the session, which
     // costs a few facts and can never make a law deaf.
-    if (law.conditionModel()) law.conditionModel()->collectRelationTypes(_relationTypesInPlay);
+    //
+    // But growing the vocabulary is not enough on its own. seedStateFacts only
+    // emits edge facts for types ALREADY in play when it ran, and it runs once
+    // per being — so a law authored after the world was seeded named a type
+    // nobody had ever emitted a fact for, and was deaf to every edge that
+    // already existed. Same defect as the relation-formed handler above, one
+    // step removed: FORMATION_RETE.md §1.2(a) calls this its second shape.
+    //
+    // So: back-seed the types this compile is the FIRST to name.
+    if (law.conditionModel()) {
+        std::unordered_set<std::string> named;
+        law.conditionModel()->collectRelationTypes(named);
+        std::unordered_set<std::string> newlyInPlay;
+        for (const std::string& type : named) {
+            if (_relationTypesInPlay.insert(type).second) newlyInPlay.insert(type);
+        }
+        if (!newlyInPlay.empty()) backSeedRelationStateFacts(newlyInPlay);
+    }
     // Stamped first, and unconditionally: the paths below that give up early
     // (no model, nothing compilable) are still a complete answer for THIS
     // revision, and re-deciding it every tick would be a standing tax.

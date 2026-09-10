@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 namespace {
 
@@ -61,18 +62,8 @@ void click(Singularity::Input::InteractionChannel* interaction,
 } // namespace
 
 int main(int argc, char** argv) {
-    std::string filename = (argc > 1) ? argv[1] : "saves/worlds/chess_app.json";
-    if (argc <= 1 && !std::filesystem::exists(filename)) {
-        if (std::filesystem::exists("../saves/worlds/chess_app.json"))
-            filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    std::string filename = (argc > 1) ? argv[1] : TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
     std::cout << "--- chess_app_probe: " << filename << " ---\n";
 
     TestSupport::BootedEngineHarness harness;
@@ -112,6 +103,43 @@ int main(int argc, char** argv) {
     assert(boardCount == 1);
     assert(pieceCount == 32);
     std::cout << "  one board, 32 pieces\n";
+
+    // The Law Library is backed by authored category Singulars and actual
+    // Relations, not UI labels. These edges hydrate only after authored Laws
+    // exist, so this also guards the post-Law second relation pass.
+    assert(findCat("category.chess.law"));
+    assert(findCat("category.chess.law.interaction"));
+    assert(findCat("category.chess.law.movement"));
+    assert(findCat("category.chess.law.capture"));
+    std::unordered_set<std::string> categorizedLaws;
+    bool sawInteractionParent = false;
+    bool sawClickMembership = false;
+    for (Relation* relation : Universe::instance().relations()) {
+        if (!relation) continue;
+        if (relation->type == "subcategory-of" &&
+            relation->aId() == "category.chess.law.interaction" &&
+            relation->bId() == "category.chess.law") {
+            sawInteractionParent = true;
+        }
+        if (relation->type == "instance-of" &&
+            relation->bId().rfind("category.chess.law", 0) == 0 &&
+            relation->aId().rfind("law-chess-", 0) == 0) {
+            categorizedLaws.insert(relation->aId());
+            if (relation->aId() == "law-chess-click" &&
+                relation->bId() == "category.chess.law.interaction") {
+                sawClickMembership = true;
+            }
+        }
+    }
+    assert(sawInteractionParent);
+    assert(sawClickMembership);
+    std::size_t authoredLawCount = 0;
+    for (const auto& law : harness.lawManager.getAll()) {
+        if (law && !law->isFirstMover()) ++authoredLawCount;
+    }
+    assert(categorizedLaws.size() == authoredLawCount &&
+           "every authored chess Law is categorized");
+    std::cout << "  authored Law category DAG hydrated with every chess Law classified\n";
 
     // Queens on their colours: d1 is light (3+0 odd), d8 is dark (3+7 even).
     assert(asInt(*whiteQueen, "gridX") == 3 && asInt(*whiteQueen, "gridY") == 0);

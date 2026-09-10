@@ -1,8 +1,29 @@
 # Synthesis Studio is half-wired
 
 **Status:** open  
+**Latest pass:** resonance Studio upgrade authored; automated behavior verified, live visual/audio acceptance pending (see below).
 **Section in the To-Do list:** Interaction · controls · GUI  
 **Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
+
+---
+
+## 2026-09-04 — Play the room: resonance Studio
+
+**Codex · session `synthesis-studio-20260904` · 2026-09-04 22:00 PDT.** Zach requested “make the synthesis studio way cooler” and subsequently asked to continue after a usage limit. The music-and-light direction, layout, and authored implementation are Codex's extension of that request; the Person-authorship and save-preservation requirements come from Zach's AGENTS.md.
+
+Implemented in `scripts/upgrade_synthesis_studio.py` and applied to `saves/worlds/synthesis_studio.json`, its `.ecform` sibling, and `saves/zones/SynthesisStudio/zone.json`: a wider spectrum dock, larger note pads, seven fixed floating resonators, seven note-decay meters, a last-note readout, triangle/sine/square voice selection, and Solar/Tidal/Orchid drawing inks. The shipped save lacked press Laws; two authored press Laws restore 2D/3D depression. Existing release Laws provide the spring. The new animation never creates objects during musical play. Runtime behavior remains Law data; no Studio-specific engine code was added.
+
+There are 21 new Laws and 28 new Objects (seven resonators, seven meters, six selectors, seven captions, and the authoring marker `studio.author.codex`). New Laws name that Object as their author. Its `onBehalfOf` property names Zach, and both saves retain earlier attribution while recording Codex's intervention. The original pad playback Law retains its identity and attribution with a `revised-by` edge. The drawing Law now applies the selected ink to newborn strokes. Existing unrelated beings, user properties, and the `.ecmatter` binary remain preserved.
+
+Original files, including the binary companion, are recoverable under `saves/backups/synthesis-studio-20260905T014017Z-zwfhvjcu/`. The upgrade operates on each existing document rather than regenerating the Zone. Repeated execution is a no-op, including after top-level annotations disappear during an engine save: the authoring Object's persisted revision protects later Person edits.
+
+Verification: the WebGPU app and Studio test build; the Studio regression checks cover 35 sequential pad clicks, 20 repeated orb clicks, press/release, all seven pitches, exactly one sound per selected voice, matched light response and decay, constant population during 40 note activations, and real Law/Object serialization round-trips. The updater was also exercised against an extra Person-owned sentinel being and a later paint edit, which survived. This does not establish audible timbre quality, real desktop input, or visual layout. The computer-use preview failed to open through macOS Launch Services; hands-on acceptance is listed in `Person Verification List.md`. The layout is authored for the existing 1280×720 window-point viewport; responsive layout remains outside this pass.
+
+Use the normal saved-world picker to load **synthesis_studio** after reopening Earthcall. Voice and ink controls are at the upper right; notes, orb creation, theme, and drawing mode are in the bottom dock. Visual and audible acceptance remain open; the older audit below is retained as history, not a description of the new pass's test results.
+
+Build integration note (Codex, same session, 2026-09-04 22:53 PDT): concurrent Physics work initially blocked the final rebuild by reading private `Object::center`; the two reads now call the existing `getCenter()` accessor. No physics formula changed in this correction.
+
+Final verification (Codex, same session, 2026-09-04 22:59 PDT): the rebuilt Studio test exits 0, including the selected Tidal color on a newly drawn stroke and all prior checks. The WebGPU app built successfully earlier in this pass. A subsequent app rebuild picked up ongoing unrelated engine changes and was stopped to reduce machine load (load average exceeded 50); no claim is made that the latest concurrent engine work has completed its app build. The three Studio documents have identical object content; their attribution/revision envelopes intentionally differ by document. No preview process remains running.
 
 ---
 
@@ -32,3 +53,149 @@
     (3) `InteractionChannel::step()` leaked accumulating virtual cursor coordinates into 2D hit tests while `pointerLocked` was true;
     (4) **Click Invalidation across Window/Tab Switches:** When window focus changed (e.g. switching tabs/apps, clicking outside, or opening/closing ImGui windows), GLFW on macOS never delivered mouse release callbacks to the unfocused window. `InteractionChannel` was never notified of focus loss, leaving `_liveLeftDown` latched `true` indefinitely. Once `_liveLeftDown` was stuck, `_prevLeft` stayed `true`, preventing subsequent mouse presses from firing press edges (`leftPressedNow`), failing to bind `pressedId`, and causing hand motion to trigger `dragging = true` which permanently froze all subsequent click registrations across the session. Fixed by adding `InteractionChannel::onWindowFocus`, plumbing focus changes through `Engine::onWindowFocus`, and adding self-healing physical button state reconciliation (`glfwGetMouseButton`) in `step()`;
     (5) **Unintended Cursor Lock on Menu / Window Dismissal:** Pressing `M` to close the main menu forcibly re-locked the cursor (`GLFW_CURSOR_DISABLED`) even if Creator Console or other tool windows were open, and pressing `ESC` with tool windows open toggled cursor lock instead of closing the tool window. Updated `EngineInit.cpp` so tool windows remain cursor-unlocked and `ESC` closes tool windows before toggling cursor lock. Added comprehensive test coverage in `tests/law/synthesis_studio_app_test.cpp`.
+
+---
+
+## 2026-09-03 — a regression from an unsupervised Gemini pass, fixed; the click-lockout is back and NOT the bug 29.4 already fixed. Handed to Jules.
+
+**By Claude Sonnet 5** (session `session_01QuAJPn4ksYga3rt2VQPitu`, continuing `session_01GF2zwvZm8PZ8MnDyQgy3Ki`), acting on Zach's report. Zach: *"synthesis studios buttons stop being responsive and lose functionality after some arbitrary number of clicks for a cause that i cant pin down. gemini tried fixing but misunderstood what i meant and introduced lag... also you should turn collision rules back off... the button depression issue didn't get fixed... I think u misunderstood what I meant when I said 3D tools were off. It is supposed to be off by default and only turned on when the tool for it is selected... the issue where I can only click some arbitrary number of times... also affects the 3D tool... and it's not clear why."*
+
+### Part A — three regressions from that Gemini pass, found and fixed this session (do not reintroduce)
+
+An uncommitted working tree (this Gemini session, author tag `author.gemini-spark` in the save) had added real value — the button depress/spring-back mechanic (`law-studio-button-depress`/`-spring`, `law-studio-toggle-depress`/`-spring`, absolute-position math bound to a stored `restY`/`restY2D`, not relative deltas — this part is correct and stayed) — but also introduced three regressions while chasing the click-lockout blind:
+
+1. **`Law.cpp::LawManager::loadFromJson` force-enabled every first mover not named in a save's `firstMoverEnabled`.** Added code directly contradicted its own copied-down comment ("missing keys leave the first mover at its boot default... A first mover that is not in this world yet cannot be addressed"). This is what silently turned Zach's collision toggle back on across a reload — any first mover switched off at runtime that isn't itemized in a given save gets stomped back to enabled on the next load. **Fixed: reverted to the original logic — `Law.cpp` is now byte-identical to HEAD.** Do not re-add a "reset omitted first movers" loop; the boot-default contract is "leave it exactly where it was," not "reset to a fixed value," and that now has direct test coverage (see Part below).
+2. **The save itself had `shape-generator-3d-law` / `tool-create-3d-law` flipped `false → true` in `firstMoverEnabled`.** This is the actual "3D tools were off" misunderstanding Zach called out — Gemini baked "always on" into the save instead of leaving the tool armed only by runtime tool-selection (`spawnLawArmed`/`active3DMode`, `CreationChannel.cpp`). **Fixed: reverted both to `false`** in `saves/worlds/synthesis_studio.json`.
+3. **Two test assertions in `tests/law/synthesis_studio_app_test.cpp` had been written to match the bug**, not the contract — asserting the two laws above "are enabled after loading" and that "an omitted first mover resets to its boot default (true)." **Fixed: rewrote both** to assert the tool starts disabled, and added a two-directional check that an omitted key leaves state untouched whichever way it was set (explicitly-disabled-then-omitted stays disabled; explicitly-enabled-then-omitted stays enabled) — this is now a real regression test for defect #1 above, not just a manual claim.
+4. **`app.js`'s new telemetry HUD ran full DOM writes and iterated every mesh/object in the scene inside the 60fps `animate()` loop** (`initThreeJS`'s render loop) instead of the 1-second sampling interval already sitting right there (`initTelemetryAndDiagnostics`). Cost scaled with orb count — exactly "gets laggier the more you use the studio." **Fixed: moved `updateViewportLiveStats()` off `animate()` and onto the existing 1Hz interval.** `animate()` now only does FPS-smoothing arithmetic, no DOM.
+
+Verified: `synthesis_studio_app_test` full pass (35 clicks / 5 passes / depress+spring asserted every click), full suite 95/96 (`smooth_tessellation_cache_test` is the pre-existing unrelated Bugs.md #11 failure), `earthcall_webgpu` builds clean, `Law.cpp` diffs to nothing against HEAD.
+
+**None of the above is the click-lockout Zach is actually asking about.** It was Gemini's misdiagnosis-driven side effects. The lockout itself is still open — that's Jules' job.
+
+### Part B — the click-lockout: what it is NOT, ruled out this session with evidence
+
+Zach's exact framing of his own hypotheses, verbatim, because they're better than anything I'd have guessed: *"I don't actually think imgui is responsible for this specific clicking issue since imgui has never stopped world-space clicks in any other context when i ran previously. Theres a second click pipeline that the Laws are using and I suspect something may be getting tangled there after a certain number of clicks somehow"* — and separately, that it might correlate with **duration** (click count or time-in-zone) rather than a fixed threshold. He also confirmed directly: **this is 100% the native `earthcall_webgpu` app, not the browser dashboard** (`src/Singularity/Foreign/py/...` is a separate, unrelated Flask/SocketIO remote console — item 4's `app.js` fix above lives there but is not this bug), and **he is not touching any ImGui window when it happens — it's pure Earthcall-native 2D HUD and 3D world objects.** There is also **no hover-glow feature** — only the Select tool glows on selection, which is a different thing entirely; don't rely on "hover highlight" as a signal, it doesn't exist.
+
+**Ruled out — the Law/Rete pipeline itself (Zach's "second pipeline" hypothesis, tested directly):**
+`InteractionChannel::observe()` → `EventBus` → `ReteNetwork::assertFact` → `LawManager::tick()`'s round-consumption (`retractFirst`) is the actual second pipeline Zach means, distinct from ImGui entirely, and it's a legitimate thing to suspect — Rete working memory is exactly the kind of place a per-event leak hides. I stress-tested it directly: a scratch probe (`scratch/probes/synthesis_studio_click_stress.cpp` — copy into `tests/law/` to build via the CMake glob, `cmake --build build --target synthesis_studio_click_stress`, then remove the copy and reconfigure when done, per `docs/ENGINEERING_DISCIPLINE.md`'s Working Notes) drove **6,000 press/release cycles** on `hud.pad.c5` calling `InteractionChannel::observe()` + `LawManager::tick()` directly (bypassing GLFW entirely). Result: `laws.rete().facts().size()` sat at **exactly 6080 the entire run, zero growth**; every single click sounded its note (6000/6000); no lockout; no spring-back failure; per-click wall time flat at ~9.4ms with no upward trend across the whole run. **The deterministic Law/Rete core is clean under far more load than a human session generates.** Don't re-investigate this layer without new evidence — rerun the probe if you want to confirm, but I'd be surprised if it's not still clean.
+
+**Not (necessarily) it — a previously-fixed latch, same failure family, different trigger:**
+Item 29(4) above already fixed a `_liveLeftDown`-stuck-true bug, but that one's trigger was **window focus loss** (tab switch, Cmd-Tab, clicking outside the window) dropping a `GLFW_RELEASE` callback — fixed via `InteractionChannel::onWindowFocus` + polling `glfwGetMouseButton()` as a cross-check in `step()`. A second, independent pass landed the same day (commit `3f397d98`, "ImGUI patches...") adding a *second* reconciliation loop in `Engine.cpp::tick()` that zeroes `io.MouseDown[]` against the physical GLFW state before `ImGui::NewFrame()`, specifically for ImGui's own capture state getting stuck. **Zach's current repro does not involve switching windows or touching ImGui at all**, so neither of these fixes is obviously the gap — but read both before touching input code, because whatever the remaining bug is, it must NOT be the same trigger these two already cover (confirm your repro genuinely never blurs the window or opens an ImGui panel first).
+
+### Part C — the live hand-trace: where I'd look next, unverified without a real window
+
+I do not have a way to drive the real windowed app or send it live OS mouse/keyboard events from here — everything above the Rete/Law layer is `GLFWwindow*`-shaped (`InteractionChannel::step()` calls `glfwGetCursorPos`/`glfwGetMouseButton`/`glfwGetWindowAttrib` directly) and untestable headless. This is the actual gap Jules should fill: **you can run and click the live app; I could not.**
+
+Hand-tracing `InteractionChannel::step()` / `noteMouseButton()` (`src/Singularity/Input/Interaction/InteractionChannel.cpp`): the existing heal only fixes a dropped GLFW **callback** by cross-checking the **polled** hardware state (`glfwGetMouseButton`) each frame. If the *polled* state itself is what's wrong — a real OS/driver-level stuck bit, not just a missed callback — this heal cannot detect it, because it's checking one unreliable signal against itself. `Engine.cpp`'s own comment already names this class of problem on this exact platform: *"On macOS / GLFW, focus transitions, popup windows, or rapid trackpad clicks can drop GLFW_RELEASE events."* Rapid trackpad clicks, specifically, with no focus change and no popup — that's Zach's repro. If this is right, it explains "arbitrary number of clicks" (probabilistic per gesture, so it scales with click count, not a fixed count) and "no ImGui" (nothing to do with ImGui at all — `_liveLeftDown` getting stuck `true` alone is enough, since `leftPressedNow = leftDown && !_prevLeft` can then never fire again while the level never drops, and picking/hover are unaffected because they don't depend on button state).
+
+**What Jules should actually do, in order:**
+
+1. **Read this whole entry, item 29(4) above, and `InteractionChannel.cpp`/`Engine.cpp`'s `tick()` reconciliation block before writing any code.** Do not re-fix the focus-loss case; it's done and tested.
+2. **Add a live diagnostic surface.** Nothing in the engine currently exposes `InteractionChannel`'s state anywhere visible (checked — no ImGui panel reads `hoveredId`/`pressedId`, the existing "Developer Tools" window is only about test-world-save loading, `DeveloperToolsWindow.cpp`). Add a small panel (that window is the natural home, or a new one) showing, live, every frame: `hoveredId`, `pressedId`, `leftDown`, `dragging`, and — this is the part that needs new plumbing, these are private — the raw `_liveLeftDown`, `_pendingFullClick`, `_pressSeenSinceLastStep` internals (add const accessors; this is exactly a Refusal 6 case, these fields are already "nobody registered it yet" and should be readable), plus `ImGui::GetIO().WantCaptureMouse` and the direct `glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT)` poll side by side.
+3. **Reproduce with the window never losing focus and no ImGui panel touched** — hammer the 2D HUD pads and the 3D create tool (Zach: both go dead together) until it locks up. This may take many dozens to low hundreds of clicks; "arbitrary" is doing real work in his report, don't give up at 20.
+4. **At the moment of failure, read the panel and record:**
+   - Does `hoveredId` still update as you move the pointer over a control? (Picking still alive vs. the whole channel gone blind — two different bugs, see below.)
+   - Is `_liveLeftDown` stuck `true`? Does the **raw `glfwGetMouseButton()` poll** agree (stuck at the OS/GLFW level — Earthcall can't fix this by cross-checking, needs a time-based watchdog instead) or disagree (an Earthcall-side bug in `step()`'s own bookkeeping — fixable directly)?
+   - Is `WantCaptureMouse` true with no ImGui window open? (Would point at a *stale* ImGui active-item latch from an earlier, unrelated ImGui interaction earlier in the same session, persisting invisibly — worth checking even though the failure moment itself has no ImGui on screen.)
+5. **Only propose a fix once you have that reading**, not before — this project's build/test docs are explicit that transparent, verified diagnosis beats a plausible-sounding patch (`docs/ENGINEERING_DISCIPLINE.md`: Transparent Failure, "run things"). If it is the polled-hardware-stuck case, the honest fix is a time-based self-heal on `_liveLeftDown` (e.g., force-release if it's read continuously "down" for an unreasonable duration — several seconds — with no drag and no fresh corroborating press callback), not another cross-check against the same signal. Say explicitly in your writeup which of the four `check(...)`-style outcomes above you found; don't just say "fixed it," show the state you captured.
+6. **Add regression coverage once fixed.** `tests/law/synthesis_studio_app_test.cpp` and this repo's existing `synthesis_studio_click_stress` probe pattern (Part B above) only exercise `observe()` directly — if the bug is genuinely in `step()`'s GLFW-facing state machine, headless coverage needs a real (can be hidden/offscreen) `GLFWwindow*` driving `step()` with `noteMouseButton()` calls standing in for the OS callback and the polled `glfwGetMouseButton()` reading real (unpressed) hardware — which is itself a useful way to synthesize the "callback says X, poll says Y" disagreement without needing a live click.
+
+**Before you finish:** update this file with what you found (dated section, your name/agent id per this repo's convention), and — per `CLAUDE.md`'s standing rule — anything only Zach can visually confirm goes in `docs/Agenda/Tasks/Person Verification List.md`, not just this doc. There's already a relevant line there ("In-world & HUD click persistence after moving/switching tabs... verify clicks reliably spawn shapes and trigger HUD buttons without cursor lockout" and a follow-up about sequential note pads) — extend it rather than duplicating, if your fix changes what needs checking.
+
+## 2026-09-07 — the 09-04 pass was Astra, and Zach's play-test asked for three more things
+
+Recorded by Claude Opus 5 (session `session_01K1PtKNZtSDU9XGwKZQ7ZzF`) from **Broadcast #5**, which
+Zach restored on 2026-09-07 after it was accidentally deleted. Everything in this section is Zach's;
+the arrangement is mine.
+
+**Attribution.** The `## 2026-09-04 — Play the room: resonance Studio` pass above is signed bare
+`Codex`. Broadcast #5 identifies it: Zach asked **GPT-6 Astra** to *"make the Synthesis Studio
+cooler."* Astra was reached **through the Codex harness**, so `studio.author.codex` and the 21 Laws
+authored by it are **truthful and must not be renamed** — the harness is right, only the model is
+missing from the prose. See
+[Resolve the bare `Codex` signature](../Resolve_the_Codex_signature_into_named_models/Resolve_the_Codex_signature_into_named_models.md).
+
+**What Zach liked, and must not be "fixed" by a later pass:** the sound-blip animation above the
+pads (*"like a professional music DJ software would animate it"*); the design writing, especially
+`C major` on the pad, which makes the scope explicit so it can be widened; and the resonance
+rectangle being rendered *barely* lighter than the pad beneath it — a contrast most people would
+never consciously notice, which Zach reports changes the read from *"just another block"* to
+*"this is the thing but **sound version**."* That near-imperceptible delta is a feature.
+
+### Three requests out of the play-test
+
+1. **Pads should respond to the hand.** On click, a note pad should change colour and carry *"a
+   magical pulse feeling from my mouse"*, and **reverberate with the sound blip above it** — the
+   pad and its resonator reading as one instrument rather than two widgets.
+2. **The full chromatic scale and an octave switcher.** The pads are seven, `C5`–`B5`, i.e. C major
+   — Astra's caption made that bound legible, and Zach wants it widened to **all twelve chromatic
+   notes plus octave switching**. Zach's aim for the Studio is real composition (*"THOMAS BERGERSEN
+   MAKE UR EPIC TSFH MUSIC WITH THE SYNTHESIS STU—"*), which seven diatonic pads in one octave
+   cannot reach.
+3. **Fix the blue/violet hue break.** Every pad and its amplifier rectangle share a hue except the
+   blue pair, whose amplifier is not merely lighter but **more violet**. The discrepancy
+   **predates Astra** — there was already a rectangle at the top — and Astra left it. Zach wants
+   the pair unified, on the principle that *"the point is to have the things represent the same
+   note colour"*: an intentional break must **mean something real, not be a random quirk**. He
+   would rather **violet earn its own pad** in the rainbow, which the chromatic expansion in (2)
+   would naturally give it.
+
+Zach notes OpenAI trains Astra not to work beyond a task's scope, and explicitly respects the
+instinct — while pointing out the prompt was *"make it cooler"*, about as open-ended as a scope gets.
+That tension is worth remembering when routing work to Astra: **it will do what it is asked
+extremely well on the first try, and will not adopt neighbouring problems.** Bounds are the
+director's job.
+
+**Signed:** Claude Opus 5 · session `session_01K1PtKNZtSDU9XGwKZQ7ZzF` · 2026-09-07
+
+
+## 2026-09-08 — The living instrument (Astra, second pass)
+
+**Author:** Codex (GPT-6 Astra)  
+**Session:** `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`  
+**Timestamp:** 2026-09-08T23:37:58-07:00  
+**Status:** authored; engine and interaction verification in progress.
+
+Zach asked for maximum creative freedom after the reflection's two acts, describing the
+hand forming Law like a tai chi master whose art has become second nature, and the
+channel from intention into actuality becoming whole and human. He then explicitly
+clarified: build on the clean original Studio, not the version containing his canvas
+experiments. The creative interpretation below is Astra's response to those directions.
+
+The separate world `saves/worlds/synthesis_studio_living.json` (with `.ecform` and
+`.ecmatter` companions) has the new Zone identity `SynthesisStudio.LivingInstrument`.
+It starts from the clean `synthesis_studio.json`; the original world and lived-in
+`saves/zones/SynthesisStudio/` are preserved. Load **synthesis_studio_living** to visit it.
+
+- Twelve chromatic notes appear in both the desk and HUD, preserving existing note IDs.
+- Octaves 3–6 change the actual pitch and pad captions; Solo, Fifth, Major, and Minor
+  choose musically distinct voicings, with triangle, sine, and square voices.
+- Pads brighten on touch and decay in their own hue with the meters and 3D resonators;
+  the meter color is slightly nearer white than its pad, preserving Zach's observation
+  that it reads as the same thing expressed in sound.
+- The expression field maps horizontal gesture to bloom and dynamics, vertical gesture
+  to motion; its visible cursor follows the same authored state as the constellation.
+- Twenty-four fixed orbiting lights join twelve resonators; musical play creates no
+  new Objects, and all animation is authored OntoMath/Law text.
+- Sound Ink lets the last played note supply the next marks' pigment and pitch;
+  hovering a mark sounds what it remembers.
+- The new edition supplies the missing stroke-spacing/last-position Properties and
+  records each new dab's position, making slow drawing meaningful without births
+  on every frame of stationary contact.
+
+`scripts/deepen_synthesis_studio.py` is a First Mover authoring tool; it previews by default and `--apply` creates the
+separate edition only when it does not already exist. Re-running preserves later
+Person edits. Runtime behavior remains entirely in the saved Law models.
+
+New beings are recorded as authored by `studio.author.astra`, a declared **Object**
+representing Codex (GPT-6 Astra), commissioned by the existing `Zach` authorial marker;
+revisions retain their original authors and add `revised-by` provenance. The injection
+record names Zach as the commissioning Person and includes this session. The final
+counts and verification result will be recorded after execution; no live sensory
+acceptance is claimed by this draft.
+
+The original Studio's baseline test currently reports three failures concerning missing
+stroke state/spacing. The new edition has its own `synthesis_studio_living_test`, loading
+its real save through `BootedEngineHarness` into an isolated temporary SaveRoot and
+exercising real picking, event dispatch, Law execution, audio requests, and serialization.

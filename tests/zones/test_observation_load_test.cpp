@@ -8,6 +8,18 @@
 // window now calls — ZoneManager::loadTestObservation — and asserts the
 // live path: Home survives, the dump's objects are in the active Zone,
 // and the Person is settled looking at them.
+//
+// dump_test_save (test_save_helper.hpp) calls ZoneManager::saveState,
+// which calls persistZones() unconditionally — and this test never points
+// SaveSystem at a sandbox, so that write landed in the REAL saves/zones/
+// tree (saves/zones/visible_cube/zone.json picked up 34 lines of drift
+// running the full suite once, 2026-09-08 — the same bug class as the 5
+// chess tests, just not yet fixed). Sol (agent intercom, "Basic Pixel
+// Changer Zone Identity Bug 9-7-26", 2026-09-09, Stage 0): "Put
+// test_observation_load_test behind the same TestSupport::RealSaveTreeGuard
+// used by the chess tests, and add a before/after tree hash or equivalent
+// assertion so the test proves it restored the real identity tree even on
+// early return/exception."
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Person/Person.hpp"
@@ -19,6 +31,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "test_save_helper.hpp"
+#include "support/test_harness.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
@@ -76,6 +89,21 @@ int main() {
     std::filesystem::create_directories(sandbox);
     const std::string dumpPath = (sandbox / "visible_cube.json").string();
 
+    // Sol, Stage 0: prove the real tree comes back byte-identical even if
+    // something in the guarded section throws. Snapshotting before
+    // constructing the guard, and diffing after it is destroyed (whether
+    // by falling off the end of the try block or by unwinding through the
+    // catch below), is the actual proof — not just trusting the guard's
+    // own bookkeeping.
+    const std::string beforeTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    bool guardedSectionThrew = false;
+    std::string guardedSectionException;
+
+    try {
+    TestSupport::RealSaveTreeGuard realTreeGuard(TestSupport::GuardCurrentRoot);
+
     const glm::vec3 cubePos(0.0f, 2.0f, -2.0f);
     {
         Zone dumpWorld("test-observation", "default");
@@ -111,6 +139,12 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
+    // 1. Error path: missing file
+    live.loadTestObservation("non_existent_file.json", ctx);
+    check(live.getSaveLoadState().lastLoadReport.find("COULD NOT OPEN OR READ") != std::string::npos,
+          "loadTestObservation handles missing file properly");
+
+    // 2. Happy path: valid dump
     live.loadTestObservation(dumpPath, ctx);
 
     bool homeStillHere = false;
@@ -192,6 +226,26 @@ int main() {
         std::cout << "  skip: saves/tests/basic_cube_law_test_final.json is not on disk "
                      "(gitignored); synthetic dump covered the live path.\n";
     }
+    } catch (const std::exception& e) {
+        guardedSectionThrew = true;
+        guardedSectionException = e.what();
+    } catch (...) {
+        guardedSectionThrew = true;
+        guardedSectionException = "non-std::exception thrown";
+    }
+    // realTreeGuard is out of scope here either way — normal fall-through
+    // or stack unwinding through the catches above — so the real tree
+    // should already be restored from backup by this point.
+
+    check(!guardedSectionThrew,
+          std::string("the guarded section completed without throwing") +
+              (guardedSectionThrew ? (" (threw: " + guardedSectionException + ")") : ""));
+    const std::string afterTreeHash =
+        TestSupport::hashDirectoryTree("saves/zones") + "|" +
+        TestSupport::hashDirectoryTree("saves/homes");
+    check(afterTreeHash == beforeTreeHash,
+          "saves/zones and saves/homes hash byte-identical after the guarded section — "
+          "the real identity tree was restored, even if the section above threw");
 
     std::filesystem::remove_all(sandbox);
 

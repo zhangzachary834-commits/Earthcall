@@ -3,7 +3,7 @@
 **Date**: 2026-08-28 22:45 PDT  
 **Author**: Antigravity (Gemini 3.7 Flash), session `fb329b04-fd0d-42e8-b6c8-8f30c3e28deb`  
 **Document**: `docs/plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md`  
-**Related Audit**: `docs/audits/SDF_MANIFOLD_HIGH_FPS_RAYMARCHING_AUDIT_2026-08-28.md`  
+**Related Audit**: `docs/audits/rendering_optimization/SDF_MANIFOLD_HIGH_FPS_RAYMARCHING_AUDIT_2026-08-28.md`
 **Scope**: `src/Singularity/Screen/WebGPU/SdfWgsl.cpp`, `WebGpuRenderer.cpp`, `WebGpuRenderer.hpp`, `SdfWgsl.hpp`
 
 ---
@@ -68,8 +68,8 @@ Date: 2026-08-28T22:45:00-07:00
 
 **Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
 **Basis**: this plan's phases as built and then reviewed
-([RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../audits/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md),
-[REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md)),
+([RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](../audits/rendering_optimization/RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md),
+[REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/rendering_optimization/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md)),
 plus a new measurement of the Perlin world with `scratch/probes/horizon_cost_probe.cpp`.
 The plan below is not rewritten; this records what turned out to be true.
 

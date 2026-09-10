@@ -10,6 +10,9 @@
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
 #include <chrono>
@@ -176,6 +179,18 @@ namespace Core {
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
                                   static_cast<int>(stats.cachedMeshesCount));
+            }
+            if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                if (recorder->isRecording()) {
+                    recorder->stepFrame(fbW, fbH);
+                }
+            }
+            if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
+                watcher->tick();
+            }
+            if (auto* mic = Singularity::Audio::AudioRecorder::find(*_lawManager)) {
+                double dt = Universe::instance().dt();
+                mic->tick(dt > 0.0 ? dt : 0.016);
             }
         }
     }

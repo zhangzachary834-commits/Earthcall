@@ -6,6 +6,9 @@
 // Header-only so a single-TU smoke can just #include it.
 
 #include <webgpu/webgpu.h>
+#ifndef __EMSCRIPTEN__
+#include <webgpu/wgpu.h>
+#endif
 
 namespace wgpu {
 namespace detail {
@@ -32,6 +35,11 @@ struct Device {
     WGPUAdapter  adapter  = nullptr;
     WGPUDevice   device   = nullptr;
     WGPUQueue    queue    = nullptr;
+    // Kernel capability, not an authored rendering setting. It means this
+    // device was explicitly created with the native timestamp-query feature;
+    // a renderer still has to create its query resources successfully before
+    // reporting an execution duration.
+    bool timestampQueries = false;
 
     bool init() {
         instance = wgpuCreateInstance(nullptr);
@@ -47,15 +55,48 @@ struct Device {
         if (!ar.a) return false;
         adapter = ar.a;
 
+        // Timestamp queries are optional diagnostic infrastructure. Request
+        // them only when BOTH required features are advertised. If the optional
+        // request is rejected, retry the ordinary device rather than making a
+        // visual Earthcall session depend on profiling support.
+        WGPUDeviceDescriptor dd = {};
+#ifndef __EMSCRIPTEN__
+        const WGPUFeatureName requested[] = {
+            WGPUFeatureName_TimestampQuery,
+            static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
+        };
+        const bool canTimestamp =
+            wgpuAdapterHasFeature(adapter, WGPUFeatureName_TimestampQuery) &&
+            wgpuAdapterHasFeature(
+                adapter,
+                static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders));
+        if (canTimestamp) {
+            dd.requiredFeatureCount = 2;
+            dd.requiredFeatures = requested;
+        }
+#endif
+
+        const bool requestedTimestampQueries = dd.requiredFeatureCount != 0;
         detail::DeviceR dr;
         WGPURequestDeviceCallbackInfo dcb = {};
         dcb.mode = WGPUCallbackMode_AllowProcessEvents;
         dcb.callback = detail::onDevice;
         dcb.userdata1 = &dr;
-        wgpuAdapterRequestDevice(adapter, nullptr, dcb);
+        wgpuAdapterRequestDevice(adapter, dd.requiredFeatureCount ? &dd : nullptr, dcb);
         while (!dr.done) wgpuInstanceProcessEvents(instance);
+        const bool timestampRequestAccepted =
+            dd.requiredFeatureCount != 0 && dr.d != nullptr;
+        if (!dr.d && dd.requiredFeatureCount) {
+            dr = {};
+            wgpuAdapterRequestDevice(adapter, nullptr, dcb);
+            while (!dr.done) wgpuInstanceProcessEvents(instance);
+        }
         if (!dr.d) return false;
         device = dr.d;
+
+#ifndef __EMSCRIPTEN__
+        timestampQueries = requestedTimestampQueries && timestampRequestAccepted;
+#endif
 
         queue = wgpuDeviceGetQueue(device);
         return queue != nullptr;

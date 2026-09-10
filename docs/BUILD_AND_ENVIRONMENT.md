@@ -56,7 +56,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 83 registered, 82 pass (~35-175 s depending on load) — smooth_tessellation_cache_test is the one failure, pre-existing, Bugs.md #11; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07); smooth_tessellation_cache_test is the known pre-existing failure (Bugs.md #11); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -74,14 +74,18 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-24, 66 of 66 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
+**As of 2026-09-07, 109 tests are registered and the default build is clean.** The
+known source-level failure remains `smooth_tessellation_cache_test` (Bugs.md #11).
+WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
+acquire a device or GLFW context in a headless/sandboxed runner is an environment failure,
+not a test verdict. `zone_facetexture_test` guards Home/Zone identity materials
+(FaceTextures persist across session loads). `chess_app_test` guards the authored chess
+world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
 `Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
 onto `Singular`, losing the tint and brush a canvas has and a space does not.
-
-There are no known failures, deliberate or otherwise.
 
 **`chess_app_test` was a real, open regression (Bugs.md #7, 2026-08-24) and is now fixed and
 guarded.** The Zone identity store lost the relation graph — every `saves/zones/*/zone.json`
@@ -146,7 +150,7 @@ speed against the reference and stops; if that number will not hold still, nothi
 test measures will either. Pass a save path as the first argument to measure a different
 world (the baseline is only ever written from the default one).
 
-What it found on its first run is written up in `docs/audits/2026-08-24_frame_lag_probe.md`
+What it found on its first run is written up in `docs/audits/rendering_optimization/2026-08-24_frame_lag_probe.md`
 and tracked in the to-do list's **Performance** section: `Physics::updateBodies` is all-pairs
 with no broadphase, so `Zone::update` costs 1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512
 objects — a fitted `n^1.75`. The chess world itself is fine at 35 objects (6-7 ms simulation
@@ -161,6 +165,7 @@ honest rather than convenient:
 
 | Test | Guards against |
 |---|---|
+| `synthesis_studio_app_test` | the actual Studio save's controls losing their actions: repeated input, press/release, voice selection, selected ink reaching new strokes, note-reactive geometry, bounded musical play, and real Object/Law round-trips; click targets follow authored rectangles. Live visual/audio acceptance remains in `docs/Agenda/Tasks/Person Verification List.md`. Updated by Codex, session `synthesis-studio-20260904`, 2026-09-04 22:53 PDT. |
 | `paint_test` | paint written through a *shared* material (repaints the world), and a `color` property that does not read back what was written — `propSetColor` was an empty function for a month |
 | `object_roundtrip_test` | a field `to_json` writes and `from_json` drops. `faceColors` was write-only for a month with the write side making it look covered; `serialization_compat_test` covers the msgpack/Frontier *plumbing* and cannot see this |
 | `channel_paths_test` | the law-authoring picker offering a property path no registry answers. `CreationChannel::activeShapeKind` was advertised and unregistered, so every law reading it silently fell back |
@@ -302,4 +307,3 @@ lived beside it until 2026-08-11 and was deleted. Formation is `Relation/Formati
 (all includes point directly to `Relation/Formation/Formation.hpp`). Lexeme is a Singular, not a Language-channel type.
 
 **Test harnesses (`TestLabInterfaces/`, `TestLabAI/`)** sit at the repository root as external harness interfaces (renamed from `TestLab/` in commit e813b6b6 to distinguish interface tools from the ontology).
-

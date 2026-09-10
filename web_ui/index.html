@@ -120,17 +120,17 @@
 
     <div id="viewport-container">
         <!-- The canvas is used if running in Emscripten WASM mode -->
-        <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()"></canvas>
+        <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()" role="img" aria-label="Earthcall World View"></canvas>
         
-        <div id="connection-status">
+        <div id="connection-status" role="status" aria-live="polite">
             <div class="status-dot" id="status-indicator"></div>
             <span id="status-text">Initializing...</span>
         </div>
 
-        <div id="logos-interface">
-            <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World">
-            <button id="emit-btn" disabled>Emit</button>
-        </div>
+        <form id="logos-interface">
+            <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World" autofocus>
+            <button type="submit" id="emit-btn" disabled title="Enter a word to emit" aria-disabled="true">Emit</button>
+        </form>
     </div>
 
     <script src="app.js"></script>

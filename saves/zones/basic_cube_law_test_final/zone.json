@@ -1,6 +1,7 @@
 {
   "deletable": {
-    "Player": true
+    "Player": true,
+    "Zach": true
   },
   "formationRelations": [],
   "identifier": "basic_cube_law_test_final",
@@ -222,7 +223,7 @@
     }
   ],
   "name": "basic_cube_law_test_final",
-  "owner": "Player",
+  "owner": "Zach",
   "parentZone": "",
   "qualities": {
     "ownerKind": "person"
@@ -231,10 +232,53 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-3.member-0",
         "objectID": "concept-1.birth-3.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -245,17 +289,85 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-4.member-0",
         "objectID": "concept-1.birth-4.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -266,17 +378,85 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-5.member-0",
         "objectID": "concept-1.birth-5.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -287,17 +467,85 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-6.member-0",
         "objectID": "concept-1.birth-6.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -308,17 +556,85 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.concept-1.birth-7.member-0",
         "objectID": "concept-1.birth-7.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -329,17 +645,85 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.concept-1.birth-8.member-0",
         "objectID": "concept-1.birth-8.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -350,7 +734,32 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

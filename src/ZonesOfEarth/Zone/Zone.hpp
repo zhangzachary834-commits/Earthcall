@@ -61,10 +61,19 @@ public:
     void describe() const;
 
     const std::string& name() const { return _name; }
+    // Display is presentation-only and MAY diverge from identity (Zach,
+    // 2026-09-09: "Zone should absolutely have a real identifier/name
+    // split. It's a Singular."). A Zone constructed the ordinary way keeps
+    // _identifier == _name (every existing call site, unchanged); only a
+    // record whose JSON "name" and "identifier" fields actually differ
+    // ever calls this — see makeZoneFromJson. Never touches _identifier:
+    // renaming a Zone's display must never silently re-key its identity.
+    void setName(const std::string& displayName) { _name = displayName; }
     const Qualities& getQualities() const { return _qualities; }
     const Deletability& getDeletability() const { return _deletable; }
 
     std::string propName() const { return _name; }
+    std::string propIdentifier() const { return _identifier; }
     std::string scopeName() const;
 
     const std::string& owner() const { return _ownerId; }
@@ -142,6 +151,11 @@ protected:
 
 private:
     std::string _name;
+    // Stable identity, distinct from _name (display). Always initialized
+    // equal to the constructor's `name` argument — every pre-existing call
+    // site is unaffected — and diverges only when a JSON record's own
+    // "identifier"/"name" fields differ (makeZoneFromJson via setName()).
+    std::string _identifier;
     std::string _parentZoneName;
     Scope _scope;
     Qualities _qualities;
@@ -164,11 +178,11 @@ public:
     const Formation& joys() const { return _joys; }
     bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
     std::string propJoys() const { return _joys.getIdentifier(); }
-    void load();
+    virtual void load();
     void unload();
     void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});
     void applyFormationRelations();
 
-    // Singular interface
-    std::string getIdentifier() const override { return _name; }
+    // Singular interface. Identity, not display — see _identifier's comment.
+    std::string getIdentifier() const override { return _identifier; }
 };

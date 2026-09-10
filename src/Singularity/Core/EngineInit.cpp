@@ -17,6 +17,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
+#include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -28,6 +29,12 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
+#include "Singularity/Storage/StreamChannel.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
 #include <GLFW/glfw3.h>
@@ -62,7 +69,7 @@ void Engine::initLogic() {
     if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
     if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();
     if (!_person) {
-        Soul soul("Player");
+        Soul soul("Person");
         Body body("humanoid", "default");
         _person = std::make_unique<Person>(std::move(soul), std::move(body), "default");
     }
@@ -104,6 +111,24 @@ void Engine::initLogic() {
 
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
+
+    // Register first-mover FileChannel (native computer filesystem sense and act)
+    Singularity::Storage::FileChannel::syncRegister(*_lawManager);
+
+    // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
+    Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
+
+    // Register first-mover VirtualFileSystem (VFS uniform URI scheme and in-RAM files)
+    Singularity::Storage::VirtualFileSystem::syncRegister(*_lawManager);
+
+    // Register first-mover StreamChannel (FIFO named pipes, process streams, real-time pipes)
+    Singularity::Storage::StreamChannel::syncRegister(*_lawManager);
+
+    // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
+    Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Register first-mover AudioRecorder (microphone audio capture and streaming recording)
+    Singularity::Audio::AudioRecorder::syncRegister(*_lawManager);
 
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
@@ -233,6 +258,7 @@ void Engine::initLogic() {
         ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
         ctx.person = getPerson();
         ctx.lawManager = getLawManager();
+        ctx.ourverse = &_world;
         ctx.worldTime = &_worldTime;
         ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
         mgr.saveStateWithLog("", ctx);
@@ -375,14 +401,6 @@ void Engine::initLogic() {
         // Escape closes tool windows first if any are open
         if (_creatorConsoleOpen) {
             _creatorConsoleOpen = false;
-            return;
-        }
-        if (_devToolsWindowOpen) {
-            _devToolsWindowOpen = false;
-            return;
-        }
-        if (_performanceMetricsWindowOpen) {
-            _performanceMetricsWindowOpen = false;
             return;
         }
         _mouseHandler->toggleCursorLock(_window);

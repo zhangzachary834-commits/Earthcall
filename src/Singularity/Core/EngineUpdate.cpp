@@ -175,6 +175,8 @@ namespace Core {
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
             interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
+            static int frameCount = 0;
+            frameCount++;
         }
         auto tInteract1 = clock::now();
         g_frameTimings.interaction_ms = getMs(tInteract0, tInteract1);

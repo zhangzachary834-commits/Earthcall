@@ -3474,6 +3474,25 @@
       "opacity": 1.0,
       "shininess": 32.0,
       "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "faceTextures": [
+        {
+          "pixelsB64": "Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//w==",
+          "size": 64
+        }
+      ],
+      "name": "Luna's First Star",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
     }
   ],
   "name": "Sanctum of Beginnings",
@@ -3497,32 +3516,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -3541,7 +3560,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -3599,9 +3620,9 @@
           0.0,
           1.0,
           0.0,
-          0.10098647326231003,
+          0.0,
           0.5,
-          1.0026824474334717,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -3631,24 +3652,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -3666,7 +3687,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -3694,9 +3717,9 @@
           0.0,
           1.0,
           0.0,
-          -0.6444001197814941,
+          0.0,
           0.5,
-          3.715226888656616,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -3726,24 +3749,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -3761,7 +3784,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -3789,9 +3814,9 @@
           0.0,
           1.0,
           0.0,
-          -0.5982033014297485,
+          0.0,
           0.5,
-          -2.3708736896514893,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -3821,24 +3846,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -3856,7 +3881,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -3884,9 +3911,9 @@
           0.0,
           1.0,
           0.0,
-          0.25600314140319824,
+          0.0,
           0.5,
-          -3.6349873542785645,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -3916,24 +3943,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -3951,7 +3978,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -3979,9 +4008,9 @@
           0.0,
           1.0,
           0.0,
-          0.25600314140319824,
+          0.0,
           0.5,
-          -4.635402679443359,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4011,24 +4040,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4046,7 +4075,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4074,9 +4105,9 @@
           0.0,
           1.0,
           0.0,
-          2.828935146331787,
+          0.0,
           0.5,
-          -5.086270809173584,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4106,24 +4137,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4141,7 +4172,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4169,9 +4202,9 @@
           0.0,
           1.0,
           0.0,
-          4.275790691375732,
+          0.0,
           0.5,
-          -2.986839532852173,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4201,24 +4234,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4236,7 +4269,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4264,9 +4299,9 @@
           0.0,
           1.0,
           0.0,
-          4.562497615814209,
+          0.0,
           0.5,
-          -4.213987827301025,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4296,24 +4331,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4331,7 +4366,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4359,9 +4396,9 @@
           0.0,
           1.0,
           0.0,
-          5.277790546417236,
+          0.0,
           0.5,
-          -3.2138686180114746,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4391,24 +4428,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4426,7 +4463,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4454,9 +4493,9 @@
           0.0,
           1.0,
           0.0,
-          4.555479526519775,
+          0.0,
           0.5,
-          -0.7741259336471558,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4486,24 +4525,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4521,7 +4560,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4549,9 +4590,9 @@
           0.0,
           1.0,
           0.0,
-          6.558201789855957,
+          0.0,
           0.5,
-          -1.5948783159255981,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4581,24 +4622,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4616,7 +4657,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4644,9 +4687,9 @@
           0.0,
           1.0,
           0.0,
-          5.536816120147705,
+          0.0,
           0.5,
-          -2.2118685245513916,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4676,24 +4719,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -4711,7 +4754,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -4739,9 +4784,9 @@
           0.0,
           1.0,
           0.0,
-          6.694035053253174,
+          0.0,
           0.5,
-          -0.47138315439224243,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -4771,335 +4816,25 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
-        ],
-        "field": {
-          "children": [
-            {
-              "children": [
-                {
-                  "children": [
-                    {
-                      "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [
-                                {
-                                  "children": [
-                                    {
-                                      "children": [
-                                        {
-                                          "dims": [
-                                            0.5,
-                                            0.5,
-                                            0.5
-                                          ],
-                                          "offset": [
-                                            0.0,
-                                            0.0,
-                                            0.0
-                                          ],
-                                          "op": 0,
-                                          "p0": 0.0,
-                                          "p1": 0.0,
-                                          "prim": 1,
-                                          "t": 0.5
-                                        },
-                                        {
-                                          "dims": [
-                                            0.5,
-                                            0.5,
-                                            0.5
-                                          ],
-                                          "offset": [
-                                            0.0,
-                                            1.0019996166229248,
-                                            0.0
-                                          ],
-                                          "op": 0,
-                                          "p0": 0.0,
-                                          "p1": 0.0,
-                                          "prim": 1,
-                                          "t": 0.5
-                                        }
-                                      ],
-                                      "dims": [
-                                        0.5,
-                                        0.5,
-                                        0.5
-                                      ],
-                                      "offset": [
-                                        0.0,
-                                        0.0,
-                                        0.0
-                                      ],
-                                      "op": 2,
-                                      "p0": 0.0,
-                                      "p1": 0.0,
-                                      "prim": 0,
-                                      "t": 0.5
-                                    },
-                                    {
-                                      "dims": [
-                                        0.5,
-                                        0.5,
-                                        0.5
-                                      ],
-                                      "offset": [
-                                        0.16652250289916992,
-                                        -2.002257823944092,
-                                        0.34805548191070557
-                                      ],
-                                      "op": 0,
-                                      "p0": 0.0,
-                                      "p1": 0.0,
-                                      "prim": 1,
-                                      "t": 0.5
-                                    }
-                                  ],
-                                  "dims": [
-                                    0.5,
-                                    0.5,
-                                    0.5
-                                  ],
-                                  "offset": [
-                                    0.0,
-                                    0.0,
-                                    0.0
-                                  ],
-                                  "op": 2,
-                                  "p0": 0.0,
-                                  "p1": 0.0,
-                                  "prim": 0,
-                                  "t": 0.5
-                                },
-                                {
-                                  "dims": [
-                                    0.5,
-                                    0.5,
-                                    0.5
-                                  ],
-                                  "offset": [
-                                    4.138580322265625,
-                                    1.2388389110565186,
-                                    6.758962154388428
-                                  ],
-                                  "op": 0,
-                                  "p0": 0.0,
-                                  "p1": 0.0,
-                                  "prim": 1,
-                                  "t": 0.5
-                                }
-                              ],
-                              "dims": [
-                                0.5,
-                                0.5,
-                                0.5
-                              ],
-                              "offset": [
-                                0.0,
-                                0.0,
-                                0.0
-                              ],
-                              "op": 2,
-                              "p0": 0.0,
-                              "p1": 0.0,
-                              "prim": 0,
-                              "t": 0.5
-                            },
-                            {
-                              "dims": [
-                                0.5,
-                                0.5,
-                                0.5
-                              ],
-                              "offset": [
-                                3.8237504959106445,
-                                1.5337424278259277,
-                                7.308993816375732
-                              ],
-                              "op": 0,
-                              "p0": 0.0,
-                              "p1": 0.0,
-                              "prim": 1,
-                              "t": 0.5
-                            }
-                          ],
-                          "dims": [
-                            0.5,
-                            0.5,
-                            0.5
-                          ],
-                          "offset": [
-                            0.0,
-                            0.0,
-                            0.0
-                          ],
-                          "op": 2,
-                          "p0": 0.0,
-                          "p1": 0.0,
-                          "prim": 0,
-                          "t": 0.5
-                        },
-                        {
-                          "dims": [
-                            0.5,
-                            0.5,
-                            0.5
-                          ],
-                          "offset": [
-                            2.637698173522949,
-                            3.0647830963134766,
-                            9.230712890625
-                          ],
-                          "op": 0,
-                          "p0": 0.0,
-                          "p1": 0.0,
-                          "prim": 1,
-                          "t": 0.5
-                        }
-                      ],
-                      "dims": [
-                        0.5,
-                        0.5,
-                        0.5
-                      ],
-                      "offset": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "op": 2,
-                      "p0": 0.0,
-                      "p1": 0.0,
-                      "prim": 0,
-                      "t": 0.5
-                    },
-                    {
-                      "dims": [
-                        0.5,
-                        0.5,
-                        0.5
-                      ],
-                      "offset": [
-                        5.480986595153809,
-                        -2.1415083408355713,
-                        6.10081672668457
-                      ],
-                      "op": 0,
-                      "p0": 0.0,
-                      "p1": 0.0,
-                      "prim": 1,
-                      "t": 0.5
-                    }
-                  ],
-                  "dims": [
-                    0.5,
-                    0.5,
-                    0.5
-                  ],
-                  "offset": [
-                    0.0,
-                    0.0,
-                    0.0
-                  ],
-                  "op": 2,
-                  "p0": 0.0,
-                  "p1": 0.0,
-                  "prim": 0,
-                  "t": 0.5
-                },
-                {
-                  "dims": [
-                    0.5,
-                    0.5,
-                    0.5
-                  ],
-                  "offset": [
-                    7.56995964050293,
-                    0.06730389595031738,
-                    5.6456451416015625
-                  ],
-                  "op": 0,
-                  "p0": 0.0,
-                  "p1": 0.0,
-                  "prim": 1,
-                  "t": 0.5
-                }
-              ],
-              "dims": [
-                0.5,
-                0.5,
-                0.5
-              ],
-              "offset": [
-                0.0,
-                0.0,
-                0.0
-              ],
-              "op": 2,
-              "p0": 0.0,
-              "p1": 0.0,
-              "prim": 0,
-              "t": 0.5
-            },
-            {
-              "dims": [
-                0.5,
-                0.5,
-                0.5
-              ],
-              "offset": [
-                7.5292863845825195,
-                -2.1170482635498047,
-                5.554290771484375
-              ],
-              "op": 0,
-              "p0": 0.0,
-              "p1": 0.0,
-              "prim": 1,
-              "t": 0.5
-            }
-          ],
-          "dims": [
-            0.5,
-            0.5,
-            0.5
-          ],
-          "offset": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "op": 2,
-          "p0": 0.0,
-          "p1": 0.0,
-          "prim": 0,
-          "t": 0.5
-        },
-        "fieldExtent": [
-          1.600000023841858,
-          1.600000023841858,
-          1.600000023841858
         ],
         "geometryType": 10,
         "materialId": "material.concept-shape-3d.birth-57.member-0",
@@ -5116,7 +4851,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5144,9 +4881,9 @@
           0.0,
           1.0,
           0.0,
-          4.368293762207031,
-          2.008514404296875,
-          -2.1904537677764893,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5176,24 +4913,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5211,7 +4948,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5239,9 +4978,9 @@
           0.0,
           1.0,
           0.0,
-          5.67896032333374,
+          0.0,
           0.5,
-          0.07455194741487503,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5271,24 +5010,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5306,7 +5045,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5334,9 +5075,9 @@
           0.0,
           1.0,
           0.0,
-          8.666543960571289,
+          0.0,
           0.5,
-          6.07556676864624,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5366,24 +5107,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5401,7 +5142,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5429,9 +5172,9 @@
           0.0,
           1.0,
           0.0,
-          9.198979377746582,
+          0.0,
           0.5,
-          8.635794639587402,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5461,24 +5204,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5496,7 +5239,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5524,9 +5269,9 @@
           0.0,
           1.0,
           0.0,
-          8.196979522705078,
+          0.0,
           0.5,
-          8.433700561523438,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5556,24 +5301,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5591,7 +5336,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5619,9 +5366,9 @@
           0.0,
           1.0,
           0.0,
-          7.588244915008545,
+          0.0,
           0.5,
-          6.689026832580566,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5651,24 +5398,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5686,7 +5433,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5714,9 +5463,9 @@
           0.0,
           1.0,
           0.0,
-          12.533796310424805,
+          0.0,
           0.5,
-          3.665191888809204,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5746,24 +5495,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -5781,7 +5530,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5809,9 +5560,9 @@
           0.0,
           1.0,
           0.0,
-          12.298794746398926,
+          0.0,
           0.5,
-          1.032294511795044,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5876,7 +5627,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5904,9 +5657,9 @@
           0.0,
           1.0,
           0.0,
-          14.380775451660156,
+          0.0,
           0.5,
-          -0.38936948776245117,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -5971,7 +5724,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -5999,9 +5754,9 @@
           0.0,
           1.0,
           0.0,
-          17.667221069335938,
+          0.0,
           0.5,
-          -3.3191909790039063,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6066,7 +5821,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6094,9 +5851,9 @@
           0.0,
           1.0,
           0.0,
-          7.098783016204834,
+          0.0,
           0.5,
-          -14.522348403930664,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6161,7 +5918,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6189,9 +5948,9 @@
           0.0,
           1.0,
           0.0,
-          20.732572555541992,
+          0.0,
           0.5,
-          -14.030694961547852,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6256,7 +6015,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6284,9 +6045,9 @@
           0.0,
           1.0,
           0.0,
-          13.72721004486084,
+          0.0,
           0.5,
-          -16.132356643676758,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6351,7 +6112,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6379,9 +6142,9 @@
           0.0,
           1.0,
           0.0,
-          16.40319061279297,
+          0.0,
           0.5,
-          -4.66898250579834,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6446,7 +6209,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6474,9 +6239,9 @@
           0.0,
           1.0,
           0.0,
-          18.350135803222656,
+          0.0,
           0.5,
-          -2.048527717590332,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6541,7 +6306,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6569,9 +6336,9 @@
           0.0,
           1.0,
           0.0,
-          26.682010650634766,
+          0.0,
           0.5,
-          -2.048527717590332,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6636,7 +6403,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6664,9 +6433,9 @@
           0.0,
           1.0,
           0.0,
-          11.178437232971191,
+          0.0,
           0.5,
-          -2.048527717590332,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6696,24 +6465,24 @@
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
+            1.0,
             0.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ],
           [
-            1.0,
             0.0,
-            0.0
+            0.0,
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -6731,7 +6500,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6759,9 +6530,9 @@
           0.0,
           1.0,
           0.0,
-          17.139570236206055,
+          0.0,
           0.5,
-          1.0032340288162231,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6782,32 +6553,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -6826,7 +6597,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6854,9 +6627,9 @@
           0.0,
           1.0,
           0.0,
-          10.141836166381836,
+          0.0,
           0.5,
-          -2.9599034786224365,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6877,32 +6650,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -6921,7 +6694,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -6949,9 +6724,9 @@
           0.0,
           1.0,
           0.0,
-          9.754598617553711,
+          0.0,
           0.5,
-          -4.907513618469238,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -6972,8 +6747,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7016,7 +6791,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7044,9 +6821,9 @@
           0.0,
           1.0,
           0.0,
-          5.691035270690918,
+          0.0,
           0.5,
-          -0.5685986876487732,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7067,8 +6844,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7111,7 +6888,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7139,9 +6918,9 @@
           0.0,
           1.0,
           0.0,
-          3.696171283721924,
+          0.0,
           0.5,
-          5.673133373260498,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7162,8 +6941,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7206,7 +6985,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7234,9 +7015,9 @@
           0.0,
           1.0,
           0.0,
-          2.2707290649414063,
+          0.0,
           0.5,
-          12.553348541259766,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7257,8 +7038,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7301,7 +7082,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7329,9 +7112,9 @@
           0.0,
           1.0,
           0.0,
-          0.693126916885376,
+          0.0,
           0.5,
-          14.220473289489746,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7352,8 +7135,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7396,7 +7179,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7424,9 +7209,9 @@
           0.0,
           1.0,
           0.0,
-          4.5328168869018555,
+          0.0,
           0.5,
-          3.0408451557159424,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7447,8 +7232,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7491,7 +7276,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7519,9 +7306,9 @@
           0.0,
           1.0,
           0.0,
-          2.5359771251678467,
+          0.0,
           0.5,
-          2.86826229095459,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7542,8 +7329,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7586,7 +7373,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7614,9 +7403,9 @@
           0.0,
           1.0,
           0.0,
-          2.0046472549438477,
+          0.0,
           0.5,
-          11.387198448181152,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7637,8 +7426,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7681,7 +7470,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7709,9 +7500,9 @@
           0.0,
           1.0,
           0.0,
-          -5.506669521331787,
+          0.0,
           0.5,
-          7.046947002410889,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7732,8 +7523,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7776,7 +7567,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7804,9 +7597,9 @@
           0.0,
           1.0,
           0.0,
-          0.40479668974876404,
+          0.0,
           0.5,
-          -2.9893288612365723,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7827,8 +7620,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7871,7 +7664,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7899,9 +7694,9 @@
           0.0,
           1.0,
           0.0,
-          0.4887814223766327,
+          0.0,
           0.5,
-          -1.6050182580947876,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -7922,8 +7717,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -7966,7 +7761,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -7994,9 +7791,9 @@
           0.0,
           1.0,
           0.0,
-          4.210909366607666,
+          0.0,
           0.5,
-          6.586478233337402,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8017,8 +7814,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8061,7 +7858,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8089,9 +7888,9 @@
           0.0,
           1.0,
           0.0,
-          1.2510392665863037,
+          0.0,
           0.5,
-          4.330353736877441,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8112,8 +7911,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8156,7 +7955,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8184,9 +7985,9 @@
           0.0,
           1.0,
           0.0,
-          1.9535490274429321,
+          0.0,
           0.5,
-          3.3660693168640137,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8207,8 +8008,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8251,7 +8052,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8279,9 +8082,9 @@
           0.0,
           1.0,
           0.0,
-          -3.1480324268341064,
+          0.0,
           0.5,
-          13.066225051879883,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8302,8 +8105,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8346,7 +8149,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8374,9 +8179,9 @@
           0.0,
           1.0,
           0.0,
-          4.7077436447143555,
+          0.0,
           0.5,
-          6.094780921936035,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8397,8 +8202,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8441,7 +8246,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8469,9 +8276,9 @@
           0.0,
           1.0,
           0.0,
-          8.036389350891113,
+          0.0,
           0.5,
-          -0.05203515291213989,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8492,8 +8299,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8536,7 +8343,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8564,9 +8373,9 @@
           0.0,
           1.0,
           0.0,
-          -8.497822761535645,
+          0.0,
           0.5,
-          4.20936918258667,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8587,8 +8396,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8631,7 +8440,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8659,9 +8470,9 @@
           0.0,
           1.0,
           0.0,
-          7.517190456390381,
+          0.0,
           0.5,
-          6.018425464630127,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8682,8 +8493,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8726,7 +8537,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8754,9 +8567,9 @@
           0.0,
           1.0,
           0.0,
-          1.7198899984359741,
+          0.0,
           0.5,
-          0.12379462271928787,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8777,8 +8590,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8821,7 +8634,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8849,9 +8664,9 @@
           0.0,
           1.0,
           0.0,
-          6.3138885498046875,
+          0.0,
           0.5,
-          4.178437232971191,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8872,8 +8687,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -8916,7 +8731,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -8944,9 +8761,9 @@
           0.0,
           1.0,
           0.0,
-          2.849449634552002,
+          0.0,
           0.5,
-          3.8502392768859863,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -8967,8 +8784,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9011,7 +8828,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9039,9 +8858,9 @@
           0.0,
           1.0,
           0.0,
-          2.505863666534424,
+          0.0,
           0.5,
-          4.769103527069092,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9062,8 +8881,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9106,7 +8925,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9134,9 +8955,9 @@
           0.0,
           1.0,
           0.0,
-          -0.9861015677452087,
+          0.0,
           0.5,
-          10.217026710510254,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9157,8 +8978,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9201,7 +9022,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9229,9 +9052,9 @@
           0.0,
           1.0,
           0.0,
-          3.5739212036132813,
+          0.0,
           0.5,
-          6.2927350997924805,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9252,8 +9075,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9296,7 +9119,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9324,9 +9149,9 @@
           0.0,
           1.0,
           0.0,
-          11.53079605102539,
+          0.0,
           0.5,
-          4.004034519195557,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9347,8 +9172,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9391,7 +9216,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9419,9 +9246,9 @@
           0.0,
           1.0,
           0.0,
-          6.37003231048584,
+          0.0,
           0.5,
-          6.396194934844971,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9442,8 +9269,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9486,7 +9313,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9514,9 +9343,9 @@
           0.0,
           1.0,
           0.0,
-          3.753079891204834,
+          0.0,
           0.5,
-          3.3279433250427246,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9537,8 +9366,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9581,7 +9410,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9609,9 +9440,9 @@
           0.0,
           1.0,
           0.0,
-          11.660964965820313,
+          0.0,
           0.5,
-          4.316895484924316,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9632,8 +9463,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9676,7 +9507,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9704,9 +9537,9 @@
           0.0,
           1.0,
           0.0,
-          -5.291965007781982,
+          0.0,
           0.5,
-          5.623864650726318,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9727,8 +9560,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9771,7 +9604,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9799,9 +9634,9 @@
           0.0,
           1.0,
           0.0,
-          1.5690263509750366,
+          0.0,
           0.5,
-          3.0000784397125244,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9822,8 +9657,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9866,7 +9701,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9894,9 +9731,9 @@
           0.0,
           1.0,
           0.0,
-          0.8784624934196472,
+          0.0,
           0.5,
-          3.9459009170532227,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -9917,8 +9754,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -9961,7 +9798,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -9989,9 +9828,9 @@
           0.0,
           1.0,
           0.0,
-          2.749751091003418,
+          0.0,
           0.5,
-          5.313151836395264,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10012,8 +9851,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10056,7 +9895,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10084,9 +9925,9 @@
           0.0,
           1.0,
           0.0,
-          0.4117635190486908,
+          0.0,
           0.5,
-          3.6313276290893555,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10107,8 +9948,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10151,7 +9992,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10179,9 +10022,9 @@
           0.0,
           1.0,
           0.0,
-          -4.382966995239258,
+          0.0,
           0.5,
-          4.741782188415527,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10202,8 +10045,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10246,7 +10089,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10274,9 +10119,9 @@
           0.0,
           1.0,
           0.0,
-          5.5973219871521,
+          0.0,
           0.5,
-          3.0927321910858154,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10297,8 +10142,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10341,7 +10186,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10369,9 +10216,9 @@
           0.0,
           1.0,
           0.0,
-          -0.010803120210766792,
+          0.0,
           0.5,
-          4.708002090454102,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10392,8 +10239,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10436,7 +10283,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10464,9 +10313,9 @@
           0.0,
           1.0,
           0.0,
-          10.510793685913086,
+          0.0,
           0.5,
-          4.477531433105469,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10487,8 +10336,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10531,7 +10380,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10559,9 +10410,9 @@
           0.0,
           1.0,
           0.0,
-          4.104055881500244,
+          0.0,
           0.5,
-          1.099625825881958,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10582,8 +10433,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10626,7 +10477,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10654,9 +10507,9 @@
           0.0,
           1.0,
           0.0,
-          4.247862339019775,
+          0.0,
           0.5,
-          3.9334802627563477,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10677,8 +10530,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10721,7 +10574,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10749,9 +10604,9 @@
           0.0,
           1.0,
           0.0,
-          2.209895610809326,
+          0.0,
           0.5,
-          4.483304023742676,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10772,8 +10627,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10816,7 +10671,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10844,9 +10701,9 @@
           0.0,
           1.0,
           0.0,
-          5.684476375579834,
+          0.0,
           0.5,
-          5.952081203460693,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10867,8 +10724,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -10911,7 +10768,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -10939,9 +10798,9 @@
           0.0,
           1.0,
           0.0,
-          5.9420366287231445,
+          0.0,
           0.5,
-          5.0507097244262695,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -10962,8 +10821,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11006,7 +10865,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11034,9 +10895,9 @@
           0.0,
           1.0,
           0.0,
-          4.7245941162109375,
+          0.0,
           0.5,
-          3.439678430557251,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11057,8 +10918,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11101,7 +10962,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11129,9 +10992,9 @@
           0.0,
           1.0,
           0.0,
-          2.883451461791992,
+          0.0,
           0.5,
-          3.5606369972229004,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11152,8 +11015,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11196,7 +11059,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11224,9 +11089,9 @@
           0.0,
           1.0,
           0.0,
-          0.2523294687271118,
+          0.0,
           0.5,
-          4.305539131164551,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11247,8 +11112,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11291,7 +11156,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11319,9 +11186,9 @@
           0.0,
           1.0,
           0.0,
-          -4.423138618469238,
+          0.0,
           0.5,
-          1.6483408212661743,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11342,8 +11209,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11386,7 +11253,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11414,9 +11283,9 @@
           0.0,
           1.0,
           0.0,
-          4.769463062286377,
+          0.0,
           0.5,
-          4.919195652008057,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11437,8 +11306,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11481,7 +11350,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11509,9 +11380,9 @@
           0.0,
           1.0,
           0.0,
-          -1.9913990497589111,
+          0.0,
           0.5,
-          5.1250457763671875,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11532,8 +11403,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11576,7 +11447,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11604,9 +11477,9 @@
           0.0,
           1.0,
           0.0,
-          3.898146629333496,
+          0.0,
           0.5,
-          4.486963748931885,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11627,8 +11500,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11671,7 +11544,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11699,9 +11574,9 @@
           0.0,
           1.0,
           0.0,
-          6.705869674682617,
+          0.0,
           0.5,
-          1.4792789220809937,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11722,8 +11597,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11766,7 +11641,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11794,9 +11671,9 @@
           0.0,
           1.0,
           0.0,
-          -1.1924813985824585,
+          0.0,
           0.5,
-          6.995190143585205,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11817,8 +11694,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11861,7 +11738,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11889,9 +11768,9 @@
           0.0,
           1.0,
           0.0,
-          5.225327014923096,
+          0.0,
           0.5,
-          4.205167770385742,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -11912,8 +11791,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -11956,7 +11835,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -11984,9 +11865,9 @@
           0.0,
           1.0,
           0.0,
-          -0.06962299346923828,
+          0.0,
           0.5,
-          5.771383285522461,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12007,8 +11888,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12051,7 +11932,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12079,9 +11962,9 @@
           0.0,
           1.0,
           0.0,
-          -6.835597038269043,
+          0.0,
           0.5,
-          12.761576652526855,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12102,8 +11985,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12146,7 +12029,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12174,9 +12059,9 @@
           0.0,
           1.0,
           0.0,
-          2.1800177097320557,
+          0.0,
           0.5,
-          4.136720180511475,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12197,8 +12082,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12241,7 +12126,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12269,9 +12156,9 @@
           0.0,
           1.0,
           0.0,
-          -0.2181575894355774,
+          0.0,
           0.5,
-          7.09187126159668,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12292,8 +12179,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12336,7 +12223,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12364,9 +12253,9 @@
           0.0,
           1.0,
           0.0,
-          1.7450857162475586,
+          0.0,
           0.5,
-          12.262341499328613,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12387,8 +12276,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12431,7 +12320,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12459,9 +12350,9 @@
           0.0,
           1.0,
           0.0,
-          9.7448148727417,
+          0.0,
           0.5,
-          5.071869373321533,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12482,8 +12373,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12526,7 +12417,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12554,9 +12447,9 @@
           0.0,
           1.0,
           0.0,
-          6.1431074142456055,
+          0.0,
           0.5,
-          1.7775983810424805,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12577,8 +12470,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12621,7 +12514,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12649,9 +12544,9 @@
           0.0,
           1.0,
           0.0,
-          -2.4007649421691895,
+          0.0,
           0.5,
-          4.800930976867676,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12672,8 +12567,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12716,7 +12611,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12744,9 +12641,9 @@
           0.0,
           1.0,
           0.0,
-          2.167710065841675,
+          0.0,
           0.5,
-          5.599564075469971,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12767,8 +12664,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12811,7 +12708,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12839,9 +12738,9 @@
           0.0,
           1.0,
           0.0,
-          4.749724864959717,
+          0.0,
           0.5,
-          5.360355377197266,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12862,8 +12761,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -12906,7 +12805,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -12934,9 +12835,9 @@
           0.0,
           1.0,
           0.0,
-          -0.5156919360160828,
+          0.0,
           0.5,
-          5.2630615234375,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -12957,8 +12858,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -13001,7 +12902,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -13029,9 +12932,9 @@
           0.0,
           1.0,
           0.0,
-          11.75883960723877,
+          0.0,
           0.5,
-          3.019533634185791,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13052,8 +12955,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -13096,7 +12999,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -13124,9 +13029,9 @@
           0.0,
           1.0,
           0.0,
-          22.285743713378906,
+          0.0,
           0.5,
-          5.055023670196533,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13147,8 +13052,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -13191,7 +13096,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -13219,9 +13126,9 @@
           0.0,
           1.0,
           0.0,
-          1.1771057844161987,
+          0.0,
           0.5,
-          6.195418834686279,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13242,8 +13149,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -13286,7 +13193,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -13314,9 +13223,9 @@
           0.0,
           1.0,
           0.0,
-          10.29527759552002,
+          0.0,
           0.5,
-          3.3243234157562256,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13337,8 +13246,8 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
@@ -13381,7 +13290,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "stakeholders": [
           {
@@ -13409,9 +13320,9 @@
           0.0,
           1.0,
           0.0,
-          9.71761417388916,
+          0.0,
           0.5,
-          17.849529266357422,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13432,32 +13343,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13476,7 +13387,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13496,9 +13409,9 @@
           0.0,
           1.0,
           0.0,
-          7.558924198150635,
+          0.0,
           0.5,
-          -1.5270894765853882,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13519,32 +13432,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13563,7 +13476,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13583,9 +13498,9 @@
           0.0,
           1.0,
           0.0,
-          5.556201934814453,
+          0.0,
           0.5,
-          -1.2117494344711304,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13606,32 +13521,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13650,7 +13565,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13670,9 +13587,9 @@
           0.0,
           1.0,
           0.0,
-          -3.8066515922546387,
-          6.904256820678711,
-          -0.8281294107437134,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13693,32 +13610,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13737,7 +13654,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13757,9 +13676,9 @@
           0.0,
           1.0,
           0.0,
-          -4.90597677230835,
-          7.098845958709717,
-          -1.5755919218063354,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13780,32 +13699,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13824,7 +13743,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13844,9 +13765,9 @@
           0.0,
           1.0,
           0.0,
-          -4.663584232330322,
-          8.629548072814941,
-          -1.314796805381775,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13867,32 +13788,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13911,7 +13832,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -13931,9 +13854,9 @@
           0.0,
           1.0,
           0.0,
-          -4.927331924438477,
-          8.93091869354248,
-          -0.31390491127967834,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -13954,32 +13877,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -13998,7 +13921,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14018,9 +13943,9 @@
           0.0,
           1.0,
           0.0,
-          -5.665584087371826,
-          9.163224220275879,
-          -1.6001328229904175,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14041,32 +13966,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14085,7 +14010,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14105,9 +14032,9 @@
           0.0,
           1.0,
           0.0,
-          -4.579945087432861,
-          9.101505279541016,
-          -2.3314857482910156,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14128,32 +14055,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14172,7 +14099,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14192,9 +14121,9 @@
           0.0,
           1.0,
           0.0,
-          -4.5658183097839355,
-          9.095808029174805,
-          -3.3334858417510986,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14215,32 +14144,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14259,7 +14188,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14279,9 +14210,9 @@
           0.0,
           1.0,
           0.0,
-          -4.519105911254883,
-          8.095379829406738,
-          -3.3176887035369873,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14302,32 +14233,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14346,7 +14277,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14366,9 +14299,9 @@
           0.0,
           1.0,
           0.0,
-          -4.643096923828125,
-          10.102165222167969,
-          -2.6891188621520996,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14389,32 +14322,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14433,7 +14366,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14453,9 +14388,9 @@
           0.0,
           1.0,
           0.0,
-          -4.519105911254883,
-          8.099505424499512,
-          -2.3167967796325684,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14476,32 +14411,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14520,7 +14455,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14540,9 +14477,9 @@
           0.0,
           1.0,
           0.0,
-          -4.648204326629639,
-          9.37716293334961,
-          -4.333848476409912,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14563,32 +14500,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14607,7 +14544,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14627,9 +14566,9 @@
           0.0,
           1.0,
           0.0,
-          -4.5374650955200195,
-          11.102508544921875,
-          -2.679699659347534,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14650,32 +14589,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14694,7 +14633,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14714,9 +14655,9 @@
           0.0,
           1.0,
           0.0,
-          -3.3705787658691406,
-          9.191118240356445,
-          -3.139341115951538,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14737,32 +14678,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14781,7 +14722,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14801,9 +14744,9 @@
           0.0,
           1.0,
           0.0,
-          -4.5996479988098145,
-          9.631548881530762,
-          -1.331122875213623,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14824,32 +14767,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14868,7 +14811,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14888,9 +14833,9 @@
           0.0,
           1.0,
           0.0,
-          -3.478844165802002,
-          9.230213165283203,
-          -1.1371458768844604,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14911,32 +14856,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -14955,7 +14900,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -14975,9 +14922,9 @@
           0.0,
           1.0,
           0.0,
-          -3.5779449939727783,
-          9.31131649017334,
-          -2.139145851135254,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -14998,32 +14945,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -15042,7 +14989,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15062,9 +15011,9 @@
           0.0,
           1.0,
           0.0,
-          -3.520648717880249,
-          9.387107849121094,
-          -4.141341209411621,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15085,32 +15034,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -15129,7 +15078,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15149,9 +15100,9 @@
           0.0,
           1.0,
           0.0,
-          -2.577929973602295,
-          9.387107849121094,
-          -2.139145851135254,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15172,32 +15123,32 @@
         "faceColors": [
           [
             1.0,
-            1.0,
-            1.0
+            0.0,
+            0.0
           ],
           [
             1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
             1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
             1.0
           ],
           [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
-            1.0
-          ],
-          [
-            1.0,
-            1.0,
+            0.0,
+            0.0,
             1.0
           ]
         ],
@@ -15216,7 +15167,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15236,9 +15189,9 @@
           0.0,
           1.0,
           0.0,
-          -0.0744064450263977,
-          6.258357524871826,
-          -11.775606155395508,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15258,34 +15211,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15303,7 +15256,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15323,9 +15278,9 @@
           0.0,
           1.0,
           0.0,
-          6.908912658691406,
-          3.2949841022491455,
-          -2.3208746910095215,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15345,34 +15300,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15390,7 +15345,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15410,9 +15367,9 @@
           0.0,
           1.0,
           0.0,
-          8.615036010742188,
-          3.0933806896209717,
-          -0.4094022512435913,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15432,34 +15389,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15477,7 +15434,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15497,9 +15456,9 @@
           0.0,
           1.0,
           0.0,
-          10.149761199951172,
-          4.278380393981934,
-          -1.3195197582244873,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15519,34 +15478,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15564,7 +15523,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15584,9 +15545,9 @@
           0.0,
           1.0,
           0.0,
-          11.986051559448242,
-          5.878378868103027,
-          -0.8399609327316284,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15606,34 +15567,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15651,7 +15612,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15671,9 +15634,9 @@
           0.0,
           1.0,
           0.0,
-          13.304826736450195,
-          5.8456573486328125,
-          -0.9354059100151062,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15693,34 +15656,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15738,7 +15701,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15758,9 +15723,9 @@
           0.0,
           1.0,
           0.0,
-          14.991405487060547,
-          5.863457679748535,
-          0.12928420305252075,
+          0.0,
+          0.5,
+          0.0,
           1.0
         ],
         "x2D": 100.0,
@@ -15780,34 +15745,34 @@
         ],
         "faceColors": [
           [
-            0.0,
             1.0,
-            0.9411764144897461
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
             1.0,
-            0.9411764144897461
+            0.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
+            0.0,
+            1.0
           ],
           [
             0.0,
-            1.0,
-            0.9411764144897461
-          ],
-          [
             0.0,
-            1.0,
-            0.9411764144897461
+            1.0
           ]
         ],
         "geometryType": 0,
@@ -15825,7 +15790,9 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
         ],
         "targetRotation": [
           0.0,
@@ -15845,9 +15812,98 @@
           0.0,
           1.0,
           0.0,
-          16.077491760253906,
-          5.994258880615234,
-          1.611721158027649,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "material.Luna's First Star",
+        "objectID": "Luna's First Star",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 10,
+        "shapeParams": [
+          0.5,
+          0.3199999928474426,
+          0.5,
+          0.5,
+          0.3499999940395355,
+          0.15000000596046448,
+          2.0,
+          0.25,
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -0.10000000149011612,
+          1.350000023841858,
+          1.25,
           1.0
         ],
         "x2D": 100.0,

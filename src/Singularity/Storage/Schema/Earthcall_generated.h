@@ -1018,7 +1018,8 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_CENTER = 28,
     VT_AUTHORITATIVE_AXIS = 30,
     VT_TARGET_ROTATION = 32,
-    VT_ROTATION_RESPONSIVENESS = 34
+    VT_ROTATION_RESPONSIVENESS = 34,
+    VT_OWNER_IDENTIFIER = 36
   };
   const ::flatbuffers::String *id() const {
     return GetPointer<const ::flatbuffers::String *>(VT_ID);
@@ -1068,6 +1069,9 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   float rotation_responsiveness() const {
     return GetField<float>(VT_ROTATION_RESPONSIVENESS, 1.0f);
   }
+  const ::flatbuffers::String *owner_identifier() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_OWNER_IDENTIFIER);
+  }
   template <bool B = false>
   bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1102,6 +1106,8 @@ struct Entity FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
            VerifyField<Earthcall::Schema::Vec3>(verifier, VT_AUTHORITATIVE_AXIS, 4) &&
            VerifyField<Earthcall::Schema::Vec3>(verifier, VT_TARGET_ROTATION, 4) &&
            VerifyField<float>(verifier, VT_ROTATION_RESPONSIVENESS, 4) &&
+           VerifyOffset(verifier, VT_OWNER_IDENTIFIER) &&
+           verifier.VerifyString(owner_identifier()) &&
            verifier.EndTable();
   }
 };
@@ -1158,6 +1164,9 @@ struct EntityBuilder {
   void add_rotation_responsiveness(float rotation_responsiveness) {
     fbb_.AddElement<float>(Entity::VT_ROTATION_RESPONSIVENESS, rotation_responsiveness, 1.0f);
   }
+  void add_owner_identifier(::flatbuffers::Offset<::flatbuffers::String> owner_identifier) {
+    fbb_.AddOffset(Entity::VT_OWNER_IDENTIFIER, owner_identifier);
+  }
   explicit EntityBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -1186,8 +1195,10 @@ inline ::flatbuffers::Offset<Entity> CreateEntity(
     const Earthcall::Schema::Vec3 *center = nullptr,
     const Earthcall::Schema::Vec3 *authoritative_axis = nullptr,
     const Earthcall::Schema::Vec3 *target_rotation = nullptr,
-    float rotation_responsiveness = 1.0f) {
+    float rotation_responsiveness = 1.0f,
+    ::flatbuffers::Offset<::flatbuffers::String> owner_identifier = 0) {
   EntityBuilder builder_(_fbb);
+  builder_.add_owner_identifier(owner_identifier);
   builder_.add_rotation_responsiveness(rotation_responsiveness);
   builder_.add_target_rotation(target_rotation);
   builder_.add_authoritative_axis(authoritative_axis);
@@ -1224,7 +1235,8 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
     const Earthcall::Schema::Vec3 *center = nullptr,
     const Earthcall::Schema::Vec3 *authoritative_axis = nullptr,
     const Earthcall::Schema::Vec3 *target_rotation = nullptr,
-    float rotation_responsiveness = 1.0f) {
+    float rotation_responsiveness = 1.0f,
+    const char *owner_identifier = nullptr) {
   auto id__ = id ? _fbb.CreateString(id) : 0;
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto transform__ = transform ? _fbb.CreateVector<float>(*transform) : 0;
@@ -1233,6 +1245,7 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
   auto sdf_nodes__ = sdf_nodes ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::SdfNode>>(*sdf_nodes) : 0;
   auto laws__ = laws ? _fbb.CreateVector<::flatbuffers::Offset<Earthcall::Schema::LawComponent>>(*laws) : 0;
   auto material_id__ = material_id ? _fbb.CreateString(material_id) : 0;
+  auto owner_identifier__ = owner_identifier ? _fbb.CreateString(owner_identifier) : 0;
   return Earthcall::Schema::CreateEntity(
       _fbb,
       id__,
@@ -1250,7 +1263,8 @@ inline ::flatbuffers::Offset<Entity> CreateEntityDirect(
       center,
       authoritative_axis,
       target_rotation,
-      rotation_responsiveness);
+      rotation_responsiveness,
+      owner_identifier__);
 }
 
 struct SaveChunk FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {

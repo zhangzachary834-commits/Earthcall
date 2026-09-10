@@ -69,18 +69,18 @@ void check(bool ok, const std::string& what) {
 } // namespace
 
 int main() {
-    std::string filename = "saves/worlds/chess_app.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/chess_app.json")) {
-        filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    // This test never used TestSupport::RealSaveTreeGuard — it pointed
+    // SaveSystem straight at the real saves/ tree with no backup/restore at
+    // all, unlike every other chess test. Found 2026-09-09 after it (run
+    // directly, repeatedly, outside ctest, verifying unrelated Zone-identity
+    // work) corrupted the real saves/zones/Chess/zone.json from 4,076 to
+    // 8,792 lines — the exact "duplicate relation" shape the 5 chess tests'
+    // 2026-09-07 RealSaveTreeGuard fix was supposed to close everywhere.
+    // Recovered from an orphaned RealSaveTreeGuard temp backup (this test's
+    // own missing guard meant no backup of its own existed); this guard is
+    // the actual fix so it cannot recur.
+    const std::string filename = TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
 
     std::cout << "=== Boot hydration then load — the running app's order ===\n";
 

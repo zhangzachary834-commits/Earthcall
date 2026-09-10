@@ -98,6 +98,7 @@ std::vector<std::shared_ptr<Relation>> SyntacticParser::parse(const std::string&
 
                     auto rel = std::make_shared<Relation>(canonical, *subject, *lexeme, true);
                     rel->setWeight(0.5f);
+                    rel->setDynamicProperty("decayRate", 0.02f);
                     results.push_back(rel);
 
                     subject = nullptr;

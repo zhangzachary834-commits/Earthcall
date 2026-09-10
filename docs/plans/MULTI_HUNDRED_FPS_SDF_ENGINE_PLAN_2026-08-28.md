@@ -65,7 +65,7 @@ Date: 2026-08-28T23:01:00-07:00
 
 **Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
 **Basis**: `scratch/probes/horizon_cost_probe.cpp` against the authored Perlin field, plus
-[REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
+[REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../audits/rendering_optimization/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
 
 ### The 40 FPS this scales "from" was not a rendering number
 

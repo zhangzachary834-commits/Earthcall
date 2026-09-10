@@ -132,15 +132,38 @@ int main() {
     std::srand(42);
     std::printf("=== isHeightfieldExpr: structural pattern match ===\n");
     {
-        // Positive: the real authored Perlin-floor field, y - 40*noise(p*0.008+off).
+        // Negative: the real authored Perlin-floor field reads the whole point,
+        // including p.y. Its outer syntax resembles a heightfield but h is not
+        // independent of y, so specialization would change its mathematics.
         auto offset = mkVec3(mkConst(100.0), mkConst(0.0), mkConst(100.0));
         auto arg = mkBinary(MathNode::Op::Scale, mkConst(0.008),
                             mkBinary(MathNode::Op::Add, mkLeaf("p"), std::move(offset)));
         auto h = mkBinary(MathNode::Op::Scale, mkConst(40.0), mkNoise(std::move(arg)));
         geom::SdfNode field = wrapHeightfield(std::move(h));
         const OntoMath::MathNode* outH = nullptr;
+        expect(!geom::isHeightfieldExpr(field, &outH) && outH == nullptr,
+              "y - 40*noise(p*0.008+offset) is rejected because h reads y");
+    }
+    {
+        // Positive: only x/z components reach Noise, so h is proved independent
+        // of y and the 2D min/max grid is admissible.
+        auto nx = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "x"));
+        auto nz = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "z"));
+        auto arg = mkVec3(std::move(nx), mkConst(0.0), std::move(nz));
+        auto h = mkBinary(MathNode::Op::Scale, mkConst(40.0), mkNoise(std::move(arg)));
+        geom::SdfNode field = wrapHeightfield(std::move(h));
+        const OntoMath::MathNode* outH = nullptr;
         expect(geom::isHeightfieldExpr(field, &outH) && outH != nullptr,
-              "y - 40*noise(p*0.008+offset) is recognized as a heightfield");
+              "y - h(x,z) with component-extracted x/z is recognized");
+    }
+    {
+        // Negative: y hidden in a constructed vector component must not escape
+        // the dependency proof.
+        auto v = mkVec3(mkConst(0.0), mkLeaf("y"), mkConst(0.0));
+        auto h = mkComponent(std::move(v), "y");
+        geom::SdfNode field = wrapHeightfield(std::move(h));
+        expect(!geom::isHeightfieldExpr(field, nullptr),
+              "y hidden in VectorConstruct/Component is rejected");
     }
     {
         // Negative: reversed operand order, h - y, is NOT the pattern (that
@@ -186,17 +209,18 @@ int main() {
                        glm::vec3(1000.f, 30.f, 1000.f), 128, 128, 20000);
     }
     {
-        // A properly-authored 2D heightfield: noise fed only Component(p,x)/
-        // Component(p,z), no y at all. Must ALSO be sound, and (checked
-        // separately, not asserted here since it is a perf property not a
-        // correctness one) tighter -- this is the case Phase C is actually
-        // for.
+        // A mathematically valid 2D heightfield can still lack a proved range
+        // bound for acceleration. Perlin's former Lipschitz number was
+        // empirical, so computeHeightGrid must refuse it rather than using a
+        // sampled margin to delete ray segments.
         auto nx = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "x"));
         auto nz = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "z"));
         auto arg = mkVec3(std::move(nx), mkConst(0.0), std::move(nz));
         auto h = mkBinary(MathNode::Op::Scale, mkConst(40.0), mkNoise(std::move(arg)));
-        checkSoundness("2D heightfield (Component-extracted x/z, no y)", *h,
-                       glm::vec3(1000.f, 30.f, 1000.f), 128, 128, 20000);
+        geom::HeightGrid grid = geom::computeHeightGrid(
+            *h, glm::vec3(1000.f, 30.f, 1000.f), 128, 128);
+        expect(grid.dimX == 0,
+              "2D Perlin heightfield refuses grid without a proved Lipschitz bound");
     }
     {
         // An op the Lipschitz estimator does not cover (Pow) must REFUSE

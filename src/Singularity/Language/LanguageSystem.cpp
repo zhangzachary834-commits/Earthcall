@@ -125,7 +125,7 @@ void LanguageSystem::remove(const std::string& symbol) {
     }
 }
 
-void LanguageSystem::tick(float deltaTime) {
+void LanguageSystem::tick(float) {
     // 1. Process queued utterances from WebSocket/WebBindings
     std::queue<PendingUtterance> localQueue;
     {
@@ -175,6 +175,7 @@ void LanguageSystem::tick(float deltaTime) {
                 Singular* target = activeZone.formation().findMemberByIdentifier(u.targetSingularId);
                 if (target) {
                     auto rel = std::make_shared<Relation>("speaks", *target, *lexeme, true);
+                    rel->setDynamicProperty("decayRate", 0.02f);
                     activeZone.formation().addRelation(rel);
                     std::cout << "[LanguageSystem] Routed utterance to target Object: " << u.targetSingularId << std::endl;
                 }
@@ -194,36 +195,8 @@ void LanguageSystem::tick(float deltaTime) {
     }
 
     // 2. Synaptic Plasticity (Decay semantic weights)
-    Zone& activeZone = mgr.active();
-    std::vector<std::shared_ptr<Relation>> toRemove;
-    
-    for (const auto& rel : activeZone.formation().relations().getAll()) {
-        // Skip structural/authored ontology relations
-        if (rel->type == "is_pos" || rel->type == "resolves_to" || rel->type == "member" || rel->type == "attachment" || rel->type == "speaks") {
-            continue;
-        }
-        
-        float w = rel->getWeight();
-        if (w > 0.0f) {
-            w -= 0.02f * deltaTime; // Decay rate
-            if (w <= 0.0f) {
-                toRemove.push_back(rel);
-                ECA::Logger::instance().log(
-                    ECA::LogCategory::Language,
-                    "PATHWAY_DECAY",
-                    "Semantic pathway decayed and forgotten: " + rel->getIdentifier(),
-                    nlohmann::json{{"relationId", rel->getIdentifier()}}
-                );
-                std::cout << "[LanguageSystem] Semantic pathway decayed and forgotten: " << rel->getIdentifier() << std::endl;
-            } else {
-                rel->setWeight(w);
-            }
-        }
-    }
-    
-    for (const auto& rel : toRemove) {
-        activeZone.formation().removeRelation(rel);
-    }
+    // Removed. Synaptic Plasticity is now a fully authored OntoMath function
+    // running as a Law in the world.
 }
 
 void LanguageSystem::queueUtterance(const std::string& payload, const std::string& sourceClient, const std::string& targetSingularId) {

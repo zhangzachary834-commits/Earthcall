@@ -1,6 +1,7 @@
 {
   "deletable": {
-    "Player": true
+    "Player": true,
+    "Zach": true
   },
   "formationRelations": [],
   "identifier": "visible_cube",
@@ -21,7 +22,7 @@
     }
   ],
   "name": "visible_cube",
-  "owner": "Player",
+  "owner": "Zach",
   "parentZone": "",
   "qualities": {
     "ownerKind": "person"
@@ -30,10 +31,53 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.default",
         "objectID": "witness-cube",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -44,7 +88,32 @@
           0.15000000596046448,
           2.0,
           0.25,
-          0.11999999731779099
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

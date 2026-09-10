@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <optional>
+#include <unordered_set>
 #include "json.hpp"
 #include "Zone/Zone.hpp"
 #include "SaveContext.hpp"
@@ -26,6 +28,9 @@ class ZoneManager {
     SaveLoadState _saveLoad;
 
 public:
+    std::vector<std::shared_ptr<Object>>& getGlobalObjects() { return globalObjects; }
+    const std::vector<std::shared_ptr<Object>>& getGlobalObjects() const { return globalObjects; }
+
     void addZone(std::shared_ptr<Zone> zone);
     void switchTo(size_t index);
     void describeCurrent() const;
@@ -103,7 +108,18 @@ public:
     void loadTestObservation(const std::string& filename, SaveContext& ctx);
     
     // Split substrate (.ecmatter) FlatBuffer methods
-    std::vector<uint8_t> buildMatterFlatBuffer() const;
+    // scopeZoneIds absent (default) = every live Zone, matching what the
+    // .ecform half of an ordinary Save/Quick Save also embeds (buildSaveJson
+    // iterates all _zones too, so both artifacts already agree there).
+    // Present = only those Zones' objects are serialized, for a caller that
+    // knows its semantic root names a narrower set — see the "Legacy JSON
+    // splitter" call site in loadState (Sol's Invariant 1, agent intercom
+    // "Basic Pixel Changer Zone Identity Bug 9-7-26", 2026-09-08): dumping
+    // every hydrated Zone into a matter buffer for a World that itself named
+    // only one is how the real basic_pixel_changer.ecmatter reached 1,441
+    // entities.
+    std::vector<uint8_t> buildMatterFlatBuffer(
+        const std::optional<std::unordered_set<std::string>>& scopeZoneIds = std::nullopt) const;
     void applyMatterFlatBuffer(const std::vector<uint8_t>& buffer);
 
     std::vector<uint8_t> buildSaveChunkFlatBuffer();

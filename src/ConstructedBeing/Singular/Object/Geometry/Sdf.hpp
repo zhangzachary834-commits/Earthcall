@@ -146,20 +146,19 @@ struct HeightGrid {
 };
 
 // Decidable structural check: is `n` a single Expr leaf whose OntoMath tree is
-// exactly Sub(A, h) with A the y-component of the ambient point -- literally
-// f(p) = y - h(...)? This is a syntactic match only; it makes no claim about
-// whether h itself depends on y (computeHeightGrid bounds that conservatively
-// either way). On a match, *outH borrows the h subtree (alive as long as
-// n.mathNode is); on no match, *outH is left untouched and the caller must not
-// build a grid for n.
+// exactly Sub(A, h) with A the y-component of the ambient point AND h proved
+// independent of ambient y -- literally f(p) = y - h(x,z)? Unknown structure
+// refuses specialization and uses the generic implicit path. On a match, *outH
+// borrows the h subtree (alive as long as n.mathNode is); on no match, *outH is
+// left untouched and the caller must not build a grid for n.
 bool isHeightfieldExpr(const SdfNode& n, const OntoMath::MathNode** outH);
 
 // Build the grid: dimX x dimZ cells over [-halfExtent.x,halfExtent.x] x
 // [-halfExtent.z,halfExtent.z]. Each cell samples h once at its center and
 // widens by a slack derived from a compositional Lipschitz estimate of h
-// (see Sdf.cpp) times the cell's worst-case radius -- covering the object's
-// FULL y half-extent too, since h may reference y (the real Perlin-floor
-// field's noise argument does). Returns an empty grid (dimX=dimZ=0) when h
+// (see Sdf.cpp) times the cell's worst-case radius. `isHeightfieldExpr` admits
+// only h independent of y, but this lower-level builder remains conservative
+// if called directly with a y-dependent expression. Returns an empty grid when h
 // contains an operation the estimate cannot cover soundly: "no acceleration"
 // is always a safe answer, an unsound tightened bound never is.
 HeightGrid computeHeightGrid(const OntoMath::MathNode& h, const glm::vec3& halfExtent,

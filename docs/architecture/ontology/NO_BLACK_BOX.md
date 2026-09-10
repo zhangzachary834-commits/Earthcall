@@ -141,6 +141,22 @@ it?"*. Neither is a question. `Object::faceColors` was write-only for a month an
 `propSetColor` was an empty function for a month, both because nobody was going to use them
 *yet*.
 
+### 3a. Dense substrate, selective Property elevation
+
+Zach's pixel requirement makes the distinction precise: a raw texture may contain a
+million machine samples without a million permanently allocated Properties, but the
+program must be able to elevate any one sample—or a meaningful set—into the authored
+Property vocabulary. `surface.pixel.<face>.<x>.<y>` projects one texture sample as a live
+Property. `ElevatePixels` projects the defined set of an OntoMath expression over local
+`u` and `v` under any authored name. Both enumerate, persist, read, write, and participate
+in the change feed. The samples not elevated remain modality storage beneath Screen; this
+is virtualization of quantity, not accidental secrecy.
+
+Named regions must not smuggle ontology into preset bounds. Their membership is authored
+OntoMath, serialized in `surface.selection.<name>`, so the Screen substrate evaluates a
+Person's definition rather than deciding that the region is a rectangle, circle, brush,
+or tile.
+
 ---
 
 ## 4. The sealed register

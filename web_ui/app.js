@@ -69,17 +69,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         inputField.value = '';
+        inputField.dispatchEvent(new Event('input'));
+        inputField.focus();
     }
     
-    emitBtn.addEventListener('click', emitUtterance);
-    
-    inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            emitUtterance();
-        }
+    const form = document.getElementById('logos-interface');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        emitUtterance();
     });
 
     inputField.addEventListener('input', () => {
-        emitBtn.disabled = inputField.value.trim() === '';
+        const isEmpty = inputField.value.trim() === '';
+        emitBtn.disabled = isEmpty;
+        emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
+        emitBtn.setAttribute('aria-disabled', isEmpty.toString());
     });
 });

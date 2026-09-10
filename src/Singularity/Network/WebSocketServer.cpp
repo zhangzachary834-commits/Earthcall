@@ -3,6 +3,7 @@
 #include "WebSocketServer.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/Engine.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -15,6 +16,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/CurveModel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
@@ -75,7 +77,7 @@ static nlohmann::json buildWorldSnapshotJson() {
     } else {
         root["active_zone_name"] = "Default Zone";
         root["active_zone_id"] = "zone-default";
-        root["active_zone_owner"] = "Player";
+        root["active_zone_owner"] = "Person";
     }
 
     auto& zones = mgr.zones();
@@ -120,7 +122,7 @@ static nlohmann::json buildWorldSnapshotJson() {
     root["objects"] = objList;
 
     // Player & Camera Status
-    Core::Engine& eng = Core::Engine::instance();
+    ::Core::Engine& eng = ::Core::Engine::instance();
     Person* p = eng.getPerson();
     if (p) {
         nlohmann::json pj;
@@ -128,7 +130,7 @@ static nlohmann::json buildWorldSnapshotJson() {
         glm::vec3 pPos = p->position();
         pj["position"] = {pPos.x, pPos.y, pPos.z};
         
-        Core::Camera* cam = eng.getCamera();
+        ::Core::Camera* cam = eng.getCamera();
         if (cam) {
             glm::vec3 camFront = cam->getFront();
             pj["camera_forward"] = {camFront.x, camFront.y, camFront.z};
@@ -255,8 +257,41 @@ struct WebSocketServer::Impl {
         server.send(hdl, jsonPayload, websocketpp::frame::opcode::text, ec);
     }
 
+    std::vector<std::function<void()>> mainThreadTasks;
+    std::mutex mainThreadTasksMutex;
+
+    void enqueueMainThread(std::function<void()> task) {
+        std::lock_guard<std::mutex> lock(mainThreadTasksMutex);
+        mainThreadTasks.push_back(std::move(task));
+    }
+
+    void pollMainThread() {
+        std::vector<std::function<void()>> toRun;
+        {
+            std::lock_guard<std::mutex> lock(mainThreadTasksMutex);
+            if (mainThreadTasks.empty()) return;
+            toRun.swap(mainThreadTasks);
+        }
+        for (auto& t : toRun) {
+            if (t) {
+                try {
+                    t();
+                } catch (const std::exception& e) {
+                    std::cerr << "[WebSocketServer] Main thread task exception: " << e.what() << std::endl;
+                }
+            }
+        }
+    }
+
     void on_message(websocketpp::connection_hdl hdl, ServerType::message_ptr msg) {
         std::string payload = msg->get_payload();
+        enqueueMainThread([this, hdl, payload]() {
+            processMessage(hdl, payload);
+        });
+    }
+
+    void processMessage(websocketpp::connection_hdl hdl, const std::string& payload) {
+
         try {
             auto j = nlohmann::json::parse(payload);
             if (!j.is_object()) return;
@@ -275,12 +310,12 @@ struct WebSocketServer::Impl {
             if (type == "utterance") {
                 auto it = j.find("payload");
                 if (it != j.end() && it->is_string()) {
-                    Core::Event::Utterance evt;
+                    ::Core::Event::Utterance evt;
                     evt.payload = it->get<std::string>();
                     evt.sourceClient = j.value("sourceClient", clientId);
                     evt.targetSingularId = j.value("targetSingularId", "");
 
-                    Core::EventBus::instance().publish(evt);
+                    ::Core::EventBus::instance().publish(evt);
                     std::cout << "[WebSocketServer] Received utterance: \"" << evt.payload << "\" from " << evt.sourceClient << std::endl;
 
                     nlohmann::json reply;
@@ -291,9 +326,7 @@ struct WebSocketServer::Impl {
                     broadcast(reply.dump());
                 }
                 return;
-            }
-
-            // 3. Property Write
+            }            // 3. Property Write
             if (type == "property_write" || type == "PropertyWrite") {
                 std::string target = j.value("target", "");
                 std::string prop = j.value("property", "");
@@ -301,31 +334,84 @@ struct WebSocketServer::Impl {
 
                 if (!target.empty() && !prop.empty() && valIt != j.end()) {
                     Singular* targetBeing = nullptr;
-                    
-                    if (target == "@player" || target == "player" || target == "Player") {
-                        targetBeing = Core::Engine::instance().getPerson();
-                    } else if (target == "@active_zone" || target == "active_zone" || target == "zone") {
+                    std::string normTarget = target;
+                    if (!normTarget.empty() && normTarget[0] == '@') {
+                        normTarget = normTarget.substr(1);
+                    }
+
+                    if (target == "@player" || normTarget == "player" || normTarget == "Player") {
+                        targetBeing = ::Core::Engine::instance().getPerson();
+                    } else if (target == "@active_zone" || normTarget == "active_zone" || normTarget == "zone") {
                         targetBeing = &mgr.active();
                     } else {
+                        // 1. Search in Universe beings
                         for (auto* being : Universe::instance().beings()) {
-                            if (being && (being->getIdentifier() == target || (dynamic_cast<Object*>(being) && dynamic_cast<Object*>(being)->getObjectID() == target))) {
+                            if (!being) continue;
+                            if (being->getIdentifier() == target || being->getIdentifier() == normTarget) {
                                 targetBeing = being;
                                 break;
+                            }
+                            if (auto* obj = dynamic_cast<Object*>(being)) {
+                                if (obj->getObjectID() == target || obj->getObjectID() == normTarget ||
+                                    obj->getEntityName() == target || obj->getEntityName() == normTarget) {
+                                    targetBeing = being;
+                                    break;
+                                }
+                            }
+                        }
+                        // 2. Search in active zone objects
+                        if (!targetBeing) {
+                            for (const auto& obj : mgr.active().getOwnedObjects()) {
+                                if (!obj) continue;
+                                if (obj->getObjectID() == target || obj->getObjectID() == normTarget ||
+                                    obj->getIdentifier() == target || obj->getIdentifier() == normTarget ||
+                                    obj->getEntityName() == target || obj->getEntityName() == normTarget) {
+                                    targetBeing = obj.get();
+                                    break;
+                                }
+                            }
+                        }
+                        // 3. Search in LawManager (Laws and Modality Channels)
+                        if (!targetBeing) {
+                            LawManager* lm = ::Core::Engine::instance().getLawManager();
+                            if (lm) {
+                                for (const auto& l : lm->getAll()) {
+                                    if (l && (l->getIdentifier() == target || l->getIdentifier() == normTarget || l->name() == target)) {
+                                        targetBeing = l.get();
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
 
                     if (targetBeing) {
                         PropertyValue val = propertyValueFromJson(*valIt);
-                        PropertyPath path = PropertyPath::parse(prop);
-                        auto res = path.setValue(*targetBeing, val);
-                        bool ok = (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged);
+                        bool ok = false;
+                        int pathResultCode = 0;
+
+                        // Direct SDF field.expr live conversion on Objects
+                        auto* obj = dynamic_cast<Object*>(targetBeing);
+                        if (obj && (prop == "field.expr" || prop == "expr") && std::holds_alternative<std::string>(val)) {
+                            std::string expr = std::get<std::string>(val);
+                            geom::SdfNode node = geom::makeImplicit(expr);
+                            if (!node.rpn.empty()) {
+                                obj->setFieldShape(node, obj->getFieldExtent());
+                                ok = true;
+                            }
+                        } else {
+                            PropertyPath path = PropertyPath::parse(prop);
+                            auto res = path.setValue(*targetBeing, val);
+                            pathResultCode = static_cast<int>(res);
+                            ok = (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged);
+                        }
 
                         nlohmann::json reply;
                         reply["type"] = "property_write_ack";
                         reply["target"] = target;
                         reply["property"] = prop;
                         reply["status"] = ok ? "success" : "failed";
+                        reply["pathResult"] = pathResultCode;
                         sendTo(hdl, reply.dump());
 
                         if (ok) {
@@ -339,24 +425,51 @@ struct WebSocketServer::Impl {
                         reply["status"] = "target_not_found";
                         sendTo(hdl, reply.dump());
                     }
+                } else {
+                    nlohmann::json reply;
+                    reply["type"] = "property_write_ack";
+                    reply["target"] = target;
+                    reply["property"] = prop;
+                    reply["status"] = "invalid_arguments";
+                    sendTo(hdl, reply.dump());
                 }
                 return;
             }
 
-            // 4. Spawn / Create Object
-            if (type == "spawn_object" || type == "create_object") {
-                std::string shapeStr = j.value("shape", j.value("shapeKind", "Cube"));
+            // 4. Spawn / Create Object            // 4. Spawn / Create Object or Field
+            if (type == "spawn_object" || type == "create_object" || type == "spawn_field" || type == "create_field") {
+                std::string shapeStr = j.value("shape", j.value("shapeKind", (type.find("field") != std::string::npos ? "Field" : "Cube")));
                 int shapeInt = j.value("shapeKindInt", -1);
                 Object::ShapeKind shape = parseShapeKind(shapeStr, shapeInt);
 
                 auto obj = std::make_shared<Object>();
                 
                 std::string name = j.value("name", j.value("id", ""));
-                if (!name.empty()) {
-                    obj->setObjectID(name);
+                if (name.empty()) {
+                    name = shapeStr + "_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count() % 10000);
                 }
+                obj->setObjectID(name);
+                                obj->setName(name);
 
-                obj->setShape(shape);
+                // SDF Field handling
+                if (shapeStr == "Field" || shapeStr == "field" || shapeStr == "SDF" || j.contains("fieldExpr") || j.contains("expr")) {
+                    std::string expr = j.value("fieldExpr", j.value("expr", "sphere(0.5)"));
+                    glm::vec3 extent(1.0f);
+                    if (j.contains("extent")) {
+                        if (j["extent"].is_number()) {
+                            extent = glm::vec3(j["extent"].get<float>());
+                        } else if (j["extent"].is_array() && j["extent"].size() >= 3) {
+                            extent = glm::vec3(j["extent"][0].get<float>(), j["extent"][1].get<float>(), j["extent"][2].get<float>());
+                        }
+                    }
+                    geom::SdfNode node = geom::makeImplicit(expr);
+                    obj->setFieldShape(node, extent);
+                    if (j.contains("cellSize") && j["cellSize"].is_number()) {
+                        obj->setFieldCellSize(j["cellSize"].get<float>());
+                    }
+                } else {
+                    obj->setShape(shape);
+                }
 
                 if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
                     float px = j["position"][0].get<float>();
@@ -364,7 +477,7 @@ struct WebSocketServer::Impl {
                     float pz = j["position"][2].get<float>();
                     obj->setPosition(glm::vec3(px, py, pz));
                 } else {
-                    Person* p = Core::Engine::instance().getPerson();
+                    Person* p = ::Core::Engine::instance().getPerson();
                     if (p) {
                         glm::vec3 pPos = p->position();
                         glm::vec3 fwd = p->cameraForward;
@@ -379,7 +492,7 @@ struct WebSocketServer::Impl {
                     obj->setRotationEulerDegrees(glm::vec3(rx, ry, rz));
                 }
 
-                if (j.contains("dimensions")) {
+                if (j.contains("dimensions") && j["dimensions"].is_number()) {
                     float dim = j["dimensions"].get<float>();
                     if (dim > 0) obj->setDimensions(static_cast<int>(dim));
                 }
@@ -399,21 +512,28 @@ struct WebSocketServer::Impl {
                     obj->setMaterialId(mat);
                 }
 
+                // Register with Zone and Global Objects for persistence
+                obj->addZoneDesignation(mgr.active().name());
+                obj->addZoneDesignation(mgr.active().getIdentifier());
                 mgr.active().addObject(obj);
+                mgr.getGlobalObjects().push_back(obj);
+                mgr.persistZones();
+
                 std::cout << "[WebSocketServer] Spawned object " << obj->getObjectID() << " (" << shapeStr << ") in " << mgr.active().name() << std::endl;
 
                 nlohmann::json reply;
-                reply["type"] = "spawn_object_ack";
+                reply["type"] = (type.find("field") != std::string::npos) ? "spawn_field_ack" : "spawn_object_ack";
                 reply["status"] = "success";
                 reply["id"] = obj->getObjectID();
                 reply["name"] = obj->getIdentifier();
+                reply["isField"] = obj->hasField();
                 sendTo(hdl, reply.dump());
 
                 broadcast(buildWorldSnapshotJson().dump());
                 return;
             }
 
-            // 5. Delete / Destroy Object
+            // 5. Delete / Destroy Object            // 5. Delete / Destroy Object
             if (type == "delete_object" || type == "destroy_object") {
                 std::string id = j.value("id", j.value("target", ""));
                 if (!id.empty()) {
@@ -500,7 +620,7 @@ struct WebSocketServer::Impl {
             if (type == "toggle_law" || type == "set_law_enabled") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
                 bool enabled = j.value("enabled", true);
-                LawManager* lm = Core::Engine::instance().getLawManager();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
                     bool found = false;
                     for (auto& law : lm->getAll()) {
@@ -528,8 +648,8 @@ struct WebSocketServer::Impl {
             // 8. Update Law Nodes (Modifying When -> Condition -> Action Nodes Live)
             if (type == "update_law_nodes" || type == "update_law" || type == "modify_law_nodes") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
-                LawManager* lm = Core::Engine::instance().getLawManager();
-                Person* p = Core::Engine::instance().getPerson();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
+                Person* p = ::Core::Engine::instance().getPerson();
 
                 if (lm && !identifier.empty()) {
                     Law* law = nullptr;
@@ -647,17 +767,21 @@ struct WebSocketServer::Impl {
                     }
                 }
                 return;
-            }
-
-            // 9. Create / Author Law
+            }            // 9. Create / Author Law
             if (type == "create_law" || type == "author_law" || type == "inject_law") {
                 std::string name = j.value("name", "Authored Law");
                 std::string identifier = j.value("identifier", j.value("id", ""));
+                if (identifier.empty()) {
+                    identifier = "law-" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count() % 1000000);
+                }
+                if (!identifier.empty() && identifier[0] == '@') {
+                    identifier = identifier.substr(1);
+                }
                 int activation = j.value("activation", 0);
-                std::string expr = j.value("expression", "");
+                std::string trigger = j.value("trigger", "");
 
-                LawManager* lm = Core::Engine::instance().getLawManager();
-                Person* p = Core::Engine::instance().getPerson();
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
+                Person* p = ::Core::Engine::instance().getPerson();
 
                 if (lm) {
                     Law* existing = nullptr;
@@ -671,6 +795,12 @@ struct WebSocketServer::Impl {
                     std::shared_ptr<Law> law;
                     if (existing) {
                         existing->setEnabled(true);
+                        for (auto& l : lm->getAll()) {
+                            if (l.get() == existing) {
+                                law = l;
+                                break;
+                            }
+                        }
                     } else {
                         law = lm->createLaw(name, p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
                         if (!identifier.empty()) {
@@ -682,72 +812,163 @@ struct WebSocketServer::Impl {
                         law->setEnabled(true);
                         law->setScope(Law::Scope::Everyone);
 
-                        // Template: Zero-G
-                        if (identifier == "law-zero-g" || name.find("Zero-G") != std::string::npos || name.find("Zero Gravity") != std::string::npos) {
-                            law->setActivation(Law::Activation::WhileTrue);
-                            auto gNode = std::make_shared<OntoMath::MathNode>();
-                            gNode->op = OntoMath::MathNode::Op::VectorConstruct;
-                            auto makeConst = [](double val) {
-                                auto n = std::make_unique<OntoMath::MathNode>();
-                                n->op = OntoMath::MathNode::Op::ScalarLeaf;
-                                n->scalarForm = OntoMath::ScalarForm::constant(val);
-                                return n;
-                            };
-                            gNode->children.push_back(makeConst(0.0));
-                            gNode->children.push_back(makeConst(9.81));
-                            gNode->children.push_back(makeConst(0.0));
-                            law->setActionModel(ActionNode::flow("velocity", OntoMath::Piecewise::continuous(gNode), MathBindings{}));
-                            
-                            for (auto& otherLaw : lm->getAll()) {
-                                if (otherLaw && otherLaw->getIdentifier() == "physics-gravity") {
-                                    otherLaw->setEnabled(false);
+                        // 1. Raw AST Deserialization (matching internal engine format)
+                        if (j.contains("actionModel") && j["actionModel"].is_object()) {
+                            law->setActionModel(ActionNode::fromJson(j["actionModel"]));
+                        }
+                        if (j.contains("conditionModel") && j["conditionModel"].is_object()) {
+                            law->setConditionModel(ConditionNode::fromJson(j["conditionModel"]));
+                        }
+
+                        // 2. Structured Condition Compilation
+                        if (j.contains("condition") && j["condition"].is_object()) {
+                            auto cJson = j["condition"];
+                            bool condEnabled = cJson.value("enabled", true);
+                            if (condEnabled) {
+                                std::string pathStr = cJson.value("path", "");
+                                std::string opStr = cJson.value("op", "==");
+                                auto valIt = cJson.find("operand");
+
+                                if (!pathStr.empty()) {
+                                    ConditionNode cNode;
+                                    cNode.kind = ConditionNode::Kind::Compare;
+                                    cNode.path = PropertyPath::parse(pathStr);
+                                    if (valIt != cJson.end()) {
+                                        cNode.operand = propertyValueFromJson(*valIt);
+                                    } else {
+                                        cNode.operand = PropertyValue(0.0);
+                                    }
+
+                                    if (opStr == "==") cNode.op = ConditionNode::Op::Eq;
+                                    else if (opStr == "!=") cNode.op = ConditionNode::Op::Ne;
+                                    else if (opStr == "<") cNode.op = ConditionNode::Op::Lt;
+                                    else if (opStr == "<=") cNode.op = ConditionNode::Op::Le;
+                                    else if (opStr == ">") cNode.op = ConditionNode::Op::Gt;
+                                    else if (opStr == ">=") cNode.op = ConditionNode::Op::Ge;
+
+                                    law->setConditionModel(cNode);
                                 }
                             }
                         }
-                        // Template: Color Pulsator
-                        else if (identifier == "law-color-pulse" || name.find("Color Pulse") != std::string::npos || name.find("Pulsator") != std::string::npos) {
-                            law->setActivation(Law::Activation::WhileTrue);
-                            MathBindings vibBindings;
-                            vibBindings["t"] = PropertyPath::parse("time");
-                            auto sNode = std::make_shared<OntoMath::MathNode>();
-                            sNode->op = OntoMath::MathNode::Op::ScalarLeaf;
-                            sNode->scalarForm = OntoMath::ScalarForm::sinusoid(0.5, 2.0, 0.5, 0.0, "t");
-                            law->setActionModel(ActionNode::map("color.r", OntoMath::Piecewise::continuous(sNode), vibBindings));
+
+                        // 3. Structured Action Compilation
+                        if (j.contains("action") && j["action"].is_object() && !j.contains("actionModel")) {
+                            auto aJson = j["action"];
+                            std::string kind = aJson.value("kind", "flow");
+                            std::string pathStr = aJson.value("path", "position.y");
+                            std::string formula = aJson.value("formula", "sin");
+
+                            if (kind == "flow" || kind == "map") {
+                                auto sNode = std::make_shared<OntoMath::MathNode>();
+                                sNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                MathBindings bindings;
+
+                                if (formula == "sin" || formula == "sinusoid" || formula == "sine") {
+                                    double amp = aJson.value("amplitude", 1.0);
+                                    double freq = aJson.value("frequency", 1.0);
+                                    double phase = aJson.value("phase", 0.0);
+                                    double offset = aJson.value("offset", 0.0);
+                                    std::string timeVar = aJson.value("timeVariable", "t");
+                                    bindings[timeVar] = PropertyPath::parse("time");
+                                    sNode->scalarForm = OntoMath::ScalarForm::sinusoid(amp, freq, offset, phase, timeVar);
+                                } else if (formula == "linear") {
+                                    double rate = aJson.value("rate", aJson.value("amplitude", 1.0));
+                                    bindings["t"] = PropertyPath::parse("time");
+                                    sNode->scalarForm = OntoMath::ScalarForm::variable("t", 1.0, rate);
+                                } else if (formula == "toggle") {
+                                    bindings["o"] = PropertyPath::parse(pathStr);
+                                    sNode->scalarForm = OntoMath::ScalarForm::variable("o", 1.0, -1.0); sNode->scalarForm.terms.push_back(OntoMath::Term{1.0, {}});
+                                } else {
+                                    double constVal = aJson.value("value", aJson.value("offset", 1.0));
+                                    sNode->scalarForm = OntoMath::ScalarForm::constant(constVal);
+                                }
+
+                                if (kind == "flow") {
+                                    law->setActionModel(ActionNode::flow(pathStr, OntoMath::Piecewise::continuous(sNode), bindings));
+                                } else {
+                                    law->setActionModel(ActionNode::map(pathStr, OntoMath::Piecewise::continuous(sNode), bindings));
+                                }
+                            } else if (kind == "set") {
+                                auto valIt = aJson.find("value");
+                                if (valIt != aJson.end()) {
+                                    law->setActionModel(ActionNode::set(pathStr, propertyValueFromJson(*valIt)));
+                                }
+                            } else if (kind == "spawn") {
+                                std::string conceptId = aJson.value("concept", "shape-cube");
+                                law->setActionModel(ActionNode::spawn(conceptId));
+                            } else if (kind == "destroy") {
+                                law->setActionModel(ActionNode::destroy());
+                            }
                         }
-                        // Template: Orbit
-                        else if (identifier == "law-satellite-orbit" || name.find("Orbit") != std::string::npos || name.find("Satellite") != std::string::npos) {
-                            law->setActivation(Law::Activation::WhileTrue);
-                            MathBindings timeBinding;
-                            timeBinding["t"] = PropertyPath::parse("time");
 
-                            auto xNode = std::make_shared<OntoMath::MathNode>();
-                            xNode->op = OntoMath::MathNode::Op::ScalarLeaf;
-                            xNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 1.5707963, "t");
+                        // 4. Built-in Preset Templates (if no custom action provided)
+                        if (!law->hasActionModel()) {
+                            if (identifier == "law-zero-g" || name.find("Zero-G") != std::string::npos || name.find("Zero Gravity") != std::string::npos) {
+                                law->setActivation(Law::Activation::WhileTrue);
+                                auto gNode = std::make_shared<OntoMath::MathNode>();
+                                gNode->op = OntoMath::MathNode::Op::VectorConstruct;
+                                auto makeConst = [](double val) {
+                                    auto n = std::make_unique<OntoMath::MathNode>();
+                                    n->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                    n->scalarForm = OntoMath::ScalarForm::constant(val);
+                                    return n;
+                                };
+                                gNode->children.push_back(makeConst(0.0));
+                                gNode->children.push_back(makeConst(9.81));
+                                gNode->children.push_back(makeConst(0.0));
+                                law->setActionModel(ActionNode::flow("velocity", OntoMath::Piecewise::continuous(gNode), MathBindings{}));
+                                
+                                for (auto& otherLaw : lm->getAll()) {
+                                    if (otherLaw && otherLaw->getIdentifier() == "physics-gravity") {
+                                        otherLaw->setEnabled(false);
+                                    }
+                                }
+                            } else if (identifier == "law-color-pulse" || name.find("Color Pulse") != std::string::npos || name.find("Pulsator") != std::string::npos) {
+                                law->setActivation(Law::Activation::WhileTrue);
+                                MathBindings vibBindings;
+                                vibBindings["t"] = PropertyPath::parse("time");
+                                auto sNode = std::make_shared<OntoMath::MathNode>();
+                                sNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                sNode->scalarForm = OntoMath::ScalarForm::sinusoid(0.5, 2.0, 0.5, 0.0, "t");
+                                law->setActionModel(ActionNode::map("color.r", OntoMath::Piecewise::continuous(sNode), vibBindings));
+                            } else if (identifier == "law-satellite-orbit" || name.find("Orbit") != std::string::npos || name.find("Satellite") != std::string::npos) {
+                                law->setActivation(Law::Activation::WhileTrue);
+                                MathBindings timeBinding;
+                                timeBinding["t"] = PropertyPath::parse("time");
 
-                            auto zNode = std::make_shared<OntoMath::MathNode>();
-                            zNode->op = OntoMath::MathNode::Op::ScalarLeaf;
-                            zNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 0.0, "t");
+                                auto xNode = std::make_shared<OntoMath::MathNode>();
+                                xNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                xNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 1.5707963, "t");
 
-                            ActionNode mapX = ActionNode::map("position.x", OntoMath::Piecewise::continuous(xNode), timeBinding);
-                            ActionNode mapZ = ActionNode::map("position.z", OntoMath::Piecewise::continuous(zNode), timeBinding);
+                                auto zNode = std::make_shared<OntoMath::MathNode>();
+                                zNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                zNode->scalarForm = OntoMath::ScalarForm::sinusoid(5.0, 1.0, 0.0, 0.0, "t");
 
-                            law->setActionModel(ActionNode::parallel({mapX, mapZ}));
+                                ActionNode mapX = ActionNode::map("position.x", OntoMath::Piecewise::continuous(xNode), timeBinding);
+                                ActionNode mapZ = ActionNode::map("position.z", OntoMath::Piecewise::continuous(zNode), timeBinding);
+
+                                law->setActionModel(ActionNode::parallel({mapX, mapZ}));
+                            } else if (identifier == "law-kinetic-bounce" || name.find("Bounce") != std::string::npos || activation == 1) {
+                                law->setActivation(Law::Activation::OnEvent);
+                                law->ecaLoop().eventType = "contact-began";
+                                law->setScope(Law::Scope::Subject);
+                                lm->bindTrigger(law->getIdentifier(), "contact-began");
+
+                                auto bounceNode = std::make_shared<OntoMath::MathNode>();
+                                bounceNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                                bounceNode->scalarForm = OntoMath::ScalarForm::constant(12.0);
+
+                                law->setActionModel(ActionNode::map("velocity.y", OntoMath::Piecewise::continuous(bounceNode), MathBindings{}));
+                            } else {
+                                law->setActivation(static_cast<Law::Activation>(activation));
+                            }
                         }
-                        // Template: Bounce
-                        else if (identifier == "law-kinetic-bounce" || name.find("Bounce") != std::string::npos || activation == 1) {
+
+                        // Event trigger binding
+                        if (!trigger.empty() && trigger != "universe.time") {
                             law->setActivation(Law::Activation::OnEvent);
-                            law->ecaLoop().eventType = "contact-began";
-                            law->setScope(Law::Scope::Subject);
-                            lm->bindTrigger(law->getIdentifier(), "contact-began");
-
-                            auto bounceNode = std::make_shared<OntoMath::MathNode>();
-                            bounceNode->op = OntoMath::MathNode::Op::ScalarLeaf;
-                            bounceNode->scalarForm = OntoMath::ScalarForm::constant(12.0);
-
-                            law->setActionModel(ActionNode::map("velocity.y", OntoMath::Piecewise::continuous(bounceNode), MathBindings{}));
-                        }
-                        else {
-                            law->setActivation(static_cast<Law::Activation>(activation));
+                            law->ecaLoop().eventType = trigger;
+                            lm->bindTrigger(law->getIdentifier(), trigger);
                         }
 
                         law->recompile();
@@ -762,6 +983,11 @@ struct WebSocketServer::Impl {
                     sendTo(hdl, reply.dump());
 
                     broadcast(buildWorldSnapshotJson().dump());
+                } else {
+                    nlohmann::json reply;
+                    reply["type"] = "create_law_ack";
+                    reply["status"] = "law_manager_unavailable";
+                    sendTo(hdl, reply.dump());
                 }
                 return;
             }
@@ -769,7 +995,10 @@ struct WebSocketServer::Impl {
             // 10. Delete Law
             if (type == "delete_law" || type == "remove_law") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
-                LawManager* lm = Core::Engine::instance().getLawManager();
+                if (!identifier.empty() && identifier[0] == '@') {
+                    identifier = identifier.substr(1);
+                }
+                LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
                     bool removed = lm->remove(identifier);
                     nlohmann::json reply;
@@ -781,11 +1010,15 @@ struct WebSocketServer::Impl {
                     if (removed) {
                         broadcast(buildWorldSnapshotJson().dump());
                     }
+                } else {
+                    nlohmann::json reply;
+                    reply["type"] = "delete_law_ack";
+                    reply["status"] = "invalid_identifier";
+                    reply["identifier"] = identifier;
+                    sendTo(hdl, reply.dump());
                 }
                 return;
-            }
-
-            // 11. Switch Zone
+            }            // 11. Switch Zone
             if (type == "switch_zone" || type == "change_zone") {
                 if (j.contains("index")) {
                     size_t idx = j["index"].get<size_t>();
@@ -810,8 +1043,8 @@ struct WebSocketServer::Impl {
             if (type == "create_zone") {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
-                Person* p = Core::Engine::instance().getPerson();
-                std::string owner = p ? p->getIdentifier() : "Player";
+                Person* p = ::Core::Engine::instance().getPerson();
+                std::string owner = p ? p->getIdentifier() : "Person";
                 mgr.authorZone(zname, owner, kind);
                 broadcast(buildWorldSnapshotJson().dump());
                 return;
@@ -824,10 +1057,10 @@ struct WebSocketServer::Impl {
                     float py = j["position"][1].get<float>();
                     float pz = j["position"][2].get<float>();
                     
-                    Person* p = Core::Engine::instance().getPerson();
+                    Person* p = ::Core::Engine::instance().getPerson();
                     if (p) p->position() = glm::vec3(px, py, pz);
                     
-                    Core::Camera* cam = Core::Engine::instance().getCamera();
+                    ::Core::Camera* cam = ::Core::Engine::instance().getCamera();
                     if (cam) cam->pos = glm::vec3(px, py + 1.8f, pz);
 
                     broadcast(buildWorldSnapshotJson().dump());
@@ -845,28 +1078,36 @@ struct WebSocketServer::Impl {
                 }
                 broadcast(buildWorldSnapshotJson().dump());
                 return;
-            }
-
-            // 15. Quick Save
+            }            // 15. Quick Save / Save World
             if (type == "quick_save" || type == "save_world") {
-                SaveContext ctx;
-                Core::Engine& eng = Core::Engine::instance();
-                ctx.camera = eng.getCamera();
-                ctx.mouseHandler = eng.getMouseHandler();
-                ctx.person = eng.getPerson();
-                ctx.lawManager = eng.getLawManager();
-                ctx.worldTime = eng.worldTimePtr();
-                std::string customName = j.value("name", "");
-                mgr.saveStateWithLog(customName, ctx);
+                try {
+                    SaveContext ctx;
+                    ::Core::Engine& eng = ::Core::Engine::instance();
+                    ctx.camera = eng.getCamera();
+                    ctx.mouseHandler = eng.getMouseHandler();
+                    ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
+                    ctx.person = eng.getPerson();
+                    ctx.lawManager = eng.getLawManager();
+                    ctx.ourverse = &eng.getWorld();
+                    ctx.worldTime = eng.worldTimePtr();
+                    std::string customName = j.value("name", "");
+                    mgr.saveStateWithLog(customName, ctx);
 
-                nlohmann::json reply;
-                reply["type"] = "save_ack";
-                reply["status"] = "success";
-                sendTo(hdl, reply.dump());
+                    nlohmann::json reply;
+                    reply["type"] = "save_ack";
+                    reply["status"] = "success";
+                    reply["name"] = customName;
+                    sendTo(hdl, reply.dump());
+                } catch (const std::exception& e) {
+                    std::cerr << "[WebSocketServer] Save error: " << e.what() << std::endl;
+                    nlohmann::json reply;
+                    reply["type"] = "save_ack";
+                    reply["status"] = "failed";
+                    reply["error"] = e.what();
+                    sendTo(hdl, reply.dump());
+                }
                 return;
-            }
-
-            // Echo fallback
+            }            // Echo fallback
             nlohmann::json echo;
             echo["status"] = "received";
             echo["echo"] = j;
@@ -905,6 +1146,10 @@ struct WebSocketServer::Impl {
         std::cout << "[WebSocketServer] Client disconnected." << std::endl;
     }
 };
+
+void WebSocketServer::pollMainThread() {
+    if (_impl) _impl->pollMainThread();
+}
 
 WebSocketServer& WebSocketServer::instance() {
     static WebSocketServer instance;

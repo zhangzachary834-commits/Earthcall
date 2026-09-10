@@ -107,7 +107,7 @@ bool Object::raycastFace(const glm::vec3& rayOriginWorld, const glm::vec3& rayDi
     }
     if (_hasSmooth) {
         glm::vec3 n;
-        if (geom::raycastSmooth(smoothData, oL, dL, outT, n, outUV)) { outFaceIndex = 0; return true; }
+        if (geom::raycastSmooth(smoothData, oL, dL, outT, n, outUV)) { outT /= dirLen; outFaceIndex = 0; return true; }
         return false;
     }
     if (_hasPatch) {

@@ -256,10 +256,12 @@ static float torusSDF(const glm::vec3& p, float R, float r) {
 
 static float ovoidSDF(const glm::vec3& p, float r, float asym) {
     // Egg: a sphere whose radius tapers along +z (smaller top, fatter bottom).
-    float taper = 1.0f + asym * (p.z / std::max(1e-3f, r));
+    const float safeR = std::max(1e-3f, r);
+    const float zClamped = glm::clamp(p.z, -safeR, safeR);
+    float taper = 1.0f + asym * (zClamped / safeR);
     taper = std::max(0.25f, taper);
-    glm::vec3 q = p; q.x /= taper; q.y /= taper;
-    return glm::length(q) - r;
+    const glm::vec3 q(p.x / taper, p.y / taper, p.z);
+    return (glm::length(q) - r) * std::min(taper, 1.0f);
 }
 
 static float parametricSDF(const SmoothSurfaceData& s, const glm::vec3& p) {

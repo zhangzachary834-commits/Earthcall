@@ -1,11 +1,10 @@
 #include "Relation.hpp"
+#include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include <iostream>
-#include <cstring>
-#include <cstdio>
 
 // Specific Implementation Vision: Recursive, custom tool creation
 // With a combination of the basic tools here, with a Formation system comprised of relations between things, people can create their own tools on top of that.
@@ -14,55 +13,6 @@
 // User can have the choice to have the tools themselves be integrated under relations. Every act of drawing can call a relation between the tool and the other Singulars involved. (tool isn't Singular yet, so we'll make them Singular in the future.)
 
 using json = nlohmann::json;
-
-namespace {
-std::vector<float> mat4ToVector(const glm::mat4& matrix) {
-    std::vector<float> values(16);
-    const float* raw = glm::value_ptr(matrix);
-    for (int i = 0; i < 16; ++i) values[i] = raw[i];
-    return values;
-}
-
-glm::mat4 vectorToMat4(const std::vector<float>& values) {
-    glm::mat4 matrix(1.0f);
-    if (values.size() == 16) {
-        std::memcpy(glm::value_ptr(matrix), values.data(), sizeof(float) * 16);
-    }
-    return matrix;
-}
-} // namespace
-
-json Relation::AttachmentData::toJson() const {
-    return json{
-        {"enabled", enabled},
-        {"localOffset", mat4ToVector(localOffset)},
-        {"parentAnchor", {parentAnchor.x, parentAnchor.y, parentAnchor.z}},
-        {"childAnchor", {childAnchor.x, childAnchor.y, childAnchor.z}},
-        {"inheritTranslation", inheritTranslation},
-        {"inheritRotation", inheritRotation},
-        {"inheritScale", inheritScale}
-    };
-}
-
-Relation::AttachmentData Relation::AttachmentData::fromJson(const json& j) {
-    AttachmentData data;
-    data.enabled = j.value("enabled", false);
-    data.localOffset = vectorToMat4(j.value("localOffset", std::vector<float>{}));
-    if (j.contains("parentAnchor") && j["parentAnchor"].is_array() && j["parentAnchor"].size() >= 3) {
-        data.parentAnchor = glm::vec3(j["parentAnchor"][0].get<float>(),
-                                      j["parentAnchor"][1].get<float>(),
-                                      j["parentAnchor"][2].get<float>());
-    }
-    if (j.contains("childAnchor") && j["childAnchor"].is_array() && j["childAnchor"].size() >= 3) {
-        data.childAnchor = glm::vec3(j["childAnchor"][0].get<float>(),
-                                     j["childAnchor"][1].get<float>(),
-                                     j["childAnchor"][2].get<float>());
-    }
-    data.inheritTranslation = j.value("inheritTranslation", true);
-    data.inheritRotation = j.value("inheritRotation", true);
-    data.inheritScale = j.value("inheritScale", true);
-    return data;
-}
 
 Relation::Relation(const std::string& type,
                    Singular& aBeing,
@@ -148,50 +98,11 @@ bool Relation::isBetween(const std::string& a, const std::string& b) const {
 }
 
 json Relation::toJson() const {
-    json evArr = json::array();
-    for(const auto& ev : events) evArr.push_back(ev.toJson());
-
-    return json{{"type", type},
-                {"entityA", aId()},
-                {"entityB", bId()},
-                {"directed", directed},
-                {"weight", getWeight()},
-                {"events", evArr},
-                {"attachment", attachment.toJson()}};
+    return relationToJson(*this);
 }
 
 Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resolve) {
-    Relation r;
-    r.type = j.at("type").get<std::string>();
-    r.directed = j.value("directed", false);
-    r.setWeight(j.value("weight", 1.0f));
-
-    if(j.contains("events") && j["events"].is_array()){
-        for(const auto& item : j["events"]) {
-            r.events.push_back(RelationEvent::fromJson(item));
-        }
-    }
-    if (j.contains("attachment")) {
-        r.attachment = AttachmentData::fromJson(j["attachment"]);
-    }
-
-    std::string savedA = j.value("entityA", std::string{});
-    std::string savedB = j.value("entityB", std::string{});
-    r._endpointA.savedId = savedA;
-    r._endpointB.savedId = savedB;
-
-    if (resolve) {
-        Singular* aPtr = savedA.empty() ? nullptr : resolve(savedA);
-        Singular* bPtr = savedB.empty() ? nullptr : resolve(savedB);
-        r.bind(aPtr, bPtr);
-        if ((!savedA.empty() && !r.a()) || (!savedB.empty() && !r.b())) {
-            std::fprintf(stderr,
-                "Relation::fromJson: unbound endpoint(s) type='%s' a='%s' b='%s'. "
-                "Identifier properties kept; the relation holds no being until bind.\n",
-                r.type.c_str(), savedA.c_str(), savedB.c_str());
-        }
-    }
-    return r;
+    return relationFromJson(j, resolve);
 }
 
 // A Relation is a legible Singular: type/weight/directed are governable

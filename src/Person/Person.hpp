@@ -47,6 +47,7 @@ public:
     Singularity::Language::Lexeme* called() const { return _called.get(); }
     const std::string& getDisplayName() const;
     void setDisplayName(const std::string& name);
+    void rename(const std::string& newName);
 
     glm::vec3& position() { return _position; }
     const glm::vec3& position() const { return _position; }

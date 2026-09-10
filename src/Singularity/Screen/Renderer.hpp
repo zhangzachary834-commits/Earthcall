@@ -47,6 +47,12 @@ public:
         uint32_t bufferSuballocations = 0;
         uint32_t pipelineSwitches = 0;
         uint32_t cachedMeshesCount = 0;
+        // Kernel timing, resolved asynchronously from optional GPU timestamp
+        // queries. It covers the main render pass only (before the ImGui overlay)
+        // and describes an earlier submitted frame, never a CPU wall-clock span.
+        bool     gpuMainPassTimingSupported = false;
+        bool     gpuMainPassTimingValid = false;
+        float    gpuMainPassMs = 0.0f;
     };
 
     const FrameStats& frameStats() const { return _frameStats; }
@@ -235,6 +241,15 @@ public:
     virtual TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                         uint32_t width, uint32_t height) = 0;
     virtual void releaseTexture(TextureHandle handle) = 0;
+
+    // Readback the rendered framebuffer pixels as RGBA8.
+    // Default implementation returns false; backends override if supported.
+    virtual bool readPixels(uint8_t* /*outRgba*/, uint32_t /*width*/, uint32_t /*height*/) {
+        return false;
+    }
+
+    // Live hot-reloading: clears and recompiles shader pipelines from disk.
+    virtual void reloadShaders() {}
 
 protected:
     // The hooks a backend actually implements. The state above (model stack,

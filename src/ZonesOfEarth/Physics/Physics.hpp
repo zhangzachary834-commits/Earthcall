@@ -44,12 +44,22 @@ namespace Physics {
         float magnitude{0.0f};
     };
 
-    // Simple rigid form used for point-mass entities (e.g., the player)
+    // Simple rigid form used for spatial entities
     struct RigidForm {
         float mass{1.0f};                       // kilograms
         glm::vec3 velocity{0.0f};               // metres per second
         glm::vec3 accumulatedForce{0.0f};       // Newtons, reset each step
+
+        // Rotational kinematics & dynamics
+        glm::vec3 angularVelocity{0.0f};        // degrees per second
+        glm::vec3 accumulatedTorque{0.0f};      // Newton-metres, reset each step
+        glm::vec3 centerOfMassOffset{0.0f};     // local offset from object origin
+        float momentOfInertia{0.1f};            // kg * m^2 rotational inertia
     };
+
+    // Accumulate an external torque on the form (adds to this frame only)
+    void applyTorque(RigidForm& form, const glm::vec3& torque);
+    void clearTorque(RigidForm& form);
 
     // Accumulate an external force on the form (adds to this frame only)
     void applyForce(RigidForm& form, const glm::vec3& force);
@@ -117,7 +127,6 @@ namespace Physics {
     // Record that gravity is acting between an object and the environment
     void recordGravity(const Singular& obj, const Singular& env, float strength = 1.0f);
 
-    /* TODO: Integrate this into our Event Bus-Handler system. */
     // Record an object-object collision relation
     void recordCollision(const Singular& a, const Singular& b, float strength = 1.0f);
 

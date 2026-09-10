@@ -213,6 +213,7 @@ click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 | Key | Holds | Section |
 |---|---|---|
 | `saveFormat` | `"zone-identity-v1"` when the file was written by this path | §4f |
+| `semanticRoots` | versioned Person, Zone/Home, and Ourverse root records; authoritative when present | §4f |
 | `zoneRefs[]` | `{identifier, kind?}` — the working set, pointing at the Zone store | §4f |
 | `currentZoneId` | identifier of the active Zone (preferred over the index) | §4f |
 | `zones[]` | dual-write snapshot of each Zone (legacy readers; identity is the store) | §4a, §4b, §4f |
@@ -223,8 +224,11 @@ click-through (Zach, 2026-08-21) that retired the stagnant "World" bag.
 | `transferPolicy` | the Singularity gate state | — |
 | `mathFunctions` | the OntoMath `FunctionRegistry` | — |
 | `materials` | Material beings | — |
-| `playerBody`, `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | the Person's situated view | — |
+| `cameraPos`, `cameraFront`, `cameraUp`, `yaw`, `pitch` | the Person's situated view; their semantic record lives in `semanticRoots.person` | — |
 | `currentZone`, `currentColor`, `currentTool`, `worldMode`, `worldPhysics`, `flying`, `worldTime` | session state | — |
+
+`playerBody` is accepted only as a legacy input key. Current writers emit the Body through
+the `semanticRoots.person` root and must not recreate a duplicate payload.
 
 **What is deliberately absent:** first-mover laws. They are skipped on write and
 *preserved across load* rather than restored — `LawManager::loadFromJson` pulls them
@@ -522,10 +526,17 @@ them. `BeingKind::World = 6` never matches; do not reuse the integer.
 | 6 | `Parallel` | 15 | `RemoveElement` |
 | 7 | `Spawn` — instantiate a Concept | 16 | `Destroy` |
 | 8 | `Map` — `path := f(bindings)` | 17 | `Synthesize` |
+| 18 | `PlayAudio` — act through Audio | 19 | `AuthorZone` |
+| 20 | `AddRelation` | 21 | `WritePixel` — UV-addressed Screen act |
+| 22 | `ElevatePixels` — OntoMath-selected samples become a named Property |  |  |
 
 `Object::ShapeKind` (also append-only): `0 Cube · 1 Polyhedron · 2 Sphere · 3 Cylinder ·
 4 Cone · 5 Ellipsoid · 6 Ovoid · 7 Paraboloid · 8 Torus · 9 RoundedBox · 10 Field ·
-11 Patch · 12 Shape2D · 13 Text2D`.
+11 Patch · 12 Shape2D · 13 Text2D`. Per architectural doctrine (Zach), `ShapeKind` is a
+parameterization substrate reserved for First Movers (bootstrapping, tooling, migration,
+foreign interop) and not the load-bearing substrate for Persons' world authoring (which
+is OntoMath fields/CSG, Formations, and Laws). `Shape2D` and `Text2D` serve as low-level
+orthographic Screen carrier primitives, not domain UI categories.
 
 ### 5d. `PropertyValue` — the tagged-value envelope
 

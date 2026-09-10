@@ -163,6 +163,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Storage/MigrateSaves.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/terminal_entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
@@ -237,6 +238,10 @@ if(NOT EMSCRIPTEN)
     # --- Main Executable ---
     add_executable(earthcall src/entry.cpp)
     target_link_libraries(earthcall PRIVATE earthcall_core)
+
+    # --- Terminal Executable ---
+    add_executable(earthcall_terminal src/terminal_entry.cpp)
+    target_link_libraries(earthcall_terminal PRIVATE earthcall_core)
 
     # --- wgpu-native (vendored) ---
     set(WGPU_NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wgpu)

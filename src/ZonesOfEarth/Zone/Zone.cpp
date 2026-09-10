@@ -34,6 +34,12 @@ std::string Zone::scopeName() const { return scopeToString(_scope); }
 void Zone::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "name", this, &Zone::propName));
+    // Read-only: identity is set once at construction (or by
+    // makeZoneFromJson resolving a JSON record's own "identifier" field)
+    // and never reassigned through the property system — no black box
+    // (Refusal 6), but not a knob either. See _identifier's comment.
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "identifier", this, &Zone::propIdentifier));
     registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "scope", this, &Zone::scopeName));
     registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
@@ -283,7 +289,7 @@ void Zone::applyFormationRelations() {
 }
 
 Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope scope)
-    : _name(name), _scope(scope), _formation(),
+    : _name(name), _identifier(name), _scope(scope), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(name + "_spatialRoot"))
 {
     _spatialField = _spatialRootObject->field;
@@ -303,7 +309,7 @@ Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope s
 }
 
 Zone::Zone(const Zone& other)
-    : _name(other._name), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
+    : _name(other._name), _identifier(other._identifier), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
       _joys(other._joys), _ownerId(other._ownerId), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot"))
 {
@@ -319,6 +325,7 @@ Zone& Zone::operator=(const Zone& other)
     if(this==&other) return *this;
     Zone tmp(other);
     std::swap(_name, tmp._name);
+    std::swap(_identifier, tmp._identifier);
     std::swap(_scope, tmp._scope);
     std::swap(_qualities, tmp._qualities);
     std::swap(_deletable, tmp._deletable);
@@ -360,6 +367,17 @@ bool Zone::removeObject(Object* obj) {
     auto it = std::find_if(_objects.begin(), _objects.end(),
                            [obj](const std::shared_ptr<Object>& p) { return p.get() == obj; });
     if (it == _objects.end()) return false;
+
+    // The world's SHAPE just changed, so anything derived from "who exists and
+    // what do they carry" is now stale. addObject has always said so; this did
+    // not, and the omission was invisible only because nothing read the counter
+    // — it had no consumers at all until the vocabulary index
+    // (FORMATION_RETE.md §8 rung 2). Without this a being removed outside the
+    // unmaking path stays in the index, and the index holds RAW pointers, so
+    // the next sweep reads freed memory rather than merely a stale answer.
+    // reapUnmadeBeings bumps too; both paths must, because either can be the
+    // one that runs.
+    Universe::instance().bumpStructuralRevision();
 
     Core::EventBus::instance().publish(
         ECA::Event{"object-destroyed", obj, nullptr, std::time(nullptr)});

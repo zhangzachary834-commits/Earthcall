@@ -110,35 +110,75 @@ bool NativeBytecodeVM::execute(const Bytecode& code, Singular& target) {
 
             case Opcode::Add: {
                 double lhs = 0.0, rhs = 0.0;
-                if (std::holds_alternative<double>(_registers[ip->src1])) {
-                    lhs = std::get<double>(_registers[ip->src1]);
-                }
-                if (std::holds_alternative<double>(_registers[ip->src2])) {
-                    rhs = std::get<double>(_registers[ip->src2]);
-                }
+                propertyValueToNumber(_registers[ip->src1], lhs);
+                propertyValueToNumber(_registers[ip->src2], rhs);
                 _registers[ip->dst] = PropertyValue(lhs + rhs);
+                break;
+            }
+
+            case Opcode::Sub: {
+                double lhs = 0.0, rhs = 0.0;
+                propertyValueToNumber(_registers[ip->src1], lhs);
+                propertyValueToNumber(_registers[ip->src2], rhs);
+                _registers[ip->dst] = PropertyValue(lhs - rhs);
                 break;
             }
 
             case Opcode::Mul: {
                 double lhs = 0.0, rhs = 0.0;
-                if (std::holds_alternative<double>(_registers[ip->src1])) {
-                    lhs = std::get<double>(_registers[ip->src1]);
-                }
-                if (std::holds_alternative<double>(_registers[ip->src2])) {
-                    rhs = std::get<double>(_registers[ip->src2]);
-                }
+                propertyValueToNumber(_registers[ip->src1], lhs);
+                propertyValueToNumber(_registers[ip->src2], rhs);
                 _registers[ip->dst] = PropertyValue(lhs * rhs);
                 break;
             }
 
-            // Other ops omitted for skeleton brevity
-            case Opcode::Sub:
-            case Opcode::CmpEq:
-            case Opcode::CmpGt:
-            case Opcode::BranchFalse:
-            case Opcode::Jump:
+            case Opcode::CmpEq: {
+                double lhs = 0.0, rhs = 0.0;
+                bool eq = false;
+                if (propertyValueToNumber(_registers[ip->src1], lhs) &&
+                    propertyValueToNumber(_registers[ip->src2], rhs)) {
+                    eq = (lhs == rhs);
+                } else {
+                    eq = propertyValueUnchanged(_registers[ip->src1], _registers[ip->src2]);
+                }
+                _registers[ip->dst] = PropertyValue(eq ? 1.0 : 0.0);
                 break;
+            }
+
+            case Opcode::CmpGt: {
+                double lhs = 0.0, rhs = 0.0;
+                propertyValueToNumber(_registers[ip->src1], lhs);
+                propertyValueToNumber(_registers[ip->src2], rhs);
+                _registers[ip->dst] = PropertyValue(lhs > rhs ? 1.0 : 0.0);
+                break;
+            }
+
+            case Opcode::BranchFalse: {
+                bool isTrue = false;
+                if (std::holds_alternative<bool>(_registers[ip->src1])) {
+                    isTrue = std::get<bool>(_registers[ip->src1]);
+                } else {
+                    double val = 0.0;
+                    if (propertyValueToNumber(_registers[ip->src1], val)) {
+                        isTrue = (val != 0.0);
+                    }
+                }
+                if (!isTrue) {
+                    if (ip->src2 < code.instructions.size()) {
+                        ip = code.instructions.data() + ip->src2;
+                        continue;
+                    }
+                }
+                break;
+            }
+
+            case Opcode::Jump: {
+                if (ip->src2 < code.instructions.size()) {
+                    ip = code.instructions.data() + ip->src2;
+                    continue;
+                }
+                break;
+            }
 
             case Opcode::Halt:
                 return true;

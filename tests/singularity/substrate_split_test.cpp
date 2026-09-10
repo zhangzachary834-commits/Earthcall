@@ -112,11 +112,27 @@ int main() {
           "saveStateWithLog completed successfully");
 
     const auto formPath = sandbox / "worlds" / "split_test_world.ecform";
-    const auto matterPath = sandbox / "worlds" / "split_test_world.ecmatter";
     const auto jsonPath = sandbox / "worlds" / "split_test_world.json";
 
     check(std::filesystem::exists(formPath), ".ecform semantic text file exists");
-    check(std::filesystem::exists(matterPath), ".ecmatter physical binary file exists");
+
+    // Invariant 4 (Sol, agent intercom "Basic Pixel Changer Zone Identity Bug
+    // 9-7-26", 2026-09-09): saveStateWithLog now commits matter under a
+    // content-addressed generation name coupled to the .ecform's own
+    // "matterGeneration" metadata, not a fixed "<stem>.ecmatter" name — the
+    // .ecform is the pointer, and its recorded snapshotId/sha256/byteLength
+    // are exactly what a reader must resolve and verify to find it.
+    std::filesystem::path matterPath;
+    {
+        std::ifstream formIn(formPath);
+        nlohmann::json fj;
+        formIn >> fj;
+        check(fj.contains("matterGeneration"), ".ecform names a matterGeneration (Invariant 4)");
+        const std::string snapshotId = fj.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
+        check(!snapshotId.empty(), "matterGeneration carries a non-empty snapshotId");
+        matterPath = sandbox / "worlds" / ("split_test_world." + snapshotId + ".ecmatter");
+    }
+    check(std::filesystem::exists(matterPath), ".ecmatter physical binary file exists under its generation name");
 
     // Test 2: Inspect .ecform JSON structure (ensure it's lean, readable, no binary base64)
     {

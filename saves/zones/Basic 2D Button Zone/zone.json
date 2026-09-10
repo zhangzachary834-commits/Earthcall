@@ -1,0 +1,123 @@
+{
+  "deletable": {
+    "Zach": true
+  },
+  "formationRelations": [],
+  "identifier": "Basic 2D Button Zone",
+  "lexemes": [],
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "name": "default",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
+    }
+  ],
+  "name": "Basic 2D Button Zone",
+  "owner": "Zach",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "world": {
+    "objects": [
+      {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "material.default",
+        "objectID": "my-2d-button",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          100.0,
+          50.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      }
+    ]
+  }
+}

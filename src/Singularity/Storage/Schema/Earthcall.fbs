@@ -116,6 +116,19 @@ table Entity {
   authoritative_axis: Vec3;
   target_rotation: Vec3;
   rotation_responsiveness: float = 1.0;
+
+  // Appended 2026-09-08 (Sol's Invariant 2, agent intercom
+  // "Basic Pixel Changer Zone Identity Bug 9-7-26"): the stable identifier
+  // of the Zone or Home this Entity belongs to. `id` alone is not a unique
+  // address — the real basic_pixel_changer.ecmatter had 382 bare ids that
+  // named more than one live object across different Zones, and
+  // last-record-wins silently let a stale duplicate clobber a correct one.
+  // The canonical address is (owner_identifier, id). Absent on legacy
+  // records (empty string / not present) — ZoneManager resolves those only
+  // when the bare id is unambiguous among currently-live objects, and
+  // refuses (skips, logs every candidate) rather than guessing when it is
+  // not. Append-only: never remove or renumber a field in this table.
+  owner_identifier: string;
 }
 
 // A Save Chunk represents a spatial region or category of entities (.ecmatter)

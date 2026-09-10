@@ -162,6 +162,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     gpu.adapter  = _webgpu->ctx.adapter;
     gpu.device   = _webgpu->ctx.device;
     gpu.queue    = _webgpu->ctx.queue;
+    gpu.timestampQueries = _webgpu->ctx.timestampQueries;
     if (!_webgpu->renderer.init(gpu, wgpu::kSurfaceFormat)) {
         std::cerr << "⚠️  Failed to initialise WebGpuRenderer!" << std::endl;
         return false;
@@ -285,6 +286,10 @@ void Engine::tick(float dt) {
     };
 
     glfwPollEvents();
+
+#ifndef __EMSCRIPTEN__
+    Singularity::Network::WebSocketServer::instance().pollMainThread();
+#endif
 
 #ifdef EARTHCALL_WEBGPU
     // A swapchain is sized: presenting against a stale size gives a suboptimal

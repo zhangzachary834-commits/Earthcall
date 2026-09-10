@@ -16,6 +16,7 @@
 
 #include <ctime>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -517,7 +518,15 @@ public:
     std::string assertFact(FactPtr fact);
     bool retractFact(const std::string& factId);
     void retractStateFactsBySubject(const std::string& subjectId);
-    void markFactDirty(const std::string& subjectId, const std::string& attribute);
+    // Returns whether any fact was actually marked. FALSE means the network
+    // holds no state fact for that (subject, attribute) at all — which is not
+    // "nothing changed", it is "the network has never heard of this property
+    // on this being". seedStateFacts snapshots a being's properties ONCE per
+    // being ever, so a property GRANTED at runtime had no fact to dirty and
+    // never got one: a WhileTrue law reading it stayed permanently deaf to
+    // that being, silently. Same family as the relation deafness rung 0 fixed.
+    // The scan was already linear over the fact list, so the answer is free.
+    bool markFactDirty(const std::string& subjectId, const std::string& attribute);
     void evaluateDirty();
     bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }
     // Drop every fact naming this being. Called when it is actually freed:
@@ -535,6 +544,19 @@ public:
     void retractFirst(std::size_t count);
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
+
+    // Is a live relation-state fact already keyed on this being and type?
+    //
+    // assertFact does NOT deduplicate — it pushes a fact and an id every call —
+    // and three paths now assert edge facts (the first-tick seed, the
+    // relation-formed handler, and the back-seed when a relation type first
+    // enters play). Without this they stack duplicates into every alpha memory
+    // that matches, which is a standing per-tick propagation tax and, over a
+    // session of relations forming and dissolving, unbounded.
+    //
+    // Compares the SUBJECT POINTER, never dereferencing it: this is called on
+    // paths where a relation's far endpoint may already be destroyed.
+    bool hasRelationStateFact(const Singular* subject, const std::string& relationType) const;
 
     // `source` defaults to Foreign deliberately: a caller that has not said
     // where its predicate came from has not earned the assumption that it can
@@ -659,6 +681,12 @@ private:
     static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
     std::vector<FactPtr> _facts;
+    // Every being that has ever been a fact's subject or object, so
+    // retractFactsAbout can answer "this one has no facts" in O(1) instead of
+    // scanning the table. It fires on EVERY Singular destructor — including
+    // the `Moment` inside every transient `ECA::Event` — so that scan was the
+    // engine's real quadratic. A SUPERSET on purpose: see retractFactsAbout.
+    std::unordered_set<const Singular*> _factParticipants;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;
@@ -681,7 +709,9 @@ private:
 
 class FirstMoverLaw : public Law {
 public:
-    FirstMoverLaw(const std::string& name) : Law(name) {}
+    FirstMoverLaw(const std::string& name) : Law(name) {
+        setLawIdentifier(name);
+    }
     bool isFirstMover() const override { return true; }
 };
 
@@ -832,6 +862,52 @@ private:
                             std::vector<Law::ApplicationRecord>& records);
     // Whom an untargeted law sweeps: the beings carrying its vocabulary.
     std::vector<Singular*> sweepSubjects(const Law& law) const;
+
+    // ------------------------------------------------------------------
+    // The vocabulary index — FORMATION_RETE.md §3.0, §8 rung 2.
+    //
+    // sweepSubjects used to answer "whom is this law about" by rebuilding
+    // Universe::beings() — the provider allocates a fresh vector every call —
+    // and testing couldApplyTo against every being, once per sweeping law per
+    // tick. Measured at 1000 beings and 8 laws where only 8 beings could ever
+    // match: 7.6 ms/tick, fitting k = 0.82 against POPULATION with the
+    // matching set held constant. The sweep cost the whole world to find eight
+    // beings; ~99% of it could not have matched.
+    //
+    // §3.0 names what that filter really is: "a degenerate, implicit,
+    // unauthored category". This is that category made explicit — one entry per
+    // property NAME some law requires, holding the beings that carry it. Only
+    // names laws actually ask for are indexed, which is Magic Sets in miniature
+    // (§4C): the goal restricts what the engine bothers to know.
+    //
+    // NOT yet a Formation, and that is deliberate rather than unfinished.
+    // Reifying it as a rooted Category Formation is the other half of rung 2
+    // and it is blocked: per Zach's revised definition (§3.4) a purely
+    // branching taxonomy is not a Formation at all, and closing the loop needs
+    // concept-Singulars. Formation::addMember also walks the relation graph per
+    // member, which a per-structural-change rebuild cannot afford.
+    //
+    // Refusal 6: this is Kernel-tier DERIVED state — a pure function of
+    // (the world, the law set), reconstructible at any moment, holding no truth
+    // of its own — and it is named here rather than merely omitted.
+    // ------------------------------------------------------------------
+    // const, and the state below is mutable, ON PURPOSE. sweepSubjects is
+    // const and calls this itself, so the index cannot be read stale by a
+    // caller that forgot to refresh first — and a stale index does not merely
+    // give an old answer, it returns {} for a name it has not indexed yet,
+    // which is a law reaching nobody. Correctness must not depend on call
+    // order; tick() still calls it once up front so the per-law call is an
+    // integer compare rather than N passes over the world.
+    void refreshVocabularyIndex() const;
+    // Members are RAW pointers, so this must be rebuilt whenever the world's
+    // shape changes. Universe::structuralRevision() is that signal, and
+    // Zone::removeObject had to be taught to bump it before this could be
+    // trusted — see the comment there.
+    mutable std::unordered_map<std::string, std::vector<Singular*>> _vocabularyIndex;
+    mutable std::unordered_set<std::string> _indexedNames;
+    // Deliberately a sentinel no real revision can equal, so the first tick
+    // always builds rather than trusting an empty index.
+    mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
     // End-of-tick unmaking, once no pointer to a victim is still live.
     void reapUnmade();
     void releaseFromLaws(Singular* being);
@@ -874,6 +950,21 @@ private:
     // connectToEventBus() is what keeps the facts current afterwards.
     // ------------------------------------------------------------------
     void seedStateFacts(Singular* being);
+    // One edge fact, asserted WITHOUT consulting _seededSubjects.
+    //
+    // That set guards the property snapshot above, which is genuinely
+    // once-per-being. Edge seeding was made to share the gate and should never
+    // have: a being's properties are a snapshot, its edges are a stream. Once
+    // the being was known, every relation formed afterwards was silently
+    // dropped — FORMATION_RETE.md §1.2(a), the defect that made every
+    // continuous `Related` law permanently deaf. Two concerns, now separated.
+    //
+    // `endpoint` is the being the fact is keyed on; the far end is never
+    // dereferenced (see seedStateFacts for why that matters).
+    void assertRelationStateFact(Singular* endpoint, const std::string& relationType);
+    // Catch up the edges that already existed when a relation type first
+    // enters the seeding vocabulary — the second shape of the same defect.
+    void backSeedRelationStateFacts(const std::unordered_set<std::string>& types);
     std::unordered_set<std::string> _seededSubjects;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is

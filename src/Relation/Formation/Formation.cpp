@@ -16,6 +16,12 @@
 #include <utility>
 #include "Singularity/Screen/Renderer.hpp"
 
+
+// Formation definition: bidirectional Singular Relation-graph with at least two Relations that look visually like a
+// cycle—such that if you were to only traverse it in one direction, you could end up back at the starting Singular.
+// The philosophical reason is that a Formation represents true more-ness than individual. If they depend top-down
+// that is not really a self-crystallizing structure but rather a hierarchical Relation.
+
 void Formation::buildProperties() {
     registerProperty(std::make_unique<PropertyRef<Formation, std::string>>(
         "relationTypeTag", this, &Formation::relationTypeTag));

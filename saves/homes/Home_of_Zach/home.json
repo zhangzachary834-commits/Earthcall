@@ -1,0 +1,30 @@
+{
+  "being": "home",
+  "cannotForceStay": true,
+  "deletable": {
+    "Zach": true
+  },
+  "entryRequiresWill": true,
+  "formationRelations": [],
+  "identifier": "Home_of_Zach",
+  "inhabitants": [
+    "Zach"
+  ],
+  "lexemes": [],
+  "name": "Home_of_Zach",
+  "owner": "Zach",
+  "parentZone": "",
+  "primary": true,
+  "qualities": {
+    "kind": "home",
+    "ownerKind": "person",
+    "primary": "true"
+  },
+  "scope": "Local",
+  "stakes": [
+    "Zach"
+  ],
+  "world": {
+    "objects": []
+  }
+}

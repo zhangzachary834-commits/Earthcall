@@ -93,11 +93,11 @@ public:
     // Dynamic properties to allow Laws to attach state to objects
     // Hot path: StringId keys
     bool getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const;
-    void setDynamicProperty(Earthcall::StringId id, const PropertyValue& v);
+    bool setDynamicProperty(Earthcall::StringId id, const PropertyValue& v);
 
     // Cold path: String names (backward compatible, delegates to StringId version)
     bool getDynamicProperty(const std::string& name, PropertyValue& out) const;
-    void setDynamicProperty(const std::string& name, const PropertyValue& v);
+    bool setDynamicProperty(const std::string& name, const PropertyValue& v);
 
     // A law-added property is a real part of the being, so it has to be
     // ENUMERABLE (the authoring UI offers it beside the registered vocabulary)
@@ -197,6 +197,22 @@ protected:
     Formation* _property_formation = nullptr;
     // Subclasses will deserialize their own specific properties here.
     virtual void buildProperties() = 0;
+
+    // Optional projection from an authored property name onto state whose
+    // storage belongs below a modality/kernel boundary.  The dynamic-property
+    // entry remains the Person-authored act of elevation (so it enumerates and
+    // persists); subclasses may make its reads/writes reach the live state.
+    virtual bool readAuthoredPropertyProjection(Earthcall::StringId,
+                                                PropertyValue&) const {
+        return false;
+    }
+    virtual bool recognizesAuthoredPropertyProjection(Earthcall::StringId) const {
+        return false;
+    }
+    virtual bool writeAuthoredPropertyProjection(Earthcall::StringId,
+                                                 const PropertyValue&) {
+        return false;
+    }
 
     void registerProperty(std::unique_ptr<Property> prop) {
         if (!prop) return;

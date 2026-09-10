@@ -75,9 +75,12 @@ public:
         );
         llvm::FunctionCallee setPropFunc = module->getOrInsertFunction("Earthcall_JIT_SetDoubleProperty", abiFuncType);
         llvm::FunctionCallee addPropFunc = module->getOrInsertFunction("Earthcall_JIT_AddDoubleProperty", abiFuncType);
+        llvm::FunctionCallee scalePropFunc = module->getOrInsertFunction("Earthcall_JIT_ScaleDoubleProperty", abiFuncType);
 
         // Recursively walk the AST and emit IR
-        emitNode(law.actionModel(), builder, targetArg, setPropFunc, addPropFunc);
+        if (law.actionModel()) {
+            emitNode(*law.actionModel(), builder, targetArg, setPropFunc, addPropFunc, scalePropFunc);
+        }
 
         builder.CreateRetVoid();
 
@@ -119,7 +122,7 @@ private:
     std::unique_ptr<llvm::orc::LLJIT> _jit;
 
     void emitNode(const ActionNode& node, llvm::IRBuilder<>& builder, llvm::Value* targetArg,
-                  llvm::FunctionCallee setFunc, llvm::FunctionCallee addFunc) 
+                  llvm::FunctionCallee setFunc, llvm::FunctionCallee addFunc, llvm::FunctionCallee scaleFunc) 
     {
         switch (node.kind) {
             case ActionNode::Kind::Set: {
@@ -146,10 +149,22 @@ private:
                 }
                 break;
             }
+            case ActionNode::Kind::Scale: {
+                if (std::holds_alternative<double>(node.operand)) {
+                    double val = std::get<double>(node.operand);
+                    uint32_t idVal = node.path.fullId().value;
+                    builder.CreateCall(scaleFunc, {
+                        targetArg,
+                        builder.getInt32(idVal),
+                        llvm::ConstantFP::get(builder.getDoubleTy(), val)
+                    });
+                }
+                break;
+            }
             case ActionNode::Kind::Sequence:
             case ActionNode::Kind::Parallel: {
                 for (const auto& child : node.children) {
-                    emitNode(child, builder, targetArg, setFunc, addFunc);
+                    emitNode(child, builder, targetArg, setFunc, addFunc, scaleFunc);
                 }
                 break;
             }
@@ -163,6 +178,14 @@ private:
 // Expose the global singleton or factory
 bool PropheticJIT::isSupportedOnHost() {
     return true; // We compiled with LLVM
+}
+
+std::unique_ptr<PropheticJIT> PropheticJIT::create() {
+    auto jit = std::make_unique<PropheticJITImpl>();
+    if (jit->isSupportedOnHost()) {
+        return jit;
+    }
+    return nullptr;
 }
 
 } // namespace Execution
