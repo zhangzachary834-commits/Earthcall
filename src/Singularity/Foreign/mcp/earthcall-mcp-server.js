@@ -134,7 +134,10 @@ class EarthcallBridgeClient {
       }, timeoutMs);
 
       this.pendingRequests.set(reqId, {
-        matches: (data) => data.type === ackType || data.type === `${payload.type}_ack`,
+        matches: (data) => data.type === ackType || data.type === `${payload.type}_ack` ||
+                           (payload.type === "quick_save" && data.type === "save_ack") ||
+                           (payload.type === "save_world" && data.type === "save_ack") ||
+                           (payload.type === "spawn_field" && data.type === "spawn_field_ack"),
         resolve: (res) => {
           clearTimeout(timer);
           resolve(res);
@@ -199,9 +202,16 @@ const TOOLS = [
       properties: {
         shape: {
           type: "string",
-          enum: ["Cube", "Sphere", "Cylinder", "Cone", "Torus", "Plane"],
-          description: "Geometric shape kind of the object",
+          enum: ["Cube", "Sphere", "Cylinder", "Cone", "Torus", "Plane", "Field"],
+          description: "Geometric shape kind of the object (use 'Field' for Raymarched Signed Distance Fields)",
           default: "Cube"
+        },
+        fieldExpr: {
+          type: "string",
+          description: "SDF implicit formula when shape is 'Field' (e.g. 'smoothUnion(sphere(0.5), box(0.4), 0.1)', 'torus(0.5, 0.2)', 'sphere(0.8)')"
+        },
+        extent: {
+          description: "Bounding extent for Field shapes ([ex, ey, ez] or float, default: 1.0)"
         },
         name: {
           type: "string",
@@ -224,6 +234,60 @@ const TOOLS = [
         dimensions: {
           type: "number",
           description: "Uniform scale dimension of the object (default: 1.0)"
+        },
+        color: {
+          type: "array",
+          items: { type: "number" },
+          description: "RGB color components [r, g, b] (0.0 to 1.0 or 0 to 255)",
+          minItems: 3,
+          maxItems: 3
+        },
+        materialId: {
+          type: "string",
+          description: "Optional material identifier"
+        }
+      }
+    }
+  },
+  {
+    name: "earthcall_spawn_field",
+    description: "Spawns a signed distance field (SDF) implicit surface entity live into the active Earthcall zone (ShapeKind::Field, spatialKind = 1), rendered in real time via raymarching. Accepts formulas like 'sphere(0.5)', 'smoothUnion(sphere(0.5), box(0.4), 0.1)', 'torus(0.5, 0.2)', 'morph(sphere(0.5), box(0.4), 0.5)'.",
+    inputSchema: {
+      type: "object",
+      required: ["expr"],
+      properties: {
+        expr: {
+          type: "string",
+          description: "SDF implicit formula, e.g. 'sphere(0.5)', 'box(0.5)', 'torus(0.5, 0.2)', 'cylinder(0.3, 0.6)', 'smoothUnion(sphere(0.5), box(0.4), 0.1)', 'morph(sphere(0.5), box(0.4), 0.5)'"
+        },
+        name: {
+          type: "string",
+          description: "Optional identifier or display name for the new field object"
+        },
+        position: {
+          type: "array",
+          items: { type: "number" },
+          description: "3D world position coordinates [x, y, z]. If omitted, spawns in front of the player.",
+          minItems: 3,
+          maxItems: 3
+        },
+        rotation: {
+          type: "array",
+          items: { type: "number" },
+          description: "Euler rotation in degrees [rx, ry, rz]",
+          minItems: 3,
+          maxItems: 3
+        },
+        dimensions: {
+          type: "number",
+          description: "Uniform scale dimension of the object (default: 1.0)"
+        },
+        extent: {
+          description: "Half-size bounding extent for raymarching [ex, ey, ez] or single float (default: 1.0)"
+        },
+        cellSize: {
+          type: "number",
+          description: "Optional grid cell size for marching acceleration"
         },
         color: {
           type: "array",
@@ -358,16 +422,27 @@ const TOOLS = [
         },
         action: {
           type: "object",
-          description: "Action node { kind: 'flow'|'map'|'set'|'spawn'|'destroy', path, formula, value, concept }",
+          description: "Structured action template { kind: 'flow'|'map'|'set'|'spawn'|'destroy', path, formula: 'sin'|'linear'|'constant'|'toggle', amplitude, frequency, offset, phase, rate, value, concept }",
           properties: {
             kind: { type: "string" },
             path: { type: "string" },
+            formula: { type: "string" },
             amplitude: { type: "number" },
             frequency: { type: "number" },
             offset: { type: "number" },
             phase: { type: "number" },
-            value: {}
+            rate: { type: "number" },
+            value: {},
+            concept: { type: "string" }
           }
+        },
+        actionModel: {
+          type: "object",
+          description: "Raw AST ActionNode matching Earthcall internal JSON format (as returned by get_state)"
+        },
+        conditionModel: {
+          type: "object",
+          description: "Raw AST ConditionNode matching Earthcall internal JSON format (as returned by get_state)"
         }
       }
     }
@@ -642,9 +717,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           rotation: args.rotation,
           dimensions: args.dimensions,
           color: args.color,
-          materialId: args.materialId
+          materialId: args.materialId,
+          fieldExpr: args.fieldExpr,
+          extent: args.extent
         };
         const result = await client.sendWithAck(payload, "spawn_object_ack");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case "earthcall_spawn_field": {
+        if (!client.connected) {
+          throw new McpError(ErrorCode.InternalError, "Earthcall engine is offline. Launch Earthcall to spawn SDF fields.");
+        }
+        const payload = {
+          type: "spawn_field",
+          expr: args.expr,
+          name: args.name || "",
+          position: args.position,
+          rotation: args.rotation,
+          dimensions: args.dimensions,
+          extent: args.extent,
+          cellSize: args.cellSize,
+          color: args.color,
+          materialId: args.materialId
+        };
+        const result = await client.sendWithAck(payload, "spawn_field_ack");
         return {
           content: [
             {
@@ -731,7 +835,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           activation: args.activation !== undefined ? args.activation : 0,
           trigger: args.trigger,
           condition: args.condition,
-          action: args.action
+          action: args.action,
+          actionModel: args.actionModel,
+          conditionModel: args.conditionModel
         };
         const result = await client.sendWithAck(payload, "create_law_ack");
         return {

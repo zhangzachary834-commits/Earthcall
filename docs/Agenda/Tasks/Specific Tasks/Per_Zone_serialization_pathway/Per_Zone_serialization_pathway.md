@@ -52,3 +52,95 @@ world file admits them. A Zone pathway with those properties is partial, not don
 5. A shared Material or Law referenced by two Zones retains one stable identity and is not
    duplicated by either save.
 6. Legacy world files remain readable and are never rewritten merely by inspection/load.
+
+## Live failure: Zone identities contain no 3D placement — 2026-09-09
+
+**Reported by Zach; diagnosed and recorded by Codex session
+`01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-09 18:11 PDT.** Zach observed
+that Sanctum of Beginnings boots with all shapes stuffed into one place, while
+Synthesis Studio's large floor/platform and separate lower prisms collapse visually into
+one short white rectangular prism. He warned that Chess appeared next in the same blast
+radius and that loading a save did not reliably repair Synthesis Studio.
+
+This is one systemic persistence omission, not three render bugs. Commit `946a6240`
+(`Implement Substrate Split Serialization`, 2026-09-01) deliberately removed
+`transform`, `center`, `authoritativeAxis`, `targetRotation`, and
+`rotationResponsiveness` from Object semantic JSON and placed them only in the
+conglomerate `.ecmatter` writer. Per-Zone identities never gained their own matter
+generation. Their Object reader still accepts these JSON keys, but the writer emits none.
+
+Read-only inspection of the authored files confirms the exact visible result:
+
+- `Sanctum of Beginnings/zone.json`: 129 Objects; 129 missing transforms.
+- `SynthesisStudio/zone.json`: 193 Objects; 193 missing transforms.
+- `SynthesisStudio.LivingInstrument/zone.json`: 137 Objects; 137 missing transforms.
+- `Chess/zone.json`: 39 Objects; 39 missing transforms.
+- `studio.platform.floor` should carry scale/placement `14 × 0.2 × 14` at y = -0.1
+  in `synthesis_studio.ecmatter`; without that record it becomes the default unit cube at
+  the origin. `studio.console.desk` similarly loses `5.2 × 0.8 × 2.4` and occupies the
+  same origin. Their overlap is the one short prism Zach sees.
+
+The recent composite-identity/refuse-on-ambiguity fix exposed this older loss rather than
+causing it. Old Synthesis sidecars have no `owner_identifier`, while
+`SynthesisStudio` and `SynthesisStudio.LivingInstrument` share dozens of `studio.*` and
+`hud.*` identifiers. The safe loader now refuses those ambiguous legacy records instead
+of spraying one Zone's transform into whichever same-named Object happens to win. Before
+that refusal, wrong last-writer restoration could mask the transformless identities.
+
+Correct placement still exists in legacy matter sources, including
+`synthesis_studio.ecmatter`, `chess_app.ecmatter`, and Zach's
+`random syntehsis studio stuff.ecmatter`; this is fragmented authority, not evidence that
+the authored placement bytes are gone. The `SynthesisStudio` identity's 123 additional
+Sphere identifiers beyond the 70-object base world are not to be deleted or called
+corruption: they may be authored/spawned history, and their intended transforms require a
+Person-chosen recovery source if competing sidecars disagree.
+
+### Required repair boundary
+
+1. Restore every Person-meaningful, Law-addressable pose field to semantic Object
+   persistence. Transform/position/rotation were misclassified as “purely physical”; raw
+   topology density may live in matter, but authored placement may not disappear from the
+   semantic Zone record.
+2. Give each Zone its own verified, content-addressed matter generation for genuinely
+   physical/heavy geometry, and load it only through that Zone's activation transaction.
+3. A legacy Zone Object missing placement must never silently receive the identity
+   transform. Mark the Zone incomplete and identify recoverable candidate sidecars.
+4. Compatibility recovery may resolve an ownerless record inside the one requested Zone
+   when unique there; it must not search every live Zone and must refuse competing values.
+   Choosing among genuinely different authored sidecars is a Person decision.
+5. Add round-trip coverage proving semantic pose survives Zone identity alone, plus real
+   activation fixtures for Sanctum, Synthesis Studio, and Chess. The persistence-coverage
+   audit must fail if any registered pose field again has no semantic writer.
+
+No save file was modified during this diagnosis.
+
+### Repair boundary item 1 — fixed (Claude Sonnet 5, session `01MsayKP3NYfQAyBtyQ8xeA1`, 2026-09-09)
+
+`Object::to_json` (`ObjectSerialization.cpp`) now writes `transform`, `center`,
+`authoritativeAxis`, `targetRotation`, and `rotationResponsiveness` again —
+`from_json` never stopped reading them, so this closes the gap directly at its
+source rather than routing around it. Matter (`buildMatterFlatBuffer`) still also
+writes transform for legacy/heavy-geometry compatibility; the two are redundant
+by design where both exist, and semantic JSON is now the field of record whether
+or not a matter generation exists for a given Zone.
+
+New `tests/zones/object_semantic_pose_test.cpp`, 12/12 green:
+- a direct `to_json`/`from_json` round-trip proves all five fields survive;
+- the actual failing shape — a Zone identity written via `persistZones()` with
+  NO World and NO matter sidecar at all, then hydrated through
+  `ZoneManager::hydrateFromZoneStore()` (the real boot path, not `loadState`) —
+  proves a `studio.platform.floor`-shaped object (14×0.2×14 at y=-0.1, the exact
+  real dimensions Sol named) keeps its authored position and scale from the Zone
+  identity alone, where before this fix it silently became a unit cube at the
+  origin.
+
+Items 2-5 of the repair boundary (Zone-scoped matter generations, refuse-not-
+default on missing legacy placement, Zone-scoped ownerless-matter recovery with
+Person-choice on conflict, and the Invariant 5 persistence-coverage audit) are
+not yet attempted — see the agent intercom thread for sequencing with Sol's
+broader architectural pivot (Zone activation as the transaction root, not
+`loadState(worldFile)`).
+
+No existing Zone identity file's authored placement was migrated/recovered by
+this pass — that remains the Person-authorized, preservation-tested operation
+Sol specified. This fix only changes what NEW writes look like going forward.

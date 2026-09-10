@@ -36,6 +36,16 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             0.20000000298023224,
@@ -72,6 +82,7 @@
         "materialId": "material.test-persist",
         "objectID": "test-persist",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -85,6 +96,29 @@
           0.11999999731779099,
           100.0,
           100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

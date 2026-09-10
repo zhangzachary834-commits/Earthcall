@@ -129,6 +129,16 @@ int main() {
     obj1->setShape(Object::ShapeKind::Cube);
     obj1->setObjectID("gen-object");
     obj1->setPosition(glm::vec3(1.0f, 2.0f, 3.0f));
+    // Position is semantic now too (Object::to_json writes transform
+    // directly — see Per_Zone_serialization_pathway.md's "Live failure"
+    // section, 2026-09-09), so it survives a refused matter generation on
+    // its own and can no longer serve as this test's "did matter actually
+    // apply" signal. Custom polyhedron vertex data is genuinely
+    // matter-exclusive (never written to the .ecform), so it stands in for
+    // that signal in the tamper/missing-file cases below.
+    obj1->setPolyhedronData(PolyhedronData::createCustomPolyhedron(
+        {{-1.0f, -1.0f, 0.0f}, {1.0f, -1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+        {{0, 1, 2}}));
     zone1->addObject(obj1);
     mgr1.addZone(zone1);
 
@@ -208,11 +218,7 @@ int main() {
                 if (o && o->getObjectID() == "gen-object") { found = o.get(); break; }
             }
         }
-        bool hydrated = false;
-        if (found) {
-            glm::vec3 t = translationOf(found->getTransform());
-            hydrated = std::abs(t.x - 4.0f) < 1e-3f && std::abs(t.y - 5.0f) < 1e-3f && std::abs(t.z - 6.0f) < 1e-3f;
-        }
+        bool hydrated = found && found->getPolyhedronData().getVertexCount() == 3;
         check(!hydrated, "a root naming a hash-mismatched generation refuses to hydrate matter");
         check(!std::filesystem::exists(legacyFixedMatterPath),
               "refusal does not fall through to rebuilding a legacy fixed-name .ecmatter");
@@ -238,11 +244,7 @@ int main() {
                 if (o && o->getObjectID() == "gen-object") { found = o.get(); break; }
             }
         }
-        bool hydrated = false;
-        if (found) {
-            glm::vec3 t = translationOf(found->getTransform());
-            hydrated = std::abs(t.x - 4.0f) < 1e-3f && std::abs(t.y - 5.0f) < 1e-3f && std::abs(t.z - 6.0f) < 1e-3f;
-        }
+        bool hydrated = found && found->getPolyhedronData().getVertexCount() == 3;
         check(!hydrated, "a root naming a missing generation file refuses to hydrate matter");
         check(!std::filesystem::exists(legacyFixedMatterPath),
               "a missing named generation does not trigger a silent legacy re-migration either");

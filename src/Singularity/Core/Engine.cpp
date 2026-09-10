@@ -287,6 +287,10 @@ void Engine::tick(float dt) {
 
     glfwPollEvents();
 
+#ifndef __EMSCRIPTEN__
+    Singularity::Network::WebSocketServer::instance().pollMainThread();
+#endif
+
 #ifdef EARTHCALL_WEBGPU
     // A swapchain is sized: presenting against a stale size gives a suboptimal
     // or failed surface texture, so track the framebuffer and reconfigure.

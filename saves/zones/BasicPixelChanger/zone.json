@@ -36,6 +36,16 @@
             "v": "Basic Pixel Canvas"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -72,6 +82,7 @@
         "materialId": "material.default",
         "objectID": "basic-pixel-canvas",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 12,
         "shapeParams": [
           1.0,
@@ -85,6 +96,29 @@
           0.0,
           512.0,
           512.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 160.0,
         "y2D": 100.0,

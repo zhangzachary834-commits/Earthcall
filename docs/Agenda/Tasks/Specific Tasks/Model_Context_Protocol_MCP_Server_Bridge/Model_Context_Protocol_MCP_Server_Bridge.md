@@ -1,68 +1,65 @@
-# Model Context Protocol (MCP) Server Bridge (`Option A`) (2026-09-09)
+# Model Context Protocol (MCP) Server Bridge (`Option A`) (v2) (2026-09-09)
 
-**Status:** ✅ done and verified  
+**Status:** ✅ done and verified (v2 Field-Tested Upgrade)  
 **Section in the To-Do list:** Modalities · integration · substrate  
-**Author:** Gemini Spark  
-**Timestamp:** 2026-09-09T13:17:00-07:00  
+**Author:** Gemini Spark (sparkly guy)  
+**Timestamp:** 2026-09-09T18:19:00-07:00  
 
 ---
 
-## Origination & Scope
-Zach requested implementing Option A: TypeScript/Node Model Context Protocol (MCP) Bridge (`scripts/mcp-server.js` and `src/Singularity/Foreign/mcp/`) to allow external AI models and developer tools (Claude Desktop, Cursor, Gemini CLI, OpenAI, etc.) to perceive and author Earthcall directly over standard MCP stdio JSON-RPC.
+## Origination & v1 Field Testing Feedback
+Zach and Claude (Opus 4.6 via Claude Desktop) conducted a live field test of the MCP bridge v1, successfully querying world state, spawning 14 entities into "Clawd's Monastery", and building persistent structures. The field test identified five key areas for v2:
+1. `earthcall_author_law` created empty shells because custom action/condition schemas were not compiled into real OntoMath ASTs.
+2. `earthcall_write_property` returned `sent_without_ack` because raw JSON primitives failed in `propertyValueFromJson` and `@` target prefix was unhandled.
+3. SDF / Implicit Field creation lacked a dedicated tool.
+4. Law deletion crashed when mutating Laws from background WebSocket worker thread while engine main thread ticked.
+5. Spawned objects were lost on zone switch if not manually saved because they were not added to `globalObjects`.
 
-Option C (Native C++ MCP Server directly in the engine) is tracked on the To-do list for subsequent implementation.
+---
 
-## Architecture & Communication
+## v2 Architecture & Upgrades Implemented
 
-1. **Placement (Refusal #2 Compliant)**:
-   - Built under `src/Singularity/Foreign/mcp/earthcall-mcp-server.js`.
-   - Executable wrapper at `scripts/mcp-server.js` (`chmod +x`).
-   - Integrated with `package.json` under `"scripts": { "mcp": "node scripts/mcp-server.js" }` and `"bin": { "earthcall-mcp": "scripts/mcp-server.js" }`.
+### 1. Main-Thread Dispatch & Crash Immunity (`pollMainThread`)
+- **Root Cause**: `WebSocketServer`'s `worker` thread was executing `lm->createLaw`, `lm->remove`, and `mgr.active().addObject` directly, causing data races and iterator invalidation with `Engine::tick(dt)` / `LawManager::step()`.
+- **Solution**: Added `mainThreadTasks` queue in `WebSocketServer::Impl` and wired `Singularity::Network::WebSocketServer::instance().pollMainThread()` into `Engine::tick(dt)`. All world mutations now execute deterministically on the engine's main thread.
 
-2. **Bidirectional WebSocket Bridge**:
-   - Maintains an asynchronous bridge to Earthcall's C++ WebSocket server (`ws://localhost:8080`, configurable via `EARTHCALL_WS_URL`).
-   - Translates MCP tool calls into Earthcall JSON protocol messages (`property_write`, `spawn_object`, `transform_object`, `create_law`, `switch_zone`, etc.) and returns real-time responses.
-   - Automatically reconnects with exponential backoff if the engine restarts.
+### 2. Full OntoMath AST Compilation & Raw Mode in `earthcall_author_law`
+- In `WebSocketServer.cpp` (`create_law`), added dual-mode support:
+  - **Raw AST Mode**: Directly deserializes `actionModel` (`ActionNode::fromJson`) and `conditionModel` (`ConditionNode::fromJson`) matching internal engine format.
+  - **Structured Template Mode**: Automatically compiles simplified schemas (`flow`, `map`, `set`, `spawn`, `destroy`, `sin`/`sinusoid`, `linear`, `constant`, `toggle`) into real `OntoMath::MathNode`, `OntoMath::ScalarForm`, and `OntoMath::Piecewise` continuous functions.
+  - Correctly binds event triggers (`lm->bindTrigger`) and calls `law->recompile()`.
 
-3. **Graceful Offline Fallback**:
-   - If Earthcall's live engine is not currently running, inspection tools (`earthcall_get_state`, `earthcall_list_saves`) automatically fall back to reading `saves/worlds/` and `saves/zones/` on disk, allowing models to inspect world states even offline.
-   - Status tool (`earthcall_get_connection_status`) reports connection health and provides clear instructions for starting the engine.
+### 3. Transparent Property Writes & Live SDF Conversions (`earthcall_write_property`)
+- Upgraded `propertyValueFromJson` in `PropertyValueJson.cpp` to natively handle both `{ "t": ..., "v": ... }` and raw JSON primitives (booleans, ints, floats, strings, 3-element vec3 arrays, 16-element mat4 arrays).
+- Normalized target parsing: strips leading `@` and resolves `@player`, `@active_zone`, beings in `Universe`, active zone objects, and Laws/Channels in `LawManager`.
+- Direct SDF conversion: writing `field.expr` or `expr` on an Object parses with `geom::makeImplicit` and calls `obj->setFieldShape(node, extent)` in real time.
+- Guaranteed `property_write_ack` with `status: "success"|"failed"|"target_not_found"`.
 
-## Tools Exposed to AI Models (16 Tools)
+### 4. Dedicated SDF Field Creation Tool (`earthcall_spawn_field`)
+- Added dedicated `earthcall_spawn_field` tool (now 17 tools total):
+  - Spawns live raymarched Signed Distance Fields (`ShapeKind::Field`, `spatialKind = 1`).
+  - Accepts any implicit formula (`sphere(0.5)`, `box(0.5)`, `torus(0.5, 0.2)`, `smoothUnion(sphere(0.5), box(0.4), 0.1)`, `morph(...)`).
+- Updated `earthcall_spawn_object` to accept `shape: "Field"`, `fieldExpr`, and `extent`.
 
-1. `earthcall_get_state`: Retrieves full active world state (active zone, objects, positions, colors, shapes, laws, and player coordinates).
-2. `earthcall_spawn_object`: Spawns 3D shapes (Cube, Sphere, Cylinder, Cone, Torus, Plane) with custom transform, scale, color, and name.
-3. `earthcall_transform_object`: Modifies an existing entity's position, rotation, dimensions, color, shape, or material.
-4. `earthcall_delete_object`: Removes an object from the active zone by identifier.
-5. `earthcall_write_property`: Sets any property path on any being (e.g. `@player.position.y`, `@screen-recorder.recording`, `@active_zone.gravity`, or object ID). Refusal #6 compliant.
-6. `earthcall_author_law`: Authors or modifies a When-Condition-Action Law (supports built-in presets like zero-g, color-pulse, orbit, bounce, or custom ASTs).
-7. `earthcall_toggle_law`: Enables or disables an existing Law by identifier.
-8. `earthcall_delete_law`: Removes an authored Law from Earthcall's LawManager.
-9. `earthcall_switch_zone`: Switches active Zone by name or index.
-10. `earthcall_create_zone`: Creates a new Zone in the Ourverse.
-11. `earthcall_teleport_player`: Teleports the player to 3D world coordinates.
-12. `earthcall_speak`: Emits an utterance into Earthcall's Language modality and EventBus.
-13. `earthcall_save_world`: Triggers a world save to disk with optional custom name.
-14. `earthcall_screen_record`: Controls the Singularity Screen Recorder (start, stop, pause, resume, snapshot).
-15. `earthcall_list_saves`: Catalogs saved worlds, zones, and homes in `saves/`.
-16. `earthcall_get_connection_status`: Verifies live WebSocket bridge connectivity.
+### 5. Auto-Persistence & Zone Switching Object Retention
+- In `spawn_object` and `spawn_field`:
+  - Registers zone designations on the object (`obj->addZoneDesignation(...)`).
+  - Adds to both `mgr.active().addObject(obj)` AND `mgr.getGlobalObjects().push_back(obj)`.
+  - Calls `mgr.persistZones()`.
+  - Switching zones and reloading now preserves all spawned entities.
 
-## Resources & Prompts
+### 6. Robust World Saving (`earthcall_save_world`)
+- Dispatched safely on the main thread via `pollMainThread()`.
+- Catches exceptions and returns `save_ack` with success status and filename.
 
-- **Resources**:
-  - `earthcall://status`: Live engine and WebSocket connection health.
-  - `earthcall://world/snapshot`: Real-time JSON snapshot of active zone and entities.
-  - `earthcall://saves/catalog`: Catalog of saved worlds and zones.
-- **Prompts**:
-  - `earthcall-first-mover`: System instructions for guiding AI agents as Earthcall First Movers respecting the Seven Refusals.
+---
 
 ## Verification
-- Test harness `tests/singularity/mcp_bridge_test.js`:
-  - Verified MCP protocol handshake (`initialize`).
-  - Verified `tools/list` exposes all 16 tools with valid JSON schemas.
-  - Verified `earthcall_get_connection_status` returns structured status.
-  - Verified `earthcall_list_saves` catalogs saved files on disk.
-  - Verified `earthcall_get_state` retrieves world state with offline fallback.
-  - Verified `resources/read` for `earthcall://status`.
-  - Verified `prompts/get` for `earthcall-first-mover`.
-  - Result: **7/7 checks passed (100%)**.
+- MCP Bridge test suite `tests/singularity/mcp_bridge_test.js`: **8/8 checks passed**.
+  - All 17 tools registered with valid schemas.
+  - Protocol handshake, health info, save cataloging, and offline fallback verified.
+- C++ Engine test suite:
+  - `file_channel_test`: **13/13 passed**.
+  - `screen_recorder_test`: **8/8 passed**.
+  - `vfs_test`: **4/4 passed**.
+  - `stream_channel_test`: **4/4 passed**.

@@ -1382,6 +1382,16 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1418,6 +1428,7 @@
         "materialId": "material.object-565",
         "objectID": "object-565",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1432,11 +1443,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1473,6 +1517,7 @@
         "materialId": "material.object-566",
         "objectID": "object-566",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1487,11 +1532,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1528,6 +1606,7 @@
         "materialId": "material.object-567",
         "objectID": "object-567",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1542,11 +1621,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1583,6 +1695,7 @@
         "materialId": "material.object-568",
         "objectID": "object-568",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1597,11 +1710,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1638,6 +1784,7 @@
         "materialId": "material.object-569",
         "objectID": "object-569",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1652,11 +1799,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1693,6 +1873,7 @@
         "materialId": "material.object-570",
         "objectID": "object-570",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1707,11 +1888,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1748,6 +1962,7 @@
         "materialId": "material.object-571",
         "objectID": "object-571",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1762,11 +1977,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1803,6 +2051,7 @@
         "materialId": "material.object-572",
         "objectID": "object-572",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1817,11 +2066,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1858,6 +2140,7 @@
         "materialId": "material.object-573",
         "objectID": "object-573",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1872,11 +2155,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1913,6 +2229,7 @@
         "materialId": "material.object-574",
         "objectID": "object-574",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1927,11 +2244,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -1968,6 +2318,7 @@
         "materialId": "material.object-575",
         "objectID": "object-575",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -1982,11 +2333,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2023,6 +2407,7 @@
         "materialId": "material.object-576",
         "objectID": "object-576",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2037,11 +2422,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2078,6 +2496,7 @@
         "materialId": "material.object-577",
         "objectID": "object-577",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2092,11 +2511,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2133,6 +2585,7 @@
         "materialId": "material.object-578",
         "objectID": "object-578",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2147,11 +2600,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2188,6 +2674,7 @@
         "materialId": "material.object-579",
         "objectID": "object-579",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2202,11 +2689,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2243,6 +2763,7 @@
         "materialId": "material.object-580",
         "objectID": "object-580",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2257,11 +2778,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2298,6 +2852,7 @@
         "materialId": "material.object-581",
         "objectID": "object-581",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2312,11 +2867,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2353,6 +2941,7 @@
         "materialId": "material.object-582",
         "objectID": "object-582",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2367,11 +2956,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2408,6 +3030,7 @@
         "materialId": "material.object-583",
         "objectID": "object-583",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2422,11 +3045,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2463,6 +3119,7 @@
         "materialId": "material.object-584",
         "objectID": "object-584",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2477,11 +3134,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2518,6 +3208,7 @@
         "materialId": "material.object-585",
         "objectID": "object-585",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2532,11 +3223,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2573,6 +3297,7 @@
         "materialId": "material.object-586",
         "objectID": "object-586",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2587,11 +3312,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2628,6 +3386,7 @@
         "materialId": "material.object-587",
         "objectID": "object-587",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2642,11 +3401,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2683,6 +3475,7 @@
         "materialId": "material.object-588",
         "objectID": "object-588",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2697,11 +3490,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2738,6 +3564,7 @@
         "materialId": "material.object-589",
         "objectID": "object-589",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2752,11 +3579,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2793,6 +3653,7 @@
         "materialId": "material.object-590",
         "objectID": "object-590",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2807,11 +3668,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2848,6 +3742,7 @@
         "materialId": "material.object-591",
         "objectID": "object-591",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2862,11 +3757,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2903,6 +3831,7 @@
         "materialId": "material.object-592",
         "objectID": "object-592",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2917,11 +3846,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -2958,6 +3920,7 @@
         "materialId": "material.object-593",
         "objectID": "object-593",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -2972,11 +3935,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3013,6 +4009,7 @@
         "materialId": "material.object-594",
         "objectID": "object-594",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3027,11 +4024,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3068,6 +4098,7 @@
         "materialId": "material.object-595",
         "objectID": "object-595",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3082,11 +4113,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3123,6 +4187,7 @@
         "materialId": "material.object-596",
         "objectID": "object-596",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3137,11 +4202,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3178,6 +4276,7 @@
         "materialId": "material.object-597",
         "objectID": "object-597",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3192,11 +4291,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3233,6 +4365,7 @@
         "materialId": "material.object-598",
         "objectID": "object-598",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3247,11 +4380,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3288,6 +4454,7 @@
         "materialId": "material.object-599",
         "objectID": "object-599",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3302,11 +4469,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3343,6 +4543,7 @@
         "materialId": "material.object-600",
         "objectID": "object-600",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3357,11 +4558,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3398,6 +4632,7 @@
         "materialId": "material.object-601",
         "objectID": "object-601",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3412,11 +4647,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3453,6 +4721,7 @@
         "materialId": "material.object-602",
         "objectID": "object-602",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3467,11 +4736,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3508,6 +4810,7 @@
         "materialId": "material.object-603",
         "objectID": "object-603",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3522,11 +4825,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3563,6 +4899,7 @@
         "materialId": "material.object-604",
         "objectID": "object-604",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3577,11 +4914,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3618,6 +4988,7 @@
         "materialId": "material.object-605",
         "objectID": "object-605",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3632,11 +5003,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3673,6 +5077,7 @@
         "materialId": "material.object-606",
         "objectID": "object-606",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3687,11 +5092,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3728,6 +5166,7 @@
         "materialId": "material.object-607",
         "objectID": "object-607",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3742,11 +5181,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3783,6 +5255,7 @@
         "materialId": "material.object-608",
         "objectID": "object-608",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3797,11 +5270,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3838,6 +5344,7 @@
         "materialId": "material.object-609",
         "objectID": "object-609",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3852,11 +5359,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3893,6 +5433,7 @@
         "materialId": "material.object-610",
         "objectID": "object-610",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3907,11 +5448,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3948,6 +5522,7 @@
         "materialId": "material.object-611",
         "objectID": "object-611",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -3962,11 +5537,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4003,6 +5611,7 @@
         "materialId": "material.object-612",
         "objectID": "object-612",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4017,11 +5626,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4058,6 +5700,7 @@
         "materialId": "material.object-613",
         "objectID": "object-613",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4072,11 +5715,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4113,6 +5789,7 @@
         "materialId": "material.object-614",
         "objectID": "object-614",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4127,11 +5804,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4168,6 +5878,7 @@
         "materialId": "material.object-615",
         "objectID": "object-615",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4182,11 +5893,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4223,6 +5967,7 @@
         "materialId": "material.object-616",
         "objectID": "object-616",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4237,11 +5982,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4278,6 +6056,7 @@
         "materialId": "material.object-617",
         "objectID": "object-617",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4292,11 +6071,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4333,6 +6145,7 @@
         "materialId": "material.object-618",
         "objectID": "object-618",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4347,11 +6160,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4388,6 +6234,7 @@
         "materialId": "material.object-619",
         "objectID": "object-619",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4402,11 +6249,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4443,6 +6323,7 @@
         "materialId": "material.object-620",
         "objectID": "object-620",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4457,11 +6338,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4498,6 +6412,7 @@
         "materialId": "material.object-621",
         "objectID": "object-621",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4512,11 +6427,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4553,6 +6501,7 @@
         "materialId": "material.object-622",
         "objectID": "object-622",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4567,11 +6516,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4608,6 +6590,7 @@
         "materialId": "material.object-623",
         "objectID": "object-623",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4622,11 +6605,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4663,6 +6679,7 @@
         "materialId": "material.object-624",
         "objectID": "object-624",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4677,11 +6694,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4718,6 +6768,7 @@
         "materialId": "material.object-625",
         "objectID": "object-625",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4732,11 +6783,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4773,6 +6857,7 @@
         "materialId": "material.object-626",
         "objectID": "object-626",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4787,11 +6872,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4828,6 +6946,7 @@
         "materialId": "material.object-627",
         "objectID": "object-627",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4842,11 +6961,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4883,6 +7035,7 @@
         "materialId": "material.object-628",
         "objectID": "object-628",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4897,11 +7050,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4938,6 +7124,7 @@
         "materialId": "material.object-629",
         "objectID": "object-629",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -4952,11 +7139,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4993,6 +7213,7 @@
         "materialId": "material.object-630",
         "objectID": "object-630",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5007,11 +7228,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5048,6 +7302,7 @@
         "materialId": "material.object-631",
         "objectID": "object-631",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5062,11 +7317,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5103,6 +7391,7 @@
         "materialId": "material.object-632",
         "objectID": "object-632",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5117,11 +7406,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5158,6 +7480,7 @@
         "materialId": "material.object-633",
         "objectID": "object-633",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5172,11 +7495,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5213,6 +7569,7 @@
         "materialId": "material.object-634",
         "objectID": "object-634",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5227,11 +7584,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5268,6 +7658,7 @@
         "materialId": "material.object-766",
         "objectID": "object-766",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -5281,6 +7672,29 @@
           0.11999999731779099,
           100.0,
           100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

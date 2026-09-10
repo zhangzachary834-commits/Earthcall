@@ -30,6 +30,16 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -66,6 +76,7 @@
         "materialId": "material.default",
         "objectID": "my-2d-button",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 12,
         "shapeParams": [
           1.0,
@@ -79,6 +90,29 @@
           0.0,
           100.0,
           50.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

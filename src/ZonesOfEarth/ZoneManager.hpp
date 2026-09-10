@@ -28,6 +28,9 @@ class ZoneManager {
     SaveLoadState _saveLoad;
 
 public:
+    std::vector<std::shared_ptr<Object>>& getGlobalObjects() { return globalObjects; }
+    const std::vector<std::shared_ptr<Object>>& getGlobalObjects() const { return globalObjects; }
+
     void addZone(std::shared_ptr<Zone> zone);
     void switchTo(size_t index);
     void describeCurrent() const;

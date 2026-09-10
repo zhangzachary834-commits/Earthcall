@@ -39,7 +39,17 @@
             "v": "Perlin Ground Plane"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
         "baseline": "ground",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -76,6 +86,7 @@
         "materialId": "material.grass",
         "objectID": "perlin-ground-plane",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
           0.5,
@@ -89,6 +100,29 @@
           0.11999999731779099,
           100.0,
           100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

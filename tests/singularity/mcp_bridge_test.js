@@ -6,7 +6,6 @@ const mcpProcess = spawn(process.execPath, [path.join(__dirname, "../../scripts/
 });
 
 let buffer = "";
-let currentStep = 0;
 let passedChecks = 0;
 
 function sendReq(req) {
@@ -33,12 +32,21 @@ mcpProcess.stdout.on("data", (data) => {
       // Tools list response
       else if (msg.id === 2) {
         const tools = msg.result.tools || [];
-        if (tools.length >= 16) {
+        if (tools.length >= 17) {
           console.log(`  ok: tools/list returned ${tools.length} active Earthcall tools`);
           passedChecks++;
         } else {
-          console.error(`  FAILED: expected 16+ tools, got ${tools.length}`);
+          console.error(`  FAILED: expected 17+ tools, got ${tools.length}`);
         }
+
+        const hasSpawnField = tools.some(t => t.name === "earthcall_spawn_field");
+        if (hasSpawnField) {
+          console.log("  ok: earthcall_spawn_field tool registered with valid schema");
+          passedChecks++;
+        } else {
+          console.error("  FAILED: earthcall_spawn_field tool missing from tools list");
+        }
+
         // Call tool: earthcall_get_connection_status
         sendReq({
           jsonrpc: "2.0",

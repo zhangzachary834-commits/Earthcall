@@ -3474,6 +3474,25 @@
       "opacity": 1.0,
       "shininess": 32.0,
       "specular": 1.0
+    },
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.800000011920929,
+      "faceTextures": [
+        {
+          "pixelsB64": "Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//y23//8tt///Lbf//w==",
+          "size": 64
+        }
+      ],
+      "name": "Luna's First Star",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0
     }
   ],
   "name": "Sanctum of Beginnings",
@@ -3484,6 +3503,16 @@
   "world": {
     "objects": [
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3520,6 +3549,7 @@
         "materialId": "material.object-43",
         "objectID": "object-43",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3572,11 +3602,44 @@
             "timestamp": 1787900988
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3613,6 +3676,7 @@
         "materialId": "material.object-44",
         "objectID": "object-44",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3635,11 +3699,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3676,6 +3773,7 @@
         "materialId": "material.concept-shape-3d.birth-45.member-0",
         "objectID": "concept-shape-3d.birth-45.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3698,11 +3796,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3739,6 +3870,7 @@
         "materialId": "material.concept-shape-3d.birth-46.member-0",
         "objectID": "concept-shape-3d.birth-46.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3761,11 +3893,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3802,6 +3967,7 @@
         "materialId": "material.concept-shape-3d.birth-47.member-0",
         "objectID": "concept-shape-3d.birth-47.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3824,11 +3990,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3865,6 +4064,7 @@
         "materialId": "material.concept-shape-3d.birth-48.member-0",
         "objectID": "concept-shape-3d.birth-48.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3887,11 +4087,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3928,6 +4161,7 @@
         "materialId": "material.concept-shape-3d.birth-49.member-0",
         "objectID": "concept-shape-3d.birth-49.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -3950,11 +4184,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -3991,6 +4258,7 @@
         "materialId": "material.concept-shape-3d.birth-50.member-0",
         "objectID": "concept-shape-3d.birth-50.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4013,11 +4281,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4054,6 +4355,7 @@
         "materialId": "material.concept-shape-3d.birth-51.member-0",
         "objectID": "concept-shape-3d.birth-51.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4076,11 +4378,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4117,6 +4452,7 @@
         "materialId": "material.concept-shape-3d.birth-52.member-0",
         "objectID": "concept-shape-3d.birth-52.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4139,11 +4475,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4180,6 +4549,7 @@
         "materialId": "material.concept-shape-3d.birth-53.member-0",
         "objectID": "concept-shape-3d.birth-53.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4202,11 +4572,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4243,6 +4646,7 @@
         "materialId": "material.concept-shape-3d.birth-54.member-0",
         "objectID": "concept-shape-3d.birth-54.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4265,11 +4669,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4306,6 +4743,7 @@
         "materialId": "material.concept-shape-3d.birth-56.member-0",
         "objectID": "concept-shape-3d.birth-56.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4328,11 +4766,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4369,6 +4840,7 @@
         "materialId": "material.concept-shape-3d.birth-57.member-0",
         "objectID": "concept-shape-3d.birth-57.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
           0.5,
@@ -4391,11 +4863,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4432,6 +4937,7 @@
         "materialId": "material.concept-shape-3d.birth-59.member-0",
         "objectID": "concept-shape-3d.birth-59.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4454,11 +4960,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4495,6 +5034,7 @@
         "materialId": "material.concept-shape-3d.birth-63.member-0",
         "objectID": "concept-shape-3d.birth-63.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4517,11 +5057,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4558,6 +5131,7 @@
         "materialId": "material.concept-shape-3d.birth-64.member-0",
         "objectID": "concept-shape-3d.birth-64.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4580,11 +5154,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4621,6 +5228,7 @@
         "materialId": "material.concept-shape-3d.birth-65.member-0",
         "objectID": "concept-shape-3d.birth-65.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4643,11 +5251,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4684,6 +5325,7 @@
         "materialId": "material.concept-shape-3d.birth-67.member-0",
         "objectID": "concept-shape-3d.birth-67.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4706,11 +5348,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4747,6 +5422,7 @@
         "materialId": "material.concept-shape-3d.birth-70.member-0",
         "objectID": "concept-shape-3d.birth-70.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4769,11 +5445,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4810,6 +5519,7 @@
         "materialId": "material.concept-shape-3d.birth-71.member-0",
         "objectID": "concept-shape-3d.birth-71.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -4832,11 +5542,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4873,6 +5616,7 @@
         "materialId": "material.concept-shape-3d.birth-72.member-0",
         "objectID": "concept-shape-3d.birth-72.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -4895,11 +5639,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4936,6 +5713,7 @@
         "materialId": "material.concept-shape-3d.birth-73.member-0",
         "objectID": "concept-shape-3d.birth-73.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -4958,11 +5736,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -4999,6 +5810,7 @@
         "materialId": "material.concept-shape-3d.birth-74.member-0",
         "objectID": "concept-shape-3d.birth-74.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -5021,11 +5833,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5062,6 +5907,7 @@
         "materialId": "material.concept-shape-3d.birth-75.member-0",
         "objectID": "concept-shape-3d.birth-75.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -5084,11 +5930,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5125,6 +6004,7 @@
         "materialId": "material.concept-shape-3d.birth-76.member-0",
         "objectID": "concept-shape-3d.birth-76.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.5,
@@ -5147,11 +6027,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5188,6 +6101,7 @@
         "materialId": "material.concept-shape-3d.birth-77.member-0",
         "objectID": "concept-shape-3d.birth-77.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5210,11 +6124,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5251,6 +6198,7 @@
         "materialId": "material.concept-shape-3d.birth-78.member-0",
         "objectID": "concept-shape-3d.birth-78.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5273,11 +6221,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5314,6 +6295,7 @@
         "materialId": "material.concept-shape-3d.birth-79.member-0",
         "objectID": "concept-shape-3d.birth-79.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5336,11 +6318,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5377,6 +6392,7 @@
         "materialId": "material.concept-shape-3d.birth-80.member-0",
         "objectID": "concept-shape-3d.birth-80.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5399,11 +6415,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5440,6 +6489,7 @@
         "materialId": "material.concept-shape-3d.birth-81.member-0",
         "objectID": "concept-shape-3d.birth-81.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -5462,11 +6512,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5503,6 +6586,7 @@
         "materialId": "material.object-409",
         "objectID": "object-409",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -5525,11 +6609,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5566,6 +6683,7 @@
         "materialId": "material.object-484",
         "objectID": "object-484",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -5588,11 +6706,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5629,6 +6780,7 @@
         "materialId": "material.object-487",
         "objectID": "object-487",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5651,11 +6803,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5692,6 +6877,7 @@
         "materialId": "material.object-488",
         "objectID": "object-488",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5714,11 +6900,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5755,6 +6974,7 @@
         "materialId": "material.object-489",
         "objectID": "object-489",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5777,11 +6997,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5818,6 +7071,7 @@
         "materialId": "material.object-490",
         "objectID": "object-490",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5840,11 +7094,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5881,6 +7168,7 @@
         "materialId": "material.object-491",
         "objectID": "object-491",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5903,11 +7191,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -5944,6 +7265,7 @@
         "materialId": "material.object-492",
         "objectID": "object-492",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -5966,11 +7288,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6007,6 +7362,7 @@
         "materialId": "material.object-493",
         "objectID": "object-493",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6029,11 +7385,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6070,6 +7459,7 @@
         "materialId": "material.object-494",
         "objectID": "object-494",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6092,11 +7482,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6133,6 +7556,7 @@
         "materialId": "material.object-495",
         "objectID": "object-495",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6155,11 +7579,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6196,6 +7653,7 @@
         "materialId": "material.object-496",
         "objectID": "object-496",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6218,11 +7676,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6259,6 +7750,7 @@
         "materialId": "material.object-497",
         "objectID": "object-497",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6281,11 +7773,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6322,6 +7847,7 @@
         "materialId": "material.object-498",
         "objectID": "object-498",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6344,11 +7870,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6385,6 +7944,7 @@
         "materialId": "material.object-499",
         "objectID": "object-499",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6407,11 +7967,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6448,6 +8041,7 @@
         "materialId": "material.object-500",
         "objectID": "object-500",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6470,11 +8064,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6511,6 +8138,7 @@
         "materialId": "material.object-501",
         "objectID": "object-501",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6533,11 +8161,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6574,6 +8235,7 @@
         "materialId": "material.object-502",
         "objectID": "object-502",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6596,11 +8258,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6637,6 +8332,7 @@
         "materialId": "material.object-503",
         "objectID": "object-503",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6659,11 +8355,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6700,6 +8429,7 @@
         "materialId": "material.object-504",
         "objectID": "object-504",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6722,11 +8452,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6763,6 +8526,7 @@
         "materialId": "material.object-505",
         "objectID": "object-505",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6785,11 +8549,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6826,6 +8623,7 @@
         "materialId": "material.object-506",
         "objectID": "object-506",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6848,11 +8646,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6889,6 +8720,7 @@
         "materialId": "material.object-507",
         "objectID": "object-507",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6911,11 +8743,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -6952,6 +8817,7 @@
         "materialId": "material.object-508",
         "objectID": "object-508",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -6974,11 +8840,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7015,6 +8914,7 @@
         "materialId": "material.object-509",
         "objectID": "object-509",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7037,11 +8937,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7078,6 +9011,7 @@
         "materialId": "material.object-510",
         "objectID": "object-510",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7100,11 +9034,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7141,6 +9108,7 @@
         "materialId": "material.object-511",
         "objectID": "object-511",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7163,11 +9131,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7204,6 +9205,7 @@
         "materialId": "material.object-512",
         "objectID": "object-512",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7226,11 +9228,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7267,6 +9302,7 @@
         "materialId": "material.object-513",
         "objectID": "object-513",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7289,11 +9325,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7330,6 +9399,7 @@
         "materialId": "material.object-514",
         "objectID": "object-514",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7352,11 +9422,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7393,6 +9496,7 @@
         "materialId": "material.object-515",
         "objectID": "object-515",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7415,11 +9519,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7456,6 +9593,7 @@
         "materialId": "material.object-516",
         "objectID": "object-516",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7478,11 +9616,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7519,6 +9690,7 @@
         "materialId": "material.object-517",
         "objectID": "object-517",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7541,11 +9713,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7582,6 +9787,7 @@
         "materialId": "material.object-518",
         "objectID": "object-518",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7604,11 +9810,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7645,6 +9884,7 @@
         "materialId": "material.object-519",
         "objectID": "object-519",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7667,11 +9907,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7708,6 +9981,7 @@
         "materialId": "material.object-520",
         "objectID": "object-520",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7730,11 +10004,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7771,6 +10078,7 @@
         "materialId": "material.object-521",
         "objectID": "object-521",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7793,11 +10101,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7834,6 +10175,7 @@
         "materialId": "material.object-522",
         "objectID": "object-522",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7856,11 +10198,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7897,6 +10272,7 @@
         "materialId": "material.object-523",
         "objectID": "object-523",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7919,11 +10295,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -7960,6 +10369,7 @@
         "materialId": "material.object-524",
         "objectID": "object-524",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -7982,11 +10392,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8023,6 +10466,7 @@
         "materialId": "material.object-525",
         "objectID": "object-525",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8045,11 +10489,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8086,6 +10563,7 @@
         "materialId": "material.object-526",
         "objectID": "object-526",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8108,11 +10586,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8149,6 +10660,7 @@
         "materialId": "material.object-527",
         "objectID": "object-527",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8171,11 +10683,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8212,6 +10757,7 @@
         "materialId": "material.object-528",
         "objectID": "object-528",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8234,11 +10780,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8275,6 +10854,7 @@
         "materialId": "material.object-529",
         "objectID": "object-529",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8297,11 +10877,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8338,6 +10951,7 @@
         "materialId": "material.object-530",
         "objectID": "object-530",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8360,11 +10974,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8401,6 +11048,7 @@
         "materialId": "material.object-531",
         "objectID": "object-531",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8423,11 +11071,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8464,6 +11145,7 @@
         "materialId": "material.object-532",
         "objectID": "object-532",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8486,11 +11168,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8527,6 +11242,7 @@
         "materialId": "material.object-533",
         "objectID": "object-533",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8549,11 +11265,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8590,6 +11339,7 @@
         "materialId": "material.object-534",
         "objectID": "object-534",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8612,11 +11362,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8653,6 +11436,7 @@
         "materialId": "material.object-535",
         "objectID": "object-535",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8675,11 +11459,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8716,6 +11533,7 @@
         "materialId": "material.object-536",
         "objectID": "object-536",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8738,11 +11556,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8779,6 +11630,7 @@
         "materialId": "material.object-537",
         "objectID": "object-537",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8801,11 +11653,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8842,6 +11727,7 @@
         "materialId": "material.object-538",
         "objectID": "object-538",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8864,11 +11750,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8905,6 +11824,7 @@
         "materialId": "material.object-539",
         "objectID": "object-539",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8927,11 +11847,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -8968,6 +11921,7 @@
         "materialId": "material.object-540",
         "objectID": "object-540",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -8990,11 +11944,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9031,6 +12018,7 @@
         "materialId": "material.object-541",
         "objectID": "object-541",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9053,11 +12041,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9094,6 +12115,7 @@
         "materialId": "material.object-542",
         "objectID": "object-542",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9116,11 +12138,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9157,6 +12212,7 @@
         "materialId": "material.object-543",
         "objectID": "object-543",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9179,11 +12235,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9220,6 +12309,7 @@
         "materialId": "material.object-544",
         "objectID": "object-544",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9242,11 +12332,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9283,6 +12406,7 @@
         "materialId": "material.object-545",
         "objectID": "object-545",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9305,11 +12429,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9346,6 +12503,7 @@
         "materialId": "material.object-546",
         "objectID": "object-546",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9368,11 +12526,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9409,6 +12600,7 @@
         "materialId": "material.object-547",
         "objectID": "object-547",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9431,11 +12623,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9472,6 +12697,7 @@
         "materialId": "material.object-548",
         "objectID": "object-548",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9494,11 +12720,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9535,6 +12794,7 @@
         "materialId": "material.object-549",
         "objectID": "object-549",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9557,11 +12817,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9598,6 +12891,7 @@
         "materialId": "material.object-550",
         "objectID": "object-550",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9620,11 +12914,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9661,6 +12988,7 @@
         "materialId": "material.object-551",
         "objectID": "object-551",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9683,11 +13011,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9724,6 +13085,7 @@
         "materialId": "material.object-552",
         "objectID": "object-552",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9746,11 +13108,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9787,6 +13182,7 @@
         "materialId": "material.object-553",
         "objectID": "object-553",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9809,11 +13205,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9850,6 +13279,7 @@
         "materialId": "material.object-554",
         "objectID": "object-554",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 8,
         "shapeParams": [
           0.5,
@@ -9872,11 +13302,44 @@
             "timestamp": 1787900950
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9913,6 +13376,7 @@
         "materialId": "material.object-769",
         "objectID": "object-769",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -9927,11 +13391,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -9968,6 +13465,7 @@
         "materialId": "material.concept-shape-3d.birth-770.member-0",
         "objectID": "concept-shape-3d.birth-770.member-0",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -9982,11 +13480,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10023,6 +13554,7 @@
         "materialId": "material.object-846",
         "objectID": "object-846",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10037,11 +13569,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10078,6 +13643,7 @@
         "materialId": "material.object-847",
         "objectID": "object-847",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10092,11 +13658,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10133,6 +13732,7 @@
         "materialId": "material.object-848",
         "objectID": "object-848",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10147,11 +13747,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10188,6 +13821,7 @@
         "materialId": "material.object-849",
         "objectID": "object-849",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10202,11 +13836,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10243,6 +13910,7 @@
         "materialId": "material.object-850",
         "objectID": "object-850",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10257,11 +13925,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10298,6 +13999,7 @@
         "materialId": "material.object-851",
         "objectID": "object-851",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10312,11 +14014,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10353,6 +14088,7 @@
         "materialId": "material.object-852",
         "objectID": "object-852",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10367,11 +14103,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10408,6 +14177,7 @@
         "materialId": "material.object-853",
         "objectID": "object-853",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10422,11 +14192,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10463,6 +14266,7 @@
         "materialId": "material.object-854",
         "objectID": "object-854",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10477,11 +14281,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10518,6 +14355,7 @@
         "materialId": "material.object-855",
         "objectID": "object-855",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10532,11 +14370,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10573,6 +14444,7 @@
         "materialId": "material.object-856",
         "objectID": "object-856",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10587,11 +14459,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10628,6 +14533,7 @@
         "materialId": "material.object-857",
         "objectID": "object-857",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10642,11 +14548,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10683,6 +14622,7 @@
         "materialId": "material.object-858",
         "objectID": "object-858",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10697,11 +14637,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10738,6 +14711,7 @@
         "materialId": "material.object-859",
         "objectID": "object-859",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10752,11 +14726,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10793,6 +14800,7 @@
         "materialId": "material.object-860",
         "objectID": "object-860",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10807,11 +14815,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10848,6 +14889,7 @@
         "materialId": "material.object-861",
         "objectID": "object-861",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10862,11 +14904,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10903,6 +14978,7 @@
         "materialId": "material.object-862",
         "objectID": "object-862",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10917,11 +14993,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -10958,6 +15067,7 @@
         "materialId": "material.object-863",
         "objectID": "object-863",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -10972,11 +15082,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11013,6 +15156,7 @@
         "materialId": "material.object-866",
         "objectID": "object-866",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11027,11 +15171,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11068,6 +15245,7 @@
         "materialId": "material.object-867",
         "objectID": "object-867",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11082,11 +15260,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11123,6 +15334,7 @@
         "materialId": "material.object-868",
         "objectID": "object-868",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11137,11 +15349,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11178,6 +15423,7 @@
         "materialId": "material.object-869",
         "objectID": "object-869",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11192,11 +15438,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11233,6 +15512,7 @@
         "materialId": "material.object-870",
         "objectID": "object-870",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11247,11 +15527,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11288,6 +15601,7 @@
         "materialId": "material.object-871",
         "objectID": "object-871",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11302,11 +15616,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11343,6 +15690,7 @@
         "materialId": "material.object-872",
         "objectID": "object-872",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11357,11 +15705,44 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
       },
       {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "faceColors": [
           [
             1.0,
@@ -11398,6 +15779,7 @@
         "materialId": "material.object-873",
         "objectID": "object-873",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -11411,6 +15793,118 @@
           0.11999999731779099,
           100.0,
           100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
+      },
+      {
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ],
+          [
+            0.18000000715255737,
+            0.7200000286102295,
+            1.0
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "material.Luna's First Star",
+        "objectID": "Luna's First Star",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 10,
+        "shapeParams": [
+          0.5,
+          0.3199999928474426,
+          0.5,
+          0.5,
+          0.3499999940395355,
+          0.15000000596046448,
+          2.0,
+          0.25,
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -0.10000000149011612,
+          1.350000023841858,
+          1.25,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,

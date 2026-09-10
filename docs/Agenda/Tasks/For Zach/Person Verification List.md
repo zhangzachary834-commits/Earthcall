@@ -225,24 +225,21 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 
 ## Model Context Protocol (MCP) Server Bridge (@modelcontextprotocol)
 
-*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 16 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). → [full task](../Specific%20Tasks/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
+*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 17 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). Upgraded to v2 following Claude & Zach's live field testing report. → [full task](../Specific%20Tasks/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
 
 - [x] **Wire the server into Claude Desktop's config.** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Added an `earthcall` entry under `mcpServers` in `~/Library/Application Support/Claude/claude_desktop_config.json` (backed up first to `claude_desktop_config.json.bak-20260909135837` alongside it), pointing at `scripts/mcp-server.js` with `EARTHCALL_WS_URL=ws://localhost:8080`. Verified `node scripts/mcp-server.js` starts cleanly and logs `Server initialized and listening over stdio.`; verified `@modelcontextprotocol/sdk` is present in `node_modules`; verified the edited config is still valid JSON and every pre-existing key survived untouched. **Quit and reopen Claude Desktop** for it to pick up the new server — it wasn't running when this was made, so no restart was forced on you.
-- [ ] **Run MCP Server & Test Live Tool Execution.** (the config wiring above is done — this is the live end-to-end check only you can confirm)
+- [x] **Wire the server into Claude Code CLI (this tool).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Ran `claude mcp add earthcall -s local -e EARTHCALL_WS_URL=ws://localhost:8080 -- node /Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js`. Scoped `local` (private to you, stored in `~/.claude.json` under this project, not committed to git) rather than `project`, since the config's absolute path is machine-specific. `claude mcp get earthcall` confirms `Status: ✔ Connected`. Only a **new** Claude Code session in this project directory will see the tools — this already-running session started before the server was registered.
+- [x] **Wire the server into Codex (Codex CLI + ChatGPT desktop app's Codex agent — they share one config).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Confirmed both surfaces read `~/.codex/config.toml` (ChatGPT.app's own `node_repl`/`computer-use` MCP entries were already sitting in that same file). Ran `codex mcp add earthcall --env EARTHCALL_WS_URL=ws://localhost:8080 -- node /Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js`; `codex mcp get earthcall` confirms it's registered (`enabled: true`, `transport: stdio`). **Both ChatGPT.app and any new `codex` CLI session were/are running — restart them** to pick it up.
+- [x] **Wire the server into Antigravity (Antigravity IDE + Antigravity CLI — they share one config).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* No `antigravity`/`gemini` CLI binary was on PATH to do this via a command, so I hand-wrote `~/.gemini/config/mcp_config.json` directly (it was a valid but empty 0-byte file — backed up first, though there was nothing in it to lose) with an `earthcall` entry under `mcpServers`, same `command`/`args`/`env` shape as the Claude Desktop config. Verified the result parses as valid JSON. **Antigravity.app was running — restart it** to pick this up. Not yet live-tested (no `antigravity`/`gemini` CLI present here to smoke-test the way I did for Claude/Codex) — flagging in case Antigravity's actual schema key differs from what public docs showed me (`serverUrl` is used there for *remote* HTTP servers instead of `url`, so it's plausible local stdio servers have a similarly non-obvious key name).
+- [ ] **Run MCP Server v2 & Test Live Tool Execution:**
   1. In terminal: `export PATH="/opt/homebrew/bin:$PATH"`
   2. Start Earthcall in one window (`Run Earthcall.command`).
-  3. Restart Claude Desktop, or run `node scripts/mcp-server.js` directly, or configure Cursor's `mcpServers` the same way:
-     ```json
-     {
-       "mcpServers": {
-         "earthcall": {
-           "command": "node",
-           "args": ["/Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js"]
-         }
-       }
-     }
-     ```
-  4. Ask the AI assistant to inspect the live world (`earthcall_get_state`), spawn a cube or sphere (`earthcall_spawn_object`), or author a law (`earthcall_author_law`). Confirm the object appears live in Earthcall!
+  3. Restart Claude Desktop or run `node scripts/mcp-server.js`.
+  4. **Test OntoMath Law Authoring (`earthcall_author_law`):** Ask Claude to author an oscillating or flow Law with formula `"sin"`, e.g. on `position.y` or `color.r`. Verify in Law Graph that the Law has real Condition and Action ASTs, executes in the live world, and animates entities!
+  5. **Test Property Writes (`earthcall_write_property`):** Ask Claude to change an object's color, position, or write `field.expr := "smoothUnion(sphere(0.5), box(0.4), 0.1)"`. Verify it immediately returns a success acknowledgment and live-converts the entity into a raymarched SDF field!
+  6. **Test Dedicated SDF Field Creation (`earthcall_spawn_field`):** Ask Claude to spawn an SDF field. Verify it appears live with smooth raymarched geometry!
+  7. **Test Zone Switch Persistence:** Switch zones and switch back; verify all 14 objects in "Clawd's Monastery" are preserved in memory and on disk!
+  8. **Test Law Deletion:** Delete an authored Law (`earthcall_delete_law`); verify the engine safely removes the Law on the main thread without crashing!
 
 ## Zone identity boundary (Invariant 6, Stage 1) — found a real duplicate on your own Home
 
