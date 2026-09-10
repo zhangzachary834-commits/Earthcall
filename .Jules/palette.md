@@ -10,3 +10,6 @@
 ## 2024-03-24 - Overlay Dismissal Focus Drop
 **Learning:** When dismissing full-screen overlays (like `#start-overlay` in `web_ui/wasm.html`), if the focused element is hidden (e.g., `display: none`), keyboard focus silently drops back to the document `<body>`. This breaks keyboard navigation flow for screen readers and power users.
 **Action:** Always add `tabindex="-1"` to the primary application container or canvas that replaces the overlay, and explicitly call `.focus()` on it immediately after hiding the overlay to preserve logical navigation state.
+## 2026-09-09 - Semantic Form Transformation
+**Learning:** Wrapping single-input interfaces in semantic forms is crucial for both mobile keyboard behavior (providing a native 'Go'/'Submit' button) and standardizing screen reader submission.
+**Action:** Always prefer forms over loose inputs with enter-key listeners.
