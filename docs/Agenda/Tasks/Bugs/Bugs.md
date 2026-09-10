@@ -1,3 +1,6 @@
+## INSTRUCTIONS:
+- Needs to follow same conciseness and file-organization conventions as the main To-Do list. 
+
 
 Bugs:
 1. ✅ **The self-lifting floor** — done and verified (2026-08-14): Fixed ungrounded list index fallbacks in `World.cpp`/`Ourverse.cpp`, fixed origin vs. `supportOffset` clamping in `Physics.cpp`, and filtered ground by `baseline` attribute in collision loop; guarded by `tests/ground_plane_test.cpp`. Open sub-issue: `Tool::ShapeGenerator3D` cursor hit fallback on miss. See [Specific Tasks/Self_Lifting_Floor_Bug.md](../Specific%20Tasks/Self_Lifting_Floor_Bug.md).
@@ -99,3 +102,5 @@ Bugs:
 BRUHHHHHHHH LIKE BLACK WAS IN A TERRIBLE POSITION AND I WAS ALMOST WINNING AGAINST BLACK ZACH (i was playing with mysefl xd) BUT SUDDENLY IT JUST STOPPED WORKING
 
 BROOOOOOOOOO THE PROGRAM FORESAW BLACKS DEFEAT AND RESIGNED ON BEHALF OF BLACK
+
+25. In chess, hitting Promote buttons promotes every single piece on front or back rank.  

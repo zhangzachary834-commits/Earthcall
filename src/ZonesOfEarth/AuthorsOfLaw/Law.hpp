@@ -595,7 +595,63 @@ public:
     // Fifty laws on "collision" is one predicate over the fact stream, not
     // fifty identical ones.
     std::size_t internTypeAlpha(const std::string& eventType);
+
+    // ------------------------------------------------------------------
+    // One node per DISTINCT authored condition, shared by every law that
+    // states it — the same bargain internTypeAlpha already makes for event
+    // types, extended to the path every authored leaf actually takes.
+    //
+    // Measured in the saved worlds: 70% of all condition leaves are textual
+    // duplicates (791 of 1124). chess_app.json states
+    // `instance-of category.chess.piece` in 76 separate laws and
+    // `onBoard == true` in 74. Each compiled its own node, and a node is not
+    // just a closure — it keeps a vector of every fact it has matched, and
+    // assertFact runs EVERY node's predicate against EVERY fact. So the
+    // duplication was paid twice: once in memory, and once per fact assertion
+    // in time.
+    //
+    // THE KEY IS THE WHOLE SERIALIZED LEAF, and that is not incidental.
+    // An analysis proposed keying on (path, op, const), which is incomplete —
+    // it omits operandPath, tolerance, lo/hi, relationType, otherId, probe,
+    // region and beingKind. Two different conditions sharing a key would bind
+    // one law to another's predicate, and if that predicate is the stricter of
+    // the two the law is NARROWED — silently deaf, the failure
+    // PROPHETIC_RETE.md §2 exists to forbid. The saves already contain the
+    // collision: chess states both `chessColor == <literal>` and
+    // `chessColor == @state.chess.turn`, identical under (path, op, const) and
+    // emphatically not the same condition.
+    //
+    // toJson() is complete by construction — it is the serialization contract,
+    // so two leaves that serialize identically ARE the same condition — and it
+    // fails safe: a kind that ever serialized incompletely would break saving
+    // long before it broke sharing.
+    //
+    // Only AUTHORED leaves. A Foreign closure cannot be reasoned about at all,
+    // and Interned type nodes already share through their own index.
+    std::size_t internAuthoredAlpha(const std::string& conditionKey,
+                                    const std::string& description,
+                                    AlphaPredicate predicate);
     std::size_t alphaNodeCount() const { return _alphaNodes.size(); }
+    std::size_t betaNodeCount() const { return _betaNodes.size(); }
+
+    // How many fact references all node memories are holding right now.
+    //
+    // The number the α-node-sharing question actually turns on. Node COUNT is
+    // cheap — a node is a closure and a description; what costs is that every
+    // bound node keeps a vector of every fact it has matched, so two laws with
+    // the same condition text keep two identical copies of the same match set.
+    //
+    // Exposed because it was not: alphaNodeCount(), PropheticCounters and
+    // TickTiming all existed with ZERO call sites anywhere in src/ — the same
+    // shape as Universe::structuralRevision(), which sat wrong and unnoticed
+    // until something finally read it. A counter nobody reads cannot be
+    // observed to be wrong.
+    std::size_t nodeMemoryFootprint() const {
+        std::size_t total = 0;
+        for (const auto& alpha : _alphaNodes) total += alpha.memory.size();
+        for (const auto& beta : _betaNodes) total += beta.memory.size();
+        return total;
+    }
 
     // ------------------------------------------------------------------
     // "Would anything act on a fact of this type?" — asked before an event
@@ -696,6 +752,10 @@ private:
     std::unordered_map<std::size_t, std::vector<std::string>> _alphaLawBindings;
     std::unordered_map<std::size_t, std::vector<std::string>> _betaLawBindings;
     std::unordered_map<std::string, std::size_t> _typeAlphaIndex;   // event type -> node
+    // serialized condition leaf -> node. Entries may go stale when
+    // dropUnboundAlphaNodes removes a node nobody reads; node ids are never
+    // reused, so a stale entry resolves to nothing and is simply rebuilt.
+    std::unordered_map<std::string, std::size_t> _authoredAlphaIndex;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent

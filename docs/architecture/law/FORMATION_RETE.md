@@ -2,13 +2,13 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09). Rung 0 closed §1.2(a):
+**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is measured and deliberately deferred** (2026-09-10) — its stated subject has no users, and the adjacent real cost needs an invalidation signal the tree does not have. Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
 remaining quantifier cost is not removable by indexing. Rung 2 built the vocabulary index and
 fixed a fourth deafness; its Formation half stays blocked behind §3.4's concept-Singulars.
-Rung 3 hoisted subject-independent gates and found a fifth deafness. Rungs 4–7 remain
+Rung 3 hoisted subject-independent gates and found a fifth deafness. Rungs 5–7 remain
 specified, not implemented. §1 is **verified against the tree**. §3–§7 are design. §9 holds the ⚑ AUTHOR
 decisions that are Zach's alone; §9.3 is answered, the rest are open.
 
@@ -576,8 +576,57 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
 
    Guarded by `tests/law/gate_hoist_test.cpp` (six ways the hoist could silence a law) and
    `tests/law/referent_resolution_test.cpp` (the measurement).
-4. **Category-level overlap** (§3.1), including the quantitative subkind via the existing
-   `Range::mayIntersect`.
+4. ⚠️ **Category-level overlap** (§3.1). *Measured 2026-09-10 (Opus 5, session
+   `session_01F9nK3FZ7VR4PFPTUWfYyvm`) and **deliberately not built**. The measurement says this
+   rung is aimed at something nothing does, while the thing everything does is next door.*
+
+   **Overlap has no users.** Scanning every saved world's `authoredLaws.laws`: **zero laws conjoin
+   two distinct categories.** Overlap pruning answers "can a being be in A and B at once"; no
+   authored law asks. The quantitative subkind via `Range::mayIntersect` remains genuinely
+   half-built and correct as described — it simply has nothing to prune yet, and should be built
+   when a law first wants it rather than before.
+
+   **Membership is the hot idiom, by two orders of magnitude.** `Related(instance-of, category.X)`
+   is how laws are actually scoped: **132 laws name `category.chess.piece` this way**, against 4
+   for the next most common category. This is §3.0's "laws query Category Formations", and it is
+   where the cost is.
+
+   **Measured cost**, against an identical law of identical selectivity asking a plain property
+   instead of the graph (same 8 matching beings, same firing set):
+
+   | beings | `Related(category)` | `Compare(own property)` | ratio |
+   |---|---|---|---|
+   | 50 | 1.93 ms | 0.71 ms | 2.7x |
+   | 400 | 12.08 ms | 3.01 ms | **4.0x** |
+
+   Fitted k against population, matching set held constant: **0.87 for `Related` against 0.67 for
+   the control.** The gap widens with the world.
+
+   **Two hypotheses tested and rejected** — recorded so they are not re-derived. (i) *By-value
+   string ids*: `isBetween` calls `aId()`/`bId()`, which build a `std::string` through a virtual
+   call, twice per relation per evaluation. Rewritten to reject by POINTER and stringify only the
+   subject's own few edges: **12.08 → 11.91 ms, inside noise.** (ii) *Per-call allocation*:
+   `Universe::relations()` returns a fresh vector every call. Given a reused buffer:
+   **no change.** That rewrite was reverted, having bought nothing.
+
+   **The real cost is the O(relations) provider walk itself**, once per candidate per tick, and no
+   rewrite of the predicate can remove it. Only an index can.
+
+   **Why the index is not built: the invalidation signal does not exist.** A relation index would
+   have to be keyed on something that moves when the graph moves, and
+   `Universe::structuralRevision()` is not that thing — `RelationManager` never bumps it. Worse,
+   the relation *provider* points at the active Zone's formation, so **switching zones changes the
+   answer with no `RelationManager` mutation at all.** Building an index on a signal whose
+   completeness cannot be shown is precisely how §1.2(a) and the four deafnesses after it happened.
+   The precondition is a relation-revision signal that covers mutation *and* provider swap.
+
+   **What was kept**, and it is a safety change rather than a speed one: the predicate now rejects
+   non-matching relations by pointer, so it dereferences a far end only for the subject's own
+   edges. The old path called `aId()`/`bId()` on **every relation in the world** on every
+   evaluation, and a relation may outlive its endpoints (rung 0). Guarded by `continuous_law_test`
+   §8, `add_relation_action_test` and `rete_relation_state_test`.
+
+   Measurement: `tests/law/category_membership_scaling_test.cpp`.
 5. **The instance-side slow adapter** — capped, two-rate clock, candidates only.
 6. **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
    restriction.
@@ -694,7 +743,7 @@ against a 1.653 ms baseline** with the fix in.
 
 ---
 
-*Rungs 1, 2 and 3 by Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09.*
+*Rungs 1–3 built and rung 4 measured by Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, 2026-09-09 / 09-10.*
 *Rung 0 implemented, and §3.4 / §9.3 / §10 updated, by Claude Opus 5, session
 `session_01K1PtKNZtSDU9XGwKZQ7ZzF`, 2026-09-08.*
 *Revised by Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`, 2026-09-08T02:30:47-07:00.*

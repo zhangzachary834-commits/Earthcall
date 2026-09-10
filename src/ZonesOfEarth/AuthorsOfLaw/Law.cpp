@@ -1284,6 +1284,23 @@ void ReteNetwork::purgeAgendaOf(const std::string& lawId) {
                   _agenda.end());
 }
 
+std::size_t ReteNetwork::internAuthoredAlpha(const std::string& conditionKey,
+                                             const std::string& description,
+                                             AlphaPredicate predicate) {
+    // The findAlpha check is load-bearing, exactly as it is in internTypeAlpha:
+    // dropUnboundAlphaNodes can remove a node this map still names. Ids are
+    // never reused, so a stale entry resolves to nothing rather than to the
+    // wrong node, and we rebuild.
+    auto existing = _authoredAlphaIndex.find(conditionKey);
+    if (existing != _authoredAlphaIndex.end() && findAlpha(existing->second)) {
+        return existing->second;
+    }
+    const std::size_t id = addAlphaNode(description, std::move(predicate),
+                                        AlphaSource::Authored);
+    _authoredAlphaIndex[conditionKey] = id;
+    return id;
+}
+
 std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
     auto existing = _typeAlphaIndex.find(eventType);
     if (existing != _typeAlphaIndex.end() && findAlpha(existing->second)) {

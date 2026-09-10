@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0–3 of 7 done (2026-09-08, 2026-09-09). Rung 2's Formation half and rungs 4–7 specified.
+**Status:** rungs 0–3 of 7 done (2026-09-08, 2026-09-09); rung 4 measured and deferred with a named precondition (2026-09-10). Rung 2's Formation half and rungs 5–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -174,6 +174,38 @@ nobody**, silently. `ConditionModel` had already fixed this exact bug on the alp
 
 **Guarded by** `tests/law/gate_hoist_test.cpp` and `tests/law/referent_resolution_test.cpp`.
 
+## Rung 4 — ⚠️ measured 2026-09-10, deliberately NOT built
+
+*Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.* The most useful outcome available
+here was a "no", and it protects a later pass from a real mistake.
+
+**Overlap has no users.** Across every saved world, **zero laws conjoin two distinct categories**.
+Overlap answers "can a being be in A and B at once"; nothing asks. The quantitative subkind via
+`Range::mayIntersect` is genuinely half-built and should be finished when a law first wants it.
+
+**Membership is the hot idiom** — **132 laws** scope themselves with
+`Related(instance-of, category.chess.piece)`, against 4 for the next category. Measured against an
+identical law of identical selectivity reading a plain property: **2.7x slower at 50 beings, 4.0x
+at 400**, k 0.87 vs 0.67. The gap widens with the world.
+
+**Two hypotheses tested and rejected:** by-value string ids in `isBetween` (rewritten to pointer
+comparison — no change, inside noise) and per-call vector allocation in `Universe::relations()`
+(buffer reuse — no change; reverted). **The cost is the O(relations) provider walk per evaluation**,
+and no rewrite of the predicate removes it.
+
+**Why no index: the invalidation signal does not exist.** `RelationManager` never bumps
+`structuralRevision()`, and the relation *provider* points at the active Zone's formation — so
+**switching zones changes the answer with no RelationManager mutation at all**. An index on a
+signal whose completeness cannot be shown is exactly how the five deafnesses happened. The
+precondition is a relation-revision signal covering mutation *and* provider swap.
+
+**Kept, on safety grounds rather than speed:** the `Related` predicate now rejects by pointer and
+dereferences a far end only for the subject's own edges. The old path called `aId()`/`bId()` on
+every relation in the world every evaluation, and a relation may outlive its endpoints.
+
+**Guarded by** `continuous_law_test` §8, `add_relation_action_test`, `rete_relation_state_test`;
+measured by `tests/law/category_membership_scaling_test.cpp`.
+
 ## Next rungs
 
 2. ~~**Categories as authored Formations**~~ — index half done 2026-09-09 (above). The Formation
@@ -183,8 +215,10 @@ nobody**, silently. `ConditionModel` had already fixed this exact bug on the alp
    inside the taxonomy — it needs the concept-Singular bridge (`ObjectConcept`, whose
    `RelationTemplate::bAnchorId` is already "relate to this concept in advance"). Also needs
    `Zone::removeObject` to bump `Universe::structuralRevision()`, which today it does not.
-4–7. Category-level overlap (§3.1) via the existing `Range::mayIntersect`; the instance-side slow
-   adapter; reified path Relations and Law-as-traverser; departure reporting on the reactive path.
+5–7. The instance-side slow adapter; reified path Relations and Law-as-traverser; departure
+   reporting on the reactive path. Plus the two preconditions this work uncovered: a **relation
+   revision signal** (rung 4) and **complete property-write coverage** (rung 1b), each blocking an
+   index that is otherwise ready to build.
 
 ## ⚑ AUTHOR — open, Zach's
 

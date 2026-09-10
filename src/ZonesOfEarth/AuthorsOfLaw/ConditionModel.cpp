@@ -322,17 +322,41 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                     if (!participant) return false;   // unproven referent
                     other = participant->getIdentifier();
                 }
-                const std::string id = subject.getIdentifier();
+                // REJECT BY POINTER, STRINGIFY ONLY WHAT SURVIVES.
+                //
+                // This loop used to ask `rel->isBetween(id, other)` of every
+                // relation in the world, and aId()/bId() each build a
+                // std::string BY VALUE through a virtual call — so scoping a
+                // law to a category cost two string constructions per relation
+                // per evaluation, and the evaluation runs once per candidate
+                // per tick. Measured against an identical law asking a plain
+                // property instead: 2.7x slower at 50 beings, 4.0x at 400, the
+                // gap widening with population. `Related(instance-of,
+                // category.X)` is the dominant scoping idiom in the tree — 132
+                // laws across the saved worlds name a category this way — so
+                // this is the hot loop of Layer 0 (FORMATION_RETE.md §3.0).
+                //
+                // The near end is a pointer we already hold. Comparing it
+                // costs nothing, and it rejects almost every relation, leaving
+                // only the handful this subject actually participates in to be
+                // named. That also DEREFERENCES FEWER FAR ENDS than before: a
+                // relation may outlive its endpoints (rung 0), and the old
+                // path touched every far end in the world on every evaluation.
+                const Singular* self = &subject;
                 for (const Relation* rel : Universe::instance().relations()) {
                     if (!rel) continue;
                     if (!type.empty() && rel->type != type) continue;
-                    if (other.empty()) {
-                        if (rel->directed ? rel->aId() == id : rel->involves(id)) {
-                            return true;
-                        }
-                        continue;
-                    }
-                    if (rel->isBetween(id, other)) return true;
+
+                    const bool isSource = rel->a() == self;
+                    const bool isTarget = rel->b() == self;
+                    // Direction is honored exactly as before: a directed
+                    // relation holds only OF its source.
+                    if (rel->directed ? !isSource : (!isSource && !isTarget)) continue;
+
+                    if (other.empty()) return true;
+
+                    const Singular* far = isSource ? rel->b() : rel->a();
+                    if (far && far->getIdentifier() == other) return true;
                 }
                 return false;
             };
@@ -622,7 +646,13 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         return dot == std::string::npos ? dotted : dotted.substr(0, dot);
     };
 
-    std::size_t alphaId = rete.addAlphaNode(desc,
+    // Shared on the whole serialized leaf — see ReteNetwork::internAuthoredAlpha
+    // for why the key is the entire node and not a chosen subset of its fields.
+    // Everything the predicate below captures (orig, which is compile()'d from
+    // this node; targetAttr, derived from kind/path/relationType; desc) is a
+    // pure function of that text, so two leaves with the same key really do
+    // want the same node.
+    std::size_t alphaId = rete.internAuthoredAlpha(this->toJson().dump(), desc,
         [orig, targetAttr, rootOf](const FactPtr& fact) {
             if (!fact->isState) return false;
             if (!fact->subject) return false;
@@ -634,11 +664,11 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             }
             ECA::Event dummy;
             return orig(dummy, *fact->subject);
-        },
-        // The closure is opaque, but the TEXT behind it is this very tree —
-        // so the Prophetic index can account for what this node reads, and
-        // says so by tagging the node Authored rather than Foreign.
-        ReteNetwork::AlphaSource::Authored);
+        });
+        // (The node is tagged Authored inside internAuthoredAlpha. The closure
+        // is opaque, but the TEXT behind it is this very tree — which is what
+        // lets the Prophetic index account for what the node reads, and is the
+        // same text the sharing key is built from.)
 
     if (leftId == 0) {
         return {alphaId};
