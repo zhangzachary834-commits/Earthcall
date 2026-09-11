@@ -81,16 +81,37 @@ namespace Core {
         _camera->viewport[0] = 0;    _camera->viewport[1] = 0;
         _camera->viewport[2] = fbW;  _camera->viewport[3] = fbH;
 
-        ShadingSystem::update(_camera->pos);
+        // Refusal #6: light placement is authored world state, not a hidden
+        // camera-relative constant inside ShadingSystem. ScreenChannel is the
+        // first-mover bridge for the Screen/light modality, and its Properties
+        // are reachable from ordinary Laws through PropertyPath. The renderer
+        // still owns only backend mechanics (uniforms, GL state, GPU handles).
+        //
+        // Preserve the renderer's existing radiance coefficients here rather
+        // than inventing new authorable names that WebGPU does not yet consume.
+        // Material ambient/diffuse/specular are already authorable; the
+        // remaining global radiance/volumetric equations are the next light
+        // demystification rung, not something this seam pretends to have solved.
+        Singularity::Screen::ScreenChannel* screenChannel = nullptr;
+        if (_lawManager) {
+            screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
+            if (screenChannel) {
+                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                    ? _camera->pos + screenChannel->lightCameraOffset
+                    : screenChannel->lightPosition;
+                currentRenderer().setLight(lightWorldPos,
+                                           currentRenderer().lightAmbient(),
+                                           currentRenderer().lightDiffuse(),
+                                           currentRenderer().lightSpecular());
+            }
+        }
 
         {
             glm::vec4 clearColor(0.1f, 0.1f, 0.15f, 1.0f);
-            if (_lawManager) {
-                if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
-                    clearColor = glm::vec4(sc->backgroundColor, 1.0f);
-                    currentRenderer().setWireframe(sc->wireframe);
-                    currentRenderer().setHeightGridDdaEnabled(sc->heightGridDdaEnabled);
-                }
+            if (screenChannel) {
+                clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
+                currentRenderer().setWireframe(screenChannel->wireframe);
+                currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
