@@ -167,7 +167,7 @@ bool Law::conditionsSatisfied(const Singular& target) const {
     ECA::Event event;
     event.type = "law-evaluate";
     event.subject = const_cast<Singular*>(&target);
-    event.timestamp = std::time(nullptr);
+    
 
     bool anySatisfied = false;
     for (const auto& condition : _conditionPredicates) {
@@ -443,7 +443,7 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         ECA::Event event;
         event.type = "law-apply";
         event.subject = &target;
-        event.timestamp = std::time(nullptr);
+        
 
         // time.sinceApplied context: t=0 is when this law began holding for
         // this subject (continuous edge, or drive-session start); a plain
@@ -452,9 +452,8 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         // back the outer onset instead of erasing it.
         std::optional<Universe::OnsetScope> onsetScope;
         if (Universe::instance().hasClock()) {
-            const std::string subjectId = target.getIdentifier();
-            onsetScope.emplace(hasOnset(subjectId) ? onsetFor(subjectId)
-                                                   : Universe::instance().now());
+            onsetScope.emplace(hasOnset(&target) ? onsetFor(&target)
+                                                 : Universe::instance().now());
         }
 
         // Arm the trace: every action node reports into it, and the record
@@ -1588,6 +1587,9 @@ void LawManager::connectToEventBus() {
         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
             _seededSubjects.erase(subjectId);
         }
+        for (auto& law : _laws) {
+            law->forgetSubject(being);
+        }
         // …and every RELATION that held it lets go of the pointer, keeping the
         // name. Relations outlive their endpoints all the time (a Formation, a
         // provenance record, a test's own graph), and aId()/bId() call a
@@ -1944,13 +1946,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // deafness, bought with a performance win, which is the trade this
         // whole document exists to refuse. Releasing is O(held), not O(world).
         if (!gatesHold(*law)) {
-            std::vector<std::string> released;
-            for (const auto& [subjectId, held] : law->conditionMemory()) {
-                if (held) released.push_back(subjectId);
+            std::vector<const Singular*> released;
+            for (const auto& [subject, held] : law->conditionMemory()) {
+                if (held) released.push_back(subject);
             }
-            for (const std::string& subjectId : released) {
-                law->rememberConditionState(subjectId, false);
-                law->forgetOnset(subjectId);
+            for (const Singular* subject : released) {
+                law->rememberConditionState(subject, false);
+                law->forgetOnset(subject);
             }
             continue;
         }
@@ -2007,28 +2009,27 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             // false->true for this subject. With no onset remembered, applyTo
             // falls back to "now" every tick, so every Flow and Drive authored
             // against that clock read t=0 forever.
-            std::unordered_set<std::string> matching;
+            std::unordered_set<const Singular*> matching;
             matching.reserve(subjects.size());
             for (Singular* subject : subjects) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
-                const std::string subjectId = subject->getIdentifier();
-                matching.insert(subjectId);
-                const bool wasHolding = law->lastConditionState(subjectId);
-                law->rememberConditionState(subjectId, true);
+                matching.insert(subject);
+                const bool wasHolding = law->lastConditionState(subject);
+                law->rememberConditionState(subject, true);
                 if (!wasHolding && Universe::instance().hasClock()) {
-                    law->rememberOnset(subjectId, Universe::instance().now());
+                    law->rememberOnset(subject, Universe::instance().now());
                 }
             }
 
             // Release: whoever the law held for last tick and does not now.
             // Collected first, because forgetting mutates what we are reading.
-            std::vector<std::string> released;
-            for (const auto& [subjectId, held] : law->conditionMemory()) {
-                if (held && matching.count(subjectId) == 0) released.push_back(subjectId);
+            std::vector<const Singular*> released;
+            for (const auto& [subject, held] : law->conditionMemory()) {
+                if (held && matching.count(subject) == 0) released.push_back(subject);
             }
-            for (const auto& subjectId : released) {
-                law->rememberConditionState(subjectId, false);
-                law->forgetOnset(subjectId);
+            for (const auto* subject : released) {
+                law->rememberConditionState(subject, false);
+                law->forgetOnset(subject);
             }
 
             for (Singular* subject : subjects) {
@@ -2052,16 +2053,15 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         for (Singular* subject : subjects) {
             if (!subject || Universe::instance().isUnmade(subject)) continue;
             const bool holds = law->conditionsSatisfied(*subject);
-            const std::string subjectId = subject->getIdentifier();
-            const bool wasHolding = law->lastConditionState(subjectId);
-            law->rememberConditionState(subjectId, holds);
+            const bool wasHolding = law->lastConditionState(subject);
+            law->rememberConditionState(subject, holds);
 
             // The false->true edge is t=0 for this subject's change-over-time
             // clock (time.sinceApplied); release re-arms it.
             if (holds && !wasHolding && Universe::instance().hasClock()) {
-                law->rememberOnset(subjectId, Universe::instance().now());
+                law->rememberOnset(subject, Universe::instance().now());
             } else if (!holds && wasHolding) {
-                law->forgetOnset(subjectId);
+                law->forgetOnset(subject);
             }
 
             const bool fire = law->activation() == Law::Activation::WhileTrue
@@ -2069,12 +2069,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   : (holds && !wasHolding);   // the false->true edge
             if (!fire) continue;
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subjectId)) {
+                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;   // a re-edge while the launched process still
                                 // runs is absorbed — the session owns it
                 }
-                restartDriveSession(*law, subjectId);   // a re-edge = new t=0
+                restartDriveSession(*law, subject->getIdentifier());   // a re-edge = new t=0
             }
             // An OnBecomeTrue law that drives launches its process at the
             // edge and runs it to the end of its authored bounds.
@@ -2345,7 +2345,13 @@ void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
                 session.eventObjectId = o->getIdentifier();
             }
         }
-        law.rememberOnset(subjectId, now);
+        Singular* subject = nullptr;
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == subjectId) { subject = being; break; }
+        }
+        if (subject) {
+            law.rememberOnset(subject, now);
+        }
         return;
     }
 }
@@ -2364,7 +2370,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
         }
     }
     const double onset = Universe::instance().now();
-    law.rememberOnset(subjectId, onset);
+    law.rememberOnset(&subject, onset);
     DriveSession session;
     session.lawId = law.getIdentifier();
     session.subjectId = subjectId;
@@ -2411,7 +2417,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
-            if (law) law->forgetOnset(it->subjectId);
+            if (law && subject) law->forgetOnset(subject);
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2434,7 +2440,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             alive = law->actionModel()->definedFor(*subject);
         }
         if (!alive && now > it->onset) {
-            law->forgetOnset(it->subjectId);
+            law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
             it = _driveSessions.erase(it);
@@ -2445,7 +2451,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         if (now > it->onset) {
             // The session owns this drive's t=0 — reassert it so applyTo's
             // context matches even if the law's edge memory moved meanwhile.
-            law->rememberOnset(it->subjectId, it->onset);
+            law->rememberOnset(subject, it->onset);
             law->applyTo(*subject);
             if (!law->applicationLog().empty()) {
                 records.push_back(law->applicationLog().back());

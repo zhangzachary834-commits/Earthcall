@@ -84,6 +84,8 @@ public:
     // names instead of asking Persons to know the registry by heart.
     std::vector<Property*> listProperties();
 
+    bool hasPropertyStartingWith(const std::string& prefix);
+
     // A Singular can flexibly own any kind of thing. That ownership IS the
     // property registry below: each owned value is wrapped as a Property
     // (PropertyRef over a member, ComputedProperty over getters) and typed

@@ -177,19 +177,19 @@ public:
     void setRetrigger(Retrigger mode) { _retrigger = mode; }
 
     // Per-subject condition memory for edge detection (OnBecomeTrue).
-    bool lastConditionState(const std::string& subjectId) const {
-        auto it = _conditionMemory.find(subjectId);
+    bool lastConditionState(const Singular* subject) const {
+        auto it = _conditionMemory.find(subject);
         return it != _conditionMemory.end() && it->second;
     }
-    void rememberConditionState(const std::string& subjectId, bool state) {
-        _conditionMemory[subjectId] = state;
+    void rememberConditionState(const Singular* subject, bool state) {
+        _conditionMemory[subject] = state;
     }
     // Who the law believes it currently holds for. The reactive path learns
     // who ENTERED the match set from the network, but nothing tells it who
     // LEFT — so it reads its own memory and takes the difference. Release is
     // what re-arms the onset clock, and a release nobody notices is an onset
     // that never re-arms.
-    const std::unordered_map<std::string, bool>& conditionMemory() const {
+    const std::unordered_map<const Singular*, bool>& conditionMemory() const {
         return _conditionMemory;
     }
 
@@ -197,17 +197,21 @@ public:
     // last went false->true for that subject. This is the t=0 of
     // "time.sinceApplied" — the authored change-over-time clock. Runtime
     // state like _conditionMemory: never serialized; release re-arms it.
-    bool hasOnset(const std::string& subjectId) const {
-        return _onsetMemory.count(subjectId) != 0;
+    bool hasOnset(const Singular* subject) const {
+        return _onsetMemory.count(subject) != 0;
     }
-    double onsetFor(const std::string& subjectId) const {
-        auto it = _onsetMemory.find(subjectId);
+    double onsetFor(const Singular* subject) const {
+        auto it = _onsetMemory.find(subject);
         return it != _onsetMemory.end() ? it->second : 0.0;
     }
-    void rememberOnset(const std::string& subjectId, double worldTime) {
-        _onsetMemory[subjectId] = worldTime;
+    void rememberOnset(const Singular* subject, double worldTime) {
+        _onsetMemory[subject] = worldTime;
     }
-    void forgetOnset(const std::string& subjectId) { _onsetMemory.erase(subjectId); }
+    void forgetOnset(const Singular* subject) { _onsetMemory.erase(subject); }
+    void forgetSubject(const Singular* subject) {
+        _conditionMemory.erase(subject);
+        _onsetMemory.erase(subject);
+    }
 
     // First movers (engine-backed bridge laws) live in the register for
     // LEGIBILITY and GOVERNANCE, but their truth lives in the engine:
@@ -428,8 +432,8 @@ private:
     std::shared_ptr<Zone> _jurisdiction;
     bool _drives = false;
     Retrigger _retrigger = Retrigger::Absorb;
-    std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
-    std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
+    std::unordered_map<const Singular*, bool> _conditionMemory;   // edge detection
+    std::unordered_map<const Singular*, double> _onsetMemory;     // t=0 per subject
     std::uint64_t _conditionRevision{0};                      // see conditionRevision()
     static std::uint64_t s_textRevision;                      // see textRevision()
     ConditionMode _conditionMode = ConditionMode::All;
