@@ -146,6 +146,13 @@ public:
     virtual bool isDeletable(const std::string &person) const;
     const Deletability &deletability() const { return _deletable; }
 
+    // Every Zone already owns one continuous mathematical FieldNode and keeps
+    // it in the Zone Formation. It is world substrate, not an Object wrapper.
+    // Expose the existing being so persistence and rendering bridges can read
+    // its authored state without inventing a domain-specific C++ Light class.
+    geom::FieldNode* spatialRoot() { return _spatialRootObject.get(); }
+    const geom::FieldNode* spatialRoot() const { return _spatialRootObject.get(); }
+
 protected:
     void buildProperties() override;
 
