@@ -10,12 +10,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if we are running under Emscripten (WASM Mode)
     const isWasmMode = typeof Module !== 'undefined' && Module.Earthcall_EmitUtterance;
     
+    const defaultPlaceholder = inputField.placeholder;
+
     function setStatus(text, isConnected) {
         statusText.innerText = text;
+
+        const wasDisconnected = !statusContainer.classList.contains('connected') && statusContainer.classList.contains('disconnected');
+
         if (isConnected) {
             statusContainer.classList.add('connected');
+            statusContainer.classList.remove('disconnected');
         } else {
             statusContainer.classList.remove('connected');
+            statusContainer.classList.add('disconnected');
+        }
+
+        inputField.disabled = !isConnected;
+        inputField.placeholder = isConnected ? defaultPlaceholder : "Connecting to engine...";
+
+        inputField.dispatchEvent(new Event('input'));
+
+        if (isConnected && wasDisconnected) {
+            inputField.focus();
         }
     }
     

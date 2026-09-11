@@ -64,7 +64,12 @@
         }
 
         #utterance-input::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #utterance-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         #emit-btn {
@@ -113,6 +118,10 @@
 
         .connected .status-dot {
             background: #7ed321;
+        }
+
+        .disconnected .status-dot {
+            background: #d0021b;
         }
     </style>
 </head>
