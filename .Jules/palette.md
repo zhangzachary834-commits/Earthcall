@@ -13,3 +13,6 @@
 ## 2026-09-09 - Semantic Form Transformation
 **Learning:** Wrapping single-input interfaces in semantic forms is crucial for both mobile keyboard behavior (providing a native 'Go'/'Submit' button) and standardizing screen reader submission.
 **Action:** Always prefer forms over loose inputs with enter-key listeners.
+## 2024-11-25 - [Prevent Silent Data Loss on Disconnect]
+**Learning:** Leaving form inputs enabled when a backend connection is broken creates silent failure scenarios where users type and submit data that is lost. Disabling inputs during disconnected states prevents this, but you must manually trigger events (`dispatchEvent(new Event('input'))`) to update dependent button states and manually restore focus (`.focus()`) upon reconnection to preserve navigation flow.
+**Action:** Always disable inputs during disconnected states, update placeholders dynamically, trigger update events, and focus the input once the connection returns.
