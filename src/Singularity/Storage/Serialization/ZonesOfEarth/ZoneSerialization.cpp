@@ -4,6 +4,7 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include <memory>
 #include <string>
@@ -179,6 +180,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+
+    // The Zone's continuous field root used to exist live, participate in the
+    // Formation, expose PropertyPaths, and then simply disappear from saves.
+    // Persist the being itself — including its OntoMath ASTs and authored
+    // dynamic properties — so a field that governs reality remains real
+    // across the temporal boundary too.
+    if (const auto* root = zone.spatialRoot()) {
+        zj["spatialRoot"] = root->toJson();
+    }
+
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
@@ -238,6 +249,14 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             }
         }
     }
+
+    // Restore into the Zone's already-owned FieldNode instead of replacing
+    // the pointer. Formation membership and any lazily materialised PropertyRef
+    // bridges therefore stay valid while the mathematical state comes back.
+    if (zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
+        if (auto* root = zone.spatialRoot()) root->applyJson(zj["spatialRoot"]);
+    }
+
     if (replaceObjects) {
         zone.getOwnedObjectsMutable().clear();
     }
