@@ -5,6 +5,9 @@
   "formationRelations": [],
   "identifier": "BasicPixelChanger",
   "lexemes": [],
+  "lawRefs": [
+    "law-basic-pixel-changer"
+  ],
   "materials": [
     {
       "ambient": 0.20000000298023224,

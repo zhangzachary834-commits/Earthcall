@@ -34,6 +34,8 @@
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 
@@ -72,6 +74,26 @@ void Engine::initLogic() {
         Soul soul("Person");
         Body body("humanoid", "default");
         _person = std::make_unique<Person>(std::move(soul), std::move(body), "default");
+
+        // Legacy single-Person installations predate authenticated profile
+        // selection. When exactly one local profile exists, restoring it is
+        // unambiguous and lets authored-by references resolve to that actual
+        // Person. Multiple profiles are never guessed between, and a profile
+        // claiming a cryptographic personId still requires the future login /
+        // signature path rather than being trusted merely because it is a
+        // file on disk.
+        const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
+        if (profiles.size() == 1) {
+            const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
+            if (profile.is_object() && !profile.contains("personId")) {
+                personFromJson(profile, *_person);
+                std::cout << "[Init] Restored sole legacy Person profile '"
+                          << _person->getDisplayName() << "' (not logged in).\n";
+            }
+        } else if (profiles.size() > 1) {
+            std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
+                         "Person is present.\n";
+        }
     }
     if (!_chat) _chat = std::make_unique<Chat>();
     if (!_cursorTools) _cursorTools = std::make_unique<CursorTools>();
@@ -218,6 +240,7 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.ensureHomeZone(_person->getIdentifier());
     mgr.bindLive();
+    mgr.bindLawManager(_lawManager.get());
     // Home (and every other identity-stable Zone) lives in
     // saves/zones/<id>/, not inside a session/"world" file. Hydrate
     // after minting the boot Zones so an empty Sanctum/Home is filled

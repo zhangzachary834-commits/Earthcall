@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 #include <map>
@@ -968,6 +969,88 @@ std::vector<std::string> listZoneIdentities() {
     return out;
 }
 
+namespace {
+std::filesystem::path sharedIdentityRoot(const char* leaf) {
+    const std::filesystem::path root = g_saveRoot.empty()
+        ? std::filesystem::path("saves")
+        : std::filesystem::path(g_saveRoot);
+    return root / leaf;
+}
+} // namespace
+
+std::string lawDirectory(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    const std::filesystem::path dir = sharedIdentityRoot("laws") / safe;
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Failed to create Law directory "
+                  << dir.string() << ": " << ec.message() << "\n";
+        return "";
+    }
+    return dir.string();
+}
+
+std::string lawIdentityPath(const std::string& identifier) {
+    const std::string dir = lawDirectory(identifier);
+    return dir.empty() ? std::string{} : dir + "/law.json";
+}
+
+bool lawIdentityExists(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return false;
+    std::error_code ec;
+    const auto path = sharedIdentityRoot("laws") / safe / "law.json";
+    return std::filesystem::exists(path, ec) &&
+           std::filesystem::is_regular_file(path, ec) &&
+           std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = lawIdentityPath(identifier);
+    if (path.empty() || !permitted(path)) return false;
+
+    // A shared root must never be observed half-written. The temporary file
+    // is adjacent, so rename is one filesystem commit on supported hosts.
+    const std::filesystem::path finalPath(path);
+    const std::filesystem::path temporary =
+        finalPath.string() + ".tmp-" + timestamp() + "-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    {
+        std::ofstream out(temporary);
+        if (!out) {
+            std::cerr << "[SaveSystem] Failed to open Law identity temporary file: "
+                      << temporary.string() << "\n";
+            return false;
+        }
+        out << j.dump(2);
+        out.flush();
+        if (!out) {
+            std::error_code ignored;
+            std::filesystem::remove(temporary, ignored);
+            return false;
+        }
+    }
+    std::error_code ec;
+    std::filesystem::rename(temporary, finalPath, ec);
+    if (ec) {
+        const std::string renameError = ec.message();
+        std::error_code ignored;
+        std::filesystem::remove(temporary, ignored);
+        std::cerr << "[SaveSystem] Failed to commit Law identity " << path
+                  << ": " << renameError << "\n";
+        return false;
+    }
+    return true;
+}
+
+nlohmann::json readLawIdentity(const std::string& identifier) {
+    if (!lawIdentityExists(identifier)) return nlohmann::json();
+    const std::string safe = sanitizeLabel(identifier);
+    return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
+}
+
 std::string homeDirectory(const std::string& identifier) {
     std::string folder = ensureSaveTypeFolder(SaveType::HOME);
     if (folder.empty()) return "";
@@ -1054,4 +1137,4 @@ std::vector<std::string> listHomeIdentities() {
     return out;
 }
 
-} // namespace SaveSystem 
+} // namespace SaveSystem

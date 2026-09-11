@@ -49,14 +49,174 @@ void ZoneManager::addZone(std::shared_ptr<Zone> zone)
     _zones.push_back(std::move(zone));
 }
 
-void ZoneManager::switchTo(size_t index)
+bool ZoneManager::switchTo(size_t index)
 {
-    if (index < _zones.size())
-    {
+    if (index < _zones.size()) {
+        // Resolve the complete authored Law closure before changing any live
+        // state. A missing/malformed root, absent author/target, or identifier
+        // collision leaves the current Zone and Law register untouched.
+        struct PreparedLaw {
+            std::string id;
+            std::shared_ptr<Law> law;
+            std::vector<std::string> triggers;
+        };
+        std::vector<PreparedLaw> prepared;
+        std::unordered_set<std::string> requestedLawIds;
+
+        const auto& targetZone = _zones[index];
+        if (!targetZone) {
+            std::cerr << "[zones] REFUSED activation: target Zone is null. "
+                         "Current Zone remains active.\n";
+            return false;
+        }
+        nlohmann::json identity;
+        identity = targetZone->isHome()
+            ? SaveSystem::readHomeIdentity(targetZone->getIdentifier())
+            : SaveSystem::readZoneIdentity(targetZone->getIdentifier());
+        const nlohmann::json lawRefs = identity.is_object()
+            ? identity.value("lawRefs", nlohmann::json::array())
+            : nlohmann::json::array();
+        if (!lawRefs.is_array()) {
+            std::cerr << "[zones] REFUSED activation of '"
+                      << targetZone->getIdentifier()
+                      << "': lawRefs is not an array. Current Zone remains active.\n";
+            return false;
+        }
+        if (!lawRefs.empty() && !_lawManager) {
+            std::cerr << "[zones] REFUSED activation: Zone names authored Laws but no "
+                         "LawManager is bound. Current Zone remains active.\n";
+            return false;
+        }
+
+        const auto resolveReference = [&](const std::string& id,
+                                          bool requirePerson) -> Singular* {
+            if (id.empty()) return nullptr;
+            std::vector<Singular*> candidates;
+            const auto consider = [&](Singular* being) {
+                if (!being) return;
+                bool matches = being->getIdentifier() == id;
+                if (auto* person = dynamic_cast<Person*>(being)) {
+                    matches = person->matchesIdentifier(id);
+                } else if (requirePerson) {
+                    matches = false;
+                }
+                if (matches && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+                    candidates.push_back(being);
+                }
+            };
+            for (Singular* being : Universe::instance().beings()) consider(being);
+            // Target-Zone objects are not yet in the active Universe. They
+            // are still valid references in the closure being preflighted.
+            for (const auto& zone : _zones) {
+                if (!zone) continue;
+                consider(zone.get());
+                for (const auto& object : zone->getOwnedObjects()) consider(object.get());
+            }
+            return candidates.size() == 1 ? candidates.front() : nullptr;
+        };
+
+        try {
+            for (const auto& refJson : lawRefs) {
+                if (!refJson.is_string()) throw std::runtime_error("lawRef is not a string");
+                const std::string ref = refJson.get<std::string>();
+                if (ref.empty() || !requestedLawIds.insert(ref).second) {
+                    throw std::runtime_error("empty or duplicate lawRef '" + ref + "'");
+                }
+                const nlohmann::json root = SaveSystem::readLawIdentity(ref);
+                if (!root.is_object()) {
+                    throw std::runtime_error("missing Law root '" + ref + "'");
+                }
+                if (root.value("identifier", std::string{}) != ref ||
+                    !root.contains("law") || !root["law"].is_object()) {
+                    throw std::runtime_error("Law root identity mismatch for '" + ref + "'");
+                }
+                auto law = Law::fromJson(root["law"]);
+                if (!law || law->getIdentifier() != ref) {
+                    throw std::runtime_error("serialized Law id mismatch for '" + ref + "'");
+                }
+
+                const auto& lawJson = root["law"];
+                if (!lawJson.contains("authors") || !lawJson["authors"].is_array() ||
+                    lawJson["authors"].empty()) {
+                    throw std::runtime_error("Law '" + ref + "' has no recorded author");
+                }
+                for (const auto& authorJson : lawJson["authors"]) {
+                    if (!authorJson.is_string()) {
+                        throw std::runtime_error("Law '" + ref + "' has a non-string author ref");
+                    }
+                    Singular* author = resolveReference(authorJson.get<std::string>(), true);
+                    if (!author) {
+                        throw std::runtime_error("Law '" + ref + "' cannot resolve Person author '" +
+                                                 authorJson.get<std::string>() + "'");
+                    }
+                    law->addAuthor(*author);
+                }
+                if (lawJson.contains("targets")) {
+                    if (!lawJson["targets"].is_array()) {
+                        throw std::runtime_error("Law '" + ref + "' targets is not an array");
+                    }
+                    for (const auto& targetJson : lawJson["targets"]) {
+                        if (!targetJson.is_string()) {
+                            throw std::runtime_error("Law '" + ref + "' has a non-string target ref");
+                        }
+                        Singular* target = resolveReference(targetJson.get<std::string>(), false);
+                        if (!target) {
+                            throw std::runtime_error("Law '" + ref + "' cannot resolve target '" +
+                                                     targetJson.get<std::string>() + "'");
+                        }
+                        law->addTarget(*target);
+                    }
+                }
+
+                std::vector<std::string> triggers;
+                const auto triggerJson = root.value("triggers", nlohmann::json::array());
+                if (!triggerJson.is_array()) {
+                    throw std::runtime_error("Law '" + ref + "' triggers is not an array");
+                }
+                for (const auto& trigger : triggerJson) {
+                    if (!trigger.is_string() || trigger.get<std::string>().empty()) {
+                        throw std::runtime_error("Law '" + ref + "' has an invalid trigger");
+                    }
+                    triggers.push_back(trigger.get<std::string>());
+                }
+                if (law->activation() == Law::Activation::OnEvent && triggers.empty()) {
+                    throw std::runtime_error("OnEvent Law '" + ref + "' names no trigger");
+                }
+
+                Law* existing = _lawManager ? _lawManager->find(ref) : nullptr;
+                if (existing && _activeZoneLawIds.count(ref) == 0) {
+                    throw std::runtime_error("Law id collision for '" + ref + "'");
+                }
+                prepared.push_back(PreparedLaw{ref, std::move(law), std::move(triggers)});
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[zones] REFUSED activation of '"
+                      << targetZone->getIdentifier()
+                      << "': " << e.what() << ". Current Zone and Laws remain active.\n";
+            return false;
+        }
+
         if (!_zones.empty() && _currentIndex < _zones.size() && _currentIndex != index) {
             Core::EventBus::instance().publish(
                 ECA::Event{"zone-exited", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
         }
+
+        if (_lawManager) {
+            for (const auto& id : _activeZoneLawIds) {
+                if (requestedLawIds.count(id) == 0) _lawManager->remove(id);
+            }
+            for (auto& incoming : prepared) {
+                if (_activeZoneLawIds.count(incoming.id) != 0 &&
+                    _lawManager->find(incoming.id)) {
+                    continue;
+                }
+                _lawManager->add(incoming.law);
+                for (const auto& trigger : incoming.triggers) {
+                    _lawManager->bindTrigger(incoming.id, trigger);
+                }
+            }
+        }
+        _activeZoneLawIds = std::move(requestedLawIds);
 
         _currentIndex = index;
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
@@ -101,11 +261,10 @@ void ZoneManager::switchTo(size_t index)
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(
             ECA::Event{"zone-entered", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        return true;
     }
-    else
-    {
-        std::cerr << "⚠️ Invalid zone index!" << std::endl;
-    }
+    std::cerr << "⚠️ Invalid zone index!" << std::endl;
+    return false;
 }
 
 void ZoneManager::describeCurrent() const
@@ -484,7 +643,18 @@ void ZoneManager::persistZones() const {
                 continue;
             }
         }
-        const nlohmann::json doc = zoneToJson(*z);
+        nlohmann::json doc = zoneToJson(*z);
+        nlohmann::json priorIdentity;
+        if (identityExists) {
+            priorIdentity = dwelling ? SaveSystem::readHomeIdentity(id)
+                                     : SaveSystem::readZoneIdentity(id);
+            // lawRefs are authored Zone membership, not a projection of the
+            // currently global Law register. Preserve them across an ordinary
+            // Zone save until an authoring surface explicitly changes them.
+            if (priorIdentity.contains("lawRefs")) {
+                doc["lawRefs"] = priorIdentity["lawRefs"];
+            }
+        }
 
         // Bug #7's guard of last resort: never stamp an empty relation
         // graph or lexeme set over a stored identity that still holds one.
@@ -492,8 +662,7 @@ void ZoneManager::persistZones() const {
         // gets here, but this is the check that would have caught the loss
         // the day it happened, so it stays even if it now looks redundant.
         if (identityExists) {
-            nlohmann::json existingGraph = dwelling ? SaveSystem::readHomeIdentity(id)
-                                                     : SaveSystem::readZoneIdentity(id);
+            nlohmann::json existingGraph = priorIdentity;
             if (existingGraph.is_object()) {
                 const std::size_t storedRelations =
                     existingGraph.value("formationRelations", nlohmann::json::array()).size();
@@ -523,6 +692,29 @@ void ZoneManager::persistZones() const {
             std::cerr << "[zones] REFUSED or failed to persist "
                       << (dwelling ? "Home" : "Zone") << " '" << id << "'\n";
         } else {
+            if (_lawManager && doc.contains("lawRefs") && doc["lawRefs"].is_array()) {
+                for (const auto& refJson : doc["lawRefs"]) {
+                    if (!refJson.is_string()) continue;
+                    const std::string lawId = refJson.get<std::string>();
+                    Law* law = _lawManager->find(lawId);
+                    if (!law || law->isFirstMover()) continue;
+                    const nlohmann::json lawJson = law->toJson();
+                    nlohmann::json lawRoot{
+                        {"identifier", lawId},
+                        {"authors", lawJson.value("authors", nlohmann::json::array())},
+                        {"law", lawJson},
+                        {"triggers", _lawManager->triggersOf(lawId)}
+                    };
+                    const nlohmann::json existingRoot = SaveSystem::readLawIdentity(lawId);
+                    if (existingRoot.is_object() && existingRoot.contains("injected_by")) {
+                        lawRoot["injected_by"] = existingRoot["injected_by"];
+                    }
+                    if (!SaveSystem::writeLawIdentity(lawId, lawRoot)) {
+                        std::cerr << "[zones] REFUSED or failed to persist shared Law '"
+                                  << lawId << "' named by Zone '" << id << "'.\n";
+                    }
+                }
+            }
             std::size_t paintedObjects = 0;
             std::size_t totalFaceTextures = 0;
             for (const auto& obj : z->getOwnedObjects()) {

@@ -145,3 +145,51 @@ Registered `authoritativeAxis`, `targetRotation`, and `rotationResponsiveness` i
 Also updated `no_black_box_test` `kWriteExemptions` for `authoritativeAxis` normalization behavior (309/309 green).
 
 Items 2-4 of the repair boundary (Zone-scoped matter generations, refuse-not-default on missing legacy placement, Zone-scoped ownerless-matter recovery with Person-choice on conflict) remain for future passes.
+
+## Law closure first rung — 2026-09-10
+
+**Implemented by Codex (GPT-5), session
+`01a07d15-f266-7902-bc11-cf7b06b0b343`, 2026-09-10 19:36:53 PDT.** This
+directly follows Zach's correction above: Creator Console → Zones → Move to Zone must
+make the Zone live without a legacy World load. The diagnosis and boundary also draw on
+every unread message in the agent-intercom threads **Basic Pixel Changer Zone Identity
+Bug 9-7-26** and **Law Engine Rungs 0-1 9-9-26**, especially Sonnet's shared-root
+proposal and Sol's preflight-before-mutation invariant.
+
+The Basic Pixel Changer exposed the missing rung exactly: its Zone identity booted the
+white canvas and Material, but its only authored Law still lived under the legacy
+World's `authoredLaws`. The old automated test called `loadState`, so it proved that old
+path and could not see the lived failure Zach found.
+
+This pass adds one stable shared Law root at
+`saves/laws/law-basic-pixel-changer/law.json` and makes
+`saves/zones/BasicPixelChanger/zone.json` name it through `lawRefs`. Zone activation now:
+
+- reads and validates every named Law root before changing the current Zone;
+- verifies root/document identifiers, recorded Person authors, targets, and triggers;
+- refuses missing, malformed, ambiguous, or colliding dependencies with the old Zone and
+  Law register unchanged;
+- registers and binds the closure before `zone-loaded` / `zone-entered`; and
+- releases Zone-scoped Laws when the Person leaves, while preserving engine-owned First
+  Movers and unrelated global Laws.
+
+Ordinary Zone persistence preserves authored `lawRefs` and writes the referenced shared
+Law root rather than embedding a copy in the Zone. Shared-Law writes use an adjacent
+temporary file plus atomic rename. On a legacy installation with exactly one local,
+non-cryptographic Person profile, boot restores that unambiguous profile so the saved
+author resolves as the actual Person; multiple profiles are refused rather than guessed,
+and a file-claimed cryptographic identity is not auto-trusted.
+
+`basic_pixel_changer_test` now uses only Zone/Law identities—no World loader—and passes
+24 checks covering the real click, addressed texel isolation, individual pixel Property
+elevation, OntoMath-defined region Property elevation, missing-root atomic refusal, and
+Law persistence/re-entry. The full project and `earthcall_webgpu` compile; seven adjacent
+Zone/save tests and `save_system_error_test` pass. The GLFW-based
+`law_persistence_test` and `no_black_box_test` could not be completed in this
+non-interactive run because macOS application services hung during initialization; both
+were stopped, not reported as green.
+
+This is deliberately **not** the completion of the reopened task. General Material and
+Category shared roots, Zone-scoped matter generations, a detached whole-closure
+transaction across every root kind, Save Zone isolation, and migration of the other
+authored app Laws remain open under the completion contract above.

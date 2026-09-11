@@ -149,6 +149,15 @@ struct IdentityRecord {
 // decision itself — enumeration is mechanism, not a policy gate.
 std::vector<IdentityRecord> listZoneIdentityRecords();
 
+// Shared authored-Law identity store. Zones carry stable lawRefs; the Law
+// itself remains one shared root at saves/laws/<identifier>/law.json rather
+// than being copied into every Zone that names it.
+std::string lawDirectory(const std::string& identifier);
+std::string lawIdentityPath(const std::string& identifier);
+bool lawIdentityExists(const std::string& identifier);
+bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j);
+nlohmann::json readLawIdentity(const std::string& identifier);
+
 std::string homeDirectory(const std::string& identifier);
 std::string homeIdentityPath(const std::string& identifier);
 bool homeIdentityExists(const std::string& identifier);

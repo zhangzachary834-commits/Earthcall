@@ -7,6 +7,8 @@
 #include "Zone/Zone.hpp"
 #include "SaveContext.hpp"
 
+class LawManager;
+
 // Persistence and UI state for save/load operations
 struct SaveLoadState {
     std::vector<std::string> files;
@@ -26,13 +28,19 @@ class ZoneManager {
     size_t _currentIndex = 0;
     std::vector<std::shared_ptr<Object>> globalObjects; // Repository of all objects
     SaveLoadState _saveLoad;
+    LawManager* _lawManager = nullptr;
+    // Derived activation cache beneath the persistence boundary: the ids in
+    // the currently active Zone's lawRefs. The authored references themselves
+    // remain visible in zone.json; this set only tells switchTo which runtime
+    // registrations it must release on departure.
+    std::unordered_set<std::string> _activeZoneLawIds;
 
 public:
     std::vector<std::shared_ptr<Object>>& getGlobalObjects() { return globalObjects; }
     const std::vector<std::shared_ptr<Object>>& getGlobalObjects() const { return globalObjects; }
 
     void addZone(std::shared_ptr<Zone> zone);
-    void switchTo(size_t index);
+    bool switchTo(size_t index);
     void describeCurrent() const;
 
     void loadZone();
@@ -61,6 +69,10 @@ public:
     // their own. Not a second registry — one live pointer.
     void bindLive();
     static ZoneManager* live();
+
+    // Bind the one running Law register. Zone activation resolves lawRefs
+    // through it atomically; ZoneManager does not own or duplicate Laws.
+    void bindLawManager(LawManager* manager) { _lawManager = manager; }
 
     // Primary Home is a kernel fact: find-or-mint the Person's dwelling,
     // not "any Zone they own". Additional Homes go through authorZone.

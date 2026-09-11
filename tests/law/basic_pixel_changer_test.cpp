@@ -1,7 +1,8 @@
 // The Basic Pixel Changer, held to its authored save and its actual Sense-Act
-// route: screen-space observation -> object-clicked -> Law -> Screen channel ->
-// copy-on-write Material pixels.  This test never reconstructs the changer Law
-// in C++, so deleting or drifting the save's law text makes it fail.
+// route: Zone activation -> stable Law root -> screen-space observation ->
+// object-clicked -> Law -> Screen channel -> copy-on-write Material pixels.
+// This test never invokes the legacy World loader or reconstructs the changer
+// Law in C++, so deleting/drifting either authored identity makes it fail.
 
 #include "support/test_harness.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
@@ -58,36 +59,57 @@ bool near(const glm::vec3& a, const glm::vec3& b) {
 
 int main() {
     std::printf("=== Basic Pixel Changer: authored Law and property elevation ===\n");
-    std::string filename = "saves/worlds/basic_pixel_changer.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/basic_pixel_changer.json")) {
-        filename = "../saves/worlds/basic_pixel_changer.json";
+    std::filesystem::path sourceRoot = "saves";
+    if (!std::filesystem::exists(sourceRoot / "zones/BasicPixelChanger/zone.json") &&
+        std::filesystem::exists("../saves/zones/BasicPixelChanger/zone.json")) {
+        sourceRoot = "../saves";
     }
-    if (!std::filesystem::exists(filename)) {
-        std::fprintf(stderr, "basic_pixel_changer_test: authored save is missing\n");
+    const auto sourceZone = std::filesystem::absolute(
+        sourceRoot / "zones/BasicPixelChanger/zone.json");
+    const auto sourceLaw = std::filesystem::absolute(
+        sourceRoot / "laws/law-basic-pixel-changer/law.json");
+    if (!std::filesystem::exists(sourceZone) || !std::filesystem::exists(sourceLaw)) {
+        std::fprintf(stderr, "basic_pixel_changer_test: authored Zone/Law root is missing\n");
         return 1;
     }
-    const auto source = std::filesystem::absolute(filename);
     TempSaveRoot isolated{
         std::filesystem::temp_directory_path() /
         ("earthcall-basic-pixel-" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()))};
-    std::filesystem::create_directories(isolated.path / "worlds");
-    const auto isolatedWorld = isolated.path / "worlds" / "basic_pixel_changer.json";
-    std::filesystem::copy_file(source, isolatedWorld);
+    std::filesystem::create_directories(isolated.path / "zones/BasicPixelChanger");
+    std::filesystem::create_directories(isolated.path / "laws/law-basic-pixel-changer");
+    std::filesystem::copy_file(sourceZone,
+                               isolated.path / "zones/BasicPixelChanger/zone.json");
+    std::filesystem::copy_file(sourceLaw,
+                               isolated.path / "laws/law-basic-pixel-changer/law.json");
     SaveSystem::setSaveRoot(isolated.path.string());
-    filename = isolatedWorld.string();
 
-    TestSupport::BootedEngineHarness harness;
+    const auto emptyZone = [](const std::string& id) {
+        return nlohmann::json{
+            {"identifier", id}, {"name", id}, {"scope", "Local"},
+            {"formationRelations", nlohmann::json::array()},
+            {"lexemes", nlohmann::json::array()},
+            {"materials", nlohmann::json::array()},
+            {"world", {{"objects", nlohmann::json::array()}}}
+        };
+    };
+    auto missingLawZone = emptyZone("MissingLawRoot");
+    missingLawZone["lawRefs"] = {"law-that-does-not-exist"};
+    check(SaveSystem::writeZoneIdentity("MissingLawRoot", missingLawZone),
+          "missing-root refusal fixture written in isolated store");
+    check(SaveSystem::writeZoneIdentity("NoLaws", emptyZone("NoLaws")),
+          "law-free departure fixture written in isolated store");
+
+    TestSupport::BootedEngineHarness harness("Zach");
     Singularity::Core::CreationChannel::syncRegister(harness.lawManager);
     Singularity::Screen::ScreenChannel::syncRegister(harness.lawManager);
-    harness.loadWorld(filename);
 
     std::shared_ptr<Zone> zone;
     for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
         if (harness.zones.zones()[i] &&
             findObject(*harness.zones.zones()[i], "basic-pixel-canvas")) {
-            harness.zones.switchTo(i);
+            check(harness.zones.switchTo(i),
+                  "Creator Console Zone activation resolves the complete Law closure");
             zone = harness.zones.zones()[i];
             break;
         }
@@ -195,6 +217,44 @@ int main() {
               regionRoundTrip.propertyName == "authored.left-quarter" &&
               regionRoundTrip.mapFunction.print() == selector.print(),
           "authored OntoMath pixel-set definition round-trips");
+
+    harness.zones.persistZones();
+    const nlohmann::json persistedZone = SaveSystem::readZoneIdentity("BasicPixelChanger");
+    const nlohmann::json persistedLaw =
+        SaveSystem::readLawIdentity("law-basic-pixel-changer");
+    check(persistedZone.value("lawRefs", nlohmann::json::array()) ==
+              nlohmann::json::array({"law-basic-pixel-changer"}),
+          "Zone persistence preserves its authored stable Law reference");
+    check(persistedLaw.value("identifier", std::string{}) == "law-basic-pixel-changer" &&
+              persistedLaw.value("authors", nlohmann::json::array()) ==
+                  nlohmann::json::array({"Zach"}) &&
+              persistedLaw["law"].value("authors", nlohmann::json::array()) ==
+                  nlohmann::json::array({"Zach"}) &&
+              persistedLaw.value("triggers", nlohmann::json::array()) ==
+                  nlohmann::json::array({"object-clicked"}),
+          "shared Law root persists identity, Person author, and trigger");
+
+    const std::size_t basicIndex = harness.zones.currentIndex();
+    std::size_t missingIndex = harness.zones.zones().size();
+    std::size_t noLawsIndex = harness.zones.zones().size();
+    for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
+        const auto& candidate = harness.zones.zones()[i];
+        if (!candidate) continue;
+        if (candidate->getIdentifier() == "MissingLawRoot") missingIndex = i;
+        if (candidate->getIdentifier() == "NoLaws") noLawsIndex = i;
+    }
+    check(missingIndex < harness.zones.zones().size() &&
+              !harness.zones.switchTo(missingIndex) &&
+              harness.zones.currentIndex() == basicIndex &&
+              harness.lawManager.find("law-basic-pixel-changer") != nullptr,
+          "missing Law root refuses atomically and leaves the current Zone working");
+    check(noLawsIndex < harness.zones.zones().size() &&
+              harness.zones.switchTo(noLawsIndex) &&
+              harness.lawManager.find("law-basic-pixel-changer") == nullptr,
+          "leaving the Zone releases its Zone-scoped Law");
+    check(harness.zones.switchTo(basicIndex) &&
+              harness.lawManager.find("law-basic-pixel-changer") != nullptr,
+          "re-entering the Zone restores and rebinds its shared Law root");
 
     std::printf("%s (%d failure%s)\n", failures ? "FAIL" : "PASS", failures,
                 failures == 1 ? "" : "s");

@@ -1,0 +1,48 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-basic-pixel-changer",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "law": {
+    "actionModel": {
+      "kind": 21,
+      "pixelColorPath": "@creation-channel.activeColor",
+      "pixelFacePath": "@interaction-channel.hoveredFace",
+      "pixelUPath": "@interaction-channel.hoveredU",
+      "pixelVPath": "@interaction-channel.hoveredV"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authors": [
+      "Zach"
+    ],
+    "authority": 0,
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "basic-pixel-canvas"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-basic-pixel-changer",
+    "name": "Basic Pixel Changer",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-basic-pixel-changer",
+        "entityB": "Zach",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}
