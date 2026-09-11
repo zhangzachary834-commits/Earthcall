@@ -7,6 +7,7 @@
 #include "../../Person/Person.hpp"
 #include "../../Person/Body/BodyPart/BodyPart.hpp"
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
+#include "../../ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
@@ -81,29 +82,47 @@ namespace Core {
         _camera->viewport[0] = 0;    _camera->viewport[1] = 0;
         _camera->viewport[2] = fbW;  _camera->viewport[3] = fbH;
 
-        // Refusal #6: light placement is authored world state, not a hidden
-        // camera-relative constant inside ShadingSystem. ScreenChannel is the
-        // first-mover bridge for the Screen/light modality, and its Properties
-        // are reachable from ordinary Laws through PropertyPath. The renderer
-        // still owns only backend mechanics (uniforms, GL state, GPU handles).
+        // Refusal #6: renderer state is downstream of authored reality.
         //
-        // Preserve the renderer's existing radiance coefficients here rather
-        // than inventing new authorable names that WebGPU does not yet consume.
-        // Material ambient/diffuse/specular are already authorable; the
-        // remaining global radiance/volumetric equations are the next light
-        // demystification rung, not something this seam pretends to have solved.
+        // A Zone's existing FieldNode can become the persistent illumination
+        // source by carrying the ordinary authored bool property
+        // `light.source=true`. Its registered `origin` is then the source's
+        // world-space placement. Nothing new is carved into the C++ ontology:
+        // FieldNode remains the continuous mathematical substrate, and the
+        // marker is Person/Law-authored vocabulary on a Singular.
+        //
+        // If no persistent radiant field has been authored yet, ScreenChannel
+        // preserves the previous camera-relative compatibility path. That
+        // first-mover fallback is intentionally second priority: once a Zone
+        // says where illumination lives, the renderer obeys the world.
         Singularity::Screen::ScreenChannel* screenChannel = nullptr;
         if (_lawManager) {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
-            if (screenChannel) {
-                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
-                    ? _camera->pos + screenChannel->lightCameraOffset
-                    : screenChannel->lightPosition;
-                currentRenderer().setLight(lightWorldPos,
-                                           currentRenderer().lightAmbient(),
-                                           currentRenderer().lightDiffuse(),
-                                           currentRenderer().lightSpecular());
+        }
+
+        bool persistentLightPlaced = false;
+        if (auto* root = zone.spatialRoot()) {
+            PropertyValue lightSourceValue;
+            if (root->getDynamicProperty("light.source", lightSourceValue)) {
+                if (const bool* isSource = std::get_if<bool>(&lightSourceValue);
+                    isSource && *isSource) {
+                    currentRenderer().setLight(root->origin,
+                                               currentRenderer().lightAmbient(),
+                                               currentRenderer().lightDiffuse(),
+                                               currentRenderer().lightSpecular());
+                    persistentLightPlaced = true;
+                }
             }
+        }
+
+        if (!persistentLightPlaced && screenChannel) {
+            const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                ? _camera->pos + screenChannel->lightCameraOffset
+                : screenChannel->lightPosition;
+            currentRenderer().setLight(lightWorldPos,
+                                       currentRenderer().lightAmbient(),
+                                       currentRenderer().lightDiffuse(),
+                                       currentRenderer().lightSpecular());
         }
 
         {
