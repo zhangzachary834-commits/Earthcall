@@ -87,18 +87,19 @@ Earthcall/
     Identity/              First Mover register, identity ledger, key pairs, claims
     Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager · Formation
+                             py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
       Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
       FirstMoverOntology/  FirstMoverWindowTools, Legacy, TalkingRobotGuyAPI
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-                             Adapters/  MacOSAccessibilityAdapter
                              API/       EarthcallAPI, SecurityManager
-                             mcp/       earthcall-mcp-server.js
-                             py/        app.py
+                             Adapters/  MacOSAccessibilityAdapter
                              Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
                              Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+                             mcp/       earthcall-mcp-server.js
+                             py/        app.py
       Input/               the Input modality
                              Interaction/  InteractionChannel, ControlPatterns
                              Keyboard/     KeyboardHandler
@@ -109,10 +110,18 @@ Earthcall/
                              py/  engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
-      Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
-      Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
+                             Adapters/
+                             py/
+      Screen/              the Screen/Light modality (Renderer, BrushSystem, ScreenRecorder)
+                             GL/
+                             WebGPU/
+      Storage/             the Storage modality (SaveSystem, CloudStorage, FileChannel, StreamChannel, VirtualFileSystem)
+                             FlatBuffers/
+                             Schema/
+                             Serialization/
     Time/                  Moment (instant or interval); the world clock itself lives on Universe
-    ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
+    ZonesOfEarth/          Zone · HomesOfEarth · Physics · AuthorsOfLaw (Law) · Ourverse
+                             py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -177,7 +186,7 @@ into their proper ontological homes:
 | `Rendering/` | `Singularity/Screen/` | **Done.** Output channel for the Screen/Light modality. Rendering is how Earthcall acts in the light modality. |
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
-| `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `BinaryPack`, `Frontier`). |
+| `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `FileChannel`, `StreamChannel`, `VirtualFileSystem`). |
 | `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
