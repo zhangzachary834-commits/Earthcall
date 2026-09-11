@@ -107,6 +107,7 @@ void ScreenChannel::buildProperties() {
     // later FieldNodes/OntoMath can drive these same properties through Laws.
     // The picker probes this registry, so these paths become authorable without
     // a second hand-maintained vocabulary.
+    boolean("light.enabled", &ScreenChannel::lightEnabled);
     boolean("light.cameraRelative", &ScreenChannel::lightCameraRelative);
     vector3("light.position", &ScreenChannel::lightPosition);
     vector3("light.cameraOffset", &ScreenChannel::lightCameraOffset);
