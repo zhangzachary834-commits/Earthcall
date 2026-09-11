@@ -241,22 +241,22 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 Singular& t = const_cast<Singular&>(target);
                 PropertyValue lhs;
                 if (!lawGetValue(t, lhsPath, lhs)) {
-                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - Property Not Found]: " + desc, {
-                        {"targetId", t.getIdentifier()}, {"result", false}
-                    });
+                    if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                        ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - Property Not Found]: " + desc, {
+                            {"targetId", t.getIdentifier()}, {"result", false}
+                        });
+                    }
                     return false;
                 }
                 PropertyValue rhs = rhsLiteral;
                 if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) {
-                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
-                        {"targetId", t.getIdentifier()}, {"result", false}
-                    });
+                    if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                        ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
+                            {"targetId", t.getIdentifier()}, {"result", false}
+                        });
+                    }
                     return false;
                 }
-                
-                std::string lhsStr = "(unknown)";
-                if (const std::string* s = std::get_if<std::string>(&lhs)) lhsStr = *s;
-                else if (const double* d = std::get_if<double>(&lhs)) lhsStr = std::to_string(*d);
 
                 double a = 0.0, b = 0.0;
                 const bool numeric =
@@ -278,14 +278,19 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                         break;
                     }
                 }
-                std::string logMsg = "Condition Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc;
-                if (!res) {
-                    logMsg += " (LHS was: " + lhsStr + ")";
+                if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                    std::string lhsStr = "(unknown)";
+                    if (const std::string* s = std::get_if<std::string>(&lhs)) lhsStr = *s;
+                    else if (const double* d = std::get_if<double>(&lhs)) lhsStr = std::to_string(*d);
+
+                    std::string logMsg = "Condition Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc;
+                    if (!res) {
+                        logMsg += " (LHS was: " + lhsStr + ")";
+                    }
+                    ECA::LawAuditLogger::instance().log("CONDITION", logMsg, {
+                        {"targetId", t.getIdentifier()}, {"result", res}
+                    });
                 }
-                
-                ECA::LawAuditLogger::instance().log("CONDITION", logMsg, {
-                    {"targetId", t.getIdentifier()}, {"result", res}
-                });
                 return res;
             };
         }
@@ -423,9 +428,11 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                         if (p && p(e, target)) { res = true; break; }
                     }
                 }
-                ECA::LawAuditLogger::instance().log("CONDITION", "Logic Node Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc, {
-                    {"targetId", target.getIdentifier()}, {"result", res}
-                });
+                if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                    ECA::LawAuditLogger::instance().log("CONDITION", "Logic Node Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc, {
+                        {"targetId", target.getIdentifier()}, {"result", res}
+                    });
+                }
                 return res;
             };
         }

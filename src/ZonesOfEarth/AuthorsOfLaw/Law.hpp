@@ -330,6 +330,7 @@ public:
     // ------------------------------------------------------------------
     const std::vector<std::string>& requiredProperties() const { return _requiredProperties; }
     const std::vector<ConditionPredicate>& compiledGates() const { return _compiledGates; }
+    bool writesQualifiedRoots() const { return _writesQualifiedRoots; }
     bool couldApplyTo(Singular& being) const;
 
     void setConditionModel(ConditionModel model);
@@ -454,6 +455,7 @@ private:
     std::vector<ApplicationRecord> _applicationLog;
     std::vector<std::string> _requiredProperties;   // derived at recompile()
     std::vector<ConditionPredicate> _compiledGates;
+    bool _writesQualifiedRoots{false};
 };
 
 struct LawRegisteredEvent {
@@ -766,6 +768,11 @@ private:
     // fact is a deaf `Related` law — the defect rung 0 exists to fix. That
     // asymmetry is why the bulk paths clear rather than try to be precise.
     std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateIndex;
+    std::unordered_map<std::string, std::vector<FactPtr>> _stateFactsBySubjectAttr;
+    std::unordered_map<std::string, FactPtr> _factById;
+    std::unordered_map<std::string, std::vector<std::size_t>> _factAlphaNodes;
+    std::unordered_map<std::string, std::vector<std::size_t>> _factBetaNodes;
+    std::unordered_set<std::string> _agendaFactIds;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;
