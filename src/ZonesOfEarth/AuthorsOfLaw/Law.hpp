@@ -329,6 +329,7 @@ public:
     // is correct — it really is about all of them.
     // ------------------------------------------------------------------
     const std::vector<std::string>& requiredProperties() const { return _requiredProperties; }
+    const std::vector<ConditionPredicate>& compiledGates() const { return _compiledGates; }
     bool couldApplyTo(Singular& being) const;
 
     void setConditionModel(ConditionModel model);
@@ -452,6 +453,7 @@ private:
     std::vector<Action> _actions;
     std::vector<ApplicationRecord> _applicationLog;
     std::vector<std::string> _requiredProperties;   // derived at recompile()
+    std::vector<ConditionPredicate> _compiledGates;
 };
 
 struct LawRegisteredEvent {

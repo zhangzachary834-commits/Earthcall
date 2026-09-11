@@ -217,9 +217,16 @@ void Law::setActionModel(ActionModel model) {
 // a model are cleared — first-mover closures registered directly through
 // addCondition/addAction survive untouched on model-less laws.
 void Law::recompile() {
+    _compiledGates.clear();
     if (_conditionModel) {
         _conditionPredicates.clear();
         addCondition(_conditionModel->describe(), _conditionModel->compile());
+        
+        std::vector<const ConditionNode*> gates;
+        _conditionModel->collectHoistableGates(gates);
+        for (const auto* gate : gates) {
+            _compiledGates.push_back(gate->compile());
+        }
     }
     if (_actionModel) {
         _actions.clear();
@@ -1769,8 +1776,12 @@ void LawManager::syncProphetic() {
     }
 }
 
+static int global_prop_hears_count = 0;
+static int global_prop_hears_true_count = 0;
+
 bool LawManager::propheticHears(const std::string& propertyName) const {
     ++_propheticCounters.asked;
+    global_prop_hears_count++;
 
     // Three ways to fail open, in the order they are cheapest to check.
     //
@@ -1778,19 +1789,19 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
     //     so the index describes a different law set than the one that is
     //     live. One integer compare, and it is the reason the gate is safe to
     //     consult from a callback that runs between ticks.
-    if (_propheticRevision != Law::textRevision()) return true;
+    if (_propheticRevision != Law::textRevision()) { global_prop_hears_true_count++; return true; }
     // (2) INCOMPLETE. Some law reads through a closure, a collision test, or a
     //     condition kind this build cannot read. Nothing may be pruned around
     //     a law whose reads are not enumerable.
-    if (!_prophetic.complete()) return true;
+    if (!_prophetic.complete()) { global_prop_hears_true_count++; return true; }
     // (3) FOREIGN ALPHA. A node bound with a hand-written predicate (the graph
     //     editor, a test, a channel) matches on whatever it likes, and no law
     //     text accounts for it. Deliberately NOT hasOpaqueBoundAlpha(), which
     //     counts every compiled condition too — an authored condition's reads
     //     are exactly the law's own text, which this index has read.
-    if (_rete.hasForeignBoundAlpha()) return true;
+    if (_rete.hasForeignBoundAlpha()) { global_prop_hears_true_count++; return true; }
 
-    if (_prophetic.anyConditionReads(propertyName)) return true;
+    if (_prophetic.anyConditionReads(propertyName)) { global_prop_hears_true_count++; return true; }
     ++_propheticCounters.filtered;
     return false;
 }
@@ -1798,30 +1809,32 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
 std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
-    // Bring the possibility-space index up to date with the law text before
-    // anything consults it. Cheap when nothing moved: one integer compare.
     syncProphetic();
+    auto Tp = glfwGetTime();
 
-    // Bring compiled terminals up to date with the conditions they were
-    // compiled from, before anything reads either. Conditions are edited from
-    // the graph window, from tools, and from loaded worlds; asking here means
-    // no editing path has to remember to recompile, and the reactive and
-    // sweep evaluations cannot be looking at different conditions.
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
     auto T1 = glfwGetTime();
+    
+    double totalReteTime = 0.0;
+    double totalApplyTime = 0.0;
+    double totalSweepTime = 0.0;
+    int reteCount = 0;
+    int sweepCount = 0;
 
     // Introduce any being the network has not met. Only while connected: the
     // property-change callback installed by connectToEventBus() is what keeps
     // a seeded fact current, and a snapshot nothing refreshes is worse than no
     // snapshot — the reactive path would answer confidently from stale values.
     // Disconnected, the sweep below reads the beings themselves and is right.
+    auto t_before_seed = glfwGetTime();
     if (_connected) {
         for (Singular* being : Universe::instance().beings()) {
             seedStateFacts(being);
         }
     }
+    auto t_after_seed = glfwGetTime();
 
     // Once per tick, for every law — not once per law. This is the whole point
     // of the index: the world is walked a single time here, and each sweeping
@@ -1835,13 +1848,26 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     refreshVocabularyIndex();
 
     auto T2 = glfwGetTime();
+    
+    double seed_ms = (t_after_seed - t_before_seed) * 1000.0;
+    double vocab_ms = (T2 - t_after_seed) * 1000.0;
+    static double total_seed_ms = 0.0;
+    static double total_vocab_ms = 0.0;
+    total_seed_ms += seed_ms;
+    total_vocab_ms += vocab_ms;
 
+    auto t_eval_dirty_start = glfwGetTime();
     if (_rete.hasDirtyFacts()) {
         _rete.evaluateDirty();
         _dirty = true;
     }
+    double eval_dirty_ms = (glfwGetTime() - t_eval_dirty_start) * 1000.0;
+    static double total_eval_dirty_ms = 0.0;
+    total_eval_dirty_ms += eval_dirty_ms;
 
     std::vector<Law::ApplicationRecord> records;
+    static int total_agenda_size = 0;
+    static double total_agenda_loop_ms = 0.0;
     for (int round = 0; round < _maxChainRounds && _dirty; ++round) { if(round == 7) std::cout << "MAX CHAIN ROUNDS HIT!" << std::endl;
         _dirty = false;
         // Facts asserted before this round are consumed by it; facts asserted
@@ -1852,6 +1878,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // _rete.evaluate() call sat here whose result was discarded — the
         // last trace of the rebuild-every-frame design.)
         std::vector<ReteActivation> agenda = _rete.drainAgenda();
+        total_agenda_size += agenda.size();
+        auto t_agenda_start = glfwGetTime();
         for (const auto& activation : agenda) {
             Law* law = find(activation.lawId);
             if (!law) continue;
@@ -1915,6 +1943,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
             applyAndMaybeDrive(*law, *subject, records);
         }
+        total_agenda_loop_ms += (glfwGetTime() - t_agenda_start) * 1000.0;
         _rete.retractFirst(consumed);
     }
 
@@ -1929,6 +1958,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     // and mutating _laws under the loop would invalidate the iterator.
     // ------------------------------------------------------------------
     const std::vector<std::shared_ptr<Law>> continuousLaws = _laws;
+    auto t_laws_start = glfwGetTime();
     for (const auto& law : continuousLaws) {
         if (!law || law->activation() == Law::Activation::OnEvent) continue;
         if (!law->isEnabled() || !law->isAuthored()) continue;
@@ -1982,11 +2012,15 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         // tests/law/rete_compile_test.cpp, which went red the day it was
         // dropped ("an edge fires once, not once per tick").
         if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
+            reteCount++;
+            auto tR1 = glfwGetTime();
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
             for (const auto& info : termIt->second) termIds.push_back(info.nodeId);
 
             std::vector<Singular*> subjects = _rete.collectTerminalSubjects(termIds);
+            auto tR2 = glfwGetTime();
+            totalReteTime += (tR2 - tR1);
 
             // WHOM the law is about is the author's answer, not the network's.
             // The terminal memories hold every being that satisfies the
@@ -2042,12 +2076,15 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
                 applyAndMaybeDrive(*law, *subject, records);
             }
+            totalApplyTime += (glfwGetTime() - tR2);
             continue;
         }
 
         // OnBecomeTrue and laws without Rete terminals: full sweep path.
         // Edge detection requires knowing when a being LEAVES the match set,
         // so the full sweep is still necessary here.
+        sweepCount++;
+        auto tS1 = glfwGetTime();
         std::vector<Singular*> subjects = sweepSubjects(*law);
 
         for (Singular* subject : subjects) {
@@ -2080,9 +2117,31 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             // edge and runs it to the end of its authored bounds.
             applyAndMaybeDrive(*law, *subject, records);
         }
+        totalSweepTime += (glfwGetTime() - tS1);
     }
-
+    static double total_laws_loop_ms = 0.0;
+    total_laws_loop_ms += (glfwGetTime() - t_laws_start) * 1000.0;
+    static int tickCount = 0;
     auto T3 = glfwGetTime();
+    double rest_of_tick = (T3 - T2) * 1000.0;
+    static double total_rest_of_tick = 0.0;
+    total_rest_of_tick += rest_of_tick;
+
+    if (tickCount++ % 24 == 0) {
+        
+        
+        printf("TICK: propHears=%d/%d, agenda_size=%d, agenda_loop=%.3f, laws_loop=%.3f, reteCount=%d (%.3f ms rete, %.3f ms apply), sweepCount=%d (%.3f ms sweep), seed=%.3f, vocab=%.3f, evaluateDirty=%.3f, restOfTick=%.3f\n",
+            global_prop_hears_true_count, global_prop_hears_count, total_agenda_size, total_agenda_loop_ms, total_laws_loop_ms, reteCount, totalReteTime*1000.0, totalApplyTime*1000.0, sweepCount, totalSweepTime*1000.0, total_seed_ms, total_vocab_ms, total_eval_dirty_ms, total_rest_of_tick);
+        global_prop_hears_count = 0;
+        global_prop_hears_true_count = 0;
+        total_agenda_size = 0;
+        total_agenda_loop_ms = 0.0;
+        total_laws_loop_ms = 0.0;
+        total_seed_ms = 0.0;
+        total_vocab_ms = 0.0;
+        total_eval_dirty_ms = 0.0;
+        total_rest_of_tick = 0.0;
+    }
     runDriveSessions(records);
     auto T4 = glfwGetTime();
     reapUnmade();
@@ -2120,21 +2179,33 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
 }
 
 bool LawManager::gatesHold(const Law& law) const {
-    const ConditionNode* model = law.conditionModel();
-    if (!model) return true;
+    const auto& compiledGates = law.compiledGates();
+    if (compiledGates.empty()) return true;
 
-    std::vector<const ConditionNode*> gates;
-    model->collectHoistableGates(gates);
-    if (gates.empty()) return true;
+    // A gate ignores its subject, so ANY Singular answers it identically — and
+    // the law itself is one, always alive, and never a member of the world it
+    // is asked about. Deliberately not a member of the population: a world may
+    // legitimately be empty at this moment.
+    ECA::Event probe;
+    probe.type = "law-gate";
+    Singular& standIn = const_cast<Law&>(law);
+    bool gatesInitiallyTrue = true;
+    for (const auto& predicate : compiledGates) {
+        if (!predicate(probe, standIn)) {
+            gatesInitiallyTrue = false;
+            break;
+        }
+    }
 
-    // THE GUARD THAT MAKES HOISTING SOUND. Evaluating a gate once for the whole
-    // sweep assumes nothing moves it during that sweep. The law's own actions
-    // are the one thing that certainly runs between subjects — so if this law
-    // writes through ANY qualified root, it could flip its own gate partway,
-    // and the per-subject answers would legitimately differ. Refuse to hoist.
-    //
-    // Other laws cannot interfere: a tick runs one law's sweep to completion
-    // before the next, and events a law fires become facts for the NEXT round.
+    // If the gate is already false, the law won't run AT ALL, so it can't possibly
+    // execute its actions to flip the gate. We can safely hoist the FALSE!
+    if (!gatesInitiallyTrue) return false;
+
+    // THE GUARD THAT MAKES HOISTING TRUE SOUND.
+    // If the gates are TRUE, but the law writes to a qualified root, the law might 
+    // flip the gate to FALSE partway through its per-subject execution.
+    // In that case, we CANNOT hoist the true! We must return true to force the 
+    // per-subject fallback loop to evaluate the gate properly for each subject.
     if (law.actionModel()) {
         std::vector<PropertyPath> writes;
         law.actionModel()->collectPaths(writes);
@@ -2146,16 +2217,6 @@ bool LawManager::gatesHold(const Law& law) const {
         }
     }
 
-    // A gate ignores its subject, so ANY Singular answers it identically — and
-    // the law itself is one, always alive, and never a member of the world it
-    // is asked about. Deliberately not a member of the population: a world may
-    // legitimately be empty at this moment.
-    ECA::Event probe;
-    probe.type = "law-gate";
-    Singular& standIn = const_cast<Law&>(law);
-    for (const ConditionNode* gate : gates) {
-        if (!gate->compile()(probe, standIn)) return false;
-    }
     return true;
 }
 

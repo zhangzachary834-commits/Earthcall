@@ -246,8 +246,8 @@ void Engine::initLogic() {
     // after minting the boot Zones so an empty Sanctum/Home is filled
     // from the store rather than a second copy being born.
     mgr.hydrateFromZoneStore();
-    _world.ensureGatheringZone(mgr);
-    if (_lawManager) _world.registerMetalaws(*_lawManager);
+    _ourverse.ensureGatheringZone(mgr);
+    if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = std::make_unique<ElementalToolHandler>(&mgr);
@@ -281,7 +281,7 @@ void Engine::initLogic() {
         ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
         ctx.person = getPerson();
         ctx.lawManager = getLawManager();
-        ctx.ourverse = &_world;
+        ctx.ourverse = &_ourverse;
         ctx.worldTime = &_worldTime;
         ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
         mgr.saveStateWithLog("", ctx);

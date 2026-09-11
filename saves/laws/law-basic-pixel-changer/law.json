@@ -7,7 +7,7 @@
   "law": {
     "actionModel": {
       "kind": 21,
-      "pixelColorPath": "@creation-channel.activeColor",
+      "pixelColorPath": "@material-color-picker.selectedColor",
       "pixelFacePath": "@interaction-channel.hoveredFace",
       "pixelUPath": "@interaction-channel.hoveredU",
       "pixelVPath": "@interaction-channel.hoveredV"

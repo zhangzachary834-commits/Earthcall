@@ -4,8 +4,17 @@ file_path = "src/ZonesOfEarth/Physics/Physics.cpp"
 with open(file_path, "r") as f:
     content = f.read()
 
-content = content.replace("void updateBodies(std::vector<std::shared_ptr<Object>>& objects, float deltaTime,", "void updateBodies(std::vector<std::shared_ptr<Object>>& objects, float deltaTime, float gravityAccel, float airResistance, float groundY) { return; }\nvoid old_updateBodies(std::vector<std::shared_ptr<Object>>& objects, float deltaTime,")
+find_str = """void updateBodies(float dt) {
+    auto& u = Universe::instance();"""
 
-with open(file_path, "w") as f:
-    f.write(content)
-print("Disabled physics!")
+replace_str = """void updateBodies(float dt) {
+    return; // STUBBED FOR PROFILING
+    auto& u = Universe::instance();"""
+
+if find_str in content:
+    content = content.replace(find_str, replace_str)
+    with open(file_path, "w") as f:
+        f.write(content)
+    print("Patched Physics.cpp")
+else:
+    print("Physics.cpp already patched or string not found.")

@@ -1,0 +1,82 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-material-color-picker-apply",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "law": {
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@material.material-color-picker-preview.baseColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@material.authored-color-target.baseColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
+        }
+      ]
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authors": [
+      "Zach"
+    ],
+    "authority": 0,
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "material-color-picker"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-material-color-picker-apply",
+    "name": "Material Color Picker \u2014 apply to Material",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-material-color-picker-apply",
+        "entityB": "Zach",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "color-selection-changed"
+  ]
+}

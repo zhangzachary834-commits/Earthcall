@@ -778,7 +778,10 @@ void checkLoadTime(const std::string& filename, double loadMs, size_t objects) {
 
 } // namespace
 
+#include <GLFW/glfw3.h>
+
 int main(int argc, char** argv) {
+    glfwInit();
     // Line-buffered: this test prints as it goes and is the one test in the
     // suite long enough that a Person will want to watch it work.
     std::setvbuf(stdout, nullptr, _IOLBF, 0);

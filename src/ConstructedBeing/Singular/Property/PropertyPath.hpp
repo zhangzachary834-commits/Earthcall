@@ -59,6 +59,7 @@ private:
     std::vector<std::vector<Earthcall::StringId>> _joinedIds;
 
 public:
+    const std::vector<std::vector<Earthcall::StringId>>& joinedIds() const { return _joinedIds; }
 
     // The deepest Property the path reaches, or nullptr. When the last segment
     // is a vec3 component it is reported through trailingComponent ("x"/"y"/"z")
