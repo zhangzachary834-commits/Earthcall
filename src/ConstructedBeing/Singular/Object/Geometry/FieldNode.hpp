@@ -67,6 +67,7 @@ public:
     const std::shared_ptr<OntoMath::VectorField> vectorField;
 
     nlohmann::json toJson() const;
+    void applyJson(const nlohmann::json& j);
     static std::shared_ptr<FieldNode> fromJson(const nlohmann::json& j);
 
 protected:
