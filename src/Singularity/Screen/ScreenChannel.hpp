@@ -15,6 +15,7 @@ namespace Screen {
 // Laws can read and govern:
 //   - @screen-channel.enabled: master switch for screen rendering
 //   - @screen-channel.backgroundColor: screen clear / background color (vec3)
+//   - @screen-channel.light.enabled: whether scene lighting is applied
 //   - @screen-channel.light.cameraRelative: whether the renderer derives the
 //     light's world position from the Person's camera plus light.cameraOffset
 //   - @screen-channel.light.position: absolute world-space light position when
@@ -65,15 +66,17 @@ public:
     // First-order authored illumination placement.
     //
     // These are WORLD MEANING, not GPU mechanism: a Person can mean something
-    // by changing where illumination comes from, so NO_BLACK_BOX.md requires
-    // them to be ordinary Properties. The backend still owns pipelines,
-    // uniforms and driver handles beneath the Kernel; ScreenChannel owns only
-    // the authored facts the renderer consumes.
+    // by changing whether illumination exists and where it comes from, so
+    // NO_BLACK_BOX.md requires them to be ordinary Properties. The backend
+    // still owns pipelines, uniforms and driver handles beneath the Kernel;
+    // ScreenChannel owns only the authored facts the renderer consumes.
     //
-    // The defaults preserve the old ShadingSystem behavior exactly: the active
-    // light follows the Person's camera at cameraPos + (2,5,2). A Law can make
-    // it world-fixed by setting light.cameraRelative=false and writing
-    // light.position, or can animate either vector as any other property.
+    // The defaults preserve the old ShadingSystem behavior exactly: lighting
+    // is on, and the active light follows the Person's camera at
+    // cameraPos + (2,5,2). A Law can make it world-fixed by setting
+    // light.cameraRelative=false and writing light.position, or can animate
+    // either vector as any other property.
+    bool      lightEnabled = true;
     bool      lightCameraRelative = true;
     glm::vec3 lightPosition{2.0f, 5.0f, 2.0f};
     glm::vec3 lightCameraOffset{2.0f, 5.0f, 2.0f};
