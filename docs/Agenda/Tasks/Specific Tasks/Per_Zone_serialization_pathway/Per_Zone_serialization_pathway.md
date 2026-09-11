@@ -146,6 +146,53 @@ Also updated `no_black_box_test` `kWriteExemptions` for `authoritativeAxis` norm
 
 Items 2-4 of the repair boundary (Zone-scoped matter generations, refuse-not-default on missing legacy placement, Zone-scoped ownerless-matter recovery with Person-choice on conflict) remain for future passes.
 
+### Synthesis Studio authored-pose recovery — 2026-09-11
+
+Zach reported the remaining lived failure directly: every 3D form in the
+Synthesis Studio appeared as a cube except the orbiting sphere ecology. That
+description identified `SynthesisStudio.LivingInstrument` in particular: it
+contains the `studio.living.satellite.*` beings. Codex traced this to an
+important aftermath of the original omission rather than a failure of the new
+writer: after the broken boot supplied identity transforms, a later
+`persistZones()` faithfully serialized those already-collapsed live values.
+The repair above prevents future loss but cannot infer the old values back into
+an identity that now explicitly says “unit cube at the origin.”
+
+At Zach's explicit request to fix the visible Studio, Codex performed a
+field-scoped recovery from the corresponding authored `.ecform` roots:
+
+- `SynthesisStudio`: 193 current Objects; all membership and 123 later
+  target-only Sphere beings preserved; 70 source IDs matched with zero
+  `shapeKind` mismatches; only `transform` and `center` changed on the 32
+  matching 3D Objects.
+- `SynthesisStudio.LivingInstrument`: all 137 source and target IDs matched
+  one-to-one with zero `shapeKind` mismatches; only `transform` and `center`
+  changed on its 67 3D Objects (29 Cube-topology rectangular forms and 38
+  Sphere-topology resonators/satellites).
+- The sources were `saves/worlds/synthesis_studio.ecform` and
+  `saves/worlds/synthesis_studio_living.ecform`. Their furniture poses agree
+  with `scripts/author_synthesis_studio.py` and the last correct historical
+  Zone revision: floor `14×0.2×14 @ (0,-0.1,0)`, desk
+  `5.2×0.8×2.4 @ (0,0.4,0)`, and easel `4.2×2.4×0.1 @ (0,2.2,2.4)`.
+- Exact pre-repair bytes remain at
+  `saves/backups/SynthesisStudio.pose-recovery-2026-09-11/zone.before.json`
+  and
+  `saves/backups/SynthesisStudio.LivingInstrument.pose-recovery-2026-09-11/zone.before.json`.
+  The recovery tool verifies expected source/target SHA-256 values, refuses
+  duplicate IDs or shape mismatches, verifies its backup, and atomically
+  replaces the target: `scripts/recover_zone_object_pose.py`.
+
+Semantic before/after comparison proved Object membership unchanged and every
+non-`transform`/`center` field unchanged. The two existing executable guards,
+`object_semantic_pose_test` and `object_pose_serialization_guard_test`, passed
+2/2 after recovery. Desktop manifestation remains a Person witness: fully quit
+the already-running broken instance **without saving its stale live Zone**,
+relaunch, and Move to each Studio Zone from Creator Console → Zones.
+
+Origin: Zach's live report and explicit repair request. Diagnosis, preservation
+tool, and field-scoped recovery: Codex (GPT-5), session
+`01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-11 10:29 PDT.
+
 ## Law closure first rung — 2026-09-10
 
 **Implemented by Codex (GPT-5), session

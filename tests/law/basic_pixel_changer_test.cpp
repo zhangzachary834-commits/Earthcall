@@ -88,9 +88,10 @@ int main() {
                                isolated.path / "zones/BasicPixelChanger/zone.json");
     std::filesystem::copy_file(sourceLaw,
                                isolated.path / "laws/law-basic-pixel-changer/law.json");
-    const std::array<const char*, 4> pickerLawIds{
+    const std::array<const char*, 6> pickerLawIds{
         "law-material-color-picker-red", "law-material-color-picker-green",
-        "law-material-color-picker-blue", "law-material-color-picker-apply"};
+        "law-material-color-picker-blue", "law-material-color-picker-chromatic",
+        "law-material-color-picker-value", "law-material-color-picker-apply"};
     for (const char* lawId : pickerLawIds) {
         const auto source = sourceRoot / "laws" / lawId / "law.json";
         const auto destination = isolated.path / "laws" / lawId / "law.json";
@@ -135,20 +136,26 @@ int main() {
     Object* redStrip = findObject(*zone, "material-color-picker-red");
     Object* greenStrip = findObject(*zone, "material-color-picker-green");
     Object* blueStrip = findObject(*zone, "material-color-picker-blue");
+    Object* chromaticField = findObject(*zone, "material-color-picker-chromatic");
+    Object* valueStrip = findObject(*zone, "material-color-picker-value");
     auto* creation = Singularity::Core::CreationChannel::find(harness.lawManager);
     auto* law = harness.lawManager.find("law-basic-pixel-changer");
     check(canvas != nullptr, "authored canvas loaded");
     check(picker != nullptr, "authored Material color picker loaded");
     check(redStrip != nullptr && greenStrip != nullptr && blueStrip != nullptr,
           "authored RGB picker strips loaded");
+    check(chromaticField != nullptr && valueStrip != nullptr,
+          "authored 2D chromatic field and value strip loaded");
     check(creation != nullptr, "Creation channel supplies the selected color Property");
     check(law != nullptr && law->isAuthored(), "changer Law loaded with a recorded author");
-    if (!canvas || !picker || !creation || !law) return 1;
+    if (!canvas || !picker || !redStrip || !greenStrip || !blueStrip ||
+        !chromaticField || !valueStrip || !creation || !law) return 1;
 
     const glm::vec3 initialColor(0.10f, 0.70f, 0.25f);
     picker->setDynamicProperty("selectedColor", PropertyValue(initialColor));
     creation->activeColor = initialColor; // compatibility bridge, not the pixel source
-    std::vector<Object*> reachable{canvas, redStrip, greenStrip, blueStrip, picker};
+    std::vector<Object*> reachable{canvas, redStrip, greenStrip, blueStrip,
+                                   chromaticField, valueStrip, picker};
     const auto frame = [&](float x, float y, bool left) {
         Singularity::Input::InteractionChannel::Sense sense;
         sense.pointerX = x;
@@ -160,18 +167,40 @@ int main() {
         harness.lawManager.tick();
     };
 
-    // The picker is a normal Sense-Act instrument.  Clicking an authored
-    // strip drives the selectedColor Property, mirrors the legacy creation
-    // channel, and publishes the material-apply event through Laws.
-    frame(800.0f, 256.0f, false);
-    frame(800.0f, 256.0f, true);
-    frame(800.0f, 256.0f, false);
-    const glm::vec3 pickedColor(0.25f, 0.70f, 0.25f);
+    // The chromatic field is a normal Sense-Act instrument: u authors hue,
+    // 1-v authors saturation, and a six-piece OntoMath model maps HSV to RGB.
+    // At (u=.5, v=.25), HSV(.5,.75,1) is cyan (0.25,1,1).
+    frame(860.0f, 170.0f, false);
+    frame(860.0f, 170.0f, true);
+    frame(860.0f, 170.0f, false);
     Property* selectedColorProperty = picker->findProperty("selectedColor");
     check(selectedColorProperty != nullptr &&
               std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              near(std::get<glm::vec3>(selectedColorProperty->value()),
+                   glm::vec3(0.25f, 1.0f, 1.0f)),
+          "2D hue-saturation click maps through authored OntoMath into RGB");
+
+    // The separate Value slider supplies the missing third HSV dimension.
+    // It preserves hue/saturation and scales the selected cyan to 40% value.
+    frame(830.0f, 420.0f, false);
+    frame(830.0f, 420.0f, true);
+    frame(830.0f, 420.0f, false);
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              near(std::get<glm::vec3>(selectedColorProperty->value()),
+                   glm::vec3(0.10f, 0.40f, 0.40f)),
+          "value slider completes the full HSV color range through a Law");
+
+    // Direct component sliders remain available as the basic form. Red=.25
+    // changes only that channel, leaving the green/blue values at .40.
+    frame(785.0f, 501.0f, false);
+    frame(785.0f, 501.0f, true);
+    frame(785.0f, 501.0f, false);
+    const glm::vec3 pickedColor(0.25f, 0.40f, 0.40f);
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
               near(std::get<glm::vec3>(selectedColorProperty->value()), pickedColor),
-          "clicking the authored red strip changes selectedColor through a Law");
+          "direct red slider changes one selectedColor component through a Law");
     check(near(creation->activeColor, pickedColor),
           "picker Law mirrors selectedColor into the Creation channel bridge");
     auto targetMaterial = materials.get("authored-color-target");
@@ -270,6 +299,8 @@ int main() {
                                      "law-material-color-picker-red",
                                      "law-material-color-picker-green",
                                      "law-material-color-picker-blue",
+                                     "law-material-color-picker-chromatic",
+                                     "law-material-color-picker-value",
                                      "law-material-color-picker-apply"}),
           "Zone persistence preserves its authored stable Law references");
     check(persistedLaw.value("identifier", std::string{}) == "law-basic-pixel-changer" &&

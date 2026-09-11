@@ -2498,7 +2498,14 @@ bool LawManager::remove(const std::string& lawId) {
     _reteTerminals.erase(lawId);
     _compiledConditionRevision.erase(lawId);
     _lawFormation.removeMember(it->get());
+
+    // Detach the owning reference before final destruction. Singular's
+    // release callback walks the live Law register; destroying a Law while
+    // its shared_ptr is still visible here makes that callback call into a
+    // half-destructed Law.
+    std::shared_ptr<Law> removed = std::move(*it);
     _laws.erase(it);
+    removed.reset();
     Law::bumpTextRevision();
     return true;
 }

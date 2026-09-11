@@ -11,8 +11,8 @@ by stable identifier/name instead of replacing the Zone snapshot.
 from __future__ import annotations
 
 import base64
+import colorsys
 import json
-import math
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +37,8 @@ def rgba_texture(size: int, sample) -> str:
     return base64.b64encode(bytes(pixels)).decode("ascii")
 
 
-def material(name: str, texture: str | None = None, color=(1.0, 1.0, 1.0)) -> dict[str, Any]:
+def material(name: str, texture: str | None = None, color=(1.0, 1.0, 1.0),
+             texture_size: int = 32) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ambient": 0.2,
         "baseColor": list(color),
@@ -48,7 +49,7 @@ def material(name: str, texture: str | None = None, color=(1.0, 1.0, 1.0)) -> di
         "specular": 1.0,
     }
     if texture is not None:
-        out["faceTextures"] = [{"size": 32, "pixelsB64": texture}]
+        out["faceTextures"] = [{"size": texture_size, "pixelsB64": texture}]
     return out
 
 
@@ -90,20 +91,80 @@ def scalar_node(variable: str) -> dict[str, Any]:
     return {"op": 0, "scalarForm": {"terms": [{"c": 1.0, "factors": {variable: 1.0}}]}}
 
 
+def scalar_terms(*terms: tuple[float, dict[str, float]]) -> dict[str, Any]:
+    return {
+        "op": 0,
+        "scalarForm": {
+            "terms": [{"c": coefficient, "factors": factors}
+                      for coefficient, factors in terms]
+        },
+    }
+
+
 def vector_node(variable: str) -> dict[str, Any]:
     return {"op": 1, "var": variable}
+
+
+def vector_construct(*components: dict[str, Any]) -> dict[str, Any]:
+    return {"op": 2, "children": list(components)}
 
 
 def everywhere(node: dict[str, Any], variable: str) -> dict[str, Any]:
     return {"input": variable, "pieces": [{"mathNode": node}]}
 
 
-def map_action(path: str, node: dict[str, Any], variable: str, source: str) -> dict[str, Any]:
+def map_action(path: str, node: dict[str, Any], variable: str,
+               sources: str | dict[str, str]) -> dict[str, Any]:
     return {
         "kind": 8,
         "path": path,
         "function": everywhere(node, variable),
-        "bindings": {variable: source},
+        "bindings": {variable: sources} if isinstance(sources, str) else sources,
+    }
+
+
+def hsv_piecewise() -> dict[str, Any]:
+    """Exact HSV→RGB as six authored OntoMath pieces over h in [0,1]."""
+    v = scalar_terms((1.0, {"v": 1.0}))
+    m = scalar_terms((1.0, {"v": 1.0}), (-1.0, {"v": 1.0, "s": 1.0}))
+    rising = lambda offset: scalar_terms(
+        (1.0, {"v": 1.0}), (-1.0, {"v": 1.0, "s": 1.0}),
+        (-offset, {"v": 1.0, "s": 1.0}),
+        (6.0, {"h": 1.0, "v": 1.0, "s": 1.0}))
+    falling = lambda offset: scalar_terms(
+        (1.0, {"v": 1.0}), (-1.0, {"v": 1.0, "s": 1.0}),
+        (offset, {"v": 1.0, "s": 1.0}),
+        (-6.0, {"h": 1.0, "v": 1.0, "s": 1.0}))
+    vectors = [
+        vector_construct(v, rising(0.0), m),
+        vector_construct(falling(2.0), v, m),
+        vector_construct(m, v, rising(2.0)),
+        vector_construct(m, falling(4.0), v),
+        vector_construct(rising(4.0), m, v),
+        vector_construct(v, m, falling(6.0)),
+    ]
+    pieces = []
+    for sector, node in enumerate(vectors):
+        pieces.append({
+            "lo": sector / 6.0,
+            "includeLo": True,
+            "hi": (sector + 1) / 6.0,
+            "includeHi": sector == 5,
+            "mathNode": node,
+        })
+    return {"input": "h", "pieces": pieces}
+
+
+def hsv_color_action() -> dict[str, Any]:
+    return {
+        "kind": 8,
+        "path": "@material-color-picker.selectedColor",
+        "function": hsv_piecewise(),
+        "bindings": {
+            "h": "@material-color-picker.hue",
+            "s": "@material-color-picker.saturation",
+            "v": "@material-color-picker.value",
+        },
     }
 
 
@@ -149,6 +210,34 @@ def picker_law(law_id: str, name: str, strip_id: str, component: str) -> dict[st
         },
         "triggers": ["object-clicked"],
     }
+
+
+def chromatic_law(law_id: str, name: str, control_id: str,
+                  two_dimensional: bool) -> dict[str, Any]:
+    actions = []
+    if two_dimensional:
+        actions.extend([
+            map_action("@material-color-picker.hue", scalar_node("u"), "u",
+                       "@interaction-channel.hoveredU"),
+            map_action(
+                "@material-color-picker.saturation",
+                scalar_terms((1.0, {}), (-1.0, {"v": 1.0})),
+                "v", "@interaction-channel.hoveredV"),
+        ])
+    else:
+        actions.append(
+            map_action("@material-color-picker.value", scalar_node("u"), "u",
+                       "@interaction-channel.hoveredU"))
+    actions.extend([
+        hsv_color_action(),
+        map_action("@creation-channel.activeColor", vector_node("c"), "c",
+                   "@material-color-picker.selectedColor"),
+        {"kind": 10, "eventType": "color-selection-changed",
+         "publishSubject": "material-color-picker"},
+    ])
+    law = picker_law(law_id, name, control_id, "r")
+    law["law"]["actionModel"] = {"kind": 5, "children": actions}
+    return law
 
 
 def material_apply_law() -> dict[str, Any]:
@@ -215,14 +304,18 @@ def main() -> None:
     zone = json.loads(ZONE_PATH.read_text())
     zone.setdefault("lawRefs", [])
     law_ids = ["law-material-color-picker-red", "law-material-color-picker-green",
-               "law-material-color-picker-blue", "law-material-color-picker-apply"]
-    for law_id in law_ids:
-        if law_id not in zone["lawRefs"]:
-            zone["lawRefs"].append(law_id)
+               "law-material-color-picker-blue", "law-material-color-picker-chromatic",
+               "law-material-color-picker-value", "law-material-color-picker-apply"]
+    # Keep every unrelated authored reference in place, but make this
+    # instrument's closure deterministic and dependency-readable on reruns.
+    zone["lawRefs"] = [ref for ref in zone["lawRefs"] if ref not in set(law_ids)] + law_ids
 
-    gradient_red = rgba_texture(32, lambda u, v: (u, 0.04, 0.04))
-    gradient_green = rgba_texture(32, lambda u, v: (0.04, u, 0.04))
-    gradient_blue = rgba_texture(32, lambda u, v: (0.04, 0.04, u))
+    gradient_red = rgba_texture(32, lambda u, v: (u, 0.0, 0.0))
+    gradient_green = rgba_texture(32, lambda u, v: (0.0, u, 0.0))
+    gradient_blue = rgba_texture(32, lambda u, v: (0.0, 0.0, u))
+    gradient_value = rgba_texture(32, lambda u, v: (u, u, u))
+    chromatic = rgba_texture(
+        64, lambda u, v: colorsys.hsv_to_rgb(u, 1.0 - v, 1.0))
     white = rgba_texture(32, lambda u, v: (1.0, 1.0, 1.0))
     panel = rgba_texture(8, lambda u, v: (0.055, 0.065, 0.09))
 
@@ -232,6 +325,9 @@ def main() -> None:
         "color-picker-red-ramp": material("color-picker-red-ramp", gradient_red),
         "color-picker-green-ramp": material("color-picker-green-ramp", gradient_green),
         "color-picker-blue-ramp": material("color-picker-blue-ramp", gradient_blue),
+        "color-picker-value-ramp": material("color-picker-value-ramp", gradient_value),
+        "color-picker-chromatic-field": material(
+            "color-picker-chromatic-field", chromatic, texture_size=64),
         "material-color-picker-preview": material("material-color-picker-preview", white),
         "authored-color-target": material("authored-color-target", white),
     })
@@ -240,21 +336,30 @@ def main() -> None:
     objects = zone.setdefault("world", {}).setdefault("objects", [])
     by_id = {obj.get("objectID"): obj for obj in objects}
     authored = [
-        object_2d("material-color-picker-panel", 700, 70, 340, 560,
+        object_2d("material-color-picker-panel", 690, 20, 570, 680,
                   "color-picker-panel", z=1),
-        object_2d("material-color-picker-title", 720, 88, 300, 28,
-                  "", "MATERIAL COLOR — LAWS", color=(0.82, 0.88, 1.0), z=30, text=True),
-        object_2d("material-color-picker", 730, 130, 280, 76,
+        object_2d("material-color-picker-title", 710, 38, 520, 28,
+                  "", "MATERIAL COLOR — LAW + ONTOMATH", color=(0.82, 0.88, 1.0), z=30, text=True),
+        object_2d("material-color-picker", 1040, 110, 190, 120,
                   "material-color-picker-preview", "SELECTED COLOR",
                   color=(1.0, 0.15, 0.15), z=20,
-                  properties={"selectedColor": {"t": "vec3", "x": 1.0, "y": 0.15, "z": 0.15}}),
-        object_2d("material-color-picker-red", 730, 230, 280, 52,
+                  properties={
+                      "selectedColor": {"t": "vec3", "x": 1.0, "y": 0.15, "z": 0.15},
+                      "hue": {"t": "double", "v": 0.0},
+                      "saturation": {"t": "double", "v": 0.85},
+                      "value": {"t": "double", "v": 1.0},
+                  }),
+        object_2d("material-color-picker-chromatic", 710, 100, 300, 280,
+                  "color-picker-chromatic-field", "HUE × SATURATION", z=20),
+        object_2d("material-color-picker-value", 710, 402, 300, 42,
+                  "color-picker-value-ramp", "VALUE / BRIGHTNESS", z=20),
+        object_2d("material-color-picker-red", 710, 480, 300, 42,
                   "color-picker-red-ramp", "RED", z=20),
-        object_2d("material-color-picker-green", 730, 302, 280, 52,
+        object_2d("material-color-picker-green", 710, 540, 300, 42,
                   "color-picker-green-ramp", "GREEN", z=20),
-        object_2d("material-color-picker-blue", 730, 374, 280, 52,
+        object_2d("material-color-picker-blue", 710, 600, 300, 42,
                   "color-picker-blue-ramp", "BLUE", z=20),
-        object_2d("material-color-target", 730, 460, 280, 100,
+        object_2d("material-color-target", 1040, 260, 190, 120,
                   "authored-color-target", "TARGET MATERIAL", color=(1.0, 1.0, 1.0), z=20),
     ]
     for obj in authored:
@@ -282,6 +387,12 @@ def main() -> None:
                    "material-color-picker-green", "g"),
         picker_law("law-material-color-picker-blue", "Material Color Picker — blue channel",
                    "material-color-picker-blue", "b"),
+        chromatic_law("law-material-color-picker-chromatic",
+                      "Material Color Picker — 2D chromatic selector",
+                      "material-color-picker-chromatic", True),
+        chromatic_law("law-material-color-picker-value",
+                      "Material Color Picker — value channel",
+                      "material-color-picker-value", False),
         material_apply_law(),
     ]
     for law in laws:
