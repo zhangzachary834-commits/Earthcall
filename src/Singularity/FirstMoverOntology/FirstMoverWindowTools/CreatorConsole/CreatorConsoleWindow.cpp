@@ -21,61 +21,56 @@ namespace Rendering {
 
         auto& state = getCreatorConsoleState();
 
+        // Track external changes to state.currentSection (hotkeys, menus, initial boot state)
+        static CreatorSection s_lastActiveSection = state.currentSection;
+        static bool s_sectionChangedExternally = true;
+
+        if (state.currentSection != s_lastActiveSection) {
+            s_sectionChangedExternally = true;
+            s_lastActiveSection = state.currentSection;
+        }
+
         // Menu Bar or Tab Bar for Tabs
         if (ImGui::BeginMenuBar()) {
-            if (ImGui::MenuItem("Paint", nullptr, state.currentSection == CreatorSection::Paint)) {
-                state.currentSection = CreatorSection::Paint;
-            }
-            if (ImGui::MenuItem("3D Tools", nullptr, state.currentSection == CreatorSection::Create3D)) {
-                state.currentSection = CreatorSection::Create3D;
-            }
-            if (ImGui::MenuItem("Character", nullptr, state.currentSection == CreatorSection::Character)) {
-                state.currentSection = CreatorSection::Character;
-            }
-            if (ImGui::MenuItem("World", nullptr, state.currentSection == CreatorSection::World)) {
-                state.currentSection = CreatorSection::World;
-            }
-            if (ImGui::MenuItem("Assets", nullptr, state.currentSection == CreatorSection::Assets)) {
-                state.currentSection = CreatorSection::Assets;
-            }
-            if (ImGui::MenuItem("Relations", nullptr, state.currentSection == CreatorSection::Relations)) {
-                state.currentSection = CreatorSection::Relations;
-            }
-            if (ImGui::MenuItem("Zones", nullptr, state.currentSection == CreatorSection::Zones)) {
-                state.currentSection = CreatorSection::Zones;
-            }
+            auto renderMenuItem = [&](const char* label, CreatorSection sec) {
+                if (ImGui::MenuItem(label, nullptr, state.currentSection == sec)) {
+                    state.currentSection = sec;
+                    s_lastActiveSection = sec;
+                    s_sectionChangedExternally = true;
+                }
+            };
+            renderMenuItem("Paint", CreatorSection::Paint);
+            renderMenuItem("3D Tools", CreatorSection::Create3D);
+            renderMenuItem("Character", CreatorSection::Character);
+            renderMenuItem("World", CreatorSection::World);
+            renderMenuItem("Assets", CreatorSection::Assets);
+            renderMenuItem("Relations", CreatorSection::Relations);
+            renderMenuItem("Zones", CreatorSection::Zones);
             ImGui::EndMenuBar();
         } else {
             // Fallback for dock/child containers without menu bar
-            if (ImGui::BeginTabBar("CreatorConsoleTabs", ImGuiTabBarFlags_None)) {
-                if (ImGui::BeginTabItem("Paint", nullptr, state.currentSection == CreatorSection::Paint ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Paint;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("3D Tools", nullptr, state.currentSection == CreatorSection::Create3D ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Create3D;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Character", nullptr, state.currentSection == CreatorSection::Character ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Character;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("World", nullptr, state.currentSection == CreatorSection::World ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::World;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Assets", nullptr, state.currentSection == CreatorSection::Assets ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Assets;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Relations", nullptr, state.currentSection == CreatorSection::Relations ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Relations;
-                    ImGui::EndTabItem();
-                }
-                if (ImGui::BeginTabItem("Zones", nullptr, state.currentSection == CreatorSection::Zones ? ImGuiTabItemFlags_SetSelected : 0)) {
-                    state.currentSection = CreatorSection::Zones;
-                    ImGui::EndTabItem();
-                }
+            if (ImGui::BeginTabBar("##CreatorConsoleTabs", ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_TabListPopupButton)) {
+                auto renderTab = [&](const char* label, CreatorSection sec) {
+                    ImGuiTabItemFlags flags = 0;
+                    if (s_sectionChangedExternally && state.currentSection == sec) {
+                        flags |= ImGuiTabItemFlags_SetSelected;
+                    }
+                    if (ImGui::BeginTabItem(label, nullptr, flags)) {
+                        state.currentSection = sec;
+                        s_lastActiveSection = sec;
+                        ImGui::EndTabItem();
+                    }
+                };
+
+                renderTab("Paint", CreatorSection::Paint);
+                renderTab("3D Tools", CreatorSection::Create3D);
+                renderTab("Character", CreatorSection::Character);
+                renderTab("World", CreatorSection::World);
+                renderTab("Assets", CreatorSection::Assets);
+                renderTab("Relations", CreatorSection::Relations);
+                renderTab("Zones", CreatorSection::Zones);
+
+                s_sectionChangedExternally = false;
                 ImGui::EndTabBar();
             }
         }

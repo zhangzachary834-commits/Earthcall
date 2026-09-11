@@ -1811,7 +1811,71 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         });
         stage("authored-laws", [&] {
             if (j.contains("authoredLaws")) {
-                ctx.lawManager->loadFromJson(j["authoredLaws"]);
+                // A legacy World snapshot may embed an older copy of a Law
+                // whose canonical identity now lives in saves/laws and is
+                // named by the active Zone's lawRefs. The Zone closure was
+                // already preflighted and activated above; letting the later
+                // compatibility bag replace it makes the old snapshot win.
+                // Basic Pixel Changer exposed this directly: its legacy copy
+                // still read @creation-channel.activeColor, silently undoing
+                // the authored picker Law every time that World was loaded.
+                //
+                // Compose one detached register first, replacing only those
+                // colliding entries with their shared roots. LawManager then
+                // performs its existing replace-all exactly once, so no
+                // half-old/half-new register is observable.
+                nlohmann::json effective = j["authoredLaws"];
+                if (!effective.is_object()) {
+                    throw std::runtime_error("authoredLaws is not an object");
+                }
+                auto& lawsJson = effective["laws"];
+                if (lawsJson.is_null()) lawsJson = nlohmann::json::array();
+                if (!lawsJson.is_array()) {
+                    throw std::runtime_error("authoredLaws.laws is not an array");
+                }
+                auto& triggersJson = effective["triggers"];
+                if (triggersJson.is_null()) triggersJson = nlohmann::json::object();
+                if (!triggersJson.is_object()) {
+                    throw std::runtime_error("authoredLaws.triggers is not an object");
+                }
+
+                for (const std::string& id : _activeZoneLawIds) {
+                    const nlohmann::json root = SaveSystem::readLawIdentity(id);
+                    if (!root.is_object() ||
+                        root.value("identifier", std::string{}) != id ||
+                        !root.contains("law") || !root["law"].is_object()) {
+                        throw std::runtime_error(
+                            "active Zone Law root became unavailable for '" + id + "'");
+                    }
+
+                    bool replaced = false;
+                    for (auto& embedded : lawsJson) {
+                        if (embedded.is_object() &&
+                            embedded.value("id", std::string{}) == id) {
+                            embedded = root["law"];
+                            replaced = true;
+                            break;
+                        }
+                    }
+                    if (!replaced) lawsJson.push_back(root["law"]);
+
+                    const nlohmann::json rootTriggers =
+                        root.value("triggers", nlohmann::json::array());
+                    if (!rootTriggers.is_array()) {
+                        throw std::runtime_error(
+                            "active Zone Law root has invalid triggers for '" + id + "'");
+                    }
+                    triggersJson[id] = rootTriggers;
+
+                    if (effective.contains("formationMembers") &&
+                        effective["formationMembers"].is_array()) {
+                        auto& members = effective["formationMembers"];
+                        if (std::find(members.begin(), members.end(), id) == members.end()) {
+                            members.push_back(id);
+                        }
+                    }
+                }
+                ctx.lawManager->loadFromJson(effective);
             }
 
             // Zone graphs hydrate before authored Laws because Objects and

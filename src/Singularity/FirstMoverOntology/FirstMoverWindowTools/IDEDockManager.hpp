@@ -22,6 +22,11 @@ enum class DockSlot {
     Bottom      // Attached to Bottom Bar / Drawer
 };
 
+enum class SlotLayout {
+    Tabbed,     // Single active window with tabs
+    Stacked     // Multiple windows stacked simultaneously inside the slot
+};
+
 struct DockableWindow {
     std::string id;
     std::string title;
@@ -30,6 +35,10 @@ struct DockableWindow {
     DockSlot currentSlot = DockSlot::Floating;
     bool* open = nullptr;
     std::function<void()> renderContent = nullptr;
+    bool collapsedInStack = false;
+    float stackHeight = 0.0f; // custom height in vertical stack (0 = auto)
+    float stackWidth = 0.0f;  // custom width in horizontal stack (0 = auto)
+    bool wasOpen = false;
 };
 
 class IDEDockManager {
@@ -56,16 +65,16 @@ public:
 
     // Collapsed states
     bool isLeftCollapsed() const { return _leftCollapsed; }
-    void setLeftCollapsed(bool c) { _leftCollapsed = c; }
-    void toggleLeftCollapsed() { _leftCollapsed = !_leftCollapsed; }
+    void setLeftCollapsed(bool c) { _leftCollapsed = c; if (!c) touchSlot(DockSlot::Left); }
+    void toggleLeftCollapsed() { _leftCollapsed = !_leftCollapsed; if (!_leftCollapsed) touchSlot(DockSlot::Left); }
 
     bool isRightCollapsed() const { return _rightCollapsed; }
-    void setRightCollapsed(bool c) { _rightCollapsed = c; }
-    void toggleRightCollapsed() { _rightCollapsed = !_rightCollapsed; }
+    void setRightCollapsed(bool c) { _rightCollapsed = c; if (!c) touchSlot(DockSlot::Right); }
+    void toggleRightCollapsed() { _rightCollapsed = !_rightCollapsed; if (!_rightCollapsed) touchSlot(DockSlot::Right); }
 
     bool isBottomCollapsed() const { return _bottomCollapsed; }
-    void setBottomCollapsed(bool c) { _bottomCollapsed = c; }
-    void toggleBottomCollapsed() { _bottomCollapsed = !_bottomCollapsed; }
+    void setBottomCollapsed(bool c) { _bottomCollapsed = c; if (!c) touchSlot(DockSlot::Bottom); }
+    void toggleBottomCollapsed() { _bottomCollapsed = !_bottomCollapsed; if (!_bottomCollapsed) touchSlot(DockSlot::Bottom); }
 
     // Window registration & retrieval
     void registerWindow(const std::string& id, const std::string& title, const std::string& shortcut,
@@ -80,6 +89,15 @@ public:
     // Active tab in each slot
     std::string activeTabInSlot(DockSlot slot) const;
     void setActiveTabInSlot(DockSlot slot, const std::string& windowId);
+
+    // Slot layout mode (Tabbed vs Stacked)
+    SlotLayout slotLayout(DockSlot slot) const;
+    void setSlotLayout(DockSlot slot, SlotLayout layout);
+    void toggleSlotLayout(DockSlot slot);
+
+    // Sequence / corner priority tracking
+    void touchSlot(DockSlot slot);
+    uint64_t slotSeq(DockSlot slot) const;
 
     // Reset layout
     void resetToDefaultLayout();
@@ -100,6 +118,8 @@ private:
     void renderFloatingWindows();
 
     void renderPanelHeader(DockSlot slot, DockableWindow* activeWin, const std::vector<DockableWindow*>& dockedWins);
+    void renderStackedVertical(DockSlot slot, const std::vector<DockableWindow*>& dockedWins, float width, float availH);
+    void renderStackedHorizontal(const std::vector<DockableWindow*>& dockedWins, float leftX, float bottomY, float barW, float barH);
 
     bool _ideMode = false;
     bool _showTopBar = true;
@@ -111,6 +131,15 @@ private:
     bool _leftCollapsed = false;
     bool _rightCollapsed = false;
     bool _bottomCollapsed = false;
+
+    SlotLayout _leftLayout = SlotLayout::Tabbed;
+    SlotLayout _rightLayout = SlotLayout::Tabbed;
+    SlotLayout _bottomLayout = SlotLayout::Tabbed;
+
+    uint64_t _leftSlotSeq = 1;
+    uint64_t _rightSlotSeq = 1;
+    uint64_t _bottomSlotSeq = 0;
+    uint64_t _slotSeqCounter = 2;
 
     std::string _activeLeftTab;
     std::string _activeRightTab;

@@ -2043,6 +2043,24 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         const bool hasTerminals =
             _connected && termIt != _reteTerminals.end() && !termIt->second.empty();
 
+        if (law->activation() == Law::Activation::WhileTrue) {
+            if (!hasTerminals) {
+                static std::unordered_set<std::string> printed;
+                if (printed.insert(law->getIdentifier()).second) {
+                    fprintf(stderr, "--- NO TERMINALS FOR LAW: %s ---\n", law->getIdentifier().c_str());
+                    fflush(stderr);
+                }
+            }
+        }
+        if (law->activation() == Law::Activation::WhileTrue) {
+            static int no_term = 0, yes_term = 0;
+            if (hasTerminals) yes_term++; else no_term++;
+            static int pp = 0;
+            if (++pp == 5000) {
+                printf("--- WHILE TRUE TERMINALS: Yes %d, No %d ---\n", yes_term, no_term);
+                yes_term = 0; no_term = 0; pp = 0;
+            }
+        }
         if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
