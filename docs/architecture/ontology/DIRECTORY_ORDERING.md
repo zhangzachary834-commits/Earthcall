@@ -95,14 +95,15 @@ Earthcall/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
                              Adapters/  MacOSAccessibilityAdapter
                              API/       EarthcallAPI, SecurityManager
-                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+                             mcp/       earthcall-mcp-server.js
                              py/        app.py
+                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
       Input/               the Input modality
-                             Keyboard/     KeyboardHandler
-                             Mouse/        MouseHandler
-                             Locomotion/   LocomotionChannel
                              Interaction/  InteractionChannel, ControlPatterns
+                             Keyboard/     KeyboardHandler
+                             Locomotion/   LocomotionChannel
+                             Mouse/        MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
