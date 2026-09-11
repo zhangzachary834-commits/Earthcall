@@ -101,6 +101,16 @@ void ScreenChannel::buildProperties() {
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
+    // Illumination placement is first-order authored state. These names are
+    // deliberately under `light.*` instead of inventing a C++ Light kind: the
+    // Screen modality is the first-mover bridge to GPU illumination today, and
+    // later FieldNodes/OntoMath can drive these same properties through Laws.
+    // The picker probes this registry, so these paths become authorable without
+    // a second hand-maintained vocabulary.
+    boolean("light.cameraRelative", &ScreenChannel::lightCameraRelative);
+    vector3("light.position", &ScreenChannel::lightPosition);
+    vector3("light.cameraOffset", &ScreenChannel::lightCameraOffset);
+
     const auto readOnlyBool = [this](const char* name, bool (ScreenChannel::*getter)() const) {
         registerProperty(
             std::make_unique<ComputedProperty<ScreenChannel, bool>>(name, this, getter));
