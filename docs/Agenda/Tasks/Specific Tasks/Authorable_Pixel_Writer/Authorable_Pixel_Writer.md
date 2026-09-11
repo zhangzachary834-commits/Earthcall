@@ -55,7 +55,9 @@ The `BasicPixelChanger` Zone contains the Shape2D Object `basic-pixel-canvas` an
 the shared Law root `law-basic-pixel-changer` through `lawRefs`. The Law hears
 `object-clicked`, requires that exact canvas identity, and performs `WritePixel` from
 `@interaction-channel.hoveredFace`, `.hoveredU`, `.hoveredV`, and
-`@creation-channel.activeColor`.
+the canvas's own authored `paintColor` Property. The authored color-picker apply Law maps
+its `selectedColor` into `paintColor` on `color-selection-changed`; the click itself needs
+neither Creator Console state nor a global named-being lookup.
 
 The save records **Zach** as author. Its `injected_by` envelope records **Codex (GPT-5),
 session `01a07d15-f266-7902-bc11-cf7b06b0b343`** as the mechanism that wrote the file by
@@ -76,6 +78,14 @@ copy-on-write, and visible pixel manifestation together—not merely the headles
 Still open beyond this task: a Person-facing authored-domain surface, authored texture
 resolution, stroke identity/history/provenance, and compiled/GPU evaluation for very large
 or continuously changing selections. These are not grounds for a rigid region vocabulary.
+
+**Regression and repair — Zach, 2026-09-11:** after the full RGB/HSV interface appeared,
+Zach reported that clicking the canvas no longer manifested a pixel. The only changed
+handoff since his witnessed red dots was a direct global read of
+`@material-color-picker.selectedColor`. The color-selection Law now hands that value to
+the canvas's authored `paintColor`, and `WritePixel` reads its subject locally. The focused
+test now supplies all ten live Zone objects to hit selection and verifies the handoff plus
+the exact changed texel. Native visual confirmation remains on the Person Verification List.
 
 ## Next human-authored rung: the domain of writing
 

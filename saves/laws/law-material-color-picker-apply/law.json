@@ -10,6 +10,24 @@
       "children": [
         {
           "kind": 8,
+          "path": "@basic-pixel-canvas.paintColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
+        },
+        {
+          "kind": 8,
           "path": "@material.material-color-picker-preview.baseColor",
           "function": {
             "input": "c",

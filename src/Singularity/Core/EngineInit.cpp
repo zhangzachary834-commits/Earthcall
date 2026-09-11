@@ -38,6 +38,11 @@
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
+#include "Singularity/Screen/DeveloperToolsWindow.hpp"
+#include "Singularity/Screen/CreationWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -350,6 +355,10 @@ void Engine::initLogic() {
         _showKeymapWindow = !_showKeymapWindow;
         if (_showKeymapWindow) ensureCursorUnlocked();
     });
+    _mainMenu.addOption("Toggle IDE Mode", GLFW_KEY_F10, [this]() {
+        Rendering::IDEDockManager::instance().toggleIDEMode();
+        ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         _creatorConsoleOpen = true;
         Rendering::getCreatorConsoleState().currentSection = Rendering::CreatorSection::Character;
@@ -452,6 +461,10 @@ void Engine::initLogic() {
         _showKeymapWindow = !_showKeymapWindow;
         if (_showKeymapWindow) ensureCursorUnlocked();
     });
+    _keyboardHandler->bindKey(GLFW_KEY_F10, "toggle_ide_mode", [this]() {
+        Rendering::IDEDockManager::instance().toggleIDEMode();
+        ensureCursorUnlocked();
+    });
     _keyboardHandler->bindKey(GLFW_KEY_1, "perspective_first_person", [this]() { _currentPerspective = PerspectiveMode::FirstPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _currentPerspective = PerspectiveMode::SecondPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_3, "perspective_third_person", [this]() { _currentPerspective = PerspectiveMode::ThirdPerson; });
@@ -504,6 +517,45 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_UP, "manual_offset_forward", [](){});
     _keyboardHandler->bindKey(GLFW_KEY_DOWN, "manual_offset_backward", [](){});
 
+    // --------------------------------------------------------------
+    // Register dockable windows with IDEDockManager
+    // --------------------------------------------------------------
+    auto& dockMgr = Rendering::IDEDockManager::instance();
+
+    dockMgr.registerWindow("creator_console", "Creator Console [F8]", "F8",
+        Rendering::DockSlot::Left, &_creatorConsoleOpen, [this]() {
+            Rendering::renderCreatorConsoleContent(
+                _person.get(),
+                Rendering::getCreatorConsoleState().selectedObject3D,
+                mgr, _window, this);
+        });
+
+    dockMgr.registerWindow("dev_tools", "Developer Tools [`]", "`",
+        Rendering::DockSlot::Left, &_devToolsWindowOpen, [this]() {
+            Rendering::renderDeveloperToolsContent(_window, this);
+        });
+
+    dockMgr.registerWindow("creation_console", "Singular Creation [F9]", "F9",
+        Rendering::DockSlot::Left, &_creationConsoleOpen, [this]() {
+            if (_person) {
+                Rendering::renderCreationContent(*_person, nullptr, mgr.active());
+            }
+        });
+
+    dockMgr.registerWindow("perf_metrics", "Performance & Coords [F3]", "F3",
+        Rendering::DockSlot::Right, &_performanceMetricsWindowOpen, [this]() {
+            Rendering::renderPerformanceMetricsContent(this);
+        });
+
+    dockMgr.registerWindow("keymap", "Controls / Keymap [K]", "K",
+        Rendering::DockSlot::Right, &_showKeymapWindow, [this]() {
+            renderKeymapContent();
+        });
+
+    dockMgr.registerWindow("chat", "Chat [H]", "H",
+        Rendering::DockSlot::Bottom, &_showChatWindow, [this]() {
+            if (_chat) _chat->renderContent();
+        });
 }
 
 // ---------------------------------------------------------------------------

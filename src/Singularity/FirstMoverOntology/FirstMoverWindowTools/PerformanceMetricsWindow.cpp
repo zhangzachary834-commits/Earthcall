@@ -17,11 +17,10 @@ FrameTimings g_frameTimings{};
 
 namespace Rendering {
 
-void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
-    if (!open || !*open || !engine) return;
+void renderPerformanceMetricsContent(Core::Engine* engine) {
+    if (!engine) return;
 
-    if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
+    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
         ImGui::Text("FPS (instant): %.1f", ImGui::GetIO().Framerate);
 
         // 5-second rolling average FPS
@@ -277,6 +276,13 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
                                 static_cast<double>(pc.asked));
             }
         }
+    }
+
+void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
+    if (!open || !*open || !engine) return;
+
+    if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
+        renderPerformanceMetricsContent(engine);
     }
     ImGui::End();
 }

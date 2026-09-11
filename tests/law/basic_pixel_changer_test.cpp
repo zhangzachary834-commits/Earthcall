@@ -154,8 +154,12 @@ int main() {
     const glm::vec3 initialColor(0.10f, 0.70f, 0.25f);
     picker->setDynamicProperty("selectedColor", PropertyValue(initialColor));
     creation->activeColor = initialColor; // compatibility bridge, not the pixel source
-    std::vector<Object*> reachable{canvas, redStrip, greenStrip, blueStrip,
-                                   chromaticField, valueStrip, picker};
+    // Use the exact complete set and order the live engine supplies. A hand-
+    // curated list hid screen objects that could participate in hit selection.
+    std::vector<Object*> reachable;
+    for (const auto& object : zone->getOwnedObjects()) {
+        if (object) reachable.push_back(object.get());
+    }
     const auto frame = [&](float x, float y, bool left) {
         Singularity::Input::InteractionChannel::Sense sense;
         sense.pointerX = x;
@@ -203,6 +207,11 @@ int main() {
           "direct red slider changes one selectedColor component through a Law");
     check(near(creation->activeColor, pickedColor),
           "picker Law mirrors selectedColor into the Creation channel bridge");
+    Property* paintColorProperty = canvas->findProperty("paintColor");
+    check(paintColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(paintColorProperty->value()) &&
+              near(std::get<glm::vec3>(paintColorProperty->value()), pickedColor),
+          "picker Law hands the authored color to the canvas paintColor Property");
     auto targetMaterial = materials.get("authored-color-target");
     check(targetMaterial != nullptr && near(targetMaterial->baseColor,
                                              pickedColor),
@@ -282,8 +291,8 @@ int main() {
 
     const ActionNode roundTrip = ActionNode::fromJson(law->actionModel()->toJson());
     check(roundTrip.kind == ActionNode::Kind::WritePixel &&
-              roundTrip.pixelColorPath.toString() == "@material-color-picker.selectedColor",
-          "authored WritePixel action round-trips without hidden defaults");
+              roundTrip.pixelColorPath.toString() == "paintColor",
+          "authored WritePixel reads its canvas-local color and round-trips without hidden defaults");
     const ActionNode regionRoundTrip = ActionNode::fromJson(elevateRegion.toJson());
     check(regionRoundTrip.kind == ActionNode::Kind::ElevatePixels &&
               regionRoundTrip.propertyName == "authored.left-quarter" &&

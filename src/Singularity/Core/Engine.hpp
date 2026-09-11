@@ -201,6 +201,7 @@ public:
     bool getUsePressureSimulation() const { return false; }
     void render();
     void renderNametags();
+    void renderKeymapContent();
     void onFramebufferSize(int width, int height);
     Menu _mainMenu;
     
