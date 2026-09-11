@@ -80,12 +80,18 @@ resolution, stroke identity/history/provenance, and compiled/GPU evaluation for 
 or continuously changing selections. These are not grounds for a rigid region vocabulary.
 
 **Regression and repair — Zach, 2026-09-11:** after the full RGB/HSV interface appeared,
-Zach reported that clicking the canvas no longer manifested a pixel. The only changed
-handoff since his witnessed red dots was a direct global read of
-`@material-color-picker.selectedColor`. The color-selection Law now hands that value to
-the canvas's authored `paintColor`, and `WritePixel` reads its subject locally. The focused
-test now supplies all ten live Zone objects to hit selection and verifies the handoff plus
-the exact changed texel. Native visual confirmation remains on the Person Verification List.
+Zach reported that clicking the canvas no longer manifested a pixel, then discovered the
+decisive clue himself: changing the Creator Console 3D-tool color to red made marks appear.
+The writer was active but painting its legacy white selection onto the white canvas.
+`saves/worlds/basic_pixel_changer.json` and `.ecform` still embedded an older copy of the
+Law that read `@creation-channel.activeColor`, and `loadState` admitted that compatibility
+bag after activating the Zone's canonical Law closure. Both Zach-owned artifacts now carry
+the canvas-local `paintColor` path. More importantly, the loader now overlays the active
+Zone's shared Law roots onto colliding embedded copies before its one register replacement,
+so an old World cannot silently undo a Zone Law again. The focused test supplies all ten
+live Zone objects, deliberately loads a stale Creator-Console copy, and proves the authored
+picker still changes the exact addressed texel. Native confirmation remains on the Person
+Verification List.
 
 ## Next human-authored rung: the domain of writing
 

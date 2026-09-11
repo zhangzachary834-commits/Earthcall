@@ -66,6 +66,7 @@ void IDEDockManager::setWindowSlot(const std::string& id, DockSlot slot) {
         if (slot == DockSlot::Left) _activeLeftTab = id;
         else if (slot == DockSlot::Right) _activeRightTab = id;
         else if (slot == DockSlot::Bottom) _activeBottomTab = id;
+        touchSlot(slot);
     }
 }
 
@@ -80,6 +81,39 @@ void IDEDockManager::setActiveTabInSlot(DockSlot slot, const std::string& window
     if (slot == DockSlot::Left) _activeLeftTab = windowId;
     else if (slot == DockSlot::Right) _activeRightTab = windowId;
     else if (slot == DockSlot::Bottom) _activeBottomTab = windowId;
+    touchSlot(slot);
+}
+
+SlotLayout IDEDockManager::slotLayout(DockSlot slot) const {
+    if (slot == DockSlot::Left) return _leftLayout;
+    if (slot == DockSlot::Right) return _rightLayout;
+    if (slot == DockSlot::Bottom) return _bottomLayout;
+    return SlotLayout::Tabbed;
+}
+
+void IDEDockManager::setSlotLayout(DockSlot slot, SlotLayout layout) {
+    if (slot == DockSlot::Left) _leftLayout = layout;
+    else if (slot == DockSlot::Right) _rightLayout = layout;
+    else if (slot == DockSlot::Bottom) _bottomLayout = layout;
+    touchSlot(slot);
+}
+
+void IDEDockManager::toggleSlotLayout(DockSlot slot) {
+    SlotLayout current = slotLayout(slot);
+    setSlotLayout(slot, current == SlotLayout::Tabbed ? SlotLayout::Stacked : SlotLayout::Tabbed);
+}
+
+void IDEDockManager::touchSlot(DockSlot slot) {
+    if (slot == DockSlot::Left) _leftSlotSeq = ++_slotSeqCounter;
+    else if (slot == DockSlot::Right) _rightSlotSeq = ++_slotSeqCounter;
+    else if (slot == DockSlot::Bottom) _bottomSlotSeq = ++_slotSeqCounter;
+}
+
+uint64_t IDEDockManager::slotSeq(DockSlot slot) const {
+    if (slot == DockSlot::Left) return _leftSlotSeq;
+    if (slot == DockSlot::Right) return _rightSlotSeq;
+    if (slot == DockSlot::Bottom) return _bottomSlotSeq;
+    return 0;
 }
 
 void IDEDockManager::resetToDefaultLayout() {
@@ -89,8 +123,17 @@ void IDEDockManager::resetToDefaultLayout() {
     _leftCollapsed = false;
     _rightCollapsed = false;
     _bottomCollapsed = false;
+    _leftLayout = SlotLayout::Tabbed;
+    _rightLayout = SlotLayout::Tabbed;
+    _bottomLayout = SlotLayout::Tabbed;
+    _leftSlotSeq = 1;
+    _rightSlotSeq = 1;
+    _bottomSlotSeq = 0;
     for (auto& w : _windows) {
         w.currentSlot = w.defaultSlot;
+        w.collapsedInStack = false;
+        w.stackHeight = 0.0f;
+        w.stackWidth = 0.0f;
     }
 }
 
@@ -146,61 +189,97 @@ void IDEDockManager::renderTopWorkspaceBar(Core::Engine* engine) {
 
         // Dock section toggles when in IDE mode
         if (_ideMode) {
-            // Left sidebar toggle
-            bool leftHasOpen = false;
+            // Left sidebar toggle & layout switch
+            std::vector<DockableWindow*> leftDocked;
             for (auto* w : getWindowsInSlot(DockSlot::Left)) {
-                if (w->open && *w->open) { leftHasOpen = true; break; }
+                if (w->open && *w->open) leftDocked.push_back(w);
             }
             if (_leftCollapsed) {
-                if (ImGui::Button("◧ Left (Collapsed)")) toggleLeftCollapsed();
-            } else if (leftHasOpen) {
+                if (ImGui::Button("◧ Left (Collapsed)")) {
+                    toggleLeftCollapsed();
+                    touchSlot(DockSlot::Left);
+                }
+            } else if (!leftDocked.empty()) {
                 if (ImGui::Button("◧ Left [F8]")) toggleLeftCollapsed();
+                if (leftDocked.size() > 1) {
+                    ImGui::SameLine();
+                    bool isStacked = (_leftLayout == SlotLayout::Stacked);
+                    if (ImGui::SmallButton(isStacked ? "▤ Tabs##TopL" : "☷ Stack##TopL")) {
+                        toggleSlotLayout(DockSlot::Left);
+                    }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip(isStacked ? "Switch Left Sidebar to Tabs" : "Stack multiple Left Sidebar windows simultaneously");
+                }
             } else {
                 if (ImGui::Button("◧ Open Creator [F8]")) {
                     if (auto* w = findWindow("creator_console")) {
                         if (w->open) *w->open = true;
                         _activeLeftTab = "creator_console";
                         _leftCollapsed = false;
+                        touchSlot(DockSlot::Left);
                     }
                 }
             }
             ImGui::SameLine();
 
-            // Bottom bar toggle
-            bool bottomHasOpen = false;
+            // Bottom bar toggle & layout switch
+            std::vector<DockableWindow*> bottomDocked;
             for (auto* w : getWindowsInSlot(DockSlot::Bottom)) {
-                if (w->open && *w->open) { bottomHasOpen = true; break; }
+                if (w->open && *w->open) bottomDocked.push_back(w);
             }
             if (_bottomCollapsed) {
-                if (ImGui::Button("⬓ Bottom (Collapsed)")) toggleBottomCollapsed();
-            } else if (bottomHasOpen) {
+                if (ImGui::Button("⬓ Bottom (Collapsed)")) {
+                    toggleBottomCollapsed();
+                    touchSlot(DockSlot::Bottom);
+                }
+            } else if (!bottomDocked.empty()) {
                 if (ImGui::Button("⬓ Bottom [H]")) toggleBottomCollapsed();
+                if (bottomDocked.size() > 1) {
+                    ImGui::SameLine();
+                    bool isStacked = (_bottomLayout == SlotLayout::Stacked);
+                    if (ImGui::SmallButton(isStacked ? "▤ Tabs##TopB" : "☷ Stack##TopB")) {
+                        toggleSlotLayout(DockSlot::Bottom);
+                    }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip(isStacked ? "Switch Bottom Bar to Tabs" : "Stack/tile multiple Bottom Bar windows side-by-side");
+                }
             } else {
                 if (ImGui::Button("⬓ Open Chat [H]")) {
                     if (auto* w = findWindow("chat")) {
                         if (w->open) *w->open = true;
                         _activeBottomTab = "chat";
                         _bottomCollapsed = false;
+                        touchSlot(DockSlot::Bottom);
                     }
                 }
             }
             ImGui::SameLine();
 
-            // Right sidebar toggle
-            bool rightHasOpen = false;
+            // Right sidebar toggle & layout switch
+            std::vector<DockableWindow*> rightDocked;
             for (auto* w : getWindowsInSlot(DockSlot::Right)) {
-                if (w->open && *w->open) { rightHasOpen = true; break; }
+                if (w->open && *w->open) rightDocked.push_back(w);
             }
             if (_rightCollapsed) {
-                if (ImGui::Button("◨ Right (Collapsed)")) toggleRightCollapsed();
-            } else if (rightHasOpen) {
+                if (ImGui::Button("◨ Right (Collapsed)")) {
+                    toggleRightCollapsed();
+                    touchSlot(DockSlot::Right);
+                }
+            } else if (!rightDocked.empty()) {
                 if (ImGui::Button("◨ Right [F3]")) toggleRightCollapsed();
+                if (rightDocked.size() > 1) {
+                    ImGui::SameLine();
+                    bool isStacked = (_rightLayout == SlotLayout::Stacked);
+                    if (ImGui::SmallButton(isStacked ? "▤ Tabs##TopR" : "☷ Stack##TopR")) {
+                        toggleSlotLayout(DockSlot::Right);
+                    }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip(isStacked ? "Switch Right Sidebar to Tabs" : "Stack multiple Right Sidebar windows simultaneously");
+                }
             } else {
                 if (ImGui::Button("◨ Open Metrics [F3]")) {
                     if (auto* w = findWindow("perf_metrics")) {
                         if (w->open) *w->open = true;
                         _activeRightTab = "perf_metrics";
                         _rightCollapsed = false;
+                        touchSlot(DockSlot::Right);
                     }
                 }
             }
@@ -220,9 +299,9 @@ void IDEDockManager::renderTopWorkspaceBar(Core::Engine* engine) {
             if (ImGui::Button(btnLabel.c_str())) {
                 *win.open = !isOpen;
                 if (!isOpen) {
-                    if (win.currentSlot == DockSlot::Left) { _activeLeftTab = win.id; _leftCollapsed = false; }
-                    else if (win.currentSlot == DockSlot::Right) { _activeRightTab = win.id; _rightCollapsed = false; }
-                    else if (win.currentSlot == DockSlot::Bottom) { _activeBottomTab = win.id; _bottomCollapsed = false; }
+                    if (win.currentSlot == DockSlot::Left) { _activeLeftTab = win.id; _leftCollapsed = false; touchSlot(DockSlot::Left); }
+                    else if (win.currentSlot == DockSlot::Right) { _activeRightTab = win.id; _rightCollapsed = false; touchSlot(DockSlot::Right); }
+                    else if (win.currentSlot == DockSlot::Bottom) { _activeBottomTab = win.id; _bottomCollapsed = false; touchSlot(DockSlot::Bottom); }
                     if (engine) engine->ensureCursorUnlocked();
                 }
             }
@@ -276,6 +355,25 @@ void IDEDockManager::renderPanelHeader(DockSlot slot, DockableWindow* activeWin,
         ImGui::SameLine();
         ImGui::TextDisabled("|");
         ImGui::SameLine();
+
+        // Stack/Tabs layout toggle if slot has multiple windows
+        if (dockedWins.size() > 1) {
+            SlotLayout currentLayout = slotLayout(slot);
+            if (currentLayout == SlotLayout::Tabbed) {
+                if (ImGui::SmallButton("☷ Stack")) {
+                    setSlotLayout(slot, SlotLayout::Stacked);
+                }
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("Stack multiple windows simultaneously in this panel");
+            } else {
+                if (ImGui::SmallButton("▤ Tabs")) {
+                    setSlotLayout(slot, SlotLayout::Tabbed);
+                }
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("Switch to single active window with tabs");
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled("|");
+            ImGui::SameLine();
+        }
 
         // Dock to Left
         if (slot != DockSlot::Left) {
@@ -335,6 +433,216 @@ void IDEDockManager::renderPanelHeader(DockSlot slot, DockableWindow* activeWin,
     ImGui::Separator();
 }
 
+void IDEDockManager::renderStackedVertical(DockSlot slot, const std::vector<DockableWindow*>& dockedWins, float width, float availH) {
+    if (dockedWins.empty()) return;
+
+    // Header bar for the slot
+    const char* slotName = (slot == DockSlot::Left) ? "Left Sidebar" : "Right Sidebar";
+    ImGui::TextColored(ImVec4(0.35f, 0.75f, 0.95f, 1.0f), "%s", slotName);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(%zu stacked)", dockedWins.size());
+    ImGui::SameLine();
+    ImGui::TextDisabled("|");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("▤ Tabs")) {
+        setSlotLayout(slot, SlotLayout::Tabbed);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Switch back to tabbed view (one window at a time)");
+
+    ImGui::SameLine();
+    if (slot == DockSlot::Left) {
+        if (ImGui::SmallButton("◀")) toggleLeftCollapsed();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Collapse Left Sidebar");
+    } else {
+        if (ImGui::SmallButton("▶")) toggleRightCollapsed();
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Collapse Right Sidebar");
+    }
+    ImGui::Separator();
+
+    // Height distribution among panes
+    int expandedCount = 0;
+    for (auto* win : dockedWins) {
+        if (!win->collapsedInStack) expandedCount++;
+    }
+
+    constexpr float paneHeaderH = 28.0f;
+    constexpr float slotHeaderH = 34.0f;
+    constexpr float itemSpacing = 6.0f;
+    float fixedHeaderTotal = slotHeaderH + static_cast<float>(dockedWins.size()) * (paneHeaderH + itemSpacing);
+    float availForPanes = std::max(60.0f, availH - fixedHeaderTotal);
+    float defaultPaneH = (expandedCount > 0) ? (availForPanes / static_cast<float>(expandedCount)) : 60.0f;
+
+    for (size_t i = 0; i < dockedWins.size(); ++i) {
+        auto* win = dockedWins[i];
+        ImGui::PushID(win->id.c_str());
+
+        // Pane accordion header
+        if (ImGui::SmallButton(win->collapsedInStack ? "▶" : "▼")) {
+            win->collapsedInStack = !win->collapsedInStack;
+        }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip(win->collapsedInStack ? "Expand pane" : "Collapse pane");
+
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.90f, 0.92f, 0.95f, 1.0f), "%s", win->title.c_str());
+
+        // Quick action buttons aligned to right
+        float rightControlsX = width - 110.0f;
+        if (ImGui::GetCursorPosX() < rightControlsX) {
+            ImGui::SetCursorPosX(rightControlsX);
+        }
+
+        if (slot != DockSlot::Bottom) {
+            if (ImGui::SmallButton("⬓")) {
+                setWindowSlot(win->id, DockSlot::Bottom);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move window to Bottom Bar");
+            ImGui::SameLine();
+        }
+
+        if (slot == DockSlot::Left) {
+            if (ImGui::SmallButton("◨")) {
+                setWindowSlot(win->id, DockSlot::Right);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move window to Right Sidebar");
+            ImGui::SameLine();
+        } else if (slot == DockSlot::Right) {
+            if (ImGui::SmallButton("◧")) {
+                setWindowSlot(win->id, DockSlot::Left);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move window to Left Sidebar");
+            ImGui::SameLine();
+        }
+
+        if (ImGui::SmallButton("❐")) {
+            setWindowSlot(win->id, DockSlot::Floating);
+        }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Float window");
+        ImGui::SameLine();
+
+        if (ImGui::SmallButton("✕")) {
+            if (win->open) *win->open = false;
+        }
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Close window");
+
+        // If expanded, render child content region and splitter
+        if (!win->collapsedInStack) {
+            float paneH = (win->stackHeight > 40.0f) ? win->stackHeight : defaultPaneH;
+            paneH = std::max(50.0f, paneH);
+
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.10f, 0.11f, 0.13f, 0.90f));
+            if (ImGui::BeginChild("##PaneChild", ImVec2(0, paneH), true, ImGuiWindowFlags_HorizontalScrollbar)) {
+                if (win->renderContent) {
+                    win->renderContent();
+                }
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+
+            // Draggable splitter between expanded panes
+            if (expandedCount > 1) {
+                ImGui::InvisibleButton("##PaneSplitter", ImVec2(-1, 5.0f));
+                if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+                    ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+                }
+                if (ImGui::IsItemActive()) {
+                    float delta = ImGui::GetIO().MouseDelta.y;
+                    win->stackHeight = std::clamp(paneH + delta, 40.0f, availH - 60.0f);
+                    touchSlot(slot);
+                }
+            }
+        }
+
+        ImGui::PopID();
+        ImGui::Spacing();
+    }
+}
+
+void IDEDockManager::renderStackedHorizontal(const std::vector<DockableWindow*>& dockedWins, float leftX, float bottomY, float barW, float barH) {
+    (void)leftX;
+    (void)bottomY;
+    if (dockedWins.empty()) return;
+
+    // Header bar of the Bottom Drawer
+    ImGui::TextColored(ImVec4(0.35f, 0.75f, 0.95f, 1.0f), "Bottom Drawer");
+    ImGui::SameLine();
+    ImGui::TextDisabled("(%zu side-by-side)", dockedWins.size());
+    ImGui::SameLine();
+    ImGui::TextDisabled("|");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("▤ Tabs")) {
+        setSlotLayout(DockSlot::Bottom, SlotLayout::Tabbed);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Switch back to tabbed view (one window at a time)");
+
+    ImGui::SameLine();
+    if (ImGui::SmallButton("▼")) toggleBottomCollapsed();
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Collapse Bottom Bar");
+    ImGui::Separator();
+
+    float contentH = std::max(50.0f, barH - 42.0f);
+    size_t count = dockedWins.size();
+    float availableW = barW - 16.0f - static_cast<float>(count - 1) * 8.0f;
+    float defaultColW = std::max(120.0f, availableW / static_cast<float>(count));
+
+    for (size_t i = 0; i < count; ++i) {
+        auto* win = dockedWins[i];
+        ImGui::PushID(win->id.c_str());
+
+        float colW = (win->stackWidth > 80.0f) ? win->stackWidth : defaultColW;
+        colW = std::max(120.0f, colW);
+
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.10f, 0.11f, 0.13f, 0.90f));
+        if (ImGui::BeginChild("##ColChild", ImVec2(colW, contentH), true, ImGuiWindowFlags_HorizontalScrollbar)) {
+            // Column header
+            ImGui::TextColored(ImVec4(0.90f, 0.92f, 0.95f, 1.0f), "%s", win->title.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("◧")) {
+                setWindowSlot(win->id, DockSlot::Left);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move window to Left Sidebar");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("◨")) {
+                setWindowSlot(win->id, DockSlot::Right);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Move window to Right Sidebar");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("❐")) {
+                setWindowSlot(win->id, DockSlot::Floating);
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Float window");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("✕")) {
+                if (win->open) *win->open = false;
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Close window");
+            ImGui::Separator();
+
+            if (win->renderContent) {
+                win->renderContent();
+            }
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+
+        // Draggable vertical splitter between columns
+        if (i + 1 < count) {
+            ImGui::SameLine();
+            ImGui::InvisibleButton("##ColSplitter", ImVec2(6.0f, contentH));
+            if (ImGui::IsItemHovered() || ImGui::IsItemActive()) {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+            }
+            if (ImGui::IsItemActive()) {
+                float delta = ImGui::GetIO().MouseDelta.x;
+                win->stackWidth = std::clamp(colW + delta, 100.0f, barW - 100.0f);
+                touchSlot(DockSlot::Bottom);
+            }
+            ImGui::SameLine();
+        }
+
+        ImGui::PopID();
+    }
+}
+
 void IDEDockManager::renderLeftSidebar(float topY, float availH, float availW) {
     std::vector<DockableWindow*> dockedWins;
     for (auto* w : getWindowsInSlot(DockSlot::Left)) {
@@ -377,25 +685,29 @@ void IDEDockManager::renderLeftSidebar(float topY, float availH, float availW) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 
     if (ImGui::Begin("##IDEDockLeft", nullptr, flags)) {
-        // Determine active window in this slot
-        DockableWindow* activeWin = nullptr;
-        for (auto* w : dockedWins) {
-            if (w->id == _activeLeftTab) {
-                activeWin = w;
-                break;
+        if (_leftLayout == SlotLayout::Stacked && dockedWins.size() > 1) {
+            renderStackedVertical(DockSlot::Left, dockedWins, width, availH);
+        } else {
+            // Determine active window in this slot
+            DockableWindow* activeWin = nullptr;
+            for (auto* w : dockedWins) {
+                if (w->id == _activeLeftTab) {
+                    activeWin = w;
+                    break;
+                }
             }
-        }
-        if (!activeWin && !dockedWins.empty()) {
-            activeWin = dockedWins.front();
-            _activeLeftTab = activeWin->id;
-        }
+            if (!activeWin && !dockedWins.empty()) {
+                activeWin = dockedWins.front();
+                _activeLeftTab = activeWin->id;
+            }
 
-        renderPanelHeader(DockSlot::Left, activeWin, dockedWins);
+            renderPanelHeader(DockSlot::Left, activeWin, dockedWins);
 
-        if (activeWin && activeWin->renderContent) {
-            ImGui::BeginChild("##LeftContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-            activeWin->renderContent();
-            ImGui::EndChild();
+            if (activeWin && activeWin->renderContent) {
+                ImGui::BeginChild("##LeftContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+                activeWin->renderContent();
+                ImGui::EndChild();
+            }
         }
     }
     ImGui::End();
@@ -414,6 +726,7 @@ void IDEDockManager::renderLeftSidebar(float topY, float availH, float availW) {
             }
             if (ImGui::IsItemActive()) {
                 _leftWidth = std::clamp(_leftWidth + ImGui::GetIO().MouseDelta.x, 200.0f, availW * 0.5f);
+                touchSlot(DockSlot::Left);
             }
         }
         ImGui::End();
@@ -466,24 +779,28 @@ void IDEDockManager::renderRightSidebar(float topY, float availH, float availW) 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 
     if (ImGui::Begin("##IDEDockRight", nullptr, flags)) {
-        DockableWindow* activeWin = nullptr;
-        for (auto* w : dockedWins) {
-            if (w->id == _activeRightTab) {
-                activeWin = w;
-                break;
+        if (_rightLayout == SlotLayout::Stacked && dockedWins.size() > 1) {
+            renderStackedVertical(DockSlot::Right, dockedWins, width, availH);
+        } else {
+            DockableWindow* activeWin = nullptr;
+            for (auto* w : dockedWins) {
+                if (w->id == _activeRightTab) {
+                    activeWin = w;
+                    break;
+                }
             }
-        }
-        if (!activeWin && !dockedWins.empty()) {
-            activeWin = dockedWins.front();
-            _activeRightTab = activeWin->id;
-        }
+            if (!activeWin && !dockedWins.empty()) {
+                activeWin = dockedWins.front();
+                _activeRightTab = activeWin->id;
+            }
 
-        renderPanelHeader(DockSlot::Right, activeWin, dockedWins);
+            renderPanelHeader(DockSlot::Right, activeWin, dockedWins);
 
-        if (activeWin && activeWin->renderContent) {
-            ImGui::BeginChild("##RightContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-            activeWin->renderContent();
-            ImGui::EndChild();
+            if (activeWin && activeWin->renderContent) {
+                ImGui::BeginChild("##RightContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+                activeWin->renderContent();
+                ImGui::EndChild();
+            }
         }
     }
     ImGui::End();
@@ -502,6 +819,7 @@ void IDEDockManager::renderRightSidebar(float topY, float availH, float availW) 
             }
             if (ImGui::IsItemActive()) {
                 _rightWidth = std::clamp(_rightWidth - ImGui::GetIO().MouseDelta.x, 200.0f, availW * 0.5f);
+                touchSlot(DockSlot::Right);
             }
         }
         ImGui::End();
@@ -551,24 +869,28 @@ void IDEDockManager::renderBottomBar(float leftX, float bottomY, float barW, flo
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 8));
 
     if (ImGui::Begin("##IDEDockBottom", nullptr, flags)) {
-        DockableWindow* activeWin = nullptr;
-        for (auto* w : dockedWins) {
-            if (w->id == _activeBottomTab) {
-                activeWin = w;
-                break;
+        if (_bottomLayout == SlotLayout::Stacked && dockedWins.size() > 1) {
+            renderStackedHorizontal(dockedWins, leftX, bottomY, barW, barH);
+        } else {
+            DockableWindow* activeWin = nullptr;
+            for (auto* w : dockedWins) {
+                if (w->id == _activeBottomTab) {
+                    activeWin = w;
+                    break;
+                }
             }
-        }
-        if (!activeWin && !dockedWins.empty()) {
-            activeWin = dockedWins.front();
-            _activeBottomTab = activeWin->id;
-        }
+            if (!activeWin && !dockedWins.empty()) {
+                activeWin = dockedWins.front();
+                _activeBottomTab = activeWin->id;
+            }
 
-        renderPanelHeader(DockSlot::Bottom, activeWin, dockedWins);
+            renderPanelHeader(DockSlot::Bottom, activeWin, dockedWins);
 
-        if (activeWin && activeWin->renderContent) {
-            ImGui::BeginChild("##BottomContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-            activeWin->renderContent();
-            ImGui::EndChild();
+            if (activeWin && activeWin->renderContent) {
+                ImGui::BeginChild("##BottomContentRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+                activeWin->renderContent();
+                ImGui::EndChild();
+            }
         }
     }
     ImGui::End();
@@ -587,6 +909,7 @@ void IDEDockManager::renderBottomBar(float leftX, float bottomY, float barW, flo
             }
             if (ImGui::IsItemActive()) {
                 _bottomHeight = std::clamp(_bottomHeight - ImGui::GetIO().MouseDelta.y, 100.0f, ImGui::GetIO().DisplaySize.y * 0.6f);
+                touchSlot(DockSlot::Bottom);
             }
         }
         ImGui::End();
@@ -653,12 +976,39 @@ void IDEDockManager::render(Core::Engine* engine, ZoneManager& /*zoneMgr*/, GLFW
         return;
     }
 
+    // Synchronize window open transition detection & slot sequence priority
+    for (auto& w : _windows) {
+        bool isOpen = (w.open && *w.open);
+        if (isOpen && !w.wasOpen) {
+            touchSlot(w.currentSlot);
+            if (w.currentSlot == DockSlot::Left) {
+                _activeLeftTab = w.id;
+                _leftCollapsed = false;
+            } else if (w.currentSlot == DockSlot::Right) {
+                _activeRightTab = w.id;
+                _rightCollapsed = false;
+            } else if (w.currentSlot == DockSlot::Bottom) {
+                _activeBottomTab = w.id;
+                _bottomCollapsed = false;
+            }
+        }
+        w.wasOpen = isOpen;
+    }
+
     const ImGuiIO& io = ImGui::GetIO();
     const float screenW = io.DisplaySize.x;
     const float screenH = io.DisplaySize.y;
     const float topY = _showTopBar ? 28.0f : 0.0f;
 
-    // Check if bottom bar has open windows
+    // Check which slots have open windows
+    bool leftHasOpen = false;
+    for (auto* w : getWindowsInSlot(DockSlot::Left)) {
+        if (w->open && *w->open) { leftHasOpen = true; break; }
+    }
+    bool rightHasOpen = false;
+    for (auto* w : getWindowsInSlot(DockSlot::Right)) {
+        if (w->open && *w->open) { rightHasOpen = true; break; }
+    }
     bool hasBottomWins = false;
     for (auto* w : getWindowsInSlot(DockSlot::Bottom)) {
         if (w->open && *w->open) { hasBottomWins = true; break; }
@@ -669,32 +1019,41 @@ void IDEDockManager::render(Core::Engine* engine, ZoneManager& /*zoneMgr*/, GLFW
         effectiveBottomH = _bottomCollapsed ? 26.0f : std::clamp(_bottomHeight, 100.0f, screenH * 0.6f);
     }
 
-    float sidebarH = screenH - topY - effectiveBottomH;
-
-    // Render Left Sidebar
-    renderLeftSidebar(topY, sidebarH, screenW);
-
-    // Render Right Sidebar
-    renderRightSidebar(topY, sidebarH, screenW);
-
-    // Calculate bottom bar horizontal bounds
-    bool leftHasOpen = false;
-    for (auto* w : getWindowsInSlot(DockSlot::Left)) {
-        if (w->open && *w->open) { leftHasOpen = true; break; }
-    }
-    bool rightHasOpen = false;
-    for (auto* w : getWindowsInSlot(DockSlot::Right)) {
-        if (w->open && *w->open) { rightHasOpen = true; break; }
-    }
-
     float leftOffset = (leftHasOpen && !_leftCollapsed) ? std::clamp(_leftWidth, 200.0f, screenW * 0.5f) : (leftHasOpen ? 28.0f : 0.0f);
     float rightOffset = (rightHasOpen && !_rightCollapsed) ? std::clamp(_rightWidth, 200.0f, screenW * 0.5f) : (rightHasOpen ? 28.0f : 0.0f);
-    float bottomW = std::max(100.0f, screenW - leftOffset - rightOffset);
+
+    // Corner collision priority:
+    // Most recently added/interacted slot wins the corner.
+    // When left and bottom both have open windows:
+    // If left was touched more recently than bottom (_leftSlotSeq > _bottomSlotSeq),
+    // left sidebar fills the corner down to screenH, and bottom bar starts flush at leftOffset.
+    // If bottom was touched more recently (_bottomSlotSeq >= _leftSlotSeq),
+    // bottom bar fills the corner (starts at 0.0f), and left sidebar stops flush at screenH - topY - effectiveBottomH.
+    bool leftWinsCorner = leftHasOpen && (!hasBottomWins || _leftSlotSeq > _bottomSlotSeq);
+    bool rightWinsCorner = rightHasOpen && (!hasBottomWins || _rightSlotSeq > _bottomSlotSeq);
+
+    float leftAvailH = leftWinsCorner ? (screenH - topY) : (screenH - topY - effectiveBottomH);
+    float rightAvailH = rightWinsCorner ? (screenH - topY) : (screenH - topY - effectiveBottomH);
+
+    // Render Left Sidebar
+    if (leftHasOpen) {
+        renderLeftSidebar(topY, leftAvailH, screenW);
+    }
+
+    // Render Right Sidebar
+    if (rightHasOpen) {
+        renderRightSidebar(topY, rightAvailH, screenW);
+    }
+
+    // Bottom bar horizontal bounds
+    float bottomStartX = (leftHasOpen && leftWinsCorner) ? leftOffset : 0.0f;
+    float bottomEndX = (rightHasOpen && rightWinsCorner) ? (screenW - rightOffset) : screenW;
+    float bottomW = std::max(100.0f, bottomEndX - bottomStartX);
     float bottomY = screenH - effectiveBottomH;
 
     // Render Bottom Bar
     if (hasBottomWins) {
-        renderBottomBar(leftOffset, bottomY, bottomW, effectiveBottomH);
+        renderBottomBar(bottomStartX, bottomY, bottomW, effectiveBottomH);
     }
 
     // Render any windows popped out to Float while in IDE mode

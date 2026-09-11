@@ -28,7 +28,7 @@
 - [x] Select object
 - [ ] Morph object → select an existing object → activate Morph → modify its geometry using the available morph controls → verify the object's shape changes as intended
 - [x] Face Brush
-- [ ] Basic Pixel Changer authored Material color picker → Zach confirmed the full RGB/HSV interface appears, but reported on 2026-09-11 that the canvas stopped visibly painting. Rebuild/relaunch, load `BasicPixelChanger`, click a conspicuous saturated color in the 2D hue-saturation field, and click several canvas locations. Verify each click now paints that color; then change value and RGB sliders and verify the selected-color preview, target-material swatch, and subsequent pixels all follow. The repair gives the canvas an authored `paintColor` Property and makes `WritePixel` read it locally; the complete-object-set regression passes headlessly, but this native manifestation needs Zach's witness.
+- [ ] Basic Pixel Changer authored Material color picker → Zach confirmed the full RGB/HSV interface appears and discovered why the canvas seemed inert: changing Creator Console's color to red made pixels visible, proving the legacy embedded Law was still painting its default white on the white canvas. Fully quit/relaunch, load `basic_pixel_changer`, choose a conspicuous saturated color only through the Law-driven 2D field, and click several canvas locations without touching Creator Console color. Verify each mark follows the Law picker; then change value and RGB sliders and verify the preview, target Material, and subsequent pixels all follow. Both Zach-owned legacy world artifacts now use canvas `paintColor`, and the loader now makes the canonical Zone Law root override a stale embedded copy; the deliberate stale-world regression passes headlessly, but this native manifestation needs Zach's witness.
 - [ ] Pottery → activate Pottery → create/use a pottery form on an object → verify the geometry changes as intended | Zach: My note in the todo list remains unfixed: Pottery successfully increases 3D dimensinos but stretches the FaceTextures to fit the new face dimensions rather than increasing the size of the facetexture image accordingly. 
 - [ ] Rotate → select an object → activate Rotate → rotate the object → verify its orientation changes | Zach: changing the angle sliders on a selected shape while having rotation tool selected does not visibly change the shape. However, if you scroll to the bottom of the creator console window in 3D tool mode you'll see "Selection" with what seems to be the object ID. There are "Target Rotation" sliders that successfully rotate the shape. 
 - [ ] Fuse Objects → create/select two objects → activate Fuse → fuse them → verify they become one fused object as intended | Zach: I mean I guess it executes, but it's not always clear what and sometimes it's weird and unclear if it's buggy or not. I need to investigate. 
@@ -301,3 +301,16 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
   8. Drag the inner splitters (the edge of Left, Right, or Bottom panels) and verify resize cursors (`<->` and `^v`) appear and panels resize smoothly.
   9. Click `[❐ Float]` on any panel header to pop it out into an independent floating window; click `[◧]`, `[◨]`, or `[⬓]` to re-dock it.
   10. Press `F10` again to toggle back to traditional floating window mode; verify all windows restore cleanly to their floating positions.
+   11. **Corner Collision Dynamic Priority (Zero Void)**:
+       - In IDE Mode, open Left Sidebar (`F8`) and Bottom Bar (`H`).
+       - Observe the bottom-left corner: notice there is **zero empty void/gap**!
+       - Because Bottom Bar was opened most recently, Bottom Bar extends from `X = 0` across the corner, while Left Sidebar sits flush on top of it.
+       - Now click any tab or control inside Left Sidebar: Left Sidebar takes dynamic priority, extending all the way to the bottom edge of the screen, while Bottom Bar shrinks flush against the sidebar's right edge.
+       - Test the bottom-right corner with Right Sidebar (`F3`) and Bottom Bar (`H`) and verify the exact same zero-gap priority behavior.
+   12. **Stacked Multiple Windows Layout**:
+       - In Left Sidebar (with both Creator Console and Dev Tools open), click `[☷ Stack]` in the panel header or the top workspace bar.
+       - Verify both tools appear **simultaneously stacked vertically** inside the sidebar!
+       - Click `[▼]` on either pane's header: verify it collapses accordion-style into a compact header bar (`[▶]`), yielding space to the other tool. Click `[▶]` to expand it again.
+       - Drag the divider between stacked panes to resize them vertically.
+       - In Bottom Bar (with multiple tools docked), toggle `[☷ Stack]`: verify tools arrange as side-by-side columns with draggable vertical splitters!
+       - Click `[▤ Tabs]` at any time to return to single-active tabbed mode.
