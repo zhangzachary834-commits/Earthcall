@@ -95,10 +95,25 @@ document.addEventListener('DOMContentLoaded', () => {
         emitUtterance();
     });
 
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            inputField.value = '';
+            inputField.dispatchEvent(new Event('input'));
+        }
+    });
+
     inputField.addEventListener('input', () => {
         const isEmpty = inputField.value.trim() === '';
-        emitBtn.disabled = isEmpty;
-        emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
-        emitBtn.setAttribute('aria-disabled', isEmpty.toString());
+        const isDisabled = inputField.disabled;
+
+        emitBtn.disabled = isEmpty || isDisabled;
+
+        if (isDisabled) {
+            emitBtn.title = "Engine disconnected";
+        } else {
+            emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
+        }
+
+        emitBtn.setAttribute('aria-disabled', (isEmpty || isDisabled).toString());
     });
 });
