@@ -1,4 +1,5 @@
 #include "FieldNode.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 namespace geom {
 
@@ -9,6 +10,20 @@ nlohmann::json FieldNode::toJson() const {
     j["scale"] = {scale.x, scale.y, scale.z};
     j["field"] = field->toJson();
     j["vectorField"] = vectorField->toJson();
+
+    // A FieldNode is a Singular, so properties a Person/Law grants it are
+    // first-order authored state just like authored Object properties.  Keep
+    // them beside the mathematical ASTs instead of silently dropping them at
+    // the save boundary (the temporal form of Refusal #6's black box).
+    if (!dynamicProperties().empty()) {
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : dynamicProperties()) {
+            PropertyValue live = entry.second;
+            getDynamicProperty(entry.first, live);
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
+        }
+        j["authoredProperties"] = std::move(dyn);
+    }
     return j;
 }
 
@@ -49,6 +64,13 @@ std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {
             mutVec->frequency = newVec->frequency;
             mutVec->amplitude = newVec->amplitude;
             mutVec->astDefinition = newVec->astDefinition;
+        }
+    }
+
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin();
+             it != j["authoredProperties"].end(); ++it) {
+            node->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
         }
     }
     return node;
