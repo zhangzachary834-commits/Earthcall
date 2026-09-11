@@ -1,0 +1,18 @@
+--- tests/singularity/frame_lag_test.cpp
++++ tests/singularity/frame_lag_test.cpp
+@@ -420,10 +420,10 @@
+     std::printf("\n\n1. SCALING — making beings and resolving pure law\n");
+     std::printf("  target   |   total ms (median)     |       zone ms           | relation ms |  law ms\n");
+     std::printf("  --------------------------------------------------------------------------------------\n");
+-    costForPopulation(32, 60, false);
+-    costForPopulation(64, 30, false);
+-    costForPopulation(128, 30, false);
+-    costForPopulation(256, 30, false);
+-    costForPopulation(512, 10, false);
++    //costForPopulation(32, 60, false);
++    //costForPopulation(64, 30, false);
++    //costForPopulation(128, 30, false);
++    //costForPopulation(256, 30, false);
++    //costForPopulation(512, 10, false);
+     
+     // ------------------------------------------------------------------

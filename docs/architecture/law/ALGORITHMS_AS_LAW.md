@@ -542,6 +542,33 @@ it is not a *Decide*:
   is intelligible; *"disable the ground-constraint law and the player falls through the
   floor forever with no way back"* is not. Those stay at R3/R4 permanently.
 
+{ Zach: I'd nuance the part on "collision testing." Collision is still fundamentally an algorithm operating on a 
+representational artifact, not native machine substrate. In a strictly ontocomputing and doctrinal sense, it is Decide. 
+While it's genuinely faster than trying to brute force pure property 
+lookups. Authorable Decide-phases can actually help optimize the narrow phase further when specific contours are mapped.
+
+However, in practice with conventional computer today, it's more complicated, because the way computers work mean specific 
+mathematics have distinct mathematical channels that are both universal and work best with collision. 
+There is a legitimate sense in which the overlap of mathematical clouds 
+can be conceptualized as a sense capacity because collision is constant every frame that sprawls over two 
+entire field's gradients. 
+
+There's two paths I can think of. First, and closest to how collision is already calculated:
+a universal collision algorithm hardcoded in cpp. However, my version would not be a hardcoded property 
+of phyiscal/visual 3D Singulars (in the spirit of Refusal 1, 3, 7), 
+but rather as a universal OntoMath bound-overlap framework that generalizes beyond physics, 
+with the specific variables of it being authorable. This would be Sense, but where Decide authors the specifc form.
+
+Second, PropertyPaths when compiling to bytecode/JIT can achieve speeds 
+like cpp, particularly JIT. Then it would be Decide operating over property paths. 
+
+The common through-line of both is authored direction
+of a native and fast substrate that organizes the part closest to metal—and a kind of organization that is fundamentally
+common among the Singularity mathematical substrate itself. 
+
+But see this is why I'm dreaming of a Earthcall-native OS/hardware so we don't have to fight awkward distinctions like 
+these, and we can collapse the distinction between math and "math channels." }
+
 A tight inner numeric kernel that is genuinely hot and genuinely *sensing* or *acting* is
 first-mover code. But note what the migration framework insists on: even then, its
 **constants become properties** (R3) so a Person governs the algorithm without owning its

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Execution/ExecutionChannel.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
@@ -1074,4 +1075,6 @@ private:
     std::uint64_t _propheticRevision = static_cast<std::uint64_t>(-1);
     mutable PropheticCounters _propheticCounters;
     int _maxChainRounds = 5;
+
+    Earthcall::Execution::ExecutionChannel _executionChannel;
 };
