@@ -55,7 +55,9 @@ The `BasicPixelChanger` Zone contains the Shape2D Object `basic-pixel-canvas` an
 the shared Law root `law-basic-pixel-changer` through `lawRefs`. The Law hears
 `object-clicked`, requires that exact canvas identity, and performs `WritePixel` from
 `@interaction-channel.hoveredFace`, `.hoveredU`, `.hoveredV`, and
-`@creation-channel.activeColor`.
+the canvas's own authored `paintColor` Property. The authored color-picker apply Law maps
+its `selectedColor` into `paintColor` on `color-selection-changed`; the click itself needs
+neither Creator Console state nor a global named-being lookup.
 
 The save records **Zach** as author. Its `injected_by` envelope records **Codex (GPT-5),
 session `01a07d15-f266-7902-bc11-cf7b06b0b343`** as the mechanism that wrote the file by
@@ -76,6 +78,20 @@ copy-on-write, and visible pixel manifestation together—not merely the headles
 Still open beyond this task: a Person-facing authored-domain surface, authored texture
 resolution, stroke identity/history/provenance, and compiled/GPU evaluation for very large
 or continuously changing selections. These are not grounds for a rigid region vocabulary.
+
+**Regression and repair — Zach, 2026-09-11:** after the full RGB/HSV interface appeared,
+Zach reported that clicking the canvas no longer manifested a pixel, then discovered the
+decisive clue himself: changing the Creator Console 3D-tool color to red made marks appear.
+The writer was active but painting its legacy white selection onto the white canvas.
+`saves/worlds/basic_pixel_changer.json` and `.ecform` still embedded an older copy of the
+Law that read `@creation-channel.activeColor`, and `loadState` admitted that compatibility
+bag after activating the Zone's canonical Law closure. Both Zach-owned artifacts now carry
+the canvas-local `paintColor` path. More importantly, the loader now overlays the active
+Zone's shared Law roots onto colliding embedded copies before its one register replacement,
+so an old World cannot silently undo a Zone Law again. The focused test supplies all ten
+live Zone objects, deliberately loads a stale Creator-Console copy, and proves the authored
+picker still changes the exact addressed texel. Native confirmation remains on the Person
+Verification List.
 
 ## Next human-authored rung: the domain of writing
 

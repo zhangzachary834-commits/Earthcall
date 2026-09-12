@@ -17,6 +17,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -154,8 +155,12 @@ int main() {
     const glm::vec3 initialColor(0.10f, 0.70f, 0.25f);
     picker->setDynamicProperty("selectedColor", PropertyValue(initialColor));
     creation->activeColor = initialColor; // compatibility bridge, not the pixel source
-    std::vector<Object*> reachable{canvas, redStrip, greenStrip, blueStrip,
-                                   chromaticField, valueStrip, picker};
+    // Use the exact complete set and order the live engine supplies. A hand-
+    // curated list hid screen objects that could participate in hit selection.
+    std::vector<Object*> reachable;
+    for (const auto& object : zone->getOwnedObjects()) {
+        if (object) reachable.push_back(object.get());
+    }
     const auto frame = [&](float x, float y, bool left) {
         Singularity::Input::InteractionChannel::Sense sense;
         sense.pointerX = x;
@@ -203,6 +208,11 @@ int main() {
           "direct red slider changes one selectedColor component through a Law");
     check(near(creation->activeColor, pickedColor),
           "picker Law mirrors selectedColor into the Creation channel bridge");
+    Property* paintColorProperty = canvas->findProperty("paintColor");
+    check(paintColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(paintColorProperty->value()) &&
+              near(std::get<glm::vec3>(paintColorProperty->value()), pickedColor),
+          "picker Law hands the authored color to the canvas paintColor Property");
     auto targetMaterial = materials.get("authored-color-target");
     check(targetMaterial != nullptr && near(targetMaterial->baseColor,
                                              pickedColor),
@@ -282,8 +292,8 @@ int main() {
 
     const ActionNode roundTrip = ActionNode::fromJson(law->actionModel()->toJson());
     check(roundTrip.kind == ActionNode::Kind::WritePixel &&
-              roundTrip.pixelColorPath.toString() == "@material-color-picker.selectedColor",
-          "authored WritePixel action round-trips without hidden defaults");
+              roundTrip.pixelColorPath.toString() == "paintColor",
+          "authored WritePixel reads its canvas-local color and round-trips without hidden defaults");
     const ActionNode regionRoundTrip = ActionNode::fromJson(elevateRegion.toJson());
     check(regionRoundTrip.kind == ActionNode::Kind::ElevatePixels &&
               regionRoundTrip.propertyName == "authored.left-quarter" &&
@@ -333,6 +343,65 @@ int main() {
     check(harness.zones.switchTo(basicIndex) &&
               harness.lawManager.find("law-basic-pixel-changer") != nullptr,
           "re-entering the Zone restores and rebinds its shared Law root");
+
+    // A legacy session embeds the same Law identity with its old Creator
+    // Console color path. Loading that compatibility bag happens after Zone
+    // activation; the shared Zone Law root must remain authoritative.
+    nlohmann::json staleLaw =
+        SaveSystem::readLawIdentity("law-basic-pixel-changer")["law"];
+    staleLaw["actionModel"]["pixelColorPath"] = "@creation-channel.activeColor";
+    const nlohmann::json legacyWorld{
+        {"currentZoneId", "BasicPixelChanger"},
+        {"zoneRefs", nlohmann::json::array({{{"identifier", "BasicPixelChanger"}}})},
+        {"authoredLaws",
+         {{"laws", nlohmann::json::array({staleLaw})},
+          {"triggers", {{"law-basic-pixel-changer",
+                          nlohmann::json::array({"object-clicked"})}}},
+          {"formationMembers",
+           nlohmann::json::array({"law-basic-pixel-changer"})}}},
+    };
+    const auto legacyPath = isolated.path / "worlds/legacy-pixel-color.ecform";
+    std::filesystem::create_directories(legacyPath.parent_path());
+    {
+        std::ofstream out(legacyPath);
+        out << legacyWorld.dump(2) << '\n';
+    }
+    harness.loadWorld(legacyPath.string());
+    Law* afterLegacyLoad = harness.lawManager.find("law-basic-pixel-changer");
+    const ActionNode afterLegacyAction = afterLegacyLoad
+        ? ActionNode::fromJson(afterLegacyLoad->actionModel()->toJson())
+        : ActionNode{};
+    check(afterLegacyLoad != nullptr &&
+              afterLegacyAction.pixelColorPath.toString() == "paintColor",
+          "Zone Law root overrides a legacy World's Creator Console color copy");
+    check(harness.lawManager.find("law-material-color-picker-chromatic") != nullptr &&
+              harness.lawManager.find("law-material-color-picker-apply") != nullptr,
+          "legacy World load preserves the active Zone's complete picker Law closure");
+
+    // Prove the post-load lived path, not merely the serialized field.
+    zone = harness.zones.zones()[harness.zones.currentIndex()];
+    canvas = findObject(*zone, "basic-pixel-canvas");
+    picker = findPicker(*zone);
+    reachable.clear();
+    for (const auto& object : zone->getOwnedObjects()) {
+        if (object) reachable.push_back(object.get());
+    }
+    frame(935.0f, 170.0f, false);
+    frame(935.0f, 170.0f, true);
+    frame(935.0f, 170.0f, false);
+    paintColorProperty = canvas ? canvas->findProperty("paintColor") : nullptr;
+    const glm::vec3 postLoadColor =
+        paintColorProperty && std::holds_alternative<glm::vec3>(paintColorProperty->value())
+            ? std::get<glm::vec3>(paintColorProperty->value())
+            : glm::vec3(-1.0f);
+    frame(600.0f, 580.0f, false);
+    frame(600.0f, 580.0f, true);
+    frame(600.0f, 580.0f, false);
+    auto postLoadMaterial = materials.get("material.basic-pixel-canvas");
+    check(canvas != nullptr && picker != nullptr && postLoadMaterial != nullptr &&
+              !postLoadMaterial->faceTextures.empty() &&
+              near(texel(postLoadMaterial->faceTextures[0], 55, 60), postLoadColor),
+          "after legacy load, the authored picker color visibly reaches the addressed pixel");
 
     std::printf("%s (%d failure%s)\n", failures ? "FAIL" : "PASS", failures,
                 failures == 1 ? "" : "s");

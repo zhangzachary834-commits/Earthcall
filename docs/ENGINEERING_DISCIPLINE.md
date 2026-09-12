@@ -24,12 +24,13 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
   A check that does not exercise the live path is not end-to-end. It is a second office
   for the same claim, and this repository has already learned what that costs.
 
-- **The Two-Path Testing Doctrine:** Ensure all tests route through two paths—one path that
-  tests the mathematical correctness of the logic itself, and the other that simulates
-  whether it has produced the human-facing effect (i.e. a button being *actually responsive*
-  to a person's click in the live/production environment, not just working in theory). These
-  two paths are critical so bugs can be immediately filtered as either a logic problem in
-  the feature itself, or an environment problem in the host that serves the feature.
+- **Two-Path Testing Doctrine:** All tests must route through two distinct paths: one that
+  tests the mathematical/logical correctness in isolation, and another that simulates the
+  actual human-facing effect (e.g., a button being *actually responsive* to a click, not
+  just able to work in theory but unresponsive in the live/production environment). These
+  two paths are important so bugs can be immediately filtered to determine whether it is
+  a logic problem in the feature itself or an environment problem in the thing that hosts
+  the feature.
 
 - **The Integrity Check:** After finishing, ask: "does anything I changed have a caller, a
   consumer, or a test that now lies?" If yes, fix it before closing the session.

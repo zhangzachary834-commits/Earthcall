@@ -73,11 +73,12 @@ void Menu::toggle() {
 bool Menu::isOpen() const { return openState; }
 
 namespace {
+    thread_local char t_menuKeyLabelBuf[2] = {0, 0};
+
     const char* menuKeyLabel(int key) {
         if (key >= GLFW_KEY_SPACE && key <= GLFW_KEY_Z) {
-            static thread_local char buf[2] = {0, 0};
-            buf[0] = static_cast<char>(key);
-            return buf;
+            t_menuKeyLabelBuf[0] = static_cast<char>(key);
+            return t_menuKeyLabelBuf;
         }
         switch (key) {
             case GLFW_KEY_ENTER: return "Enter";

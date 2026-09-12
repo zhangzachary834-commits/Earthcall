@@ -243,6 +243,11 @@ def chromatic_law(law_id: str, name: str, control_id: str,
 def material_apply_law() -> dict[str, Any]:
     law_id = "law-material-color-picker-apply"
     actions = [
+        # Hand the authored selection to the canvas as its own writable
+        # Property. The pixel Law can then read its subject locally instead
+        # of depending on a global named-being lookup during the click edge.
+        map_action("@basic-pixel-canvas.paintColor",
+                   vector_node("c"), "c", "@material-color-picker.selectedColor"),
         map_action("@material.material-color-picker-preview.baseColor",
                    vector_node("c"), "c", "@material-color-picker.selectedColor"),
         map_action("@material.authored-color-target.baseColor",
@@ -335,6 +340,10 @@ def main() -> None:
 
     objects = zone.setdefault("world", {}).setdefault("objects", [])
     by_id = {obj.get("objectID"): obj for obj in objects}
+    canvas = by_id.get("basic-pixel-canvas")
+    if canvas is not None:
+        canvas.setdefault("authoredProperties", {}).setdefault(
+            "paintColor", {"t": "vec3", "x": 1.0, "y": 0.15, "z": 0.15})
     authored = [
         object_2d("material-color-picker-panel", 690, 20, 570, 680,
                   "color-picker-panel", z=1),
@@ -398,13 +407,14 @@ def main() -> None:
     for law in laws:
         write_json(LAW_DIR / law["identifier"] / "law.json", law)
 
-    # The pixel writer now consumes the same authored color Singular as the
-    # material picker. Keep the old CreationChannel path out of the Person
-    # path; the RGB bars still mirror it as a compatibility bridge.
+    # The pixel writer consumes its canvas subject's authored paintColor.
+    # color-selection-changed maps the picker selection into that Property,
+    # so the click edge needs no global named-being lookup and no hidden C++
+    # state. The Creator Console color remains only a compatibility bridge.
     pixel_law_path = LAW_DIR / "law-basic-pixel-changer" / "law.json"
     if pixel_law_path.exists():
         pixel_law = json.loads(pixel_law_path.read_text())
-        pixel_law["law"]["actionModel"]["pixelColorPath"] = "@material-color-picker.selectedColor"
+        pixel_law["law"]["actionModel"]["pixelColorPath"] = "paintColor"
         write_json(pixel_law_path, pixel_law)
 
 

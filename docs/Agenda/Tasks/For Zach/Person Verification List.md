@@ -28,7 +28,7 @@
 - [x] Select object
 - [ ] Morph object → select an existing object → activate Morph → modify its geometry using the available morph controls → verify the object's shape changes as intended
 - [x] Face Brush
-- [ ] Basic Pixel Changer authored Material color picker → load `BasicPixelChanger`; click across the 2D hue-saturation field, move the value/brightness slider, and click different positions on the direct red/green/blue sliders; verify the selected-color preview and target-material swatch change across the full gamut, then click the canvas and verify the next painted pixel uses that selected color.
+- [ ] Basic Pixel Changer authored Material color picker → Zach confirmed the full RGB/HSV interface appears and discovered why the canvas seemed inert: changing Creator Console's color to red made pixels visible, proving the legacy embedded Law was still painting its default white on the white canvas. Fully quit/relaunch, load `basic_pixel_changer`, choose a conspicuous saturated color only through the Law-driven 2D field, and click several canvas locations without touching Creator Console color. Verify each mark follows the Law picker; then change value and RGB sliders and verify the preview, target Material, and subsequent pixels all follow. Both Zach-owned legacy world artifacts now use canvas `paintColor`, and the loader now makes the canonical Zone Law root override a stale embedded copy; the deliberate stale-world regression passes headlessly, but this native manifestation needs Zach's witness.
 - [ ] Pottery → activate Pottery → create/use a pottery form on an object → verify the geometry changes as intended | Zach: My note in the todo list remains unfixed: Pottery successfully increases 3D dimensinos but stretches the FaceTextures to fit the new face dimensions rather than increasing the size of the facetexture image accordingly. 
 - [ ] Rotate → select an object → activate Rotate → rotate the object → verify its orientation changes | Zach: changing the angle sliders on a selected shape while having rotation tool selected does not visibly change the shape. However, if you scroll to the bottom of the creator console window in 3D tool mode you'll see "Selection" with what seems to be the object ID. There are "Target Rotation" sliders that successfully rotate the shape. 
 - [ ] Fuse Objects → create/select two objects → activate Fuse → fuse them → verify they become one fused object as intended | Zach: I mean I guess it executes, but it's not always clear what and sometimes it's weird and unclear if it's buggy or not. I need to investigate. 
@@ -279,3 +279,38 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 - [ ] **Look at the new "Rete network" block in the performance window.** `PerformanceMetricsWindow` now shows alpha/beta node counts, live fact count, and "fact refs held", plus the prophetic filter's skip rate. Open chess in `earthcall_webgpu` — chess states `instance-of category.chess.piece` in **76 separate laws**, so before this change the network carried 76 identical nodes each holding its own copy of the same match set. The alpha count should now be far below the number of laws. This is the first time the network's own size has been visible at all.
 - [ ] **Chess and Go must play identically.** Sharing means many laws now read one node. `chess_app_test`, `go_app_test` and `rete_compile_test` pass, but a shared node binding the wrong law is exactly the kind of fault a suite can miss and a hand cannot: play a real game in each and confirm no piece behaves differently, and especially that nothing has gone *quiet*.
 - [ ] **Synthesis Studio chord pads.** `synthesis_studio_living.json` states `isChordPad == true` in ten laws, which now share one node. Play the pads and confirm all of them still sound and light.
+
+## IDE Docking Mode for First Mover Window Tools
+
+*Landed 2026-09-11, Antigravity. Added IDE Docking Mode attaching ImGui windows to screen edges (Left sidebar, Right sidebar, Bottom bar drawer), keeping the central 3D viewport clear and unoccluded. → [full task](../Specific%20Tasks/IDE_Docking_Mode/IDE_Docking_Mode.md)*
+
+- [ ] **Toggle IDE Mode (`F10` or Menu `M`)**:
+  1. Launch Earthcall WebGPU: `Run Earthcall.command` or `./build/earthcall_webgpu`.
+  2. Press `F10` (or press `M` and select "Toggle IDE Mode" from the main menu) to switch into IDE Docked Mode.
+  3. Notice the top workspace bar appears: `[≡ IDE DOCKED]` with panel indicators `[Left: 3]`, `[Right: 2]`, `[Bottom: 1]`.
+  4. Verify the **Left Sidebar** opens docked to the left edge of the viewport containing tabs:
+     - **Creator Console [F8]**
+     - **Dev Tools [`]**
+     - **Creation [F9]**
+  5. Verify the **Right Sidebar** opens docked to the right edge containing tabs:
+     - **Metrics & Coords [F3]**
+     - **Keymap [K]**
+  6. Verify the **Bottom Drawer** opens docked across the bottom containing:
+     - **Chat [H]**
+  7. Verify the **Center Viewport** remains completely open, unobstructed, and responsive to 3D camera navigation and object interactions.
+  8. Drag the inner splitters (the edge of Left, Right, or Bottom panels) and verify resize cursors (`<->` and `^v`) appear and panels resize smoothly.
+  9. Click `[❐ Float]` on any panel header to pop it out into an independent floating window; click `[◧]`, `[◨]`, or `[⬓]` to re-dock it.
+  10. Press `F10` again to toggle back to traditional floating window mode; verify all windows restore cleanly to their floating positions.
+   11. **Corner Collision Dynamic Priority (Zero Void)**:
+       - In IDE Mode, open Left Sidebar (`F8`) and Bottom Bar (`H`).
+       - Observe the bottom-left corner: notice there is **zero empty void/gap**!
+       - Because Bottom Bar was opened most recently, Bottom Bar extends from `X = 0` across the corner, while Left Sidebar sits flush on top of it.
+       - Now click any tab or control inside Left Sidebar: Left Sidebar takes dynamic priority, extending all the way to the bottom edge of the screen, while Bottom Bar shrinks flush against the sidebar's right edge.
+       - Test the bottom-right corner with Right Sidebar (`F3`) and Bottom Bar (`H`) and verify the exact same zero-gap priority behavior.
+   12. **Stacked Multiple Windows Layout**:
+       - In Left Sidebar (with both Creator Console and Dev Tools open), click `[☷ Stack]` in the panel header or the top workspace bar.
+       - Verify both tools appear **simultaneously stacked vertically** inside the sidebar!
+       - Click `[▼]` on either pane's header: verify it collapses accordion-style into a compact header bar (`[▶]`), yielding space to the other tool. Click `[▶]` to expand it again.
+       - Drag the divider between stacked panes to resize them vertically.
+       - In Bottom Bar (with multiple tools docked), toggle `[☷ Stack]`: verify tools arrange as side-by-side columns with draggable vertical splitters!
+       - Click `[▤ Tabs]` at any time to return to single-active tabbed mode.
