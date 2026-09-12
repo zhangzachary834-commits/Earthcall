@@ -4,6 +4,7 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include <memory>
 #include <string>
@@ -179,6 +180,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+
+    // The Zone's continuous field root used to exist live, participate in the
+    // Formation, expose PropertyPaths, and then simply disappear from saves.
+    // Persist the being itself — including its OntoMath ASTs and authored
+    // dynamic properties — so a field that governs reality remains real
+    // across the temporal boundary too.
+    if (const auto* root = zone.spatialRoot()) {
+        zj["spatialRoot"] = root->toJson();
+    }
+
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
@@ -238,6 +249,18 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             }
         }
     }
+
+    // `replaceObjects=false` is the live-Zone merge used by loadState to
+    // preserve unsaved work. The spatial FieldNode is live authored state too:
+    // an older session snapshot must not rewind a Person's unsaved field/Law
+    // edits. Fresh construction and explicit snapshot restoration use the
+    // replacement path and may hydrate the persisted mathematical being.
+    // Restore INTO the already-owned node rather than replacing its pointer so
+    // Formation membership and lazily materialised PropertyRefs stay valid.
+    if (replaceObjects && zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
+        if (auto* root = zone.spatialRoot()) root->applyJson(zj["spatialRoot"]);
+    }
+
     if (replaceObjects) {
         zone.getOwnedObjectsMutable().clear();
     }

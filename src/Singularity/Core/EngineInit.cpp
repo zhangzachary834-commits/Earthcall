@@ -10,6 +10,7 @@
 #include "../../Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/ShadingSystem.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
@@ -182,6 +183,13 @@ void Engine::initLogic() {
         // domain, which must be the one in front of the Person (the old
         // World bag was only the active world's).
         beings.push_back(&mgr.active());
+        // The Zone's continuous FieldNode is already a Singular and a member
+        // of its Formation. It must also enter the Universe working set or a
+        // named Law path such as @Sanctum_of_Beginnings_spatialRoot.origin
+        // can never resolve it: registered state that no Law can name is still
+        // a black box (Refusal #6). This is generic Field reachability, not a
+        // special Light type; light is merely the first consumer.
+        if (auto* field = mgr.active().spatialRoot()) beings.push_back(field);
         for (const auto& obj : mgr.active().getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
@@ -212,9 +220,12 @@ void Engine::initLogic() {
         beings.push_back(_person.get());
         // Other Zones: governance geography — laws quantify over them
         // (ForAny Zone ...) and address them by name (@Home.owner) even
-        // while unloaded. Active was already pushed as the Spawn womb.
+        // while unloaded. Their continuous field beings have the same right
+        // to named Law reachability; active was already pushed above.
         for (auto& zone : mgr.zones()) {
-            if (zone.get() != &mgr.active()) beings.push_back(zone.get());
+            if (zone.get() == &mgr.active()) continue;
+            beings.push_back(zone.get());
+            if (auto* field = zone->spatialRoot()) beings.push_back(field);
         }
     });
 
