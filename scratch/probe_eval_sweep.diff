@@ -1,0 +1,24 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -2043,6 +2043,11 @@
+         // OnBecomeTrue and laws without Rete terminals: full sweep path.
+         // Edge detection requires knowing when a being LEAVES the match set,
+         // so the full sweep is still necessary here.
++        auto tA = glfwGetTime();
+         std::vector<Singular*> subjects = sweepSubjects(*law);
++        auto tB = glfwGetTime();
++        if ((tB - tA) * 1000.0 > 1.0) {
++            printf("[EVAL+SWEEP] Law '%s' (hasTerminals=%d, activation=%d) took %.2f ms to sweep %zu subjects\n", law->getIdentifier().c_str(), hasTerminals, (int)law->activation(), (tB - tA) * 1000.0, subjects.size());
++        }
+ 
+         for (Singular* subject : subjects) {
+@@ -2048,6 +2053,7 @@
+         for (Singular* subject : subjects) {
+             if (!subject || Universe::instance().isUnmade(subject)) continue;
++            auto tC = glfwGetTime();
+             const bool holds = law->conditionsSatisfied(*subject);
++            auto tD = glfwGetTime();
++            if ((tD - tC) * 1000.0 > 1.0) {
++                printf("[EVAL+SWEEP] Law '%s' conditionsSatisfied on '%s' took %.2f ms\n", law->getIdentifier().c_str(), subject->getIdentifier().c_str(), (tD - tC) * 1000.0);
++            }
+             const bool wasHolding = law->lastConditionState(subject);

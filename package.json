@@ -1,5 +1,16 @@
 {
+  "name": "earthcall",
+  "version": "1.0.0",
+  "description": "Earthcall - Person-centered ontology and world creation engine",
+  "main": "scripts/mcp-server.js",
+  "bin": {
+    "earthcall-mcp": "scripts/mcp-server.js"
+  },
+  "scripts": {
+    "mcp": "node scripts/mcp-server.js"
+  },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "groq-compound-mcp-server": "^0.1.7"
   }
 }

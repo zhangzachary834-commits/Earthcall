@@ -126,8 +126,37 @@ std::string zoneIdentityPath(const std::string& identifier);
 bool zoneIdentityExists(const std::string& identifier);
 bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readZoneIdentity(const std::string& identifier);
-// Identifiers as stored (from zone.json `identifier`/`name`, else the folder).
+// The directory key each identity was actually enumerated under — NOT a
+// document-parsed identifier, which may differ from the folder it lives in
+// (e.g. saves/zones/BasicPixelChanger/ once carried a document identifier
+// of "Basic Pixel Changer", a space-containing display string). Reading
+// this key back via readZoneIdentity/readHomeIdentity is guaranteed to
+// resolve the SAME folder that was just enumerated — the boundary
+// violation Sol's Invariant 6 names ("do not return a document identifier
+// and then use it to reconstruct a possibly different path") is
+// structurally impossible with this type, since the key never round-trips
+// through document content at all.
 std::vector<std::string> listZoneIdentities();
+struct IdentityRecord {
+    std::string directoryKey;
+    nlohmann::json document;
+};
+// One entry per saves/zones/<dir>/zone.json with non-empty content,
+// directoryKey exactly the folder name, document the parsed file — the
+// caller (ZoneManager::hydrateFromZoneStore) is responsible for validating
+// the document's own claimed identity against directoryKey before ever
+// admitting a live Zone from it. This function makes no validation
+// decision itself — enumeration is mechanism, not a policy gate.
+std::vector<IdentityRecord> listZoneIdentityRecords();
+
+// Shared authored-Law identity store. Zones carry stable lawRefs; the Law
+// itself remains one shared root at saves/laws/<identifier>/law.json rather
+// than being copied into every Zone that names it.
+std::string lawDirectory(const std::string& identifier);
+std::string lawIdentityPath(const std::string& identifier);
+bool lawIdentityExists(const std::string& identifier);
+bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j);
+nlohmann::json readLawIdentity(const std::string& identifier);
 
 std::string homeDirectory(const std::string& identifier);
 std::string homeIdentityPath(const std::string& identifier);
@@ -135,5 +164,6 @@ bool homeIdentityExists(const std::string& identifier);
 bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readHomeIdentity(const std::string& identifier);
 std::vector<std::string> listHomeIdentities();
+std::vector<IdentityRecord> listHomeIdentityRecords();
 
 } // namespace SaveSystem

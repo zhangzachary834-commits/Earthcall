@@ -1,0 +1,615 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-material-color-picker-chromatic",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "law": {
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@material-color-picker.hue",
+          "function": {
+            "input": "u",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {
+                          "u": 1.0
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "u": "@interaction-channel.hoveredU"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@material-color-picker.saturation",
+          "function": {
+            "input": "v",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      },
+                      {
+                        "c": -1.0,
+                        "factors": {
+                          "v": 1.0
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "v": "@interaction-channel.hoveredV"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@material-color-picker.selectedColor",
+          "function": {
+            "input": "h",
+            "pieces": [
+              {
+                "lo": 0.0,
+                "includeLo": true,
+                "hi": 0.16666666666666666,
+                "includeHi": false,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -0.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.16666666666666666,
+                "includeLo": true,
+                "hi": 0.3333333333333333,
+                "includeHi": false,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 2.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.3333333333333333,
+                "includeLo": true,
+                "hi": 0.5,
+                "includeHi": false,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -2.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.5,
+                "includeLo": true,
+                "hi": 0.6666666666666666,
+                "includeHi": false,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 4.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.6666666666666666,
+                "includeLo": true,
+                "hi": 0.8333333333333334,
+                "includeHi": false,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -4.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.8333333333333334,
+                "includeLo": true,
+                "hi": 1.0,
+                "includeHi": true,
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "v": 1.0
+                            }
+                          },
+                          {
+                            "c": -1.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": 6.0,
+                            "factors": {
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          },
+                          {
+                            "c": -6.0,
+                            "factors": {
+                              "h": 1.0,
+                              "v": 1.0,
+                              "s": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "h": "@material-color-picker.hue",
+            "s": "@material-color-picker.saturation",
+            "v": "@material-color-picker.value"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@creation-channel.activeColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "color-selection-changed",
+          "publishSubject": "material-color-picker"
+        }
+      ]
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authors": [
+      "Zach"
+    ],
+    "authority": 0,
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "material-color-picker-chromatic"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-material-color-picker-chromatic",
+    "name": "Material Color Picker \u2014 2D chromatic selector",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-material-color-picker-chromatic",
+        "entityB": "Zach",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

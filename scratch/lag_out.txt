@@ -1,0 +1,55 @@
+--- frame_lag_test: saves/worlds/synthesis_studio_living.json ---
+machine calibration: x1.08 versus the reference machine (>1 means slower; every time below is divided by it)
+baseline: tests/singularity/frame_lag_baseline.txt
+
+1. SHAPE — per-frame cost against population size
+     64 objects -> frame    2.868 ms  (zone    0.280 [g:0.002 r:0.001 a:0.265 p:0.011]  relations  0.000  law    2.542)  over 24 frames
+    128 objects -> frame    5.704 ms  (zone    0.558 [g:0.004 r:0.002 a:0.530 p:0.022]  relations  0.000  law    5.138)  over 24 frames
+    256 objects -> frame   11.568 ms  (zone    1.162 [g:0.008 r:0.005 a:1.088 p:0.046]  relations  0.001  law   10.398)  over 24 frames
+    512 objects -> frame   23.930 ms  (zone    2.405 [g:0.040 r:0.009 a:2.245 p:0.092]  relations  0.001  law   21.488)  over 13 frames
+  ok        whole frame grows as n^k (linear 1.0, quadratic 2.0), k = 1.020 (aspiration 1.150, baseline 1.113)
+  ok        Zone::update grows as n^k (linear 1.0, quadratic 2.0), k = 1.037 (aspiration 1.150, baseline 1.137)
+  note        groundScan costs 0.0404 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  note        rotation costs 0.0094 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok          automation grows as n^k (linear 1.0, quadratic 2.0), k = 1.029 (aspiration 1.150, baseline 0.968)
+  ok          physics grows as n^k (linear 1.0, quadratic 2.0), k = 1.022 (aspiration 1.150, baseline 1.279)
+  note      formation relations costs 0.0013 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok        LawManager::tick grows as n^k (linear 1.0, quadratic 2.0), k = 1.026 (aspiration 1.150, baseline 0.957)
+⚠️  Zone 'Go': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'Go Game': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+🔀 Switching to zone [0]...
+🌍 Zone 'SynthesisStudio.LivingInstrument' loaded with 137 objects.
+🌀 Entering zone: SynthesisStudio.LivingInstrument (Local)
+   Qualities:
+     - forkedFrom: SynthesisStudio
+     - kind: studio
+     - ownerKind: person
+   Deletable by:
+     - Zach: yes
+
+world: SynthesisStudio.LivingInstrument  objects=137  laws=69  relations=240
+
+--- RUNNING QUIESCENCE ---
+Tick 0: 0.000 ms
+Tick 1: 0.000 ms
+Tick 2: 0.000 ms
+
+3. STEADY — the loaded world, frame after frame
+  24 frames (wall-clock cap reached)
+  simulation frame             median 201.119 ms   p95 539.225   worst 709.757   first-quarter 474.658 -> last-quarter 191.436 (medians)
+  by phase                     zone    0.058 ms   relations   0.016 ms   law  201.063 ms  (medians)
+  LAG       median simulation frame = 186.697 ms (aspiration 5.500, baseline 2.456)  <- worse than the recorded baseline
+  ok          of that, Zone::update = 0.054 ms (aspiration 3.000, baseline 0.797)
+  LAG         of that, LawManager::tick = 186.644 ms (aspiration 2.000, baseline 1.653)  <- worse than the recorded baseline
+  LAG       95th-percentile frame (a hitch that recurs) = 500.557 ms (aspiration 16.600, baseline 2.662)  <- worse than the recorded baseline
+  ok        no drift: last quarter of the run costs 0.40x the first quarter
+
+4. LOAD — opening the authored world
+  saves/worlds/synthesis_studio_living.json: 11790.9 ms for 137 objects in the active Zone
+  LAG       time to open the world = 10945.358 ms (aspiration 4000.000, baseline 6950.000)  <- worse than the recorded baseline
+
+machine steadiness: calibration x1.08 at the start, x1.21 at the end (drift 1.13x)
+
+broken invariants: 0   timing regressions: 4
+STANDING lines are costs already recorded in the baseline, not failures.
+They are tasks — see docs/Agenda/Tasks/To-do list.md, Performance.

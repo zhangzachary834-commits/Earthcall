@@ -139,6 +139,7 @@ namespace Physics {
                       float gravityAccel,
                       float airResistance,
                       float groundY) {
+        return; // STUBBED FOR PROFILING
         // Apply modular physics laws to all bodies before integration
         // We keep legacy gravity/air as fallback when no laws exist
         const auto& laws = getLaws();

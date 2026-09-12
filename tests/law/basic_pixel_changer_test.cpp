@@ -1,7 +1,8 @@
 // The Basic Pixel Changer, held to its authored save and its actual Sense-Act
-// route: screen-space observation -> object-clicked -> Law -> Screen channel ->
-// copy-on-write Material pixels.  This test never reconstructs the changer Law
-// in C++, so deleting or drifting the save's law text makes it fail.
+// route: Zone activation -> stable Law root -> screen-space observation ->
+// object-clicked -> Law -> Screen channel -> copy-on-write Material pixels.
+// This test never invokes the legacy World loader or reconstructs the changer
+// Law in C++, so deleting/drifting either authored identity makes it fail.
 
 #include "support/test_harness.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
@@ -11,11 +12,14 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 
 #include <cassert>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -45,6 +49,10 @@ Object* findObject(Zone& zone, const std::string& id) {
     return nullptr;
 }
 
+Object* findPicker(Zone& zone) {
+    return findObject(zone, "material-color-picker");
+}
+
 glm::vec3 texel(const FaceTexture& texture, int x, int y) {
     const std::size_t offset = static_cast<std::size_t>(y * texture.size + x) * 4;
     return glm::vec3(texture.pixels[offset], texture.pixels[offset + 1],
@@ -58,51 +66,101 @@ bool near(const glm::vec3& a, const glm::vec3& b) {
 
 int main() {
     std::printf("=== Basic Pixel Changer: authored Law and property elevation ===\n");
-    std::string filename = "saves/worlds/basic_pixel_changer.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/basic_pixel_changer.json")) {
-        filename = "../saves/worlds/basic_pixel_changer.json";
+    std::filesystem::path sourceRoot = "saves";
+    if (!std::filesystem::exists(sourceRoot / "zones/BasicPixelChanger/zone.json") &&
+        std::filesystem::exists("../saves/zones/BasicPixelChanger/zone.json")) {
+        sourceRoot = "../saves";
     }
-    if (!std::filesystem::exists(filename)) {
-        std::fprintf(stderr, "basic_pixel_changer_test: authored save is missing\n");
+    const auto sourceZone = std::filesystem::absolute(
+        sourceRoot / "zones/BasicPixelChanger/zone.json");
+    const auto sourceLaw = std::filesystem::absolute(
+        sourceRoot / "laws/law-basic-pixel-changer/law.json");
+    if (!std::filesystem::exists(sourceZone) || !std::filesystem::exists(sourceLaw)) {
+        std::fprintf(stderr, "basic_pixel_changer_test: authored Zone/Law root is missing\n");
         return 1;
     }
-    const auto source = std::filesystem::absolute(filename);
     TempSaveRoot isolated{
         std::filesystem::temp_directory_path() /
         ("earthcall-basic-pixel-" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()))};
-    std::filesystem::create_directories(isolated.path / "worlds");
-    const auto isolatedWorld = isolated.path / "worlds" / "basic_pixel_changer.json";
-    std::filesystem::copy_file(source, isolatedWorld);
+    std::filesystem::create_directories(isolated.path / "zones/BasicPixelChanger");
+    std::filesystem::create_directories(isolated.path / "laws/law-basic-pixel-changer");
+    std::filesystem::copy_file(sourceZone,
+                               isolated.path / "zones/BasicPixelChanger/zone.json");
+    std::filesystem::copy_file(sourceLaw,
+                               isolated.path / "laws/law-basic-pixel-changer/law.json");
+    const std::array<const char*, 6> pickerLawIds{
+        "law-material-color-picker-red", "law-material-color-picker-green",
+        "law-material-color-picker-blue", "law-material-color-picker-chromatic",
+        "law-material-color-picker-value", "law-material-color-picker-apply"};
+    for (const char* lawId : pickerLawIds) {
+        const auto source = sourceRoot / "laws" / lawId / "law.json";
+        const auto destination = isolated.path / "laws" / lawId / "law.json";
+        std::filesystem::create_directories(destination.parent_path());
+        std::filesystem::copy_file(source, destination);
+    }
     SaveSystem::setSaveRoot(isolated.path.string());
-    filename = isolatedWorld.string();
 
-    TestSupport::BootedEngineHarness harness;
+    const auto emptyZone = [](const std::string& id) {
+        return nlohmann::json{
+            {"identifier", id}, {"name", id}, {"scope", "Local"},
+            {"formationRelations", nlohmann::json::array()},
+            {"lexemes", nlohmann::json::array()},
+            {"materials", nlohmann::json::array()},
+            {"world", {{"objects", nlohmann::json::array()}}}
+        };
+    };
+    auto missingLawZone = emptyZone("MissingLawRoot");
+    missingLawZone["lawRefs"] = {"law-that-does-not-exist"};
+    check(SaveSystem::writeZoneIdentity("MissingLawRoot", missingLawZone),
+          "missing-root refusal fixture written in isolated store");
+    check(SaveSystem::writeZoneIdentity("NoLaws", emptyZone("NoLaws")),
+          "law-free departure fixture written in isolated store");
+
+    TestSupport::BootedEngineHarness harness("Zach");
     Singularity::Core::CreationChannel::syncRegister(harness.lawManager);
     Singularity::Screen::ScreenChannel::syncRegister(harness.lawManager);
-    harness.loadWorld(filename);
 
     std::shared_ptr<Zone> zone;
     for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
         if (harness.zones.zones()[i] &&
             findObject(*harness.zones.zones()[i], "basic-pixel-canvas")) {
-            harness.zones.switchTo(i);
+            check(harness.zones.switchTo(i),
+                  "Creator Console Zone activation resolves the complete Law closure");
             zone = harness.zones.zones()[i];
             break;
         }
     }
     assert(zone);
     Object* canvas = findObject(*zone, "basic-pixel-canvas");
+    Object* picker = findPicker(*zone);
+    Object* redStrip = findObject(*zone, "material-color-picker-red");
+    Object* greenStrip = findObject(*zone, "material-color-picker-green");
+    Object* blueStrip = findObject(*zone, "material-color-picker-blue");
+    Object* chromaticField = findObject(*zone, "material-color-picker-chromatic");
+    Object* valueStrip = findObject(*zone, "material-color-picker-value");
     auto* creation = Singularity::Core::CreationChannel::find(harness.lawManager);
     auto* law = harness.lawManager.find("law-basic-pixel-changer");
     check(canvas != nullptr, "authored canvas loaded");
+    check(picker != nullptr, "authored Material color picker loaded");
+    check(redStrip != nullptr && greenStrip != nullptr && blueStrip != nullptr,
+          "authored RGB picker strips loaded");
+    check(chromaticField != nullptr && valueStrip != nullptr,
+          "authored 2D chromatic field and value strip loaded");
     check(creation != nullptr, "Creation channel supplies the selected color Property");
     check(law != nullptr && law->isAuthored(), "changer Law loaded with a recorded author");
-    if (!canvas || !creation || !law) return 1;
+    if (!canvas || !picker || !redStrip || !greenStrip || !blueStrip ||
+        !chromaticField || !valueStrip || !creation || !law) return 1;
 
-    creation->activeColor = glm::vec3(0.10f, 0.70f, 0.25f);
-    std::vector<Object*> reachable{canvas};
+    const glm::vec3 initialColor(0.10f, 0.70f, 0.25f);
+    picker->setDynamicProperty("selectedColor", PropertyValue(initialColor));
+    creation->activeColor = initialColor; // compatibility bridge, not the pixel source
+    // Use the exact complete set and order the live engine supplies. A hand-
+    // curated list hid screen objects that could participate in hit selection.
+    std::vector<Object*> reachable;
+    for (const auto& object : zone->getOwnedObjects()) {
+        if (object) reachable.push_back(object.get());
+    }
     const auto frame = [&](float x, float y, bool left) {
         Singularity::Input::InteractionChannel::Sense sense;
         sense.pointerX = x;
@@ -113,6 +171,52 @@ int main() {
         harness.interaction->observe(sense, reachable);
         harness.lawManager.tick();
     };
+
+    // The chromatic field is a normal Sense-Act instrument: u authors hue,
+    // 1-v authors saturation, and a six-piece OntoMath model maps HSV to RGB.
+    // At (u=.5, v=.25), HSV(.5,.75,1) is cyan (0.25,1,1).
+    frame(860.0f, 170.0f, false);
+    frame(860.0f, 170.0f, true);
+    frame(860.0f, 170.0f, false);
+    Property* selectedColorProperty = picker->findProperty("selectedColor");
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              near(std::get<glm::vec3>(selectedColorProperty->value()),
+                   glm::vec3(0.25f, 1.0f, 1.0f)),
+          "2D hue-saturation click maps through authored OntoMath into RGB");
+
+    // The separate Value slider supplies the missing third HSV dimension.
+    // It preserves hue/saturation and scales the selected cyan to 40% value.
+    frame(830.0f, 420.0f, false);
+    frame(830.0f, 420.0f, true);
+    frame(830.0f, 420.0f, false);
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              near(std::get<glm::vec3>(selectedColorProperty->value()),
+                   glm::vec3(0.10f, 0.40f, 0.40f)),
+          "value slider completes the full HSV color range through a Law");
+
+    // Direct component sliders remain available as the basic form. Red=.25
+    // changes only that channel, leaving the green/blue values at .40.
+    frame(785.0f, 501.0f, false);
+    frame(785.0f, 501.0f, true);
+    frame(785.0f, 501.0f, false);
+    const glm::vec3 pickedColor(0.25f, 0.40f, 0.40f);
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              near(std::get<glm::vec3>(selectedColorProperty->value()), pickedColor),
+          "direct red slider changes one selectedColor component through a Law");
+    check(near(creation->activeColor, pickedColor),
+          "picker Law mirrors selectedColor into the Creation channel bridge");
+    Property* paintColorProperty = canvas->findProperty("paintColor");
+    check(paintColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(paintColorProperty->value()) &&
+              near(std::get<glm::vec3>(paintColorProperty->value()), pickedColor),
+          "picker Law hands the authored color to the canvas paintColor Property");
+    auto targetMaterial = materials.get("authored-color-target");
+    check(targetMaterial != nullptr && near(targetMaterial->baseColor,
+                                             pickedColor),
+          "picker Law applies the selected color to the authored target Material");
 
     // Canvas is (160,100)..(672,612).  This is precisely u=.25, v=.75,
     // which addresses texel (16,48) of the lazily-created 64x64 texture.
@@ -128,8 +232,8 @@ int main() {
           "first pixel write gives the canvas its own one-face Material");
     if (!material || material->faceTextures.empty()) return 1;
     FaceTexture& texture = material->faceTextures[0];
-    check(near(texel(texture, 16, 48), creation->activeColor),
-          "click changes exactly the addressed texel to the selected color");
+    check(near(texel(texture, 16, 48), pickedColor),
+          "click changes exactly the addressed texel to the authored picker color");
     check(near(texel(texture, 15, 48), glm::vec3(1.0f)),
           "neighboring texel remains unchanged");
 
@@ -188,13 +292,116 @@ int main() {
 
     const ActionNode roundTrip = ActionNode::fromJson(law->actionModel()->toJson());
     check(roundTrip.kind == ActionNode::Kind::WritePixel &&
-              roundTrip.pixelColorPath.toString() == "@creation-channel.activeColor",
-          "authored WritePixel action round-trips without hidden defaults");
+              roundTrip.pixelColorPath.toString() == "paintColor",
+          "authored WritePixel reads its canvas-local color and round-trips without hidden defaults");
     const ActionNode regionRoundTrip = ActionNode::fromJson(elevateRegion.toJson());
     check(regionRoundTrip.kind == ActionNode::Kind::ElevatePixels &&
               regionRoundTrip.propertyName == "authored.left-quarter" &&
               regionRoundTrip.mapFunction.print() == selector.print(),
           "authored OntoMath pixel-set definition round-trips");
+
+    harness.zones.persistZones();
+    const nlohmann::json persistedZone = SaveSystem::readZoneIdentity("BasicPixelChanger");
+    const nlohmann::json persistedLaw =
+        SaveSystem::readLawIdentity("law-basic-pixel-changer");
+    check(persistedZone.value("lawRefs", nlohmann::json::array()) ==
+              nlohmann::json::array({"law-basic-pixel-changer",
+                                     "law-material-color-picker-red",
+                                     "law-material-color-picker-green",
+                                     "law-material-color-picker-blue",
+                                     "law-material-color-picker-chromatic",
+                                     "law-material-color-picker-value",
+                                     "law-material-color-picker-apply"}),
+          "Zone persistence preserves its authored stable Law references");
+    check(persistedLaw.value("identifier", std::string{}) == "law-basic-pixel-changer" &&
+              persistedLaw.value("authors", nlohmann::json::array()) ==
+                  nlohmann::json::array({"Zach"}) &&
+              persistedLaw["law"].value("authors", nlohmann::json::array()) ==
+                  nlohmann::json::array({"Zach"}) &&
+              persistedLaw.value("triggers", nlohmann::json::array()) ==
+                  nlohmann::json::array({"object-clicked"}),
+          "shared Law root persists identity, Person author, and trigger");
+
+    const std::size_t basicIndex = harness.zones.currentIndex();
+    std::size_t missingIndex = harness.zones.zones().size();
+    std::size_t noLawsIndex = harness.zones.zones().size();
+    for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
+        const auto& candidate = harness.zones.zones()[i];
+        if (!candidate) continue;
+        if (candidate->getIdentifier() == "MissingLawRoot") missingIndex = i;
+        if (candidate->getIdentifier() == "NoLaws") noLawsIndex = i;
+    }
+    check(missingIndex < harness.zones.zones().size() &&
+              !harness.zones.switchTo(missingIndex) &&
+              harness.zones.currentIndex() == basicIndex &&
+              harness.lawManager.find("law-basic-pixel-changer") != nullptr,
+          "missing Law root refuses atomically and leaves the current Zone working");
+    check(noLawsIndex < harness.zones.zones().size() &&
+              harness.zones.switchTo(noLawsIndex) &&
+              harness.lawManager.find("law-basic-pixel-changer") == nullptr,
+          "leaving the Zone releases its Zone-scoped Law");
+    check(harness.zones.switchTo(basicIndex) &&
+              harness.lawManager.find("law-basic-pixel-changer") != nullptr,
+          "re-entering the Zone restores and rebinds its shared Law root");
+
+    // A legacy session embeds the same Law identity with its old Creator
+    // Console color path. Loading that compatibility bag happens after Zone
+    // activation; the shared Zone Law root must remain authoritative.
+    nlohmann::json staleLaw =
+        SaveSystem::readLawIdentity("law-basic-pixel-changer")["law"];
+    staleLaw["actionModel"]["pixelColorPath"] = "@creation-channel.activeColor";
+    const nlohmann::json legacyWorld{
+        {"currentZoneId", "BasicPixelChanger"},
+        {"zoneRefs", nlohmann::json::array({{{"identifier", "BasicPixelChanger"}}})},
+        {"authoredLaws",
+         {{"laws", nlohmann::json::array({staleLaw})},
+          {"triggers", {{"law-basic-pixel-changer",
+                          nlohmann::json::array({"object-clicked"})}}},
+          {"formationMembers",
+           nlohmann::json::array({"law-basic-pixel-changer"})}}},
+    };
+    const auto legacyPath = isolated.path / "worlds/legacy-pixel-color.ecform";
+    std::filesystem::create_directories(legacyPath.parent_path());
+    {
+        std::ofstream out(legacyPath);
+        out << legacyWorld.dump(2) << '\n';
+    }
+    harness.loadWorld(legacyPath.string());
+    Law* afterLegacyLoad = harness.lawManager.find("law-basic-pixel-changer");
+    const ActionNode afterLegacyAction = afterLegacyLoad
+        ? ActionNode::fromJson(afterLegacyLoad->actionModel()->toJson())
+        : ActionNode{};
+    check(afterLegacyLoad != nullptr &&
+              afterLegacyAction.pixelColorPath.toString() == "paintColor",
+          "Zone Law root overrides a legacy World's Creator Console color copy");
+    check(harness.lawManager.find("law-material-color-picker-chromatic") != nullptr &&
+              harness.lawManager.find("law-material-color-picker-apply") != nullptr,
+          "legacy World load preserves the active Zone's complete picker Law closure");
+
+    // Prove the post-load lived path, not merely the serialized field.
+    zone = harness.zones.zones()[harness.zones.currentIndex()];
+    canvas = findObject(*zone, "basic-pixel-canvas");
+    picker = findPicker(*zone);
+    reachable.clear();
+    for (const auto& object : zone->getOwnedObjects()) {
+        if (object) reachable.push_back(object.get());
+    }
+    frame(935.0f, 170.0f, false);
+    frame(935.0f, 170.0f, true);
+    frame(935.0f, 170.0f, false);
+    paintColorProperty = canvas ? canvas->findProperty("paintColor") : nullptr;
+    const glm::vec3 postLoadColor =
+        paintColorProperty && std::holds_alternative<glm::vec3>(paintColorProperty->value())
+            ? std::get<glm::vec3>(paintColorProperty->value())
+            : glm::vec3(-1.0f);
+    frame(600.0f, 580.0f, false);
+    frame(600.0f, 580.0f, true);
+    frame(600.0f, 580.0f, false);
+    auto postLoadMaterial = materials.get("material.basic-pixel-canvas");
+    check(canvas != nullptr && picker != nullptr && postLoadMaterial != nullptr &&
+              !postLoadMaterial->faceTextures.empty() &&
+              near(texel(postLoadMaterial->faceTextures[0], 55, 60), postLoadColor),
+          "after legacy load, the authored picker color visibly reaches the addressed pixel");
 
     std::printf("%s (%d failure%s)\n", failures ? "FAIL" : "PASS", failures,
                 failures == 1 ? "" : "s");

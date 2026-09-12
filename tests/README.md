@@ -9,6 +9,7 @@ loose at this root.
 ```
 tests/
   support/              headers shared by more than one test (not a ctest)
+  relation/             Relation, Graph, and relational logic tests
   constructed-being/    Singular, Object, ObjectConcept, Formation, Material, Property
   person/               Person, Soul, Body, First Mover actuation
   zones/                Zone, Home, World, Physics, Ourverse, Time

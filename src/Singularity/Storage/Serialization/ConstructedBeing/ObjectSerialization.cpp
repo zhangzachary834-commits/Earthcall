@@ -17,6 +17,13 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
     if(v.size()==16){ std::memcpy(glm::value_ptr(m), v.data(), sizeof(float)*16); }
     return m;
 }
+
+static std::vector<float> mat4ToVector(const glm::mat4& m) {
+    std::vector<float> v(16);
+    const float* ptr = glm::value_ptr(m);
+    for (int i = 0; i < 16; ++i) v[i] = ptr[i];
+    return v;
+}
 // ------------------------------------------------------------------
 // Object (.ecform / Semantic Text Substrate)
 // ------------------------------------------------------------------
@@ -33,6 +40,25 @@ void to_json(nlohmann::json& j, const Object& obj){
     }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
+
+    // Placement is Person-meaningful, Law-addressable state — not "purely
+    // physical" density that only the conglomerate .ecmatter sidecar may
+    // hold. Commit 946a6240 (2026-09-01, "Substrate Split Serialization")
+    // removed these five fields from here on that theory; from_json below
+    // never stopped reading them, so every Object loaded through a Zone
+    // identity that had no matching matter sidecar silently lost its
+    // transform to the identity default. Diagnosed by Sol (Codex,
+    // 2026-09-09) from Zach's live report of Sanctum/Synthesis
+    // Studio/Chess collapsing to the origin — see
+    // docs/Agenda/Tasks/Specific Tasks/Per_Zone_serialization_pathway/
+    // Per_Zone_serialization_pathway.md, "Live failure" section. Physical
+    // topology (vertex/face density) is the part that may still live in
+    // matter alone; placement may not disappear from the semantic record.
+    j["transform"] = mat4ToVector(obj.getTransform());
+    j["center"] = { obj.getCenter().x, obj.getCenter().y, obj.getCenter().z };
+    j["authoritativeAxis"] = { obj.getAuthoritativeAxis().x, obj.getAuthoritativeAxis().y, obj.getAuthoritativeAxis().z };
+    j["targetRotation"] = { obj.getTargetRotationEulerDegrees().x, obj.getTargetRotationEulerDegrees().y, obj.getTargetRotationEulerDegrees().z };
+    j["rotationResponsiveness"] = obj.getRotationResponsiveness();
 
     j["renderMode"] = static_cast<int>(obj.getRenderModeProp());
     // Screen-space position for Shape2D / Text2D.

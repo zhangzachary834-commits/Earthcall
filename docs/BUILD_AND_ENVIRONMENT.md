@@ -56,7 +56,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07); smooth_tessellation_cache_test is the known pre-existing failure (Bugs.md #11); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -74,8 +74,7 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-09-07, 109 tests are registered and the default build is clean.** The
-known source-level failure remains `smooth_tessellation_cache_test` (Bugs.md #11).
+**As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
 WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
 acquire a device or GLFW context in a headless/sandboxed runner is an environment failure,
 not a test verdict. `zone_facetexture_test` guards Home/Zone identity materials

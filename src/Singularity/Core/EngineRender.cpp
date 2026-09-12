@@ -1,5 +1,4 @@
 #include "Singularity/Core/Engine.hpp"
-#include "../../ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "../Screen/Camera.hpp"
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
@@ -8,8 +7,12 @@
 #include "../../Person/Person.hpp"
 #include "../../Person/Body/BodyPart/BodyPart.hpp"
 #include "../../ConstructedBeing/Singular/Object/Object.hpp"
+#include "../../ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
 #include <chrono>
@@ -79,16 +82,55 @@ namespace Core {
         _camera->viewport[0] = 0;    _camera->viewport[1] = 0;
         _camera->viewport[2] = fbW;  _camera->viewport[3] = fbH;
 
-        ShadingSystem::update(_camera->pos);
+        // Refusal #6: renderer state is downstream of authored reality.
+        //
+        // A Zone's existing FieldNode can become the persistent illumination
+        // source by carrying the ordinary authored bool property
+        // `light.source=true`. Its registered `origin` is then the source's
+        // world-space placement. Nothing new is carved into the C++ ontology:
+        // FieldNode remains the continuous mathematical substrate, and the
+        // marker is Person/Law-authored vocabulary on a Singular.
+        //
+        // If no persistent radiant field has been authored yet, ScreenChannel
+        // preserves the previous camera-relative compatibility path. That
+        // first-mover fallback is intentionally second priority: once a Zone
+        // says where illumination lives, the renderer obeys the world.
+        Singularity::Screen::ScreenChannel* screenChannel = nullptr;
+        if (_lawManager) {
+            screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
+        }
+
+        bool persistentLightPlaced = false;
+        if (auto* root = zone.spatialRoot()) {
+            PropertyValue lightSourceValue;
+            if (root->getDynamicProperty("light.source", lightSourceValue)) {
+                if (const bool* isSource = std::get_if<bool>(&lightSourceValue);
+                    isSource && *isSource) {
+                    currentRenderer().setLight(root->origin,
+                                               currentRenderer().lightAmbient(),
+                                               currentRenderer().lightDiffuse(),
+                                               currentRenderer().lightSpecular());
+                    persistentLightPlaced = true;
+                }
+            }
+        }
+
+        if (!persistentLightPlaced && screenChannel) {
+            const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                ? _camera->pos + screenChannel->lightCameraOffset
+                : screenChannel->lightPosition;
+            currentRenderer().setLight(lightWorldPos,
+                                       currentRenderer().lightAmbient(),
+                                       currentRenderer().lightDiffuse(),
+                                       currentRenderer().lightSpecular());
+        }
 
         {
             glm::vec4 clearColor(0.1f, 0.1f, 0.15f, 1.0f);
-            if (_lawManager) {
-                if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
-                    clearColor = glm::vec4(sc->backgroundColor, 1.0f);
-                    currentRenderer().setWireframe(sc->wireframe);
-                    currentRenderer().setHeightGridDdaEnabled(sc->heightGridDdaEnabled);
-                }
+            if (screenChannel) {
+                clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
+                currentRenderer().setWireframe(screenChannel->wireframe);
+                currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -176,6 +218,18 @@ namespace Core {
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
                                   static_cast<int>(stats.cachedMeshesCount));
+            }
+            if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                if (recorder->isRecording()) {
+                    recorder->stepFrame(fbW, fbH);
+                }
+            }
+            if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
+                watcher->tick();
+            }
+            if (auto* mic = Singularity::Audio::AudioRecorder::find(*_lawManager)) {
+                double dt = Universe::instance().dt();
+                mic->tick(dt > 0.0 ? dt : 0.016);
             }
         }
     }

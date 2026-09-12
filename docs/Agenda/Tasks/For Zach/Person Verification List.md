@@ -28,6 +28,7 @@
 - [x] Select object
 - [ ] Morph object → select an existing object → activate Morph → modify its geometry using the available morph controls → verify the object's shape changes as intended
 - [x] Face Brush
+- [ ] Basic Pixel Changer authored Material color picker → Zach confirmed the full RGB/HSV interface appears and discovered why the canvas seemed inert: changing Creator Console's color to red made pixels visible, proving the legacy embedded Law was still painting its default white on the white canvas. Fully quit/relaunch, load `basic_pixel_changer`, choose a conspicuous saturated color only through the Law-driven 2D field, and click several canvas locations without touching Creator Console color. Verify each mark follows the Law picker; then change value and RGB sliders and verify the preview, target Material, and subsequent pixels all follow. Both Zach-owned legacy world artifacts now use canvas `paintColor`, and the loader now makes the canonical Zone Law root override a stale embedded copy; the deliberate stale-world regression passes headlessly, but this native manifestation needs Zach's witness.
 - [ ] Pottery → activate Pottery → create/use a pottery form on an object → verify the geometry changes as intended | Zach: My note in the todo list remains unfixed: Pottery successfully increases 3D dimensinos but stretches the FaceTextures to fit the new face dimensions rather than increasing the size of the facetexture image accordingly. 
 - [ ] Rotate → select an object → activate Rotate → rotate the object → verify its orientation changes | Zach: changing the angle sliders on a selected shape while having rotation tool selected does not visibly change the shape. However, if you scroll to the bottom of the creator console window in 3D tool mode you'll see "Selection" with what seems to be the object ID. There are "Target Rotation" sliders that successfully rotate the shape. 
 - [ ] Fuse Objects → create/select two objects → activate Fuse → fuse them → verify they become one fused object as intended | Zach: I mean I guess it executes, but it's not always clear what and sometimes it's weird and unclear if it's buggy or not. I need to investigate. 
@@ -90,6 +91,7 @@
 
 ## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)
 
+- [ ] **Recovered Studio 3D poses — Zach + Codex, 2026-09-11:** if Earthcall is still displaying the broken unit-cube Studio, quit without saving that stale live state, relaunch, then use Creator Console → Zones → Move to Zone for both `SynthesisStudio` and `SynthesisStudio.LivingInstrument`. Confirm the broad `14×0.2×14` floor, `5.2×0.8×2.4` desk, thin easel, buttons/pads, and Living Instrument furniture are distinct rectangular forms in their authored places while the orbiting resonators and satellites remain intact. Then Save Zone, restart once more, and confirm the recovered poses persist without loading an Assets world.
 - [ ] **Resonance Studio upgrade — Codex, session `synthesis-studio-20260904`, 2026-09-04 22:00 PDT:** reopen Earthcall and load `synthesis_studio` at the default 1280×720 window size; verify the full spectrum dock and upper-right voice/ink controls fit, text is readable, and the floating resonators remain visible above the easel.
 - [x] **Play the room:** play C5 through B5 on both the desk and dock; each matching sphere should swell/rise, its colored meter should jump then settle, and the last-note caption should change; play repeatedly for over a minute and check responsiveness and animation feel.
 - [ ] **Sound and ink:** select TRI, SINE, then SQR and compare their audible character; select TIDAL or ORCHID, enable DRAW, and drag on the easel to see the selected color; confirm existing artwork remains. Save/reload and repeat. Automated sink/serialization checks pass; actual sound and desktop feel still need a Person's witness.
@@ -112,9 +114,11 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 
 ## Basic Pixel Changer
 
+- [x] **Basic Pixel Changer — actual Zone-only click path VERIFIED by Zach, 2026-09-10 20:36 PDT.** Zach relaunched after the Zone-scoped Law closure, clicked the canvas, and reported: “IT WORKS” and “I put red dots on it.” The native WebGPU manifestation, click edge, authored Law, and selected-color pixel write are now Person-witnessed. The separate second-color, disable-Law, and quit/reload persistence experiments below remain open where not explicitly witnessed.
 - [ ] **Basic Pixel Changer (Zach + Codex, session `01a07d15-f266-7902-bc11-cf7b06b0b343`, 2026-09-07 11:54 PDT)** → load `saves/worlds/basic_pixel_changer.json`; choose a conspicuous color in the Creator Console and click several separated places on the white canvas. Verify each click changes only its addressed square sample, choose a second color and verify later clicks use it, then save/reload and confirm the pixels remain. In Law Author, inspect `Basic Pixel Changer`: its `WritePixel` action should visibly read interaction face/u/v plus creation active color. Create or inspect an `ElevatePixels` action and confirm its named set is edited as OntoMath over local `u` and `v`, not through a rectangle/circle preset. Disable the Law and verify another click makes no mark.
 - [ ] **Basic Pixel Changer — first-click render crash (Zach hit it live, Codex diagnosed/fixed, Claude verified build+launch only, 2026-09-07 12:3x PDT)** → the first real click into the canvas aborted the app with a wgpu validation panic (`RenderPipeline ... uses attachments with formats []` vs the swapchain's `Bgra8Unorm` pass) because the `drawImage2D` pipeline descriptor in `WebGpuRenderer.cpp` built its fragment state but never attached it (`ipd.fragment = &ifrag` was missing). That line is now present with an explanatory comment. Claude confirmed `earthcall_webgpu` builds clean and launches without crashing on an unrelated world, but has no driver for clicking inside this native GPU window — **only a Person can confirm the actual repro is gone.** Load the pixel-changer world and click the canvas; the app must not abort. If it still crashes, capture the panic text verbatim before reporting back.
-- [ ] **Basic Pixel Changer — canvas rendered red instead of white (Zach hit it live, Claude diagnosed/fixed, 2026-09-07 13:3x PDT)** → after the crash fix above, clicking the canvas appeared to do nothing — Zach reported it was actually rendering red with white label text, not white. Root cause was one level up from rendering: the Zone identity store (`saves/zones/BasicPixelChanger/`) predated `faceColors` being authored on the canvas, and `ZoneManager`'s load path let the store's stale snapshot silently override the World's authored object wholesale, so `faceColors[0]` sat at its raw C++ default (legacy cube red). Fixed in `ZoneSerialization.cpp`/`ZoneManager.cpp` (see [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)) with a per-field merge instead of whole-object replacement, and the two stale identity files were deleted. Claude verified with a new automated test (`zone_identity_test`) and confirmed no regression across the full suite, but has no driver to click inside the app — **only a Person can confirm the canvas now actually shows white and a click leaves a visible mark.** Load `saves/worlds/basic_pixel_changer.json`, confirm the canvas is white (not red), click it, and confirm a colored mark appears at the click point. While there, it's also worth a glance at `SynthesisStudio` and `Chess` (also flagged as affected in the task doc) for anything that still looks wrong-colored.
+- [x] ~~Basic Pixel Changer — canvas rendered red instead of white (Zach hit it live, Claude diagnosed/fixed, 2026-09-07 13:3x PDT)~~ — **superseded by the entry below**: this fix (Zone-identity field-level merge + `faceColors` serialization) was real and necessary but not sufficient — Zach still saw red after it.
+- [ ] **Basic Pixel Changer — canvas STILL red after two rounds of fixes; third cause found by Sol on the agent intercom (Claude + Codex GPT-5.6 Sol, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-08)** → the actual remaining mechanism: a separate binary sidecar (`.ecmatter`, physical-matter FlatBuffer) is applied AFTER the semantic JSON zone load and was unconditionally overwriting `faceColors`/`materialId`/face textures from whatever entity matched an object's bare id — the real `basic_pixel_changer.ecmatter` has two records for `basic-pixel-canvas`, one white and one the legacy red default, and the red one was applied last, every time, regardless of how correct the JSON path was. Fixed: `ZoneManager::applyMatterFlatBuffer`/`buildMatterFlatBuffer` no longer touch those three fields at all (they're semantic/Material state, already fully covered by the JSON path). Full details and the wider duplicate-bare-id problem this also exposed (not yet fixed, needs its own structural pass): [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md). New automated test (`matter_semantic_precedence_test`, 4/4) proves the exact precedence directly; full suite still matches baseline. Neither Claude nor Sol can drive the actual GUI — **only a Person can confirm this is finally the one.** Fully quit any running Earthcall instance, relaunch, load `saves/worlds/basic_pixel_changer.json`, confirm the canvas is white (not red), click it, and confirm a colored mark appears at the click point. While there, a glance at `SynthesisStudio` and `Chess` (both independently flagged in the task doc) for anything still wrong-colored would help confirm the fix generalizes.
 
 ## Perlin Noise Floor & 3D Raymarching
 - [ ] **Perlin Noise Floor Hill Zone rendering performance (implementation pass, session 2026-09-05):** Zach's 2026-09-05 play-test found horror-film-like whole-frame jitter/tearing, Sanctum reporting ~100 submitted FPS on the internal 60 Hz Mac panel, and the existing Perlin 3D-phase 1→100→300 ms oscillation still present. The macOS surface now uses FIFO plus display sync; load `Perlin Noise Floor Zone` and Sanctum in the WebGPU app (`Run Earthcall.command`) and confirm full-frame motion is coherent and the internal panel is paced at its actual refresh rate (an external high-refresh monitor may legitimately report its higher cadence). Then look toward the horizon and at 45 degrees, then build/place objects (cubes or house structures). Press `F3`: it should label the 3D phase, surface acquire, and queue-submit values as CPU wall-clock observations rather than GPU duration. If the adapter exposes timestamp queries, it should additionally show a delayed `GPU main render pass` duration that changes with the scene but does not stall the UI; otherwise it must say timestamps are unsupported. Verify the authored Perlin surface remains unchanged, placed objects render, occlude, and settle on the same hills without a GPU hitch; record whether the 100–300 ms queue-debt oscillation remains. The pass also needs a camera-inside-proxy check and ground selection/highlight check.
@@ -142,3 +146,171 @@ only in an intercom file. Marked done where Zach has already stated the verdict.
 - [x] ~~Resonance rectangle rendered *just barely* lighter than the pad beneath it~~ — **verified good by Zach**: *"barely perceptible but it changes the feel from 'oh just another block' to 'oh this is the thing but sound version'."* Do not "fix" this contrast; it is deliberate and it works.
 - [ ] **Blue/violet hue inconsistency (Zach's one complaint).** Every note pad and its amplifier rectangle share a hue, except the blue one — its amplifier is not merely lighter, it is **more violet**. Zach: the discrepancy **predates Astra**, which left it in place. He wants **consistency**, because the point is for the pair to represent the same note colour: *"if u wanted violet dispreancy on purpose u gotta make it mean somethign real not just a random quirk."* Fix the blue pair to one hue, and see the note below about giving violet a pad of its own.
 - [ ] **Draw pad enrichment is unverifiable.** Astra also enriched the draw pad, but the draw pad **was already broken before Astra arrived**, so Zach has never seen that part. Re-check once the draw pad works — this is downstream of the Synthesis Studio click-lockout work, not a separate defect.
+
+## Formation Rete rung 0 — relation-shaped laws that were silently deaf
+
+*Raised 2026-09-08, Claude Opus 5, session `session_01K1PtKNZtSDU9XGwKZQ7ZzF`. The spec's §1.2(a)
+says the deafness hit **"every 'every instance of this category, every tick' law in the tree, the
+Synthesis Studio's slider among them."** A green suite is not a witness for that — the fix is in
+what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+- [ ] **Synthesis Studio — laws that watch relations formed during play.** Open the Studio in `earthcall_webgpu` (`Run Earthcall.command`). Any behaviour that depends on a relation being formed *while you play* — the slider, note-reactive lights, ink reaching a newly drawn stroke — should now respond on the tick the relation forms, where before it would have stayed dead for the rest of the session. Confirm nothing that already worked has started firing *too* eagerly.
+- [ ] **Chess and Go — no over-firing.** Both are relation-heavy. Play a few moves in each and confirm pieces behave as before: rung 0 makes laws hear *more*, so the risk to look for is a law that now fires when it should not, not one that stays quiet.
+- [ ] **A relation you form and then break.** Form a relation in-world, watch the dependent law take hold, then dissolve it and confirm the law stops. Nothing retracts the stale fact by design (it is safe — the law re-checks the live graph), so this is the check that the safety actually holds in the running app rather than only in the test.
+
+## Robust Native File I/O & File Types (FileChannel)
+
+*Landed 2026-09-08, Gemini Spark. Hardened `@file-channel` with atomic write swaps, append mode, DoS bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](../Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)*
+
+- [ ] **Author Law interacting with `@file-channel`.** Open the Law Authoring / Creator Console. Point `@file-channel.path` at a file (e.g. `saves/test.json` or an image/sound) and verify that `@file-channel.mimeType`, `@file-channel.fileType`, `@file-channel.size`, and `@file-channel.jsonValid` reflect the file's properties accurately.
+
+## Screen Recorder in the Singularity (@screen-recorder)
+
+*Landed 2026-09-08, Gemini Spark. Added `@screen-recorder` Sense-Act first mover with in-engine viewport, host display, and window modes, PPM/PNG/raw stream output, and automatic fallback to viewport when OS screen capture is unpermitted. → [full task](../Specific%20Tasks/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)*
+
+- [ ] **Record In-Engine Frame Sequence or Snapshot.** In the Creator Console, inspect `@screen-recorder`:
+  - Set `@screen-recorder.recording := true` to capture live rendering frames to `saves/recordings/`.
+  - Set `@screen-recorder.snapshot := true` to capture an instant screenshot.
+
+## Streaming Pipes and Process Pipelines (@stream-channel)
+
+*Landed 2026-09-08, Gemini Spark. Added `@stream-channel` with POSIX FIFO named pipes, process stream execution (`popen`/`pclose`), chunked streaming, and Base64 stream transport. → [full task](../Specific%20Tasks/Streaming_Pipes_and_FIFOs/Streaming_Pipes_and_FIFOs.md)*
+
+- [ ] **Test Process Pipe or FIFO.** In the Creator Console, point `@stream-channel.target` at a pipe or command (e.g. `cat > /tmp/test_pipe.txt`), trigger `@stream-channel.open := true`, write via `@stream-channel.chunkData`, and verify direct data flow without intermediate file polling.
+
+## Virtual File System (@vfs)
+
+*Landed 2026-09-08, Gemini Spark. Built `@vfs` resolving `save://`, `zone://`, `home://`, `recording://`, custom prefix mounts, and `memory://` zero-disk ephemeral RAM files, transparently integrated into `FileChannel`. → [full task](../Specific%20Tasks/Virtual_File_System_VFS/Virtual_File_System_VFS.md)*
+
+- [ ] **Test Universal URI Resolution & In-RAM Files.** In Creator Console, point `@file-channel.path := "memory://test_scratch"` or `"save://worlds/my_world.json"` and execute read/write; verify `memory://` files never touch disk while `save://` resolves portably across platforms.
+
+## File Watcher & Live Hot-Reloading (@file-watcher)
+
+*Landed 2026-09-08, Gemini Spark. Built `@file-watcher` Sense-Act first mover with configurable directory scanning, extension filters, and ECA edge events (`file-modified`, `file-created`, `file-deleted`) for real-time asset, shader, and rule hot-reloading. → [full task](../Specific%20Tasks/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md)*
+
+- [ ] **Live File Hot-Reloading.** In the Creator Console, inspect `@file-watcher`:
+  - Set `@file-watcher.watchPath := "saves"` (or a specific directory/file).
+  - Open a file in that directory in an external editor (VS Code, TextEdit) and modify or save it.
+  - Observe that `@file-watcher.lastEventType` immediately updates to `"file-modified"` and publishes `ECA::Event("file-modified")` without requiring an app reload or manual polling.
+
+## Microphone Audio Capture & Recording (@microphone)
+
+*Landed 2026-09-09, Gemini Spark. Built `@microphone` (`@audio-recorder`) Sense-Act first mover with macOS CoreAudio capture, hardware device enumeration (built-in, USB, AirPods), TCC permission status checks, live RMS/peak metering, speech/silence detection ECA events, and canonical 16-bit PCM WAV recording. → [full task](../Specific%20Tasks/Microphone_Audio_Recording_Subsystem/Microphone_Audio_Recording_Subsystem.md)*
+
+- [ ] **Test Live Microphone Recording & Telemetry.** In the Creator Console, inspect `@microphone`:
+  - Verify `@microphone.devices` lists your Mac's connected inputs (e.g. "MacBook Pro Microphone", USB interfaces, AirPods).
+  - Check `@microphone.hasPermission` and `@microphone.permissionStatus` (if denied, grant in System Settings > Privacy & Security > Microphone).
+  - Set `@microphone.recording := true` (or trigger `@microphone.start := true`), speak into the mic, and observe `@microphone.inputLevel` and `@microphone.peakLevel` moving in real time.
+  - Set `@microphone.recording := false`. Verify a standard `.wav` file is saved to `saves/recordings/` (or specified `@microphone.outputPath`) and can be played back with QuickTime / Audacity.
+
+
+- [ ] **Synthesis Studio / Living Instrument** (Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-08 23:37 PDT): Load `synthesis_studio_living`; confirm this is the clean room, with no canvas-spam imports, while your original Studio remains intact. Play all twelve HUD/desk notes, change octaves 3–6 and Solo/Fifth/Major/Minor with each voice, and judge tuning, dynamics, responsiveness, and the shared pad/meter/resonator hue. Drag the expression field from lower left to upper right and feel whether bloom, motion, and dynamics follow your hand coherently. Turn Sound Ink on, play a note, enable Draw, and drag slowly over the easel; confirm its marks carry that note's color and sound on hover. Save, quit, reopen, and confirm the expression, harmony, octave, and marks remain yours. Judge the constellation's movement, text readability, and layout in your usual window size.
+
+## Formation Rete rung 1 — the engine got ~9x faster on law-heavy worlds
+
+*Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`. Every transient
+`ECA::Event` was destroying a `Moment` — which is a `Singular` — and each destruction scanned the
+whole Rete fact table. Measured at 320 beings: **593 ms/tick → 63 ms/tick**. This is a speed
+change to the tick every law application pays, so what needs a Person is that nothing MOVED
+differently, only faster. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+- [ ] **A law-heavy world should feel faster, and behave identically.** Open `chess_app`, Synthesis Studio, and Far Lands in `earthcall_webgpu` (`Run Earthcall.command`). Watch the F3 `LawManager::tick` figure — it should be markedly lower than you remember on the same world. Then play: pieces move legally, pads sound, terrain loads. The risk to look for is a law that no longer fires, or one that fires when it should not.
+- [ ] **Beings that leave the world while laws watch them.** The fix makes "this being never had facts" an O(1) answer, so the check that matters is the opposite case: delete objects a law is actively targeting, in a busy zone, and confirm nothing crashes and no law keeps acting on the deleted thing. That path is where a wrong answer would show as a dangling read rather than a slow frame.
+- [ ] **`frame_lag_test` wants re-recording, and only you should authorize it.** The `LawManager::tick` baseline in `tests/singularity/frame_lag_baseline.txt` was recorded before this fix and is now far above what the engine costs. Leaving it means the file overstates the cost; changing it means editing a baseline, which `AGENTS.md` says never to do to quiet a line. This one is not being quieted — it is genuinely faster — but it is your call to re-record.
+
+## Formation Rete rung 2 — the sweep got ~1.8x faster, and a fourth deaf-law bug closed
+
+*Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`. Two changes a
+Person should feel. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+- [ ] **Laws that read a property granted DURING play.** This is the fixed bug, and it is the one worth walking. Any law watching a property that a *different* law grants at runtime — `AddProperty` actions, authored `warmth`-style grants, anything a tool adds mid-session — was permanently deaf to that being: the property existed, the law was enabled and compiled, and it simply never fired for it. Grant a property in-world and confirm a law watching it now takes hold on that being, in the same session, without a reload.
+- [ ] **Nothing over-fires.** Both rung 2 changes make laws reach *more*, so the risk is the opposite of deafness. Play chess, Go, and Synthesis Studio and confirm no law is now acting on beings it should not — especially anything with an `AddProperty` action.
+- [ ] **Objects deleted mid-play, in a law-heavy zone.** `Zone::removeObject` now announces that the world's shape changed; before, only the unmaking path did. The vocabulary index holds raw pointers, so this is the path where a wrong answer would be a crash rather than a slow frame. Delete objects a law is actively targeting and confirm the app stays up and the law stops acting on them.
+
+## Zone identifier/name split — the "3 live objects across Zones (same name)" refusals
+
+*Raised 2026-09-09 by Zach pasting live console output; fixed same day, Claude Sonnet 5,
+session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
+
+- [ ] **Reload `synthesis_studio_living` (or whatever world showed the refusal spam) and watch the console.** Before this fix, loading it logged dozens of `applyMatterFlatBuffer: entity '...' has no exact owner match and matches 2/3 live objects across Zones (same name printed more than once)` lines — a real duplicate-live-Zone bug, not a cosmetic one. That spam should be gone or much reduced. Any REMAINING "matches N live objects" line naming genuinely different-named Zones is a separate, pre-existing ambiguity (Invariant 3 working as designed on legacy ownerless records) — not this bug.
+- [ ] **Objects that live in "Basic 2D Button Zone" or "Perlin Noise Floor Zone" should now show their authored geometry/position**, not a default transform — those were the two names actually colliding in what you pasted. If either still looks wrong, say so; it would mean a second, different cause in the same area.
+- [ ] **`saves/zones/BasicPixelChanger/`'s folder/identifier mismatch is still there, untouched.** This fix closes the general mechanism (Zone can now HAVE a differing identifier/name without colliding with another Zone), but did not rewrite any save file. If you want that one file's `identifier` field corrected to match its folder key, that's a one-line, low-risk edit but needs your explicit go-ahead since it's a save file.
+
+## Model Context Protocol (MCP) Server Bridge (@modelcontextprotocol)
+
+*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 17 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). Upgraded to v2 following Claude & Zach's live field testing report. → [full task](../Specific%20Tasks/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
+
+- [x] **Wire the server into Claude Desktop's config.** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Added an `earthcall` entry under `mcpServers` in `~/Library/Application Support/Claude/claude_desktop_config.json` (backed up first to `claude_desktop_config.json.bak-20260909135837` alongside it), pointing at `scripts/mcp-server.js` with `EARTHCALL_WS_URL=ws://localhost:8080`. Verified `node scripts/mcp-server.js` starts cleanly and logs `Server initialized and listening over stdio.`; verified `@modelcontextprotocol/sdk` is present in `node_modules`; verified the edited config is still valid JSON and every pre-existing key survived untouched. **Quit and reopen Claude Desktop** for it to pick up the new server — it wasn't running when this was made, so no restart was forced on you.
+- [x] **Wire the server into Claude Code CLI (this tool).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Ran `claude mcp add earthcall -s local -e EARTHCALL_WS_URL=ws://localhost:8080 -- node /Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js`. Scoped `local` (private to you, stored in `~/.claude.json` under this project, not committed to git) rather than `project`, since the config's absolute path is machine-specific. `claude mcp get earthcall` confirms `Status: ✔ Connected`. Only a **new** Claude Code session in this project directory will see the tools — this already-running session started before the server was registered.
+- [x] **Wire the server into Codex (Codex CLI + ChatGPT desktop app's Codex agent — they share one config).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Confirmed both surfaces read `~/.codex/config.toml` (ChatGPT.app's own `node_repl`/`computer-use` MCP entries were already sitting in that same file). Ran `codex mcp add earthcall --env EARTHCALL_WS_URL=ws://localhost:8080 -- node /Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js`; `codex mcp get earthcall` confirms it's registered (`enabled: true`, `transport: stdio`). **Both ChatGPT.app and any new `codex` CLI session were/are running — restart them** to pick it up.
+- [x] **Wire the server into Antigravity (Antigravity IDE + Antigravity CLI — they share one config).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* No `antigravity`/`gemini` CLI binary was on PATH to do this via a command, so I hand-wrote `~/.gemini/config/mcp_config.json` directly (it was a valid but empty 0-byte file — backed up first, though there was nothing in it to lose) with an `earthcall` entry under `mcpServers`, same `command`/`args`/`env` shape as the Claude Desktop config. Verified the result parses as valid JSON. **Antigravity.app was running — restart it** to pick this up. Not yet live-tested (no `antigravity`/`gemini` CLI present here to smoke-test the way I did for Claude/Codex) — flagging in case Antigravity's actual schema key differs from what public docs showed me (`serverUrl` is used there for *remote* HTTP servers instead of `url`, so it's plausible local stdio servers have a similarly non-obvious key name).
+- [ ] **Run MCP Server v2 & Test Live Tool Execution:**
+  1. In terminal: `export PATH="/opt/homebrew/bin:$PATH"`
+  2. Start Earthcall in one window (`Run Earthcall.command`).
+  3. Restart Claude Desktop or run `node scripts/mcp-server.js`.
+  4. **Test OntoMath Law Authoring (`earthcall_author_law`):** Ask Claude to author an oscillating or flow Law with formula `"sin"`, e.g. on `position.y` or `color.r`. Verify in Law Graph that the Law has real Condition and Action ASTs, executes in the live world, and animates entities!
+  5. **Test Property Writes (`earthcall_write_property`):** Ask Claude to change an object's color, position, or write `field.expr := "smoothUnion(sphere(0.5), box(0.4), 0.1)"`. Verify it immediately returns a success acknowledgment and live-converts the entity into a raymarched SDF field!
+  6. **Test Dedicated SDF Field Creation (`earthcall_spawn_field`):** Ask Claude to spawn an SDF field. Verify it appears live with smooth raymarched geometry!
+  7. **Test Zone Switch Persistence:** Switch zones and switch back; verify all 14 objects in "Clawd's Monastery" are preserved in memory and on disk!
+  8. **Test Law Deletion:** Delete an authored Law (`earthcall_delete_law`); verify the engine safely removes the Law on the main thread without crashing!
+
+## Zone identity boundary (Invariant 6, Stage 1) — found a real duplicate on your own Home
+
+*Landed 2026-09-09, Claude Sonnet 5, session `01MsayKP3NYfQAyBtyQ8xeA1`, per Sol's staged plan on the agent intercom. → [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
+
+- [ ] **Reload your world and confirm Home looks exactly as it did before** — all 104 objects, nothing missing. While implementing this, I found `saves/zones/Home/zone.json` (a stale, 32-object duplicate) sitting alongside the real `saves/homes/Home/home.json` (104 objects, the one your saves have actually been updating). Both claimed the identity "Home" — harmless before because the old code silently ignored the second one it saw, but the new validation this pass adds would have made your ACTUAL Home refuse to load entirely. You authorized moving the stale one aside (not deleting it): it's now at `saves/backups/Home.orphaned-2026-09-09/zone.json`, fully intact and recoverable, just no longer claiming the "Home" identity. Nothing about your live Home should look any different — please confirm.
+- [ ] **The Basic Pixel Changer canvas should still work exactly as before.** You separately authorized a one-line fix to `saves/zones/BasicPixelChanger/zone.json`'s `identifier` field (was `"Basic Pixel Changer"` with a space, mismatching its folder; now `"BasicPixelChanger"`, matching). This was the same class of bug Sol originally found in this file back on 2026-09-08. Reload it and confirm the canvas still opens and paints as it did after that first fix.
+- [ ] **If you ever see a console line starting `[ZoneManager] hydrateFromZoneStore: REFUSED`**, that means a Zone or Home identity file's folder name doesn't match its own internal `identifier` field, or two identity files are claiming the same identity — the new validation this pass adds. It will name the exact file(s) involved. That Zone simply won't load until the file is fixed; nothing is silently guessed at or auto-repaired. Send me the message if you see one and don't recognize why.
+
+## Formation Rete rung 3 — a fifth deaf-law bug, and the oldest one yet
+
+*Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+- [ ] **Laws that touch `shape.*` and are NOT `WhileTrue`.** This is the big one. A law's required vocabulary is the path's root (`shape`), but the property is registered as `shape.fillet` — there is no property called `shape` — so `couldApplyTo` refused every being and **any sweep-path law touching a shape parameter reached nobody at all**, silently. That means `OnBecomeTrue` laws, and any law without compiled Rete terminals, that set or test `shape.fillet`, `shape.r`, `shape.kind` and friends. If you have ever authored such a law and quietly concluded it "didn't work", try it again — it should work now. This is the check most likely to change something you actually see.
+- [ ] **Laws gated on a state being or channel.** Anything conditioned on an `@`-rooted referent (the ambient theme, the draw-mode indicator, the slider clamp, the crystal's pulse) is now skipped wholesale while its gate is shut, instead of being tested against every being. Toggle those gates off and on repeatedly in Synthesis Studio and confirm the laws stop and **restart** — the restart is the risky half, because a hoist that forgot to release its held subjects would never re-fire.
+- [ ] **Nothing over-fires.** Both rung 3 changes make laws reach *more* beings, not fewer. Play chess, Go, Far Lands and the Studio and watch for a law now acting where it should not.
+
+## α-node sharing — the Rete network should be much smaller, and visibly so
+
+*Raised 2026-09-10, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`, adjudicating o3's
+`DEEP_CODEBASE_ANALYSIS_2026-09-07` claim. → [the analysis](../../../Analysis/DERIVED_STATE_AND_THE_SILENCE_OF_LAWS_2026-09-10.md) §9b*
+
+- [ ] **Look at the new "Rete network" block in the performance window.** `PerformanceMetricsWindow` now shows alpha/beta node counts, live fact count, and "fact refs held", plus the prophetic filter's skip rate. Open chess in `earthcall_webgpu` — chess states `instance-of category.chess.piece` in **76 separate laws**, so before this change the network carried 76 identical nodes each holding its own copy of the same match set. The alpha count should now be far below the number of laws. This is the first time the network's own size has been visible at all.
+- [ ] **Chess and Go must play identically.** Sharing means many laws now read one node. `chess_app_test`, `go_app_test` and `rete_compile_test` pass, but a shared node binding the wrong law is exactly the kind of fault a suite can miss and a hand cannot: play a real game in each and confirm no piece behaves differently, and especially that nothing has gone *quiet*.
+- [ ] **Synthesis Studio chord pads.** `synthesis_studio_living.json` states `isChordPad == true` in ten laws, which now share one node. Play the pads and confirm all of them still sound and light.
+
+## IDE Docking Mode for First Mover Window Tools
+
+*Landed 2026-09-11, Antigravity. Added IDE Docking Mode attaching ImGui windows to screen edges (Left sidebar, Right sidebar, Bottom bar drawer), keeping the central 3D viewport clear and unoccluded. → [full task](../Specific%20Tasks/IDE_Docking_Mode/IDE_Docking_Mode.md)*
+
+- [ ] **Toggle IDE Mode (`F10` or Menu `M`)**:
+  1. Launch Earthcall WebGPU: `Run Earthcall.command` or `./build/earthcall_webgpu`.
+  2. Press `F10` (or press `M` and select "Toggle IDE Mode" from the main menu) to switch into IDE Docked Mode.
+  3. Notice the top workspace bar appears: `[≡ IDE DOCKED]` with panel indicators `[Left: 3]`, `[Right: 2]`, `[Bottom: 1]`.
+  4. Verify the **Left Sidebar** opens docked to the left edge of the viewport containing tabs:
+     - **Creator Console [F8]**
+     - **Dev Tools [`]**
+     - **Creation [F9]**
+  5. Verify the **Right Sidebar** opens docked to the right edge containing tabs:
+     - **Metrics & Coords [F3]**
+     - **Keymap [K]**
+  6. Verify the **Bottom Drawer** opens docked across the bottom containing:
+     - **Chat [H]**
+  7. Verify the **Center Viewport** remains completely open, unobstructed, and responsive to 3D camera navigation and object interactions.
+  8. Drag the inner splitters (the edge of Left, Right, or Bottom panels) and verify resize cursors (`<->` and `^v`) appear and panels resize smoothly.
+  9. Click `[❐ Float]` on any panel header to pop it out into an independent floating window; click `[◧]`, `[◨]`, or `[⬓]` to re-dock it.
+  10. Press `F10` again to toggle back to traditional floating window mode; verify all windows restore cleanly to their floating positions.
+   11. **Corner Collision Dynamic Priority (Zero Void)**:
+       - In IDE Mode, open Left Sidebar (`F8`) and Bottom Bar (`H`).
+       - Observe the bottom-left corner: notice there is **zero empty void/gap**!
+       - Because Bottom Bar was opened most recently, Bottom Bar extends from `X = 0` across the corner, while Left Sidebar sits flush on top of it.
+       - Now click any tab or control inside Left Sidebar: Left Sidebar takes dynamic priority, extending all the way to the bottom edge of the screen, while Bottom Bar shrinks flush against the sidebar's right edge.
+       - Test the bottom-right corner with Right Sidebar (`F3`) and Bottom Bar (`H`) and verify the exact same zero-gap priority behavior.
+   12. **Stacked Multiple Windows Layout**:
+       - In Left Sidebar (with both Creator Console and Dev Tools open), click `[☷ Stack]` in the panel header or the top workspace bar.
+       - Verify both tools appear **simultaneously stacked vertically** inside the sidebar!
+       - Click `[▼]` on either pane's header: verify it collapses accordion-style into a compact header bar (`[▶]`), yielding space to the other tool. Click `[▶]` to expand it again.
+       - Drag the divider between stacked panes to resize them vertically.
+       - In Bottom Bar (with multiple tools docked), toggle `[☷ Stack]`: verify tools arrange as side-by-side columns with draggable vertical splitters!
+       - Click `[▤ Tabs]` at any time to return to single-active tabbed mode.

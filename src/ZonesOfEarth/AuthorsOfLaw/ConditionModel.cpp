@@ -241,22 +241,22 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 Singular& t = const_cast<Singular&>(target);
                 PropertyValue lhs;
                 if (!lawGetValue(t, lhsPath, lhs)) {
-                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - Property Not Found]: " + desc, {
-                        {"targetId", t.getIdentifier()}, {"result", false}
-                    });
+                    if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                        ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - Property Not Found]: " + desc, {
+                            {"targetId", t.getIdentifier()}, {"result", false}
+                        });
+                    }
                     return false;
                 }
                 PropertyValue rhs = rhsLiteral;
                 if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) {
-                    ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
-                        {"targetId", t.getIdentifier()}, {"result", false}
-                    });
+                    if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                        ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
+                            {"targetId", t.getIdentifier()}, {"result", false}
+                        });
+                    }
                     return false;
                 }
-                
-                std::string lhsStr = "(unknown)";
-                if (const std::string* s = std::get_if<std::string>(&lhs)) lhsStr = *s;
-                else if (const double* d = std::get_if<double>(&lhs)) lhsStr = std::to_string(*d);
 
                 double a = 0.0, b = 0.0;
                 const bool numeric =
@@ -278,14 +278,19 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                         break;
                     }
                 }
-                std::string logMsg = "Condition Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc;
-                if (!res) {
-                    logMsg += " (LHS was: " + lhsStr + ")";
+                if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                    std::string lhsStr = "(unknown)";
+                    if (const std::string* s = std::get_if<std::string>(&lhs)) lhsStr = *s;
+                    else if (const double* d = std::get_if<double>(&lhs)) lhsStr = std::to_string(*d);
+
+                    std::string logMsg = "Condition Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc;
+                    if (!res) {
+                        logMsg += " (LHS was: " + lhsStr + ")";
+                    }
+                    ECA::LawAuditLogger::instance().log("CONDITION", logMsg, {
+                        {"targetId", t.getIdentifier()}, {"result", res}
+                    });
                 }
-                
-                ECA::LawAuditLogger::instance().log("CONDITION", logMsg, {
-                    {"targetId", t.getIdentifier()}, {"result", res}
-                });
                 return res;
             };
         }
@@ -322,17 +327,41 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                     if (!participant) return false;   // unproven referent
                     other = participant->getIdentifier();
                 }
-                const std::string id = subject.getIdentifier();
+                // REJECT BY POINTER, STRINGIFY ONLY WHAT SURVIVES.
+                //
+                // This loop used to ask `rel->isBetween(id, other)` of every
+                // relation in the world, and aId()/bId() each build a
+                // std::string BY VALUE through a virtual call — so scoping a
+                // law to a category cost two string constructions per relation
+                // per evaluation, and the evaluation runs once per candidate
+                // per tick. Measured against an identical law asking a plain
+                // property instead: 2.7x slower at 50 beings, 4.0x at 400, the
+                // gap widening with population. `Related(instance-of,
+                // category.X)` is the dominant scoping idiom in the tree — 132
+                // laws across the saved worlds name a category this way — so
+                // this is the hot loop of Layer 0 (FORMATION_RETE.md §3.0).
+                //
+                // The near end is a pointer we already hold. Comparing it
+                // costs nothing, and it rejects almost every relation, leaving
+                // only the handful this subject actually participates in to be
+                // named. That also DEREFERENCES FEWER FAR ENDS than before: a
+                // relation may outlive its endpoints (rung 0), and the old
+                // path touched every far end in the world on every evaluation.
+                const Singular* self = &subject;
                 for (const Relation* rel : Universe::instance().relations()) {
                     if (!rel) continue;
                     if (!type.empty() && rel->type != type) continue;
-                    if (other.empty()) {
-                        if (rel->directed ? rel->aId() == id : rel->involves(id)) {
-                            return true;
-                        }
-                        continue;
-                    }
-                    if (rel->isBetween(id, other)) return true;
+
+                    const bool isSource = rel->a() == self;
+                    const bool isTarget = rel->b() == self;
+                    // Direction is honored exactly as before: a directed
+                    // relation holds only OF its source.
+                    if (rel->directed ? !isSource : (!isSource && !isTarget)) continue;
+
+                    if (other.empty()) return true;
+
+                    const Singular* far = isSource ? rel->b() : rel->a();
+                    if (far && far->getIdentifier() == other) return true;
                 }
                 return false;
             };
@@ -399,9 +428,11 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                         if (p && p(e, target)) { res = true; break; }
                     }
                 }
-                ECA::LawAuditLogger::instance().log("CONDITION", "Logic Node Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc, {
-                    {"targetId", target.getIdentifier()}, {"result", res}
-                });
+                if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
+                    ECA::LawAuditLogger::instance().log("CONDITION", "Logic Node Evaluated [" + std::string(res ? "PASS" : "FAIL") + "]: " + desc, {
+                        {"targetId", target.getIdentifier()}, {"result", res}
+                    });
+                }
                 return res;
             };
         }
@@ -463,6 +494,36 @@ ECA::ConditionPredicate ConditionNode::compile() const {
     return [](const ECA::Event&, const Singular&) { return false; };
 }
 
+// A quantifier says nothing about the subject.
+//
+// Its compiled closure takes `const Singular&` UNNAMED (see Kind::ForAny in
+// compile()): "does some/every Object satisfy C" is a proposition about the
+// WORLD, with the same answer whichever subject you ask it about. Two
+// consequences for the index, and they point the same way:
+//
+//   * As a filter it is worthless. `targetAttr` is set only for Compare and
+//     Related, so a quantifier compiles to an alpha with NO attribute filter —
+//     it admits or rejects every fact together, which is not a candidate set,
+//     it is a constant.
+//   * As a cost it is severe. That alpha's predicate is a full scan of
+//     Universe::beings(), and it runs once per state fact per assertion — so
+//     a world where laws write, and facts go dirty and re-assert, pays the
+//     scan N times a tick for nothing.
+//
+// Measured, with the transient-Moment quadratic already removed: a bare ForAll
+// fitted k = 1.82 against population where the identical Compare law fitted
+// 1.46, 6.3x slower at 320 beings. FORMATION_RETE.md §1.2(b), §8 rung 1.
+//
+// So it is dropped from the index the same way a qualified-root conjunct is,
+// with the same soundness argument: the terminals are a CANDIDATE filter and
+// Law::applyTo re-evaluates the whole condition tree before firing, so leaving
+// a conjunct out WIDENS the candidate set and changes no outcome.
+// Widen where uncertain, never narrow — PROPHETIC_RETE.md §2.
+static bool isQuantifier(const ConditionNode& node) {
+    return node.kind == ConditionNode::Kind::ForAny ||
+           node.kind == ConditionNode::Kind::ForAll;
+}
+
 std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
                                                       const std::string& lawId,
                                                       std::size_t leftId,
@@ -495,7 +556,7 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             // reading law like art-stroke-draw-law does sixty times a second.
             //
             // Widen where uncertain, never narrow. PROPHETIC_RETE.md §2.
-            if (child.readsQualifiedRoot()) continue;
+            if (child.readsQualifiedRoot() || isQuantifier(child)) continue;
 
             std::vector<std::size_t> next;
             for (std::size_t left : currents) {
@@ -510,6 +571,13 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             }
             currents = std::move(next);
         }
+        // If EVERY conjunct was skipped, `currents` is still {leftId} — and
+        // when leftId is 0 that is the "no left yet" sentinel, not a node id.
+        // Returning it would propagate 0 upward as though it were real, which
+        // is the bug the empty-All branch above exists to stop; skipping
+        // quantifier conjuncts made `All(ForAll(...), ForAny(...))` a second
+        // way to reach it. No index is the honest answer.
+        if (currents.size() == 1 && currents[0] == 0) return {};
         return currents;
     }
     if (kind == Kind::Any) {
@@ -521,6 +589,13 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         for (const auto& child : children) {
             if (child.readsQualifiedRoot()) return {};
         }
+        // A quantifier disjunct is deliberately NOT dropped here. It cannot be
+        // skipped the way a conjunct can — "local OR world-wide" is satisfiable
+        // with the local half false, so indexing on the local half alone would
+        // narrow — and refusing the whole Any an index is worse still: it sends
+        // the law to the sweep, which evaluates the condition twice per subject.
+        // Measured on the bare-quantifier shape, that trade cost 413 -> 718 ms
+        // at 320 beings. Keeping the node is the cheaper honest option.
         std::vector<std::size_t> allTerminals;
         for (const auto& child : children) {
             auto t = child.compileToRete(rete, lawId, leftId, leftIsBeta);
@@ -551,6 +626,16 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
     // correct here, and the compiled predicate below still decides the truth.
     if (readsQualifiedRoot()) return {};
 
+    // A BARE quantifier still gets its (useless) alpha, and that is a measured
+    // choice, not an oversight. Returning {} here leaves the law with no
+    // terminals, which sends it to the sweep — and the sweep evaluates the
+    // condition TWICE per subject: once in tick()'s continuous loop and again
+    // inside applyTo, which re-checks before firing. Dropping the node made a
+    // bare ForAll law go from 411 ms to 718 ms at 320 beings (k 1.82 -> 1.90).
+    // Keeping the reactive path is the cheaper of the two bad options until a
+    // quantifier's answer can be memoized; see FORMATION_RETE.md §8 rung 1b
+    // for why that memo is blocked rather than merely unwritten.
+
     std::string targetAttr = "";
     if (kind == Kind::Compare) targetAttr = path.segments.empty() ? "" : path.segments.front();
     else if (kind == Kind::Related) targetAttr = relationType;
@@ -568,7 +653,13 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
         return dot == std::string::npos ? dotted : dotted.substr(0, dot);
     };
 
-    std::size_t alphaId = rete.addAlphaNode(desc,
+    // Shared on the whole serialized leaf — see ReteNetwork::internAuthoredAlpha
+    // for why the key is the entire node and not a chosen subset of its fields.
+    // Everything the predicate below captures (orig, which is compile()'d from
+    // this node; targetAttr, derived from kind/path/relationType; desc) is a
+    // pure function of that text, so two leaves with the same key really do
+    // want the same node.
+    std::size_t alphaId = rete.internAuthoredAlpha(this->toJson().dump(), desc,
         [orig, targetAttr, rootOf](const FactPtr& fact) {
             if (!fact->isState) return false;
             if (!fact->subject) return false;
@@ -580,11 +671,11 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
             }
             ECA::Event dummy;
             return orig(dummy, *fact->subject);
-        },
-        // The closure is opaque, but the TEXT behind it is this very tree —
-        // so the Prophetic index can account for what this node reads, and
-        // says so by tagging the node Authored rather than Foreign.
-        ReteNetwork::AlphaSource::Authored);
+        });
+        // (The node is tagged Authored inside internAuthoredAlpha. The closure
+        // is opaque, but the TEXT behind it is this very tree — which is what
+        // lets the Prophetic index account for what the node reads, and is the
+        // same text the sharing key is built from.)
 
     if (leftId == 0) {
         return {alphaId};
@@ -608,6 +699,31 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
 void ConditionNode::collectRelationTypes(std::unordered_set<std::string>& out) const {
     if (kind == Kind::Related && !relationType.empty()) out.insert(relationType);
     for (const auto& child : children) child.collectRelationTypes(out);
+}
+
+namespace {
+// An "@name"-rooted path that is neither @event nor @world — see the header.
+bool isPlainReferentRoot(const PropertyPath& p) {
+    if (p.segments.empty()) return false;
+    const std::string& root = p.segments.front();
+    if (root.size() < 2 || root[0] != '@') return false;
+    return root != "@event" && root != "@world";
+}
+}  // namespace
+
+bool ConditionNode::isHoistableGate() const {
+    if (kind != Kind::Compare) return false;
+    // BOTH sides must be subject-independent. A comparison of the gate against
+    // the subject's own property is about the subject after all.
+    if (!isPlainReferentRoot(path)) return false;
+    if (!operandPath.empty() && !isPlainReferentRoot(operandPath)) return false;
+    return true;
+}
+
+void ConditionNode::collectHoistableGates(std::vector<const ConditionNode*>& out) const {
+    if (isHoistableGate()) { out.push_back(this); return; }
+    if (kind != Kind::All) return;   // see the header: only conjunction
+    for (const auto& child : children) child.collectHoistableGates(out);
 }
 
 bool ConditionNode::readsQualifiedRoot() const {

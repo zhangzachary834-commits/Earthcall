@@ -73,6 +73,39 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
 }
 
 PropertyValue propertyValueFromJson(const nlohmann::json& j) {
+    if (j.is_null()) return PropertyValue{};
+    if (j.is_boolean()) return PropertyValue(j.get<bool>());
+    if (j.is_number_integer()) return PropertyValue(j.get<int>());
+    if (j.is_number_float()) return PropertyValue(j.get<double>());
+    if (j.is_string()) return PropertyValue(j.get<std::string>());
+    if (j.is_array()) {
+        if (j.size() == 3 && j[0].is_number() && j[1].is_number() && j[2].is_number()) {
+            return PropertyValue(glm::vec3(j[0].get<float>(), j[1].get<float>(), j[2].get<float>()));
+        }
+        if (j.size() == 16) {
+            glm::mat4 m(1.0f);
+            int i = 0;
+            for (int c = 0; c < 4; ++c) {
+                for (int r = 0; r < 4; ++r) {
+                    m[c][r] = j[i++].get<float>();
+                }
+            }
+            return PropertyValue(m);
+        }
+        auto list = std::make_shared<PropertyList>();
+        for (const auto& el : j) {
+            list->elements.push_back(propertyValueFromJson(el));
+        }
+        return PropertyValue(list);
+    }
+    if (j.is_object() && !j.contains("t")) {
+        auto dict = std::make_shared<PropertyDict>();
+        for (auto it = j.begin(); it != j.end(); ++it) {
+            dict->elements[it.key()] = propertyValueFromJson(it.value());
+        }
+        return PropertyValue(dict);
+    }
+
     const std::string t = j.value("t", "none");
     if (t == "int") return PropertyValue(j.value("v", 0));
     if (t == "float") return PropertyValue(j.value("v", 0.0f));

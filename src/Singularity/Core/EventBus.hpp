@@ -65,10 +65,20 @@ public:
     template<typename Event>
     void subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
     {
-        Listener typeErased = [handler](const void* ePtr){
+        std::lock_guard<std::mutex> lock(_mutex);
+        auto it = _listeners.find(typeid(Event));
+        auto newVec = std::make_shared<std::vector<ListenerEntry>>();
+        if (it != _listeners.end() && it->second) {
+            *newVec = *it->second;
+        }
+        newVec->emplace_back(ListenerEntry{priority, [handler](const void* ePtr){
             handler(*static_cast<const Event*>(ePtr));
-        };
-        subscribe(typeid(Event), typeErased, priority);
+        }});
+        // Keep highest priority first for deterministic ordering.
+        std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
+            return a.priority > b.priority;
+        });
+        _listeners[typeid(Event)] = newVec;
     }
 
     // Non-template version for internal use
@@ -81,21 +91,15 @@ public:
     void publish(const Event& event, const Metadata& meta = {})
     {
         (void)meta;
-
-        std::shared_ptr<const std::vector<ListenerEntry>> ptr;
+        std::shared_ptr<const std::vector<ListenerEntry>> listenersCopy;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             auto it = _listeners.find(typeid(Event));
             if (it == _listeners.end()) return;
-            ptr = it->second;
+            listenersCopy = it->second;
         }
-
-        if (!ptr) return;
-
-        // By taking a local copy of the shared_ptr, we keep the underlying vector
-        // alive and immutable for the duration of the dispatch.
-        // This avoids deep copies on the hot path while maintaining re-entrancy safety.
-        for (const auto& entry : *ptr) {
+        if (!listenersCopy) return;
+        for (auto& entry : *listenersCopy) {
             entry.listener(&event);
         }
     }
@@ -107,22 +111,17 @@ public:
     void publishAsync(const Event& event, const Metadata& meta = {})
     {
         (void)meta;
-
-        std::shared_ptr<const std::vector<ListenerEntry>> ptr;
+        std::shared_ptr<const std::vector<ListenerEntry>> listenersCopy;
         {
             std::lock_guard<std::mutex> lock(_mutex);
             auto it = _listeners.find(typeid(Event));
-            if (it == _listeners.end()) return;
-            ptr = it->second;
+            if (it != _listeners.end()) listenersCopy = it->second;
         }
-
-        if (!ptr || ptr->empty()) return;
+        if (!listenersCopy || listenersCopy->empty()) return;
 
         auto ePtr = std::make_shared<Event>(event); // shared to outlive lambda
-
-        // Pass ptr by value into the lambda to keep the vector alive during async execution
-        auto job  = [ptr, ePtr]() {
-            for (const auto& entry : *ptr) {
+        auto job  = [listenersCopy, ePtr]() {
+            for (auto& entry : *listenersCopy) {
                 entry.listener(ePtr.get());
             }
         };
@@ -152,9 +151,10 @@ public:
     void shutdown(); // gracefully stop worker thread
 
 private:
+    friend struct EventBusTestFriend;
+    void clear();    // remove all listeners (for testing only)
+
     // Listener registry keyed by event type ---------------------------------
-    // Using a shared_ptr to the vector allows lock-free dispatch traversal
-    // (copy-on-write semantics when modifying subscriptions).
     std::unordered_map<std::type_index, std::shared_ptr<const std::vector<ListenerEntry>>> _listeners;
     std::mutex   _mutex;
 

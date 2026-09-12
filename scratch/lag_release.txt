@@ -1,0 +1,32 @@
+--- frame_lag_test: saves/worlds/synthesis_studio_living.json ---
+machine calibration: x0.47 versus the reference machine (>1 means slower; every time below is divided by it)
+baseline: tests/singularity/frame_lag_baseline.txt
+
+1. SHAPE — per-frame cost against population size
+     64 objects -> frame    0.260 ms  (zone    0.026 [g:0.000 r:0.000 a:0.011 p:0.015]  relations  0.000  law    0.228)  over 24 frames
+    128 objects -> frame    0.561 ms  (zone    0.057 [g:0.000 r:0.001 a:0.022 p:0.034]  relations  0.000  law    0.504)  over 24 frames
+    256 objects -> frame    1.192 ms  (zone    0.147 [g:0.001 r:0.002 a:0.049 p:0.094]  relations  0.000  law    1.043)  over 24 frames
+    512 objects -> frame    2.824 ms  (zone    0.457 [g:0.002 r:0.004 a:0.109 p:0.338]  relations  0.000  law    2.358)  over 24 frames
+  ok        whole frame grows as n^k (linear 1.0, quadratic 2.0), k = 1.141 (aspiration 1.150, baseline 1.113)
+  EXP-FAIL  Zone::update grows as n^k (linear 1.0, quadratic 2.0), k = 1.371 (aspiration 1.150, baseline 1.137)  <- ALGORITHMIC REGRESSION
+  note        groundScan costs 0.0015 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  note        rotation costs 0.0043 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok          automation grows as n^k (linear 1.0, quadratic 2.0), k = 1.114 (aspiration 1.150, baseline 0.968)
+  EXP-FAIL    physics grows as n^k (linear 1.0, quadratic 2.0), k = 1.505 (aspiration 1.150, baseline 1.279)  <- ALGORITHMIC REGRESSION
+  note      formation relations costs 0.0000 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok        LawManager::tick grows as n^k (linear 1.0, quadratic 2.0), k = 1.115 (aspiration 1.150, baseline 0.957)
+⚠️  Zone 'Go': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'Go Game': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+🔀 Switching to zone [0]...
+🌍 Zone 'SynthesisStudio.LivingInstrument' loaded with 137 objects.
+🌀 Entering zone: SynthesisStudio.LivingInstrument (Local)
+   Qualities:
+     - forkedFrom: SynthesisStudio
+     - kind: studio
+     - ownerKind: person
+   Deletable by:
+     - Zach: yes
+
+world: SynthesisStudio.LivingInstrument  objects=137  laws=69  relations=240
+
+2. QUIESCENCE — a world nobody is touching

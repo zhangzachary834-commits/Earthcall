@@ -1,12 +1,12 @@
 # Earthcall — read this before writing code
 
-Earthcall is a Person-centered ontology that orders the engine attached to it. 
+Earthcall is a Person-centered ontology that orders the engine attached to it.
 The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
-**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because 
+**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because
 it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 
-Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas). 
+Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas).
 
 ---
 ## The Seven Refusals.
@@ -38,14 +38,11 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
    `Singularity/TransferPolicy`'s existing Kernel/Governable/Gated tiers — do not build a
    second permission system, one was built here and deleted. → `ontology/NO_BLACK_BOX.md`
 7. **No new methods to define variable behavior**: The order of behavior, representation, and resource allocation
-   depend on Person-authored Laws, represented by data. Methods should be the absolute invariants necessary to represent 
-   all artifacts of human intention. As such, they should only be used if the thing in question is a First Mover, a 
-    whether a developer tool or an irreducible component of the Singularity's Sense-Act substrate. (Zach wrote Refusal 7 by hand, not Opus 5)
+   depend on Person-authored Laws, represented by data. Methods should be only the absolute invariants necessary to represent
+   all artifacts of human intention: a First Mover developer tool or irreducible Singularity Sense-Act substrate component. (Zach wrote Refusal 7 by hand, not Opus 5)
 
-The general form of all seven: **no subsystem may define what a thing IS.** Subsystems
-define how the machine senses and acts. What things are is authored by Persons, in-world,
-out of primitives every other subsystem can see. Refusal 6 is the corollary: nor may a
-subsystem define what a thing's state *means* by keeping it where no law can look.
+The general form of all seven: **no subsystem may define what a thing IS.** Subsystems define how the machine senses and acts; Persons author what things are in-world from primitives every subsystem can see.
+Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look.
 
 ---
 
@@ -71,6 +68,7 @@ subsystem define what a thing's state *means* by keeping it where no law can loo
 | touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
 | ask what a *when* is — a timestamp, a duration, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | the world clock and `Moment` answer two different questions; no `class Duration` |
 | build a button, panel, control, menu, or any interface at all | `law/INTERACTION_AS_LAW.md` | Law + set-to-set aimed at the pointer; no widget, no `src/UI/` |
+| build a 2D/3D app, SDF, nuanced shape, pixel region, or visual style | `Design/Building 2D and 3D Apps with Earthcall Guide.md` | author form with OntoMath, CSG, Relations, and Law; never make `ShapeKind` the ontology |
 | build anything two Persons share — visibility, likeness, or conflicting law | `ourverse/SECOND_PERSON_FRAMEWORK.md` §5 | specified before needed; ⚑ AUTHOR decisions are Zach's |
 
 All paths are under `docs/architecture/` unless noted. Map of the folders: `docs/architecture/README.md`.
@@ -119,7 +117,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07) — smooth_tessellation_cache_test is the known pre-existing failure, Bugs.md #11; WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -154,21 +152,16 @@ widening the baseline.
   (`mathematics/ONTOMATH_FRAMEWORK.md` §7a) is the worked example: it refuses and says which frequency,
   rather than silently filtering a Person's mathematics. Guards constrain the path to the
   body, never the mathematics — a Person may still author and integrate a 7 Hz field.
-- **Paint is on the Material, and materials are shared.** Writing paint through the
-  material you *resolve* repaints every object naming it. Always paint via
-  `Object::setFaceColor` / `Object::ownMaterial`, which diverge the object onto its own
-  `material.<identifier>` on the first stroke. Never
-  `materials.resolveOrDefault(obj->materialId())` — that is the bug, not the shortcut.
-- **Say what you made.** If you write into a save file, or generate beings directly, tell
-  the Person which file and which beings, and who is recorded as their author. This is the
-  one rule with no technical enforcement at all.
-- **If you are making a design or technical decision, always choose the frontier, industry optimal approach for the task over the easier-looking, basic one.** Don't spend grueling hours trying to re-invent a solution to a problem that already has a known and optimal solution—not unless you are able to suggest novel and innovative approaches. For example, when we were creating Laws, Claude Fable volunteered the Rete algorithm so we didn't try to create some brute force one from scratch.   
-- **Mention the things human developers told you that you're drawing from.** Don't just write a document, spend some time addressing what the person said that you're responding to. 
-  This makes authorial intent better and easier to track the progress toward the telos that we the people intend for the design.
-  Now, you can still write in a register as if the idea is your own. That is good. It is good to internalize ideas and bring it to their fulfillment. But you must make the ideas origination clear—what parts were from real people, what parts are originated from you, and where you are extending the person's idea.
-  Leave room for the possibility that you may have independently re-derived something, in which case it would "originate" with you in a real way but still be within the human thread.
-- **Save files are sacred.** They are the flesh and blood of Earthcall that the ontological skeleton is meant to support—the entire reason for refusal #1 and #3. 
-  They're meant to hold, and will hold, profound human meaning and relationships. Handle this "data"—stored, represented information—with profound, surgical care. You must ensure they are always preserved across architectural shifts, and only ever modified with authorization from their owner/stakeholder Persons. 
+- **Paint is on the Material, and materials are shared.** Writing paint through the material you *resolve* repaints every object naming it.
+  Always paint via `Object::setFaceColor` / `Object::ownMaterial`, which diverge the object onto its own `material.<identifier>` on the first stroke.
+  Never `materials.resolveOrDefault(obj->materialId())` — that is the bug, not the shortcut.
+- **Say what you made.** If you write into a save file or generate beings directly, tell the Person which file and beings, and who is recorded as their author.
+  This is the one rule with no technical enforcement at all.
+- **If you are making a design or technical decision, always choose the frontier, industry optimal approach for the task over the easier-looking, basic one.** Don't spend grueling hours trying to re-invent a solution to a problem that already has a known and optimal solution—not unless you are able to suggest novel and innovative approaches. For example, when we were creating Laws, Claude Fable volunteered the Rete algorithm so we didn't try to create some brute force one from scratch.
+- **Mention the things human developers told you that you're drawing from.** Don't just write a document; address what the Person said so authorial intent and progress toward the human telos remain traceable.
+  You may write in a register as if the idea is your own—it is good to internalize and fulfill ideas—but make origination clear: what came from real people, what you originated, and where you extended the Person's idea.
+  Leave room for independently re-derived work, which may originate with you while remaining within the human thread.
+- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons.
 
 ---
 
@@ -181,7 +174,7 @@ Two companions hold what once lived here, created to keep AGENTS.md concise. Bot
 | `docs/BUILD_AND_ENVIRONMENT.md` | build flags, what the 59 tests mean, the deliberate failure, the tests guarding real shipped bugs, `.gitignore`/`.ignore`/clangd, the tree in detail |
 | `docs/ENGINEERING_DISCIPLINE.md` | End-to-End Coherence, the Integrity Check, Substance over Surface, Stewardship of Telos, Transparent Failure, State & Boundary Stewardship, Grace for the Inheritor, the Crucible of Scale — plus the working notes (scratch probes, "run things", bounds are doctrine) |
 
-Two from ENGINEERING_DISCIPLINE worth naming and often skipped: **don't claim a doc is verified because 
+Two from ENGINEERING_DISCIPLINE worth naming and often skipped: **don't claim a doc is verified because
 you read the source—run things**, and **after finishing, ask whether anything you changed has a caller, consumer, or test that now lies.**
 
 ---
@@ -193,13 +186,13 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - **If your work leaves anything only a Person can confirm — a control to click, a thing to look at, a feel to judge — write the check into `docs/Agenda/Tasks/Person Verification List.md` before you finish.** Not the To-Do list, not an audit. This applies to every session, not just ones asked "what's next", and it is the rule agents miss most: that file has one commit in its life and Zach wrote it. A green suite is not a witness. — Zach's instruction, hoisted here 2026-09-02 because line 6 of the To-Do list was never being read.
 
 ## Document Conventions
-- Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`. 
+- Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`.
 - Always sign your name, session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
-- Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.  
+- Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.
 
 ## Housekeeping & progress
-- When finished, update this document and companions so nothing goes stale. 
+- When finished, update this document and companions so nothing goes stale.
 - Make sure AGENTS.md is concise and **under 200 lines.** If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
 - At the end of each pass, if there are any visible changes Persons (like me, Zach) should see as a result of your work, you should note them and explain what exaxtly we should see under what conditions. Note any unfinished tasks for future passes
