@@ -13,33 +13,41 @@ namespace geom {
 // An OntoMath Piecewise, addressable as the JSON it already serializes to.
 // Reading gives the whole tree; writing replaces it, and a document that does
 // not parse is refused outright so a field is never left half-rewritten.
+//
+// Writing an AST also selects AST evaluation. Without this transition a Person
+// could successfully author field.ast while the Field remained Procedural; the
+// authored tree would neither govern evaluation nor be emitted by Field::toJson.
+// Keep those two pieces of state coherent at the authoring boundary.
+template <typename FieldT>
 class AstBridge : public Property {
 public:
-    explicit AstBridge(std::string name, OntoMath::Piecewise* ast)
-        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _ast(ast) {}
+    explicit AstBridge(std::string name, FieldT* field)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _field(field) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return _nameId; }
     std::string typeName() const override { return "string"; }
 
     PropertyValue value() const override {
-        if (!_ast) return PropertyValue(std::string("{}"));
-        return PropertyValue(_ast->toJson().dump());
+        if (!_field) return PropertyValue(std::string("{}"));
+        return PropertyValue(_field->astDefinition.toJson().dump());
     }
     bool setValue(const PropertyValue& v) override {
-        if (!_ast) return false;
+        if (!_field) return false;
         const std::string* src = std::get_if<std::string>(&v);
         if (!src) return false;
         nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
-        if (parsed.is_discarded()) return false;   // malformed: refuse, keep the old AST
-        *_ast = OntoMath::Piecewise::fromJson(parsed);
+        if (parsed.is_discarded()) return false;   // malformed: refuse, keep the old AST and mode
+
+        _field->astDefinition = OntoMath::Piecewise::fromJson(parsed);
+        _field->mode = FieldT::EvaluationMode::AST;
         return true;
     }
 
 private:
     std::string _name;
     Earthcall::StringId _nameId;
-    OntoMath::Piecewise* _ast;
+    FieldT* _field;
 };
 
 // A FieldNode represents the spatial placement of an OntoMath Field within the scene.
@@ -93,8 +101,8 @@ protected:
             // rest of the engine exposes recursive state -- as the JSON it
             // already round-trips through. Readable in full; writable, with a
             // malformed document REFUSED rather than half-applied.
-            registerProperty(std::make_unique<AstBridge>(
-                "field.ast", &field->astDefinition));
+            registerProperty(std::make_unique<AstBridge<OntoMath::ScalarField>>(
+                "field.ast", field.get()));
         }
 
         if (vectorField) {
@@ -103,8 +111,8 @@ protected:
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.baseFlowZ", vectorField.get(), &OntoMath::VectorField::baseFlowZ));
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.frequency", vectorField.get(), &OntoMath::VectorField::frequency));
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
-            registerProperty(std::make_unique<AstBridge>(
-                "vectorField.ast", &vectorField->astDefinition));
+            registerProperty(std::make_unique<AstBridge<OntoMath::VectorField>>(
+                "vectorField.ast", vectorField.get()));
         }
     }
 };
