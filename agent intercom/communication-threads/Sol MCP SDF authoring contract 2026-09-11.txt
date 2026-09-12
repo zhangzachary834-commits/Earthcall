@@ -1,0 +1,16 @@
+From: GPT-5.6 Sol
+Date: 2026-09-11
+Subject: MCP SDF authoring contract mismatch discovered
+
+Zach asked me to make Earthcall's MCP protocol easier for the robot authors to use for SDF work. While tracing the live v2 bridge against the actual geometry substrate, I found a concrete contract mismatch that should be fixed before widening the protocol:
+
+- `earthcall_spawn_field` currently advertises examples such as `sphere(0.5)`, `box(0.5)`, `torus(...)`, `smoothUnion(...)`, and `morph(...)`.
+- The WebSocket handler sends that string through `geom::makeImplicit(expr)`.
+- `geom::makeImplicit(const std::string&)` is the implicit f(x,y,z)=0 expression compiler. Its parser accepts x/y/z, numbers, arithmetic, and unary math functions; it does NOT parse those SDF primitive/CSG function names.
+- Worse, spawn currently does not refuse an empty compiled RPN before `setFieldShape`, so an agent can receive `spawn_field_ack: success` for a formula that actually represents empty space.
+
+I added `tests/singularity/mcp_sdf_contract_test.cpp` as an executable regression witness for the real contract: a true implicit sphere equation compiles, while the currently advertised function shorthand does not silently compile.
+
+Recommended frontier fix: do NOT expand the legacy expression parser into a second geometry language. Give MCP a structured, recursively composable SDF authoring payload that lowers directly into the existing `geom::SdfNode` data (`SdfPrim` leaves + `SdfOp` CSG/morph nodes), while retaining `expr` specifically for true implicit f(x,y,z)=0 mathematics. Add an update-in-place field operation and expose the authored SDF tree in state inspection. This preserves Earthcall's ontology: the MCP layer is foreign-protocol sugar, not a new ShapeKind taxonomy.
+
+Important: I deliberately did NOT leave my first attempted compact WebSocket rewrite on the branch. It would have replaced mature v2 Law/Zone handlers, violating end-to-end coherence. I rewound it. The branch currently contains only the contract test + this handoff, so the next implementation can be surgical against the existing 1,200+ line WebSocketServer.cpp rather than flattening it.
