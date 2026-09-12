@@ -356,12 +356,12 @@ bool EarthcallAPI::deleteDesignElement(const std::string& name) {
     }
 
     if (_designSystem && !it->second.systemId.empty()) {
-        if (it->second.systemType == "shape" && _designSystem->getShapeSystem()) {
-            _designSystem->getShapeSystem()->removeShape(it->second.systemId);
-        } else if (it->second.systemType == "text" && _designSystem->getTextSystem()) {
-            _designSystem->getTextSystem()->removeText(it->second.systemId);
-        } else if (it->second.systemType == "effect" && _designSystem->getEffectsSystem()) {
-            _designSystem->getEffectsSystem()->removeEffect(it->second.systemId);
+        if (it->second.systemType == "shape") {
+            _designSystem->removeShape(it->second.systemId);
+        } else if (it->second.systemType == "text") {
+            _designSystem->removeText(it->second.systemId);
+        } else if (it->second.systemType == "effect") {
+            _designSystem->removeEffect(it->second.systemId);
         }
     }
 
