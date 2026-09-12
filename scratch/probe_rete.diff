@@ -1,0 +1,31 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -1949,7 +1949,15 @@
+     // 1. First sweep: compile Rete bindings into application bounds.
+     //    If a target hasn't met the condition or left the zone, discard.
+     auto activeZone = ZoneManager::instance().activeZone();
++    auto tR1 = glfwGetTime();
++    int reteExecs = 0;
++    double maxRete = 0.0;
++    std::string maxReteLaw = "";
+     for (const auto& entry : _rete.matchSets()) {
+         Law* law = entry.first;
+         if (law->activation() != Law::Activation::WhileTrue) continue;
+ 
+@@ -1957,8 +1965,16 @@
+         for (Singular* subject : entry.second) {
+             if (subject->getZoneId() != activeZone->getIdentifier()) continue;
+             if (!law->conditionsSatisfied(*subject)) continue;
++            auto t0 = glfwGetTime();
+             
+             // ... gather records
+             applyAndMaybeDrive(*law, *subject, records);
++            auto t1 = glfwGetTime();
++            reteExecs++;
++            if (t1 - t0 > maxRete) { maxRete = t1 - t0; maxReteLaw = law->getIdentifier(); }
+         }
+     }
++    auto tR2 = glfwGetTime();
++    if ((tR2 - tR1) * 1000.0 > 1.0) {
++        printf("[RETE] Processed %d matches in %.2f ms. Max single: %.2f ms (%s)\n", reteExecs, (tR2 - tR1) * 1000.0, maxRete * 1000.0, maxReteLaw.c_str());
++    }

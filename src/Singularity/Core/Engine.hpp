@@ -87,7 +87,8 @@ public:
     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
     bool getUseLegacy2DTools() const { return _useLegacy2DTools; }
     
-    Ourverse& getWorld() { return _world; }
+    Ourverse& getOurverse() { return _ourverse; }
+    Ourverse& getWorld() { return getOurverse(); }
     Menu& getMainMenu() { return _mainMenu; }
     
     void fuseObjects(Object* A, Object* B);
@@ -183,7 +184,7 @@ public:
     // Missing 2D state
     const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
     
-    Ourverse _world;
+    Ourverse _ourverse;
     int _patchCtrlIndex = 0;
     float _currentColor[4] = {1,1,1,1};
     struct DummyBrush { bool showCursor=false; bool cursorVisible=false; float previewSize=1.0f; }; DummyBrush _brush;
@@ -200,6 +201,7 @@ public:
     bool getUsePressureSimulation() const { return false; }
     void render();
     void renderNametags();
+    void renderKeymapContent();
     void onFramebufferSize(int width, int height);
     Menu _mainMenu;
     

@@ -242,6 +242,15 @@ public:
                                         uint32_t width, uint32_t height) = 0;
     virtual void releaseTexture(TextureHandle handle) = 0;
 
+    // Readback the rendered framebuffer pixels as RGBA8.
+    // Default implementation returns false; backends override if supported.
+    virtual bool readPixels(uint8_t* /*outRgba*/, uint32_t /*width*/, uint32_t /*height*/) {
+        return false;
+    }
+
+    // Live hot-reloading: clears and recompiles shader pipelines from disk.
+    virtual void reloadShaders() {}
+
 protected:
     // The hooks a backend actually implements. The state above (model stack,
     // recorded camera, viewport) is shared and lives here.

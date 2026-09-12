@@ -1,0 +1,218 @@
+{
+  "authoredLaws": {
+    "formationMembers": [
+      "law-basic-pixel-changer"
+    ],
+    "laws": [
+      {
+        "actionModel": {
+          "kind": 21,
+          "pixelColorPath": "paintColor",
+          "pixelFacePath": "@interaction-channel.hoveredFace",
+          "pixelUPath": "@interaction-channel.hoveredU",
+          "pixelVPath": "@interaction-channel.hoveredV"
+        },
+        "activation": 0,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+          "Zach"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+          "kind": 8,
+          "otherId": "basic-pixel-canvas"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-basic-pixel-changer",
+        "name": "Basic Pixel Changer",
+        "provenance": [
+          {
+            "directed": true,
+            "entityA": "law-basic-pixel-changer",
+            "entityB": "Zach",
+            "events": [],
+            "type": "authored-by",
+            "weight": 1.0
+          }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+      }
+    ],
+    "triggers": {
+      "law-basic-pixel-changer": [
+        "object-clicked"
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "categories": [
+    {
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      },
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "geometryType": 12,
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "shapeParams": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "currentColor": [
+    1,
+    0,
+    0,
+    1
+  ],
+  "currentZoneId": "BasicPixelChanger",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "saveFormat": "zone-identity-v1",
+  "zoneRefs": [
+    {
+      "identifier": "BasicPixelChanger"
+    }
+  ],
+  "zones": [
+    {
+      "formationRelations": [],
+      "identifier": "BasicPixelChanger",
+      "materials": [],
+      "name": "Basic Pixel Changer",
+      "owner": "Zach",
+      "world": {
+        "objects": [
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Basic Pixel Canvas"
+              },
+              "paintColor": {
+                "t": "vec3",
+                "x": 1.0,
+                "y": 0.15,
+                "z": 0.15
+              }
+            },
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ]
+            ],
+            "geometryType": 12,
+            "objectID": "basic-pixel-canvas",
+            "shapeKind": 12,
+            "shapeParams": [
+              1,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              512,
+              512
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "x2D": 160,
+            "y2D": 100
+          }
+        ]
+      }
+    }
+  ]
+}

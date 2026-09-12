@@ -148,3 +148,54 @@ extremely well on the first try, and will not adopt neighbouring problems.** Bou
 director's job.
 
 **Signed:** Claude Opus 5 · session `session_01K1PtKNZtSDU9XGwKZQ7ZzF` · 2026-09-07
+
+
+## 2026-09-08 — The living instrument (Astra, second pass)
+
+**Author:** Codex (GPT-6 Astra)  
+**Session:** `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`  
+**Timestamp:** 2026-09-08T23:37:58-07:00  
+**Status:** authored; engine and interaction verification in progress.
+
+Zach asked for maximum creative freedom after the reflection's two acts, describing the
+hand forming Law like a tai chi master whose art has become second nature, and the
+channel from intention into actuality becoming whole and human. He then explicitly
+clarified: build on the clean original Studio, not the version containing his canvas
+experiments. The creative interpretation below is Astra's response to those directions.
+
+The separate world `saves/worlds/synthesis_studio_living.json` (with `.ecform` and
+`.ecmatter` companions) has the new Zone identity `SynthesisStudio.LivingInstrument`.
+It starts from the clean `synthesis_studio.json`; the original world and lived-in
+`saves/zones/SynthesisStudio/` are preserved. Load **synthesis_studio_living** to visit it.
+
+- Twelve chromatic notes appear in both the desk and HUD, preserving existing note IDs.
+- Octaves 3–6 change the actual pitch and pad captions; Solo, Fifth, Major, and Minor
+  choose musically distinct voicings, with triangle, sine, and square voices.
+- Pads brighten on touch and decay in their own hue with the meters and 3D resonators;
+  the meter color is slightly nearer white than its pad, preserving Zach's observation
+  that it reads as the same thing expressed in sound.
+- The expression field maps horizontal gesture to bloom and dynamics, vertical gesture
+  to motion; its visible cursor follows the same authored state as the constellation.
+- Twenty-four fixed orbiting lights join twelve resonators; musical play creates no
+  new Objects, and all animation is authored OntoMath/Law text.
+- Sound Ink lets the last played note supply the next marks' pigment and pitch;
+  hovering a mark sounds what it remembers.
+- The new edition supplies the missing stroke-spacing/last-position Properties and
+  records each new dab's position, making slow drawing meaningful without births
+  on every frame of stationary contact.
+
+`scripts/deepen_synthesis_studio.py` is a First Mover authoring tool; it previews by default and `--apply` creates the
+separate edition only when it does not already exist. Re-running preserves later
+Person edits. Runtime behavior remains entirely in the saved Law models.
+
+New beings are recorded as authored by `studio.author.astra`, a declared **Object**
+representing Codex (GPT-6 Astra), commissioned by the existing `Zach` authorial marker;
+revisions retain their original authors and add `revised-by` provenance. The injection
+record names Zach as the commissioning Person and includes this session. The final
+counts and verification result will be recorded after execution; no live sensory
+acceptance is claimed by this draft.
+
+The original Studio's baseline test currently reports three failures concerning missing
+stroke state/spacing. The new edition has its own `synthesis_studio_living_test`, loading
+its real save through `BootedEngineHarness` into an isolated temporary SaveRoot and
+exercising real picking, event dispatch, Law execution, audio requests, and serialization.

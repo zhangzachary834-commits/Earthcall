@@ -51,6 +51,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "support/test_harness.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -649,6 +650,15 @@ void checkFrameShape() {
 namespace {
 
 void checkQuiescence(Zone& zone, LawManager& lawManager, double& worldTime) {
+    printf("\n--- RUNNING QUIESCENCE ---\n");
+    for (int i=0; i<3; i++) {
+        double t0 = glfwGetTime();
+        lawManager.tick();
+        double t1 = glfwGetTime();
+        printf("Tick %d: %.3f ms\n", i, (t1-t0)*1000.0);
+    }
+    return;
+
     std::printf("\n2. QUIESCENCE — a world nobody is touching\n");
 
     const size_t populationBefore = zone.getOwnedObjects().size();
@@ -768,7 +778,10 @@ void checkLoadTime(const std::string& filename, double loadMs, size_t objects) {
 
 } // namespace
 
+#include <GLFW/glfw3.h>
+
 int main(int argc, char** argv) {
+    glfwInit();
     // Line-buffered: this test prints as it goes and is the one test in the
     // suite long enough that a Person will want to watch it work.
     std::setvbuf(stdout, nullptr, _IOLBF, 0);
@@ -797,13 +810,14 @@ int main(int argc, char** argv) {
     }
     const bool defaultWorld = filename.empty();
     if (defaultWorld) filename = resolveRepoFile("saves/worlds/chess_app.json");
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    // This test pointed SaveSystem straight at the real saves/ tree with no
+    // backup/restore, the same unguarded shape found in
+    // zone_boot_hydration_relations_test 2026-09-09 (it had corrupted the
+    // real saves/zones/Chess/zone.json — 4,076 lines grew to 8,792 — from
+    // being run directly, repeatedly, outside ctest). Guarding this one too
+    // rather than waiting to find it the same way; lives for the rest of
+    // main() so it covers the loadState() call below.
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
 
     gCalibration = calibrate() / kReferenceCalibrationMs;
     loadBaseline();

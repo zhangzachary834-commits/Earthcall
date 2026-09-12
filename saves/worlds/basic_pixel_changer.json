@@ -1,0 +1,123 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "authors": [
+    "Zach"
+  ],
+  "currentZoneId": "BasicPixelChanger",
+  "zoneRefs": [
+    {
+      "identifier": "BasicPixelChanger"
+    }
+  ],
+  "categories": [
+    {
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+      "center": [0, 0, 0],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      }
+    }
+  ],
+  "zones": [
+    {
+      "identifier": "BasicPixelChanger",
+      "name": "Basic Pixel Changer",
+      "owner": "Zach",
+      "world": {
+        "objects": [
+          {
+            "objectID": "basic-pixel-canvas",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [1, 1, 0, 0, 0, 0, 0, 0, 0, 512, 512],
+            "x2D": 160,
+            "y2D": 100,
+            "transform": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            "center": [0, 0, 0],
+            "faceColors": [
+              [1, 1, 1],
+              [1, 1, 1],
+              [1, 1, 1],
+              [1, 1, 1],
+              [1, 1, 1],
+              [1, 1, 1]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Basic Pixel Canvas"
+              },
+              "paintColor": {
+                "t": "vec3",
+                "x": 1.0,
+                "y": 0.15,
+                "z": 0.15
+              }
+            }
+          }
+        ]
+      },
+      "materials": [],
+      "formationRelations": []
+    }
+  ],
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "law-basic-pixel-changer",
+        "name": "Basic Pixel Changer",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Zach"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 8,
+          "otherId": "basic-pixel-canvas"
+        },
+        "actionModel": {
+          "kind": 21,
+          "pixelFacePath": "@interaction-channel.hoveredFace",
+          "pixelUPath": "@interaction-channel.hoveredU",
+          "pixelVPath": "@interaction-channel.hoveredV",
+          "pixelColorPath": "paintColor"
+        },
+        "provenance": [
+          {
+            "entityA": "law-basic-pixel-changer",
+            "entityB": "Zach",
+            "directed": true,
+            "weight": 1.0,
+            "events": [],
+            "type": "authored-by"
+          }
+        ]
+      }
+    ],
+    "triggers": {
+      "law-basic-pixel-changer": [
+        "object-clicked"
+      ]
+    },
+    "formationMembers": [
+      "law-basic-pixel-changer"
+    ]
+  },
+  "currentColor": [1, 0, 0, 1]
+}

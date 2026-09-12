@@ -24,9 +24,9 @@
 </head>
 <body>
     <div id="start-overlay" role="button" tabindex="0" aria-label="Start Earthcall" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); color: white; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer; font-family: sans-serif;">
-        <h1>Click to Start Earthcall</h1>
+        <h1>Click or press Enter to Start Earthcall</h1>
     </div>
-    <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <canvas id="earthcall-canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
     <script type='text/javascript'>
       var Module = {
         print: (text) => console.log('WASM PRINT: ' + text),
@@ -43,6 +43,7 @@
           // A user gesture has occurred.
           // Emscripten's WebAudio and pointer lock logic will now be permitted.
           // We can also explicitly request pointer lock on the canvas here if desired.
+          document.getElementById('earthcall-canvas').focus();
           document.getElementById('earthcall-canvas').requestPointerLock();
       }
 

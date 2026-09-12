@@ -4,6 +4,7 @@
 #   ./scripts/build.sh              # configure + build
 #   ./scripts/build.sh run          # configure + build + run
 #   ./scripts/build.sh webgpu run   # configure + build the WebGPU app + run
+#   ./scripts/build.sh terminal run # configure + build the Terminal CLI app + run
 #   ./scripts/build.sh test         # configure + build + test
 #   ./scripts/build.sh quick        # build only (skip configure)
 #   ./scripts/build.sh quick run    # build only + run
@@ -31,6 +32,10 @@ build_webgpu() {
   cmake --build "$BUILD" --target earthcall_webgpu -j"$JOBS"
 }
 
+build_terminal() {
+  cmake --build "$BUILD" --target earthcall_terminal -j"$JOBS"
+}
+
 build_tests() {
   cmake --build "$BUILD" -j"$JOBS"
 }
@@ -41,6 +46,10 @@ run() {
 
 run_webgpu() {
   exec "$BUILD/earthcall_webgpu" "$@"
+}
+
+run_terminal() {
+  exec "$BUILD/earthcall_terminal" "$@"
 }
 
 test_all() {
@@ -71,6 +80,11 @@ case "$ACTION" in
     build_webgpu
     if [[ "${1:-}" == "run" ]]; then shift; run_webgpu "$@"; fi
     ;;
+  terminal)
+    configure
+    build_terminal
+    if [[ "${1:-}" == "run" ]]; then shift; run_terminal "$@"; fi
+    ;;
   clean)
     rm -rf "$BUILD"
     configure
@@ -82,7 +96,7 @@ case "$ACTION" in
     ;;
   *)
     echo "Unknown action: $ACTION"
-    echo "Usage: $0 [run|webgpu [run]|test|quick|clean]"
+    echo "Usage: $0 [run|webgpu [run]|terminal [run]|test|quick|clean]"
     exit 1
     ;;
 esac

@@ -44,9 +44,9 @@ std::ios_base::openmode Logger::openModeFor(const std::string& path) const {
 }
 
 void Logger::ensureCategoryStreams(LogCategory cat) {
-    std::size_t idx = static_cast<std::size_t>(cat);
+    const std::size_t idx = static_cast<std::size_t>(cat);
     if (idx >= static_cast<std::size_t>(LogCategory::Count)) return;
-    if (_streams[idx].logFile.is_open()) return;
+    if (_streams[idx].logFile.is_open() || _streams[idx].jsonlFile.is_open()) return;
 
     std::string catName = categoryToString(cat);
     std::string dirPath = "logs/" + catName;
@@ -55,15 +55,20 @@ void Logger::ensureCategoryStreams(LogCategory cat) {
     std::string logPath = dirPath + "/" + catName + ".log";
     std::string jsonlPath = dirPath + "/" + catName + ".jsonl";
 
-    _streams[idx].logFile.open(logPath, openModeFor(logPath));
-    _streams[idx].jsonlFile.open(jsonlPath, openModeFor(jsonlPath));
+    CategoryStreams& cs = _streams[idx];
+    cs.logFile.open(logPath, openModeFor(logPath));
+    cs.jsonlFile.open(jsonlPath, openModeFor(jsonlPath));
 
-    if (!_streams[idx].logFile.is_open() || !_streams[idx].jsonlFile.is_open()) {
+    if (!cs.logFile.is_open() || !cs.jsonlFile.is_open()) {
         std::cerr << "[Logger] Warning: Could not open log files in " << dirPath << "\n";
     }
 }
 
 Logger::Logger() {
+    for (size_t i = 0; i < static_cast<size_t>(LogCategory::Count); ++i) {
+        _categoryLevels[i].store(-1);
+    }
+
     std::filesystem::create_directories("logs");
 
     // Mirror for backwards compatibility with legacy law audit logs
@@ -105,18 +110,16 @@ void Logger::shutdown() {
 }
 
 void Logger::setCategoryLevel(LogCategory cat, LogLevel level) {
-    std::size_t idx = static_cast<std::size_t>(cat);
-    if (idx >= static_cast<std::size_t>(LogCategory::Count)) return;
-    std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    _categoryLevels[idx] = level;
+    if (static_cast<size_t>(cat) < static_cast<size_t>(LogCategory::Count)) {
+        _categoryLevels[static_cast<size_t>(cat)].store(static_cast<int>(level));
+    }
 }
 
 LogLevel Logger::categoryLevel(LogCategory cat) const {
-    std::size_t idx = static_cast<std::size_t>(cat);
-    if (idx >= static_cast<std::size_t>(LogCategory::Count)) return _level.load();
-
-    std::lock_guard<std::mutex> lock(_categoryLevelMutex);
-    if (_categoryLevels[idx].has_value()) return _categoryLevels[idx].value();
+    if (static_cast<size_t>(cat) < static_cast<size_t>(LogCategory::Count)) {
+        int val = _categoryLevels[static_cast<size_t>(cat)].load();
+        if (val != -1) return static_cast<LogLevel>(val);
+    }
     return _level.load();
 }
 
@@ -166,7 +169,7 @@ void Logger::log(LogCategory cat, const std::string& type, const std::string& me
 
 #ifdef __EMSCRIPTEN__
     // Direct output in single-threaded WebAssembly build
-    std::size_t idx = static_cast<std::size_t>(cat);
+    const std::size_t idx = static_cast<std::size_t>(cat);
     if (idx < static_cast<std::size_t>(LogCategory::Count)) {
         CategoryStreams& cs = _streams[idx];
         if (cs.logFile.is_open()) {
@@ -215,7 +218,7 @@ void Logger::backgroundWorker() {
         }
 
         for (const auto& entry : batch) {
-            std::size_t idx = static_cast<std::size_t>(entry.category);
+            const std::size_t idx = static_cast<std::size_t>(entry.category);
             if (idx >= static_cast<std::size_t>(LogCategory::Count)) continue;
 
             CategoryStreams& cs = _streams[idx];

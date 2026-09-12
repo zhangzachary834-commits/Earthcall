@@ -17,11 +17,10 @@ FrameTimings g_frameTimings{};
 
 namespace Rendering {
 
-void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
-    if (!open || !*open || !engine) return;
+void renderPerformanceMetricsContent(Core::Engine* engine) {
+    if (!engine) return;
 
-    if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
+    ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
         ImGui::Text("FPS (instant): %.1f", ImGui::GetIO().Framerate);
 
         // 5-second rolling average FPS
@@ -69,7 +68,7 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
 
         // Calculate AST evals per frame
         static uint32_t lastAstEvals = 0;
-        uint32_t currentAstEvals = OntoMath::g_astEvaluations.load(std::memory_order_relaxed);
+        uint32_t currentAstEvals = OntoMath::g_astEvaluationsTotal.load(std::memory_order_relaxed) + (OntoMath::t_astEvaluations & 1023);
         uint32_t astDiff = currentAstEvals - lastAstEvals;
         lastAstEvals = currentAstEvals;
 
@@ -247,7 +246,43 @@ void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
             ImGui::Text("  Eval + Sweep:    %6.2f ms", t.evalMs);
             ImGui::Text("  Drive Sessions:  %6.2f ms", t.driveMs);
             ImGui::Text("  Reap Unmade:     %6.2f ms", t.reapMs);
+
+            // The network itself, not just the time it took.
+            //
+            // These counters existed with zero readers anywhere in src/ — the
+            // shape a 2026-09-07 analysis called "no runtime profile hooks",
+            // which was half right: the timings above were surfaced here, and
+            // the network's own size was not visible at all. A number nobody
+            // reads cannot be observed to be wrong.
+            //
+            // What to watch: `fact refs` is what duplicate conditions inflate.
+            // Every bound node keeps a vector of every fact it matched, and
+            // assertFact runs EVERY node's predicate against EVERY fact — so a
+            // network far wider than the number of DISTINCT conditions costs
+            // both memory and time on every assertion.
+            const auto& rete = lm->rete();
+            ImGui::Separator();
+            ImGui::Text("Rete network");
+            ImGui::Text("  alpha / beta:    %6zu / %zu",
+                        rete.alphaNodeCount(), rete.betaNodeCount());
+            ImGui::Text("  facts:           %6zu", rete.facts().size());
+            ImGui::Text("  fact refs held:  %6zu", rete.nodeMemoryFootprint());
+            const auto& pc = lm->propheticCounters();
+            if (pc.asked > 0) {
+                ImGui::Text("  prophetic filter: %llu/%llu skipped (%.0f%%)",
+                            static_cast<unsigned long long>(pc.filtered),
+                            static_cast<unsigned long long>(pc.asked),
+                            100.0 * static_cast<double>(pc.filtered) /
+                                static_cast<double>(pc.asked));
+            }
         }
+    }
+
+void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine) {
+    if (!open || !*open || !engine) return;
+
+    if (ImGui::Begin("Performance & Coordinates", open, ImGuiWindowFlags_AlwaysAutoResize)) {
+        renderPerformanceMetricsContent(engine);
     }
     ImGui::End();
 }

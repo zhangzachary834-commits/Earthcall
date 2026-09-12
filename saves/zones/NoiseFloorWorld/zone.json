@@ -1,182 +1,133 @@
 {
-  "being": "zone",
-  "name": "Perlin Noise Floor Zone",
+  "deletable": {
+    "Antigravity": true
+  },
+  "formationRelations": [],
   "identifier": "NoiseFloorWorld",
+  "lexemes": [],
+  "materials": [
+    {
+      "ambient": 0.20000000298023224,
+      "baseColor": [
+        0.20000000298023224,
+        0.800000011920929,
+        0.20000000298023224
+      ],
+      "diffuse": 0.8999999761581421,
+      "name": "grass",
+      "opacity": 1.0,
+      "shininess": 10.0,
+      "specular": 0.10000000149011612
+    }
+  ],
+  "name": "Perlin Noise Floor Zone",
   "owner": "Antigravity",
   "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
   "scope": "Local",
-  "injected_by": "Antigravity",
-  "authors": "Zachary",
-  "qualities": {},
   "world": {
     "objects": [
       {
-        "objectID": "perlin-ground-plane",
-        "shapeKind": 10,
-        "geometryType": 10,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          -2,
-          0,
-          1
-        ],
-        "center": [
-          0,
-          -2,
-          0
-        ],
-        "materialId": "material.grass",
-        "baseline": "ground",
+        "attributes": {
+          "baseline": "ground"
+        },
         "authoredProperties": {
           "displayName": {
             "t": "string",
             "v": "Perlin Ground Plane"
           }
         },
-        "fieldExtent": [
-          1000.0,
-          30.0,
-          1000.0
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
         ],
-        "field": {
-          "op": 0,
-          "prim": 7,
-          "mathNode": {
-            "op": 5,
-            "children": [
-              {
-                "op": 1,
-                "var": "y"
-              },
-              {
-                "op": 6,
-                "children": [
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 40.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 29,
-                    "children": [
-                      {
-                        "op": 6,
-                        "children": [
-                          {
-                            "op": 0,
-                            "scalarForm": {
-                              "terms": [
-                                {
-                                  "c": 0.008,
-                                  "factors": {}
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "op": 4,
-                            "children": [
-                              {
-                                "op": 1,
-                                "var": "p"
-                              },
-                              {
-                                "op": 2,
-                                "children": [
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 0.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        }
+        "baseline": "ground",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "material.grass",
+        "objectID": "perlin-ground-plane",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 10,
+        "shapeParams": [
+          0.5,
+          0.3199999928474426,
+          0.5,
+          0.5,
+          0.3499999940395355,
+          0.15000000596046448,
+          2.0,
+          0.25,
+          0.11999999731779099,
+          100.0,
+          100.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100.0,
+        "y2D": 100.0,
+        "zOrder2D": 0
       }
-    ],
-    "laws": []
-  },
-  "materials": [
-    {
-      "name": "grass",
-      "baseColor": [
-        0.25,
-        0.75,
-        0.25
-      ],
-      "opacity": 1.0,
-      "shininess": 0.0,
-      "specular": 0.0,
-      "ambient": 0.3,
-      "diffuse": 0.8
-    }
-  ],
-  "formationRelations": [],
-  "lexemes": []
+    ]
+  }
 }

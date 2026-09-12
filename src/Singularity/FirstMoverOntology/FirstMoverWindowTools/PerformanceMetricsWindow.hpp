@@ -27,4 +27,5 @@ extern FrameTimings g_frameTimings;
 
 namespace Rendering {
     void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine);
+    void renderPerformanceMetricsContent(Core::Engine* engine);
 }

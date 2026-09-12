@@ -1,0 +1,77 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -2329,6 +2329,13 @@
+     const double now = Universe::instance().now();
+     bool found = false;
+ 
++    const auto findBeing = [](const std::string& id) -> Singular* {
++        for (Singular* being : Universe::instance().beings()) {
++            if (being && being->getIdentifier() == id) return being;
++        }
++        return nullptr;
++    };
++
+     for (auto& session : _driveSessions) {
+         if (session.lawId != law.getIdentifier() || session.subjectId != subjectId) {
+             continue;
+@@ -2338,7 +2345,7 @@
+         session.elapsed = 0.0;
+         session.timeLimit = 0.0;
+         session.onset = now;
+-        law.rememberOnset(subjectId, now);
++        if (Singular* subject = findBeing(subjectId)) law.rememberOnset(subject, now);
+         found = true;
+         break;
+     }
+@@ -2356,7 +2363,7 @@
+         session.onset = onset;
+         session.timeLimit = timeLimit;
+         _driveSessions.push_back(session);
+-        law.rememberOnset(subjectId, onset);
++        if (Singular* subject = findBeing(subjectId)) law.rememberOnset(subject, onset);
+     }
+ }
+ 
+@@ -2400,23 +2407,23 @@
+         Singular* subject = law ? findBeing(it->subjectId) : nullptr;
+ 
+         // A law or being that left the world ends its sessions silently.
+         if (!law || !subject || !law->isEnabled()) {
+-            if (law) law->forgetOnset(it->subjectId);
++            if (law && subject) law->forgetOnset(subject);
+             it = _driveSessions.erase(it);
+             continue;
+         }
+ 
+         // If a law was recompiled or removed, it forgets everything; the
+         // session catches it here because the law isn't sweeping for it anymore.
+         if (it->textRevision != law->textRevision()) {
+-            law->forgetOnset(it->subjectId);
++            law->forgetOnset(subject);
+             it = _driveSessions.erase(it);
+             continue;
+         }
+ 
+         // If the law's condition no longer holds, the session aborts (unless
+         // absorb retrigger applies, which relies on the condition to abort it).
+         if (!law->lastConditionState(subject)) {
+-            law->forgetOnset(it->subjectId);
++            law->forgetOnset(subject);
+             it = _driveSessions.erase(it);
+             continue;
+         }
+@@ -2434,7 +2441,7 @@
+         // function (which returns false).
+         const bool applies = law->driveBoundsApplyTo(*subject, records);
+         if (!applies) {
+-            law->forgetOnset(it->subjectId);
++            law->forgetOnset(subject);
+             it = _driveSessions.erase(it);
+             continue;
+         }
+@@ -2445,7 +2452,7 @@
+         } else {
+-            law->rememberOnset(it->subjectId, it->onset);
++            law->rememberOnset(subject, it->onset);
+             law->applyTo(*subject);
+         }

@@ -19,6 +19,9 @@ public:
     // Render the chat UI. Optionally pass a pointer to an open flag for closing the window.
     void renderUI(bool* p_open = nullptr);
 
+    // Render inner content without Begin/End (for IDE dock containers)
+    void renderContent();
+
 private:
     std::vector<ChatMessage> messages;
     char inputBuffer[256] = "";

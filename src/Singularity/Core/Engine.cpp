@@ -47,6 +47,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
@@ -287,6 +288,10 @@ void Engine::tick(float dt) {
 
     glfwPollEvents();
 
+#ifndef __EMSCRIPTEN__
+    Singularity::Network::WebSocketServer::instance().pollMainThread();
+#endif
+
 #ifdef EARTHCALL_WEBGPU
     // A swapchain is sized: presenting against a stale size gives a suboptimal
     // or failed surface texture, so track the framebuffer and reconfigure.
@@ -379,61 +384,8 @@ void Engine::tick(float dt) {
     }
 
     // 5. ImGui Windows
-    Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
-    Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
-
-    if (_creationConsoleOpen) {
-        Rendering::renderCreationWindow(&_creationConsoleOpen, *_person, nullptr, mgr.active());
-    }
-
-    if (_creatorConsoleOpen) {
-        Rendering::renderCreatorConsoleWindow(
-            &_creatorConsoleOpen, _person.get(),
-            Rendering::getCreatorConsoleState().selectedObject3D,
-            mgr, _window, this);
-    }
-
+    Rendering::IDEDockManager::instance().render(this, mgr, _window);
     Rendering::renderSaveLoadWindows(this);
-
-    if (_showKeymapWindow) {
-        ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Controls / Keymap", &_showKeymapWindow,
-                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::TextUnformatted("Core");
-            ImGui::Separator();
-            ImGui::BulletText("M: Toggle Main Menu");
-            ImGui::BulletText("Esc: Toggle Cursor Lock");
-            ImGui::BulletText("H: Toggle Chat");
-            ImGui::BulletText("K: Controls / Keymap");
-            ImGui::BulletText("`: Toggle Dev Tools");
-            ImGui::BulletText("F8: Creator Console");
-            ImGui::BulletText("F9: Singular Set-to-Set Creation");
-            ImGui::BulletText("C: Character Architect Forge Zone");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Saves");
-            ImGui::Separator();
-            ImGui::BulletText("S: Quick Save (from the menu)");
-            ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Camera");
-            ImGui::Separator();
-            ImGui::BulletText("WASD: Move");
-            ImGui::BulletText("Space: Up");
-            ImGui::BulletText("Shift: Down");
-            ImGui::BulletText("V: Sprint");
-            ImGui::BulletText("Alt: Slow");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Create");
-            ImGui::Separator();
-            ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
-            ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
-        }
-        ImGui::End();
-    }
-
-    if (_showChatWindow && _chat) {
-        _chat->renderUI(&_showChatWindow);
-    }
 
     if (_showImGuiDemo) {
         ImGui::ShowDemoWindow(&_showImGuiDemo);
@@ -594,4 +546,37 @@ float Engine::getFaceBrushUOffset() const {
 float Engine::getFaceBrushVOffset() const {
     return Rendering::getCreatorConsoleState().faceBrushVOffset;
 }
+
+void Engine::renderKeymapContent() {
+    ImGui::TextUnformatted("Core");
+    ImGui::Separator();
+    ImGui::BulletText("M: Toggle Main Menu");
+    ImGui::BulletText("Esc: Toggle Cursor Lock");
+    ImGui::BulletText("H: Toggle Chat");
+    ImGui::BulletText("K: Controls / Keymap");
+    ImGui::BulletText("`: Toggle Dev Tools");
+    ImGui::BulletText("F8: Creator Console");
+    ImGui::BulletText("F9: Singular Set-to-Set Creation");
+    ImGui::BulletText("F10: Toggle IDE Docking Mode (Sidebars/Bottom Bar)");
+    ImGui::BulletText("C: Character Architect Forge Zone");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Saves");
+    ImGui::Separator();
+    ImGui::BulletText("S: Quick Save (from the menu)");
+    ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Camera");
+    ImGui::Separator();
+    ImGui::BulletText("WASD: Move");
+    ImGui::BulletText("Space: Up");
+    ImGui::BulletText("Shift: Down");
+    ImGui::BulletText("V: Sprint");
+    ImGui::BulletText("Alt: Slow");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Create");
+    ImGui::Separator();
+    ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
+    ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
+}
+
 }

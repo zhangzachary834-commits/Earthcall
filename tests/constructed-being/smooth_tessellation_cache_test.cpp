@@ -76,7 +76,33 @@ int main() {
         std::printf("  [8] Torus changed to Cube; GC evicts torus (cache size = 0)\n");
     }
 
+    // Additional regression check: shape changes while identical live smooth shapes share an entry
+    {
+        Object::clearSmoothTessellationCache();
+        assert(Object::smoothTessellationCacheSize() == 0);
+
+        auto sphereA = std::make_unique<Object>("sphere-A");
+        auto sphereB = std::make_unique<Object>("sphere-B");
+        Object::ShapeParams p; p.r = 1.0f;
+        sphereA->setShape(Object::ShapeKind::Sphere, p);
+        sphereB->setShape(Object::ShapeKind::Sphere, p);
+        assert(Object::smoothTessellationCacheSize() == 1);
+
+        // sphereA changes to Cube; sphereB remains Sphere
+        sphereA->setShapeKind(Object::ShapeKind::Cube);
+        size_t evicted = Object::gcSmoothTessellationCache();
+        assert(evicted == 0); // Cache entry retained because sphereB still uses it
+        assert(Object::smoothTessellationCacheSize() == 1);
+
+        // sphereB changes to Cube
+        sphereB->setShapeKind(Object::ShapeKind::Cube);
+        evicted = Object::gcSmoothTessellationCache();
+        assert(evicted == 1); // Now evicted
+        assert(Object::smoothTessellationCacheSize() == 0);
+        std::printf("  [9] Identical live smooth shape sharing verified across shape changes\n");
+    }
+
     // Verification complete
-    std::printf("RESULT: smooth_tessellation_cache_test: ALL OK (8/8 checks passed)\n");
+    std::printf("RESULT: smooth_tessellation_cache_test: ALL OK (9/9 checks passed)\n");
     return 0;
 }

@@ -77,6 +77,26 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789006485
         }
       ],
       "type": "subcategory-of",
@@ -155,6 +175,26 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1788772864
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1788988016
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789006485
         }
       ],
       "type": "instance-of",
@@ -183,11 +223,54 @@
             "v": "The Far Lands Mathematical Field"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
         "baseline": "ground",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 10,
         "materialId": "material.farlands.terrain",
         "objectID": "object.farlands.terrain",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 10,
         "shapeParams": [
           0.5,
@@ -202,6 +285,29 @@
           100.0,
           100.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
@@ -213,10 +319,53 @@
             "v": "Spawn Observation Dais"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 3,
         "materialId": "material.farlands.safezone",
         "objectID": "object.farlands.dais",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 3,
         "shapeParams": [
           6.0,
@@ -231,6 +380,29 @@
           0.0,
           0.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
@@ -242,10 +414,53 @@
             "v": "Far Lands Horizon Beacon"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 9,
         "materialId": "material.farlands.rock",
         "objectID": "object.farlands.beacon",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 9,
         "shapeParams": [
           0.4000000059604645,
@@ -259,6 +474,29 @@
           0.10000000149011612,
           0.0,
           0.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
@@ -287,10 +525,53 @@
             "v": "Harmonic Resonance Core"
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 2,
         "materialId": "material.farlands.beacon",
         "objectID": "object.farlands.resonance_crystal",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 2,
         "shapeParams": [
           0.4000000059604645,
@@ -337,6 +618,29 @@
             "timestamp": 1788744975
           }
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 100.0,
         "y2D": 100.0,
         "zOrder2D": 0
@@ -352,10 +656,53 @@
             "v": 5.0
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 0,
         "materialId": "material.farlands.dark",
         "objectID": "state.farlands",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 0,
         "shapeParams": [
           0.5,
@@ -369,6 +716,29 @@
           0.0,
           0.0,
           0.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 100.0,
         "y2D": 100.0,
@@ -397,10 +767,53 @@
             "v": 0.0
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.title",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 13,
         "shapeParams": [
           0.0,
@@ -414,6 +827,29 @@
           0.0,
           0.0,
           26.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 30.0,
         "y2D": 30.0,
@@ -442,10 +878,53 @@
             "v": 0.0
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.subtitle",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 13,
         "shapeParams": [
           0.0,
@@ -459,6 +938,29 @@
           0.0,
           0.0,
           13.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 30.0,
         "y2D": 60.0,
@@ -487,10 +989,53 @@
             "v": 0.0
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
         "geometryType": 13,
         "materialId": "",
         "objectID": "hud.hint",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 13,
         "shapeParams": [
           0.0,
@@ -504,6 +1049,29 @@
           0.0,
           0.0,
           12.0
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
         "x2D": 30.0,
         "y2D": 82.0,

@@ -298,6 +298,24 @@ std::vector<Property*> Singular::listProperties() {
     return out;
 }
 
+bool Singular::hasPropertyStartingWith(const std::string& prefix) {
+    if (!_propertiesBuilt) {
+        _propertiesBuilt = true;
+        buildProperties();
+        registerTelosProperty();
+    }
+    for (const auto& entry : _dynamicProperties) {
+        findProperty(entry.first);
+    }
+    for (auto& property : _propertyRegistry) {
+        if (!property) continue;
+        const std::string& propName = property->name();
+        if (propName.size() >= prefix.size() && propName.compare(0, prefix.size(), prefix) == 0) return true;
+    }
+    return false;
+}
+
+
 // ============================================================================
 // Dynamic properties (Person-authored via AddProperty)
 //

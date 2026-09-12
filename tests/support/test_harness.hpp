@@ -17,8 +17,11 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <glm/glm.hpp>
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -107,6 +110,7 @@ struct BootedEngineHarness {
         ctx.unpackForAuthoring = false;
 
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
+        zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
     }
 
@@ -147,6 +151,43 @@ inline std::string resolveRealWorldPath(const std::string& relativeWorldPath) {
     return filename;
 }
 
+// A deterministic content signature for a directory tree: every regular
+// file's relative path + byte length + content hash, sorted, then hashed
+// together. Two calls returning the same signature are strong evidence the
+// tree is byte-identical — no need to keep a full copy around just to diff
+// it. Not cryptographic (std::hash, not SHA-256): this defends against
+// accidental drift in a test, not an adversary, so collision resistance
+// isn't the point — the deps and code path for a real hash aren't worth
+// adding to test-only plumbing that never leaves this process. An absent
+// directory hashes to a distinct sentinel so "never existed" and "existed,
+// now empty" don't collide.
+//
+// Sol (agent intercom, "Basic Pixel Changer Zone Identity Bug 9-7-26",
+// 2026-09-09, Stage 0): "add a before/after tree hash or equivalent
+// assertion so the test proves it restored the real identity tree even on
+// early return/exception."
+inline std::string hashDirectoryTree(const std::filesystem::path& dir) {
+    std::error_code existsEc;
+    if (!std::filesystem::exists(dir, existsEc)) return "ABSENT";
+    std::vector<std::string> lines;
+    std::error_code ec;
+    for (auto it = std::filesystem::recursive_directory_iterator(
+             dir, std::filesystem::directory_options::skip_permission_denied, ec);
+         it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {
+        if (ec) break;
+        if (!it->is_regular_file(ec)) continue;
+        std::ifstream in(it->path(), std::ios::binary);
+        std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        const std::string rel = std::filesystem::relative(it->path(), dir, ec).string();
+        lines.push_back(rel + ":" + std::to_string(content.size()) + ":" +
+                         std::to_string(std::hash<std::string>{}(content)));
+    }
+    std::sort(lines.begin(), lines.end());
+    std::string joined;
+    for (const auto& l : lines) { joined += l; joined += '\n'; }
+    return std::to_string(lines.size()) + "#" + std::to_string(std::hash<std::string>{}(joined));
+}
+
 // RAII: construct AFTER resolving the world path but BEFORE constructing
 // BootedEngineHarness (whose constructor hydrates from whatever
 // SaveSystem's root already is), so the backup captures the pre-test state.
@@ -156,6 +197,20 @@ inline std::string resolveRealWorldPath(const std::string& relativeWorldPath) {
 // SaveSystem's root untouched) if `resolvedWorldPath` is not a real
 // `saves/worlds/...` file, so a CI environment where the optional fixture
 // is simply absent behaves exactly as before.
+//
+// A second constructor, tagged GuardCurrentRoot, is for tests that never
+// name a real `saves/worlds/...` file at all but still risk writing into
+// the real tree simply because nothing ever pointed SaveSystem at a
+// sandbox — test_observation_load_test's dump_test_save is exactly this
+// shape: it calls ZoneManager::saveState (persistZones() unconditionally)
+// against whatever SaveSystem's save root already resolves to, which
+// defaults to the real ./saves next to the working directory when no one
+// has called setSaveRoot. Sol (agent intercom, "Basic Pixel Changer Zone
+// Identity Bug 9-7-26", 2026-09-09, Stage 0): "Put test_observation_load_test
+// behind the same TestSupport::RealSaveTreeGuard used by the chess tests."
+struct GuardCurrentRootTag {};
+inline constexpr GuardCurrentRootTag GuardCurrentRoot{};
+
 struct RealSaveTreeGuard {
     std::filesystem::path realSaves;
     std::filesystem::path backup;
@@ -167,21 +222,13 @@ struct RealSaveTreeGuard {
             p.parent_path().parent_path().filename() != "saves") {
             return;
         }
-        realSaves = p.parent_path().parent_path();
-        backup = std::filesystem::temp_directory_path() /
-            ("earthcall-save-backup-" + std::to_string(
-                std::chrono::steady_clock::now().time_since_epoch().count()));
-        std::filesystem::create_directories(backup);
-        std::error_code ec;
-        if (std::filesystem::exists(realSaves / "zones")) {
-            std::filesystem::copy(realSaves / "zones", backup / "zones",
-                std::filesystem::copy_options::recursive, ec);
-        }
-        if (std::filesystem::exists(realSaves / "homes")) {
-            std::filesystem::copy(realSaves / "homes", backup / "homes",
-                std::filesystem::copy_options::recursive, ec);
-        }
-        SaveSystem::setSaveRoot(realSaves.string());
+        beginGuarding(p.parent_path().parent_path());
+    }
+
+    explicit RealSaveTreeGuard(GuardCurrentRootTag) {
+        const std::string root = SaveSystem::saveRoot();
+        beginGuarding(std::filesystem::absolute(
+            root.empty() ? std::filesystem::path("saves") : std::filesystem::path(root)));
     }
 
     ~RealSaveTreeGuard() {
@@ -203,6 +250,25 @@ struct RealSaveTreeGuard {
 
     RealSaveTreeGuard(const RealSaveTreeGuard&) = delete;
     RealSaveTreeGuard& operator=(const RealSaveTreeGuard&) = delete;
+
+private:
+    void beginGuarding(const std::filesystem::path& saves) {
+        realSaves = saves;
+        backup = std::filesystem::temp_directory_path() /
+            ("earthcall-save-backup-" + std::to_string(
+                std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(backup);
+        std::error_code ec;
+        if (std::filesystem::exists(realSaves / "zones")) {
+            std::filesystem::copy(realSaves / "zones", backup / "zones",
+                std::filesystem::copy_options::recursive, ec);
+        }
+        if (std::filesystem::exists(realSaves / "homes")) {
+            std::filesystem::copy(realSaves / "homes", backup / "homes",
+                std::filesystem::copy_options::recursive, ec);
+        }
+        SaveSystem::setSaveRoot(realSaves.string());
+    }
 };
 
 } // namespace TestSupport

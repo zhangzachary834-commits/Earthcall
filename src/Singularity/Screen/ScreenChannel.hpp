@@ -15,6 +15,12 @@ namespace Screen {
 // Laws can read and govern:
 //   - @screen-channel.enabled: master switch for screen rendering
 //   - @screen-channel.backgroundColor: screen clear / background color (vec3)
+//   - @screen-channel.light.cameraRelative: whether the renderer derives the
+//     light's world position from the Person's camera plus light.cameraOffset
+//   - @screen-channel.light.position: absolute world-space light position when
+//     cameraRelative is false
+//   - @screen-channel.light.cameraOffset: camera-relative displacement when
+//     cameraRelative is true; defaults to the historical (2,5,2)
 //   - @screen-channel.wireframe: whether the screen renders in wireframe mode
 //   - @screen-channel.heightGridDdaEnabled: whether the WebGPU marcher skips
 //     proven-empty stretches of a heightfield ray via its min/max grid
@@ -52,7 +58,28 @@ public:
     int       cachedMeshesCount = 0;
     bool      wireframe = false;
     bool      heightGridDdaEnabled = true;
+    bool      recording = false;
+    bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
+
+    // First-order authored illumination placement.
+    //
+    // These are WORLD MEANING, not GPU mechanism: a Person can mean something
+    // by changing where illumination comes from, so NO_BLACK_BOX.md requires
+    // them to be ordinary Properties. The backend still owns pipelines,
+    // uniforms and driver handles beneath the Kernel; ScreenChannel owns only
+    // the authored facts the renderer consumes.
+    //
+    // The defaults preserve the old ShadingSystem behavior exactly: the active
+    // light follows the Person's camera at cameraPos + (2,5,2). A Law can make
+    // it world-fixed by setting light.cameraRelative=false and writing
+    // light.position, or can animate either vector as any other property.
+    bool      lightCameraRelative = true;
+    glm::vec3 lightPosition{2.0f, 5.0f, 2.0f};
+    glm::vec3 lightCameraOffset{2.0f, 5.0f, 2.0f};
+
+    bool getHasScreenCapturePermission() const;
+    bool getHasAccessibilityPermission() const;
 
 private:
     void buildProperties() override;
@@ -64,11 +91,11 @@ private:
     // registered as a ComputedProperty with a null setter, which resolves to a
     // refused write rather than a value a Law could quietly clobber and have
     // the next updateMetrics silently overwrite again. `wireframe`,
-    // `heightGridDdaEnabled`, and `backgroundColor` are the exceptions and stay
-    // plain PropertyRefs, since they genuinely DRIVE the renderer rather than
-    // report on it — they are read back out in EngineRender.cpp every frame, and
-    // can be written by Laws and UI authoring. That shared writability is the
-    // point: one property, two hands.
+    // `heightGridDdaEnabled`, `backgroundColor`, and `light.*` are the
+    // exceptions and stay plain PropertyRefs, since they genuinely DRIVE the
+    // renderer rather than report on it — they are read back out in
+    // EngineRender.cpp every frame and can be written by Laws and UI authoring.
+    // That shared writability is the point: one property, two hands.
     int    getDrawCalls() const { return drawCalls; }
     int    getTrianglesDrawn() const { return trianglesDrawn; }
     double getVramAllocatedBytes() const { return vramAllocatedBytes; }

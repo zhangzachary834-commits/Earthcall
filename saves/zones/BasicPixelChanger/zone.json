@@ -2,9 +2,313 @@
   "deletable": {
     "Zach": true
   },
-  "formationRelations": [],
-  "identifier": "Basic Pixel Changer",
+  "formationRelations": [
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-title",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-red",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-green",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-blue",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-target",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-chromatic",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "material-color-picker-value",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    }
+  ],
+  "identifier": "BasicPixelChanger",
   "lexemes": [],
+  "lawRefs": [
+    "law-basic-pixel-changer",
+    "law-material-color-picker-red",
+    "law-material-color-picker-green",
+    "law-material-color-picker-blue",
+    "law-material-color-picker-chromatic",
+    "law-material-color-picker-value",
+    "law-material-color-picker-apply"
+  ],
   "materials": [
     {
       "ambient": 0.20000000298023224,
@@ -18,6 +322,158 @@
       "opacity": 1.0,
       "shininess": 32.0,
       "specular": 1.0
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-panel",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w4RF/8OERf/DhEX/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-red-ramp",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/wAAAP8IAAD/EAAA/xkAAP8hAAD/KQAA/zEAAP86AAD/QgAA/0oAAP9SAAD/WgAA/2MAAP9rAAD/cwAA/3sAAP+EAAD/jAAA/5QAAP+cAAD/pQAA/60AAP+1AAD/vQAA/8UAAP/OAAD/1gAA/94AAP/mAAD/7wAA//cAAP//AAD/AAAA/wgAAP8QAAD/GQAA/yEAAP8pAAD/MQAA/zoAAP9CAAD/SgAA/1IAAP9aAAD/YwAA/2sAAP9zAAD/ewAA/4QAAP+MAAD/lAAA/5wAAP+lAAD/rQAA/7UAAP+9AAD/xQAA/84AAP/WAAD/3gAA/+YAAP/vAAD/9wAA//8AAP8AAAD/CAAA/xAAAP8ZAAD/IQAA/ykAAP8xAAD/OgAA/0IAAP9KAAD/UgAA/1oAAP9jAAD/awAA/3MAAP97AAD/hAAA/4wAAP+UAAD/nAAA/6UAAP+tAAD/tQAA/70AAP/FAAD/zgAA/9YAAP/eAAD/5gAA/+8AAP/3AAD//wAA/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-green-ramp",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/wAAAP8ACAD/ABAA/wAZAP8AIQD/ACkA/wAxAP8AOgD/AEIA/wBKAP8AUgD/AFoA/wBjAP8AawD/AHMA/wB7AP8AhAD/AIwA/wCUAP8AnAD/AKUA/wCtAP8AtQD/AL0A/wDFAP8AzgD/ANYA/wDeAP8A5gD/AO8A/wD3AP8A/wD/AAAA/wAIAP8AEAD/ABkA/wAhAP8AKQD/ADEA/wA6AP8AQgD/AEoA/wBSAP8AWgD/AGMA/wBrAP8AcwD/AHsA/wCEAP8AjAD/AJQA/wCcAP8ApQD/AK0A/wC1AP8AvQD/AMUA/wDOAP8A1gD/AN4A/wDmAP8A7wD/APcA/wD/AP8AAAD/AAgA/wAQAP8AGQD/ACEA/wApAP8AMQD/ADoA/wBCAP8ASgD/AFIA/wBaAP8AYwD/AGsA/wBzAP8AewD/AIQA/wCMAP8AlAD/AJwA/wClAP8ArQD/ALUA/wC9AP8AxQD/AM4A/wDWAP8A3gD/AOYA/wDvAP8A9wD/AP8A/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-blue-ramp",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "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"
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "material-color-picker-preview",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "authored-color-target",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-value-ramp",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "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"
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "color-picker-chromatic-field",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 64,
+          "pixelsB64": "/wAA//8YAP//MQD//0kA//9hAP//eQD//5IA//+qAP//wgD//9sA///zAP/z/wD/2/8A/8L/AP+q/wD/kv8A/3n/AP9h/wD/Sf8A/zH/AP8Y/wD/AP8A/wD/GP8A/zH/AP9J/wD/Yf8A/3n/AP+S/wD/qv8A/8L/AP/b/wD/8/8A8///ANv//wDC//8Aqv//AJL//wB5//8AYf//AEn//wAx//8AGP//AAD//xgA//8xAP//SQD//2EA//95AP//kgD//6oA///CAP//2wD///MA////APP//wDb//8Awv//AKr//wCS//8Aef//AGH//wBJ//8AMf//ABj//wAA//8EBP//HAT//zQE//9MBP//ZAT//3wE//+TBP//qwT//8ME///bBP//8wT/8/8E/9v/BP/D/wT/q/8E/5P/BP98/wT/ZP8E/0z/BP80/wT/HP8E/wT/BP8E/xz/BP80/wT/TP8E/2T/BP98/wT/k/8E/6v/BP/D/wT/2/8E//P/BPP//wTb//8Ew///BKv//wST//8EfP//BGT//wRM//8ENP//BBz//wQE//8cBP//NAT//0wE//9kBP//fAT//5ME//+rBP//wwT//9sE///zBP///wTz//8E2///BMP//wSr//8Ek///BHz//wRk//8ETP//BDT//wQc//8EBP//CAj//yAI//83CP//Twj//2YI//9+CP//lQj//60I///ECP//3Aj///MI//P/CP/c/wj/xP8I/63/CP+V/wj/fv8I/2b/CP9P/wj/N/8I/yD/CP8I/wj/CP8g/wj/N/8I/0//CP9m/wj/fv8I/5X/CP+t/wj/xP8I/9z/CP/z/wjz//8I3P//CMT//wit//8Ilf//CH7//whm//8IT///CDf//wgg//8ICP//IAj//zcI//9PCP//Zgj//34I//+VCP//rQj//8QI///cCP//8wj///8I8///CNz//wjE//8Irf//CJX//wh+//8IZv//CE///wg3//8IIP//CAj//wwM//8jDP//Ogz//1IM//9pDP//gAz//5cM//+uDP//xQz//9wM///zDP/z/wz/3P8M/8X/DP+u/wz/l/8M/4D/DP9p/wz/Uv8M/zr/DP8j/wz/DP8M/wz/I/8M/zr/DP9S/wz/af8M/4D/DP+X/wz/rv8M/8X/DP/c/wz/8/8M8///DNz//wzF//8Mrv//DJf//wyA//8Maf//DFL//ww6//8MI///DAz//yMM//86DP//Ugz//2kM//+ADP//lwz//64M///FDP//3Az///MM////DPP//wzc//8Mxf//DK7//wyX//8MgP//DGn//wxS//8MOv//DCP//wwM//8QEP//JxD//z4Q//9UEP//axD//4IQ//+ZEP//rxD//8YQ///dEP//9BD/9P8Q/93/EP/G/xD/r/8Q/5n/EP+C/xD/a/8Q/1T/EP8+/xD/J/8Q/xD/EP8Q/yf/EP8+/xD/VP8Q/2v/EP+C/xD/mf8Q/6//EP/G/xD/3f8Q//T/EPT//xDd//8Qxv//EK///xCZ//8Qgv//EGv//xBU//8QPv//ECf//xAQ//8nEP//PhD//1QQ//9rEP//ghD//5kQ//+vEP//xhD//90Q///0EP///xD0//8Q3f//EMb//xCv//8Qmf//EIL//xBr//8QVP//ED7//xAn//8QEP//FBT//ysU//9BFP//VxT//24U//+EFP//mhT//7EU///HFP//3RT///QU//T/FP/d/xT/x/8U/7H/FP+a/xT/hP8U/27/FP9X/xT/Qf8U/yv/FP8U/xT/FP8r/xT/Qf8U/1f/FP9u/xT/hP8U/5r/FP+x/xT/x/8U/93/FP/0/xT0//8U3f//FMf//xSx//8Umv//FIT//xRu//8UV///FEH//xQr//8UFP//KxT//0EU//9XFP//bhT//4QU//+aFP//sRT//8cU///dFP//9BT///8U9P//FN3//xTH//8Usf//FJr//xSE//8Ubv//FFf//xRB//8UK///FBT//xgY//8uGP//RBj//1oY//9wGP//hhj//5wY//+yGP//yBj//94Y///0GP/0/xj/3v8Y/8j/GP+y/xj/nP8Y/4b/GP9w/xj/Wv8Y/0T/GP8u/xj/GP8Y/xj/Lv8Y/0T/GP9a/xj/cP8Y/4b/GP+c/xj/sv8Y/8j/GP/e/xj/9P8Y9P//GN7//xjI//8Ysv//GJz//xiG//8YcP//GFr//xhE//8YLv//GBj//y4Y//9EGP//Whj//3AY//+GGP//nBj//7IY///IGP//3hj///QY////GPT//xje//8YyP//GLL//xic//8Yhv//GHD//xha//8YRP//GC7//xgY//8cHP//Mhz//0gc//9dHP//cxz//4gc//+eHP//sxz//8kc///fHP//9Bz/9P8c/9//HP/J/xz/s/8c/57/HP+I/xz/c/8c/13/HP9I/xz/Mv8c/xz/HP8c/zL/HP9I/xz/Xf8c/3P/HP+I/xz/nv8c/7P/HP/J/xz/3/8c//T/HPT//xzf//8cyf//HLP//xye//8ciP//HHP//xxd//8cSP//HDL//xwc//8yHP//SBz//10c//9zHP//iBz//54c//+zHP//yRz//98c///0HP///xz0//8c3///HMn//xyz//8cnv//HIj//xxz//8cXf//HEj//xwy//8cHP//ICD//zYg//9LIP//YCD//3Ug//+KIP//oCD//7Ug///KIP//3yD///Qg//T/IP/f/yD/yv8g/7X/IP+g/yD/iv8g/3X/IP9g/yD/S/8g/zb/IP8g/yD/IP82/yD/S/8g/2D/IP91/yD/iv8g/6D/IP+1/yD/yv8g/9//IP/0/yD0//8g3///IMr//yC1//8goP//IIr//yB1//8gYP//IEv//yA2//8gIP//NiD//0sg//9gIP//dSD//4og//+gIP//tSD//8og///fIP//9CD///8g9P//IN///yDK//8gtf//IKD//yCK//8gdf//IGD//yBL//8gNv//ICD//yQk//85JP//TiT//2Mk//94JP//jST//6Ek//+2JP//yyT//+Ak///1JP/1/yT/4P8k/8v/JP+2/yT/of8k/43/JP94/yT/Y/8k/07/JP85/yT/JP8k/yT/Of8k/07/JP9j/yT/eP8k/43/JP+h/yT/tv8k/8v/JP/g/yT/9f8k9f//JOD//yTL//8ktv//JKH//ySN//8keP//JGP//yRO//8kOf//JCT//zkk//9OJP//YyT//3gk//+NJP//oST//7Yk///LJP//4CT///Uk////JPX//yTg//8ky///JLb//ySh//8kjf//JHj//yRj//8kTv//JDn//yQk//8oKP//PSj//1Eo//9mKP//eij//48o//+jKP//tyj//8wo///gKP//9Sj/9f8o/+D/KP/M/yj/t/8o/6P/KP+P/yj/ev8o/2b/KP9R/yj/Pf8o/yj/KP8o/z3/KP9R/yj/Zv8o/3r/KP+P/yj/o/8o/7f/KP/M/yj/4P8o//X/KPX//yjg//8ozP//KLf//yij//8oj///KHr//yhm//8oUf//KD3//ygo//89KP//USj//2Yo//96KP//jyj//6Mo//+3KP//zCj//+Ao///1KP///yj1//8o4P//KMz//yi3//8oo///KI///yh6//8oZv//KFH//yg9//8oKP//LS3//0Et//9VLf//aS3//30t//+RLf//pS3//7kt///NLf//4S3///Ut//X/Lf/h/y3/zf8t/7n/Lf+l/y3/kf8t/33/Lf9p/y3/Vf8t/0H/Lf8t/y3/Lf9B/y3/Vf8t/2n/Lf99/y3/kf8t/6X/Lf+5/y3/zf8t/+H/Lf/1/y31//8t4f//Lc3//y25//8tpf//LZH//y19//8taf//LVX//y1B//8tLf//QS3//1Ut//9pLf//fS3//5Et//+lLf//uS3//80t///hLf//9S3///8t9f//LeH//y3N//8tuf//LaX//y2R//8tff//LWn//y1V//8tQf//LS3//zEx//9EMf//WDH//2wx//9/Mf//kzH//6cx//+6Mf//zjH//+Ix///1Mf/1/zH/4v8x/87/Mf+6/zH/p/8x/5P/Mf9//zH/bP8x/1j/Mf9E/zH/Mf8x/zH/RP8x/1j/Mf9s/zH/f/8x/5P/Mf+n/zH/uv8x/87/Mf/i/zH/9f8x9f//MeL//zHO//8xuv//Maf//zGT//8xf///MWz//zFY//8xRP//MTH//0Qx//9YMf//bDH//38x//+TMf//pzH//7ox///OMf//4jH///Ux////MfX//zHi//8xzv//Mbr//zGn//8xk///MX///zFs//8xWP//MUT//zEx//81Nf//SDX//1s1//9uNf//gjX//5U1//+oNf//vDX//881///iNf//9TX/9f81/+L/Nf/P/zX/vP81/6j/Nf+V/zX/gv81/27/Nf9b/zX/SP81/zX/Nf81/0j/Nf9b/zX/bv81/4L/Nf+V/zX/qP81/7z/Nf/P/zX/4v81//X/NfX//zXi//81z///Nbz//zWo//81lf//NYL//zVu//81W///NUj//zU1//9INf//WzX//241//+CNf//lTX//6g1//+8Nf//zzX//+I1///1Nf///zX1//814v//Nc///zW8//81qP//NZX//zWC//81bv//NVv//zVI//81Nf//OTn//0w5//9eOf//cTn//4Q5//+XOf//qjn//705///QOf//4zn///Y5//b/Of/j/zn/0P85/73/Of+q/zn/l/85/4T/Of9x/zn/Xv85/0z/Of85/zn/Of9M/zn/Xv85/3H/Of+E/zn/l/85/6r/Of+9/zn/0P85/+P/Of/2/zn2//854///OdD//zm9//85qv//OZf//zmE//85cf//OV7//zlM//85Of//TDn//145//9xOf//hDn//5c5//+qOf//vTn//9A5///jOf//9jn///859v//OeP//znQ//85vf//Oar//zmX//85hP//OXH//zle//85TP//OTn//z09//9PPf//Yj3//3Q9//+HPf//mT3//6w9//++Pf//0T3//+M9///2Pf/2/z3/4/89/9H/Pf++/z3/rP89/5n/Pf+H/z3/dP89/2L/Pf9P/z3/Pf89/z3/T/89/2L/Pf90/z3/h/89/5n/Pf+s/z3/vv89/9H/Pf/j/z3/9v899v//PeP//z3R//89vv//Paz//z2Z//89h///PXT//z1i//89T///PT3//089//9iPf//dD3//4c9//+ZPf//rD3//749///RPf//4z3///Y9////Pfb//z3j//890f//Pb7//z2s//89mf//PYf//z10//89Yv//PU///z09//9BQf//U0H//2VB//93Qf//iUH//5tB//+tQf//wEH//9JB///kQf//9kH/9v9B/+T/Qf/S/0H/wP9B/63/Qf+b/0H/if9B/3f/Qf9l/0H/U/9B/0H/Qf9B/1P/Qf9l/0H/d/9B/4n/Qf+b/0H/rf9B/8D/Qf/S/0H/5P9B//b/Qfb//0Hk//9B0v//QcD//0Gt//9Bm///QYn//0F3//9BZf//QVP//0FB//9TQf//ZUH//3dB//+JQf//m0H//61B///AQf//0kH//+RB///2Qf///0H2//9B5P//QdL//0HA//9Brf//QZv//0GJ//9Bd///QWX//0FT//9BQf//RUX//1dF//9oRf//ekX//4xF//+dRf//r0X//8FF///TRf//5EX///ZF//b/Rf/k/0X/0/9F/8H/Rf+v/0X/nf9F/4z/Rf96/0X/aP9F/1f/Rf9F/0X/Rf9X/0X/aP9F/3r/Rf+M/0X/nf9F/6//Rf/B/0X/0/9F/+T/Rf/2/0X2//9F5P//RdP//0XB//9Fr///RZ3//0WM//9Fev//RWj//0VX//9FRf//V0X//2hF//96Rf//jEX//51F//+vRf//wUX//9NF///kRf//9kX///9F9v//ReT//0XT//9Fwf//Ra///0Wd//9FjP//RXr//0Vo//9FV///RUX//0lJ//9aSf//bEn//31J//+OSf//oEn//7FJ///CSf//1En//+VJ///2Sf/2/0n/5f9J/9T/Sf/C/0n/sf9J/6D/Sf+O/0n/ff9J/2z/Sf9a/0n/Sf9J/0n/Wv9J/2z/Sf99/0n/jv9J/6D/Sf+x/0n/wv9J/9T/Sf/l/0n/9v9J9v//SeX//0nU//9Jwv//SbH//0mg//9Jjv//SX3//0ls//9JWv//SUn//1pJ//9sSf//fUn//45J//+gSf//sUn//8JJ///USf//5Un///ZJ////Sfb//0nl//9J1P//ScL//0mx//9JoP//SY7//0l9//9JbP//SVr//0lJ//9NTf//Xk3//29N//+ATf//kU3//6JN//+zTf//xE3//9VN///mTf//903/9/9N/+b/Tf/V/03/xP9N/7P/Tf+i/03/kf9N/4D/Tf9v/03/Xv9N/03/Tf9N/17/Tf9v/03/gP9N/5H/Tf+i/03/s/9N/8T/Tf/V/03/5v9N//f/Tff//03m//9N1f//TcT//02z//9Nov//TZH//02A//9Nb///TV7//01N//9eTf//b03//4BN//+RTf//ok3//7NN///ETf//1U3//+ZN///3Tf///033//9N5v//TdX//03E//9Ns///TaL//02R//9NgP//TW///01e//9NTf//UVH//2JR//9yUf//g1H//5NR//+kUf//tFH//8VR///WUf//5lH///dR//f/Uf/m/1H/1v9R/8X/Uf+0/1H/pP9R/5P/Uf+D/1H/cv9R/2L/Uf9R/1H/Uf9i/1H/cv9R/4P/Uf+T/1H/pP9R/7T/Uf/F/1H/1v9R/+b/Uf/3/1H3//9R5v//Udb//1HF//9RtP//UaT//1GT//9Rg///UXL//1Fi//9RUf//YlH//3JR//+DUf//k1H//6RR//+0Uf//xVH//9ZR///mUf//91H///9R9///Ueb//1HW//9Rxf//UbT//1Gk//9Rk///UYP//1Fy//9RYv//UVH//1VV//9lVf//dVX//4ZV//+WVf//plX//7ZV///GVf//11X//+dV///3Vf/3/1X/5/9V/9f/Vf/G/1X/tv9V/6b/Vf+W/1X/hv9V/3X/Vf9l/1X/Vf9V/1X/Zf9V/3X/Vf+G/1X/lv9V/6b/Vf+2/1X/xv9V/9f/Vf/n/1X/9/9V9///Vef//1XX//9Vxv//Vbb//1Wm//9Vlv//VYb//1V1//9VZf//VVX//2VV//91Vf//hlX//5ZV//+mVf//tlX//8ZV///XVf//51X///dV////Vff//1Xn//9V1///Vcb//1W2//9Vpv//VZb//1WG//9Vdf//VWX//1VV//9ZWf//aVn//3lZ//+IWf//mFn//6hZ//+4Wf//yFn//9dZ///nWf//91n/9/9Z/+f/Wf/X/1n/yP9Z/7j/Wf+o/1n/mP9Z/4j/Wf95/1n/af9Z/1n/Wf9Z/2n/Wf95/1n/iP9Z/5j/Wf+o/1n/uP9Z/8j/Wf/X/1n/5/9Z//f/Wff//1nn//9Z1///Wcj//1m4//9ZqP//WZj//1mI//9Zef//WWn//1lZ//9pWf//eVn//4hZ//+YWf//qFn//7hZ///IWf//11n//+dZ///3Wf///1n3//9Z5///Wdf//1nI//9ZuP//Waj//1mY//9ZiP//WXn//1lp//9ZWf//XV3//21d//98Xf//i13//5td//+qXf//ul3//8ld///YXf//6F3///dd//f/Xf/o/13/2P9d/8n/Xf+6/13/qv9d/5v/Xf+L/13/fP9d/23/Xf9d/13/Xf9t/13/fP9d/4v/Xf+b/13/qv9d/7r/Xf/J/13/2P9d/+j/Xf/3/133//9d6P//Xdj//13J//9duv//Xar//12b//9di///XXz//11t//9dXf//bV3//3xd//+LXf//m13//6pd//+6Xf//yV3//9hd///oXf//913///9d9///Xej//13Y//9dyf//Xbr//12q//9dm///XYv//118//9dbf//XV3//2Fh//9wYf//f2H//45h//+dYf//rGH//7th///KYf//2WH//+hh///3Yf/3/2H/6P9h/9n/Yf/K/2H/u/9h/6z/Yf+d/2H/jv9h/3//Yf9w/2H/Yf9h/2H/cP9h/3//Yf+O/2H/nf9h/6z/Yf+7/2H/yv9h/9n/Yf/o/2H/9/9h9///Yej//2HZ//9hyv//Ybv//2Gs//9hnf//YY7//2F///9hcP//YWH//3Bh//9/Yf//jmH//51h//+sYf//u2H//8ph///ZYf//6GH///dh////Yff//2Ho//9h2f//Ycr//2G7//9hrP//YZ3//2GO//9hf///YXD//2Fh//9lZf//dGX//4Jl//+RZf//oGX//65l//+9Zf//zGX//9pl///pZf//+GX/+P9l/+n/Zf/a/2X/zP9l/73/Zf+u/2X/oP9l/5H/Zf+C/2X/dP9l/2X/Zf9l/3T/Zf+C/2X/kf9l/6D/Zf+u/2X/vf9l/8z/Zf/a/2X/6f9l//j/Zfj//2Xp//9l2v//Zcz//2W9//9lrv//ZaD//2WR//9lgv//ZXT//2Vl//90Zf//gmX//5Fl//+gZf//rmX//71l///MZf//2mX//+ll///4Zf///2X4//9l6f//Zdr//2XM//9lvf//Za7//2Wg//9lkf//ZYL//2V0//9lZf//aWn//3hp//+Gaf//lGn//6Jp//+xaf//v2n//81p///baf//6mn///hp//j/af/q/2n/2/9p/83/af+//2n/sf9p/6L/af+U/2n/hv9p/3j/af9p/2n/af94/2n/hv9p/5T/af+i/2n/sf9p/7//af/N/2n/2/9p/+r/af/4/2n4//9p6v//adv//2nN//9pv///abH//2mi//9plP//aYb//2l4//9paf//eGn//4Zp//+Uaf//omn//7Fp//+/af//zWn//9tp///qaf//+Gn///9p+P//aer//2nb//9pzf//ab///2mx//9pov//aZT//2mG//9peP//aWn//21t//97bf//iW3//5dt//+lbf//s23//8Ft///Obf//3G3//+pt///4bf/4/23/6v9t/9z/bf/O/23/wf9t/7P/bf+l/23/l/9t/4n/bf97/23/bf9t/23/e/9t/4n/bf+X/23/pf9t/7P/bf/B/23/zv9t/9z/bf/q/23/+P9t+P//ber//23c//9tzv//bcH//22z//9tpf//bZf//22J//9te///bW3//3tt//+Jbf//l23//6Vt//+zbf//wW3//85t///cbf//6m3///ht////bfj//23q//9t3P//bc7//23B//9ts///baX//22X//9tif//bXv//21t//9xcf//f3H//4xx//+acf//p3H//7Vx///Ccf//0HH//91x///rcf//+HH/+P9x/+v/cf/d/3H/0P9x/8L/cf+1/3H/p/9x/5r/cf+M/3H/f/9x/3H/cf9x/3//cf+M/3H/mv9x/6f/cf+1/3H/wv9x/9D/cf/d/3H/6/9x//j/cfj//3Hr//9x3f//cdD//3HC//9xtf//caf//3Ga//9xjP//cX///3Fx//9/cf//jHH//5px//+ncf//tXH//8Jx///Qcf//3XH//+tx///4cf///3H4//9x6///cd3//3HQ//9xwv//cbX//3Gn//9xmv//cYz//3F///9xcf//dXX//4J1//+Qdf//nXX//6p1//+3df//xHX//9F1///edf//63X///h1//j/df/r/3X/3v91/9H/df/E/3X/t/91/6r/df+d/3X/kP91/4L/df91/3X/df+C/3X/kP91/53/df+q/3X/t/91/8T/df/R/3X/3v91/+v/df/4/3X4//916///dd7//3XR//91xP//dbf//3Wq//91nf//dZD//3WC//91df//gnX//5B1//+ddf//qnX//7d1///Edf//0XX//951///rdf//+HX///91+P//dev//3Xe//910f//dcT//3W3//91qv//dZ3//3WQ//91gv//dXX//3l5//+Gef//k3n//6B5//+sef//uXn//8Z5///Sef//33n//+x5///5ef/5/3n/7P95/9//ef/S/3n/xv95/7n/ef+s/3n/oP95/5P/ef+G/3n/ef95/3n/hv95/5P/ef+g/3n/rP95/7n/ef/G/3n/0v95/9//ef/s/3n/+f95+f//eez//3nf//950v//ecb//3m5//95rP//eaD//3mT//95hv//eXn//4Z5//+Tef//oHn//6x5//+5ef//xnn//9J5///fef//7Hn///l5////efn//3ns//953///edL//3nG//95uf//eaz//3mg//95k///eYb//3l5//99ff//in3//5Z9//+iff//r33//7t9///Hff//1H3//+B9///sff//+X3/+f99/+z/ff/g/33/1P99/8f/ff+7/33/r/99/6L/ff+W/33/iv99/33/ff99/4r/ff+W/33/ov99/6//ff+7/33/x/99/9T/ff/g/33/7P99//n/ffn//33s//994P//fdT//33H//99u///fa///32i//99lv//fYr//319//+Kff//ln3//6J9//+vff//u33//8d9///Uff//4H3//+x9///5ff///335//997P//feD//33U//99x///fbv//32v//99ov//fZb//32K//99ff//goL//42C//+Zgv//pYL//7GC//+9gv//yYL//9WC///hgv//7YL///mC//n/gv/t/4L/4f+C/9X/gv/J/4L/vf+C/7H/gv+l/4L/mf+C/43/gv+C/4L/gv+N/4L/mf+C/6X/gv+x/4L/vf+C/8n/gv/V/4L/4f+C/+3/gv/5/4L5//+C7f//guH//4LV//+Cyf//gr3//4Kx//+Cpf//gpn//4KN//+Cgv//jYL//5mC//+lgv//sYL//72C///Jgv//1YL//+GC///tgv//+YL///+C+f//gu3//4Lh//+C1f//gsn//4K9//+Csf//gqX//4KZ//+Cjf//goL//4aG//+Rhv//nYb//6iG//+0hv//v4b//8uG///Xhv//4ob//+6G///5hv/5/4b/7v+G/+L/hv/X/4b/y/+G/7//hv+0/4b/qP+G/53/hv+R/4b/hv+G/4b/kf+G/53/hv+o/4b/tP+G/7//hv/L/4b/1/+G/+L/hv/u/4b/+f+G+f//hu7//4bi//+G1///hsv//4a///+GtP//hqj//4ad//+Gkf//hob//5GG//+dhv//qIb//7SG//+/hv//y4b//9eG///ihv//7ob///mG////hvn//4bu//+G4v//htf//4bL//+Gv///hrT//4ao//+Gnf//hpH//4aG//+Kiv//lYr//6CK//+riv//tor//8KK///Niv//2Ir//+OK///uiv//+Yr/+f+K/+7/iv/j/4r/2P+K/83/iv/C/4r/tv+K/6v/iv+g/4r/lf+K/4r/iv+K/5X/iv+g/4r/q/+K/7b/iv/C/4r/zf+K/9j/iv/j/4r/7v+K//n/ivn//4ru//+K4///itj//4rN//+Kwv//irb//4qr//+KoP//ipX//4qK//+Viv//oIr//6uK//+2iv//wor//82K///Yiv//44r//+6K///5iv///4r5//+K7v//iuP//4rY//+Kzf//isL//4q2//+Kq///iqD//4qV//+Kiv//jo7//5iO//+jjv//ro7//7mO///Ejv//zo7//9mO///kjv//747///qO//r/jv/v/47/5P+O/9n/jv/O/47/xP+O/7n/jv+u/47/o/+O/5j/jv+O/47/jv+Y/47/o/+O/67/jv+5/47/xP+O/87/jv/Z/47/5P+O/+//jv/6/476//+O7///juT//47Z//+Ozv//jsT//465//+Orv//jqP//46Y//+Ojv//mI7//6OO//+ujv//uY7//8SO///Ojv//2Y7//+SO///vjv//+o7///+O+v//ju///47k//+O2f//js7//47E//+Ouf//jq7//46j//+OmP//jo7//5KS//+ckv//p5L//7GS//+7kv//xpL//9CS///bkv//5ZL//++S///6kv/6/5L/7/+S/+X/kv/b/5L/0P+S/8b/kv+7/5L/sf+S/6f/kv+c/5L/kv+S/5L/nP+S/6f/kv+x/5L/u/+S/8b/kv/Q/5L/2/+S/+X/kv/v/5L/+v+S+v//ku///5Ll//+S2///ktD//5LG//+Su///krH//5Kn//+SnP//kpL//5yS//+nkv//sZL//7uS///Gkv//0JL//9uS///lkv//75L///qS////kvr//5Lv//+S5f//ktv//5LQ//+Sxv//krv//5Kx//+Sp///kpz//5KS//+Wlv//oJb//6qW//+0lv//vpb//8iW///Slv//3Jb//+aW///wlv//+pb/+v+W//D/lv/m/5b/3P+W/9L/lv/I/5b/vv+W/7T/lv+q/5b/oP+W/5b/lv+W/6D/lv+q/5b/tP+W/77/lv/I/5b/0v+W/9z/lv/m/5b/8P+W//r/lvr//5bw//+W5v//ltz//5bS//+WyP//lr7//5a0//+Wqv//lqD//5aW//+glv//qpb//7SW//++lv//yJb//9KW///clv//5pb///CW///6lv///5b6//+W8P//lub//5bc//+W0v//lsj//5a+//+WtP//lqr//5ag//+Wlv//mpr//6Oa//+tmv//t5r//8Ca///Kmv//1Jr//92a///nmv//8Zr///qa//r/mv/x/5r/5/+a/93/mv/U/5r/yv+a/8D/mv+3/5r/rf+a/6P/mv+a/5r/mv+j/5r/rf+a/7f/mv/A/5r/yv+a/9T/mv/d/5r/5/+a//H/mv/6/5r6//+a8f//muf//5rd//+a1P//msr//5rA//+at///mq3//5qj//+amv//o5r//62a//+3mv//wJr//8qa///Umv//3Zr//+ea///xmv//+pr///+a+v//mvH//5rn//+a3f//mtT//5rK//+awP//mrf//5qt//+ao///mpr//56e//+nnv//sJ7//7qe///Dnv//zJ7//9We///fnv//6J7///Ge///6nv/6/57/8f+e/+j/nv/f/57/1f+e/8z/nv/D/57/uv+e/7D/nv+n/57/nv+e/57/p/+e/7D/nv+6/57/w/+e/8z/nv/V/57/3/+e/+j/nv/x/57/+v+e+v//nvH//57o//+e3///ntX//57M//+ew///nrr//56w//+ep///np7//6ee//+wnv//up7//8Oe///Mnv//1Z7//9+e///onv//8Z7///qe////nvr//57x//+e6P//nt///57V//+ezP//nsP//566//+esP//nqf//56e//+iov//q6L//7Si//+9ov//xaL//86i///Xov//4KL//+mi///yov//+6L/+/+i//L/ov/p/6L/4P+i/9f/ov/O/6L/xf+i/73/ov+0/6L/q/+i/6L/ov+i/6v/ov+0/6L/vf+i/8X/ov/O/6L/1/+i/+D/ov/p/6L/8v+i//v/ovv//6Ly//+i6f//ouD//6LX//+izv//osX//6K9//+itP//oqv//6Ki//+rov//tKL//72i///Fov//zqL//9ei///gov//6aL///Ki///7ov///6L7//+i8v//oun//6Lg//+i1///os7//6LF//+ivf//orT//6Kr//+iov//pqb//66m//+3pv//v6b//8im///Qpv//2ab//+Gm///qpv//8qb///um//v/pv/y/6b/6v+m/+H/pv/Z/6b/0P+m/8j/pv+//6b/t/+m/67/pv+m/6b/pv+u/6b/t/+m/7//pv/I/6b/0P+m/9n/pv/h/6b/6v+m//L/pv/7/6b7//+m8v//pur//6bh//+m2f//ptD//6bI//+mv///prf//6au//+mpv//rqb//7em//+/pv//yKb//9Cm///Zpv//4ab//+qm///ypv//+6b///+m+///pvL//6bq//+m4f//ptn//6bQ//+myP//pr///6a3//+mrv//pqb//6qq//+yqv//uqr//8Kq///Kqv//0qr//9uq///jqv//66r///Oq///7qv/7/6r/8/+q/+v/qv/j/6r/2/+q/9L/qv/K/6r/wv+q/7r/qv+y/6r/qv+q/6r/sv+q/7r/qv/C/6r/yv+q/9L/qv/b/6r/4/+q/+v/qv/z/6r/+/+q+///qvP//6rr//+q4///qtv//6rS//+qyv//qsL//6q6//+qsv//qqr//7Kq//+6qv//wqr//8qq///Sqv//26r//+Oq///rqv//86r///uq////qvv//6rz//+q6///quP//6rb//+q0v//qsr//6rC//+quv//qrL//6qq//+urv//tq7//72u///Frv//za7//9Wu///crv//5K7//+yu///zrv//+67/+/+u//P/rv/s/67/5P+u/9z/rv/V/67/zf+u/8X/rv+9/67/tv+u/67/rv+u/7b/rv+9/67/xf+u/83/rv/V/67/3P+u/+T/rv/s/67/8/+u//v/rvv//67z//+u7P//ruT//67c//+u1f//rs3//67F//+uvf//rrb//66u//+2rv//va7//8Wu///Nrv//1a7//9yu///krv//7K7///Ou///7rv///677//+u8///ruz//67k//+u3P//rtX//67N//+uxf//rr3//662//+urv//srL//7my///Bsv//yLL//8+y///Xsv//3rL//+Wy///tsv//9LL///uy//v/sv/0/7L/7f+y/+X/sv/e/7L/1/+y/8//sv/I/7L/wf+y/7n/sv+y/7L/sv+5/7L/wf+y/8j/sv/P/7L/1/+y/97/sv/l/7L/7f+y//T/sv/7/7L7//+y9P//su3//7Ll//+y3v//stf//7LP//+yyP//ssH//7K5//+ysv//ubL//8Gy///Isv//z7L//9ey///esv//5bL//+2y///0sv//+7L///+y+///svT//7Lt//+y5f//st7//7LX//+yz///ssj//7LB//+yuf//srL//7a2//+9tv//xLb//8u2///Stv//2bb//+C2///ntv//7rb///W2///8tv/8/7b/9f+2/+7/tv/n/7b/4P+2/9n/tv/S/7b/y/+2/8T/tv+9/7b/tv+2/7b/vf+2/8T/tv/L/7b/0v+2/9n/tv/g/7b/5/+2/+7/tv/1/7b//P+2/P//tvX//7bu//+25///tuD//7bZ//+20v//tsv//7bE//+2vf//trb//722///Etv//y7b//9K2///Ztv//4Lb//+e2///utv//9bb///y2////tvz//7b1//+27v//tuf//7bg//+22f//ttL//7bL//+2xP//tr3//7a2//+6uv//wbr//8e6///Ouv//1Lr//9u6///iuv//6Lr//++6///1uv///Lr//P+6//X/uv/v/7r/6P+6/+L/uv/b/7r/1P+6/87/uv/H/7r/wf+6/7r/uv+6/8H/uv/H/7r/zv+6/9T/uv/b/7r/4v+6/+j/uv/v/7r/9f+6//z/uvz//7r1//+67///uuj//7ri//+62///utT//7rO//+6x///usH//7q6///Buv//x7r//866///Uuv//27r//+K6///ouv//77r///W6///8uv///7r8//+69f//uu///7ro//+64v//utv//7rU//+6zv//usf//7rB//+6uv//vr7//8S+///Lvv//0b7//9e+///dvv//477//+m+///wvv//9r7///y+//z/vv/2/77/8P++/+n/vv/j/77/3f++/9f/vv/R/77/y/++/8T/vv++/77/vv/E/77/y/++/9H/vv/X/77/3f++/+P/vv/p/77/8P++//b/vv/8/778//++9v//vvD//77p//++4///vt3//77X//++0f//vsv//77E//++vv//xL7//8u+///Rvv//177//92+///jvv//6b7///C+///2vv///L7///++/P//vvb//77w//++6f//vuP//77d//++1///vtH//77L//++xP//vr7//8LC///Iwv//zsL//9TC///Zwv//38L//+XC///rwv//8cL///bC///8wv/8/8L/9v/C//H/wv/r/8L/5f/C/9//wv/Z/8L/1P/C/87/wv/I/8L/wv/C/8L/yP/C/87/wv/U/8L/2f/C/9//wv/l/8L/6//C//H/wv/2/8L//P/C/P//wvb//8Lx///C6///wuX//8Lf///C2f//wtT//8LO///CyP//wsL//8jC///Owv//1ML//9nC///fwv//5cL//+vC///xwv//9sL///zC////wvz//8L2///C8f//wuv//8Ll///C3///wtn//8LU///Czv//wsj//8LC///Gxv//zMb//9HG///Xxv//3Mb//+HG///nxv//7Mb///LG///3xv///Mb//P/G//f/xv/y/8b/7P/G/+f/xv/h/8b/3P/G/9f/xv/R/8b/zP/G/8b/xv/G/8z/xv/R/8b/1//G/9z/xv/h/8b/5//G/+z/xv/y/8b/9//G//z/xvz//8b3///G8v//xuz//8bn///G4f//xtz//8bX///G0f//xsz//8bG///Mxv//0cb//9fG///cxv//4cb//+fG///sxv//8sb///fG///8xv///8b8///G9///xvL//8bs///G5///xuH//8bc///G1///xtH//8bM///Gxv//ysr//8/K///Uyv//2cr//97K///jyv//6Mr//+3K///yyv//98r///zK//z/yv/3/8r/8v/K/+3/yv/o/8r/4//K/97/yv/Z/8r/1P/K/8//yv/K/8r/yv/P/8r/1P/K/9n/yv/e/8r/4//K/+j/yv/t/8r/8v/K//f/yv/8/8r8///K9///yvL//8rt///K6P//yuP//8re///K2f//ytT//8rP///Kyv//z8r//9TK///Zyv//3sr//+PK///oyv//7cr///LK///3yv///Mr////K/P//yvf//8ry///K7f//yuj//8rj///K3v//ytn//8rU///Kz///ysr//87O///Tzv//2M7//9zO///hzv//5s7//+rO///vzv//887///jO///9zv/9/87/+P/O//P/zv/v/87/6v/O/+b/zv/h/87/3P/O/9j/zv/T/87/zv/O/87/0//O/9j/zv/c/87/4f/O/+b/zv/q/87/7//O//P/zv/4/87//f/O/f//zvj//87z///O7///zur//87m///O4f//ztz//87Y///O0///zs7//9PO///Yzv//3M7//+HO///mzv//6s7//+/O///zzv//+M7///3O////zv3//874///O8///zu///87q///O5v//zuH//87c///O2P//ztP//87O///S0v//19L//9vS///f0v//49L//+jS///s0v//8NL///TS///50v///dL//f/S//n/0v/0/9L/8P/S/+z/0v/o/9L/4//S/9//0v/b/9L/1//S/9L/0v/S/9f/0v/b/9L/3//S/+P/0v/o/9L/7P/S//D/0v/0/9L/+f/S//3/0v3//9L5///S9P//0vD//9Ls///S6P//0uP//9Lf///S2///0tf//9LS///X0v//29L//9/S///j0v//6NL//+zS///w0v//9NL///nS///90v///9L9///S+f//0vT//9Lw///S7P//0uj//9Lj///S3///0tv//9LX///S0v//19f//9rX///e1///4tf//+bX///q1///7tf///LX///11///+df///3X//3/1//5/9f/9f/X//L/1//u/9f/6v/X/+b/1//i/9f/3v/X/9r/1//X/9f/1//a/9f/3v/X/+L/1//m/9f/6v/X/+7/1//y/9f/9f/X//n/1//9/9f9///X+f//1/X//9fy///X7v//1+r//9fm///X4v//197//9fa///X1///2tf//97X///i1///5tf//+rX///u1///8tf///XX///51////df////X/f//1/n//9f1///X8v//1+7//9fq///X5v//1+L//9fe///X2v//19f//9vb///e2///4tv//+Xb///o2///7Nv//+/b///z2///9tv///rb///92//9/9v/+v/b//b/2//z/9v/7//b/+z/2//o/9v/5f/b/+L/2//e/9v/2//b/9v/3v/b/+L/2//l/9v/6P/b/+z/2//v/9v/8//b//b/2//6/9v//f/b/f//2/r//9v2///b8///2+///9vs///b6P//2+X//9vi///b3v//29v//97b///i2///5dv//+jb///s2///79v///Pb///22///+tv///3b////2/3//9v6///b9v//2/P//9vv///b7P//2+j//9vl///b4v//297//9vb///f3///4t///+Xf///o3///69///+7f///x3///9N////ff///63////d///f/f//r/3//3/9//9P/f//H/3//u/9//6//f/+j/3//l/9//4v/f/9//3//f/+L/3//l/9//6P/f/+v/3//u/9//8f/f//T/3//3/9//+v/f//3/3/3//9/6///f9///3/T//9/x///f7v//3+v//9/o///f5f//3+L//9/f///i3///5d///+jf///r3///7t////Hf///03///99////rf///93////9/9///f+v//3/f//9/0///f8f//3+7//9/r///f6P//3+X//9/i///f3///4+P//+Xj///o4///6+P//+3j///w4///8+P///bj///44///++P///7j//7/4//7/+P/+P/j//b/4//z/+P/8P/j/+3/4//r/+P/6P/j/+X/4//j/+P/4//l/+P/6P/j/+v/4//t/+P/8P/j//P/4//2/+P/+P/j//v/4//+/+P+///j+///4/j//+P2///j8///4/D//+Pt///j6///4+j//+Pl///j4///5eP//+jj///r4///7eP///Dj///z4///9uP///jj///74////uP////j/v//4/v//+P4///j9v//4/P//+Pw///j7f//4+v//+Po///j5f//4+P//+fn///p5///6+f//+7n///w5///8uf///Xn///35///+ef///zn///+5//+/+f//P/n//n/5//3/+f/9f/n//L/5//w/+f/7v/n/+v/5//p/+f/5//n/+f/6f/n/+v/5//u/+f/8P/n//L/5//1/+f/9//n//n/5//8/+f//v/n/v//5/z//+f5///n9///5/X//+fy///n8P//5+7//+fr///n6f//5+f//+nn///r5///7uf///Dn///y5///9ef///fn///55////Of///7n////5/7//+f8///n+f//5/f//+f1///n8v//5/D//+fu///n6///5+n//+fn///r6///7ev//+/r///x6///8uv///Tr///26///+Ov///rr///86////uv//v/r//z/6//6/+v/+P/r//b/6//0/+v/8v/r//H/6//v/+v/7f/r/+v/6//r/+3/6//v/+v/8f/r//L/6//0/+v/9v/r//j/6//6/+v//P/r//7/6/7//+v8///r+v//6/j//+v2///r9P//6/L//+vx///r7///6+3//+vr///t6///7+v///Hr///y6///9Ov///br///46///+uv///zr///+6////+v+///r/P//6/r//+v4///r9v//6/T//+vy///r8f//6+///+vt///r6///7+////Dv///y7///8+////Xv///37///+O////rv///77////e////7v//7/7//9/+//+//v//r/7//4/+//9//v//X/7//z/+//8v/v//D/7//v/+//7//w/+//8v/v//P/7//1/+//9//v//j/7//6/+//+//v//3/7//+/+/+///v/f//7/v//+/6///v+P//7/f//+/1///v8///7/L//+/w///v7///8O////Lv///z7///9e////fv///47///+u////vv///97////u/////v/v//7/3//+/7///v+v//7/j//+/3///v9f//7/P//+/y///v8P//7+////Pz///08///9fP///bz///38///+fP///rz///78////PP///3z///+8//+//P//f/z//z/8//7//P/+v/z//n/8//3//P/9v/z//X/8//0//P/8//z//P/9P/z//X/8//2//P/9//z//n/8//6//P/+//z//z/8//9//P//v/z/v//8/3///P8///z+///8/r///P5///z9///8/b///P1///z9P//8/P///Tz///18///9vP///fz///58///+vP///vz///88////fP///7z////8/7///P9///z/P//8/v///P6///z+f//8/f///P2///z9f//8/T///Pz///39///+Pf///j3///59///+vf///v3///89////Pf///33///+9/////f////3//7/9//9//f//P/3//z/9//7//f/+v/3//n/9//4//f/+P/3//f/9//3//j/9//4//f/+f/3//r/9//7//f//P/3//z/9//9//f//v/3////9/////f+///3/f//9/z///f8///3+///9/r///f5///3+P//9/j///f3///49///+Pf///n3///69///+/f///z3///89////ff///73////9/////f////3/v//9/3///f8///3/P//9/v///f6///3+f//9/j///f4///39///+/v///v7///8+////Pv///z7///9+////fv///77///++////vv////7////+//+//v//v/7//7/+//9//v//f/7//z/+//8//v//P/7//v/+//7//v/+//7//v//P/7//z/+//8//v//f/7//3/+//+//v//v/7//7/+/////v////7/v//+/7///v+///7/f//+/3///v8///7/P//+/z///v7///7+///+/v///z7///8+////Pv///37///9+////vv///77///++/////v////7////+/7///v+///7/v//+/3///v9///7/P//+/z///v8///7+///+/v//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////w=="
+        }
+      ]
     }
   ],
   "name": "Basic Pixel Changer",
@@ -34,12 +490,61 @@
           "displayName": {
             "t": "string",
             "v": "Basic Pixel Canvas"
+          },
+          "paintColor": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.15,
+            "z": 0.15
           }
         },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
         "geometryType": 12,
         "materialId": "material.default",
         "objectID": "basic-pixel-canvas",
         "renderMode": 0,
+        "rotationResponsiveness": 10.0,
         "shapeKind": 12,
         "shapeParams": [
           1.0,
@@ -54,10 +559,938 @@
           512.0,
           512.0
         ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
         "x2D": 160.0,
         "y2D": 100.0,
         "zOrder2D": 0
+      },
+      {
+        "authoredProperties": {},
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-panel",
+        "objectID": "material-color-picker-panel",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          570,
+          680
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 690,
+        "y2D": 20,
+        "zOrder2D": 1
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "MATERIAL COLOR \u2014 LAW + ONTOMATH"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "MATERIAL COLOR \u2014 LAW + ONTOMATH"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "material-color-picker-title",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          520,
+          28
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 38,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "selectedColor": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 0.15,
+            "z": 0.15
+          },
+          "hue": {
+            "t": "double",
+            "v": 0.0
+          },
+          "saturation": {
+            "t": "double",
+            "v": 0.85
+          },
+          "value": {
+            "t": "double",
+            "v": 1.0
+          },
+          "displayName": {
+            "t": "string",
+            "v": "SELECTED COLOR"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 18.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            0.15,
+            0.15
+          ],
+          [
+            1.0,
+            0.15,
+            0.15
+          ],
+          [
+            1.0,
+            0.15,
+            0.15
+          ],
+          [
+            1.0,
+            0.15,
+            0.15
+          ],
+          [
+            1.0,
+            0.15,
+            0.15
+          ],
+          [
+            1.0,
+            0.15,
+            0.15
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "material-color-picker-preview",
+        "objectID": "material-color-picker",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          190,
+          120
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1040,
+        "y2D": 110,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "RED"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 14.7
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-red-ramp",
+        "objectID": "material-color-picker-red",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          300,
+          42
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 480,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "GREEN"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 14.7
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-green-ramp",
+        "objectID": "material-color-picker-green",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          300,
+          42
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 540,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "BLUE"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 14.7
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-blue-ramp",
+        "objectID": "material-color-picker-blue",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          300,
+          42
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 600,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "TARGET MATERIAL"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 18.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "authored-color-target",
+        "objectID": "material-color-target",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          190,
+          120
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1040,
+        "y2D": 260,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUE \u00d7 SATURATION"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 18.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-chromatic-field",
+        "objectID": "material-color-picker-chromatic",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          300,
+          280
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 100,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "VALUE / BRIGHTNESS"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 14.7
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "color-picker-value-ramp",
+        "objectID": "material-color-picker-value",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          300,
+          42
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 710,
+        "y2D": 402,
+        "zOrder2D": 20
       }
     ]
-  }
+  },
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343"
 }

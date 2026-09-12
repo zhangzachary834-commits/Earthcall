@@ -330,6 +330,23 @@ void OpenGLRenderer::applyBeginFrame(uint32_t width, uint32_t height,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+bool OpenGLRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
+    if (!outRgba || width == 0 || height == 0) return false;
+    if (!glfwGetCurrentContext()) return false;
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
+                 GL_RGBA, GL_UNSIGNED_BYTE, outRgba);
+    std::vector<uint8_t> row(width * 4);
+    for (uint32_t y = 0; y < height / 2; ++y) {
+        uint8_t* top = outRgba + y * width * 4;
+        uint8_t* btm = outRgba + (height - 1 - y) * width * 4;
+        std::memcpy(row.data(), top, width * 4);
+        std::memcpy(top, btm, width * 4);
+        std::memcpy(btm, row.data(), width * 4);
+    }
+    return true;
+}
+
 #elif !defined(__EMSCRIPTEN__)
 
 // No-op fallback stubs for headless environments without OpenGL headers.
@@ -351,5 +368,6 @@ void OpenGLRenderer::applyLightingEnabled(bool) {}
 TextureHandle OpenGLRenderer::uploadTexture(TextureHandle, const uint8_t*, uint32_t, uint32_t) { return 0; }
 void OpenGLRenderer::releaseTexture(TextureHandle) {}
 void OpenGLRenderer::applyBeginFrame(uint32_t, uint32_t, const glm::vec4&) {}
+bool OpenGLRenderer::readPixels(uint8_t*, uint32_t, uint32_t) { return false; }
 
 #endif

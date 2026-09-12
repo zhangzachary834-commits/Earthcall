@@ -1,0 +1,79 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -1579,6 +1579,9 @@
+         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
+             _seededSubjects.erase(subjectId);
+         }
++        for (auto& law : _laws) {
++            law->forgetSubject(being);
++        }
+         // …and every RELATION that held it lets go of the pointer, keeping the
+         // name. Relations outlive their endpoints all the time (a Formation, a
+         // provenance record, a test's own graph), and aId()/bId() call a
+@@ -2011,26 +2014,24 @@
+             // falls back to "now" every tick, so every Flow and Drive authored
+             // against that clock read t=0 forever.
+-            std::unordered_set<std::string> matching;
++            std::unordered_set<const Singular*> matching;
+             matching.reserve(subjects.size());
+             for (Singular* subject : subjects) {
+                 if (!subject || Universe::instance().isUnmade(subject)) continue;
+-                const std::string subjectId = subject->getIdentifier();
+-                matching.insert(subjectId);
+-                const bool wasHolding = law->lastConditionState(subjectId);
+-                law->rememberConditionState(subjectId, true);
++                matching.insert(subject);
++                const bool wasHolding = law->lastConditionState(subject);
++                law->rememberConditionState(subject, true);
+                 if (!wasHolding && Universe::instance().hasClock()) {
+-                    law->rememberOnset(subjectId, Universe::instance().now());
++                    law->rememberOnset(subject, Universe::instance().now());
+                 }
+             }
+ 
+             // Release: whoever the law held for last tick and does not now.
+             // Collected first, because forgetting mutates what we are reading.
+-            std::vector<std::string> released;
+-            for (const auto& [subjectId, held] : law->conditionMemory()) {
+-                if (held && matching.count(subjectId) == 0) released.push_back(subjectId);
++            std::vector<const Singular*> released;
++            for (const auto& [subject, held] : law->conditionMemory()) {
++                if (held && matching.count(subject) == 0) released.push_back(subject);
+             }
+-            for (const auto& subjectId : released) {
+-                law->rememberConditionState(subjectId, false);
+-                law->forgetOnset(subjectId);
++            for (const auto* subject : released) {
++                law->rememberConditionState(subject, false);
++                law->forgetOnset(subject);
+             }
+ 
+@@ -2053,13 +2054,12 @@
+         for (Singular* subject : subjects) {
+             if (!subject || Universe::instance().isUnmade(subject)) continue;
+             const bool holds = law->conditionsSatisfied(*subject);
+-            const std::string subjectId = subject->getIdentifier();
+-            const bool wasHolding = law->lastConditionState(subjectId);
+-            law->rememberConditionState(subjectId, holds);
++            const bool wasHolding = law->lastConditionState(subject);
++            law->rememberConditionState(subject, holds);
+ 
+             // The false->true edge is t=0 for this subject's change-over-time
+             // clock (time.sinceApplied); release re-arms it.
+             if (holds && !wasHolding && Universe::instance().hasClock()) {
+-                law->rememberOnset(subjectId, Universe::instance().now());
++                law->rememberOnset(subject, Universe::instance().now());
+             } else if (!holds && wasHolding) {
+-                law->forgetOnset(subjectId);
++                law->forgetOnset(subject);
+             }
+ 
+@@ -2072,5 +2072,5 @@
+             if (!fire) continue;
+             if (law->drives() &&
+-                hasDriveSession(law->getIdentifier(), subjectId)) {
++                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                 if (law->retrigger() == Law::Retrigger::Absorb) continue;
+-                restartDriveSession(*law, subjectId);
++                restartDriveSession(*law, subject->getIdentifier());
+             }

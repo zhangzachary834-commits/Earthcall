@@ -136,6 +136,34 @@ struct ConditionNode {
     // the O(1) path and leaves it correct on the sweep.
     bool readsQualifiedRoot() const;
 
+    // ------------------------------------------------------------------
+    // A GATE: a conjunct whose truth does not depend on the subject.
+    //
+    // `@studio.themeNight > 0` names ONE being (§1.1: the condition language
+    // has no free variable), so it is one truth about the world, identical for
+    // every subject you ask it about. Rung 1 established what follows: such a
+    // conjunct cannot NARROW a candidate set, because it says nothing about
+    // which subject. What it can do is decide the law all at once — when it is
+    // false, the correct candidate set is empty, and the engine should be able
+    // to say so once instead of discovering it one refusal per subject.
+    //
+    // Measured before building: a law behind a SHUT gate cost 278 ms/tick at
+    // 480 beings and fitted k = 1.67 against population, while firing nothing.
+    //
+    // Two roots are deliberately NOT hoistable, and both would be wrong:
+    //   @event.*  resolves through Universe's application event, which is set
+    //             per application inside applyTo — outside one it reads unset.
+    //   @world.*  passes the SUBJECT to the channel reading
+    //             (`found->second(subject, out)` in lawGetValue), so it is not
+    //             subject-independent at all.
+    // ------------------------------------------------------------------
+    bool isHoistableGate() const;
+    // Every hoistable gate in this tree, in conjunction position. Only `All`
+    // is descended: a gate under `Any` is a DISJUNCT, and a false disjunct
+    // decides nothing — the other branch may still hold. Under `Not` its sense
+    // is inverted, which this does not attempt to reason about.
+    void collectHoistableGates(std::vector<const ConditionNode*>& out) const;
+
     // Every relation type this tree's Related conditions name.
     void collectRelationTypes(std::unordered_set<std::string>& out) const;
 

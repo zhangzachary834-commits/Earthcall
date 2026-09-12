@@ -1,9 +1,10 @@
 # Authorable Pixel Writer
 
-**Status:** implemented and structurally verified; Person-facing visual verification remains  
+**Status:** implemented and Person-verified; authored-domain authoring surface remains
 **Section in the To-Do list:** Person-facing surface  
 **Created:** 2026-09-07 by Zach and Codex (GPT-5)  
-**Save:** `saves/worlds/basic_pixel_changer.json`  
+**Zone:** `saves/zones/BasicPixelChanger/zone.json`
+**Law root:** `saves/laws/law-basic-pixel-changer/law.json`
 **Test:** `tests/law/basic_pixel_changer_test.cpp`
 
 ---
@@ -50,11 +51,13 @@ remains dense Material/Screen substrate until a Person authors the elevation.
 
 ## Authored example
 
-`basic_pixel_changer.json` contains the Zone `BasicPixelChanger`, the Shape2D Object
-`basic-pixel-canvas`, and the Law `law-basic-pixel-changer`. The Law hears
+The `BasicPixelChanger` Zone contains the Shape2D Object `basic-pixel-canvas` and names
+the shared Law root `law-basic-pixel-changer` through `lawRefs`. The Law hears
 `object-clicked`, requires that exact canvas identity, and performs `WritePixel` from
 `@interaction-channel.hoveredFace`, `.hoveredU`, `.hoveredV`, and
-`@creation-channel.activeColor`.
+the canvas's own authored `paintColor` Property. The authored color-picker apply Law maps
+its `selectedColor` into `paintColor` on `color-selection-changed`; the click itself needs
+neither Creator Console state nor a global named-being lookup.
 
 The save records **Zach** as author. Its `injected_by` envelope records **Codex (GPT-5),
 session `01a07d15-f266-7902-bc11-cf7b06b0b343`** as the mechanism that wrote the file by
@@ -62,14 +65,56 @@ Zach's authority.
 
 ## Verification and remaining frontier
 
-The focused booted test loads the actual authored save from an isolated SaveRoot, performs
+The focused booted test activates the actual authored Zone and shared Law root from an isolated SaveRoot, performs
 the real 2D pick/click/event/Law/Screen path, verifies exact texel mutation and Material
 divergence, then uses authored `AddProperty` and `ElevatePixels` actions to test live pixel
 and OntoMath-set reads, writes, serialization, and JSON round trips.
 
-Still open beyond this task: Person-facing visual/feel confirmation, authored texture
+**Person witness — Zach, 2026-09-10 20:36 PDT:** after the Zone-scoped Law closure landed,
+Zach relaunched, moved to the canvas, clicked it, and reported: “IT WORKS” and “I put red
+dots on it.” This confirms the native WebGPU surface, click sensing, authored Law, Material
+copy-on-write, and visible pixel manifestation together—not merely the headless test.
+
+Still open beyond this task: a Person-facing authored-domain surface, authored texture
 resolution, stroke identity/history/provenance, and compiled/GPU evaluation for very large
 or continuously changing selections. These are not grounds for a rigid region vocabulary.
+
+**Regression and repair — Zach, 2026-09-11:** after the full RGB/HSV interface appeared,
+Zach reported that clicking the canvas no longer manifested a pixel, then discovered the
+decisive clue himself: changing the Creator Console 3D-tool color to red made marks appear.
+The writer was active but painting its legacy white selection onto the white canvas.
+`saves/worlds/basic_pixel_changer.json` and `.ecform` still embedded an older copy of the
+Law that read `@creation-channel.activeColor`, and `loadState` admitted that compatibility
+bag after activating the Zone's canonical Law closure. Both Zach-owned artifacts now carry
+the canvas-local `paintColor` path. More importantly, the loader now overlays the active
+Zone's shared Law roots onto colliding embedded copies before its one register replacement,
+so an old World cannot silently undo a Zone Law again. The focused test supplies all ten
+live Zone objects, deliberately loads a stale Creator-Console copy, and proves the authored
+picker still changes the exact addressed texel. Native confirmation remains on the Person
+Verification List.
+
+## Next human-authored rung: the domain of writing
+
+**Zach's direction, 2026-09-10 20:36 PDT:** “a pixel writer where the domain of
+pixel-write [is] authored.” This sharpens the next rung: not merely authoring the color or
+the clicked coordinate, but authoring the set of coordinates at which writing has meaning.
+
+Let a Person author an OntoMath defined set
+
+\[
+D = \{(u,v) \in [0,1]^2 \mid \varphi(u,v,\text{world properties})\text{ is defined}\}.
+\]
+
+The point-write Law binds `u` and `v` to the Interaction channel, uses an existing
+`ConditionNode::Zone` over `φ` so a click outside `D` does not satisfy the Law, and keeps
+the existing `WritePixel` act for the accepted coordinate. The set-write path uses the
+same `φ` through existing `ElevatePixels` to grant a named, writable Property, then uses
+ordinary `Set` / `Map` / `Flow` Law vocabulary on that Property. This composition needs no
+`RegionKind`, `BrushKind`, new `ShapeKind`, or new action kind. A Person-facing authoring
+surface and an OntoMath-authored support for the canvas itself remain implementation work.
+
+**Recorded by:** Codex (GPT-5), session
+`01a07d15-f266-7902-bc11-cf7b06b0b343`, 2026-09-10 20:36 PDT.
 
 ## First-click render crash, found and fixed after this landed
 
