@@ -38,6 +38,16 @@ int main() {
     assert(zachCount == 1);
     assert(zachPerson == &h.player);
 
+    // This is why the old counterfeit existed in the first place: authored Law
+    // reattachment needed a being called Zach. The fix is complete only if the
+    // Law now reattaches to the actual Person rather than merely losing an
+    // author when CategoryManager refuses the Object-shaped stand-in.
+    Law* pixelLaw = h.lawManager.find("law-basic-pixel-changer");
+    assert(pixelLaw != nullptr);
+    const auto& authors = pixelLaw->authors().getMembers();
+    assert(authors.size() == 1);
+    assert(authors.front() == &h.player);
+
     // Saving categories after the live load must not resurrect the impostor.
     const std::string categoriesJson = categories.toJson().dump();
     assert(categoriesJson.find("\"objectID\":\"Zach\"") == std::string::npos);
