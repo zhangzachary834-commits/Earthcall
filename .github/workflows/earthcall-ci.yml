@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - sol/authorable-light
+      - sol/person-not-object
   workflow_dispatch:
 
 permissions:
@@ -58,11 +59,13 @@ jobs:
             zone_identity_test \
             unsaved_preserve_test \
             no_black_box_test \
-            channel_paths_test
+            channel_paths_test \
+            person_not_object_test \
+            person_not_object_world_test
 
       - name: Run focused regression witnesses
         shell: bash
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(zone_spatial_field_roundtrip_test|zone_identity_test|unsaved_preserve_test|no_black_box_test|channel_paths_test)$'
+            -R '^(zone_spatial_field_roundtrip_test|zone_identity_test|unsaved_preserve_test|no_black_box_test|channel_paths_test|person_not_object_test|person_not_object_world_test)$'
