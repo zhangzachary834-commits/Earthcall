@@ -16,3 +16,6 @@
 ## 2024-11-25 - [Prevent Silent Data Loss on Disconnect]
 **Learning:** Leaving form inputs enabled when a backend connection is broken creates silent failure scenarios where users type and submit data that is lost. Disabling inputs during disconnected states prevents this, but you must manually trigger events (`dispatchEvent(new Event('input'))`) to update dependent button states and manually restore focus (`.focus()`) upon reconnection to preserve navigation flow.
 **Action:** Always disable inputs during disconnected states, update placeholders dynamically, trigger update events, and focus the input once the connection returns.
+## 2024-11-26 - [Dynamic Dependent Button State Under Connection Loss]
+**Learning:** Even if you dispatch an `input` event when a form input gets disabled due to a system disconnect, the dependent buttons (like a Submit button) won't automatically disable unless the input event handler specifically checks the `disabled` state of the input field. This oversight can leave a Submit button visually enabled while the system is disconnected, leading to silent data loss if clicked.
+**Action:** Always verify both the content (e.g., `value.trim() === ''`) AND the accessibility state (`disabled`) of the input when computing the dependent state of submission buttons in `input` handlers.
