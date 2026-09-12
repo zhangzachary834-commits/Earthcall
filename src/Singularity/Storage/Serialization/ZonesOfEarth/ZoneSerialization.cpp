@@ -250,10 +250,14 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         }
     }
 
-    // Restore into the Zone's already-owned FieldNode instead of replacing
-    // the pointer. Formation membership and any lazily materialised PropertyRef
-    // bridges therefore stay valid while the mathematical state comes back.
-    if (zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
+    // `replaceObjects=false` is the live-Zone merge used by loadState to
+    // preserve unsaved work. The spatial FieldNode is live authored state too:
+    // an older session snapshot must not rewind a Person's unsaved field/Law
+    // edits. Fresh construction and explicit snapshot restoration use the
+    // replacement path and may hydrate the persisted mathematical being.
+    // Restore INTO the already-owned node rather than replacing its pointer so
+    // Formation membership and lazily materialised PropertyRefs stay valid.
+    if (replaceObjects && zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
         if (auto* root = zone.spatialRoot()) root->applyJson(zj["spatialRoot"]);
     }
 
