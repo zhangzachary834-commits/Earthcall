@@ -10,10 +10,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/4.4.0/CMakeSystem.cmake"
   "CMakeLists.txt"
   "asio-populate-prefix/tmp/asio-populate-mkdirs.cmake"
-  "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeDetermineSystem.cmake"
   "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeGenericSystem.cmake"
   "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeInitializeConfigs.cmake"
-  "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeSystem.cmake.in"
   "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeSystemSpecificInformation.cmake"
   "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/CMakeSystemSpecificInitialize.cmake"
   "/Users/zacharyzhang/Library/Python/3.9/lib/python/site-packages/cmake/data/share/cmake-4.4/Modules/ExternalProject.cmake"
@@ -38,7 +36,6 @@ set(CMAKE_MAKEFILE_OUTPUTS
 
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
-  "CMakeFiles/4.4.0/CMakeSystem.cmake"
   "asio-populate-prefix/tmp/asio-populate-mkdirs.cmake"
   "asio-populate-prefix/tmp/asio-populate-gitclone.cmake"
   "asio-populate-prefix/src/asio-populate-stamp/asio-populate-gitinfo.txt"

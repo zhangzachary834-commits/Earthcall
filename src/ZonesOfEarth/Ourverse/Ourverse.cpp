@@ -1,20 +1,13 @@
 #include "Ourverse.hpp"
-#include <iostream>
 #include <cstdio>
-#include "imgui.h"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include <utility>
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Person/Relationship/Community/Community.hpp"
+#include "Relation/Relation.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include <unordered_map>
-#include <unordered_set>
-
-extern ZoneManager mgr;
 
 Ourverse::Ourverse() {
     _joys.setIdentifier("ourverse.joys");

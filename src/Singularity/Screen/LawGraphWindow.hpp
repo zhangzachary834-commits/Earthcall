@@ -19,9 +19,26 @@ struct LawCard {
     std::vector<int> modelPath;      // child indices from the model root
 };
 
+// One reverse-index entry for an Action node that changes a property or its
+// vocabulary. `modelPath` addresses the node inside the Law's Action tree, so
+// a search result can focus the exact THEN card rather than merely the Law.
+// Wildcard paths name effects whose final address is chosen at runtime.
+struct PropertyWriteSite {
+    std::string path;
+    ActionNode::Kind actionKind = ActionNode::Kind::Set;
+    std::vector<int> modelPath;
+    std::string effect;
+    bool wildcard = false;
+};
+
 // Card 0 is the law itself; then the event card (when a binding is known),
-// the condition tree, and the actio    n tree.
+// the condition tree, and the action tree.
 std::vector<LawCard> flattenLaw(const Law& law, const std::string& eventBinding);
+
+// Read an Action tree backwards: every node that writes, grants, clears, or
+// removes a property, in stable tree order. Pure data for the Property Writers
+// explorer and its tests; this does not execute the Law.
+std::vector<PropertyWriteSite> collectPropertyWrites(const ActionNode& root);
 
 // One entry in the path picker: a property path the authoring window offers a
 // Person, with who owns it and what it holds.

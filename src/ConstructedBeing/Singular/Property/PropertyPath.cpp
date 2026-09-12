@@ -231,8 +231,9 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
                 propertyValuesEquivalent(cur, v)) {
                 return PathResult::Unchanged;
             }
-            root.setDynamicProperty(segments[startIndex], v);   // announces from there
-            return PathResult::Ok;
+            return root.setDynamicProperty(segments[startIndex], v)
+                       ? PathResult::Ok
+                       : PathResult::TypeMismatch;
         }
         return PathResult::NoSuchProperty;
     }

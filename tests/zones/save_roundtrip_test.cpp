@@ -122,10 +122,23 @@ int main() {
           "saveStateWithLog wrote a report and did not refuse");
 
     const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
-    const auto ecmatterPath = sandbox / "worlds" / "roundtrip_world.ecmatter";
     const auto legacyEcformPath = sandbox / "worlds" / "legacy_player_body.ecform";
     check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
-    check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter");
+
+    // Invariant 4 (Sol, agent intercom "Basic Pixel Changer Zone Identity
+    // Bug 9-7-26", 2026-09-09): saveStateWithLog commits matter under a
+    // content-addressed generation name coupled to the .ecform's own
+    // "matterGeneration" metadata, not a fixed "<stem>.ecmatter" name.
+    std::filesystem::path ecmatterPath;
+    {
+        std::ifstream genIn(ecformPath);
+        nlohmann::json genJ;
+        genIn >> genJ;
+        const std::string snapshotId = genJ.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
+        check(!snapshotId.empty(), "Save As names a matterGeneration");
+        ecmatterPath = sandbox / "worlds" / ("roundtrip_world." + snapshotId + ".ecmatter");
+    }
+    check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter under its generation name");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
           "Save As also writes the Sanctum identity under saves/zones/");
     check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),

@@ -1,0 +1,5 @@
+--- frame_lag_test: saves/worlds/synthesis_studio_living.json ---
+machine calibration: x2.33 versus the reference machine (>1 means slower; every time below is divided by it)
+baseline: tests/singularity/frame_lag_baseline.txt
+
+1. SHAPE — per-frame cost against population size

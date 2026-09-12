@@ -163,6 +163,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Storage/MigrateSaves.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/terminal_entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
@@ -237,6 +238,10 @@ if(NOT EMSCRIPTEN)
     # --- Main Executable ---
     add_executable(earthcall src/entry.cpp)
     target_link_libraries(earthcall PRIVATE earthcall_core)
+
+    # --- Terminal Executable ---
+    add_executable(earthcall_terminal src/terminal_entry.cpp)
+    target_link_libraries(earthcall_terminal PRIVATE earthcall_core)
 
     # --- wgpu-native (vendored) ---
     set(WGPU_NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wgpu)
@@ -368,13 +373,13 @@ if(NOT EMSCRIPTEN)
                 )
             else()
                 set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             # uuid (non-Apple only, and NOTFOUND-guarded) already comes in
             # transitively via earthcall_core's PUBLIC link libraries above.
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         endif()
 
         # Shared fixtures (test_save_helper.hpp, test_harness.hpp). Source files live under
@@ -472,3 +477,4 @@ if (EMSCRIPTEN)
     set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")
     set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
 endif()
+target_include_directories(my_probe_test PRIVATE src third_party/nlohmann_json/single_include third_party/glm third_party/glfw/include third_party/gl3w/include third_party)

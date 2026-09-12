@@ -167,7 +167,7 @@ bool Law::conditionsSatisfied(const Singular& target) const {
     ECA::Event event;
     event.type = "law-evaluate";
     event.subject = const_cast<Singular*>(&target);
-    event.timestamp = std::time(nullptr);
+    
 
     bool anySatisfied = false;
     for (const auto& condition : _conditionPredicates) {
@@ -217,13 +217,31 @@ void Law::setActionModel(ActionModel model) {
 // a model are cleared — first-mover closures registered directly through
 // addCondition/addAction survive untouched on model-less laws.
 void Law::recompile() {
+    _compiledGates.clear();
+    _writesQualifiedRoots = false;
     if (_conditionModel) {
         _conditionPredicates.clear();
         addCondition(_conditionModel->describe(), _conditionModel->compile());
+        
+        std::vector<const ConditionNode*> gates;
+        _conditionModel->collectHoistableGates(gates);
+        for (const auto* gate : gates) {
+            _compiledGates.push_back(gate->compile());
+        }
     }
     if (_actionModel) {
         _actions.clear();
         addAction(_actionModel->describe(), _actionModel->compile());
+
+        std::vector<PropertyPath> writes;
+        _actionModel->collectPaths(writes);
+        for (const PropertyPath& w : writes) {
+            if (!w.segments.empty() && !w.segments.front().empty() &&
+                w.segments.front()[0] == '@') {
+                _writesQualifiedRoots = true;
+                break;
+            }
+        }
     }
     rebuildRequiredProperties();
 }
@@ -251,17 +269,61 @@ void Law::rebuildRequiredProperties() {
     }
 }
 
+// Does this being carry a property by this name, at all?
+//
+// Named once because TWO things now ask it: couldApplyTo below, and the
+// vocabulary index the sweep is narrowed by (LawManager::refreshVocabularyIndex,
+// FORMATION_RETE.md §8 rung 2). If the index tested membership even slightly
+// differently — only the dynamic map, say — it would omit beings the filter
+// would have kept, and an omitted candidate is a law that goes deaf with
+// nothing reported. Widen where uncertain, never narrow: PROPHETIC_RETE.md §2.
+//
+// Same reasoning as ReteNetwork::alphaFeedsAnyBeta, which its header calls
+// "named once so backfill and propagation cannot drift apart."
+bool beingCarriesProperty(const Singular& being, const std::string& name) {
+    Singular& b = const_cast<Singular&>(being);
+    if (b.findProperty(name)) return true;
+    // Authored properties are as real as first-mover ones: a law that reads a
+    // granted `warmth` must still reach the beings a previous law granted it to.
+    PropertyValue ignored;
+    if (b.getDynamicProperty(name, ignored)) return true;
+
+    // A PROPERTY'S NAME MAY ITSELF BE DOTTED, and this is where that bites.
+    //
+    // rebuildRequiredProperties stores a path's ROOT segment — `shape` for
+    // `shape.fillet` — but Object registers the property under the whole dotted
+    // name (`shape.fillet`, `shape.r`, `shape.kind`; ObjectProperties.cpp).
+    // There is no property called `shape`. So an exact-name test answered NO
+    // for every being in the world, couldApplyTo rejected all of them, and any
+    // law on the SWEEP path that touched `shape.*` — in its condition or, just
+    // as easily, in its action — reached nobody at all. Silently: the law was
+    // registered, enabled, authored, and its condition was satisfiable.
+    //
+    // ConditionModel::compileToRete already hit this exact bug on the alpha
+    // path and fixed it there with a `rootOf` helper, whose comment says "any
+    // condition over a shape parameter matched nothing at all". The sweep half
+    // was never given the same treatment. Found by gate_hoist_test §B.
+    //
+    // Matching the root WIDENS — a being with `shape.r` now answers yes to
+    // `shape` — which is the only safe direction (PROPHETIC_RETE.md §2), and
+    // couldApplyTo is a candidate filter that lawGetValue re-checks anyway.
+    const std::string prefix = name + ".";
+    for (Property* prop : b.listProperties()) {
+        if (!prop) continue;
+        const std::string& propName = prop->name();
+        if (propName.size() > prefix.size() &&
+            propName.compare(0, prefix.size(), prefix) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool Law::couldApplyTo(Singular& being) const {
     // No stated requirements = no filter. A law of pure kind-tests or pure
     // quantification really is about every being, and must keep sweeping.
     for (const std::string& name : _requiredProperties) {
-        if (being.findProperty(name)) continue;
-        // Authored properties are as real as first-mover ones: a law that
-        // reads a granted `warmth` must still reach the beings a previous
-        // law granted it to.
-        PropertyValue ignored;
-        if (being.getDynamicProperty(name, ignored)) continue;
-        return false;
+        if (!beingCarriesProperty(being, name)) return false;
     }
     return true;
 }
@@ -399,7 +461,7 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         ECA::Event event;
         event.type = "law-apply";
         event.subject = &target;
-        event.timestamp = std::time(nullptr);
+        
 
         // time.sinceApplied context: t=0 is when this law began holding for
         // this subject (continuous edge, or drive-session start); a plain
@@ -408,9 +470,8 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         // back the outer onset instead of erasing it.
         std::optional<Universe::OnsetScope> onsetScope;
         if (Universe::instance().hasClock()) {
-            const std::string subjectId = target.getIdentifier();
-            onsetScope.emplace(hasOnset(subjectId) ? onsetFor(subjectId)
-                                                   : Universe::instance().now());
+            onsetScope.emplace(hasOnset(&target) ? onsetFor(&target)
+                                                 : Universe::instance().now());
         }
 
         // Arm the trace: every action node reports into it, and the record
@@ -679,7 +740,10 @@ bool ReteNetwork::alphaIsRead(std::size_t alphaId) const {
 void ReteNetwork::refillAlphaMemory(AlphaNode& alpha) {
     alpha.memory.clear();
     for (const auto& fact : _facts) {
-        if (!alpha.predicate || alpha.predicate(fact)) alpha.memory.push_back(fact);
+        if (!alpha.predicate || alpha.predicate(fact)) {
+            alpha.memory.push_back(fact);
+            _factAlphaNodes[fact->id].push_back(alpha.id);
+        }
     }
 }
 
@@ -722,8 +786,18 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     if (fact->subject && fact->subjectId.empty()) {
         fact->subjectId = fact->subject->getIdentifier();
     }
+    // Both participants, because retractFactsAbout matches on either.
+    if (fact->subject) _factParticipants.insert(fact->subject);
+    if (fact->object)  _factParticipants.insert(fact->object);
+    if (fact->subject && fact->isState && fact->type == "relation-state") {
+        _relationStateIndex[fact->subject].insert(fact->attribute);
+    }
     _facts.push_back(fact);
     const FactPtr& f = fact;
+    _factById[f->id] = f;
+    if (f->isState) {
+        _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);
+    }
 
     std::vector<std::size_t> activatedAlphas;
     for (auto& alpha : _alphaNodes) {
@@ -734,8 +808,10 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
         if (!alpha.predicate || alpha.predicate(f)) {
             alpha.memory.push_back(f);
             activatedAlphas.push_back(alpha.id);
+            _factAlphaNodes[f->id].push_back(alpha.id);
 
             if (boundToLaw) {
+                _agendaFactIds.insert(f->id);
                 for (const auto& lawId : bindingIt->second) {
                     _agenda.push_back(
                         ReteActivation{lawId, alphaToken(f), std::time(nullptr)});
@@ -773,9 +849,11 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                         if (!joined) continue;
                         const ReteToken token = joinedToken(leftToken, rightFact);
                         beta.memory.push_back(token);
+                        for (const auto& tf : token.facts) _factBetaNodes[tf->id].push_back(beta.id);
                         newBetaTokens[beta.id].push_back(token);
                         betaActivated = true;
                         if (hasLaw) {
+                            for (const auto& tf : token.facts) _agendaFactIds.insert(tf->id);
                             for (const auto& lawId : bindingIt->second) {
                                 _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
                             }
@@ -799,9 +877,11 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                     if (isDuplicate) continue;
                     
                     beta.memory.push_back(token);
+                    for (const auto& tf : token.facts) _factBetaNodes[tf->id].push_back(beta.id);
                     newBetaTokens[beta.id].push_back(token);
                     betaActivated = true;
                     if (hasLaw) {
+                        for (const auto& tf : token.facts) _agendaFactIds.insert(tf->id);
                         for (const auto& lawId : bindingIt->second) {
                             _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
                         }
@@ -819,14 +899,11 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                     if (!joined) continue;
                     const ReteToken token = joinedToken(f, rightFact);
                     beta.memory.push_back(token);
-                    // Also announce it downstream. A beta node whose LEFT is
-                    // this one reads newBetaTokens[leftId], not the memory —
-                    // so a token that only landed in memory was invisible to
-                    // the next join, and a three-clause All() dropped matches
-                    // depending on which order its facts happened to arrive in.
                     newBetaTokens[beta.id].push_back(token);
+                    for (const auto& tf : token.facts) _factBetaNodes[tf->id].push_back(beta.id);
                     betaActivated = true;
                     if (hasLaw) {
+                        for (const auto& tf : token.facts) _agendaFactIds.insert(tf->id);
                         for (const auto& lawId : bindingIt->second) {
                             _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
                         }
@@ -840,10 +917,21 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
                                                   : leftFact->subjectId == f->subjectId;
                     if (!joined) continue;
                     const ReteToken token = joinedToken(leftFact, f);
+                    
+                    bool isDuplicate = false;
+                    if (inLeftAlpha) {
+                        for (const auto& nt : newBetaTokens[beta.id]) {
+                            if (nt.facts == token.facts) { isDuplicate = true; break; }
+                        }
+                    }
+                    if (isDuplicate) continue;
+                    
                     beta.memory.push_back(token);
-                    newBetaTokens[beta.id].push_back(token);   // see above
+                    for (const auto& tf : token.facts) _factBetaNodes[tf->id].push_back(beta.id);
+                    newBetaTokens[beta.id].push_back(token);
                     betaActivated = true;
                     if (hasLaw) {
+                        for (const auto& tf : token.facts) _agendaFactIds.insert(tf->id);
                         for (const auto& lawId : bindingIt->second) {
                             _agenda.push_back(ReteActivation{lawId, token, std::time(nullptr)});
                         }
@@ -874,27 +962,53 @@ void ReteNetwork::retractFirst(std::size_t count) {
         }
     }
 
-    for (auto& alpha : _alphaNodes) {
-        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(), 
-            [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha.memory.end());
-    }
-    for (auto& beta : _betaNodes) {
-        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(), 
-            [&](const ReteToken& t) { 
-                for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
-                return false;
-            }), beta.memory.end());
-    }
-    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
-        [&](const ReteActivation& a) { 
-            for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
-            return false;
-        }), _agenda.end());
+    std::unordered_set<std::size_t> affectedAlphas;
+    std::unordered_set<std::size_t> affectedBetas;
+    bool anyInAgenda = false;
 
-    // A retracted fact must also leave the dirty queue. _dirtyFacts holds the
-    // fact alive, but `fact->subject` is a RAW pointer into a being that may
-    // be gone — evaluateDirty() dereferences it next tick. Nothing purged this
-    // queue on any retraction path.
+    for (const auto& id : removedIds) {
+        auto aIt = _factAlphaNodes.find(id);
+        if (aIt != _factAlphaNodes.end()) {
+            affectedAlphas.insert(aIt->second.begin(), aIt->second.end());
+            _factAlphaNodes.erase(aIt);
+        }
+        auto bIt = _factBetaNodes.find(id);
+        if (bIt != _factBetaNodes.end()) {
+            affectedBetas.insert(bIt->second.begin(), bIt->second.end());
+            _factBetaNodes.erase(bIt);
+        }
+        if (_agendaFactIds.count(id)) {
+            anyInAgenda = true;
+            _agendaFactIds.erase(id);
+        }
+        _factById.erase(id);
+    }
+
+    for (std::size_t alphaId : affectedAlphas) {
+        AlphaNode* alpha = findAlpha(alphaId);
+        if (alpha) {
+            alpha->memory.erase(std::remove_if(alpha->memory.begin(), alpha->memory.end(), 
+                [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha->memory.end());
+        }
+    }
+    for (std::size_t betaId : affectedBetas) {
+        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
+        if (it != _betaNodes.end()) {
+            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(), 
+                [&](const ReteToken& t) { 
+                    for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
+                    return false;
+                }), it->memory.end());
+        }
+    }
+    if (anyInAgenda) {
+        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
+            [&](const ReteActivation& a) { 
+                for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
+                return false;
+            }), _agenda.end());
+    }
+
     _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
@@ -906,35 +1020,80 @@ void ReteNetwork::retractFirst(std::size_t count) {
 }
 
 bool ReteNetwork::retractFact(const std::string& factId) {
-    auto oldSize = _facts.size();
-    _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
-        return fact->id == factId;
-    }), _facts.end());
-    if (_facts.size() == oldSize) return false;
+    auto factIt = _factById.find(factId);
+    if (factIt == _factById.end()) return false;
+    FactPtr fact = factIt->second;
+    _factById.erase(factIt);
 
-    for (auto& alpha : _alphaNodes) {
-        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
-                                          [&](const FactPtr& f) { return f->id == factId; }),
-                           alpha.memory.end());
+    if (fact->isState) {
+        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
+        if (sIt != _stateFactsBySubjectAttr.end()) {
+            auto& vec = sIt->second;
+            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());
+            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
+        }
+        if (fact->type == "relation-state" && fact->subject) {
+            auto rIt = _relationStateIndex.find(fact->subject);
+            if (rIt != _relationStateIndex.end()) {
+                rIt->second.erase(fact->attribute);
+                if (rIt->second.empty()) _relationStateIndex.erase(rIt);
+            }
+        }
     }
-    for (auto& beta : _betaNodes) {
-        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
-                                         [&](const ReteToken& token) {
-                                             for (const auto& f : token.facts) if (f->id == factId) return true;
-                                             return false;
-                                         }),
-                          beta.memory.end());
+
+    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });
+    if (it != _facts.end()) _facts.erase(it);
+
+    auto aIt = _factAlphaNodes.find(factId);
+    if (aIt != _factAlphaNodes.end()) {
+        for (std::size_t alphaId : aIt->second) {
+            AlphaNode* alpha = findAlpha(alphaId);
+            if (alpha) {
+                auto mIt = std::find_if(alpha->memory.begin(), alpha->memory.end(),
+                                        [&](const FactPtr& f) { return f->id == factId; });
+                if (mIt != alpha->memory.end()) alpha->memory.erase(mIt);
+            }
+        }
+        _factAlphaNodes.erase(aIt);
     }
-    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
-                                 [&](const ReteActivation& act) {
-                                     for (const auto& fact : act.token.facts) if (fact->id == factId) return true;
-                                     return false;
-                                 }),
-                  _agenda.end());
+
+    auto bIt = _factBetaNodes.find(factId);
+    if (bIt != _factBetaNodes.end()) {
+        for (std::size_t betaId : bIt->second) {
+            auto bNodeIt = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
+            if (bNodeIt != _betaNodes.end()) {
+                bNodeIt->memory.erase(std::remove_if(bNodeIt->memory.begin(), bNodeIt->memory.end(),
+                                                    [&](const ReteToken& token) {
+                                                        for (const auto& f : token.facts) if (f->id == factId) return true;
+                                                        return false;
+                                                    }),
+                                      bNodeIt->memory.end());
+            }
+        }
+        _factBetaNodes.erase(bIt);
+    }
+
+    if (_agendaFactIds.count(factId)) {
+        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                     [&](const ReteActivation& act) {
+                                         for (const auto& f : act.token.facts) if (f->id == factId) return true;
+                                         return false;
+                                     }),
+                      _agenda.end());
+        _agendaFactIds.erase(factId);
+    }
     return true;
 }
 
+bool ReteNetwork::hasRelationStateFact(const Singular* subject,
+                                       const std::string& relationType) const {
+    if (!subject) return false;
+    auto it = _relationStateIndex.find(subject);
+    return it != _relationStateIndex.end() && it->second.count(relationType) != 0;
+}
+
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
+    _relationStateIndex.clear();
     std::unordered_set<std::string> removedIds;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
         if (fact->isState && fact->subjectId == subjectId) {
@@ -946,40 +1105,80 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
 
     if (removedIds.empty()) return;
 
-    for (auto& alpha : _alphaNodes) {
-        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(), 
-            [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha.memory.end());
+    std::unordered_set<std::size_t> affectedAlphas;
+    std::unordered_set<std::size_t> affectedBetas;
+    bool anyInAgenda = false;
+
+    for (const auto& id : removedIds) {
+        auto factIt = _factById.find(id);
+        if (factIt != _factById.end()) {
+            const auto& fact = factIt->second;
+            if (fact->isState) {
+                auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
+                if (sIt != _stateFactsBySubjectAttr.end()) {
+                    auto& vec = sIt->second;
+                    vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == id; }), vec.end());
+                    if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
+                }
+            }
+            _factById.erase(factIt);
+        }
+        auto aIt = _factAlphaNodes.find(id);
+        if (aIt != _factAlphaNodes.end()) {
+            affectedAlphas.insert(aIt->second.begin(), aIt->second.end());
+            _factAlphaNodes.erase(aIt);
+        }
+        auto bIt = _factBetaNodes.find(id);
+        if (bIt != _factBetaNodes.end()) {
+            affectedBetas.insert(bIt->second.begin(), bIt->second.end());
+            _factBetaNodes.erase(bIt);
+        }
+        if (_agendaFactIds.count(id)) {
+            anyInAgenda = true;
+            _agendaFactIds.erase(id);
+        }
     }
-    for (auto& beta : _betaNodes) {
-        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(), 
-            [&](const ReteToken& t) { 
-                for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
+
+    for (std::size_t alphaId : affectedAlphas) {
+        AlphaNode* alpha = findAlpha(alphaId);
+        if (alpha) {
+            alpha->memory.erase(std::remove_if(alpha->memory.begin(), alpha->memory.end(), 
+                [&](const FactPtr& f) { return removedIds.count(f->id); }), alpha->memory.end());
+        }
+    }
+    for (std::size_t betaId : affectedBetas) {
+        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
+        if (it != _betaNodes.end()) {
+            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(), 
+                [&](const ReteToken& t) { 
+                    for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
+                    return false;
+                }), it->memory.end());
+        }
+    }
+    if (anyInAgenda) {
+        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
+            [&](const ReteActivation& a) { 
+                for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
                 return false;
-            }), beta.memory.end());
+            }), _agenda.end());
     }
-    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(), 
-        [&](const ReteActivation& a) { 
-            for (const auto& f : a.token.facts) if (removedIds.count(f->id)) return true;
-            return false;
-        }), _agenda.end());
-    // A retracted fact must also leave the dirty queue. _dirtyFacts holds the
-    // fact alive, but `fact->subject` is a RAW pointer into a being that may
-    // be gone — evaluateDirty() dereferences it next tick. Nothing purged this
-    // queue on any retraction path.
+
     _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
 }
 
-void ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
-    for (const auto& fact : _facts) {
-        if (fact->isState && fact->subjectId == subjectId && fact->attribute == attribute) {
-            if (!fact->dirty) {
-                fact->dirty = true;
-                _dirtyFacts.push_back(fact);
-            }
+bool ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
+    auto it = _stateFactsBySubjectAttr.find(subjectId + ":" + attribute);
+    if (it == _stateFactsBySubjectAttr.end() || it->second.empty()) return false;
+    for (const auto& fact : it->second) {
+        if (!fact->dirty) {
+            fact->dirty = true;
+            _dirtyFacts.push_back(fact);
         }
     }
+    return true;
 }
 
 void ReteNetwork::evaluateDirty() {
@@ -1010,16 +1209,15 @@ void ReteNetwork::evaluateDirty() {
 std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     std::vector<std::string> orphanedSubjects;
     if (!being) return orphanedSubjects;
+    if (_factParticipants.find(being) == _factParticipants.end()) {
+        return orphanedSubjects;
+    }
     std::unordered_set<std::string> removedIds;
     std::unordered_set<std::string> subjects;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(),
                                 [&](const FactPtr& fact) {
                                     if (fact->subject == being || fact->object == being) {
                                         removedIds.insert(fact->id);
-                                        // Only when it was the SUBJECT: a fact
-                                        // where the dead being was the other
-                                        // participant says nothing about
-                                        // whether its subject is still seeded.
                                         if (fact->subject == being && !fact->subjectId.empty()) {
                                             subjects.insert(fact->subjectId);
                                         }
@@ -1029,39 +1227,88 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
                                 }),
                  _facts.end());
     orphanedSubjects.assign(subjects.begin(), subjects.end());
+    _factParticipants.erase(being);
+    _relationStateIndex.erase(being);
     if (removedIds.empty()) return orphanedSubjects;
 
-    for (auto& alpha : _alphaNodes) {
-        alpha.memory.erase(std::remove_if(alpha.memory.begin(), alpha.memory.end(),
-                                          [&](const FactPtr& fact) { return removedIds.count(fact->id); }),
-                           alpha.memory.end());
+    std::unordered_set<std::size_t> affectedAlphas;
+    std::unordered_set<std::size_t> affectedBetas;
+    bool anyInAgenda = false;
+
+    for (const auto& id : removedIds) {
+        auto factIt = _factById.find(id);
+        if (factIt != _factById.end()) {
+            const auto& fact = factIt->second;
+            if (fact->isState) {
+                auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
+                if (sIt != _stateFactsBySubjectAttr.end()) {
+                    auto& vec = sIt->second;
+                    vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == id; }), vec.end());
+                    if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
+                }
+            }
+            _factById.erase(factIt);
+        }
+        auto aIt = _factAlphaNodes.find(id);
+        if (aIt != _factAlphaNodes.end()) {
+            affectedAlphas.insert(aIt->second.begin(), aIt->second.end());
+            _factAlphaNodes.erase(aIt);
+        }
+        auto bIt = _factBetaNodes.find(id);
+        if (bIt != _factBetaNodes.end()) {
+            affectedBetas.insert(bIt->second.begin(), bIt->second.end());
+            _factBetaNodes.erase(bIt);
+        }
+        if (_agendaFactIds.count(id)) {
+            anyInAgenda = true;
+            _agendaFactIds.erase(id);
+        }
     }
-    for (auto& beta : _betaNodes) {
-        beta.memory.erase(std::remove_if(beta.memory.begin(), beta.memory.end(),
-                                         [&](const ReteToken& token) {
-                                             for (const auto& f : token.facts) if (removedIds.count(f->id)) return true;
-                                             return false;
-                                         }),
-                          beta.memory.end());
+
+    for (std::size_t alphaId : affectedAlphas) {
+        AlphaNode* alpha = findAlpha(alphaId);
+        if (alpha) {
+            alpha->memory.erase(std::remove_if(alpha->memory.begin(), alpha->memory.end(),
+                                              [&](const FactPtr& fact) { return removedIds.count(fact->id); }),
+                               alpha->memory.end());
+        }
     }
-    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
-                                 [&](const ReteActivation& activation) {
-                                     for (const auto& fact : activation.token.facts) {
-                                         if (removedIds.count(fact->id)) return true;
-                                     }
-                                     return false;
-                                 }),
-                  _agenda.end());
-    // Same reason as the other retraction paths: a dirty entry still naming
-    // this being is a dangling read waiting for the next evaluateDirty().
+    for (std::size_t betaId : affectedBetas) {
+        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
+        if (it != _betaNodes.end()) {
+            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(),
+                                            [&](const ReteToken& token) {
+                                                for (const auto& f : token.facts) if (removedIds.count(f->id)) return true;
+                                                return false;
+                                            }),
+                             it->memory.end());
+        }
+    }
+    if (anyInAgenda) {
+        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                     [&](const ReteActivation& act) {
+                                         for (const auto& fact : act.token.facts) if (removedIds.count(fact->id)) return true;
+                                         return false;
+                                     }),
+                      _agenda.end());
+    }
+
     _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
+
     return orphanedSubjects;
 }
 
 void ReteNetwork::clearFacts() {
     _facts.clear();
+    _factParticipants.clear();
+    _relationStateIndex.clear();
+    _stateFactsBySubjectAttr.clear();
+    _factById.clear();
+    _factAlphaNodes.clear();
+    _factBetaNodes.clear();
+    _agendaFactIds.clear();
     _dirtyFacts.clear();
     _agenda.clear();
     for (auto& alpha : _alphaNodes) alpha.memory.clear();
@@ -1194,6 +1441,23 @@ void ReteNetwork::purgeAgendaOf(const std::string& lawId) {
     _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
                                  [&](const ReteActivation& a) { return a.lawId == lawId; }),
                   _agenda.end());
+}
+
+std::size_t ReteNetwork::internAuthoredAlpha(const std::string& conditionKey,
+                                             const std::string& description,
+                                             AlphaPredicate predicate) {
+    // The findAlpha check is load-bearing, exactly as it is in internTypeAlpha:
+    // dropUnboundAlphaNodes can remove a node this map still names. Ids are
+    // never reused, so a stale entry resolves to nothing rather than to the
+    // wrong node, and we rebuild.
+    auto existing = _authoredAlphaIndex.find(conditionKey);
+    if (existing != _authoredAlphaIndex.end() && findAlpha(existing->second)) {
+        return existing->second;
+    }
+    const std::size_t id = addAlphaNode(description, std::move(predicate),
+                                        AlphaSource::Authored);
+    _authoredAlphaIndex[conditionKey] = id;
+    return id;
 }
 
 std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
@@ -1472,6 +1736,9 @@ void LawManager::connectToEventBus() {
         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
             _seededSubjects.erase(subjectId);
         }
+        for (auto& law : _laws) {
+            law->forgetSubject(being);
+        }
         // …and every RELATION that held it lets go of the pointer, keeping the
         // name. Relations outlive their endpoints all the time (a Formation, a
         // provenance record, a test's own graph), and aId()/bId() call a
@@ -1491,7 +1758,33 @@ void LawManager::connectToEventBus() {
         // in the engine. It answers "no" only where the abstract
         // interpretation PROVED no; see LawManager::propheticHears.
         if (!propheticHears(name)) return;
-        _rete.markFactDirty(owner->getIdentifier(), name);
+        if (!_rete.markFactDirty(owner->getIdentifier(), name)) {
+            // No fact existed for this (being, property). Not "unchanged" —
+            // UNKNOWN. seedStateFacts runs once per being, ever, so a property
+            // granted after that being was first seen had nothing to dirty and
+            // would never acquire a fact: the reactive path could not see it,
+            // and a WhileTrue law reading it never reached that being again.
+            // Deaf, permanently, with nothing reported — the failure
+            // PROPHETIC_RETE.md §2 forbids, and the same shape as the relation
+            // deafness of §1.2(a). Found by vocabulary_index_test §B.
+            //
+            // Only for beings the network has already met: one it has not is
+            // the first-tick seed's job, and asserting here would race it.
+            const std::string subjectId = owner->getIdentifier();
+            if (_seededSubjects.count(subjectId)) {
+                if (Property* prop = owner->findProperty(name)) {
+                    auto stateFact = std::make_shared<ReteFact>();
+                    stateFact->type = "property-state";
+                    stateFact->subject = owner;
+                    stateFact->subjectId = subjectId;
+                    stateFact->attribute = prop->name();
+                    stateFact->value = propertyValueToJson(prop->value());
+                    stateFact->isState = true;
+                    stateFact->dirty = false;
+                    _rete.assertFact(stateFact);
+                }
+            }
+        }
         _dirty = true;
     });
 
@@ -1527,6 +1820,33 @@ void LawManager::connectToEventBus() {
 
         if ((e.type == "object-created" || e.type == "relation-formed") && e.subject) {
             seedStateFacts(e.subject);
+        }
+
+        // The edge itself, for BOTH endpoints.
+        //
+        // seedStateFacts(e.subject) above is not this. On "relation-formed"
+        // the subject is the RELATION being (RelationManager.cpp: `echo.subject
+        // = r.get()`), so that call snapshots the Relation's own properties —
+        // correct, and worth keeping — while emitting no relation-state fact
+        // for either endpoint. And because seedStateFacts is gated by
+        // _seededSubjects, an already-known endpoint returned immediately even
+        // when it was passed one.
+        //
+        // So no edge formed after a being's first tick was ever indexed, and a
+        // continuous `Related` law compiles terminals — which means it never
+        // falls through to the sweep, never receives a candidate, and never
+        // re-checks. Deaf, permanently, with nothing reported anywhere.
+        // FORMATION_RETE.md §1.2(a); guarded by rete_relation_state_test.
+        if (e.type == "relation-formed" && e.subject) {
+            if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
+                if (_relationTypesInPlay.count(relation->type)) {
+                    // Both ends are safe to name HERE, and only here: an edge
+                    // being formed this instant has two live endpoints. The
+                    // back-seed below cannot assume that and does not.
+                    assertRelationStateFact(relation->a(), relation->type);
+                    assertRelationStateFact(relation->b(), relation->type);
+                }
+            }
         }
     });
 
@@ -1627,15 +1947,8 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
 std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
-    // Bring the possibility-space index up to date with the law text before
-    // anything consults it. Cheap when nothing moved: one integer compare.
     syncProphetic();
 
-    // Bring compiled terminals up to date with the conditions they were
-    // compiled from, before anything reads either. Conditions are edited from
-    // the graph window, from tools, and from loaded worlds; asking here means
-    // no editing path has to remember to recompile, and the reactive and
-    // sweep evaluations cannot be looking at different conditions.
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
@@ -1652,6 +1965,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
     }
 
+    refreshVocabularyIndex();
+
     auto T2 = glfwGetTime();
 
     if (_rete.hasDirtyFacts()) {
@@ -1660,32 +1975,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
 
     std::vector<Law::ApplicationRecord> records;
-    for (int round = 0; round < _maxChainRounds && _dirty; ++round) { if(round == 7) std::cout << "MAX CHAIN ROUNDS HIT!" << std::endl;
+    for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
         _dirty = false;
-        // Facts asserted before this round are consumed by it; facts asserted
-        // DURING it (laws firing events from applyTo) survive into the next
-        // round — that's how law chains resolve, bounded by _maxChainRounds.
         const std::size_t consumed = _rete.facts().size();
-        // Straight to the drain: the agenda is already complete. (An
-        // _rete.evaluate() call sat here whose result was discarded — the
-        // last trace of the rebuild-every-frame design.)
         std::vector<ReteActivation> agenda = _rete.drainAgenda();
         for (const auto& activation : agenda) {
             Law* law = find(activation.lawId);
             if (!law) continue;
-            // An activation is a SIGNAL that a match set changed — it is not
-            // permission to fire. Continuous laws belong to the continuous
-            // pass below, which is the only place that knows about edges.
-            // Firing them here as well made OnBecomeTrue level-triggered: it
-            // fired from the drain, again in the continuous pass, and again
-            // on every re-assert while its condition merely stayed true.
-            // "Edges, not levels."
             if (law->activation() != Law::Activation::OnEvent) continue;
-            // Disabled and unauthored laws are NOT filtered here. applyTo
-            // refuses them and says so in the record, and the refusal is the
-            // point: "the attempt is what gets noticed." Skipping them here
-            // would make an unauthored law's attempt to enter the world
-            // silent, which is the one outcome this gate exists to prevent.
             Singular* subject = activation.token.facts.empty()
                                     ? nullptr
                                     : activation.token.facts.front()->subject;
@@ -1693,26 +1990,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                         ? nullptr
                                         : activation.token.facts.front()->object;
 
-            // The event's PARTICIPANTS stay addressable while the law
-            // responds — "@event.subject" / "@event.object" paths let the
-            // condition and action phases name them BY CHOICE, whoever the
-            // application's subject is. Restores on every exit path.
             Universe::EventScope eventScope(subject, eventObject);
 
             if (law->scope() == Law::Scope::Everyone) {
-                // The event is the OCCASION; the application sweeps every
-                // being (targets, or the Universe) that CARRIES THE LAW'S
-                // VOCABULARY and satisfies the conditions — "every instance
-                // of the category".
                 std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     if (!law->conditionsSatisfied(*being)) continue;
-                    // A live drive session OWNS the process: one process,
-                    // one clock, per law-and-subject. What a re-firing
-                    // event means is the AUTHOR'S choice — Absorb (a block
-                    // resting in constant collision cannot stack or reset
-                    // the process) or Restart (the new trigger is a new t=0).
                     if (law->drives() &&
                         hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
@@ -1727,7 +2011,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;   // the session owns the process (see above)
+                    continue;
                 }
                 restartDriveSession(*law, subject->getIdentifier());
             }
@@ -1736,46 +2020,47 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         _rete.retractFirst(consumed);
     }
 
-    // ------------------------------------------------------------------
-    // Continuous pass: level-triggered laws don't wait for events — their
-    // condition phase monitors the program every tick. Subjects come from
-    // the law's targets Formation when present, otherwise from the beings
-    // that carry its vocabulary. (Events a continuous application fires —
-    // the law-applied echo — become facts for the NEXT tick's event rounds.)
-    //
-    // Iterating a COPY of the register: a law may create or destroy laws,
-    // and mutating _laws under the loop would invalidate the iterator.
-    // ------------------------------------------------------------------
     const std::vector<std::shared_ptr<Law>> continuousLaws = _laws;
     for (const auto& law : continuousLaws) {
         if (!law || law->activation() == Law::Activation::OnEvent) continue;
         if (!law->isEnabled() || !law->isAuthored()) continue;
 
         const std::string lawId = law->getIdentifier();
+
+        if (!gatesHold(*law)) {
+            std::vector<const Singular*> released;
+            for (const auto& [subject, held] : law->conditionMemory()) {
+                if (held) released.push_back(subject);
+            }
+            for (const Singular* subject : released) {
+                law->rememberConditionState(subject, false);
+                law->forgetOnset(subject);
+            }
+            continue;
+        }
+
         auto termIt = _reteTerminals.find(lawId);
-        // Terminals alone do not license the reactive path: it answers from
-        // state facts, and state facts are only as current as the change feed
-        // that maintains them. Unconnected, there is no feed — so there is no
-        // reactive answer to give, only a stale one. Fall through to the sweep.
         const bool hasTerminals =
             _connected && termIt != _reteTerminals.end() && !termIt->second.empty();
 
-        // WhileTrue laws with compiled Rete terminals: O(Matching) path.
-        // The terminal node memories already contain exactly the beings that
-        // satisfy all conditions, so we skip both sweepSubjects AND
-        // conditionsSatisfied — the Rete network has done both reactively.
-        //
-        // The activation test is LOAD-BEARING and reads as redundant, so it has
-        // been deleted once already (04c52ed4, inside a commit about FPS
-        // measuring). This path applies to every matching subject with no edge
-        // check at all — that is what makes it right for a level-triggered law
-        // and wrong for an edge-triggered one, which then re-fires every tick
-        // for as long as its condition keeps holding. CLAUDE.md's
-        // non-negotiable: "Event-transitions must be edges, not levels... A
-        // per-frame 'still happening' event is a bug — that is what WhileTrue
-        // is for." The comment below this block already says so. Guarded by
-        // tests/law/rete_compile_test.cpp, which went red the day it was
-        // dropped ("an edge fires once, not once per tick").
+        if (law->activation() == Law::Activation::WhileTrue) {
+            if (!hasTerminals) {
+                static std::unordered_set<std::string> printed;
+                if (printed.insert(law->getIdentifier()).second) {
+                    fprintf(stderr, "--- NO TERMINALS FOR LAW: %s ---\n", law->getIdentifier().c_str());
+                    fflush(stderr);
+                }
+            }
+        }
+        if (law->activation() == Law::Activation::WhileTrue) {
+            static int no_term = 0, yes_term = 0;
+            if (hasTerminals) yes_term++; else no_term++;
+            static int pp = 0;
+            if (++pp == 5000) {
+                printf("--- WHILE TRUE TERMINALS: Yes %d, No %d ---\n", yes_term, no_term);
+                yes_term = 0; no_term = 0; pp = 0;
+            }
+        }
         if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
@@ -1783,12 +2068,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
             std::vector<Singular*> subjects = _rete.collectTerminalSubjects(termIds);
 
-            // WHOM the law is about is the author's answer, not the network's.
-            // The terminal memories hold every being that satisfies the
-            // conditions; a law scoped to one being still applies to that one
-            // being. Without this, an authored targets Formation was silently
-            // ignored on the reactive path and honored on the sweep — the same
-            // law meaning two different things depending on which path ran.
             const auto& targets = law->targets().getMembers();
             if (!targets.empty()) {
                 std::unordered_set<const Singular*> allowed(targets.begin(), targets.end());
@@ -1799,33 +2078,25 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                subjects.end());
             }
 
-            // Onset bookkeeping, which the sweep below does and this path did
-            // not: t=0 for `time.sinceApplied` is the moment the condition went
-            // false->true for this subject. With no onset remembered, applyTo
-            // falls back to "now" every tick, so every Flow and Drive authored
-            // against that clock read t=0 forever.
-            std::unordered_set<std::string> matching;
+            std::unordered_set<const Singular*> matching;
             matching.reserve(subjects.size());
             for (Singular* subject : subjects) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
-                const std::string subjectId = subject->getIdentifier();
-                matching.insert(subjectId);
-                const bool wasHolding = law->lastConditionState(subjectId);
-                law->rememberConditionState(subjectId, true);
+                matching.insert(subject);
+                const bool wasHolding = law->lastConditionState(subject);
+                law->rememberConditionState(subject, true);
                 if (!wasHolding && Universe::instance().hasClock()) {
-                    law->rememberOnset(subjectId, Universe::instance().now());
+                    law->rememberOnset(subject, Universe::instance().now());
                 }
             }
 
-            // Release: whoever the law held for last tick and does not now.
-            // Collected first, because forgetting mutates what we are reading.
-            std::vector<std::string> released;
-            for (const auto& [subjectId, held] : law->conditionMemory()) {
-                if (held && matching.count(subjectId) == 0) released.push_back(subjectId);
+            std::vector<const Singular*> released;
+            for (const auto& [subject, held] : law->conditionMemory()) {
+                if (held && matching.count(subject) == 0) released.push_back(subject);
             }
-            for (const auto& subjectId : released) {
-                law->rememberConditionState(subjectId, false);
-                law->forgetOnset(subjectId);
+            for (const auto* subject : released) {
+                law->rememberConditionState(subject, false);
+                law->forgetOnset(subject);
             }
 
             for (Singular* subject : subjects) {
@@ -1842,43 +2113,34 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         }
 
         // OnBecomeTrue and laws without Rete terminals: full sweep path.
-        // Edge detection requires knowing when a being LEAVES the match set,
-        // so the full sweep is still necessary here.
         std::vector<Singular*> subjects = sweepSubjects(*law);
 
         for (Singular* subject : subjects) {
             if (!subject || Universe::instance().isUnmade(subject)) continue;
             const bool holds = law->conditionsSatisfied(*subject);
-            const std::string subjectId = subject->getIdentifier();
-            const bool wasHolding = law->lastConditionState(subjectId);
-            law->rememberConditionState(subjectId, holds);
+            const bool wasHolding = law->lastConditionState(subject);
+            law->rememberConditionState(subject, holds);
 
-            // The false->true edge is t=0 for this subject's change-over-time
-            // clock (time.sinceApplied); release re-arms it.
             if (holds && !wasHolding && Universe::instance().hasClock()) {
-                law->rememberOnset(subjectId, Universe::instance().now());
+                law->rememberOnset(subject, Universe::instance().now());
             } else if (!holds && wasHolding) {
-                law->forgetOnset(subjectId);
+                law->forgetOnset(subject);
             }
 
             const bool fire = law->activation() == Law::Activation::WhileTrue
                                   ? holds
-                                  : (holds && !wasHolding);   // the false->true edge
+                                  : (holds && !wasHolding);
             if (!fire) continue;
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subjectId)) {
+                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;   // a re-edge while the launched process still
-                                // runs is absorbed — the session owns it
+                    continue;
                 }
-                restartDriveSession(*law, subjectId);   // a re-edge = new t=0
+                restartDriveSession(*law, subject->getIdentifier());
             }
-            // An OnBecomeTrue law that drives launches its process at the
-            // edge and runs it to the end of its authored bounds.
             applyAndMaybeDrive(*law, *subject, records);
         }
     }
-
     auto T3 = glfwGetTime();
     runDriveSessions(records);
     auto T4 = glfwGetTime();
@@ -1895,16 +2157,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     return records;
 }
 
-// ---------------------------------------------------------------------------
-// One place decides whether an application earns a drive session, because
-// there were three and they all asked the wrong question.
-//
-// The old test was `applyTo(...) == Applied` — which only says the action
-// branch was reached. A law whose every write failed passed that test, got
-// handed a process, and re-applied itself forever, failing every tick. The
-// question a drive session answers is "did this law DO something", and the
-// node trace is what knows.
-// ---------------------------------------------------------------------------
 void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
                                     std::vector<Law::ApplicationRecord>& records) {
     const Law::ApplicationResult result = law.applyTo(subject);
@@ -1914,6 +2166,78 @@ void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
 
     if (result != Law::ApplicationResult::Applied) return;
     maybeStartDriveSession(law, subject);
+}
+
+bool LawManager::gatesHold(const Law& law) const {
+    const auto& compiledGates = law.compiledGates();
+    if (compiledGates.empty()) return true;
+
+    // A gate ignores its subject, so ANY Singular answers it identically — and
+    // the law itself is one, always alive, and never a member of the world it
+    // is asked about. Deliberately not a member of the population: a world may
+    // legitimately be empty at this moment.
+    ECA::Event probe;
+    probe.type = "law-gate";
+    Singular& standIn = const_cast<Law&>(law);
+    bool gatesInitiallyTrue = true;
+    for (const auto& predicate : compiledGates) {
+        if (!predicate(probe, standIn)) {
+            gatesInitiallyTrue = false;
+            break;
+        }
+    }
+
+    // If the gate is already false, the law won't run AT ALL, so it can't possibly
+    // execute its actions to flip the gate. We can safely hoist the FALSE!
+    if (!gatesInitiallyTrue) return false;
+
+    // THE GUARD THAT MAKES HOISTING TRUE SOUND.
+    // If the gates are TRUE, but the law writes to a qualified root, the law might 
+    // flip the gate to FALSE partway through its per-subject execution.
+    // In that case, we CANNOT hoist the true! We must return true to force the 
+    // per-subject fallback loop to evaluate the gate properly for each subject.
+    if (law.writesQualifiedRoots()) {
+        return true;
+    }
+
+    return true;
+}
+
+// Rebuild the vocabulary index, but only when the world's shape has moved.
+//
+// One pass over the beings for ALL laws, replacing one pass PER LAW. In a
+// steady frame — nothing made, unmade, or granted a property — this is a single
+// integer compare and returns immediately.
+//
+// The index is keyed on the property names some law requires. That set only
+// grows within a session and is cheap to check, so a law authored later cannot
+// find a name missing from the index: a new name forces a rebuild too, exactly
+// as a structural change does. Missing a name would omit candidates, and an
+// omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
+// conservative in the safe direction and rebuilds when unsure.
+void LawManager::refreshVocabularyIndex() const {
+    std::unordered_set<std::string> wanted;
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        for (const std::string& name : law->requiredProperties()) wanted.insert(name);
+    }
+
+    const uint64_t revision = Universe::instance().structuralRevision();
+    if (revision == _vocabularyBuiltAt && wanted == _indexedNames) return;
+
+    _vocabularyIndex.clear();
+    _indexedNames = std::move(wanted);
+    _vocabularyBuiltAt = revision;
+    if (_indexedNames.empty()) return;
+
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (const std::string& name : _indexedNames) {
+            if (beingCarriesProperty(*being, name)) {
+                _vocabularyIndex[name].push_back(being);
+            }
+        }
+    }
 }
 
 // Who a law sweeps when it has no targets Formation: not everyone, but
@@ -1932,14 +2256,39 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    std::vector<Singular*> beings = Universe::instance().beings();
-    if (law.requiredProperties().empty()) return beings;   // truly about everyone
-    beings.erase(std::remove_if(beings.begin(), beings.end(),
-                                [&law](Singular* being) {
-                                    return !being || !law.couldApplyTo(*being);
-                                }),
-                 beings.end());
-    return beings;
+    const auto& required = law.requiredProperties();
+    if (required.empty()) return Universe::instance().beings();  // truly about everyone
+
+    // Self-guarding: an integer compare when tick() already refreshed, a full
+    // rebuild when this was reached some other way. Never a stale read.
+    refreshVocabularyIndex();
+
+    // Seed from the RAREST required name and filter that, instead of walking
+    // the world. Every required name must hold, so the smallest of their member
+    // lists is already a superset of the answer — and picking the smallest is
+    // the cheap, metric-free stand-in for §5's cost model, where fan-out is
+    // what an edge weight is supposed to measure. When §5 lands with a real
+    // value-per-cost ranking, this is the call site that grows it.
+    //
+    // A name absent from the index means NOBODY carries it, so the law has no
+    // subjects — the fast path for a law nothing can satisfy. That is a sound
+    // narrowing (provably IMPOSSIBLE, the only kind §3.0 permits), not a guess:
+    // the index was built with the same predicate couldApplyTo uses.
+    const std::vector<Singular*>* seed = nullptr;
+    for (const std::string& name : required) {
+        auto it = _vocabularyIndex.find(name);
+        if (it == _vocabularyIndex.end()) return {};
+        if (!seed || it->second.size() < seed->size()) seed = &it->second;
+    }
+    if (!seed) return Universe::instance().beings();   // index not built yet
+
+    std::vector<Singular*> chosen;
+    chosen.reserve(seed->size());
+    for (Singular* being : *seed) {
+        // couldApplyTo still decides. The index only proposes.
+        if (being && law.couldApplyTo(*being)) chosen.push_back(being);
+    }
+    return chosen;
 }
 
 // ---------------------------------------------------------------------------
@@ -2040,7 +2389,13 @@ void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
                 session.eventObjectId = o->getIdentifier();
             }
         }
-        law.rememberOnset(subjectId, now);
+        Singular* subject = nullptr;
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == subjectId) { subject = being; break; }
+        }
+        if (subject) {
+            law.rememberOnset(subject, now);
+        }
         return;
     }
 }
@@ -2059,7 +2414,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
         }
     }
     const double onset = Universe::instance().now();
-    law.rememberOnset(subjectId, onset);
+    law.rememberOnset(&subject, onset);
     DriveSession session;
     session.lawId = law.getIdentifier();
     session.subjectId = subjectId;
@@ -2106,7 +2461,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
-            if (law) law->forgetOnset(it->subjectId);
+            if (law && subject) law->forgetOnset(subject);
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2129,7 +2484,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             alive = law->actionModel()->definedFor(*subject);
         }
         if (!alive && now > it->onset) {
-            law->forgetOnset(it->subjectId);
+            law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
             it = _driveSessions.erase(it);
@@ -2140,7 +2495,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         if (now > it->onset) {
             // The session owns this drive's t=0 — reassert it so applyTo's
             // context matches even if the law's edge memory moved meanwhile.
-            law->rememberOnset(it->subjectId, it->onset);
+            law->rememberOnset(subject, it->onset);
             law->applyTo(*subject);
             if (!law->applicationLog().empty()) {
                 records.push_back(law->applicationLog().back());
@@ -2161,7 +2516,14 @@ bool LawManager::remove(const std::string& lawId) {
     _reteTerminals.erase(lawId);
     _compiledConditionRevision.erase(lawId);
     _lawFormation.removeMember(it->get());
+
+    // Detach the owning reference before final destruction. Singular's
+    // release callback walks the live Law register; destroying a Law while
+    // its shared_ptr is still visible here makes that callback call into a
+    // half-destructed Law.
+    std::shared_ptr<Law> removed = std::move(*it);
     _laws.erase(it);
+    removed.reset();
     Law::bumpTextRevision();
     return true;
 }
@@ -2251,20 +2613,77 @@ void LawManager::seedStateFacts(Singular* being) {
     // mentions can wake no node — this is a provably-IMPOSSIBLE narrowing, the
     // only kind PROPHETIC_RETE.md §2 permits, and it keeps a graph of hundreds
     // of edges from asserting a fact per edge per being.
+    // BOTH ENDPOINTS, not only the source. This loop used to read
+    // `relation->a() != being`, so the network could traverse a->b and never
+    // b->a — the one structural gap FORMATION_RETE.md §2 names. A law whose
+    // condition looked along an edge from the far side matched nobody, and
+    // said nothing about it.
+    //
+    // Comparing `relation->b()` is a POINTER compare and does not dereference
+    // the far end, which is what keeps the guarantee below intact.
     if (!_relationTypesInPlay.empty()) {
         for (Relation* relation : Universe::instance().relations()) {
-            if (!relation || relation->a() != being) continue;
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
             if (!_relationTypesInPlay.count(relation->type)) continue;
-            auto edgeFact = std::make_shared<ReteFact>();
-            edgeFact->type = "relation-state";
-            edgeFact->subject = being;
-            edgeFact->subjectId = subjectId;
-            edgeFact->attribute = relation->type;
-            edgeFact->isState = true;
-            edgeFact->dirty = false;
-            _rete.assertFact(edgeFact);
+            assertRelationStateFact(being, relation->type);
         }
     }
+}
+
+// Emit edge facts for relation types that have only just entered play.
+//
+// Iterates BEINGS and asks which relations touch each of them, rather than
+// iterating relations and naming their endpoints. That is not a stylistic
+// choice: the being comes from the Universe provider, so it is alive and safe
+// to dereference for its identifier, whereas a relation's endpoint may already
+// have been destroyed — control_patterns_test holds several such edges, left
+// behind by scoped Objects, and naming one would take the whole engine down.
+// The far end is compared by POINTER and never read.
+//
+// Bounded: runs only on the compile that first introduces a type, and the
+// vocabulary only grows, so the whole session pays one pass per distinct
+// relation type. This must stay off the per-tick path — see the To-Do item
+// about moving per-frame seeding to admission.
+void LawManager::backSeedRelationStateFacts(const std::unordered_set<std::string>& types) {
+    if (types.empty()) return;
+    const std::vector<Relation*> relations = Universe::instance().relations();
+    if (relations.empty()) return;
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being) continue;
+        for (Relation* relation : relations) {
+            if (!relation) continue;
+            if (relation->a() != being && relation->b() != being) continue;
+            if (!types.count(relation->type)) continue;
+            assertRelationStateFact(being, relation->type);
+        }
+    }
+}
+
+// One edge fact for one endpoint. Shared by the first-tick seed above, the
+// relation-formed handler, and the back-seed in compileConditionsToRete, so
+// the three cannot drift into asserting differently shaped facts — the same
+// reasoning as ReteNetwork's alphaToken/joinedToken helpers.
+//
+// Deliberately NOT gated by _seededSubjects: see the header.
+void LawManager::assertRelationStateFact(Singular* endpoint, const std::string& relationType) {
+    if (!endpoint) return;
+    const std::string subjectId = endpoint->getIdentifier();
+    if (subjectId.empty()) return;
+    // Idempotent. An alpha filters on `attribute` alone, so a second identical
+    // fact wakes exactly the nodes the first already woke and tells them
+    // nothing new — it only makes every future propagation scan longer.
+    // Skipping it is not a narrowing: the fact it would have added is already
+    // live and already in those memories.
+    if (_rete.hasRelationStateFact(endpoint, relationType)) return;
+    auto edgeFact = std::make_shared<ReteFact>();
+    edgeFact->type = "relation-state";
+    edgeFact->subject = endpoint;
+    edgeFact->subjectId = subjectId;
+    edgeFact->attribute = relationType;
+    edgeFact->isState = true;
+    edgeFact->dirty = false;
+    _rete.assertFact(edgeFact);
 }
 
 void LawManager::syncReteCompilation(Law& law) {
@@ -2295,7 +2714,24 @@ void LawManager::compileConditionsToRete(Law& law) {
     // Every relation type this law names joins the seeding vocabulary. Only
     // grows: a type that was in play stays in play for the session, which
     // costs a few facts and can never make a law deaf.
-    if (law.conditionModel()) law.conditionModel()->collectRelationTypes(_relationTypesInPlay);
+    //
+    // But growing the vocabulary is not enough on its own. seedStateFacts only
+    // emits edge facts for types ALREADY in play when it ran, and it runs once
+    // per being — so a law authored after the world was seeded named a type
+    // nobody had ever emitted a fact for, and was deaf to every edge that
+    // already existed. Same defect as the relation-formed handler above, one
+    // step removed: FORMATION_RETE.md §1.2(a) calls this its second shape.
+    //
+    // So: back-seed the types this compile is the FIRST to name.
+    if (law.conditionModel()) {
+        std::unordered_set<std::string> named;
+        law.conditionModel()->collectRelationTypes(named);
+        std::unordered_set<std::string> newlyInPlay;
+        for (const std::string& type : named) {
+            if (_relationTypesInPlay.insert(type).second) newlyInPlay.insert(type);
+        }
+        if (!newlyInPlay.empty()) backSeedRelationStateFacts(newlyInPlay);
+    }
     // Stamped first, and unconditionally: the paths below that give up early
     // (no model, nothing compilable) are still a complete answer for THIS
     // revision, and re-deciding it every tick would be a standing tax.

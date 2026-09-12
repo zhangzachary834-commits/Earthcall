@@ -1,0 +1,58 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+@@ -176,17 +176,21 @@
+         return rootCondition && rootCondition->evaluate(event, target);
+     }
+ 
+-    bool lastConditionState(const std::string& subjectId) const {
+-        auto it = _conditionMemory.find(subjectId);
++    bool lastConditionState(const Singular* subject) const {
++        auto it = _conditionMemory.find(subject);
+         return it != _conditionMemory.end() && it->second;
+     }
+-    void rememberConditionState(const std::string& subjectId, bool state) {
+-        _conditionMemory[subjectId] = state;
++    void rememberConditionState(const Singular* subject, bool state) {
++        _conditionMemory[subject] = state;
+     }
+-    const std::unordered_map<std::string, bool>& conditionMemory() const {
++    const std::unordered_map<const Singular*, bool>& conditionMemory() const {
+         return _conditionMemory;
+     }
+ 
+-    bool hasOnset(const std::string& subjectId) const {
+-        return _onsetMemory.count(subjectId) != 0;
++    bool hasOnset(const Singular* subject) const {
++        return _onsetMemory.count(subject) != 0;
+     }
+-    double onsetFor(const std::string& subjectId) const {
+-        auto it = _onsetMemory.find(subjectId);
++    double onsetFor(const Singular* subject) const {
++        auto it = _onsetMemory.find(subject);
+         return it != _onsetMemory.end() ? it->second : 0.0;
+     }
+-    void rememberOnset(const std::string& subjectId, double worldTime) {
+-        _onsetMemory[subjectId] = worldTime;
++    void rememberOnset(const Singular* subject, double worldTime) {
++        _onsetMemory[subject] = worldTime;
+     }
+-    void forgetOnset(const std::string& subjectId) { _onsetMemory.erase(subjectId); }
++    void forgetOnset(const Singular* subject) { _onsetMemory.erase(subject); }
++
++    void forgetSubject(const Singular* subject) {
++        _conditionMemory.erase(subject);
++        _onsetMemory.erase(subject);
++    }
+ 
+     // First movers (engine-backed bridge laws) live in the register for
+@@ -428,8 +432,8 @@
+     std::vector<ApplicationRecord> _applicationLog;
+     std::vector<std::string> _requiredProperties;   // derived at recompile()
+ 
+-    std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
+-    std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
++    std::unordered_map<const Singular*, bool> _conditionMemory;   // edge detection
++    std::unordered_map<const Singular*, double> _onsetMemory;     // t=0 per subject
+     std::uint64_t _conditionRevision{0};                      // see conditionRevision()
+     static std::uint64_t s_textRevision;                      // see textRevision()
+     ConditionMode _conditionMode = ConditionMode::All;

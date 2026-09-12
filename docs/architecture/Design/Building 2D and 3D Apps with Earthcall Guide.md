@@ -3,10 +3,11 @@
 **An authoring framework for agents and Persons coming from HTML, JavaScript, game
 engines, or ordinary application frameworks.**
 
-**Status (2026-09-06):** This is the integrative guide. The ontology and much of the
-mechanism described here are implemented; the Person-facing authoring experience is
-still embryonic. Every section distinguishes what can be used now from what remains a
-design frontier. This document is not evidence that an unrun interaction works.
+**Status (created 2026-09-06; revised 2026-09-09):** This is the integrative guide. The
+ontology and much of the mechanism described here are implemented; the Person-facing
+authoring experience and complete granular pixel mastery are still under development.
+Every section distinguishes what can be used now from what remains a design frontier.
+This document is not evidence that an unrun interaction works.
 
 **Origin and extension.** Zachary Zhang supplied the skeleton and its governing intent:
 teach “the robot guys” how to leave the HTML/JavaScript mental model; show where the
@@ -434,10 +435,22 @@ act and must follow the attribution and round-trip discipline in
 
 ## 5. Building in 2D
 
-### 5.1 What exists now
+### 5.1 What exists now: First-Mover Screen parameterizations
 
-`ShapeKind::Shape2D` and `ShapeKind::Text2D` are existing append-only Screen
-parameterizations. They are not domain categories.
+`ShapeKind::Shape2D` (12) and `ShapeKind::Text2D` (13) are append-only Screen parameterizations
+in C++. They are not domain categories.
+
+**Architectural doctrine on `ShapeKind` (Zach):** application and world authors must
+**never rely on `ShapeKind` to define form**. A focused test may select an enum value to
+exercise compatibility, serialization, or a channel path. Existing First-Mover and
+migration plumbing may still carry or inspect the serialized integer, but that is legacy
+transport—not an authoring vocabulary and never a reason for behavior to branch by kind.
+
+What a 2D or 3D form *is* must be authored from first-principles OntoMath (symbolic math,
+continuous scalar/vector fields, and implicit functions over $\mathbb{R}^2$ or
+$\mathbb{R}^3$), Relations, Formations, and Laws. Every parameter must remain legible from
+metal to C++ to Person-authored Law. Refusals 1, 3, 6, and 7 all meet here: an enum cannot
+become a hidden ontology simply because the renderer already knows how to switch on it.
 
 A `Shape2D` is currently a screen-space, axis-aligned rectangle. Its useful properties
 include:
@@ -501,14 +514,20 @@ are not mature.
 - The “Professional 2D Design” and Creator Console Paint surfaces are intentionally
   disabled because their old tools were detached from Zone and would present controls
   that do nothing.
-- The general authored shape is currently a rectangle; rich authored paths, curves,
-  arbitrary 2D topology, and an OntoMath-native 2D shape taxonomy are not complete.
+- The current legacy 2D carrier is a rectangle (`ShapeKind::Shape2D`); rich
+  authored paths, curves, arbitrary 2D topology, and an OntoMath-native 2D shape taxonomy are
+  not complete. Per the architectural doctrine, expanding 2D geometric form must occur through
+  first-principles OntoMath fields and functions over $\mathbb{R}^2$ and Formations rather than
+  appending further shape kinds to the C++ enum.
 - WebGPU native line width is one pixel in the current path; thick strokes need geometry,
   not a pretend width setting.
 - Text entry, IME, caret behavior, touch, and multi-pointer interaction are not built.
+  `Text2D` acts as an orthographic quad carrier for text rendering, while the true human-facing
+  ontology of text and language belongs to `Lexeme` beings and semantic Relations.
 - There is no finished responsive-layout Law library.
-- Pixel buffers and stroke history are not yet fully exposed as Law-addressable authored
-  beings.
+- Individual pixels and OntoMath-selected pixel sets can now be elevated as live,
+  Law-addressable Properties, and `WritePixel` can act through the Screen channel. Whole
+  pixel buffers, authored resolution, and stroke history are not yet fully exposed.
 
 These are limits of the current manifestation and tools, not permission to build a
 parallel UI framework.
@@ -521,10 +540,19 @@ parallel UI framework.
 
 The current `ShapeKind` vocabulary includes cube, polyhedron, sphere, cylinder, cone,
 ellipsoid, ovoid, paraboloid, torus, rounded box, implicit Field, Bézier Patch, Shape2D,
-and Text2D. The enum is append-only and serialized as integers. These values are ways the
-substrate carries geometry; they are not domain kinds such as “building” or “robot.”
+and Text2D. The enum is append-only and serialized as integers, but it is not Earthcall's
+shape-authoring language.
 
-Use:
+For application and world construction, **never rely on those enum values**. Directly
+choosing or branching on one is admitted only in focused tests of the compatibility,
+serialization, or manifestation path. Existing engine plumbing may still store or route
+`ShapeKind::Field`; when field data is present, that value is only the carrier tag that
+gets the mathematics to Screen. The `SdfNode`, OntoMath expression, Piecewise defined set,
+Relations, and Laws are the source of truth. A save loader preferring its `field` document
+over `shapeKind` is the intended direction of dependency.
+
+Use the following mathematical representations, without turning their names into domain
+types:
 
 - analytic primitives for simple exact surfaces;
 - `Polyhedron` for explicit vertex/face constructions;
@@ -533,7 +561,220 @@ Use:
 - Relations and Formations to build compound structures;
 - Concepts to reproduce those structures.
 
-### 6.2 The 3D construction path
+### 6.2 Authoring nuanced form with SDF and OntoMath
+
+This is the practical route for a bounded solid or surface whose form is more specific
+than a stock primitive. It covers holes, cavities, asymmetric assemblies, smooth organic
+joins, procedural lattices, and custom algebraic surfaces without adding a `ShapeKind`.
+
+#### The one-function mental model
+
+Author a scalar function over local space:
+
+```text
+d(p), where p = (x, y, z)
+
+d(p) < 0   inside
+d(p) = 0   on the surface
+d(p) > 0   outside
+```
+
+An exact signed-distance function reports geometric distance as well as sign. Earthcall's
+`Expr` leaf also accepts a more general implicit function `f(x,y,z) = 0`. The zero surface
+can be correct even when `abs(f)` is not a distance. Prefer a true SDF when one is
+available: ray marching, normals, interval bounds, picking, collision, and tessellation
+all have stronger numerical behavior when the magnitude is honest. Treat a general
+implicit expression as an iso-surface equation and test it at the intended scale.
+
+The shape is evaluated in Object-local coordinates. The Object transform places the
+whole result in the Zone. Each SDF leaf also has a local `offset`, which places a part
+inside a compound field. Keep those two levels distinct: moving an Object is not the same
+authored statement as moving one cutter or lobe within its form.
+
+#### Build the field in six moves
+
+1. **State the silhouette and topology first.** Decide what must be connected, hollow,
+   repeated, sharp, or soft. Name meaningful parts before reducing them to math; a
+   semantically independent part may deserve its own Object and Relation instead of
+   disappearing inside one field tree.
+2. **Choose the smallest faithful leaves.** Current SDF leaves are sphere, box, rounded
+   box, ellipsoid, capped cylinder, cone, torus, custom expression, and convex planes.
+   Their parameters are data, not new kinds of being.
+3. **Place leaves in local space.** Use `offset` for translated sub-parts. Use the Object
+   transform for the whole. A rotated, scaled, twisted, or bent custom part is made by
+   applying the inverse coordinate transformation inside its OntoMath/expression before
+   evaluating the base field; do not request `RotatedShapeKind` or `TwistKind`.
+4. **Compose topology with field operators.** Union joins volumes, intersection keeps
+   only shared volume, subtraction cuts, smooth union grows a continuous bridge, and
+   morph interpolates two fields. Nest operations to arbitrary depth.
+5. **Set truthful bounds.** `field.extent` is the local half-extent of the sampled box.
+   It must enclose every zero crossing. Too small clips real form; needlessly huge bounds
+   waste ray, range, collision, and fallback-mesh work. Bounds are doctrine, not polish.
+6. **Make the mathematics governable and durable.** Expose the intended parameters to
+   Law, capture repeatable structures as Concepts, save the field tree/AST, reload it,
+   and verify that the same points retain the same sign and zero surface.
+
+Current leaf parameters are:
+
+| SDF leaf | Parameters | Local convention |
+|---|---|---|
+| sphere | `dims.x = radius` | centered at the leaf offset |
+| box | `dims = half-extents` | axis-aligned before coordinate transformation |
+| rounded box | box half-extents plus `p0 = corner radius` | corner radius must fit the box |
+| ellipsoid | `dims = semi-axes` | centered at the leaf offset |
+| cylinder | `dims.x = radius`, `dims.y = half-height` | axis is local Z |
+| cone | `dims.x = base radius`, `dims.y = half-height` | apex points along local +Z |
+| torus | `dims.x = major radius`, `dims.y = minor radius` | ring axis is local Z |
+| expression | authored `f(x,y,z)` or OntoMath AST | the zero set is the surface |
+| convex | outward unit face planes `(nx, ny, nz, d)` | field is the maximum half-space |
+
+The operator algebra is equally small:
+
+| Intended result | Field operation | Current `SdfOp` |
+|---|---|---|
+| either solid | `min(a, b)` | `Union` |
+| only their overlap | `max(a, b)` | `Intersect` |
+| cut B from A | `max(a, -b)` | `Subtract` |
+| organic bridge | smooth minimum of A and B | `SmoothUnion` |
+| continuous transition | `lerp(a, b, t)` | `Morph` |
+
+`Morph` and a generic algebraic implicit do not automatically remain exact distance
+fields. Their zero sets may still be intentional; verify marching and normals instead of
+assuming the word “SDF” confers metric correctness on every composition.
+
+#### Entering a custom expression today
+
+The current First-Mover path is:
+
+1. Run the canonical `earthcall_webgpu` target.
+2. Open the Creator Console with F8; F4 routes to its 3D Create surface.
+3. In **Implicit `f(x,y,z) = 0`**, enter an expression using `+ - * / ^`, constants
+   `pi` and `e`, and the available functions `sin`, `cos`, `tan`, `sqrt`, `abs`, `exp`,
+   and `log`.
+4. Choose **Create Implicit**. The tool compiles the expression into a plain-data
+   `SdfNode`, authors the Object, and calls `setFieldShape` with finite local bounds.
+5. Use Combine or Sculpt to select A and B and apply union, intersection, subtraction,
+   smooth union, or blend. Morph mode can move operand B and vary a morph parameter.
+6. Give the result stable identity, authorship, semantic Relations, and a Formation;
+   capture it as a Concept if it is meant to recur, then save and reload it.
+
+The built-in expressions are useful studies, not new categories:
+
+```text
+sphere: x*x + y*y + z*z - 0.25
+torus:  (sqrt(x*x + y*y) - 0.3)^2 + z*z - 0.01
+heart:  (x*x + 2.25*z*z + y*y - 0.25)^3
+        - x*x*y*y*y - 0.1125*z*z*y*y*y
+gyroid: abs(sin(pi*x)*cos(pi*y) + sin(pi*y)*cos(pi*z)
+        + sin(pi*z)*cos(pi*x)) - 0.2
+```
+
+The gyroid example deliberately thickens the periodic sheet with `abs(f)-t`; raw `f=0`
+is infinitely extended and paper-thin. This illustrates the general discipline: define
+the intended volume and provide bounds, rather than handing an unbounded equation to a
+finite channel and hoping the renderer infers the human intention.
+
+For Law authoring, writing `field.expr` to an Object compiles the new expression and gives
+the Object a field manifestation; malformed expressions are refused without replacing
+the standing form. The current registered surface is:
+
+| Property path | What Law can govern |
+|---|---|
+| `field.expr` | custom implicit expression; can create/replace the field |
+| `field.extent` | finite local bounds |
+| `field.dims`, `field.offset` | leaf size and local placement |
+| `field.p0`, `field.p1` | leaf-specific scalar parameters |
+| `field.blend` | morph/smooth-union parameter |
+| `field.op`, `field.prim` | serialized SDF-tree plumbing; do not use as a domain vocabulary |
+| `field.cellSize` | requested collision sampling cell size; non-positive restores automatic choice |
+
+The simple `field.*` bridge addresses the root node. Rich nested authoring should preserve
+the full serializable SDF/OntoMath tree rather than flattening a cathedral of parts into a
+single magic string. `SdfNode` is deliberately data—with children, AST, Piecewise, and
+planes—so future authoring tools and Laws can expose that structure without adding a new
+method or enum for each human idea.
+
+#### A worked compound: a hollow lantern form
+
+The following tree creates a nuanced shape entirely from mathematical data:
+
+```text
+outer shell  = RoundBox(half-extents, corner-radius)
+inner void   = RoundBox(smaller half-extents, smaller corner-radius)
+door cutter  = Box(narrow half-extents, offset toward the front)
+side cutter  = Cylinder(radius, half-height, offset across the shell)
+top ring     = Torus(major-radius, minor-radius, offset above the shell)
+
+shell        = Subtract(outer shell, inner void)
+open shell   = Subtract(Subtract(shell, door cutter), side cutter)
+lantern      = SmoothUnion(open shell, top ring, softness)
+```
+
+Vary offsets and dimensions for asymmetry. Add more authored cutters for tracery. Replace
+a lobe with a custom expression for a hand-shaped profile. Drive the smoothing or a radius
+from Law for breathing form. Use a bounded OntoMath `Piecewise` when different equations
+govern different regions. If the ring, door, or frame needs its own material, identity,
+behavior, or Relation, keep it as its own Object in a Formation instead of erasing that
+meaning into the one SDF.
+
+This recipe scales because nuance comes from composition and coordinate mathematics:
+
+- holes, tunnels, windows, and engraving are subtraction;
+- fitted joints and clipped ornaments are intersection;
+- hard assemblies are union;
+- clay-like continuity is smooth union;
+- algebraic, periodic, noisy, or hand-derived surfaces are expression/OntoMath leaves;
+- repeated meaningful parts are Concept instances gathered by Relations and Formation;
+- changing form over state or time is Law writing the same registered parameters.
+
+No step requires `ShapeKind::Lantern`, `ShapeKind::Arch`, `ShapeKind::Hole`, or an enum for
+the next nuance. If a proposed form seems to require one, the representation has stopped
+too early: return to fields, coordinate transformations, CSG, Relations, or a Bézier
+control net.
+
+When a focused geometry test must construct the tree directly, test the data structure
+without selecting a `ShapeKind`:
+
+```cpp
+using geom::SdfNode;
+using geom::SdfOp;
+using geom::SdfPrim;
+
+SdfNode outer = SdfNode::leaf(SdfPrim::RoundBox,
+                              glm::vec3(0.60f, 0.40f, 0.80f), 0.10f);
+SdfNode inner = SdfNode::leaf(SdfPrim::RoundBox,
+                              glm::vec3(0.48f, 0.30f, 0.68f), 0.07f);
+SdfNode door = SdfNode::leaf(SdfPrim::Box,
+                             glm::vec3(0.16f, 0.30f, 0.34f));
+door.offset = glm::vec3(0.0f, -0.05f, -0.68f);
+
+SdfNode shell = SdfNode::binary(SdfOp::Subtract, outer, inner);
+SdfNode lantern = SdfNode::binary(SdfOp::Subtract, shell, door);
+
+Object probe("sdf-lantern-probe");
+probe.setFieldShape(lantern, glm::vec3(0.90f, 0.90f, 1.10f));
+```
+
+That C++ is a fixture for evaluation, parity, round-trip, or channel tests. An Earthcall
+application must author the equivalent serializable field through Person-visible data,
+Law, Concept, or an authoring surface; copying the fixture into application behavior would
+merely move the hidden ontology from `ShapeKind` into source code.
+
+#### Verification protocol for an authored field
+
+- Evaluate known inside, boundary, and outside points on the CPU.
+- Confirm `field.extent` encloses the complete zero set under every authored parameter.
+- Compare CPU and WebGPU evaluation for every supported operation used by the tree.
+- Exercise analytic manifestation, picking/raycast, collision, and cached tessellation
+  where the app depends on them; parity in one channel does not prove all four.
+- Capture and instantiate the form as a Concept if repetition is promised.
+- Save and reload the actual authored Zone, then re-evaluate the same points and inspect
+  authorship, stable identifiers, Relations, and Material ownership.
+- Have a Person inspect thin features, gradients, silhouettes, seams, and interaction in
+  `earthcall_webgpu`; record that manual witness instead of converting taste into a unit
+  test claim.
+
+### 6.3 The 3D construction path
 
 The current developer path is the Creator Console (F8; F4 opens its 3D Create tab).
 It can create the supported 3D parameterizations, including broad polyhedron options and
@@ -543,7 +784,7 @@ Treat these windows as First-Mover scaffolding. They are not the final Earthcall
 authoring ontology. A finished construction must still become authored Objects,
 Relations, Formations, Concepts, and Laws that survive without the window staying open.
 
-### 6.3 Exact form and manifestation
+### 6.4 Exact form and manifestation
 
 An implicit or analytic Object’s mathematical truth must not be confused with the mesh
 or shader used to show it. `renderMode` selects the representation strategy:
@@ -556,7 +797,7 @@ The canonical app target is `earthcall_webgpu`. The OpenGL target falls back to 
 tessellation for analytic shapes; it does not raymarch them. Do not judge an authored
 implicit form by the wrong executable.
 
-### 6.4 Compound objects
+### 6.5 Compound objects
 
 A cathedral, machine, character prop, or instrument is not one giant Object by default.
 Build meaningful members, then relate them:
@@ -572,7 +813,7 @@ Use attachment Relations when transforms should inherit. Use semantic Relations 
 when no transform inheritance is required. Gather the coherent construction into a
 Formation and capture it as a Concept only after its structure is truthful.
 
-### 6.5 Current 3D limitations
+### 6.6 Current 3D limitations
 
 - The Shape Generator 3D Law path is implemented and headlessly tested, but the older
   end-to-end audit still records Person-facing placement, duplicate-law, hologram, and
@@ -648,6 +889,12 @@ Zach’s goal is mastery down to individual pixels or meaningful pixel batches. 
 extension here is a **promotion rule** that preserves that intent without forcing the
 runtime to allocate a heavyweight C++ Object for every display sample:
 
+> **CURRENT STATUS — UNDER DEVELOPMENT:** Earthcall does not yet provide complete
+> granular pixel mastery in which OntoMath defines any pixel-colored region directly,
+> independently of flat `ShapeKind` carriers, and Screen compiles that authored field all
+> the way to efficient manifestation. The first selective-elevation and `WritePixel`
+> rungs exist; they prove the direction, not completion of the full framework.
+
 | Level | Representation | When it becomes a being |
 |---|---|---|
 | raw display sample | Screen-channel metal beneath the authored world | never merely because hardware has a pixel |
@@ -662,10 +909,16 @@ selected pixel region may be a Singular because a Person has given it identity a
 governable role. This is not a retreat from granular control; it is the industry-optimal
 route to it—symbolic and sparse authored truth compiled into batched GPU work.
 
-The current code has not reached this model fully. `FaceTexture` still owns raw pixels,
-layers, and stroke history as source-level structures; Laws can reach face color and
-some layer structure, but not every pixel or stroke. Texture resolution is still a
-fixed implementation default in places. This is explicit debt, not the intended ceiling.
+The first selective-promotion step is real. `AddProperty` can elevate
+`surface.pixel.<face>.<x>.<y>` as one live `vec3` Property, while `ElevatePixels` gives an
+arbitrarily named Property to the defined set of a Person-authored OntoMath `Piecewise`
+over local `u` and `v`. No rectangular or other named-region enum determines its bounds.
+The dense `FaceTexture` remains virtual until that authoring act, and Screen writes wake
+elevated Properties that contain the changed sample. Texture resolution and stroke history
+remain explicit debt, as do direct OntoMath-to-color-field compilation, arbitrary
+continuously changing regions, GPU evaluation at scale, and a finished Person-facing
+authoring surface. Do not describe granular pixel mastery as shipped, and do not fill the
+gap by adding more flat shape or region enums.
 
 ### 7.5 2D-to-3D gradients
 
@@ -812,6 +1065,8 @@ The current action tree can:
 - `Destroy` an Object;
 - `Synthesize` a construction from ordinary action children;
 - `PlayAudio` through the registered Audio channel;
+- `WritePixel` through the registered Screen channel;
+- `ElevatePixels` to grant a named Property whose sample set is defined by OntoMath;
 - author a Zone;
 - `AddRelation` between existing beings.
 
@@ -1041,7 +1296,8 @@ Use these rules:
   semantic authoring.
 - Batch manifestations when geometry and resolved Material are identical; preserve
   per-instance transforms and authored identity.
-- Promote meaningful pixel regions to beings and keep unpromoted samples virtual.
+- Promote meaningful pixels and OntoMath-defined sets to Properties (and to beings when
+  they need identity); keep unpromoted samples virtual.
 - Avoid allocation or shader recompilation for value-only changes that uniforms can
   carry.
 - Treat bounds as doctrine. A design that needs unbounded chain rounds, call depth, or
@@ -1063,10 +1319,10 @@ the prototype.
 
 | Area | Current truth | Frontier required by Zach’s intent |
 |---|---|---|
-| 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button is proven | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, pixel regions, and layouts |
+| 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button and pixel writer are proven; pixel-set bounds are OntoMath | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, and layouts |
 | 3D authoring | primitives, polyhedra, implicit Fields, Patches, Creator Console, Concepts, and Law creation exist | close live Shape Generator audit; deeper authored CAD/topology/continuity Law libraries |
 | Form | geometry, OntoMath, Materials, and Formations carry much of it | settle first-order Form ontology and authoring without reintroducing a hardcoded class hierarchy |
-| Materials/pixels | Materials are beings; face colors/layer controls are partly Law-visible; textures persist | Law-visible granular pixels/strokes, authorable resolution, sparse regions, and full no-black-box coverage |
+| Materials/pixels | Materials are beings; textures persist; a pixel or OntoMath-selected set can be elevated as a live Property and written by Law | authorable resolution, authored stroke history/provenance, GPU compilation for large dynamic selections, and full no-black-box coverage |
 | Relations/Formations | first-class endpoints, weights, history, attachments, rooted Categories, and persistence exist | make them load-bearing across more engine actions; settle remaining manifesto/runtime definition tensions |
 | Categories | direct `instance-of` queries and rooted Category pattern exist | category home/registry, inherited closure propagation, conflict/diamond policy |
 | Concepts | Object set capture/instantiate and anchored Relations exist | generalize `ObjectConcept` toward Singular creation without duplicating ontology |
@@ -1151,7 +1407,7 @@ libraries can do beyond Earthcall’s view.
 | If you are about to… | Stop and author… |
 |---|---|
 | add `class Button`, `class Robot`, or `class ArtStyle` | Object(s), Category, Relations, Formation, Concept, Laws |
-| add `WidgetKind::Slider` or `ShapeKind::Cathedral` | Category beings; reserve enums for substrate parameterizations |
+| add `WidgetKind::Slider` or `ShapeKind::Cathedral` | Category beings and authored OntoMath; direct `ShapeKind` choice belongs only in focused compatibility/manifestation tests |
 | create `src/UI/` or `src/Apps/` | interaction or foreign channel under Singularity only if a true modality bridge is needed; authored app stays in Zones |
 | store `type: "button"` as the classification | `instance-of -> category.control.button` |
 | put behavior in a renderer or input callback | channel publishes sense; Law decides and acts |
@@ -1301,5 +1557,15 @@ the current operational framework and originated the explicit visual-atomicity p
 rule, the phased frontier, the conventional-framework translation, and the two worked
 blueprints in service of Zach’s intent.
 
+**2026-09-09 revision record:** Zach specified the hard `ShapeKind` boundary, requested
+practical instruction for building nuanced shapes from SDFs, and named granular pixel
+mastery as work still under development. Codex (GPT-5.6 Sol) extended that direction into
+the six-move SDF workflow, operator/parameter tables, Creator Console and Law routes,
+lantern composition, numerical and round-trip verification protocol, and the distinction
+between existing pixel-elevation rungs and the unfinished OntoMath-to-color-field whole.
+
 **Signed:** Codex (GPT-5.6 Sol) · session
 `01a077ed-8d0f-7882-9e63-7748558bd59a` · 2026-09-06 11:23 PDT
+
+**Revision signed:** Codex (GPT-5.6 Sol) · session
+`01a077ed-8d0f-7882-9e63-7748558bd59a` · 2026-09-09 12:07 PDT

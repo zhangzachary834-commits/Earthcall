@@ -1,0 +1,64 @@
+--- frame_lag_test: saves/worlds/synthesis_studio_living.json ---
+machine calibration: x1.05 versus the reference machine (>1 means slower; every time below is divided by it)
+baseline: tests/singularity/frame_lag_baseline.txt
+
+1. SHAPE — per-frame cost against population size
+TICK: agenda_size=0, agenda_loop=0.000, laws_loop=5.066, reteCount=0 (0.000 ms rete, 0.000 ms apply), sweepCount=1 (5.065 ms sweep), seed=0.000, vocab=2.270, evaluateDirty=0.000, restOfTick=5.067
+TICK: agenda_size=0, agenda_loop=0.000, laws_loop=62.500, reteCount=0 (0.000 ms rete, 0.000 ms apply), sweepCount=1 (2.776 ms sweep), seed=0.000, vocab=0.025, evaluateDirty=0.001, restOfTick=62.508
+     64 objects -> frame    1.805 ms  (zone    0.296 [g:0.002 r:0.001 a:0.282 p:0.011]  relations  0.000  law    1.487)  over 24 frames
+TICK: agenda_size=0, agenda_loop=0.000, laws_loop=133.352, reteCount=0 (0.000 ms rete, 0.000 ms apply), sweepCount=1 (5.763 ms sweep), seed=0.000, vocab=4.716, evaluateDirty=0.003, restOfTick=133.376
+    128 objects -> frame    6.146 ms  (zone    0.612 [g:0.004 r:0.002 a:0.580 p:0.024]  relations  0.000  law    5.522)  over 24 frames
+TICK: agenda_size=0, agenda_loop=0.000, laws_loop=253.744, reteCount=0 (0.000 ms rete, 0.000 ms apply), sweepCount=1 (11.483 ms sweep), seed=0.000, vocab=9.668, evaluateDirty=0.003, restOfTick=253.770
+    256 objects -> frame   12.665 ms  (zone    1.261 [g:0.008 r:0.005 a:1.196 p:0.048]  relations  0.000  law   11.404)  over 23 frames
+    512 objects -> frame   24.496 ms  (zone    2.432 [g:0.019 r:0.010 a:2.306 p:0.093]  relations  0.001  law   22.043)  over 13 frames
+  STANDING  whole frame grows as n^k (linear 1.0, quadratic 2.0), k = 1.233 (aspiration 1.150, baseline 1.113)
+  ok        Zone::update grows as n^k (linear 1.0, quadratic 2.0), k = 1.015 (aspiration 1.150, baseline 1.137)
+  note        groundScan costs 0.0187 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  note        rotation costs 0.0099 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok          automation grows as n^k (linear 1.0, quadratic 2.0), k = 1.014 (aspiration 1.150, baseline 0.968)
+  ok          physics grows as n^k (linear 1.0, quadratic 2.0), k = 1.015 (aspiration 1.150, baseline 1.279)
+  note      formation relations costs 0.0005 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  EXP-FAIL  LawManager::tick grows as n^k (linear 1.0, quadratic 2.0), k = 1.272 (aspiration 1.150, baseline 0.957)  <- ALGORITHMIC REGRESSION
+⚠️  Zone 'Go': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'Go Game': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+🔀 Switching to zone [0]...
+🌍 Zone 'SynthesisStudio.LivingInstrument' loaded with 137 objects.
+🌀 Entering zone: SynthesisStudio.LivingInstrument (Local)
+   Qualities:
+     - forkedFrom: SynthesisStudio
+     - kind: studio
+     - ownerKind: person
+   Deletable by:
+     - Zach: yes
+
+world: SynthesisStudio.LivingInstrument  objects=137  laws=69  relations=240
+
+--- RUNNING QUIESCENCE ---
+TICK: agenda_size=165, agenda_loop=0.202, laws_loop=528.082, reteCount=15 (0.068 ms rete, 83.879 ms apply), sweepCount=2 (1.842 ms sweep), seed=197.414, vocab=92.646, evaluateDirty=0.003, restOfTick=529.929
+Tick 0: 363.478 ms
+Tick 1: 89.031 ms
+Tick 2: 50.020 ms
+
+3. STEADY — the loaded world, frame after frame
+TICK: agenda_size=1512, agenda_loop=1.844, laws_loop=2801.138, reteCount=15 (0.046 ms rete, 106.275 ms apply), sweepCount=2 (1.015 ms sweep), seed=7.618, vocab=0.667, evaluateDirty=1149.637, restOfTick=3980.678
+  24 frames (wall-clock cap reached)
+  simulation frame             median 208.533 ms   p95 488.226   worst 538.603   first-quarter 223.105 -> last-quarter 468.061 (medians)
+  by phase                     zone    0.055 ms   relations   0.017 ms   law  208.460 ms  (medians)
+  LAG       median simulation frame = 198.761 ms (aspiration 5.500, baseline 2.456)  <- worse than the recorded baseline
+  ok          of that, Zone::update = 0.052 ms (aspiration 3.000, baseline 0.797)
+  LAG         of that, LawManager::tick = 198.691 ms (aspiration 2.000, baseline 1.653)  <- worse than the recorded baseline
+  LAG       95th-percentile frame (a hitch that recurs) = 465.347 ms (aspiration 16.600, baseline 2.662)  <- worse than the recorded baseline
+  LAG       no drift: last quarter of the run costs 2.10x the first quarter
+
+4. LOAD — opening the authored world
+  saves/worlds/synthesis_studio_living.json: 15008.3 ms for 137 objects in the active Zone
+  LAG       time to open the world = 14304.963 ms (aspiration 4000.000, baseline 6950.000)  <- worse than the recorded baseline
+
+machine steadiness: calibration x1.05 at the start, x2.47 at the end (drift 2.35x)
+  the machine's speed moved under the measurement. Every duration
+  above is reported, none of them can fail this run. Section 2's
+  invariants never touch a clock and were enforced regardless.
+
+broken invariants: 1   timing regressions: 5  (not counted: machine contended)
+STANDING lines are costs already recorded in the baseline, not failures.
+They are tasks — see docs/Agenda/Tasks/To-do list.md, Performance.

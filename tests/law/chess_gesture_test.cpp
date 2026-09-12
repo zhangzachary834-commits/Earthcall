@@ -138,15 +138,8 @@ void projectToWindow(const RenderMatrices& m, const glm::vec3& world,
 } // namespace
 
 int main() {
-    std::string filename = "saves/worlds/chess_app.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/chess_app.json")) {
-        filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-    }
+    std::string filename = TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
 
     TestSupport::BootedEngineHarness harness;
 

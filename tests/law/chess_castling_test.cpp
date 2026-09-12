@@ -63,18 +63,8 @@ float squareZ(int rank) { return (rank + 0.5f) * 1.0f - 4.0f; }
 } // namespace
 
 int main(int argc, char** argv) {
-    std::string filename = (argc > 1) ? argv[1] : "saves/worlds/chess_app.json";
-    if (argc <= 1 && !std::filesystem::exists(filename)) {
-        if (std::filesystem::exists("../saves/worlds/chess_app.json"))
-            filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    std::string filename = (argc > 1) ? argv[1] : TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
     std::cout << "--- chess_castling_test: " << filename << " ---\n";
 
     TestSupport::BootedEngineHarness harness;

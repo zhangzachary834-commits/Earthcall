@@ -128,6 +128,7 @@ public:
     TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                 uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
+    void reloadShaders() override;
 
     // CPU-GPU micro-mastery pool & persistent mesh cache
     Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }

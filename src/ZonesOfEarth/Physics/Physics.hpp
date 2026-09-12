@@ -127,7 +127,6 @@ namespace Physics {
     // Record that gravity is acting between an object and the environment
     void recordGravity(const Singular& obj, const Singular& env, float strength = 1.0f);
 
-    /* TODO: Integrate this into our Event Bus-Handler system. */
     // Record an object-object collision relation
     void recordCollision(const Singular& a, const Singular& b, float strength = 1.0f);
 

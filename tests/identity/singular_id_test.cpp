@@ -1,174 +1,176 @@
 #include "../../src/Identity/SingularId.hpp"
-#include <cassert>
-#include <iostream>
-#include <unordered_set>
 #include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <iostream>
 #include <set>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 using namespace Identity;
 
+namespace {
+
+[[noreturn]] void fail(const char* expression, const char* file, int line) {
+    std::cerr << "CHECK failed: " << expression << " at " << file << ':' << line << '\n';
+    std::exit(EXIT_FAILURE);
+}
+
+#define CHECK(expr) do { if (!(expr)) fail(#expr, __FILE__, __LINE__); } while (false)
+
+std::string nonCanonicalAlias(std::string canonical) {
+    static const std::string alphabet = "abcdefghijklmnopqrstuvwxyz234567";
+    CHECK(!canonical.empty());
+    const std::size_t pos = alphabet.find(canonical.back());
+    CHECK(pos != std::string::npos);
+    CHECK(pos + 1 < alphabet.size());
+    canonical.back() = alphabet[pos + 1];
+    return canonical;
+}
+
+} // namespace
+
 void testHex() {
     std::vector<uint8_t> empty;
-    assert(hexEncode(empty) == "");
-    assert(hexDecode("") == empty);
+    CHECK(hexEncode(empty) == "");
+    CHECK(hexDecode("") == empty);
 
-    std::vector<uint8_t> data = {0x00, 0x1A, 0x2B, 0x3C, 0xFF};
-    std::string enc = hexEncode(data);
-    assert(enc == "001a2b3cff");
+    const std::vector<uint8_t> data = {0x00, 0x1A, 0x2B, 0x3C, 0xFF};
+    CHECK(hexEncode(data) == "001a2b3cff");
+    CHECK(hexDecode("001a2b3cff") == data);
 
-    std::vector<uint8_t> dec = hexDecode(enc);
-    assert(dec == data);
-
-    // Invalid lengths or characters should return empty
-    assert(hexDecode("001a2b3cf").empty()); // odd length
-    assert(hexDecode("001X2b3cff").empty()); // invalid char
+    CHECK(hexDecode("001a2b3cf").empty()); // odd length
+    CHECK(hexDecode("001X2b3cff").empty()); // invalid char
 }
 
 void testBase32() {
-    std::vector<uint8_t> empty;
-    assert(base32Encode(empty) == "");
     std::vector<uint8_t> out;
-    assert(base32Decode("", out));
-    // out might have partial results on fail, which is okay based on base32Decode implementation
+    CHECK(base32Encode({}) == "");
+    CHECK(base32Decode("", out) && out.empty());
 
-    // RFC 4648 test vectors
-    // "f" -> "my======" -> no padding -> "my"
-    std::vector<uint8_t> f = {'f'};
-    assert(base32Encode(f) == "my");
-    out.clear();
-    assert(base32Decode("my", out) && out == f);
+    // RFC 4648 test vectors, lower-case and without padding.
+    const std::vector<std::pair<std::string, std::string>> vectors = {
+        {"f", "my"},
+        {"fo", "mzxq"},
+        {"foo", "mzxw6"},
+        {"foob", "mzxw6yq"},
+        {"fooba", "mzxw6ytb"},
+        {"foobar", "mzxw6ytboi"},
+    };
 
-    // "fo" -> "mzxq====" -> "mzxq"
-    std::vector<uint8_t> fo = {'f', 'o'};
-    assert(base32Encode(fo) == "mzxq");
-    out.clear();
-    assert(base32Decode("mzxq", out) && out == fo);
+    for (const auto& [plain, encoded] : vectors) {
+        const std::vector<uint8_t> bytes(plain.begin(), plain.end());
+        CHECK(base32Encode(bytes) == encoded);
+        out.clear();
+        CHECK(base32Decode(encoded, out));
+        CHECK(out == bytes);
+    }
 
-    // "foo" -> "mzxw6===" -> "mzxw6"
-    std::vector<uint8_t> foo = {'f', 'o', 'o'};
-    assert(base32Encode(foo) == "mzxw6");
-    out.clear();
-    assert(base32Decode("mzxw6", out) && out == foo);
+    CHECK(!base32Decode("my1", out)); // '1' is outside the RFC 4648 alphabet.
+    CHECK(!base32Decode("MY", out));  // Text form is deliberately canonical lower-case.
+    CHECK(!base32Decode("a", out));   // Impossible unpadded Base32 quantum.
 
-    // "foob" -> "mzxw6yq=" -> "mzxw6yq"
-    std::vector<uint8_t> foob = {'f', 'o', 'o', 'b'};
-    assert(base32Encode(foob) == "mzxw6yq");
-    out.clear();
-    assert(base32Decode("mzxw6yq", out) && out == foob);
-
-    // "fooba" -> "mzxw6ytb" -> "mzxw6ytb"
-    std::vector<uint8_t> fooba = {'f', 'o', 'o', 'b', 'a'};
-    assert(base32Encode(fooba) == "mzxw6ytb");
-    out.clear();
-    assert(base32Decode("mzxw6ytb", out) && out == fooba);
-
-    // "foobar" -> "mzxw6ytboi======" -> "mzxw6ytboi"
-    std::vector<uint8_t> foobar = {'f', 'o', 'o', 'b', 'a', 'r'};
-    assert(base32Encode(foobar) == "mzxw6ytboi");
-    out.clear();
-    assert(base32Decode("mzxw6ytboi", out) && out == foobar);
-
-    // Invalid base32
-    out.clear();
-    assert(!base32Decode("my1", out)); // '1' is invalid in base32
-    // out might have partial results on fail, which is okay based on base32Decode implementation
+    // "my" canonically encodes the byte 'f'. If unused tail bits are ignored,
+    // "mz" decodes to the same complete byte and creates an alias spelling.
+    CHECK(!base32Decode("mz", out));
 }
 
 void testMintOpaque() {
-    SingularId id1 = SingularId::mintOpaque();
-    assert(id1.isValid());
-    assert(id1.kind() == SingularId::Kind::Opaque);
-    assert(!id1.canAuthenticate());
-    assert(id1.bytes().size() == 16); // 128 bits = 16 bytes
+    const SingularId id = SingularId::mintOpaque();
+    CHECK(id.isValid());
+    CHECK(id.kind() == SingularId::Kind::Opaque);
+    CHECK(!id.canAuthenticate());
+    CHECK(id.bytes().size() == 16); // 128 bits
 
-    SingularId id2 = SingularId::mintOpaque();
-    assert(id1 != id2); // highly likely unique
+    const std::string canonical = id.toString();
+    CHECK(canonical.rfind("ec1:", 0) == 0);
+    CHECK(SingularId::parse(canonical) == id);
 
-    std::string s = id1.toString();
-    assert(s.substr(0, 4) == "ec1:");
-    SingularId parsed = SingularId::parse(s);
-    assert(parsed == id1);
+    // The same underlying bytes must not be accepted through a non-canonical
+    // final Base32 symbol with non-zero unused tail bits.
+    CHECK(!SingularId::parse(nonCanonicalAlias(canonical)).isValid());
 }
 
 void testFromPublicKey() {
-    std::array<uint8_t, 32> pubkey;
-    for (int i = 0; i < 32; ++i) pubkey[i] = i;
-
-    SingularId id = SingularId::fromPublicKey(pubkey);
-    assert(id.isValid());
-    assert(id.kind() == SingularId::Kind::Key);
-    assert(id.canAuthenticate());
-    assert(id.bytes().size() == 32);
-
-    for (int i = 0; i < 32; ++i) {
-        assert(id.bytes()[i] == i);
+    std::array<uint8_t, 32> pubkey{};
+    for (std::size_t i = 0; i < pubkey.size(); ++i) {
+        pubkey[i] = static_cast<uint8_t>(i);
     }
 
-    std::string s = id.toString();
-    assert(s.substr(0, 14) == "did:earthcall:");
-    SingularId parsed = SingularId::parse(s);
-    assert(parsed == id);
+    const SingularId id = SingularId::fromPublicKey(pubkey);
+    CHECK(id.isValid());
+    CHECK(id.kind() == SingularId::Kind::Key);
+    CHECK(id.canAuthenticate());
+    CHECK(id.bytes().size() == 32);
+    CHECK(std::equal(pubkey.begin(), pubkey.end(), id.bytes().begin()));
+
+    const std::string canonical = id.toString();
+    CHECK(canonical.rfind("did:earthcall:", 0) == 0);
+    CHECK(SingularId::parse(canonical) == id);
+    CHECK(!SingularId::parse(nonCanonicalAlias(canonical)).isValid());
 }
 
 void testParseInvalid() {
-    // Empty
-    assert(!SingularId::parse("").isValid());
-    // Bad prefix
-    assert(!SingularId::parse("bad:ec1:1234").isValid());
-    // Missing base32
-    assert(!SingularId::parse("ec1:").isValid());
-    assert(!SingularId::parse("did:earthcall:").isValid());
-    // Invalid base32 chars
-    assert(!SingularId::parse("ec1:1234").isValid());
-    // Valid base32 but wrong length for opaque (16 bytes expected)
-    std::vector<uint8_t> shortData(15, 0);
-    assert(!SingularId::parse("ec1:" + base32Encode(shortData)).isValid());
-    std::vector<uint8_t> longData(17, 0);
-    assert(!SingularId::parse("ec1:" + base32Encode(longData)).isValid());
+    CHECK(!SingularId::parse("").isValid());
+    CHECK(!SingularId::parse("bad:ec1:1234").isValid());
+    CHECK(!SingularId::parse("ec1:").isValid());
+    CHECK(!SingularId::parse("did:earthcall:").isValid());
+    CHECK(!SingularId::parse("ec1:1234").isValid());
 
-    // Valid base32 but wrong length for key (32 bytes expected)
-    std::vector<uint8_t> shortKey(31, 0);
-    assert(!SingularId::parse("did:earthcall:" + base32Encode(shortKey)).isValid());
-    std::vector<uint8_t> longKey(33, 0);
-    assert(!SingularId::parse("did:earthcall:" + base32Encode(longKey)).isValid());
+    const std::vector<uint8_t> shortData(15, 0);
+    const std::vector<uint8_t> longData(17, 0);
+    CHECK(!SingularId::parse("ec1:" + base32Encode(shortData)).isValid());
+    CHECK(!SingularId::parse("ec1:" + base32Encode(longData)).isValid());
+
+    const std::vector<uint8_t> shortKey(31, 0);
+    const std::vector<uint8_t> longKey(33, 0);
+    CHECK(!SingularId::parse("did:earthcall:" + base32Encode(shortKey)).isValid());
+    CHECK(!SingularId::parse("did:earthcall:" + base32Encode(longKey)).isValid());
 }
 
 void testRelationalAndHash() {
-    SingularId id1 = SingularId::mintOpaque();
-    SingularId id2 = SingularId::mintOpaque();
+    // Deterministic opaque ids avoid making ordering/hash coverage depend on a
+    // probabilistic non-collision assertion from the CSPRNG.
+    const SingularId id1 = SingularId::parse(
+        "ec1:" + base32Encode(std::vector<uint8_t>(16, 1)));
+    const SingularId id2 = SingularId::parse(
+        "ec1:" + base32Encode(std::vector<uint8_t>(16, 2)));
 
-    std::array<uint8_t, 32> pk; pk.fill(1);
-    SingularId key1 = SingularId::fromPublicKey(pk);
+    std::array<uint8_t, 32> pk1{};
+    std::array<uint8_t, 32> pk2{};
+    pk1.fill(1);
+    pk2.fill(2);
+    const SingularId key1 = SingularId::fromPublicKey(pk1);
+    const SingularId key2 = SingularId::fromPublicKey(pk2);
 
-    std::array<uint8_t, 32> pk2; pk2.fill(2);
-    SingularId key2 = SingularId::fromPublicKey(pk2);
+    CHECK(id1.isValid() && id2.isValid());
+    CHECK(id1 == id1);
+    CHECK(id1 != id2);
 
-    assert(id1 == id1);
-    assert(id1 != id2);
+    const std::set<SingularId> ordered = {id1, id2, key1, key2};
+    CHECK(ordered.size() == 4);
 
-    // Test < operator via set
-    std::set<SingularId> sset = {id1, id2, key1, key2};
-    assert(sset.size() == 4);
+    const std::unordered_set<SingularId> hashed = {id1, id2, key1, key2};
+    CHECK(hashed.size() == 4);
+    CHECK(hashed.count(id1) == 1);
 
-    // Test std::hash via unordered_set
-    std::unordered_set<SingularId> uset = {id1, id2, key1, key2};
-    assert(uset.size() == 4);
-    assert(uset.count(id1) == 1);
-
-    SingularId invalid;
-    assert(!invalid.isValid());
-    assert(invalid == SingularId());
+    const SingularId invalid;
+    CHECK(!invalid.isValid());
+    CHECK(invalid == SingularId());
 }
 
 void testAbbreviated() {
-    SingularId opq = SingularId::mintOpaque();
-    std::string abbrO = opq.abbreviated();
-    assert(abbrO.find("ec1:") == 0);
+    const SingularId opaque = SingularId::parse(
+        "ec1:" + base32Encode(std::vector<uint8_t>(16, 3)));
+    CHECK(opaque.abbreviated().rfind("ec1:", 0) == 0);
 
-    std::array<uint8_t, 32> pk; pk.fill(1);
-    SingularId key = SingularId::fromPublicKey(pk);
-    std::string abbrK = key.abbreviated();
-    assert(abbrK.find("did:") == 0); // "did:" prefix is usually kept
+    std::array<uint8_t, 32> pk{};
+    pk.fill(1);
+    const SingularId key = SingularId::fromPublicKey(pk);
+    CHECK(key.abbreviated().rfind("did:", 0) == 0);
+    CHECK(SingularId().abbreviated() == "<invalid>");
 }
 
 int main() {
@@ -181,5 +183,5 @@ int main() {
     testAbbreviated();
 
     std::cout << "Identity::SingularId tests passed!\n";
-    return 0;
+    return EXIT_SUCCESS;
 }

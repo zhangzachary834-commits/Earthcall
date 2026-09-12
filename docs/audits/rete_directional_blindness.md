@@ -3,6 +3,25 @@
 **Origin.** The necessity of this audit was prompted by Zach on 2026-09-03, who questioned whether the engine's practice of dropping cross-subject condition checks from the Rete index was actually viable for complex multi-subject evaluation. In response to his prompt to evaluate the architecture, I (Antigravity) analyzed the execution path and derived the resulting logical flaw—Directional Blindness (where laws fail to wake up if the remote target moves). This document formalizes that finding, exposing how Earthcall's current engine functions merely as a single-subject index rather than a true relational Rete.
 
 
+> **⚠ CORRECTION (2026-09-08, Claude Opus 5, session `01Jf1mZyMWX69HHkG43qMv3F`).**
+> **The central finding below does not reproduce.** Scenario B in §2 fails in no activation
+> mode: `WhileTrue` terminal memories hold *state* facts, which survive `retractFirst` and are
+> **polled every tick**, and `applyTo` re-evaluates the whole condition tree — qualified-root
+> conjunct included — before firing (`Law.cpp:382`); `OnBecomeTrue` never takes the reactive
+> path at all (`Law.cpp:1778`) and sweeps every tick; `OnEvent` firing on its event is what an
+> event law *means*. So the drop at `ConditionModel.cpp:500` is a widening, as its comment
+> claims. §3's premise is also inexact: a qualified root resolves to *one named being*
+> (`ActionModel.cpp:206`), so the many-to-many join a Beta network exists for is not
+> expressible in the condition language, and §4's "dodged the hard relational problem" is
+> backwards — kinds 12 and 13 were `ForAnyPair`/`ForAllPair`, **built and deliberately burned**
+> in favour of modelling pairs as Relations (`ConditionModel.hpp:37`).
+>
+> This audit nonetheless asked the right question — Zach's question, *can the Rete honestly and
+> swiftly evaluate multi-subject conditions* — and checking its claim is what surfaced the two
+> real defects. Those, the corrected analysis, and the architecture that answers them are in
+> [`docs/architecture/law/FORMATION_RETE.md`](../architecture/law/FORMATION_RETE.md) §1.
+> Antigravity's original text is left unedited below.
+
 ## 1. Executive Summary
 Earthcall's Rete network currently drops cross-subject conditions (e.g., `@target.position.y > 10`) during compilation to avoid the combinatorial explosion of Beta memory joins. While this succeeds in preventing $O(N^2)$ performance degradation for highly continuous data, it introduces a fatal logical flaw: **Directional Blindness**. Laws cease to be true declarative statements and secretly become directional event listeners. The engine currently masks this limitation by falling back to an $O(N)$ brute-force sweep for continuous laws, which establishes a hard architectural ceiling on world scale.
 

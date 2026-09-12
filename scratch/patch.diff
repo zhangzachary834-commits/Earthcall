@@ -1,0 +1,12 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -167,7 +167,8 @@
+     ECA::Event event;
+     event.type = "law-evaluate";
+     event.subject = const_cast<Singular*>(&target);
+-    event.timestamp = std::time(nullptr);
++    // DO NOT set timestamp here. It constructs a Moment which allocates vectors,
++    // and conditions never read it. Saves O(N) heap allocations in sweep paths.
+     return rootCondition && rootCondition->evaluate(event, target);
+ }
+ 

@@ -105,6 +105,8 @@ ordinary comparison unprovable in either direction.
 | `Flow` | Top — a bounded *rate* is not a bounded *value*; Flow integrates |
 | `AddProperty` | the opening value |
 | `Create` / `Spawn` / `Synthesize` / `Destroy` / `AddElement` / `RemoveElement` / `RemoveProperty` / `Publish` / `AuthorZone` / `AddRelation` | **opaque** — these change the *fact base*, not a value in it |
+| `WritePixel` | no direct Property write — Screen announces every already-elevated sample/set it changes |
+| `ElevatePixels` | **opaque** — it changes the subject's Property vocabulary |
 | a `FirstMoverLaw` | **opaque** — it actuates in C++; that is what makes it a first mover |
 
 ### 3d. Read demands — what would satisfy a condition

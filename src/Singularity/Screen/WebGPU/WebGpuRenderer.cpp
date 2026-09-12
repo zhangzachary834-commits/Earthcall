@@ -436,6 +436,11 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     ipd.layout = _imageLayout;
     ipd.vertex.module = _imageShader; ipd.vertex.entryPoint = wgpu::Device::str("vs");
     ipd.vertex.bufferCount = 1; ipd.vertex.buffers = &ivbl;
+    // Keep the fragment stage attached: without this assignment the pipeline
+    // has zero color targets. It can still be returned by wgpu_native, but the
+    // first drawImage2D command then aborts at encoder finish because the live
+    // BGRA render pass and the target-less pipeline are incompatible.
+    ipd.fragment = &ifrag;
     ipd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
     ipd.primitive.cullMode = WGPUCullMode_None;
     ipd.depthStencil = &ids;
@@ -490,6 +495,15 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     _meshCache.init(_device, _queue);
 
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
+}
+
+void WebGpuRenderer::reloadShaders() {
+    for (auto& kv : _sdfPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
+    }
+    _sdfPipes.clear();
+    _programCache.clear();
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.

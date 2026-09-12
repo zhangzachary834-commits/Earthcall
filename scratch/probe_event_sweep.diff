@@ -1,0 +1,23 @@
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -1887,7 +1887,14 @@
+                 // VOCABULARY and satisfies the conditions — "every instance
+                 // of the category".
++                auto tA = glfwGetTime();
+                 std::vector<Singular*> subjects = sweepSubjects(*law);
++                auto tB = glfwGetTime();
++                int holds = 0;
+                 for (Singular* being : subjects) {
+                     if (!being || Universe::instance().isUnmade(being)) continue;
+                     if (!law->conditionsSatisfied(*being)) continue;
++                    holds++;
+                     // A live drive session OWNS the process: one process,
+                     // one clock, per law-and-subject. What a re-firing
+@@ -1896,6 +1903,10 @@
+                 }
++                auto tC = glfwGetTime();
++                if ((tC - tA) * 1000.0 > 0.5) {
++                    printf("[EVENT_SWEEP] Law '%s' took %.2f ms to evaluate %zu subjects, %d held\n", law->getIdentifier().c_str(), (tC - tA)*1000.0, subjects.size(), holds);
++                }
+                 continue;
+             }

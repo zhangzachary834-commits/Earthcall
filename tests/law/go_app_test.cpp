@@ -57,13 +57,13 @@ int main(int argc, char** argv) {
         if (std::filesystem::exists("../saves/worlds/go_app.json"))
             filename = "../saves/worlds/go_app.json";
     }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    // This test pointed SaveSystem straight at the real saves/ tree with no
+    // backup/restore, the same unguarded shape found in
+    // zone_boot_hydration_relations_test 2026-09-09 (it had corrupted the
+    // real saves/zones/Chess/zone.json — 4,076 lines grew to 8,792 — from
+    // being run directly, repeatedly, outside ctest). Guarding this one too
+    // rather than waiting to find it the same way.
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
     std::cout << "--- go_app_probe: " << filename << " ---\n";
 
     TestSupport::BootedEngineHarness harness;

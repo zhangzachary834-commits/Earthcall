@@ -122,6 +122,10 @@ const WriteExemption kWriteExemptions[] = {
      "transform, and the getter re-derives Euler angles from the matrix. Not a "
      "black box — a law that writes this path does move the object — but a law "
      "that writes THEN reads gets a different number than it wrote."},
+    {"Object", "authoritativeAxis",
+     "WRITES, but normalizes: setAuthoritativeAxis normalizes the input vector "
+     "so writing a non-unit vector reads back as normalized. Not a black box — "
+     "the axis is updated — but raw unnormalized vectors do not round-trip identically."},
     {"Object", "face.*",
      "activeLayer clamps to [0, layers-1], and a probe object has exactly one "
      "layer, so 0 is the only legal value and no perturbation can round-trip. "

@@ -35,5 +35,27 @@ class TestAppConfig(unittest.TestCase):
                 app_mod.app, host="127.0.0.1", port=5005, debug=True, allow_unsafe_werkzeug=True, use_reloader=False
             )
 
+    def test_cors_origins_from_env(self):
+        # Test default (no env var), should be None (same-origin)
+        if "CORS_ALLOWED_ORIGINS" in os.environ:
+            del os.environ["CORS_ALLOWED_ORIGINS"]
+
+        # We need to run the app module script again, but it's already imported
+        with patch.dict(sys.modules):
+            if 'src.Singularity.Foreign.py.app' in sys.modules:
+                del sys.modules['src.Singularity.Foreign.py.app']
+            import src.Singularity.Foreign.py.app as app_mod
+
+            self.assertEqual(app_mod.socketio.server_options.get('cors_allowed_origins'), None)
+
+        # Test with specific origins
+        with patch.dict(os.environ, {"CORS_ALLOWED_ORIGINS": "http://localhost:3000, https://example.com"}):
+            with patch.dict(sys.modules):
+                if 'src.Singularity.Foreign.py.app' in sys.modules:
+                    del sys.modules['src.Singularity.Foreign.py.app']
+                import src.Singularity.Foreign.py.app as app_mod
+
+                self.assertEqual(app_mod.socketio.server_options.get('cors_allowed_origins'), ["http://localhost:3000", "https://example.com"])
+
 if __name__ == "__main__":
     unittest.main()

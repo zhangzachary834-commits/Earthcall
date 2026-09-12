@@ -1,0 +1,68 @@
+name: Earthcall focused CI
+
+# CI is intentionally read-only. It builds and runs tests; it does not deploy,
+# publish, merge, delete, upload releases, or write back to the repository.
+on:
+  push:
+    branches:
+      - sol/authorable-light
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: earthcall-focused-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-cpu-tests:
+    name: Focused CPU tests (macOS)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Report runner and vendored library architecture
+        shell: bash
+        run: |
+          set -euxo pipefail
+          uname -a
+          uname -m
+          cmake --version
+          file local_deps/glfw_install/lib/libglfw3.a || true
+          file local_deps/openssl-3.0.13/libcrypto.a || true
+          file local_deps/openssl-3.0.13/libssl.a || true
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build focused regression witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target \
+            zone_spatial_field_roundtrip_test \
+            zone_identity_test \
+            unsaved_preserve_test \
+            no_black_box_test \
+            channel_paths_test
+
+      - name: Run focused regression witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(zone_spatial_field_roundtrip_test|zone_identity_test|unsaved_preserve_test|no_black_box_test|channel_paths_test)$'

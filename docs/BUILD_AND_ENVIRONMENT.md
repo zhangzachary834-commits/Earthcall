@@ -56,7 +56,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 83 registered, 82 pass (~35-175 s depending on load) — smooth_tessellation_cache_test is the one failure, pre-existing, Bugs.md #11; frame_lag_test is machine-load-sensitive
+ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07); WebGPU/GL tests require a desktop GPU/display session; frame_lag_test is machine-load-sensitive
 cmake --build build --target lag                       # just the frame-cost probe, with its report
 ```
 
@@ -74,14 +74,17 @@ The Python backend starts from `src/Singularity/Foreign/py/app.py`.
 
 ## The test suite
 
-**As of 2026-08-24, 66 of 66 tests pass and the default build is clean.** `zone_facetexture_test` guards Home/Zone identity materials (FaceTextures persist across session loads). `chess_app_test` guards the authored chess world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
+**As of 2026-09-07, 109 tests are registered and the default build is clean.** (`smooth_tessellation_cache_test` fixed and verified by Jules (Gemini model unexposed), session jules-6175025450238978931-25cb60c8, 2026-09-07).
+WebGPU tests and `zone_facetexture_test` require a desktop GPU/display session; failure to
+acquire a device or GLFW context in a headless/sandboxed runner is an environment failure,
+not a test verdict. `zone_facetexture_test` guards Home/Zone identity materials
+(FaceTextures persist across session loads). `chess_app_test` guards the authored chess
+world (`saves/worlds/chess_app.json`) and is green again — see below. The thirteen
 that were broken were stale against three refactors, not against each other:
 `Rendering/` → `Singularity/Screen/` and `Util/` → `Singularity/Storage/`;
 `Object::GeometryType` → `ShapeKind`; the placement and tool fields off `Person` and onto
 `Singularity::Core::CreationChannel` (refusal #1 being enforced); `Zone` off `Object` and
 onto `Singular`, losing the tint and brush a canvas has and a space does not.
-
-There are no known failures, deliberate or otherwise.
 
 **`chess_app_test` was a real, open regression (Bugs.md #7, 2026-08-24) and is now fixed and
 guarded.** The Zone identity store lost the relation graph — every `saves/zones/*/zone.json`

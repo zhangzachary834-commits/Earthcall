@@ -1,0 +1,60 @@
+--- frame_lag_test: saves/worlds/chess_app.json ---
+machine calibration: x0.55 versus the reference machine (>1 means slower; every time below is divided by it)
+baseline: tests/singularity/frame_lag_baseline.txt
+
+1. SHAPE — per-frame cost against population size
+     64 objects -> frame    0.240 ms  (zone    0.032 [g:0.000 r:0.000 a:0.013 p:0.018]  relations  0.000  law    0.203)  over 24 frames
+    128 objects -> frame    0.701 ms  (zone    0.069 [g:0.000 r:0.001 a:0.026 p:0.041]  relations  0.000  law    0.631)  over 24 frames
+    256 objects -> frame    1.385 ms  (zone    0.166 [g:0.001 r:0.002 a:0.054 p:0.109]  relations  0.000  law    1.214)  over 24 frames
+    512 objects -> frame    2.892 ms  (zone    0.472 [g:0.002 r:0.005 a:0.111 p:0.352]  relations  0.000  law    2.417)  over 24 frames
+  STANDING  whole frame grows as n^k (linear 1.0, quadratic 2.0), k = 1.176 (aspiration 1.150, baseline 1.113)
+  STANDING  Zone::update grows as n^k (linear 1.0, quadratic 2.0), k = 1.291 (aspiration 1.150, baseline 1.137)
+  note        groundScan costs 0.0015 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  note        rotation costs 0.0047 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  ok          automation grows as n^k (linear 1.0, quadratic 2.0), k = 1.023 (aspiration 1.150, baseline 0.968)
+  STANDING    physics grows as n^k (linear 1.0, quadratic 2.0), k = 1.429 (aspiration 1.150, baseline 1.279)
+  note      formation relations costs 0.0000 ms at 512 objects — too little to fit a growth curve to; reported, not judged
+  EXP-FAIL  LawManager::tick grows as n^k (linear 1.0, quadratic 2.0), k = 1.166 (aspiration 1.150, baseline 0.957)  <- ALGORITHMIC REGRESSION
+⚠️  Zone 'Chess': 79 saved relation(s) remain pending after this hydration pass — 79 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'Go': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'Go Game': 381 saved relation(s) remain pending after this hydration pass — 381 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'SynthesisStudio': 129 saved relation(s) remain pending after this hydration pass — 129 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+⚠️  Zone 'SynthesisStudio.LivingInstrument': 6 saved relation(s) remain pending after this hydration pass — 6 because an endpoint is not in the world yet. A later hydration pass may bind newly available endpoints; any still unresolved at save time will not be written back.
+🔀 Switching to zone [0]...
+🌍 Zone 'Chess' loaded with 39 objects.
+🌀 Entering zone: Chess (Local)
+   Qualities:
+     - kind: chess
+     - ownerKind: person
+   Deletable by:
+     - Player: yes
+     - Zach: yes
+
+world: Chess  objects=39  laws=70  relations=143
+
+2. QUIESCENCE — a world nobody is touching
+  120 idle frames
+  ok        law firings per frame do not grow (first half after warm-up peaks at 0, second half at 0; 0 firings over 120 idle frames)
+  ok        population stable over 120 idle frames (39 -> 39 objects)
+  ok        no being registers a property path twice (0 duplicates)
+
+3. STEADY — the loaded world, frame after frame
+  240 frames
+  simulation frame             median   0.145 ms   p95   0.176   worst   0.276   first-quarter   0.147 -> last-quarter   0.145 (medians)
+  by phase                     zone    0.088 ms   relations   0.000 ms   law    0.057 ms  (medians)
+  ok        median simulation frame = 0.262 ms (aspiration 5.500, baseline 2.456)
+  ok          of that, Zone::update = 0.158 ms (aspiration 3.000, baseline 0.797)
+  ok          of that, LawManager::tick = 0.103 ms (aspiration 2.000, baseline 1.653)
+  ok        95th-percentile frame (a hitch that recurs) = 0.317 ms (aspiration 16.600, baseline 2.662)
+  ok        no drift: last quarter of the run costs 0.99x the first quarter
+
+4. LOAD — opening the authored world
+  saves/worlds/chess_app.json: 1580.8 ms for 39 objects in the active Zone
+  ok        time to open the world = 2852.017 ms (aspiration 4000.000, baseline 6950.000)
+            (baseline is stale and slack — re-record it)
+
+machine steadiness: calibration x0.55 at the start, x0.49 at the end (drift 1.12x)
+
+broken invariants: 1   timing regressions: 0
+STANDING lines are costs already recorded in the baseline, not failures.
+They are tasks — see docs/Agenda/Tasks/To-do list.md, Performance.

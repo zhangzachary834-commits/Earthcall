@@ -1,0 +1,55 @@
+--- src/ConstructedBeing/Singular/Singular.hpp
++++ src/ConstructedBeing/Singular/Singular.hpp
+@@ -176,6 +176,8 @@
+     // sitting as a raw untyped member no law can address.
+     std::vector<Property*> listProperties();
+ 
++    bool hasPropertyStartingWith(const std::string& prefix);
++
+     // Dynamic properties to allow Laws to attach state to objects
+     // Hot path: StringId keys
+     bool getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const;
+--- src/ConstructedBeing/Singular/Singular.cpp
++++ src/ConstructedBeing/Singular/Singular.cpp
+@@ -194,6 +194,22 @@
+     return out;
+ }
+ 
++bool Singular::hasPropertyStartingWith(const std::string& prefix) {
++    if (!_propertiesBuilt) {
++        _propertiesBuilt = true;
++        buildProperties();
++        registerTelosProperty();
++    }
++    for (const auto& entry : _dynamicProperties) {
++        findProperty(entry.first);
++    }
++    for (auto& property : _propertyRegistry) {
++        if (!property) continue;
++        const std::string& propName = property->name();
++        if (propName.size() >= prefix.size() && propName.compare(0, prefix.size(), prefix) == 0) return true;
++    }
++    return false;
++}
++
+ // Hot path: Fast property lookup by interned ID.
+ //
+ // 1. Scan _propertyNames (contiguous array of ints) for a match. Perfect L1
+--- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -176,14 +176,7 @@
+     // couldApplyTo is a candidate filter that lawGetValue re-checks anyway.
+     const std::string prefix = name + ".";
+-    for (Property* prop : b.listProperties()) {
+-        if (!prop) continue;
+-        const std::string& propName = prop->name();
+-        if (propName.size() > prefix.size() &&
+-            propName.compare(0, prefix.size(), prefix) == 0) {
+-            return true;
+-        }
+-    }
+-    return false;
++    return b.hasPropertyStartingWith(prefix);
+ }
+ 
+ bool Law::couldApplyTo(Singular& being) const {

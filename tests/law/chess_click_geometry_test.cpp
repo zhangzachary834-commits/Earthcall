@@ -66,18 +66,8 @@ std::string realClick(Singularity::Input::InteractionChannel* interaction,
 } // namespace
 
 int main() {
-    std::string filename = "saves/worlds/chess_app.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/chess_app.json")) {
-        filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    std::string filename = TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
 
     TestSupport::BootedEngineHarness harness;
     harness.loadWorld(filename);

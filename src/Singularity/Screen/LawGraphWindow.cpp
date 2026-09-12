@@ -263,7 +263,11 @@ struct SessionState {
     // property registry and Relation beings remain the ontology's truth.
     bool showLawLibrary = false;
     bool showLawRelations = false;
+    bool showPropertyWriters = false;
     char lawLibrarySearch[96] = "";
+    char writerSearch[128] = "";
+    int writerMatchMode = 1;   // exact, path family, contains
+    int writerGroupMode = 0;   // Law, Relation, IF branch, parent Action
     std::string activePropertyLens;
     int lensReferent = 0;       // subject, event subject, event object, specific being
     int lensType = 0;           // visual/runtime narrowing only; never Law text
@@ -1170,6 +1174,56 @@ std::vector<LawCard> flattenLaw(const Law& law, const std::string& eventBinding)
     return cards;
 }
 
+std::vector<PropertyWriteSite> collectPropertyWrites(const ActionNode& root) {
+    std::vector<PropertyWriteSite> writes;
+    const auto joinedProperty = [](const PropertyPath& owner, const std::string& leaf) {
+        if (owner.empty()) return leaf;
+        if (leaf.empty()) return owner.toString();
+        return owner.toString() + "." + leaf;
+    };
+    std::function<void(const ActionNode&, std::vector<int>)> visit;
+    visit = [&](const ActionNode& node, std::vector<int> modelPath) {
+        const auto add = [&](std::string path, const char* effect, bool wildcard = false) {
+            if (path.empty()) return;
+            writes.push_back({std::move(path), node.kind, modelPath, effect, wildcard});
+        };
+        switch (node.kind) {
+            case ActionNode::Kind::Set:   add(node.path.toString(), "sets"); break;
+            case ActionNode::Kind::Add:   add(node.path.toString(), "adds to"); break;
+            case ActionNode::Kind::Scale: add(node.path.toString(), "scales"); break;
+            case ActionNode::Kind::Lerp:  add(node.path.toString(), "interpolates"); break;
+            case ActionNode::Kind::Drive: add(node.path.toString(), "drives"); break;
+            case ActionNode::Kind::Map:   add(node.path.toString(), "maps"); break;
+            case ActionNode::Kind::Flow:  add(node.path.toString(), "flows into"); break;
+            case ActionNode::Kind::AddProperty:
+                add(joinedProperty(node.path, node.propertyName), "grants");
+                break;
+            case ActionNode::Kind::RemoveProperty:
+                add(joinedProperty(node.path, node.propertyName), "removes or clears");
+                break;
+            case ActionNode::Kind::WritePixel:
+                add("surface.pixel.*", "writes a runtime-selected", true);
+                break;
+            case ActionNode::Kind::ElevatePixels:
+                if (!node.propertyName.empty()) {
+                    add(node.propertyName, "grants an elevated pixel-set");
+                    add("surface.selection." + node.propertyName,
+                        "records the elevated selection");
+                }
+                break;
+            default:
+                break;
+        }
+        for (std::size_t i = 0; i < node.children.size(); ++i) {
+            std::vector<int> childPath = modelPath;
+            childPath.push_back(static_cast<int>(i));
+            visit(node.children[i], std::move(childPath));
+        }
+    };
+    visit(root, {});
+    return writes;
+}
+
 ConditionNode* conditionAt(ConditionNode& root, const std::vector<int>& path) {
     ConditionNode* node = &root;
     for (int i : path) {
@@ -1674,6 +1728,27 @@ void seedActionKind(ActionNode& node) {
             if (node.path.empty()) node.path = PropertyPath::parse("acoustic.frequency");
             if (node.input.empty()) node.input = PropertyPath::parse("acoustic.amplitude");
             break;
+        case ActionNode::Kind::WritePixel:
+            if (node.pixelFacePath.empty())
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+            if (node.pixelUPath.empty())
+                node.pixelUPath = PropertyPath::parse("@interaction-channel.hoveredU");
+            if (node.pixelVPath.empty())
+                node.pixelVPath = PropertyPath::parse("@interaction-channel.hoveredV");
+            if (node.pixelColorPath.empty())
+                node.pixelColorPath = PropertyPath::parse("@creation-channel.activeColor");
+            break;
+        case ActionNode::Kind::ElevatePixels:
+            if (node.propertyName.empty()) node.propertyName = "authored.surface-region";
+            if (node.pixelFacePath.empty())
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+            if (node.mapFunction.pieces.empty()) {
+                node.mapFunction = OntoMath::Piecewise::continuous(
+                    OntoMath::MathNode::fromLegacyExpression(
+                        OntoMath::ScalarForm::constant(1.0)));
+                node.mapFunction.inputVariable = "u";
+            }
+            break;
         case ActionNode::Kind::AuthorZone:
             if (node.createType.empty()) node.createType = "new-zone";
             break;
@@ -1712,6 +1787,8 @@ bool actionKindPalette(ActionNode& node) {
         {ActionNode::Kind::Destroy,        "CREATION",      "Destroy", "Remove an Object from its Zone."},
         {ActionNode::Kind::Publish,        "SIGNALS",       "Publish event", "Mint an event that other Laws can hear."},
         {ActionNode::Kind::PlayAudio,      "SIGNALS",       "Play audio", "Act through procedural audio properties."},
+        {ActionNode::Kind::WritePixel,     "SCREEN",        "Write pixel", "Replace one UV-addressed surface sample."},
+        {ActionNode::Kind::ElevatePixels,  "SCREEN",        "Elevate pixel set", "Name an OntoMath-selected set as a Property."},
         {ActionNode::Kind::AddProperty,    "ONTOLOGY",      "Add property", "Grant authored state to a Singular."},
         {ActionNode::Kind::RemoveProperty, "ONTOLOGY",      "Remove property", "Take an authored property back."},
         {ActionNode::Kind::AddRelation,    "ONTOLOGY",      "Add relation", "Mint a first-class Relation between Singulars."},
@@ -2048,6 +2125,35 @@ bool editActionNode(ActionNode& node) {
             break;
         }
 
+        case ActionNode::Kind::WritePixel: {
+            ImGui::TextDisabled("Replace one surface sample through the Screen channel.");
+            ImGui::TextDisabled("Every operand is a PropertyPath; no shape or palette meaning is fixed here.");
+            if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            if (pathPicker("U path", node.pixelUPath)) changed = true;
+            if (pathPicker("V path", node.pixelVPath)) changed = true;
+            if (pathPicker("Color path", node.pixelColorPath)) changed = true;
+            break;
+        }
+
+        case ActionNode::Kind::ElevatePixels: {
+            ImGui::TextDisabled("Elevate the selector's defined set over local (u,v) as one Property.");
+            ImGui::TextDisabled("No region kind is preset: OntoMath alone defines membership.");
+            char nameBuf[128];
+            copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            if (textField("Property name", nameBuf, sizeof(nameBuf),
+                          "Name the elevated pixel set…")) {
+                node.propertyName = nameBuf;
+                changed = true;
+            }
+            if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            const MathBindings localCoordinates{
+                {"u", PropertyPath::parse("u")},
+                {"v", PropertyPath::parse("v")},
+            };
+            if (editPiecewise(node.mapFunction, localCoordinates)) changed = true;
+            break;
+        }
+
         case ActionNode::Kind::AuthorZone: {
             ImGui::TextDisabled("Mint a Zone into saves/zones/<id>/, owned by a Person, Relationship, or Community. Not a widget — this is the law text.");
             char idBuf[128];
@@ -2176,6 +2282,9 @@ void renderLawLibraryWindow(bool* open, LawManager& laws) {
     if (!ImGui::Begin("Law Library", open)) { ImGui::End(); return; }
     ImGui::TextColored(kHeaderColor, "Law Library");
     ImGui::TextWrapped("Authored categories from the world's Relation DAG. A Law may belong to more than one category; selecting it focuses Law Author.");
+    if (ImGui::Button("Find Property Writers", ImVec2(-1.0f, 0.0f))) {
+        g.showPropertyWriters = true;
+    }
     ImGui::SetNextItemWidth(-1);
     ImGui::InputTextWithHint("##law-library-search", "Type a category, Law name, or identifier…",
                              g.lawLibrarySearch, sizeof(g.lawLibrarySearch));
@@ -2343,6 +2452,295 @@ void renderLawLibraryWindow(bool* open, LawManager& laws) {
     ImGui::End();
 }
 
+struct WriterHit {
+    Law* law = nullptr;
+    PropertyWriteSite site;
+};
+
+bool pathFamilyContains(const std::string& family, const std::string& path) {
+    if (family.empty()) return true;
+    if (family == path) return true;
+    if (path.size() > family.size() && path.compare(0, family.size(), family) == 0 &&
+        (path[family.size()] == '.' || path[family.size()] == '*')) return true;
+    if (family.size() > path.size() && family.compare(0, path.size(), path) == 0 &&
+        (family[path.size()] == '.' || family[path.size()] == '*')) return true;
+    return false;
+}
+
+const ActionNode* actionAt(const ActionNode& root, const std::vector<int>& path) {
+    const ActionNode* node = &root;
+    for (int child : path) {
+        if (child < 0 || child >= static_cast<int>(node->children.size())) return nullptr;
+        node = &node->children[static_cast<std::size_t>(child)];
+    }
+    return node;
+}
+
+std::string actionBreadcrumb(const ActionNode& root, const std::vector<int>& path) {
+    std::string result = "THEN";
+    const ActionNode* node = &root;
+    for (int child : path) {
+        result += " / ";
+        result += ActionNode::kindName(node->kind);
+        result += "[" + std::to_string(child + 1) + "]";
+        if (child < 0 || child >= static_cast<int>(node->children.size())) break;
+        node = &node->children[static_cast<std::size_t>(child)];
+    }
+    result += " / ";
+    result += ActionNode::kindName(node->kind);
+    return result;
+}
+
+void focusWriterHit(LawManager& laws, const WriterHit& hit) {
+    if (!hit.law) return;
+    g.selectedLawId = hit.law->getIdentifier();
+    std::string binding;
+    const auto& triggers = laws.triggersOf(g.selectedLawId);
+    for (std::size_t i = 0; i < triggers.size(); ++i) {
+        if (i) binding += ", ";
+        binding += triggers[i];
+    }
+    const std::vector<LawCard> cards = flattenLaw(*hit.law, binding);
+    g.selectedCard = 0;
+    for (std::size_t i = 0; i < cards.size(); ++i) {
+        if (cards[i].kind == LawCard::Kind::Action &&
+            cards[i].modelPath == hit.site.modelPath) {
+            g.selectedCard = static_cast<int>(i);
+            break;
+        }
+    }
+}
+
+void renderWriterRow(LawManager& laws, const WriterHit& hit, int uniqueId) {
+    if (!hit.law || !hit.law->hasActionModel()) return;
+    ImGui::PushID(uniqueId);
+    const std::string label = hit.site.effect + "  " + hit.site.path;
+    if (ImGui::Selectable(label.c_str(), false, 0, ImVec2(0.0f, 35.0f))) {
+        focusWriterHit(laws, hit);
+    }
+    const bool rowHovered = ImGui::IsItemHovered();
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s%s", ActionNode::kindName(hit.site.actionKind),
+                        hit.site.wildcard ? " · runtime address" : "");
+    if (rowHovered || ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s\nClick to focus this exact Action card",
+                          actionBreadcrumb(*hit.law->actionModel(),
+                                           hit.site.modelPath).c_str());
+    }
+    ImGui::PopID();
+}
+
+struct ConditionBranchView {
+    std::string logic;
+    std::string description;
+};
+
+void collectConditionBranches(const ConditionNode& node, std::string logic,
+                              std::vector<ConditionBranchView>& branches) {
+    const char* connective = nullptr;
+    if (node.kind == ConditionNode::Kind::All) connective = "ALL requires";
+    else if (node.kind == ConditionNode::Kind::Any) connective = "ANY alternative";
+    else if (node.kind == ConditionNode::Kind::Not) connective = "NOT of";
+    else if (node.kind == ConditionNode::Kind::ForAny) connective = "FOR ANY instance";
+    else if (node.kind == ConditionNode::Kind::ForAll) connective = "FOR ALL instances";
+    if (connective && !node.children.empty()) {
+        if (!logic.empty()) logic += " / ";
+        logic += connective;
+        for (const auto& child : node.children) {
+            collectConditionBranches(child, logic, branches);
+        }
+        return;
+    }
+    branches.push_back({logic.empty() ? "IF" : std::move(logic), node.describe()});
+}
+
+void renderPropertyWritersWindow(bool* open, LawManager& laws) {
+    ImGui::SetNextWindowSize(ImVec2(860, 680), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Property Writers", open)) { ImGui::End(); return; }
+    ImGui::TextColored(kHeaderColor, "PROPERTY WRITERS");
+    ImGui::SameLine();
+    ImGui::TextDisabled("reverse lookup across every authored Action tree");
+    ImGui::TextWrapped("Find every Action node that changes one property, then inspect it by Law, authored Relation, IF branch, or parent Action.");
+
+    PropertyPath chosenPath = PropertyPath::parse(g.writerSearch);
+    if (pathPicker("Choose a property", chosenPath)) {
+        copyToBuf(g.writerSearch, sizeof(g.writerSearch), chosenPath.toString());
+    }
+    fieldCaption("Property query");
+    ImGui::SetNextItemWidth(-1.0f);
+    ImGui::InputTextWithHint("##writer-search", "type a path like position, color.r, or @being.property…",
+                             g.writerSearch, sizeof(g.writerSearch));
+    static const char* matchModes[] = {"Exact path", "Path family", "Contains text"};
+    comboField("Match", g.writerMatchMode, matchModes, 3,
+               "Path family includes a whole property and its deeper components.");
+    static const char* groupModes[] = {
+        "By Law", "By authored Relation", "By IF branch", "By parent Action"
+    };
+    comboField("Organize", g.writerGroupMode, groupModes, 4);
+
+    std::vector<WriterHit> hits;
+    const std::string query = g.writerSearch;
+    for (const auto& law : laws.getAll()) {
+        if (!law || !law->hasActionModel()) continue;
+        for (PropertyWriteSite site : collectPropertyWrites(*law->actionModel())) {
+            bool matches = query.empty();
+            if (!matches && g.writerMatchMode == 0) matches = site.path == query;
+            if (!matches && g.writerMatchMode == 1) {
+                std::string indexedPath = site.path;
+                if (site.wildcard && !indexedPath.empty() && indexedPath.back() == '*') {
+                    indexedPath.pop_back();
+                    if (!indexedPath.empty() && indexedPath.back() == '.') indexedPath.pop_back();
+                }
+                matches = pathFamilyContains(query, indexedPath);
+            }
+            if (!matches && g.writerMatchMode == 2) matches = searchMatches(site.path, query.c_str());
+            if (matches) hits.push_back({law.get(), std::move(site)});
+        }
+    }
+    std::sort(hits.begin(), hits.end(), [](const WriterHit& a, const WriterHit& b) {
+        if (a.law->name() != b.law->name()) return a.law->name() < b.law->name();
+        if (a.site.path != b.site.path) return a.site.path < b.site.path;
+        return a.site.modelPath < b.site.modelPath;
+    });
+    std::unordered_set<std::string> matchingLawIds;
+    for (const auto& hit : hits) matchingLawIds.insert(hit.law->getIdentifier());
+    ImGui::Separator();
+    ImGui::TextDisabled("%zu writing Action node(s) across %zu Law(s)",
+                        hits.size(), matchingLawIds.size());
+    if (hits.empty()) {
+        ImGui::TextWrapped("No Action node writes that path. Try Path family for a whole vector/property family, or Contains text when you only remember part of its name.");
+        ImGui::End();
+        return;
+    }
+    ImGui::BeginChild("writer-results", ImVec2(0.0f, 0.0f), true);
+
+    const auto renderLawHits = [&](Law& law) {
+        int row = 0;
+        for (const auto& hit : hits) {
+            if (hit.law == &law) renderWriterRow(laws, hit, row++);
+        }
+    };
+    const auto lawTree = [&](Law& law, const char* suffix = nullptr) {
+        std::size_t count = 0;
+        for (const auto& hit : hits) if (hit.law == &law) ++count;
+        const std::string label = law.name() + "  (" + std::to_string(count) + ")" +
+                                  (suffix ? std::string("  · ") + suffix : std::string());
+        if (ImGui::TreeNodeEx(law.getIdentifier().c_str(), ImGuiTreeNodeFlags_DefaultOpen,
+                              "%s", label.c_str())) {
+            ImGui::TextDisabled("%s", law.getIdentifier().c_str());
+            renderLawHits(law);
+            ImGui::TreePop();
+        }
+    };
+
+    if (g.writerGroupMode == 0) {
+        for (const auto& law : laws.getAll()) {
+            if (law && matchingLawIds.count(law->getIdentifier())) lawTree(*law);
+        }
+    } else if (g.writerGroupMode == 1) {
+        std::unordered_set<std::string> groupedLawIds;
+        int relationIndex = 0;
+        for (Relation* relation : Universe::instance().relations()) {
+            if (!relation) continue;
+            Law* aLaw = dynamic_cast<Law*>(relation->a());
+            Law* bLaw = dynamic_cast<Law*>(relation->b());
+            const bool aMatches = aLaw && matchingLawIds.count(aLaw->getIdentifier());
+            const bool bMatches = bLaw && matchingLawIds.count(bLaw->getIdentifier());
+            if (!aMatches && !bMatches) continue;
+            if (aMatches) groupedLawIds.insert(aLaw->getIdentifier());
+            if (bMatches) groupedLawIds.insert(bLaw->getIdentifier());
+            ImGui::PushID(relationIndex++);
+            const std::string relationLabel = relation->aId() + "  —[" + relation->type + "]—  " +
+                                              relation->bId();
+            if (ImGui::TreeNodeEx("relation", ImGuiTreeNodeFlags_DefaultOpen,
+                                  "%s", relationLabel.c_str())) {
+                if (aMatches) lawTree(*aLaw, "endpoint A");
+                if (bMatches && bLaw != aLaw) lawTree(*bLaw, "endpoint B");
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+        }
+        if (groupedLawIds.size() < matchingLawIds.size() &&
+            ImGui::TreeNodeEx("writer-unrelated", ImGuiTreeNodeFlags_DefaultOpen,
+                              "No authored Relation")) {
+            for (const auto& law : laws.getAll()) {
+                if (law && matchingLawIds.count(law->getIdentifier()) &&
+                    !groupedLawIds.count(law->getIdentifier())) lawTree(*law);
+            }
+            ImGui::TreePop();
+        }
+    } else if (g.writerGroupMode == 2) {
+        for (const auto& lawPtr : laws.getAll()) {
+            if (!lawPtr || !matchingLawIds.count(lawPtr->getIdentifier())) continue;
+            Law& law = *lawPtr;
+            if (!ImGui::TreeNodeEx(law.getIdentifier().c_str(), ImGuiTreeNodeFlags_DefaultOpen,
+                                   "%s", law.name().c_str())) continue;
+            std::vector<ConditionBranchView> branches;
+            if (law.hasConditionModel()) {
+                collectConditionBranches(*law.conditionModel(), "", branches);
+                ImGui::TextDisabled("Complete IF: %s", law.conditionModel()->describe().c_str());
+            } else {
+                branches.push_back({"IF", "always"});
+            }
+            for (std::size_t branch = 0; branch < branches.size(); ++branch) {
+                ImGui::PushID(static_cast<int>(branch));
+                const std::string label = branches[branch].logic + ": " + branches[branch].description;
+                if (ImGui::TreeNodeEx("branch", ImGuiTreeNodeFlags_DefaultOpen,
+                                      "%s", label.c_str())) {
+                    ImGui::TextDisabled("These writes are gated by the complete IF above; this is one visible branch of it.");
+                    renderLawHits(law);
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+    } else {
+        for (const auto& lawPtr : laws.getAll()) {
+            if (!lawPtr || !lawPtr->hasActionModel() ||
+                !matchingLawIds.count(lawPtr->getIdentifier())) continue;
+            Law& law = *lawPtr;
+            if (!ImGui::TreeNodeEx(law.getIdentifier().c_str(), ImGuiTreeNodeFlags_DefaultOpen,
+                                   "%s", law.name().c_str())) continue;
+            std::vector<std::vector<int>> parents;
+            for (const auto& hit : hits) {
+                if (hit.law != &law) continue;
+                std::vector<int> parent = hit.site.modelPath;
+                if (parent.empty()) parent.push_back(-1);  // the THEN root has no parent
+                else parent.pop_back();
+                if (std::find(parents.begin(), parents.end(), parent) == parents.end()) {
+                    parents.push_back(std::move(parent));
+                }
+            }
+            for (std::size_t p = 0; p < parents.size(); ++p) {
+                const bool noParent = parents[p].size() == 1 && parents[p][0] == -1;
+                const ActionNode* parent = noParent ? nullptr
+                                                    : actionAt(*law.actionModel(), parents[p]);
+                std::string label = noParent ? "No parent — this is the THEN root"
+                                             : "Parent: ";
+                if (!noParent) label += parent ? parent->describe() : "unresolved Action";
+                ImGui::PushID(static_cast<int>(p));
+                if (ImGui::TreeNodeEx("parent", ImGuiTreeNodeFlags_DefaultOpen,
+                                      "%s", label.c_str())) {
+                    int row = 0;
+                    for (const auto& hit : hits) {
+                        if (hit.law != &law) continue;
+                        std::vector<int> hitParent = hit.site.modelPath;
+                        if (hitParent.empty()) hitParent.push_back(-1);
+                        else hitParent.pop_back();
+                        if (hitParent == parents[p]) renderWriterRow(laws, hit, row++);
+                    }
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+    }
+    ImGui::EndChild();
+    ImGui::End();
+}
+
 // Draw only Relations which literally join two Law Singulars. Event names,
 // matching property text, and visual proximity are deliberately not promoted
 // into edges: a graph that invents bonds would be a lie about the world.
@@ -2460,16 +2858,19 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         ImGui::End();
         if (g.showLawLibrary) renderLawLibraryWindow(&g.showLawLibrary, laws);
         if (g.showLawRelations) renderLawRelationsWindow(&g.showLawRelations);
+        if (g.showPropertyWriters) renderPropertyWritersWindow(&g.showPropertyWriters, laws);
         return;
     }
 
     ImGui::TextColored(kHeaderColor, "LAW AUTHOR");
     ImGui::SameLine();
     ImGui::TextDisabled("shape a law as WHEN / IF / THEN");
-    ImGui::SameLine(ImGui::GetWindowWidth() - 370.0f);
+    ImGui::SameLine(ImGui::GetWindowWidth() - 520.0f);
     if (ImGui::Button("Law Library")) g.showLawLibrary = true;
     ImGui::SameLine();
     if (ImGui::Button("Relation Graph")) g.showLawRelations = true;
+    ImGui::SameLine();
+    if (ImGui::Button("Property Writers")) g.showPropertyWriters = true;
     ImGui::Separator();
 
     // ------------------------------------------------------------------
@@ -2652,6 +3053,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         ImGui::End();
         if (g.showLawLibrary) renderLawLibraryWindow(&g.showLawLibrary, laws);
         if (g.showLawRelations) renderLawRelationsWindow(&g.showLawRelations);
+        if (g.showPropertyWriters) renderPropertyWritersWindow(&g.showPropertyWriters, laws);
         return;
     }
 
@@ -3264,6 +3666,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
     ImGui::End();
     if (g.showLawLibrary) renderLawLibraryWindow(&g.showLawLibrary, laws);
     if (g.showLawRelations) renderLawRelationsWindow(&g.showLawRelations);
+    if (g.showPropertyWriters) renderPropertyWritersWindow(&g.showPropertyWriters, laws);
 }
 
 } // namespace Rendering

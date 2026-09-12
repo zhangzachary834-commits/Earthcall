@@ -32,11 +32,12 @@ void KeyboardHandler::handleKeyPress(int key) {
     imguiWantsKeyboard = ImGui::GetIO().WantCaptureKeyboard;
 #endif
 
-    // Escape, F8 (Creator Console), and Grave Accent (Dev Tools) can always bypass ImGui capture
+    // Escape, F8 (Creator Console), F9 (Creation), F10 (IDE Mode), and Grave Accent (Dev Tools) can always bypass ImGui capture
     if (imguiWantsKeyboard && 
         key != GLFW_KEY_ESCAPE && 
         key != GLFW_KEY_F8 && 
         key != GLFW_KEY_F9 && 
+        key != GLFW_KEY_F10 && 
         key != GLFW_KEY_GRAVE_ACCENT) {
         return;
     }

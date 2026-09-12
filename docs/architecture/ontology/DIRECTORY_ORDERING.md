@@ -55,7 +55,7 @@ not — which is the proof they were never directories, only shipping labels.
 TOP LEVEL = the ontology + the modality layer.
 
   A directory may sit at the top level if and only if it names
-    (a) a kind of being        — ConstructedBeing, Person, Relation, ZonesOfEarth, Identity, Time
+    (a) a kind of being        — ConstructedBeing, Identity, Person, Relation, Time, ZonesOfEarth
     (b) a mode of the machine  — Singularity (and its modalities beneath)
 
   The Person-facing authorship surface is not a top-level region. Tools, chat,
@@ -84,54 +84,50 @@ never flatters itself.*
 Earthcall/
   src/                     the one source root — all languages
     ConstructedBeing/      Singular (Object · Lexeme · Property) · Material
+    Identity/              First Mover register, identity ledger, key pairs, claims
     Person/                Person · Soul · Body · Relationship · Perspective
     Relation/              Relation · RelationManager · Formation
-    ZonesOfEarth/          Zone · Home · Physics · AuthorsOfLaw (Law) · Ourverse
+                             py/
     Singularity/           the modality layer — where language stops mattering
-      Core/                Engine · EventBus · CreationChannel
       Audio/               the Sound modality (AudioSystem)
+      Core/                Engine · EventBus · CreationChannel
+      Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
+      FirstMoverOntology/  FirstMoverWindowTools, Legacy, TalkingRobotGuyAPI
+      Foreign/             the Foreign software modality (ForeignChannel at the root)
+                             API/       EarthcallAPI, SecurityManager
+                             Adapters/  MacOSAccessibilityAdapter
+                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+                             mcp/       earthcall-mcp-server.js
+                             py/        app.py
+      Input/               the Input modality
+                             Interaction/  InteractionChannel, ControlPatterns
+                             Keyboard/     KeyboardHandler
+                             Locomotion/   LocomotionChannel
+                             Mouse/        MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
                              py/  engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
-      Foreign/             the Foreign software modality (ForeignChannel at the root)
-                             Adapters/  MacOSAccessibilityAdapter
-                             API/       EarthcallAPI, SecurityManager
-                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-                             py/        app.py
-      Input/               the Input modality
-                             Keyboard/     KeyboardHandler
-                             Mouse/        MouseHandler
-                             Locomotion/   LocomotionChannel
-                             Interaction/  InteractionChannel, ControlPatterns
-      Screen/              the Screen/Light modality (Renderer, WebGPU, GL, BrushSystem)
-      Storage/             the Storage modality (SaveSystem, CloudStorage, BinaryPack, Frontier)
       Physical/            the Physical hardware modality (PhysicalChannel)
-      FirstMoverWindowTools/ CreatorConsole, CreationTools, Controls, Chat, Tools
-    Identity/              First Mover register, identity ledger, key pairs, claims
+                             Adapters/
+                             py/
+      Screen/              the Screen/Light modality (Renderer, BrushSystem, ScreenRecorder)
+                             GL/
+                             WebGPU/
+      Storage/             the Storage modality (SaveSystem, CloudStorage, FileChannel, StreamChannel, VirtualFileSystem)
+                             FlatBuffers/
+                             Schema/
+                             Serialization/
     Time/                  Moment (instant or interval); the world clock itself lives on Universe
-    Legacy/                the graveyard — not yet ontologically placed
+    ZonesOfEarth/          Zone · HomesOfEarth · Physics · AuthorsOfLaw (Law) · Ourverse
+                             py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
-  CMakeLists.txt  .gitmodules  Makefile.legacy                      the toolchain
+  CMakeLists.txt  .gitmodules                                       the toolchain
   build/  logs/                                                     output (ignored)
-  TestLab/  TestLabAI/                                               strays (§6)
 ```
-
-`migrate_saves.cpp`, formerly listed here as a root-level stray, was moved to
-`scratch/scripts/migrate/migrate_saves.cpp` on 2026-08-13 — it built no CMake target, so it was a
-one-off tool rather than live source, matching the same "move, never discard" precedent
-as `scratch/attic/` below. On 2026-08-14 the scratch root was subdivided (`probes/`,
-`legacy/`, `scripts/`, `fixtures/`, `audits/`, `experiments/`); see `scratch/README.md`.
-
-`scratch/attic/` holds what used to sit loose at `sight-cpp/`'s root — one-off
-probes (`test_parse.cpp`, `test_variant.cpp`), fixtures (`save.json`), logs, and
-five stale compiled binaries that were tracked (`dump_save`, `pack_save`,
-`earthcall_webgpu`, `test_parse`, `test_parse2`). They were moved rather than
-deleted: a refactor may relocate, never discard. Untracking the binaries is a
-separate decision for a separate commit.
 
 ---\
 
@@ -190,7 +186,7 @@ into their proper ontological homes:
 | `Rendering/` | `Singularity/Screen/` | **Done.** Output channel for the Screen/Light modality. Rendering is how Earthcall acts in the light modality. |
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
-| `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `BinaryPack`, `Frontier`). |
+| `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `FileChannel`, `StreamChannel`, `VirtualFileSystem`). |
 | `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
@@ -213,9 +209,9 @@ regrouping has thinned it.
 |---|---|---|
 | `third_party/`, `local_deps/`, `imgui/` | vendored foreign source | permanent. Foreign code is foreign; pretending otherwise would be the mirror error of the one this document fixes. |
 | `build/`, `logs/` | machine-specific output | permanent, and git-ignored. |
+| `TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 | `docs/`, `tests/`, `examples/`, `scripts/`, `scratch/`, `saves/`, `web_ui/` | the workshop — things *about* the world rather than *in* it | permanent. `SUBSTRATE_ORDERING.md` contemplates a future where the world reads its own tests and docs as beings; until it does, they are workshop. |
 | `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
-| `../../../TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 
 ---\
 

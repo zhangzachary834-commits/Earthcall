@@ -10,12 +10,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if we are running under Emscripten (WASM Mode)
     const isWasmMode = typeof Module !== 'undefined' && Module.Earthcall_EmitUtterance;
     
+    const defaultPlaceholder = inputField.placeholder;
+
     function setStatus(text, isConnected) {
         statusText.innerText = text;
+
+        const wasDisconnected = !statusContainer.classList.contains('connected') && statusContainer.classList.contains('disconnected');
+
         if (isConnected) {
             statusContainer.classList.add('connected');
+            statusContainer.classList.remove('disconnected');
         } else {
             statusContainer.classList.remove('connected');
+            statusContainer.classList.add('disconnected');
+        }
+
+        inputField.disabled = !isConnected;
+        inputField.placeholder = isConnected ? defaultPlaceholder : "Connecting to engine...";
+
+        inputField.dispatchEvent(new Event('input'));
+
+        if (isConnected && wasDisconnected) {
+            inputField.focus();
         }
     }
     
@@ -70,20 +86,34 @@ document.addEventListener('DOMContentLoaded', () => {
         
         inputField.value = '';
         inputField.dispatchEvent(new Event('input'));
+        inputField.focus();
     }
     
-    emitBtn.addEventListener('click', emitUtterance);
-    
-    inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            emitUtterance();
+    const form = document.getElementById('logos-interface');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        emitUtterance();
+    });
+
+    inputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            inputField.value = '';
+            inputField.dispatchEvent(new Event('input'));
         }
     });
 
     inputField.addEventListener('input', () => {
         const isEmpty = inputField.value.trim() === '';
-        emitBtn.disabled = isEmpty;
-        emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
-        emitBtn.setAttribute('aria-disabled', isEmpty.toString());
+        const isDisabled = inputField.disabled;
+
+        emitBtn.disabled = isEmpty || isDisabled;
+
+        if (isDisabled) {
+            emitBtn.title = "Engine disconnected";
+        } else {
+            emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
+        }
+
+        emitBtn.setAttribute('aria-disabled', (isEmpty || isDisabled).toString());
     });
 });

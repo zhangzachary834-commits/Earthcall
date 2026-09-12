@@ -130,7 +130,8 @@ Decide   is this being a control; is it enabled; does the Person have standing;
          → LAW. ConditionModel over property paths and Related() category edges.
 
 Act      what the click changes — a colour, a number, a spawned being, an event
-         → LAW. ActionModel: Set / Add / Map / Flow / Publish / Create / Spawn.
+         → LAW. ActionModel: Set / Add / Map / Flow / Publish / Create / Spawn /
+           WritePixel.
 ```
 
 The line between Sense and Decide is the line this framework defends. A pointer channel
@@ -253,6 +254,33 @@ change it. That is a `LAW_MIGRATION_FRAMEWORK.md` rung this framework opens.
   conflict is *in the world*, visible, and resolvable by a metalaw. A propagation-stopping
   UI framework is a permission system, and `NO_BLACK_BOX.md` §2 says there is exactly one
   of those and it is `TransferPolicy`.
+
+### 4e. Surface coordinates and the pixel act
+
+For a `Shape2D`, `hoveredFace` is face `0` and `hoveredU` / `hoveredV` are the normalized
+coordinates of the pointer within the authored screen rectangle. They are Sense readings,
+not a decision about what the surface means. `WritePixel` reads four PropertyPaths—face,
+`u`, `v`, and a `vec3` color—and asks the Screen channel to replace exactly that surface
+sample. The normal defaults point those paths at the interaction channel and
+`@creation-channel.activeColor`, so a Person can author the basic pixel-writer without a
+paint-tool callback.
+
+Zach further required that one pixel or a set of pixels be capable of becoming a Property,
+without allocating a Property for every raw sample. There are two elevation forms:
+
+- `AddProperty("surface.pixel.<face>.<x>.<y>", color)` elevates one exact sample. Its live
+  Property reads and writes the texture sample, enumerates with the Object's other authored
+  properties, and persists with it.
+- `ElevatePixels` grants any Person-chosen property name. Its region is the defined set of
+  an authored OntoMath `Piecewise` evaluated over local `u` and `v` at texel centers. The
+  companion `surface.selection.<name>` Property preserves that face and expression; the
+  named Property is a row-major `list<vec3>` over the selected samples.
+
+There is deliberately no rectangle, brush, tile, or other region preset in the runtime
+vocabulary. A named region's bounds are OntoMath. Unpromoted samples remain dense Screen /
+Material storage; promotion makes only the intended sample or set visible to Law. A direct
+pixel act also announces changes to every elevated Property whose selection contains that
+sample.
 
 ---
 
@@ -583,6 +611,12 @@ unable to fire at all, because nothing could test what only booting a window cou
    relation, surviving a JSON round trip — and the archetype law reaches the newborn
    without being re-authored
 8. a control whose category being has left the world is not governed, and is not guessed
+
+`tests/law/basic_pixel_changer_test.cpp` walks the whole authored pixel path: it loads
+`saves/worlds/basic_pixel_changer.json`, performs a real `Shape2D` pick and click, observes
+the authored `WritePixel` Law change exactly one sample, verifies Material copy-on-write,
+then elevates one exact pixel and one OntoMath-defined set through authored actions. It
+checks live Property reads/writes and save serialization for both forms.
 
 ### 11b. Manual protocol
 

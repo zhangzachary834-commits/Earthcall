@@ -17,6 +17,13 @@ static glm::mat4 vectorToMat4(const std::vector<float>& v){
     if(v.size()==16){ std::memcpy(glm::value_ptr(m), v.data(), sizeof(float)*16); }
     return m;
 }
+
+static std::vector<float> mat4ToVector(const glm::mat4& m) {
+    std::vector<float> v(16);
+    const float* ptr = glm::value_ptr(m);
+    for (int i = 0; i < 16; ++i) v[i] = ptr[i];
+    return v;
+}
 // ------------------------------------------------------------------
 // Object (.ecform / Semantic Text Substrate)
 // ------------------------------------------------------------------
@@ -33,6 +40,25 @@ void to_json(nlohmann::json& j, const Object& obj){
     }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
+
+    // Placement is Person-meaningful, Law-addressable state — not "purely
+    // physical" density that only the conglomerate .ecmatter sidecar may
+    // hold. Commit 946a6240 (2026-09-01, "Substrate Split Serialization")
+    // removed these five fields from here on that theory; from_json below
+    // never stopped reading them, so every Object loaded through a Zone
+    // identity that had no matching matter sidecar silently lost its
+    // transform to the identity default. Diagnosed by Sol (Codex,
+    // 2026-09-09) from Zach's live report of Sanctum/Synthesis
+    // Studio/Chess collapsing to the origin — see
+    // docs/Agenda/Tasks/Specific Tasks/Per_Zone_serialization_pathway/
+    // Per_Zone_serialization_pathway.md, "Live failure" section. Physical
+    // topology (vertex/face density) is the part that may still live in
+    // matter alone; placement may not disappear from the semantic record.
+    j["transform"] = mat4ToVector(obj.getTransform());
+    j["center"] = { obj.getCenter().x, obj.getCenter().y, obj.getCenter().z };
+    j["authoritativeAxis"] = { obj.getAuthoritativeAxis().x, obj.getAuthoritativeAxis().y, obj.getAuthoritativeAxis().z };
+    j["targetRotation"] = { obj.getTargetRotationEulerDegrees().x, obj.getTargetRotationEulerDegrees().y, obj.getTargetRotationEulerDegrees().z };
+    j["rotationResponsiveness"] = obj.getRotationResponsiveness();
 
     j["renderMode"] = static_cast<int>(obj.getRenderModeProp());
     // Screen-space position for Shape2D / Text2D.
@@ -61,14 +87,35 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["tags"] = obj.getTags();
     }
 
-    // Face colours (legacy / baseline tint) are migrated to Material; 
-    // we omit them from new ecform serializations to complete the substrate split.
+    // Face colours (legacy / baseline tint) are being migrated to Material,
+    // but that migration is not finished — Shape2D/Text2D's flat, untextured
+    // fallback (Object::draw2DObject) still reads faceColors[0] directly, not
+    // any Material. Omitting this field from serialization (as a prior pass
+    // here intended, to "complete the substrate split") silently regressed
+    // every such object's authored colour to the raw C++ default the moment
+    // it round-tripped through a Zone identity store: faceColors[6][3]'s
+    // in-class initializer is {1,0,0},{1,0,0},{0,1,0},{0,1,0},{0,0,1},{0,0,1}
+    // (a legacy cube-face default), so an authored white 2D plate came back
+    // red. Found 2026-09-07 via the Basic Pixel Changer canvas and ~14 other
+    // Zone identity files with the same gap. Serialize it until the render
+    // side actually stops reading it — remove this again only alongside that
+    // migration, not before.
+    j["faceColors"] = nlohmann::json::array({
+        {obj.faceColors[0][0], obj.faceColors[0][1], obj.faceColors[0][2]},
+        {obj.faceColors[1][0], obj.faceColors[1][1], obj.faceColors[1][2]},
+        {obj.faceColors[2][0], obj.faceColors[2][1], obj.faceColors[2][2]},
+        {obj.faceColors[3][0], obj.faceColors[3][1], obj.faceColors[3][2]},
+        {obj.faceColors[4][0], obj.faceColors[4][1], obj.faceColors[4][2]},
+        {obj.faceColors[5][0], obj.faceColors[5][1], obj.faceColors[5][2]}
+    });
 
     // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
         nlohmann::json dyn = nlohmann::json::object();
         for (const auto& entry : obj.dynamicProperties()) {
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+            PropertyValue live = entry.second;
+            obj.getDynamicProperty(entry.first, live);
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
         }
         j["authoredProperties"] = std::move(dyn);
     }
@@ -296,4 +343,3 @@ void from_json(const nlohmann::json& j, Object& obj){
     //     }
     // }
 }
-

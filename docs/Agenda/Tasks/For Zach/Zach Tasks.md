@@ -1,0 +1,7 @@
+- Foundational design spec, laws on laws, things building on things.  Law=groups, Singulars, Zones
+- Make connections. Read GPT crystallization doc
+- First Mover framework (STockfihs and LLMs) and their Relations  Which means EArthcall File I/O
+- Put author flags in one place
+- One master Zach tasks file that links to both author flags and person verification
+- Inside Agenda
+- Make a milestone celebration document that celebrates and admires Earthcall’s progress

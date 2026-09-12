@@ -1,0 +1,4 @@
+process attach --pid $(pgrep frame_lag_test)
+thread backtrace all
+detach
+quit

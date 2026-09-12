@@ -7,6 +7,7 @@
 #include "Automation/AutomationEvents.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
@@ -19,6 +20,8 @@
 #include <cmath>   // for mathematical functions
 #include <limits>  // for numeric_limits
 #include <optional>
+#include <map>
+#include <stdexcept>
 #include <unordered_set>
 #include <unordered_map>
 #include <atomic>
@@ -298,6 +301,258 @@ void Object::setFaceColor(int faceIndex, float r, float g, float b) {
         mine->initFaceTextures(faces);
     }
     PaintToolSurface(*mine).fillFaceColor(faceIndex, r, g, b);
+}
+
+namespace {
+struct PixelAddress {
+    int face = -1;
+    int x = -1;
+    int y = -1;
+};
+
+bool parsePixelAddress(const std::string& name, PixelAddress& out) {
+    std::vector<std::string> fields;
+    std::size_t begin = 0;
+    while (begin <= name.size()) {
+        const std::size_t end = name.find('.', begin);
+        fields.push_back(name.substr(begin, end == std::string::npos ? end : end - begin));
+        if (end == std::string::npos) break;
+        begin = end + 1;
+    }
+    if (fields.size() != 5 || fields[0] != "surface" || fields[1] != "pixel") return false;
+    try {
+        const auto parseWholeInt = [](const std::string& field) {
+            std::size_t consumed = 0;
+            const int value = std::stoi(field, &consumed);
+            if (consumed != field.size()) throw std::invalid_argument("trailing characters");
+            return value;
+        };
+        out.face = parseWholeInt(fields[2]);
+        out.x = parseWholeInt(fields[3]);
+        out.y = parseWholeInt(fields[4]);
+    } catch (...) {
+        return false;
+    }
+    return out.face >= 0 && out.x >= 0 && out.y >= 0;
+}
+
+glm::vec3 readTexel(const FaceTexture& ft, int x, int y) {
+    const std::size_t offset = static_cast<std::size_t>(y * ft.size + x) * 4;
+    return glm::vec3(ft.pixels[offset], ft.pixels[offset + 1], ft.pixels[offset + 2]) /
+           255.0f;
+}
+
+constexpr const char* kSelectionPrefix = "surface.selection.";
+
+bool selectionDefinition(const Object& object, const std::string& propertyName,
+                         int& face, OntoMath::Piecewise& selector) {
+    const auto id = Earthcall::StringInterner::intern(
+        std::string(kSelectionPrefix) + propertyName);
+    const auto found = object.dynamicProperties().find(id);
+    if (found == object.dynamicProperties().end()) return false;
+    const auto* encoded = std::get_if<std::string>(&found->second);
+    if (!encoded) return false;
+    try {
+        const nlohmann::json definition = nlohmann::json::parse(*encoded);
+        face = definition.value("face", -1);
+        if (face < 0 || !definition.contains("selector")) return false;
+        selector = OntoMath::Piecewise::fromJson(definition["selector"]);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool selectorIncludes(const OntoMath::Piecewise& selector, float u, float v,
+                      const Object& subject) {
+    const std::map<std::string, PropertyValue> vars{
+        {"u", PropertyValue(static_cast<double>(u))},
+        {"v", PropertyValue(static_cast<double>(v))},
+    };
+    return selector.evaluate(vars, &subject).has_value();
+}
+
+std::vector<glm::ivec2> selectedTexels(const FaceTexture& ft,
+                                       const OntoMath::Piecewise& selector,
+                                       const Object& subject) {
+    std::vector<glm::ivec2> selected;
+    for (int y = 0; y < ft.size; ++y) {
+        for (int x = 0; x < ft.size; ++x) {
+            const float u = (static_cast<float>(x) + 0.5f) / ft.size;
+            const float v = (static_cast<float>(y) + 0.5f) / ft.size;
+            if (selectorIncludes(selector, u, v, subject)) selected.emplace_back(x, y);
+        }
+    }
+    return selected;
+}
+} // namespace
+
+bool Object::writeSurfacePixel(int faceIndex, const glm::vec2& uv,
+                               const glm::vec3& color) {
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (faceIndex < 0 || faceIndex >= faces || !std::isfinite(uv.x) ||
+        !std::isfinite(uv.y) || uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f ||
+        uv.y > 1.0f || !std::isfinite(color.r) || !std::isfinite(color.g) ||
+        !std::isfinite(color.b)) {
+        return false;
+    }
+    auto mine = ownMaterial();
+    if (!mine) return false;
+    if (static_cast<int>(mine->faceTextures.size()) != faces) {
+        mine->initFaceTextures(faces);
+    }
+    FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(faceIndex)];
+    if (!ft.writePixel(uv, color)) return false;
+
+    // An elevated sample/set is an ordinary Property: a direct Screen act
+    // touching it wakes the same change feed as a PropertyPath write.
+    const int px = std::min(ft.size - 1, static_cast<int>(std::floor(uv.x * ft.size)));
+    const int py = std::min(ft.size - 1, static_cast<int>(std::floor(uv.y * ft.size)));
+    for (const auto& entry : dynamicProperties()) {
+        const std::string name = Earthcall::StringInterner::resolve(entry.first);
+        PixelAddress pixel;
+        if (parsePixelAddress(name, pixel)) {
+            if (pixel.face == faceIndex && pixel.x == px && pixel.y == py) {
+                notifyPropertyChanged(this, name);
+            }
+            continue;
+        }
+        int selectionFace = -1;
+        OntoMath::Piecewise selector;
+        if (selectionDefinition(*this, name, selectionFace, selector) &&
+            selectionFace == faceIndex && selectorIncludes(selector, uv.x, uv.y, *this)) {
+            notifyPropertyChanged(this, name);
+        }
+    }
+    return true;
+}
+
+bool Object::elevateSurfaceRegionProperty(const std::string& propertyName,
+                                          int faceIndex,
+                                          const OntoMath::Piecewise& selector,
+                                          std::string& reason) {
+    PixelAddress reservedPixel;
+    if (propertyName.empty() || propertyName.rfind(kSelectionPrefix, 0) == 0 ||
+        parsePixelAddress(propertyName, reservedPixel)) {
+        reason = "property name is empty or reserved for exact pixels/selection definitions";
+        return false;
+    }
+    if (selector.pieces.empty()) {
+        reason = "OntoMath selector has no defined pieces";
+        return false;
+    }
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (faceIndex < 0 || faceIndex >= faces) {
+        reason = "selected face is outside the Object's surface";
+        return false;
+    }
+    if (Property* existing = findProperty(propertyName);
+        existing && !hasDynamicProperty(propertyName)) {
+        reason = "would shadow first-mover property '" + propertyName + "'";
+        return false;
+    }
+
+    auto mine = ownMaterial();
+    if (!mine) {
+        reason = "Object could not own a paint Material";
+        return false;
+    }
+    if (static_cast<int>(mine->faceTextures.size()) != faces) mine->initFaceTextures(faces);
+    const FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(faceIndex)];
+    const auto selected = selectedTexels(ft, selector, *this);
+    auto colors = std::make_shared<PropertyList>();
+    colors->elements.reserve(selected.size());
+    for (const glm::ivec2& xy : selected) {
+        colors->elements.emplace_back(readTexel(ft, xy.x, xy.y));
+    }
+
+    const nlohmann::json definition{{"face", faceIndex},
+                                    {"selector", selector.toJson()}};
+    if (!setDynamicProperty(std::string(kSelectionPrefix) + propertyName,
+                            PropertyValue(definition.dump())) ||
+        !setDynamicProperty(propertyName, PropertyValue(colors))) {
+        reason = "surface selection could not be installed as a Property";
+        return false;
+    }
+    return true;
+}
+
+bool Object::recognizesAuthoredPropertyProjection(Earthcall::StringId id) const {
+    const std::string name = Earthcall::StringInterner::resolve(id);
+    PixelAddress pixel;
+    if (parsePixelAddress(name, pixel)) return true;
+    int face = -1;
+    OntoMath::Piecewise selector;
+    return selectionDefinition(*this, name, face, selector);
+}
+
+bool Object::readAuthoredPropertyProjection(Earthcall::StringId id,
+                                            PropertyValue& out) const {
+    const std::string name = Earthcall::StringInterner::resolve(id);
+    PixelAddress pixel;
+    int face = -1;
+    OntoMath::Piecewise selector;
+    const bool single = parsePixelAddress(name, pixel);
+    if (single) face = pixel.face;
+    else if (!selectionDefinition(*this, name, face, selector)) return false;
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (!mat || face < 0 || face >= static_cast<int>(mat->faceTextures.size())) return false;
+    const FaceTexture& ft = mat->faceTextures[static_cast<std::size_t>(face)];
+    const std::size_t expected = static_cast<std::size_t>(ft.size) * ft.size * 4;
+    if (ft.size <= 0 || ft.pixels.size() != expected) return false;
+    if (single) {
+        if (pixel.x >= ft.size || pixel.y >= ft.size) return false;
+        out = PropertyValue(readTexel(ft, pixel.x, pixel.y));
+        return true;
+    }
+    const auto selected = selectedTexels(ft, selector, *this);
+    auto list = std::make_shared<PropertyList>();
+    list->elements.reserve(selected.size());
+    for (const glm::ivec2& xy : selected) {
+        list->elements.emplace_back(readTexel(ft, xy.x, xy.y));
+    }
+    out = PropertyValue(std::move(list));
+    return true;
+}
+
+bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
+                                             const PropertyValue& value) {
+    const std::string name = Earthcall::StringInterner::resolve(id);
+    PixelAddress pixel;
+    int face = -1;
+    OntoMath::Piecewise selector;
+    const bool single = parsePixelAddress(name, pixel);
+    if (single) face = pixel.face;
+    else if (!selectionDefinition(*this, name, face, selector)) return false;
+    auto mine = ownMaterial();
+    if (!mine) return false;
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (face < 0 || face >= faces) return false;
+    if (static_cast<int>(mine->faceTextures.size()) != faces) mine->initFaceTextures(faces);
+    FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(face)];
+    std::vector<glm::ivec2> selected;
+    if (single) {
+        if (pixel.x >= ft.size || pixel.y >= ft.size) return false;
+        selected.emplace_back(pixel.x, pixel.y);
+    } else {
+        selected = selectedTexels(ft, selector, *this);
+    }
+
+    std::vector<glm::vec3> colors;
+    if (const auto* one = std::get_if<glm::vec3>(&value)) {
+        colors.assign(selected.size(), *one);
+    } else if (const auto* list = std::get_if<std::shared_ptr<PropertyList>>(&value);
+               list && *list) {
+        for (const PropertyValue& item : (*list)->elements) {
+            const auto* color = std::get_if<glm::vec3>(&item);
+            if (!color) return false;
+            colors.push_back(*color);
+        }
+    } else {
+        return false;
+    }
+    if (colors.size() != selected.size()) return false;
+    return ft.writeSamples(selected, colors);
 }
 
 void Object::drawSmoothModel() const {
@@ -638,12 +893,24 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         return;
     }
 
-    // Two triangles covering the rect (CCW, top-left origin matches ortho).
+    // A Shape2D is also the screen carrier for authored pixel content.  Once
+    // its Material has a face texture, show those samples directly; until
+    // then it remains the same inexpensive flat plate as before.
     const std::vector<glm::vec2> tris = {
         {x0, y0}, {x1, y0}, {x1, y1},
         {x0, y0}, {x1, y1}, {x0, y1},
     };
-    currentRenderer().drawTris2D(tris, color);
+    const FaceAlbedo albedo = faceAlbedo(0);
+    if (albedo.pixels && albedo.size > 0) {
+        auto mat = materials.resolveOrDefault(_materialId);
+        const glm::vec4 tint(mat ? mat->baseColor : glm::vec3(1.0f),
+                             mat ? mat->opacity : 1.0f);
+        currentRenderer().drawImage2D(
+            albedo.pixels, static_cast<uint32_t>(albedo.size),
+            static_cast<uint32_t>(albedo.size), glm::vec4(x0, y0, x1, y1), tint);
+    } else {
+        currentRenderer().drawTris2D(tris, color);
+    }
 
     // Border: a 1px outline (darkened fill color for contrast).
     const glm::vec4 borderColor(color.r * 0.6f, color.g * 0.6f, color.b * 0.6f, 1.0f);

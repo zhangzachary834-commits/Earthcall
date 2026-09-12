@@ -526,10 +526,17 @@ them. `BeingKind::World = 6` never matches; do not reuse the integer.
 | 6 | `Parallel` | 15 | `RemoveElement` |
 | 7 | `Spawn` — instantiate a Concept | 16 | `Destroy` |
 | 8 | `Map` — `path := f(bindings)` | 17 | `Synthesize` |
+| 18 | `PlayAudio` — act through Audio | 19 | `AuthorZone` |
+| 20 | `AddRelation` | 21 | `WritePixel` — UV-addressed Screen act |
+| 22 | `ElevatePixels` — OntoMath-selected samples become a named Property |  |  |
 
 `Object::ShapeKind` (also append-only): `0 Cube · 1 Polyhedron · 2 Sphere · 3 Cylinder ·
 4 Cone · 5 Ellipsoid · 6 Ovoid · 7 Paraboloid · 8 Torus · 9 RoundedBox · 10 Field ·
-11 Patch · 12 Shape2D · 13 Text2D`.
+11 Patch · 12 Shape2D · 13 Text2D`. Per architectural doctrine (Zach), `ShapeKind` is a
+parameterization substrate reserved for First Movers (bootstrapping, tooling, migration,
+foreign interop) and not the load-bearing substrate for Persons' world authoring (which
+is OntoMath fields/CSG, Formations, and Laws). `Shape2D` and `Text2D` serve as low-level
+orthographic Screen carrier primitives, not domain UI categories.
 
 ### 5d. `PropertyValue` — the tagged-value envelope
 

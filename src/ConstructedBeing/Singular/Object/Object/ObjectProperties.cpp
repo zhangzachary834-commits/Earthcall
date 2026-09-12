@@ -538,6 +538,12 @@ void Object::buildProperties() {
         "transform", this, &Object::getTransform, &Object::setTransform));
     registerProperty(std::make_unique<PropertyRef<Object, glm::vec3>>(
         "center", this, &Object::center));
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "authoritativeAxis", this, &Object::getAuthoritativeAxis, &Object::setAuthoritativeAxis));
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "targetRotation", this, &Object::getTargetRotationEulerDegrees, &Object::setTargetRotationEulerDegrees));
+    registerProperty(std::make_unique<ComputedProperty<Object, float>>(
+        "rotationResponsiveness", this, &Object::getRotationResponsiveness, &Object::setRotationResponsiveness));
     // A Law can reassign which Material being paints this object, by identifier.
     registerProperty(std::make_unique<PropertyRef<Object, std::string>>(
         "material", this, &Object::_materialId));

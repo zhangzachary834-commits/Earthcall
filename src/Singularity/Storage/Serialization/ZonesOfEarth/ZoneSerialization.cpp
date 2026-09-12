@@ -4,6 +4,7 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
 #include <memory>
 #include <string>
@@ -11,6 +12,11 @@
 #include <utility>
 
 extern MaterialManager materials;
+
+std::string zoneIdFromJson(const nlohmann::json& zj) {
+    return zj.value("identifier", zj.value("name", std::string{}));
+}
+
 // ------------------------------------------------------------------
 // Zone object bag — on disk still `{"objects":[...]}` (the old World shape).
 // ------------------------------------------------------------------
@@ -72,6 +78,90 @@ Zone::Scope scopeFromName(const std::string& name) {
 
 } // namespace
 
+// A Zone with a per-identity store (saves/zones/<id>/) is built from the
+// store first, so a Person's own in-place edits — a moved position, a
+// painted texture — survive re-loading an older World snapshot. That is
+// the point of the store; see the comment at its call site in
+// ZoneManager.cpp. But the store is a snapshot taken at some past moment,
+// not a diff — a field the World authors LATER, which the store never
+// captured, used to be silently dropped in favour of the raw C++ default
+// rather than the World's authored value, because objects only ever came
+// from ONE side or the other, never both.
+//
+// This merges per object, per field, by RFC 7386 JSON merge-patch
+// (nlohmann::json::merge_patch): the World's authored JSON is the base,
+// the store's object overlays it, and only fields the overlay actually
+// specifies win. A field absent from the overlay — because it postdates
+// the snapshot — falls through to the World's authored value instead of
+// vanishing to a hardcoded default. An object the World added after the
+// snapshot (no id in the store at all) is admitted fresh rather than
+// dropped, since there is no "unsaved work" to protect here — this is the
+// Zone's first appearance this run, its objects fresh out of
+// makeZoneFromJson a moment ago, not yet ticked by any Law.
+//
+// ONLY safe here for exactly that reason. Deliberately NOT called from
+// ZoneManager's findLive branch, and not safe to call there: a Zone kept
+// LIVE from the running session may already carry Rete facts, selection
+// state, and other runtime history that from_json (called again here on
+// an "existing" match) knows nothing about and will silently drop —
+// chess_click_geometry_test caught exactly this when it was tried
+// (2026-09-07): every piece stopped registering isSelected after a click.
+// unsaved_preserve_test also requires another file's snapshot of the same
+// live Zone to introduce nothing of its own, which this function's
+// new-object admission would violate there too. See faceColors' own fix
+// in ObjectSerialization.cpp's to_json for the findLive-reachable case
+// instead: making the field round-trip through every save means the store
+// itself is correct from its first write, so no runtime merge is needed
+// once a Zone is already live.
+void mergeZoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
+    const nlohmann::json* arr = nullptr;
+    if (j.contains("objects") && j["objects"].is_array()) arr = &j["objects"];
+    else if (j.is_array()) arr = &j;
+    if (!arr) return;
+    const nlohmann::json& worldObjects = *arr;
+    auto& owned = zone.getOwnedObjectsMutable();
+    for (const auto& oj : worldObjects) {
+        std::string id;
+        if (oj.contains("objectID") && oj["objectID"].is_string()) {
+            id = oj["objectID"].get<std::string>();
+        } else if (oj.contains("id") && oj["id"].is_string()) {
+            id = oj["id"].get<std::string>();
+        }
+        if (id.empty()) continue;
+
+        std::shared_ptr<Object> existing;
+        for (auto& holder : owned) {
+            if (holder && holder->getIdentifier() == id) { existing = holder; break; }
+        }
+
+        if (existing) {
+            nlohmann::json merged = oj;
+            merged.merge_patch(nlohmann::json(*existing));
+            from_json(merged, *existing);
+        } else {
+            std::shared_ptr<Object> obj = std::make_shared<Object>(id);
+            from_json(oj, *obj);
+            zone.addObject(std::move(obj));
+        }
+    }
+
+    // Re-link composition for anything newly admitted above — mirrors the
+    // pass at the end of zoneObjectsFromJson.
+    for (auto& holder : owned) {
+        if (!holder || holder->getPendingElementIds().empty()) continue;
+        for (const auto& elementId : holder->getPendingElementIds()) {
+            for (auto& candidate : owned) {
+                if (candidate && candidate.get() != holder.get() &&
+                    candidate->getIdentifier() == elementId) {
+                    holder->addElement(candidate.get());
+                    break;
+                }
+            }
+        }
+        holder->getPendingElementIds().clear();
+    }
+}
+
 nlohmann::json zoneToJson(const Zone& zone) {
     nlohmann::json zj;
     zj["name"] = zone.name();
@@ -90,6 +180,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+
+    // The Zone's continuous field root used to exist live, participate in the
+    // Formation, expose PropertyPaths, and then simply disappear from saves.
+    // Persist the being itself — including its OntoMath ASTs and authored
+    // dynamic properties — so a field that governs reality remains real
+    // across the temporal boundary too.
+    if (const auto* root = zone.spatialRoot()) {
+        zj["spatialRoot"] = root->toJson();
+    }
+
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
@@ -149,6 +249,18 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             }
         }
     }
+
+    // `replaceObjects=false` is the live-Zone merge used by loadState to
+    // preserve unsaved work. The spatial FieldNode is live authored state too:
+    // an older session snapshot must not rewind a Person's unsaved field/Law
+    // edits. Fresh construction and explicit snapshot restoration use the
+    // replacement path and may hydrate the persisted mathematical being.
+    // Restore INTO the already-owned node rather than replacing its pointer so
+    // Formation membership and lazily materialised PropertyRefs stay valid.
+    if (replaceObjects && zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
+        if (auto* root = zone.spatialRoot()) root->applyJson(zj["spatialRoot"]);
+    }
+
     if (replaceObjects) {
         zone.getOwnedObjectsMutable().clear();
     }
@@ -159,6 +271,15 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             zoneObjectsFromJson(zj, zone);
         }
     }
+    // A non-empty zone here can mean two different things this function
+    // cannot tell apart from replaceObjects alone: a Zone kept LIVE from the
+    // running session (unsaved_preserve_test: another file's snapshot of the
+    // same Zone must NOT touch it), or a Zone just hydrated from its identity
+    // store a moment ago (where the World's later authoring SHOULD fill in
+    // fields the store never captured — see mergeZoneObjectsFromJson).
+    // Those callers are distinguishable at the call site, not here, so the
+    // merge is invoked explicitly by ZoneManager's identity-store branch
+    // rather than folded into this general-purpose function.
     // Bug #7: this used to be nested in the empty-objects branch above, so
     // a Zone that already held objects (kept live, or just hydrated from
     // the store) could never receive its relation graph or lexemes. Now
@@ -170,17 +291,34 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
 }
 
 std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
-    const std::string name = zj.value("name", zj.value("identifier", "Untitled Zone"));
+    // Identity, not display: MUST agree with zoneIdFromJson, the same
+    // resolution every admission/dedup check in ZoneManager.cpp uses to
+    // ask "is a Zone with this id already live?" Before this fix, this
+    // function preferred "name" while zoneIdFromJson preferred
+    // "identifier" — a record whose two fields differed (the common case
+    // once identity/name are actually distinct concepts, e.g. the
+    // BasicPixelChanger/"Basic Pixel Changer" case, or the
+    // Basic2DButtonZone/"Basic 2D Button Zone" one that surfaced this)
+    // could never be recognized as already-live, so every load of a
+    // World naming it minted a fresh duplicate live Zone object sharing
+    // the same eventual getIdentifier() as one already there — exactly
+    // the ambiguity applyMatterFlatBuffer's Invariant 3 refusal surfaced.
+    const std::string identifier = zoneIdFromJson(zj);
+    const std::string safeIdentifier = identifier.empty() ? "Untitled Zone" : identifier;
+    const std::string displayName = zj.value("name", safeIdentifier);
     std::string kind;
     if (zj.contains("qualities") && zj["qualities"].is_object()) {
         kind = zj["qualities"].value("kind", std::string{});
     }
     if (kind.empty()) kind = zj.value("kind", std::string{});
     const bool dwelling = (kind == Zone::kHomeKind || kind == Zone::kCommunityHomeKind
-                           || name == "Home" || zj.value("being", std::string{}) == "home");
+                           || safeIdentifier == "Home" || zj.value("being", std::string{}) == "home");
     std::shared_ptr<Zone> zone = dwelling
-        ? std::shared_ptr<Zone>(std::make_shared<Home>(name, "strict"))
-        : std::make_shared<Zone>(name, "strict");
+        ? std::shared_ptr<Zone>(std::make_shared<Home>(safeIdentifier, "strict"))
+        : std::make_shared<Zone>(safeIdentifier, "strict");
+    if (!displayName.empty() && displayName != safeIdentifier) {
+        zone->setName(displayName);
+    }
     applyZoneJson(*zone, zj, true);
     return zone;
 }

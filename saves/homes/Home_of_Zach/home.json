@@ -1,7 +1,9 @@
 {
   "being": "home",
   "cannotForceStay": true,
-  "deletable": {},
+  "deletable": {
+    "Zach": true
+  },
   "entryRequiresWill": true,
   "formationRelations": [],
   "identifier": "Home_of_Zach",

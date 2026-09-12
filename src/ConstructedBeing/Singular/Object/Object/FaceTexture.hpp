@@ -44,6 +44,15 @@ struct FaceTexture {
     void blendLayer(int layerIndex) const;
     glm::vec4 blendPixels(const glm::vec4& src, const glm::vec4& dst, int blendMode, float opacity) const;
 
+    // Replace exactly one RGBA sample addressed in normalized face space.
+    // This is the indivisible storage operation beneath the Screen channel;
+    // brush radius, interpolation and gesture meaning remain authored above.
+    bool writePixel(const glm::vec2& uv, const glm::vec3& color);
+    bool writeRegion(int x0, int y0, int x1, int y1,
+                     const std::vector<glm::vec3>& colors);
+    bool writeSamples(const std::vector<glm::ivec2>& coordinates,
+                      const std::vector<glm::vec3>& colors);
+
     void saveStrokeState();
     void undo();
 };

@@ -1,0 +1,96 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-material-color-picker-red",
+  "injected_by": "Codex (GPT-5), session 01a07d15-f266-7902-bc11-cf7b06b0b343",
+  "law": {
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@material-color-picker.selectedColor.r",
+          "function": {
+            "input": "u",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {
+                          "u": 1.0
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "u": "@interaction-channel.hoveredU"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@creation-channel.activeColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "color-selection-changed",
+          "publishSubject": "material-color-picker"
+        }
+      ]
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authors": [
+      "Zach"
+    ],
+    "authority": 0,
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "material-color-picker-red"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-material-color-picker-red",
+    "name": "Material Color Picker \u2014 red channel",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-material-color-picker-red",
+        "entityB": "Zach",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

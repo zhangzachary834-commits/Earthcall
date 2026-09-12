@@ -395,6 +395,36 @@ std::shared_ptr<OntoMath::MathNode> SdfNode::toMathNode() const {
     return nullptr;
 }
 
+namespace {
+    // Rebuilding this environment per sample was pure overhead:
+    // four red-black-tree inserts with string keys, once per SDF
+    // sample. Reuse one map per thread -- the keys are created once
+    // and every later call only assigns into nodes that already
+    // exist, so the steady state allocates nothing.
+    //
+    // KERNEL SCRATCH (Refusal 6): a reused evaluation buffer, not
+    // being state; nothing authored can observe it. Safe to share
+    // because MathNode::evaluate never re-enters evalLeaf -- Op::SDF
+    // and Op::Gradient recurse inside the MathNode tree, never back
+    // out through geom::evalSdf -- so two bindings are never live at
+    // once. The piecewise arm below keeps its own fresh map: a Piece
+    // can carry a FunctionCall or a Fold, which read the world, and
+    // that is not a path this comment can promise never returns here.
+    thread_local std::map<std::string, PropertyValue> t_evalLeafVars{
+        {"x", PropertyValue(0.0)},
+        {"y", PropertyValue(0.0)},
+        {"z", PropertyValue(0.0)},
+        {"p", PropertyValue(glm::vec3(0.0f))},
+    };
+
+    // Same reused-map reasoning as evalLeaf above: Kernel scratch, safe because
+    // MathNode::evaluate never re-enters this call while it is live.
+    thread_local std::map<std::string, PropertyValue> t_heightGridVars{
+        {"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)},
+        {"z", PropertyValue(0.0)}, {"p", PropertyValue(glm::vec3(0.0f))},
+    };
+}
+
 static float evalRpn(const std::vector<SdfToken>& r, float x, float y, float z) {
     if (r.empty()) return 1e9f; // empty space
     float st[128]; int sp = 0;
@@ -435,31 +465,11 @@ static float evalLeaf(const SdfNode& n, const glm::vec3& world) {
         case SdfPrim::Torus:     return sdTorus(p, n.dims.x, n.dims.y);
         case SdfPrim::Expr: {
             if (n.mathNode) {
-                // Rebuilding this environment per sample was pure overhead:
-                // four red-black-tree inserts with string keys, once per SDF
-                // sample. Reuse one map per thread -- the keys are created once
-                // and every later call only assigns into nodes that already
-                // exist, so the steady state allocates nothing.
-                //
-                // KERNEL SCRATCH (Refusal 6): a reused evaluation buffer, not
-                // being state; nothing authored can observe it. Safe to share
-                // because MathNode::evaluate never re-enters evalLeaf -- Op::SDF
-                // and Op::Gradient recurse inside the MathNode tree, never back
-                // out through geom::evalSdf -- so two bindings are never live at
-                // once. The piecewise arm below keeps its own fresh map: a Piece
-                // can carry a FunctionCall or a Fold, which read the world, and
-                // that is not a path this comment can promise never returns here.
-                static thread_local std::map<std::string, PropertyValue> vars{
-                    {"x", PropertyValue(0.0)},
-                    {"y", PropertyValue(0.0)},
-                    {"z", PropertyValue(0.0)},
-                    {"p", PropertyValue(glm::vec3(0.0f))},
-                };
-                vars["x"] = PropertyValue(static_cast<double>(p.x));
-                vars["y"] = PropertyValue(static_cast<double>(p.y));
-                vars["z"] = PropertyValue(static_cast<double>(p.z));
-                vars["p"] = PropertyValue(p);
-                auto val = n.mathNode->evaluate(vars);
+                t_evalLeafVars["x"] = PropertyValue(static_cast<double>(p.x));
+                t_evalLeafVars["y"] = PropertyValue(static_cast<double>(p.y));
+                t_evalLeafVars["z"] = PropertyValue(static_cast<double>(p.z));
+                t_evalLeafVars["p"] = PropertyValue(p);
+                auto val = n.mathNode->evaluate(t_evalLeafVars);
                 if (val) {
                     double d = 0.0;
                     if (propertyValueToNumber(*val, d)) return static_cast<float>(d);
@@ -813,13 +823,6 @@ HeightGrid computeHeightGrid(const OntoMath::MathNode& h, const glm::vec3& halfE
                         lipschitz->y * halfExtent.y +
                         lipschitz->z * (0.5f * cellSizeZ);
 
-    // Same reused-map reasoning as evalLeaf above: Kernel scratch, safe because
-    // MathNode::evaluate never re-enters this call while it is live.
-    static thread_local std::map<std::string, PropertyValue> vars{
-        {"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)},
-        {"z", PropertyValue(0.0)}, {"p", PropertyValue(glm::vec3(0.0f))},
-    };
-
     grid.dimX = dimX;
     grid.dimZ = dimZ;
     grid.cells.resize(static_cast<size_t>(dimX) * static_cast<size_t>(dimZ));
@@ -827,12 +830,12 @@ HeightGrid computeHeightGrid(const OntoMath::MathNode& h, const glm::vec3& halfE
         const float z = -halfExtent.z + (static_cast<float>(iz) + 0.5f) * cellSizeZ;
         for (int ix = 0; ix < dimX; ++ix) {
             const float x = -halfExtent.x + (static_cast<float>(ix) + 0.5f) * cellSizeX;
-            vars["x"] = PropertyValue(static_cast<double>(x));
-            vars["y"] = PropertyValue(0.0);
-            vars["z"] = PropertyValue(static_cast<double>(z));
-            vars["p"] = PropertyValue(glm::vec3(x, 0.0f, z));
+            t_heightGridVars["x"] = PropertyValue(static_cast<double>(x));
+            t_heightGridVars["y"] = PropertyValue(0.0);
+            t_heightGridVars["z"] = PropertyValue(static_cast<double>(z));
+            t_heightGridVars["p"] = PropertyValue(glm::vec3(x, 0.0f, z));
             float sample = 0.0f;
-            if (auto val = h.evaluate(vars)) {
+            if (auto val = h.evaluate(t_heightGridVars)) {
                 double d = 0.0;
                 if (propertyValueToNumber(*val, d)) sample = static_cast<float>(d);
             }
