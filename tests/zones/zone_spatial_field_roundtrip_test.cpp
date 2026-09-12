@@ -30,6 +30,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -165,13 +166,15 @@ int main() {
                   "other authored radiant-field vocabulary survives with its type");
 
             Property* ast = root->findProperty("field.ast");
-            const auto* astText = ast ? std::get_if<std::string>(&ast->value()) : nullptr;
             bool sameAst = false;
-            if (astText) {
-                const auto expected = nlohmann::json::parse(authoredAstJson, nullptr, false);
-                const auto actual = nlohmann::json::parse(*astText, nullptr, false);
-                sameAst = !expected.is_discarded() && !actual.is_discarded()
-                       && expected == actual;
+            if (ast) {
+                const PropertyValue astValue = ast->value();
+                if (const auto* astText = std::get_if<std::string>(&astValue)) {
+                    const auto expected = nlohmann::json::parse(authoredAstJson, nullptr, false);
+                    const auto actual = nlohmann::json::parse(*astText, nullptr, false);
+                    sameAst = !expected.is_discarded() && !actual.is_discarded()
+                           && expected == actual;
+                }
             }
             check(sameAst,
                   "the Person-authored OntoMath AST survives save -> fresh hydration");
