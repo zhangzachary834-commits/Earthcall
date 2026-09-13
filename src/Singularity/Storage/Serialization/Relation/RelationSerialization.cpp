@@ -1,5 +1,7 @@
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+
 #include <cstdio>
 #include <cstring>
 
@@ -60,19 +62,29 @@ nlohmann::json relationToJson(const Relation& relation) {
     nlohmann::json events = nlohmann::json::array();
     for (const auto& event : relation.events) events.push_back(event.toJson());
 
-    return nlohmann::json{{"type", relation.type},
-                          {"entityA", relation.aId()},
-                          {"entityB", relation.bId()},
-                          {"directed", relation.directed},
-                          {"weight", relation.getWeight()},
-                          {"events", events},
-                          {"attachment", relation.attachment.toJson()}};
+    // Keep `type` human-readable for old tools/saves, while a grounded kind
+    // persists its actual Singular identity separately. On hydration `typeId`
+    // wins. This is the same label-vs-identity split as every other authored
+    // being: spelling is not semantic identity.
+    nlohmann::json out{{"type", relation.typeLabel()},
+                       {"entityA", relation.aId()},
+                       {"entityB", relation.bId()},
+                       {"directed", relation.directed},
+                       {"weight", relation.getWeight()},
+                       {"events", events},
+                       {"attachment", relation.attachment.toJson()}};
+    if (relation.hasGroundedType()) {
+        out["typeId"] = relation.type;
+    }
+    return out;
 }
 
 Relation relationFromJson(const nlohmann::json& json,
                           const RelationEndpointResolver& resolve) {
     Relation relation;
-    relation.type = json.at("type").get<std::string>();
+    const std::string legacyType = json.at("type").get<std::string>();
+    const std::string savedTypeId = json.value("typeId", std::string{});
+    relation.type = savedTypeId.empty() ? legacyType : savedTypeId;
     relation.directed = json.value("directed", false);
     relation.setWeight(json.value("weight", 1.0f));
 
@@ -91,6 +103,15 @@ Relation relationFromJson(const nlohmann::json& json,
     relation._endpointB.savedId = savedB;
 
     if (resolve) {
+        if (!savedTypeId.empty()) {
+            if (auto* typeBeing = resolve(savedTypeId)) {
+                if (auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(typeBeing)) {
+                    relation._typeLexeme = lexeme;
+                    relation.type = lexeme->getIdentifier();
+                }
+            }
+        }
+
         Singular* a = savedA.empty() ? nullptr : resolve(savedA);
         Singular* b = savedB.empty() ? nullptr : resolve(savedB);
         relation.bind(a, b);
@@ -98,7 +119,7 @@ Relation relationFromJson(const nlohmann::json& json,
             std::fprintf(stderr,
                 "Relation load: unbound endpoint(s) type='%s' a='%s' b='%s'. "
                 "Identifier properties are kept for a later bind.\n",
-                relation.type.c_str(), savedA.c_str(), savedB.c_str());
+                relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
         }
     }
     return relation;
