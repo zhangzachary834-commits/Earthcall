@@ -1,12 +1,15 @@
 #include "ConstructedBeing/CategoryManager.hpp"
+#include "Identity/SingularId.hpp"
 #include "Person/Body/Body.hpp"
 #include "Person/Person.hpp"
 #include "Person/PersonDatabase.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 
+#include <array>
 #include <cassert>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -38,14 +41,22 @@ Person makePerson(const std::string& displayName) {
     person.setDisplayName(displayName);
     return person;
 }
+
+Identity::SingularId deterministicPersonId() {
+    std::array<uint8_t, 32> key{};
+    for (std::size_t i = 0; i < key.size(); ++i) {
+        key[i] = static_cast<uint8_t>(i + 1);
+    }
+    return Identity::SingularId::fromPublicKey(key);
+}
 } // namespace
 
 int main() {
     ScratchSaveRoot scratch;
 
-    // Reproduce the historical generator shape before a Person profile exists:
-    // a human author was smuggled through the categories bag as an extra-spatial
-    // Object solely so Law author lookup could find the string "Zach".
+    // A lexical/display-name collision is not an identity collision. An
+    // Object is allowed to be called "Zach" even when a Person is also called
+    // Zach; Personhood is not protected by reserving human-readable strings.
     CategoryManager legacy;
     assert(legacy.create("Zach") != nullptr);
     assert(legacy.create("author.gemini-spark") != nullptr);
@@ -53,21 +64,25 @@ int main() {
     const nlohmann::json legacyBag = legacy.toJson();
     assert(legacyBag.dump().find("\"objectID\":\"Zach\"") != std::string::npos);
 
-    // Once Zach is a registered Person, that identifier belongs to Personhood.
-    // CategoryManager must not mint a second being of a lesser ontology with
-    // the same identity just because an old save asks it to.
     Person zach = makePerson("Zach");
+    const Identity::SingularId personId = deterministicPersonId();
+    assert(personId.canAuthenticate());
+    zach.setPersonId(personId);
     PersonDatabase::getInstance().savePerson(zach);
 
     CategoryManager categories;
     categories.loadFromJson(legacyBag);
 
-    assert(categories.get("Zach") == nullptr);
-    assert(categories.create("Zach") == nullptr);
+    // Display-name coincidence remains legal.
+    assert(categories.get("Zach") != nullptr);
+    assert(categories.create("Zach") != nullptr);
 
-    auto counterfeit = std::make_shared<Object>("Zach");
+    // But the Person's actual unique identity cannot re-enter as an Object.
+    const std::string identity = personId.toString();
+    assert(categories.create(identity) == nullptr);
+    auto counterfeit = std::make_shared<Object>(identity);
     categories.add(counterfeit);
-    assert(categories.get("Zach") == nullptr);
+    assert(categories.get(identity) == nullptr);
 
     // Compatibility stays deliberately narrow: authored category roots remain
     // Objects, and old MODEL author referents are still admitted until their
@@ -77,8 +92,9 @@ int main() {
     assert(categories.get("category.default") != nullptr);
 
     const std::string persisted = categories.toJson().dump();
-    assert(persisted.find("\"objectID\":\"Zach\"") == std::string::npos);
+    assert(persisted.find(identity) == std::string::npos);
+    assert(persisted.find("\"objectID\":\"Zach\"") != std::string::npos);
 
-    std::cout << "person_not_object_test: Person identity cannot re-enter through CategoryManager\n";
+    std::cout << "person_not_object_test: Person identity is protected by provenance, not name coincidence\n";
     return 0;
 }
