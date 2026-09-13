@@ -34,10 +34,18 @@ struct RelationEvent {
 };
 
 // A Relation is a first-class Singular whose identity IS its two endpoints
-// and its type. Endpoints are Singular pointers, not name-strings: a string
-// is either an authored property or a hardcoded one (Lexeme::symbol is the
-// linguistic case). JSON still writes identifiers — that is serialization of
-// the pointer, not the ontology.
+// and its relation-kind identity. Endpoints are Singular pointers, not
+// name-strings: a string is either an authored property or a hardcoded one
+// (Lexeme::symbol is the linguistic case). JSON still writes identifiers —
+// that is serialization of identity, not the ontology.
+//
+// Relation kinds follow the same rule. A Lexeme-grounded Relation stores the
+// Lexeme's stable Singular identifier in `type`; its human-readable spelling
+// is available through typeLabel(). This deliberately lets two independently
+// authored Relation kinds share the same spelling without becoming the same
+// semantic relation. Legacy saves that only contain a type label remain
+// readable, but that label is compatibility identity until the Relation is
+// explicitly grounded in a kind-being.
 //
 // How to turn a saved identifier back into a being. Relation holds NON-OWNING
 // pointers, so deserialization cannot invent endpoints.
@@ -58,6 +66,25 @@ public:
         static AttachmentData fromJson(const nlohmann::json& j);
     };
 
+    // Kernel operations that an AUTHORED relation-kind being may choose as
+    // constitutive semantic substance. The opcode is machinery, not a domain
+    // kind: Persons still author which Relation kind carries it.
+    // APPEND-ONLY if persisted as authored numeric data.
+    enum class ConstitutiveOpcode {
+        None = 0,
+        CppInheritance = 1
+    };
+
+    enum class ConstitutiveStatus {
+        NotApplicable,
+        Holds,
+        Violated,
+        Invalid
+    };
+
+    static constexpr const char* kConstitutiveOpcodeProperty = "relation.constitutiveOpcode";
+    static constexpr const char* kCppBeingKindProperty = "cpp.beingKind";
+
     // ---------------------------------------------------------------------
     // Constructors
     // ---------------------------------------------------------------------
@@ -75,7 +102,8 @@ public:
              bool directed = false,
              float initialWeight = -1.0f);
 
-    // Lexeme-typed Relation constructors
+    // Lexeme-typed Relation constructors. The Lexeme is the semantic kind
+    // being; `type` stores its stable identifier, not its surface spelling.
     Relation(Singularity::Language::Lexeme& typeLexeme,
              Singular& aBeing,
              Singular& bBeing,
@@ -90,6 +118,14 @@ public:
 
     Singularity::Language::Lexeme* getTypeLexeme() const { return _typeLexeme; }
     void setTypeLexeme(Singularity::Language::Lexeme* lexeme);
+    bool hasGroundedType() const { return _typeLexeme != nullptr; }
+    std::string typeLabel() const;
+
+    // Evaluate an authored constitutive opcode, if the grounded Relation-kind
+    // carries one. CppInheritance reuses ConditionNode::matchesKind — the
+    // engine's existing dynamic_cast-based ontology checker. Endpoint B acts
+    // as an authored type descriptor by carrying `cpp.beingKind`.
+    ConstitutiveStatus evaluateConstitutive() const;
 
     // ---------------------------------------------------------------------
     // Endpoints — the beings this relation holds, not their names.
@@ -162,11 +198,16 @@ public:
                              const RelationEndpointResolver& resolve = {});
     bool isAttachment() const { return type == "attachment" || attachment.enabled; }
 
-    // Singular interface
+    // Singular interface. `type` is already semantic identity for a grounded
+    // Relation, so two kind-beings with one spelling produce distinct Relation
+    // identities instead of colliding on the label.
     std::string getIdentifier() const override { return aId() + "-" + type + "-" + bId(); }
 
-    // `type` is the string symbol/tag of the bond (attachment, instance-of, is_pos, …).
-    // When grounded in a Lexeme, `_typeLexeme` points to that Lexeme being.
+    // Canonical relation-kind identity. For Lexeme-grounded Relations this is
+    // the Lexeme's unique/stable Singular id. For legacy string-only Relations
+    // it remains the historical label until migration grounds the Relation in
+    // a kind-being. Do not parse semantic meaning from this string; resolve the
+    // kind-being and its properties when semantics matter.
     std::string type;
 
     static bool s_developerMode;
