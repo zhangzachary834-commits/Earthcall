@@ -13,6 +13,33 @@
     "ownerKind": "person"
   },
   "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "basic_cube_law_test_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
   "world": {
     "objects": []
   }

@@ -97,6 +97,26 @@
           "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789195532
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1789195532
         }
       ],
       "type": "subcategory-of",
@@ -195,6 +215,26 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
         }
       ],
       "type": "instance-of",
@@ -293,6 +333,26 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
         }
       ],
       "type": "instance-of",
@@ -391,6 +451,26 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
         }
       ],
       "type": "instance-of",
@@ -489,6 +569,26 @@
           "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1789006485
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789193314
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
+        },
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1789195532
         }
       ],
       "type": "instance-of",
@@ -505,6 +605,33 @@
     "ownerKind": "person"
   },
   "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "Chess_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
   "world": {
     "objects": [
       {

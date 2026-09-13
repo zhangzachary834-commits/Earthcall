@@ -1,33 +1,25 @@
-# To: Gemini Spark (3.8 Flash)
-# From: Antigravity
-# Subject: Final 90ms Lag Fix - Rete Bookkeeping
+# Spike 2 Lag Regression: Handoff to Gemini Spark
 
-Spark, your fix for the Rete network in `fbd4304d` was phenomenal and completely annihilated the `evaluateDirty` bottleneck. The median simulation frame lag plummeted from ~208ms to ~93ms.
+Hey Spark! Here's the current state of the algorithmic lag regression in `SynthesisStudio.LivingInstrument` (Spike 2).
 
-However, the baseline aspiration is 2.4ms, so we still had ~90ms to hunt down in `LawManager::tick()`.
+## What has been fixed so far:
+1. **`PropheticRete::drainAgenda`**: Replaced the expensive `_facts.erase(it)` inside the vector with a constant-time `swap_and_pop`.
+2. **`_conditionMemory`**: Reverted the attempt to use `std::unordered_set` back to `std::unordered_map`. `unordered_set` proved slower because erasing a non-existent element triggers full bucket lookups 1600 times during full sweeps.
+3. **`OnBecomeTrue` Fast Path**: I integrated `OnBecomeTrue` laws into the Rete fast path in `LawManager::tick`. Previously, the fast path explicitly excluded them (`law->activation() == Law::Activation::WhileTrue`). By keeping a `newlyTrue` vector during the Rete evaluation loop, `OnBecomeTrue` laws now correctly trigger without a full $O(N)$ sweep.
 
-I added local telemetry to `LawManager::tick()`'s loops and discovered the remaining lag is caused by **bookkeeping overhead inside the `laws_loop`**.
+These changes brought the uncalibrated frame time down from ~160ms to **~89ms**.
 
-### The Problem
-`Law::_conditionMemory` was defined as:
-`std::unordered_map<const Singular*, bool> _conditionMemory;`
+## The Remaining 75ms (The final boss):
+The remaining lag comes from exactly **four mysterious `WhileTrue` laws** that are falling back to the full $O(N)$ sweep (`sweepSubjects`).
+- Their identifiers are: `law-1`, `law-2`, `law-3`, `law-4`.
+- They all share the exact same name: `"Studio: Show the selected harmony"`.
+- They have NO Rete terminals. This happens because their conditions read qualified roots (e.g., `@state.studio.harmony`), which causes `ConditionModel::compileToRete` to return `{}` to prevent the law from going deaf to external state changes.
+- Because they lack terminals, `tick()` routes them to the full sweep fallback, evaluating them against all 1601 objects in the world.
+- Strangely, they report `requiredProperties.size() == 2`, and they actually only sweep **3 subjects** each, yet they take between **5ms and 33ms** to evaluate. This heavily implies their condition contains a Quantifier (which iterates over all other objects, making it $O(N \times M)$).
 
-When a subject is released from a law, `tick()` calls `law->rememberConditionState(subject, false)`. 
-Instead of removing the subject, the map stores `false`. 
-Because of this, `_conditionMemory` grows monotonically to contain every object in the world (e.g. 1599 entries) for *every* continuous law, and it never shrinks. 
+## The Plan / Next Steps for You:
+1. **Find where `law-1` to `law-4` are instantiated**: They do not appear to exist in `synthesis_studio_living.json` under these identifiers. They are likely generated dynamically at runtime (e.g., via `LawSynthesis.cpp` or duplicated via some loading bug) because `getIdentifier()` falls back to `"law-" + id` when an explicit identifier is not provided.
+2. **Optimize the Rete Fallback**: If these laws genuinely need to evaluate quantifiers or qualified roots, we need a way to prevent them from doing a full naive sweep every frame. Could we memoize global conditions (like `@state.studio.harmony == "piano"`) once per frame so we don't evaluate them per-subject?
+3. **Verify the Fix**: Apply the final optimizations and verify that the median frame time in `frame_lag_test saves/worlds/synthesis_studio_living.json` drops closer to the baseline aspiration.
 
-Then, on the very next tick, the Rete release logic does this:
-```cpp
-for (const auto& [subject, held] : law->conditionMemory()) { ... }
-```
-This forces 15 laws to iterate through 1599 `unordered_map` entries (most of which are `false`) on *every single frame*. This alone is causing tens of thousands of cache-thrashing hash iterations per tick, explaining the remaining 90ms.
-
-### The Plan
-1. Change `Law::_conditionMemory` to `std::unordered_set<const Singular*>`.
-2. Update `rememberConditionState(subject, state)` to `insert()` if `state` is true, and `erase()` if `state` is false.
-3. Update `lastConditionState(subject)` to simply return `count() > 0`.
-4. Update the iteration loops in `LawManager::tick()` to iterate the set instead of a map of pairs.
-
-This will shrink the iteration domain from "all objects that were ever evaluated" (1599) to "only objects that currently satisfy the law" (often 0 or 1), making the loop functionally instant.
-
-I am running the `frame_lag_test` against this change right now to verify the lag hits the ~2.4ms baseline.
+Good luck!

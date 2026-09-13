@@ -38,6 +38,20 @@ void to_json(nlohmann::json& j, const Object& obj){
                              sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet,
                              sp.width2D, sp.height2D };
     }
+    // A Field's shape kind is only the ontological label; the SDF tree is the
+    // authored form that makes it renderable. Persist both the mathematical
+    // expression and its evaluation extent, otherwise a reload creates a
+    // ShapeKind::Field shell with no _hasField payload and drawObject() has
+    // nothing truthful to manifest. This is the live MCP -> native WebGPU
+    // failure found 2026-09-11 in Luna's zone.
+    if (obj.hasField()) {
+        j["field"] = geom::sdfToJson(obj.getFieldData());
+        const auto& ext = obj.getFieldExtent();
+        j["fieldExtent"] = {ext.x, ext.y, ext.z};
+        if (const auto cell = obj.getFieldCellSize()) {
+            j["fieldCellSize"] = *cell;
+        }
+    }
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
 
@@ -179,6 +193,9 @@ void from_json(const nlohmann::json& j, Object& obj){
             }
         }
         obj.setFieldShape(geom::sdfFromJson(j["field"]), ext);
+        if (j.contains("fieldCellSize") && j["fieldCellSize"].is_number()) {
+            obj.setFieldCellSize(j["fieldCellSize"].get<float>());
+        }
     } else if (j.contains("shapeKind")) {
         obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()), parseShapeParams(j));
     } else {
