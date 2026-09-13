@@ -1,0 +1,120 @@
+name: Living Studio event-interest probe
+
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Same-runner event-interest A/B
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out probe branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Report runner
+        shell: bash
+        run: |
+          set -euxo pipefail
+          uname -a
+          uname -m
+          cmake --version
+
+      - name: Configure baseline source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build baseline Living Instrument probe
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target frame_lag_test
+
+      - name: Living Instrument A — production callback
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-event-interest-A-production.txt
+          echo "baseline status: ${PIPESTATUS[0]}"
+          exit 0
+
+      - name: Apply event-interest fast path and install semantic probe
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 scratch/sol_event_interest_fastpath.py
+          cp scratch/sol_event_interest_filter_probe.cpp \
+             tests/law/sol_event_interest_filter_probe.cpp
+          grep -n 'setEventInterest' src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+
+      - name: Reconfigure and rebuild patched source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --parallel 4 --target \
+            sol_event_interest_filter_probe \
+            frame_lag_test
+
+      - name: Prove event-interest semantics
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/sol_event_interest_filter_probe | tee event-interest-semantic-witness.txt
+
+      - name: Living Instrument B — foreign-only fail-open
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-event-interest-B-foreign-only.txt
+          echo "patched benchmark status: ${PIPESTATUS[0]}"
+          exit 0
+
+      - name: Print A/B steady-state headline
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '=== A: production callback ==='
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions' \
+            living-event-interest-A-production.txt || true
+          echo '=== B: foreign-only fail-open ==='
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions' \
+            living-event-interest-B-foreign-only.txt || true
+
+      - name: Upload A/B reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-studio-event-interest-${{ github.run_id }}
+          path: |
+            living-event-interest-A-production.txt
+            living-event-interest-B-foreign-only.txt
+            event-interest-semantic-witness.txt
+          if-no-files-found: error
+          overwrite: true
