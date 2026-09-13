@@ -73,4 +73,12 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json | tee living-instrument-lag.txt
+
+      - name: Upload Living Instrument lag report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-instrument-lag-report
+          path: living-instrument-lag.txt
+          if-no-files-found: error
