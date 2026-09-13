@@ -1,38 +1,53 @@
 #!/usr/bin/env python3
 """Temporary CI-only LawManager profiler for the Living Instrument lag hunt.
 
-This script patches the runner checkout, not the committed engine source. It is
-intentionally loud: every continuous Law reports its path, candidate count and
-wall time so the artifact can be aggregated after the benchmark.
+This patches only the runner checkout. Environment switches are diagnostic
+ablations, never production semantics.
 
-Two opt-in *process-local* ablations let CI measure costs without changing the
-committed engine semantics:
-
-  SOL_PROFILE_AUDIT_OFF=1
-      Turns the Laws audit category off for that benchmark process.
-
-  SOL_PROFILE_SKIP_RETE_RECHECK=1
-      For continuous laws that already have live Rete terminals, clears the
-      derived condition predicates after terminal membership has been decided.
-      The authored ConditionModel and compiled Rete network remain intact, so
-      this isolates the duplicate Law::applyTo() condition re-evaluation cost.
-      This is a profiler-only mutation and must never be treated as production
-      implementation.
+SOL_PROFILE_AUDIT_OFF=1
+    Disable Laws audit enqueueing.
+SOL_PROFILE_SKIP_RETE_RECHECK=1
+    Clear derived condition closures only after a law has a Rete terminal.
+    This is an UPPER BOUND only: some Rete terminals are deliberately broad
+    candidates, not proofs, so this is never a production prescription.
+SOL_PROFILE_LOG_TRIM_OFF=1
+    Leave the per-law application history untrimmed for this short process,
+    isolating the cost of vector front-erasure once the 256-entry cap is full.
+SOL_PROFILE_STAKEHOLDER_OFF=1
+    Skip per-write stakeholder append for this short process, isolating its
+    allocation/history cost without changing action execution.
 """
 from pathlib import Path
 
 p = Path("src/ZonesOfEarth/AuthorsOfLaw/Law.cpp")
 s = p.read_text()
 
-# getenv for the CI-only ablation switches.
 include_anchor = '#include <cstdio>\n'
 if include_anchor not in s:
     raise SystemExit("include anchor not found")
 s = s.replace(include_anchor, include_anchor + '#include <cstdlib>\n', 1)
 
-# Disable only the Laws audit category, and only when the benchmark process
-# explicitly asks for the ablation. This occurs before any tick work so the
-# measurement includes the same world/law execution but excludes audit enqueue.
+# Process-local switches used by Law::applyTo.
+apply_anchor = """Law::ApplicationResult Law::applyTo(Singular& target) {\n    ApplicationResult result = ApplicationResult::Applied;\n"""
+apply_replacement = """Law::ApplicationResult Law::applyTo(Singular& target) {\n    static const bool solProfileLogTrimOff =\n        std::getenv(\"SOL_PROFILE_LOG_TRIM_OFF\") != nullptr;\n    static const bool solProfileStakeholderOff =\n        std::getenv(\"SOL_PROFILE_STAKEHOLDER_OFF\") != nullptr;\n    ApplicationResult result = ApplicationResult::Applied;\n"""
+if apply_anchor not in s:
+    raise SystemExit("applyTo anchor not found")
+s = s.replace(apply_anchor, apply_replacement, 1)
+
+stakeholder_anchor = """        if (wrote) {\n            for (const auto& node : trace.nodes) {\n                if (node.wrote && !node.path.empty()) {\n                    for (auto* author : _authors.getMembers()) {\n                        if (author) {\n                            target.addStakeholder(node.path, author->getIdentifier(), getIdentifier(), std::time(nullptr));\n                        }\n                    }\n                }\n            }\n        }\n"""
+stakeholder_replacement = stakeholder_anchor.replace(
+    "        if (wrote) {\n", "        if (wrote && !solProfileStakeholderOff) {\n", 1)
+if stakeholder_anchor not in s:
+    raise SystemExit("stakeholder anchor not found")
+s = s.replace(stakeholder_anchor, stakeholder_replacement, 1)
+
+trim_anchor = """    if (_applicationLog.size() > kMaxLogEntries) {\n        _applicationLog.erase(_applicationLog.begin(),\n                              _applicationLog.end() - kMaxLogEntries);\n    }\n"""
+trim_replacement = """    if (!solProfileLogTrimOff && _applicationLog.size() > kMaxLogEntries) {\n        _applicationLog.erase(_applicationLog.begin(),\n                              _applicationLog.end() - kMaxLogEntries);\n    }\n"""
+if trim_anchor not in s:
+    raise SystemExit("application-log trim anchor not found")
+s = s.replace(trim_anchor, trim_replacement, 1)
+
+# Disable only the Laws audit category when explicitly requested.
 tick_anchor = """std::vector<Law::ApplicationRecord> LawManager::tick() {\n    static bool printed = false;\n"""
 tick_replacement = """std::vector<Law::ApplicationRecord> LawManager::tick() {\n    static const bool solProfileAuditOff = std::getenv(\"SOL_PROFILE_AUDIT_OFF\") != nullptr;\n    if (solProfileAuditOff) {\n        ECA::LawAuditLogger::instance().setLevel(ECA::LawAuditLogger::Level::Off);\n    }\n\n    static bool printed = false;\n"""
 if tick_anchor not in s:
@@ -51,10 +66,6 @@ if needle not in s:
     raise SystemExit("gate anchor not found")
 s = s.replace(needle, replacement, 1)
 
-# The Rete terminal is already the result of the authored condition model. For
-# this *measurement only*, remove the derived predicate closure so applyTo does
-# not calculate the same truth a second time. Each benchmark invocation is a
-# fresh process, so this mutation cannot leak between the baseline/ablations.
 needle = """        const bool hasTerminals =\n            _connected && termIt != _reteTerminals.end() && !termIt->second.empty();\n\n\n\n        if (hasTerminals && (law->activation() == Law::Activation::WhileTrue || law->activation() == Law::Activation::OnBecomeTrue)) {\n"""
 replacement = """        const bool hasTerminals =\n            _connected && termIt != _reteTerminals.end() && !termIt->second.empty();\n\n        static const bool solProfileSkipReteRecheck =\n            std::getenv(\"SOL_PROFILE_SKIP_RETE_RECHECK\") != nullptr;\n        if (solProfileSkipReteRecheck && hasTerminals) {\n            law->clearConditions();\n        }\n\n        if (hasTerminals && (law->activation() == Law::Activation::WhileTrue || law->activation() == Law::Activation::OnBecomeTrue)) {\n"""
 if needle not in s:
@@ -74,4 +85,4 @@ if needle not in s:
 s = s.replace(needle, replacement, 1)
 
 p.write_text(s)
-print("sol_profile_law_tick.py: instrumentation + ablations applied")
+print("sol_profile_law_tick.py: instrumentation + history ablations applied")
