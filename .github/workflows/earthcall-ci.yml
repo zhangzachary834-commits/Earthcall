@@ -48,7 +48,7 @@ jobs:
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
-      - name: Build focused regression witnesses
+      - name: Build focused regression witnesses and Living Instrument probe
         shell: bash
         run: |
           set -euxo pipefail
@@ -59,7 +59,8 @@ jobs:
             channel_paths_test \
             relation_retry_lexeme_test \
             logos_modality_test \
-            person_not_object_test
+            person_not_object_test \
+            frame_lag_test
 
       - name: Run focused regression witnesses
         shell: bash
@@ -67,3 +68,22 @@ jobs:
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
             -R '^(creation_tools_test|interaction_channel_test|no_black_box_test|channel_paths_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test)$'
+
+      - name: Profile Synthesis Studio Living Instrument
+        id: living_profile
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-instrument-lag.txt
+          status=${PIPESTATUS[0]}
+          echo "benchmark_status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Upload Living Instrument profile
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-instrument-lag-profile
+          path: living-instrument-lag.txt
+          if-no-files-found: error
