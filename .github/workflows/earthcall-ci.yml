@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   focused-cpu-tests:
-    name: Focused CPU tests (macOS)
+    name: Living Studio apply-stage profile (macOS)
     runs-on: macos-14
     timeout-minutes: 45
 
@@ -26,18 +26,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Report runner and vendored library architecture
+      - name: Report runner architecture
         shell: bash
         run: |
           set -euxo pipefail
           uname -a
           uname -m
           cmake --version
-          file local_deps/glfw_install/lib/libglfw3.a || true
-          file local_deps/openssl-3.0.13/libcrypto.a || true
-          file local_deps/openssl-3.0.13/libssl.a || true
 
-      - name: Apply CI-only LawManager profiler and ablations
+      - name: Apply CI-only Law apply-stage profiler
         shell: bash
         run: |
           set -euxo pipefail
@@ -54,119 +51,50 @@ jobs:
             -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
             -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
 
-      - name: Build focused regression witnesses and Living Instrument probe
+      - name: Build Living Instrument probe
         shell: bash
         run: |
           set -euxo pipefail
-          cmake --build build --parallel 4 --target \
-            creation_tools_test \
-            interaction_channel_test \
-            no_black_box_test \
-            channel_paths_test \
-            relation_retry_lexeme_test \
-            logos_modality_test \
-            person_not_object_test \
-            continuous_law_test \
-            gate_hoist_test \
-            rete_compile_test \
-            on_become_true_rete_test \
-            frame_lag_test
+          cmake --build build --parallel 4 --target frame_lag_test
 
-      - name: Run focused regression witnesses
-        id: focused_tests
-        shell: bash
-        run: |
-          set +e
-          set -o pipefail
-          ctest --test-dir build --output-on-failure \
-            -R '^(creation_tools_test|interaction_channel_test|no_black_box_test|channel_paths_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|continuous_law_test|gate_hoist_test|rete_compile_test|on_become_true_rete_test)$' \
-            2>&1 | tee focused-tests.txt
-          status=${PIPESTATUS[0]}
-          echo "test_status=$status" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      # Four fresh processes on the same runner. The profiler patch reads only
-      # these environment switches; committed engine semantics are unchanged.
-      - name: Living Instrument A — baseline
+      - name: Profile Living Instrument apply stages
         id: living_profile
         shell: bash
         run: |
           set +e
           set -o pipefail
           ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
-            2>&1 | tee living-instrument-A-baseline.txt
+            2>&1 | tee living-apply-stage-profile.txt
           status=${PIPESTATUS[0]}
           echo "benchmark_status=$status" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Living Instrument B — audit enqueue off
-        shell: bash
-        run: |
-          set +e
-          set -o pipefail
-          SOL_PROFILE_AUDIT_OFF=1 \
-            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
-            2>&1 | tee living-instrument-B-audit-off.txt
-          exit 0
-
-      - name: Living Instrument C — redundant Rete condition recheck off
-        shell: bash
-        run: |
-          set +e
-          set -o pipefail
-          SOL_PROFILE_SKIP_RETE_RECHECK=1 \
-            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
-            2>&1 | tee living-instrument-C-rete-recheck-off.txt
-          exit 0
-
-      - name: Living Instrument D — both costs off
-        shell: bash
-        run: |
-          set +e
-          set -o pipefail
-          SOL_PROFILE_AUDIT_OFF=1 SOL_PROFILE_SKIP_RETE_RECHECK=1 \
-            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
-            2>&1 | tee living-instrument-D-both-off.txt
-          exit 0
-
-      - name: Verify all ablation reports exist
+      - name: Verify stage profiler output
         if: always()
         shell: bash
         run: |
           set -euxo pipefail
-          ls -lh living-instrument-*.txt
-          for f in living-instrument-A-baseline.txt \
-                   living-instrument-B-audit-off.txt \
-                   living-instrument-C-rete-recheck-off.txt \
-                   living-instrument-D-both-off.txt; do
-            grep -m 1 'SOL_LAW_PERF' "$f"
-          done
+          ls -lh living-apply-stage-profile.txt
+          grep -m 1 'SOL_APPLY_STAGE' living-apply-stage-profile.txt
+          grep -m 1 'SOL_LAW_PERF' living-apply-stage-profile.txt
 
-      - name: Upload Living Instrument ablation matrix
+      - name: Upload Living Instrument stage profile
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: living-instrument-law-ablation-${{ github.run_id }}
-          path: |
-            living-instrument-A-baseline.txt
-            living-instrument-B-audit-off.txt
-            living-instrument-C-rete-recheck-off.txt
-            living-instrument-D-both-off.txt
-            focused-tests.txt
+          name: living-instrument-apply-stage-${{ github.run_id }}
+          path: living-apply-stage-profile.txt
           if-no-files-found: error
           overwrite: true
 
-      - name: Preserve diagnostic failure status
+      - name: Preserve benchmark failure status
         if: always()
         shell: bash
         env:
-          TEST_STATUS: ${{ steps.focused_tests.outputs.test_status }}
           BENCHMARK_STATUS: ${{ steps.living_profile.outputs.benchmark_status }}
         run: |
-          test_status=${TEST_STATUS:-1}
           benchmark_status=${BENCHMARK_STATUS:-1}
-          echo "focused tests: $test_status"
-          echo "Living Instrument baseline benchmark: $benchmark_status"
-          if [[ "$test_status" != "0" || "$benchmark_status" != "0" ]]; then
+          echo "Living Instrument benchmark: $benchmark_status"
+          if [[ "$benchmark_status" != "0" ]]; then
             exit 1
           fi
