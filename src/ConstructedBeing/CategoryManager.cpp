@@ -1,7 +1,33 @@
 #include "CategoryManager.hpp"
+#include "Person/PersonDatabase.hpp"
 #include "Singularity/Storage/Serialization.hpp"
 
 #include <algorithm>
+#include <filesystem>
+#include <iostream>
+
+namespace {
+// Canonical authored categories live in the category.* namespace. Older
+// generator saves also smuggled author referents through the categories bag;
+// keep those legacy model referents loadable for now, but never let that
+// compatibility path counterfeit a registered human Person as an Object.
+bool shadowsRegisteredPerson(const std::string& identifier) {
+    if (identifier.empty() || identifier.rfind("category.", 0) == 0) return false;
+
+    for (const auto& profilePath : PersonDatabase::getInstance().getAllRegisteredPersons()) {
+        if (std::filesystem::path(profilePath).stem().string() == identifier) return true;
+    }
+    return false;
+}
+
+bool refusePersonAsCategoryObject(const std::string& identifier) {
+    if (!shadowsRegisteredPerson(identifier)) return false;
+    std::cerr << "[CategoryManager] REFUSED category Object '" << identifier
+              << "': that identifier belongs to a registered Person. "
+              << "Persons are not Objects; reference the Person being instead.\n";
+    return true;
+}
+} // namespace
 
 // A category is a BEING, and a being is addressed by its identifier. The slug
 // IS the name here ("category.tool.brush"), so law text can name it: an
@@ -9,6 +35,7 @@
 // `setObjectID` is what `getIdentifier()` reports.
 std::shared_ptr<Object> CategoryManager::create(const std::string& name) {
     if (auto existing = get(name)) return existing;
+    if (refusePersonAsCategoryObject(name)) return nullptr;
     auto cat = std::make_shared<Object>(name);
     cat->setName(name);
     cat->setPhysicalObject(0);   // a classification is extra-spatial
@@ -17,7 +44,9 @@ std::shared_ptr<Object> CategoryManager::create(const std::string& name) {
 }
 
 void CategoryManager::add(const std::shared_ptr<Object>& cat) {
-    if (cat && !get(cat->getIdentifier())) {
+    if (!cat) return;
+    if (refusePersonAsCategoryObject(cat->getIdentifier())) return;
+    if (!get(cat->getIdentifier())) {
         _categories.push_back(cat);
     }
 }
@@ -71,6 +100,9 @@ void CategoryManager::loadFromJson(const nlohmann::json& j) {
             }
             auto cat = std::make_shared<Object>(id);
             from_json(elem, *cat);
+            // Check the deserialized identifier too: compatibility inputs may
+            // spell identity through a field older than the two probes above.
+            if (refusePersonAsCategoryObject(cat->getIdentifier())) continue;
             // Classification is extra-spatial. from_json rebuilds an Object
             // whose physical bit defaults to true, so a loaded category
             // would otherwise re-enter the world as a cube.
