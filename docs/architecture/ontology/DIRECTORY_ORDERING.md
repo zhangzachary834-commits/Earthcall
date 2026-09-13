@@ -83,45 +83,69 @@ never flatters itself.*
 ```
 Earthcall/
   src/                     the one source root — all languages
-    ConstructedBeing/      Singular (Object · Lexeme · Property) · Material
+    ConstructedBeing/
+      Material/
+      Singular/
+        Lexeme/
+        Object/
+        Property/
+        py/
     Identity/              First Mover register, identity ledger, key pairs, claims
-    Person/                Person · Soul · Body · Relationship · Perspective
-    Relation/              Relation · RelationManager · Formation
-                             py/
+    Person/                Person
+      Body/
+        BodyPart/
+        Head/
+      Perspective/
+      Relationship/
+        Community/
+      Soul/
+    Relation/              Relation · RelationManager
+      Formation/
+      py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
       Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
-      FirstMoverOntology/  FirstMoverWindowTools, Legacy, TalkingRobotGuyAPI
+      FirstMoverOntology/
+        FirstMoverWindowTools/
+        Legacy/
+        TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-                             API/       EarthcallAPI, SecurityManager
-                             Adapters/  MacOSAccessibilityAdapter
-                             Sync/      AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-                             Web/       WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-                             mcp/       earthcall-mcp-server.js
-                             py/        app.py
+        API/               EarthcallAPI, SecurityManager
+        Adapters/          MacOSAccessibilityAdapter
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+        mcp/               earthcall-mcp-server.js
+        py/                app.py
       Input/               the Input modality
-                             Interaction/  InteractionChannel, ControlPatterns
-                             Keyboard/     KeyboardHandler
-                             Locomotion/   LocomotionChannel
-                             Mouse/        MouseHandler
+        Interaction/       InteractionChannel, ControlPatterns
+        Keyboard/          KeyboardHandler
+        Locomotion/        LocomotionChannel
+        Mouse/             MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
-                             py/  engine_server.py · events.py
+        py/                engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
-                             Adapters/
-                             py/
+        Adapters/
+        py/
       Screen/              the Screen/Light modality (Renderer, BrushSystem, ScreenRecorder)
-                             GL/
-                             WebGPU/
+        GL/
+        WebGPU/
       Storage/             the Storage modality (SaveSystem, CloudStorage, FileChannel, StreamChannel, VirtualFileSystem)
-                             FlatBuffers/
-                             Schema/
-                             Serialization/
-    Time/                  Moment (instant or interval); the world clock itself lives on Universe
-    ZonesOfEarth/          Zone · HomesOfEarth · Physics · AuthorsOfLaw (Law) · Ourverse
-                             py/
+        FlatBuffers/
+        Schema/
+        Serialization/
+    Time/                  the world clock itself lives on Universe
+      Moment/              (instant or interval)
+    ZonesOfEarth/
+      AuthorsOfLaw/        (Law)
+        py/
+      HomesOfEarth/
+      Ourverse/
+      Physics/
+      Zone/
+      py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
