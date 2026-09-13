@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - sol/authorable-light
+      - sol/manual-distance-keys
   workflow_dispatch:
 
 permissions:
@@ -54,9 +55,8 @@ jobs:
         run: |
           set -euxo pipefail
           cmake --build build --parallel 4 --target \
-            zone_spatial_field_roundtrip_test \
-            zone_identity_test \
-            unsaved_preserve_test \
+            creation_tools_test \
+            interaction_channel_test \
             no_black_box_test \
             channel_paths_test
 
@@ -65,4 +65,4 @@ jobs:
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(zone_spatial_field_roundtrip_test|zone_identity_test|unsaved_preserve_test|no_black_box_test|channel_paths_test)$'
+            -R '^(creation_tools_test|interaction_channel_test|no_black_box_test|channel_paths_test)$'
