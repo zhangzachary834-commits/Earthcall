@@ -49,12 +49,14 @@ These are valuable, but their branches are stale enough that wholesale merging w
 
 The superbranch is intentionally not a promise that every surviving change is correct. It is a *reviewable convergence point*: coherent unmerged work has been assembled without changing the default branch, while stale-but-live ideas are named explicitly instead of being silently lost or force-merged.
 
+Current `CMakeLists.txt` uses `file(GLOB_RECURSE TEST_FILES "tests/*.cpp")`, so the newly preserved C++ test files are automatically configured as test targets; they do not need individual CMake registration lines.
+
 Before merging the superbranch to default, pay particular attention to:
 
 1. the restored `Relationship.cpp` behavior and its assumptions about Relation endpoints;
 2. the resurrected PaintConsole's compatibility with today's CreationChannel/BrushSystem/CreatorConsole state;
 3. the Person-not-Object hydration guard against current save fixtures;
-4. whether the newly preserved standalone tests are registered by the present test build/CI configuration;
+4. CI/build results for the automatically discovered transplanted tests;
 5. the DesignSystem deletion path and its layer bookkeeping.
 
 After this superbranch review, the most valuable follow-up salvage order is: **camera API wiring → Singular dead-member cleanup → VM opcode/revision port → Zone fork test extraction → performance branch re-benchmark**.
