@@ -37,7 +37,7 @@ jobs:
           file local_deps/openssl-3.0.13/libcrypto.a || true
           file local_deps/openssl-3.0.13/libssl.a || true
 
-      - name: Apply CI-only LawManager profiler
+      - name: Apply CI-only LawManager profiler and ablations
         shell: bash
         run: |
           set -euxo pipefail
@@ -85,30 +85,74 @@ jobs:
           echo "test_status=$status" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Profile Synthesis Studio Living Instrument
+      # Four fresh processes on the same runner. The profiler patch reads only
+      # these environment switches; committed engine semantics are unchanged.
+      - name: Living Instrument A — baseline
         id: living_profile
         shell: bash
         run: |
           set +e
           set -o pipefail
-          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-instrument-lag.txt
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-instrument-A-baseline.txt
           status=${PIPESTATUS[0]}
           echo "benchmark_status=$status" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Verify profiler output exists
+      - name: Living Instrument B — audit enqueue off
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          SOL_PROFILE_AUDIT_OFF=1 \
+            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-instrument-B-audit-off.txt
+          exit 0
+
+      - name: Living Instrument C — redundant Rete condition recheck off
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          SOL_PROFILE_SKIP_RETE_RECHECK=1 \
+            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-instrument-C-rete-recheck-off.txt
+          exit 0
+
+      - name: Living Instrument D — both costs off
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          SOL_PROFILE_AUDIT_OFF=1 SOL_PROFILE_SKIP_RETE_RECHECK=1 \
+            ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-instrument-D-both-off.txt
+          exit 0
+
+      - name: Verify all ablation reports exist
         if: always()
         shell: bash
         run: |
-          ls -lh living-instrument-lag.txt
-          grep -m 1 'SOL_LAW_PERF' living-instrument-lag.txt
+          set -euxo pipefail
+          ls -lh living-instrument-*.txt
+          for f in living-instrument-A-baseline.txt \
+                   living-instrument-B-audit-off.txt \
+                   living-instrument-C-rete-recheck-off.txt \
+                   living-instrument-D-both-off.txt; do
+            grep -m 1 'SOL_LAW_PERF' "$f"
+          done
 
-      - name: Upload Living Instrument profile
+      - name: Upload Living Instrument ablation matrix
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: living-instrument-law-profile-${{ github.run_id }}
-          path: living-instrument-lag.txt
+          name: living-instrument-law-ablation-${{ github.run_id }}
+          path: |
+            living-instrument-A-baseline.txt
+            living-instrument-B-audit-off.txt
+            living-instrument-C-rete-recheck-off.txt
+            living-instrument-D-both-off.txt
+            focused-tests.txt
           if-no-files-found: error
           overwrite: true
 
@@ -122,7 +166,7 @@ jobs:
           test_status=${TEST_STATUS:-1}
           benchmark_status=${BENCHMARK_STATUS:-1}
           echo "focused tests: $test_status"
-          echo "Living Instrument benchmark: $benchmark_status"
+          echo "Living Instrument baseline benchmark: $benchmark_status"
           if [[ "$test_status" != "0" || "$benchmark_status" != "0" ]]; then
             exit 1
           fi
