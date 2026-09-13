@@ -1,30 +1,41 @@
 #include "CategoryManager.hpp"
 #include "Person/PersonDatabase.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization.hpp"
 
 #include <algorithm>
-#include <filesystem>
 #include <iostream>
 
 namespace {
 // Canonical authored categories live in the category.* namespace. Older
 // generator saves also smuggled author referents through the categories bag;
-// keep those legacy model referents loadable for now, but never let that
-// compatibility path counterfeit a registered human Person as an Object.
-bool shadowsRegisteredPerson(const std::string& identifier) {
+// keep those compatibility records loadable for now, but never let the bag
+// counterfeit a real Person ID.
+//
+// IMPORTANT: a display name is NOT Person identity. Two beings are allowed to
+// be called "Zach". Refusing an Object because a profile filename/display name
+// happens to match it would punish ontologically pure authorial intent based on
+// lexical coincidence. Only the authenticated Person identifier serialized in
+// the profile has enough provenance to reserve Person identity here.
+bool shadowsRegisteredPersonIdentity(const std::string& identifier) {
     if (identifier.empty() || identifier.rfind("category.", 0) == 0) return false;
 
     for (const auto& profilePath : PersonDatabase::getInstance().getAllRegisteredPersons()) {
-        if (std::filesystem::path(profilePath).stem().string() == identifier) return true;
+        const nlohmann::json profile = SaveSystem::readSaveData(profilePath);
+        if (!profile.is_object()) continue;
+        const auto it = profile.find("personId");
+        if (it != profile.end() && it->is_string() && it->get<std::string>() == identifier) {
+            return true;
+        }
     }
     return false;
 }
 
 bool refusePersonAsCategoryObject(const std::string& identifier) {
-    if (!shadowsRegisteredPerson(identifier)) return false;
+    if (!shadowsRegisteredPersonIdentity(identifier)) return false;
     std::cerr << "[CategoryManager] REFUSED category Object '" << identifier
-              << "': that identifier belongs to a registered Person. "
-              << "Persons are not Objects; reference the Person being instead.\n";
+              << "': that identifier is an authenticated Person identity. "
+              << "Persons are not Objects; a display-name collision alone is allowed.\n";
     return true;
 }
 } // namespace

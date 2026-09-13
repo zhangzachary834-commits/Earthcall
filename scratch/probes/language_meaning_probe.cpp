@@ -1,6 +1,8 @@
 // OpenCode (GPT-6 Astra), session language-depth-20260910-115436.
 // 2026-09-10 11:59 PDT. Diagnostic observations, not desired-behavior tests.
-// Zach requested a deep Language-branch analysis without recycled proposals.
+// Updated 2026-09-13 after Zach's Relation semantic-identity correction:
+// same-spelled Relation kinds must remain distinct by kind-being identity, and
+// parser output must retain its Lexeme kind rather than collapse to a string.
 // Synthetic in-memory fixtures only; run via run_language_meaning_probe.py.
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Language/SyntacticParser.hpp"
@@ -60,9 +62,11 @@ int main() {
     distinctTypes.add(relA);
     distinctTypes.add(relB);
     observed(relA->getTypeLexeme() != relB->getTypeLexeme() &&
-             relA->getIdentifier() == relB->getIdentifier() &&
-             distinctTypes.getAll().size() == 1,
-             "distinct type Lexemes with the same spelling merge in RelationManager");
+             relA->typeLabel() == relB->typeLabel() &&
+             relA->type != relB->type &&
+             relA->getIdentifier() != relB->getIdentifier() &&
+             distinctTypes.getAll().size() == 2,
+             "distinct Relation-kind Lexemes with the same spelling remain distinct by stable kind id");
 
     auto noun = language.intern("noun", "probe.pos.noun");
     auto verb = language.intern("verb", "probe.pos.verb");
@@ -80,8 +84,10 @@ int main() {
     observed(plain.size() == 1 && quoted.size() == 1 &&
              plain[0]->getIdentifier() == quoted[0]->getIdentifier(),
              "quotation and unquoted assertion produce the identical parsed Relation");
-    observed(plain[0]->getTypeLexeme() == nullptr,
-             "the parser emits a string-typed Relation despite Lexeme-typed support");
+    observed(plain[0]->getTypeLexeme() == typeB.get() &&
+             plain[0]->type == typeB->getIdentifier() &&
+             plain[0]->typeLabel() == "owns",
+             "the parser preserves the Relation-kind Lexeme and its stable semantic identity");
 
     language.queueUtterance("Arthur owns sword", "probe.source.one", arthur->getIdentifier());
     language.tick(0.0f);
@@ -90,9 +96,9 @@ int main() {
     int owns = 0, speaks = 0, occurrences = 0;
     float weight = 0.0f;
     for (const auto& relation : a->formation().relations().getAll()) {
-        if (relation->type == "owns") { ++owns; weight = relation->getWeight(); }
-        if (relation->type == "speaks") ++speaks;
-        if (relation->type == "occurrence-of") ++occurrences;
+        if (relation->typeLabel() == "owns") { ++owns; weight = relation->getWeight(); }
+        if (relation->typeLabel() == "speaks") ++speaks;
+        if (relation->typeLabel() == "occurrence-of") ++occurrences;
     }
     observed(owns == 1 && std::abs(weight - 0.7f) < 0.0001f,
              "repeated text from two sources reinforces one edge from 0.5 to 0.7");

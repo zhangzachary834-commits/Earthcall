@@ -102,9 +102,32 @@ RelationManager::~RelationManager() { liveManagers().erase(this); }
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
     if (!r->hasEndpoints()) {
-        std::cerr << "RelationManager::add - Rejecting relation '" << r->type
+        std::cerr << "RelationManager::add - Rejecting relation '" << r->typeLabel()
                   << "' with unbound Singular endpoints.\n";
         return;
+    }
+
+    // Zach's constitutive-Relation rule: if an authored Relation-kind says its
+    // substance is an engine invariant, the graph may not store a contrary
+    // assertion. This is deliberately BELOW the spelling layer. A same-named
+    // Relation-kind with another unique id and no opcode is unaffected.
+    switch (r->evaluateConstitutive()) {
+        case Relation::ConstitutiveStatus::Violated:
+            std::cerr << "RelationManager::add - REFUSED Relation kind '"
+                      << r->typeLabel() << "' [" << r->type << "] between '"
+                      << r->aId() << "' and '" << r->bId()
+                      << "': its authored constitutive opcode evaluates false.\n";
+            return;
+        case Relation::ConstitutiveStatus::Invalid:
+            std::cerr << "RelationManager::add - REFUSED Relation kind '"
+                      << r->typeLabel() << "' [" << r->type << "] between '"
+                      << r->aId() << "' and '" << r->bId()
+                      << "': its authored constitutive opcode cannot be evaluated "
+                         "from the supplied beings.\n";
+            return;
+        case Relation::ConstitutiveStatus::Holds:
+        case Relation::ConstitutiveStatus::NotApplicable:
+            break;
     }
 
     if (r->type == "subcategory-of" && wouldFormCycle(r->a(), r->b(), "subcategory-of")) {

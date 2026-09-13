@@ -1,9 +1,11 @@
 #include "Relation/Relation.hpp"
+#include "Relation/RelationManager.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Identity/FirstMoverRegister.hpp"
 #include "Singularity/Language/Utterance.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 
 #include <iostream>
 #include <cassert>
@@ -21,7 +23,7 @@ void testPendingRelationRetry() {
     auto objB = std::make_shared<Object>();
     objB->setObjectID("beta_entity");
 
-    // Create a JSON-style unbound relation or relation referencing alpha & beta
+    // Create a JSON-style unbound legacy relation referencing alpha & beta.
     nlohmann::json relJson = {
         {"type", "instance-of"},
         {"entityA", "alpha_entity"},
@@ -30,7 +32,7 @@ void testPendingRelationRetry() {
         {"weight", 1.0f}
     };
 
-    // Relation loaded without resolver (unbound endpoints, stored in _savedA / _savedB)
+    // Relation loaded without resolver (unbound endpoints, stored in saved ids)
     auto rel = std::make_shared<Relation>(Relation::fromJson(relJson));
     assert(!rel->hasEndpoints());
     assert(rel->aId() == "alpha_entity");
@@ -58,8 +60,8 @@ void testPendingRelationRetry() {
     std::cout << "✓ Formation Pending Relation Retry test passed." << std::endl;
 }
 
-void testLexemeTypedRelations() {
-    std::cout << "Testing Lexeme-Typed Relations..." << std::endl;
+void testLexemeTypedRelationsUseSemanticIdentity() {
+    std::cout << "Testing Lexeme-Typed Relations use semantic identity..." << std::endl;
 
     Lexeme categoryLexeme("instance-of", "lexeme.instance_of");
     Object sourceObj;
@@ -67,10 +69,12 @@ void testLexemeTypedRelations() {
     Object targetObj;
     targetObj.setObjectID("target_node");
 
-    // Construct Relation using Lexeme as type
+    // Construct Relation using Lexeme as type. The stable Lexeme ID, not the
+    // spelling, is the Relation kind identity.
     Relation rel(categoryLexeme, sourceObj, targetObj, true, 1.0f);
 
-    assert(rel.type == "instance-of");
+    assert(rel.type == "lexeme.instance_of");
+    assert(rel.typeLabel() == "instance-of");
     assert(rel.getTypeLexeme() == &categoryLexeme);
     assert(rel.a() == &sourceObj);
     assert(rel.b() == &targetObj);
@@ -78,10 +82,81 @@ void testLexemeTypedRelations() {
     // Test setTypeLexeme update
     Lexeme subcategoryLexeme("subcategory-of", "lexeme.subcategory_of");
     rel.setTypeLexeme(&subcategoryLexeme);
-    assert(rel.type == "subcategory-of");
+    assert(rel.type == "lexeme.subcategory_of");
+    assert(rel.typeLabel() == "subcategory-of");
     assert(rel.getTypeLexeme() == &subcategoryLexeme);
 
-    std::cout << "✓ Lexeme-Typed Relations test passed." << std::endl;
+    // Two authored Relation kinds may have the same spelling without becoming
+    // the same semantic relation. This is the language_meaning_probe collision
+    // that used to merge both edges in RelationManager.
+    Lexeme ownsA("owns", "relation-kind.owns.a");
+    Lexeme ownsB("owns", "relation-kind.owns.b");
+    auto edgeA = std::make_shared<Relation>(ownsA, sourceObj, targetObj, true, 0.5f);
+    auto edgeB = std::make_shared<Relation>(ownsB, sourceObj, targetObj, true, 0.5f);
+    RelationManager manager;
+    manager.add(edgeA);
+    manager.add(edgeB);
+    assert(edgeA->typeLabel() == edgeB->typeLabel());
+    assert(edgeA->type != edgeB->type);
+    assert(edgeA->getIdentifier() != edgeB->getIdentifier());
+    assert(manager.getAll().size() == 2);
+
+    // Serialization keeps the human label for compatibility while persisting
+    // the true semantic type identity separately and restoring the Lexeme.
+    const auto saved = edgeA->toJson();
+    assert(saved.at("type") == "owns");
+    assert(saved.at("typeId") == "relation-kind.owns.a");
+    Relation rebound = Relation::fromJson(saved, [&](const std::string& id) -> Singular* {
+        if (id == ownsA.getIdentifier()) return &ownsA;
+        if (id == sourceObj.getIdentifier()) return &sourceObj;
+        if (id == targetObj.getIdentifier()) return &targetObj;
+        return nullptr;
+    });
+    assert(rebound.getTypeLexeme() == &ownsA);
+    assert(rebound.type == ownsA.getIdentifier());
+    assert(rebound.typeLabel() == "owns");
+
+    std::cout << "✓ Lexeme-Typed semantic identity test passed." << std::endl;
+}
+
+void testAuthoredCppInheritanceConstitutiveOpcode() {
+    std::cout << "Testing authored C++-inheritance Relation substance..." << std::endl;
+
+    // The opcode is engine substrate; which authored Relation kind carries it
+    // is data on the Relation-kind Lexeme.
+    Lexeme cppInstanceOf("instance-of", "relation-kind.cpp-instance-of");
+    cppInstanceOf.setDynamicProperty(
+        Relation::kConstitutiveOpcodeProperty,
+        static_cast<int>(Relation::ConstitutiveOpcode::CppInheritance));
+
+    // Endpoint B is an authored descriptor saying which irreducible C++
+    // ontology kind it denotes. This does not make "Object" an authored
+    // domain category; it exposes the existing C++ inheritance checker as an
+    // operation Persons may use as constitutive Relation substance.
+    Object objectKindDescriptor;
+    objectKindDescriptor.setObjectID("descriptor.cpp.object");
+    objectKindDescriptor.setPhysicalObject(0);
+    objectKindDescriptor.setDynamicProperty(
+        Relation::kCppBeingKindProperty,
+        static_cast<int>(ConditionNode::BeingKind::Object));
+
+    Object actualObject;
+    actualObject.setObjectID("actual.object");
+    Relation holds(cppInstanceOf, actualObject, objectKindDescriptor, true, 1.0f);
+    assert(holds.evaluateConstitutive() == Relation::ConstitutiveStatus::Holds);
+
+    Lexeme notAnObject("not-an-object", "lexeme.not-an-object");
+    Relation violated(cppInstanceOf, notAnObject, objectKindDescriptor, true, 1.0f);
+    assert(violated.evaluateConstitutive() == Relation::ConstitutiveStatus::Violated);
+
+    // Same visible label, different Relation-kind identity, no opcode: this is
+    // an ordinary authored semantic relation and is not hijacked by the C++
+    // inheritance meaning of the first kind.
+    Lexeme authoredInstanceOf("instance-of", "relation-kind.authored-instance-of");
+    Relation independent(authoredInstanceOf, notAnObject, objectKindDescriptor, true, 1.0f);
+    assert(independent.evaluateConstitutive() == Relation::ConstitutiveStatus::NotApplicable);
+
+    std::cout << "✓ Authored C++ inheritance opcode test passed." << std::endl;
 }
 
 void testFirstMoverAsSingular() {
@@ -100,7 +175,8 @@ void testFirstMoverAsSingular() {
     assert(fm.findProperty("displayName") != nullptr);
     assert(fm.displayName == "Claude");
 
-    // Relations between First Movers are Singulars
+    assert(fm.findProperty("displayName") != nullptr);
+
     Identity::FirstMover fm2;
     fm2.id = Identity::SingularId::mintOpaque();
     fm2.displayName = "Gemini";
@@ -126,7 +202,7 @@ void testUtteranceOccurrenceRelations() {
 
     auto rels = utt.createOccurrenceRelations();
     assert(rels.size() == 2);
-    assert(rels[0]->type == "occurrence-of");
+    assert(rels[0]->typeLabel() == "occurrence-of");
     assert(rels[0]->a() == &utt);
     assert(rels[0]->b() == &pawnLex);
     assert(rels[1]->b() == &moveLex);
@@ -137,7 +213,8 @@ void testUtteranceOccurrenceRelations() {
 int main() {
     std::cout << "--- Running Relation Retry & Lexeme-Type Tests ---" << std::endl;
     testPendingRelationRetry();
-    testLexemeTypedRelations();
+    testLexemeTypedRelationsUseSemanticIdentity();
+    testAuthoredCppInheritanceConstitutiveOpcode();
     testFirstMoverAsSingular();
     testUtteranceOccurrenceRelations();
     std::cout << "--- All Tests Passed ---" << std::endl;

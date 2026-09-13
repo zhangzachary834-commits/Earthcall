@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include <iostream>
 
 // Specific Implementation Vision: Recursive, custom tool creation
@@ -14,6 +15,23 @@
 
 using json = nlohmann::json;
 
+namespace {
+bool readIntProperty(Singular* being, const char* name, int& out) {
+    if (!being || !name) return false;
+    Property* property = being->findProperty(name);
+    if (property) {
+        const PropertyValue value = property->value();
+        if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
+        if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
+    }
+    PropertyValue value;
+    if (!being->getDynamicProperty(name, value)) return false;
+    if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
+    if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
+    return false;
+}
+} // namespace
+
 Relation::Relation(const std::string& type,
                    Singular& aBeing,
                    Singular& bBeing,
@@ -39,7 +57,7 @@ Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
                    Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(typeLexeme.getSymbol()), _typeLexeme(&typeLexeme), directed(directed) {
+    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
     bind(&aBeing, &bBeing);
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
@@ -49,7 +67,7 @@ Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
                    const Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(typeLexeme.getSymbol()), _typeLexeme(&typeLexeme), directed(directed) {
+    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
     bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
@@ -57,12 +75,43 @@ Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
 void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
     _typeLexeme = lexeme;
     if (_typeLexeme) {
-        type = _typeLexeme->getSymbol();
+        type = _typeLexeme->getIdentifier();
     }
 }
 
+std::string Relation::typeLabel() const {
+    return _typeLexeme ? _typeLexeme->getSymbol() : type;
+}
+
+Relation::ConstitutiveStatus Relation::evaluateConstitutive() const {
+    if (!_typeLexeme) return ConstitutiveStatus::NotApplicable;
+
+    int rawOpcode = static_cast<int>(ConstitutiveOpcode::None);
+    if (!readIntProperty(_typeLexeme, kConstitutiveOpcodeProperty, rawOpcode) ||
+        rawOpcode == static_cast<int>(ConstitutiveOpcode::None)) {
+        return ConstitutiveStatus::NotApplicable;
+    }
+
+    switch (static_cast<ConstitutiveOpcode>(rawOpcode)) {
+        case ConstitutiveOpcode::None:
+            return ConstitutiveStatus::NotApplicable;
+        case ConstitutiveOpcode::CppInheritance: {
+            if (!a() || !b()) return ConstitutiveStatus::Invalid;
+            int rawKind = -1;
+            if (!readIntProperty(b(), kCppBeingKindProperty, rawKind)) {
+                return ConstitutiveStatus::Invalid;
+            }
+            const auto kind = static_cast<ConditionNode::BeingKind>(rawKind);
+            return ConditionNode::matchesKind(*a(), kind)
+                       ? ConstitutiveStatus::Holds
+                       : ConstitutiveStatus::Violated;
+        }
+    }
+    return ConstitutiveStatus::Invalid;
+}
+
 void Relation::describe() const {
-    std::cout << "Relation [" << type << "] "
+    std::cout << "Relation [" << typeLabel() << "] "
               << (directed ? "from " : "between ")
               << aId() << (directed ? " -> " : " and ") << bId()
               << " (strength=" << getWeight() << ")"
