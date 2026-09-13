@@ -60,9 +60,11 @@ public:
     // here, and a rule that can only be reached by booting GLFW is a rule
     // nothing tests (the standing lesson of createShapeGenerator3DLaw).
     //
-    // `uiCaptured` is the foreign-surface veto: while an ImGui window owns
-    // the pointer, the world sees no pointer at all. It is a parameter and
-    // not a property because the engine answers it, not the world.
+    // `uiCaptured` and `keyboardCaptured` are foreign-surface vetoes. While
+    // ImGui owns one modality, the world sees no level from that modality.
+    // They are inputs rather than authored properties of a control because
+    // the foreign surface answers them; the channel merely makes the sensed
+    // result legible.
     // ------------------------------------------------------------------
     struct Sense {
         float pointerX = 0.0f;          // screen pixels
@@ -77,7 +79,14 @@ public:
         bool shift = false;
         bool ctrl = false;
         bool alt = false;
+        bool keyRight = false;
+        bool keyLeft = false;
+        bool keyUp = false;
+        bool keyDownArrow = false;
+        bool keyPageUp = false;
+        bool keyPageDown = false;
         bool uiCaptured = false;
+        bool keyboardCaptured = false;
     };
 
     // Sense the frame against `reachable`, write the properties, publish the
@@ -92,12 +101,15 @@ public:
     // never from a render function (CreationChannel is the worked example of
     // why: collapsing the console froze the channel).
     void step(GLFWwindow* window, ::Core::Camera& camera, ZoneManager& mgr,
-              bool uiCaptured);
+              bool uiCaptured, bool keyboardCaptured);
 
     // Keys arrive as callbacks, not levels, so they enter here rather than
     // through Sense — an edge by construction. Publishes key-pressed /
     // key-released with the focused being as subject (null when nothing holds
-    // focus), and updates lastKey / lastKeyCode / keyDown.
+    // focus), and updates lastKey / lastKeyCode / keyDown. Directional key
+    // LEVELS are sensed separately in step() as key.RIGHT / key.LEFT / ...;
+    // that is what lets a WhileTrue Law preserve hold-to-nudge behavior without
+    // turning GLFW_REPEAT into fake repeated events.
     void noteKey(const std::string& keyName, int keyCode, bool down);
 
     // The wheel is a callback too, and unlike a button it has no level to
@@ -184,6 +196,18 @@ public:
     bool shiftDown = false;
     bool ctrlDown = false;
     bool altDown = false;
+
+    // Raw directional key LEVELS. The dotted property names registered for
+    // these are the vocabulary a Law sees: key.RIGHT, key.LEFT, key.UP,
+    // key.DOWN, key.PAGE_UP, key.PAGE_DOWN. The channel senses only whether
+    // the hardware is held; what holding it MEANS belongs to authored Law.
+    bool keyRightDown = false;
+    bool keyLeftDown = false;
+    bool keyUpDown = false;
+    bool keyDownArrowDown = false;
+    bool keyPageUpDown = false;
+    bool keyPageDownDown = false;
+    bool keyboardCaptured = false;
 
     // How far the pointer may travel between press and release and still be a
     // click rather than a drag, in WINDOW points (the same space `pointerX`/
