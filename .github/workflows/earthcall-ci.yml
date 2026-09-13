@@ -4,16 +4,14 @@ name: Earthcall focused CI
 # publish, merge, delete, upload releases, or write back to the repository.
 on:
   push:
-    branches:
-      - sol/authorable-light
-      - sol/manual-distance-keys
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: earthcall-focused-ci-${{ github.ref }}
+  group: earthcall-focused-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
