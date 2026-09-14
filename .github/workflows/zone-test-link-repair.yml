@@ -1,0 +1,101 @@
+name: Zone test-link repair
+
+# One-shot cloud repair for the macOS test linkage exposed by the Zone
+# persistence continuation gate. This workflow edits only CMakeLists.txt,
+# validates the exact patch on a GitHub-hosted macOS VM, and commits it only
+# after the affected test plus the persistence witnesses build and run.
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-20260913
+    paths:
+      - .github/workflows/zone-test-link-repair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Check out continuation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Patch only the missing CoreGraphics test linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('CMakeLists.txt')
+          s = p.read_text()
+
+          find_anchor = '  find_library(COREVIDEO_FW CoreVideo)\n'
+          find_line = '  find_library(COREGRAPHICS_FW CoreGraphics)\n'
+          if find_line not in s:
+              assert s.count(find_anchor) == 1, 'unexpected CoreVideo find_library anchor count'
+              s = s.replace(find_anchor, find_anchor + find_line, 1)
+
+          link_old = '        target_link_libraries(${target} PRIVATE ${COCOA_FW} ${IOKIT_FW} ${COREVIDEO_FW})\n'
+          link_new = '        target_link_libraries(${target} PRIVATE ${COCOA_FW} ${IOKIT_FW} ${COREVIDEO_FW} ${COREGRAPHICS_FW})\n'
+          if link_new not in s:
+              assert s.count(link_old) == 1, 'unexpected add_earthcall_test Apple linkage anchor count'
+              s = s.replace(link_old, link_new, 1)
+
+          assert s.count(find_line) == 1
+          assert s.count(link_new) == 1
+          p.write_text(s)
+          PY
+          git diff --check -- CMakeLists.txt
+          git diff -- CMakeLists.txt
+
+      - name: Record exact cloud toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sw_vers
+          uname -m
+          cmake --version
+          c++ --version
+          git rev-parse HEAD
+
+      - name: Configure with Earthcall required flags
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build app and the previously failing test
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target earthcall_webgpu active_zone_accessor_test
+
+      - name: Build and run persistence witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target singular_persistence_id_test immutable_generation_store_test zone_catalog_boot_test
+          ctest --test-dir build --output-on-failure \
+            -R '^(singular_persistence_id_test|immutable_generation_store_test|zone_catalog_boot_test)$'
+
+      - name: Commit validated CMake repair
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name 'Earthcall Cloud Gate'
+          git config user.email 'actions@users.noreply.github.com'
+          git add CMakeLists.txt
+          git commit -m 'build: link CoreGraphics into test executables'
+          git push origin HEAD:sol/event-interest-fastpath-20260913
