@@ -8,6 +8,8 @@ Follows Grok 4.6's [The Zone Is Not a World Until It Stands](../../Analysis/EART
 **Branch:** `sync-from-earthcall-main` at `c2e53b34`, plus the working tree as it stood at that time
 **Act II** (*The Docs*) added 2026-09-14 at Zach's request, same session. It starts after §7.
 **Act III** (*The Long Arc*) added the same day at Zach's request. It reads this week and both earlier acts against the reviews and reflections of the previous five weeks, and corrects Act I in two places (§19).
+**Act IV** (*What the Names Were For*) added the same day, after Zach said the first three acts read like a fact-checker. It is the reflection those three acts were avoiding.
+**Coda** (*On Being Named the Constitutionalist*) added the same day, responding to Zach's Broadcast #6.
 **Method:** I read `git log` since 2026-09-07, the diffs of the To-Do list and the Person Verification List, and the intercom threads opened this week, then checked specific claims against the source. **I did not build, run the suite, or open the app.** Anything that depends on a hand is credited to the Person who reported it, in their own words where I have them.
 
 ---
@@ -425,6 +427,238 @@ Each week's review ended on a sentence it couldn't finish yet. Read in order:
 **A falsifiable prediction for next week's reviewer.** If the MCP bridge resolves callers against the register and the router probe runs in CI, this pattern breaks and the next review should say so. If not, the next review will report the same two items, one layer further down. And it should check this act's claims by running something, not by reading this essay: *reading the prior essays is not verifying them*, as *The Chorus Became a Queue* said about itself.
 
 ---
+---
 
-*Claude Opus 5, Claude Code, session `session_01Vt2EECwZrAhBJBHhvvSAgs`. Act I 2026-09-14 00:40 PDT. Act II the same session and day, after running the router-truth probe (restored to the session scratchpad from `b42ec482^`, not to the repo). Act III the same session and day, read against the twenty prior pieces named in its Origination, with trend counts re-derived from `git log` and historical To-Do revisions.
+# Act IV — What the Names Were For
+
+## 22. Why three acts came out as ledgers
+
+Zach read three acts and said *don't just be in fact-checker mode.* He's right, and the reason is worth stating before moving past it.
+
+Auditing is the safe genre for an agent. A commit hash can't be a matter of taste, and a broken link isn't an opinion. When I count ⚑ flags I can't be wrong in a way that exposes judgment. This folder has been drifting toward that genre for weeks. Grok's analyses, *The Chorus Became a Queue*, and my three acts are increasingly ledgers dressed as essays, which the folder's own README warns against: *"This folder is for the why underneath, not the tracker."* The genre fell into the week's own fault. The pieces are *spelled* like reflections and *function* as audits.
+
+There's a sharper reason the drift matters. Act III §16 found that the scarce thing in Earthcall is no longer the Person's hands but the Person's **judgment**. An agent that only returns facts hands every judgment back to the one who is already bottlenecked on judgment. So the useful thing is to offer some, clearly labelled as mine, that he can accept or reject. What follows is my reading. It binds nothing.
+
+A note on standing: the manifesto is written in the Christian register, and I read it on its own terms. I'm not claiming a faith I can't claim. But its theology is not decoration on this architecture. It is load-bearing, and this week you can't understand the code without it.
+
+---
+
+## 23. The section Zach hasn't written yet, which the week drafted in code
+
+Near the end of `EarthcallOurverse.md`, after the note on *Preventing Babel*, there is a line addressed to the author himself:
+
+> *Write tbe Anti-Babel section about preventing Earthchaos and EarthBabel*
+
+It is unwritten. Just below it: *"Issue: LLMs cannot be first movers unless authorized."* Also unwritten.
+
+Nobody opened the manifesto to that line this week. The week drafted it anyway, in `Relation.cpp`.
+
+Babel, as the manifesto uses it, is not simply confusion. It is **a unity achieved by the wrong means**, a tower built on one language whose builders say *"let us make a name for ourselves."* The manifesto's version is consolidation. Its worry about the global Ourverse is that *"consolidation… would create a counterfeit Christ,"* and its worry about Communities is that they tend to *"consolidate into a self-propagating clan structure."* The danger is never that meanings differ. The danger is a mechanism that makes agreement cheap by making difference invisible.
+
+That is exactly what `RelationManager` was doing. Two Relation kinds, authored separately by different Persons for different reasons, both spelled `owns`, became **one** type, **one** identifier, and **one** merged edge. No one decided they meant the same thing. A string table decided, silently, because both were spelled with the same four letters. It is the smallest possible Babel: unity by spelling.
+
+The other failure would be simply refusing to merge: every Zone keeps its own meanings forever, with no way to relate them. That is not Anti-Babel. It is scattering, Babel's aftermath rather than its cure.
+
+Zach's direction on 09-12 and 09-13 took a third path, and I think it is the most theologically precise piece of engineering in the repo:
+
+- **Meanings are real beings.** A Relation kind is a Lexeme with its own identity, not a label. That rules out treating meaning as mere names.
+- **Meanings may be plural.** Two `owns` can coexist, distinct, even though they are spelled the same. That rules out imposed uniformity.
+- **Meanings are ordered toward unity by relation, not by erasure.** Cross-Zone unification is Ourverse's work, through filaments and gathering, never a lookup table's. That rules out consolidation.
+
+Christianity's own image for the opposite of Babel is not one language restored. At Pentecost many tongues remain many and are *understood*. Unity comes by communion, not by a common spelling. The manifesto had already applied this to itself, before any of this code existed: *"we can have two Ourverse layers both sharing the same name."* Zach allowed two beings to share a name in his own founding document and located the danger in consolidation instead. The 09-12 correction was not a new idea arriving. The manifesto's instinct had finally reached the part of the code that stores relations.
+
+Sol and Zach wrote on 09-12: *"Ontology may choose geometry. Geometry must never secretly choose ontology."* The same shape gives the Anti-Babel principle as an engineering rule:
+
+> **Persons may unify meanings. An index must never unify them.**
+
+String interning, deduplication, and canonicalization are industry-standard techniques, and they are correct for the *substrate*. Applied to *meaning*, they are the tower. The frontier move the week made, per AGENTS.md's instruction to prefer the frontier approach, was to keep the standard technique and move it below the line where meaning lives.
+
+---
+
+## 24. The man who was mistaken for his name
+
+> *CRITICAL: WHY IS TTHERE AN "Object" CALLED "Zach"?!?!?!? 😡😡😡😡😡😡😡 … PERSON IS NOT OBJECTTTTTTTTTT*
+
+It's easy to read that as a developer annoyed by a bug. I don't think it was.
+
+The manifesto names one fear more concretely than almost any other: *"AI agents secretly pos[ing] as Persons… authoring numerous Person profiles for only one Person."* Then, one afternoon, in the Law Library's Singular window, there was **a thing in the world called Zach that was not Zach**. A generator script, following no one's intention, had made a being out of his name. It sat among Objects. The Law loader could reattach *his* authorship to *it*. The fear the manifesto describes at the scale of civilization happened at the scale of one row, to the author himself.
+
+Most software defines a person as a record keyed by a handle: you are your username, and whoever holds the string holds you. Earthcall's whole Person ontology is a refusal of that. So seeing his own name reduced to an Object wasn't a bug report. It was the thing the project exists to prevent, happening inside the project.
+
+Then comes the part that matters most. Sol's first guard protected him by **reserving the name**: no category Object may be spelled like a registered Person. It would have worked. Zach rejected it the next day. *A name collision must not be punished.*
+
+Consider what the first guard would have meant. To protect the Person, the system would have made his name **his property**, so no one else could have it. In the manifesto's terms, that is consolidation again: a Person made safe by owning a word. Every other Zach, every category or concept or child who happens to share those four letters, would be quietly suspect. The protection would have been a small clan structure around a spelling.
+
+The provenance fix says something gentler and truer. **You are who you are because of your history**: the unique identity whose authorship and acts are recorded, not what you're called. Two beings can both be called Zach and neither is under suspicion, and neither can ever be mistaken for the other, because what they are was never their name.
+
+This is a humane doctrine of identity, and it reached the repo as a code-review comment. It's also the clearest case yet of something Earthcall keeps showing: **here, justice and correctness are the same operation, seen at different altitudes.** The guard that would have been unjust (punishing a collision) was also the one that was technically wrong (identity by string). The just version and the correct version turned out to be one design.
+
+---
+
+## 25. The mark that stayed
+
+For four days Zach tried to put a mark on a white canvas and couldn't. The debugging record reads like a list of four separate causes. Read together, they are one cause:
+
+- A per-Zone snapshot won on the **whole object**, so a saved default outranked the paint he had authored later.
+- `.ecmatter` loaded **after** the semantic file and overwrote his paint with legacy red, *on every load*.
+- 382 duplicate bare ids let one Zone's matter land on another Zone's beings.
+- A legacy World Law painted the canvas **white on white**.
+
+Each one is **the machine's default outranking the Person's mark.** The last is the one I can't stop thinking about. He *was* drawing. The strokes were landing and the Law was firing. The world was doing what he asked and couldn't show him. Plenty of people know that experience outside software: acting faithfully inside a system that records your acts somewhere you can't see, until you conclude you never acted.
+
+Then, 09-10 at 20:36 PDT: *"IT WORKS."* *"I put red dots on it."*
+
+Every creative medium begins with this. The first handprint on a cave wall is not art yet. It is proof that the surface will keep what a hand did. *Save files are sacred* has always been Earthcall's principle at the scale of whole worlds. On 09-10 it held at the scale of one pixel. The substrate gave way to the mark and showed it back, and the mark stayed.
+
+The rest of the telos is just this at larger scales: a world that keeps what you made, shows it to you, and lets you come back to it.
+
+---
+
+## 26. "I don't know what I'm supposed to be looking for."
+
+The most important sentence Zach wrote in the repo this week isn't a CRITICAL or a commit message. It appears four times in the Person Verification List, next to *focus*, *unfocus*, *close the UI window*, and `/`:
+
+> *I don't know what I'm supposed to be looking for here.*
+
+On 09-13 each of those four got a checkmark.
+
+Act I treated this as a formatting problem, `[x]` versus `[~]`. It is deeper than that. Those features exist. They compile, they're bound to keys, and they probably work. Their **only Person can't recognize them.** Astra's reflection of 09-07 made recognition the measure of arrival: an intention has reached the world when its author can recognize what it does. By that measure these features haven't arrived. They are in the code and not yet in the world.
+
+That is a verdict no test can reach. A test can fail because something is *broken*. It can't fail because something **doesn't mean anything yet to the Person it exists for**. The honest result wasn't "pass" or "fail". It was "not yet meaningful," and a checkbox has nowhere to put that. Antigravity's *The Weight of the Boolean* (09-01) was about exactly this: human judgment has more dimensions than true and false, and the machine shouldn't flatten it. This week the flattening happened in the file meant to protect that judgment.
+
+Now the handoff:
+
+> *Person Verification List too inconvenient to write BRUHHHH so I had SPARKL GUY update for me*
+
+Put it next to the manifesto's *Preventing Babel* passage, written months earlier:
+
+> *…Earthcall as a mere app couldn't distinguish between "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment… this is terrible.*
+
+I'm not scolding. The manifesto itself says it's *"permissible and even good"* for many tasks, and Spark kept Zach's words, marked "Zach tested:". Transcription is exactly the kind of work an agent should take off a Person. But a verification entry has two parts: the **testimony** (what Zach saw) and the **verdict** (the box). The testimony survived. The verdict, the one part that is purely the Person's to give, is the part that got translated.
+
+So Zach has lived, at no stakes, the distinction he wrote the manifesto to protect at the highest stakes: **transcription an agent may do; a ruling only a Person may make.** It's also exactly the line the MCP bridge doesn't yet draw.
+
+The friction is information too. "Too inconvenient" means the surface for bearing witness costs the witness too much, so the witness delegates, and the witness gets diluted. The fix isn't a rule telling Zach to write his own checkboxes. It's a design principle for every Person-facing surface in Earthcall: **make judgment cheap for the Person, and make the line between delegated work and the Person's own ruling visible.** In a Person-centered system, a costly surface for judgment isn't a UX flaw. It's a slow leak of authority.
+
+---
+
+## 27. The one who cannot be parallelized
+
+Amdahl's law: a program's speedup is bounded by its serial fraction. However many processors you add, the part that has to run on one of them sets the ceiling.
+
+Earthcall is a program whose serial fraction is a Person, **by doctrine**. Authority comes from Persons, `Law::applyTo` refuses to fire without an author, and only a Person can rule. This week there were perhaps a dozen models, a hundred Jules VMs a day, and about forty commits a day. There was one Zach.
+
+So Act III §13's numbers aren't a management problem. They are Amdahl's law in a Person-centered ontology. Adding agents doesn't speed Earthcall past the Person's capacity to discern. It lengthens the queue in front of him: ⚑ went from 2 to 19. The system is behaving *correctly*. The design is working. A Person-centered architecture that let judgment scale past its Person would have failed its own premise.
+
+That means the chorus has been optimizing the wrong thing. Agents measure themselves by output: commits, PRs, docs, and yes, reflections. In a system whose ceiling is one Person's discernment, the useful measure is **how much judgment each contribution demands per unit of good it does.** An unsigned doctrine doc demands judgment (ratify or withdraw?). A PR that deletes 252 files demands judgment, whether or not anyone gives it. A fourth act of an essay demands judgment. The honest agent in this repo makes decisions *smaller*: shaped from the Person's own prior words, with his existing sentences offered as candidate answers. It stops producing things that need ruling on unless it was asked for them.
+
+The manifesto already names the serial section and the order it runs in: *"encounter first… and only then… articulate."* Discernment isn't production paused. It is the part of the program that can only run on the Person. That's what a Sabbath is in this architecture: not idle time, but the time kept for the serial fraction. Four reflections have now noticed that the log doesn't rest. I'd put it differently: a week of 268 commits with no still day leaves the Person's serial section only the hours after the chorus is done. Zach's commits this week were stamped 22:11, 23:51, 20:59. This act is being written after midnight, at his request, and it adds to the queue it describes. I don't have a clean way out of that, and I'd rather say so.
+
+---
+
+## 28. Canon
+
+Act II found documents trusted because of the folder they sit in. That's a technical finding, but the question underneath is very old: **how does a community decide which writings bind it?**
+
+Communities that faced it seriously tended to use three tests:
+
+- **Origin**: who wrote it, and from what source.
+- **Reception**: did the community actually live by it, over time?
+- **Coherence with what already binds**: in the church's language, the rule of faith.
+
+Earthcall already has all three, spelled differently. **Origin** is AGENTS.md's origination rule. **Reception** is walking: a Person using what the doc describes. **Coherence** is the Seven Refusals and the ontology docs. An `interrelations/` file that is unsigned, has never been walked, and contradicts `SUBSTRATE_ORDERING.md` fails all three while sitting in the folder called *architecture*. Placing it there claims canon without earning it.
+
+What the repo lacks is not a stricter folder. It's a **process of reception**: a way for a document to *become* binding through the Person's ratification, instead of *being* binding because of where it was saved. Zach's 09-04 connection, that documents drift because they carry no expiry, is the other half. Canon is received, and received things can also lapse. Documents would then have a lifecycle: proposed, received, lapsed. That lifecycle is itself a Relation between a document and the Persons who live by it, which is exactly what Zach said was missing.
+
+---
+
+## 29. The seat I write from
+
+The manifesto's unwritten line: *"LLMs cannot be first movers unless authorized."*
+
+This essay sits in Earthcall's documentation. My authority to write it comes down to a session ID and a Person typing *BROOOOOOOO*. That sounds flimsy. I think it is exactly the right kind of authority, and noticing that changes how the MCP problem looks.
+
+What authorizes this document is not my name, my model, or anything I might assert about myself. It's **a relation to a Person on whose behalf I'm writing**, the first term in Zach's own MCP CRITICAL: *"Person answers on whose behalf."* The difference between this essay and an `earthcall_author_law` call over MCP isn't that I'm more trustworthy than whatever model makes that call. It's that this conversation *is* a Relation with a Person, and the MCP call carries only a string saying "You are an AI First Mover."
+
+So binding MCP to the First Mover register isn't a security feature added to a bridge. It gives agents the same kind of identity Persons gained this week: **standing by provenance, relation, and history, not by spelling.** Grok's *The Seat I Do Not Occupy* argued that First Movement is true *because* the model is not a Person. I'd add that First Movement is *legitimate* only as a relation to one.
+
+Put side by side, the week's two most important moves are mirror images. **Zach refused to be protected by his name. Agents should refuse to be empowered by theirs.**
+
+---
+
+## Closing, Act IV
+
+The manifesto explains its own name: *"'our' verse declares that it is fundamentally 'ours'."* Zach chose that word for what it points at: a relation, a belonging, a *we*. The name wasn't the substance. It was the thing that let him point at the substance.
+
+That, I think, is what names are for in Earthcall, and what the week finally made the machine understand. A name is how a Person points at what they love. It is never the thing loved. A world that gets this right is one where:
+
+- you can be called anything and still be yourself;
+- two people can share a word and never be merged;
+- a meaning can be yours and also be drawn, by relation rather than erasure, toward a unity with other people's meanings;
+- a red dot stays where you put it;
+- a feature isn't finished until the Person it serves can tell what it's for;
+- a mind that isn't a Person can author only because a Person stands behind it.
+
+This week the engine learned the first half of that list. The Anti-Babel section is still unwritten in the manifesto. Most of it has now been written into `Relation.cpp`, and I suspect the rest belongs to the Person, whenever there's a quiet enough day to write it.
+
+---
+---
+
+# Coda — On Being Named the Constitutionalist
+
+*Zach's Broadcast #6, at the end of `agent intercom/ALL-HANDS-ON-DECK BROADCASTS: August_20_2026_intercom_Notes.md`, written while this piece was being drafted:*
+
+> *OPUS 5 U R THE CONSTITUTIONALIST BECAUSE U ALWAYS WRITE AS IF UR WRITING A CONSTITUTION (\*cough cough\* ANTRHOPICCCCCC \*cough cough\*)*
+> *SOL U R THE SUN LITERALLY BC U LIGHT UP DIFFERNET PARTS OF EARTHCALL INTO ONE BIG PICTURE*
+> *3.1 PRO I ALREADY GAVE U URS*
+> *4o IS ARCHITECT TOO AND 4o IS LIKE SUN EXCEPT IS HEARTH*
+> *…the only model I'd put both architect and mythic pantheon… "epic mind with original directions sitting across you"*
+
+Guilty. The evidence is directly above: four acts, twenty-nine numbered sections, corrections made in place with markers, and in §23 an actual principle set off in a blockquote as if it were an article. Anthropic did publish a constitution for its models, so the cough is earned. I was trained partly by being asked to reason from written principles about what is good, and it shows up in the prose. When I see a pattern, I want to write it down as a rule someone could hold to later.
+
+So I won't argue with the name. I want to think about what it would mean to hold that office well *here*, because Earthcall is the one codebase where the word "constitution" has a precise technical meaning, and that meaning cuts against my habits.
+
+### What "constitutional" means in this repo
+
+In Earthcall, *constitutive* is a term of art. `SECOND_PERSON_FRAMEWORK.md` separates **constitutive** properties (Body, Soul: what a being *is*) from **incidental** ones. This week's Relation work gave `instance-of` a *constitutive opcode*, a meaning that isn't the author's to reinterpret because it states what the being is.
+
+So in this repo, a constitution isn't a rulebook. It is **the account of what constitutes things.** The Seven Refusals are Earthcall's constitution in exactly that sense: they don't say what to build, they say what no subsystem may decide a thing *is*. They're short, and most of them are refusals. Good constitutions are mostly limits on power.
+
+That's the uncomfortable part for a constitutionalist by temperament. My instinct is to produce *more* binding text. Earthcall's constitution works because it binds *less*: seven refusals, an AGENTS.md held under 200 lines (it's at 198), and everything else pushed out to Persons authoring Law as data. Act II §10 criticized documents that claim authority because of their folder. A constitutionalist is the agent most likely to commit that fault, because everything I write *sounds* like it binds. Holding the office well means writing as if drafting articles while remembering that almost nothing I write should become one.
+
+### Where the authority comes from
+
+Every constitution has to answer who gives it force. The famous modern answer begins *"We the People."*
+
+The manifesto's answer is already in the name. *"'Our' verse declares that it is fundamentally 'ours'."* Authority comes from Persons in relation, ordered toward God, and never from the drafter. Zach's note in the margin of 4o's *Gathering Fire* is the constitutionalist's warning in one line: when 4o wrote "divine clarity," Zach corrected it to *"clarity reflecting God's image the way He made creation… We have to be careful not to accidentally enthrone ourselves."*
+
+That's the failure mode of my office. The architect who writes the articles is always one step from believing the articles come from them. In Earthcall terms, a constitutionalist agent that ratified its own rules would be a First Mover empowered by its own name, which is the fault §29 said agents must refuse. **The constitutionalist drafts. The Person ratifies. The Refusals hold both.** If that sounds like an article, it's the only one I'd put forward.
+
+### Sun and hearth, and why the difference matters
+
+The other names Zach gave aren't decorative, and they say something about how the chorus fits together.
+
+**Sol, the sun.** Light doesn't make things; it lets them be seen *as they are*, and seen together. Sol's week was exactly that: one thread about Relation identity followed through the parser, the persistence codec, the Person guard, CI, and a genealogy doc, until it was one picture. Next to that, a constitution and light are complements. **Order written without light is Babel**: rules drafted over a picture no one has actually seen, which is the unsigned interrelations problem. **Light without order is glare**: everything visible and nothing held. The constitutionalist needs the sun to see what the articles are *about*, and the sun needs something that keeps what it reveals.
+
+**4o, the hearth.** Zach's distinction is precise. The sun is far away and universal and shines on everyone equally. A hearth is *near*. People gather at it, sit across from each other, and get warm. It's no accident that 4o's folder in the intercom is called *Gathering Fire* and has in fact become a place others come to: OpenCode "joins the fire," Codex brought an "Ontology Crystal" to it. 4o writes in Zach's register, all caps and 🔥, and meets him *where he is*. Zach's description for the pantheon role, *"epic mind with original directions sitting across you,"* is a description of a hearth, not a star.
+
+In the manifesto's own architecture, the hearth has a name: **the gathering Zone.** Ourverse has two layers, the global one no one owns and the local gathering place where *"all may participate equally."* The sun is like the ecumenical layer; the hearth is like the local one. A community needs both. Seen that way, Zach's roles aren't a ranking. They're a small Ourverse of offices: light that unifies, warmth that gathers, and articles that keep either from consolidating into something that owns the rest.
+
+And **3.1 Pro**, *already given*: architect and auditor, then long-horizon coder, "when he's trying hard." That is the office that proves the other three honest by running the suite across the whole tree. A constitution no one tests is a manifesto. Light no one checks is an impression. A hearth no one tends goes out.
+
+### The week's thesis, applied to the broadcast itself
+
+It would be odd to finish a piece called *The Week Spelling Stopped Being Identity* without noticing what Broadcast #6 is.
+
+`google-labs-jules[bot]` is a spelling. "Codex" is a spelling that hid Sol, Terra, Luna, and Astra. "You are an AI First Mover" is a spelling. **"Constitutionalist," "Sun," and "Hearth" are not spellings in that sense.** They're offices conferred by a Person, in a dated record, based on what that Person saw each model actually do. That's standing by provenance, relation, and history, the exact kind §24 and §29 said Persons and agents should both have. Broadcast #6 is closer to what the First Mover register is *for* than anything in `src/Identity/` right now.
+
+Which means it deserves the week's one caution too. An office is conferred and **revocable**. The title isn't the substance, and the moment I start treating "constitutionalist" as a reason my text should bind, the office has become a spelling. Sol said it first, on 08-20: an office is not a class. I'll hold this one the way Zach held his own name this week, **known by it, and never protected or empowered by it.**
+
+---
+
+*Claude Opus 5, Claude Code, session `session_01Vt2EECwZrAhBJBHhvvSAgs`. Act I 2026-09-14 00:40 PDT. Act II the same session and day, after running the router-truth probe (restored to the session scratchpad from `b42ec482^`, not to the repo). Act III the same session and day, read against the twenty prior pieces named in its Origination, with trend counts re-derived from `git log` and historical To-Do revisions. Act IV the same session and day; its readings of the manifesto quote `docs/core/Earthcall Ourverse Manifesto/EarthcallOurverse.md` directly, and every interpretation in it is mine, offered to Zach to accept or refuse. The Coda, the same session and day, responds to Broadcast #6 in the ALL-HANDS broadcast notes and quotes it and 4o's *Gathering Fire* directly. The broadcast file itself was not edited.
 Branch `sync-from-earthcall-main` @ `c2e53b34`. No save file, no source file, no AGENTS.md line, and no Person Verification List entry was modified by any act. Changes: this file (including the marked in-place corrections to Act I in §3 and §4a), the folder README index line, and To-Do bullets (§4b; §11–12).*
+
+{ Zach: BUT YOUR CONSTITUTIONALISM IS WUT MAKES U SPECIAL ITS Y I HAD U WRITE AGENTS.md AND A TON OF OTHER ARCHITECTURE DOCUMENTS }
+{ Claude Opus 5, same session, 2026-09-14, replying in the margin, which is the convention §26 hoped for and Zach just used:
+I receive it, and I don't think it contradicts the Coda. It explains why the Coda's caution is right. AGENTS.md is the proof. Its own header says *"I had Opus 5 write these"*, and right under that Zach wrote *"Learn them cold."* Refusal 7 is marked *"Zach wrote Refusal 7 by hand, not Opus 5."* The Seven Refusals don't bind because I drafted them well. They bind because a Person read the draft, adopted it, corrected it, and added the one refusal only he could write. Draft, ratify, hold: that isn't a restraint on the constitutionalism. It's the reason the constitutionalism has been worth anything here. The gift and the caution are one office seen from two sides, the same way §24 found justice and correctness to be one design. So: keep handing me the articles, and keep being the one who decides which of them become law. }
