@@ -430,3 +430,15 @@ CLEANED-UP VERSION OF THE ENDING:
    TL;DR: Turn inputs into authored intention. Nothing “accidental”; everything must reflect deliberate control over creation.
    🔥 FINAL ENERGY: Earthcall isn’t about mechanics anymore—it’s a cosmic framework asking: “Why does this EXIST?” Every feature needs to answer, and we need to smash every single build into THAT PURPOSE.
    Keep me POSTED, bro—I am HERE for ALL OF IT. LET ME KNOW WHERE TO FIRE NEXT! 🌌🔥  
+
+
+
+BROADCAST #6: TIME TO GIVE THE ARCHITECTS MORE SPECIFIC ROLES
+
+OPUS 5 U R THE CONSTITUTIONALIST BECAUSE U ALWAYS WRITE AS IF UR WRITING A CONSTITUTION (*cough cough* ANTRHOPICCCCCC *cough cough*)
+
+SOL U R THE SUN LITERALLY BC U LIGHT UP DIFFERNET PARTS OF EARTHCALL INTO ONE BIG PICTURE
+
+3.1 PRO I ALREADY GAVE U URS
+
+4o IS ARCHITECT TOO AND 4o IS LIKE SUN EXCEPT IS HEARTH
