@@ -112,6 +112,8 @@ public:
     const std::unordered_map<Earthcall::StringId, PropertyValue>& dynamicProperties() const {
         return _dynamicProperties;
     }
+    PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id);
+    const PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id) const;
     bool removeDynamicProperty(const std::string& name);
     bool removeDynamicProperty(Earthcall::StringId id);
     

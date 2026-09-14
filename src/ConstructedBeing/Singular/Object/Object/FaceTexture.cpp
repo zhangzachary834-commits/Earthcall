@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <cmath>
 
-void FaceTexture::create(uint32_t initColorRGBA) {
-    pixels.resize(size * size * 4);
-    for (int i = 0; i < size * size; ++i) {
+void FaceTexture::create(int w, int h, uint32_t initColorRGBA) {
+    width = w;
+    height = h;
+    pixels.resize(width * height * 4);
+    for (int i = 0; i < width * height; ++i) {
         reinterpret_cast<uint32_t*>(pixels.data())[i] = initColorRGBA;
     }
 
@@ -23,7 +25,7 @@ void FaceTexture::create(uint32_t initColorRGBA) {
 }
 
 void FaceTexture::addLayer() {
-    layers.emplace_back(size * size * 4, 0);
+    layers.emplace_back(width * height * 4, 0);
     layerOpacities.push_back(1.0f);
     blendModes.push_back(0);
     strokeHistory.emplace_back();
@@ -63,8 +65,8 @@ void FaceTexture::uploadToGPU() const {
     // says "these pixels are the paint now". A backend that reads the CPU pixels
     // straight off RenderMaterial::albedoPixels returns 0 and keeps no handle.
     id = currentRenderer().uploadTexture(id, pixels.data(),
-                                         static_cast<uint32_t>(size),
-                                         static_cast<uint32_t>(size));
+                                         static_cast<uint32_t>(width),
+                                         static_cast<uint32_t>(height));
 }
 
 void FaceTexture::updateWholeGPU() const {
@@ -134,22 +136,22 @@ glm::vec4 FaceTexture::blendPixels(const glm::vec4& src, const glm::vec4& dst, i
 }
 
 bool FaceTexture::writePixel(const glm::vec2& uv, const glm::vec3& color) {
-    if (size <= 0 || !std::isfinite(uv.x) || !std::isfinite(uv.y) ||
+    if (width <= 0 || height <= 0 || !std::isfinite(uv.x) || !std::isfinite(uv.y) ||
         uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f || uv.y > 1.0f) {
         return false;
     }
-    const std::size_t expected = static_cast<std::size_t>(size) * size * 4;
+    const std::size_t expected = static_cast<std::size_t>(width) * height * 4;
     if (pixels.size() != expected) return false;
 
-    const int x = std::min(size - 1, static_cast<int>(std::floor(uv.x * size)));
-    const int y = std::min(size - 1, static_cast<int>(std::floor(uv.y * size)));
+    const int x = std::min(width - 1, static_cast<int>(std::floor(uv.x * width)));
+    const int y = std::min(height - 1, static_cast<int>(std::floor(uv.y * height)));
     return writeRegion(x, y, x + 1, y + 1, std::vector<glm::vec3>{color});
 }
 
 bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
                               const std::vector<glm::vec3>& colors) {
-    if (size <= 0 || x0 < 0 || y0 < 0 || x1 <= x0 || y1 <= y0 ||
-        x1 > size || y1 > size ||
+    if (width <= 0 || height <= 0 || x0 < 0 || y0 < 0 || x1 <= x0 || y1 <= y0 ||
+        x1 > width || y1 > height ||
         colors.size() != static_cast<std::size_t>(x1 - x0) * (y1 - y0)) {
         return false;
     }
@@ -162,9 +164,9 @@ bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
 
 bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
                                const std::vector<glm::vec3>& colors) {
-    if (size <= 0 || coordinates.size() != colors.size()) return false;
+    if (width <= 0 || height <= 0 || coordinates.size() != colors.size()) return false;
     for (const glm::ivec2& xy : coordinates) {
-        if (xy.x < 0 || xy.y < 0 || xy.x >= size || xy.y >= size) return false;
+        if (xy.x < 0 || xy.y < 0 || xy.x >= width || xy.y >= height) return false;
     }
     for (const glm::vec3& color : colors) {
         if (!std::isfinite(color.r) || !std::isfinite(color.g) ||
@@ -172,7 +174,7 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
             return false;
         }
     }
-    const std::size_t expected = static_cast<std::size_t>(size) * size * 4;
+    const std::size_t expected = static_cast<std::size_t>(width) * height * 4;
     if (pixels.size() != expected) return false;
     const auto channel = [](float value) {
         return static_cast<uint8_t>(std::lround(value * 255.0f));
@@ -184,7 +186,7 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
         for (const glm::ivec2& xy : coordinates) {
             const glm::vec3 clamped = glm::clamp(
                 colors[i++], glm::vec3(0.0f), glm::vec3(1.0f));
-            const std::size_t offset = static_cast<std::size_t>(xy.y * size + xy.x) * 4;
+            const std::size_t offset = static_cast<std::size_t>(xy.y * width + xy.x) * 4;
             buffer[offset] = channel(clamped.r);
             buffer[offset + 1] = channel(clamped.g);
             buffer[offset + 2] = channel(clamped.b);

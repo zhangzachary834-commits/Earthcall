@@ -822,21 +822,22 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     auto owned = _textures.find(mat.textureId);
     if (mat.textureId != 0 && owned != _textures.end()) {
         albedoView = owned->second.view;
-    } else if (mat.albedoPixels && mat.albedoSize > 0) {
-        const uint32_t s = static_cast<uint32_t>(mat.albedoSize);
+    } else if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
+        const uint32_t w = static_cast<uint32_t>(mat.albedoWidth);
+        const uint32_t h = static_cast<uint32_t>(mat.albedoHeight);
         WGPUTextureDescriptor atd = {};
         atd.usage = WGPUTextureUsage_TextureBinding | WGPUTextureUsage_CopyDst;
         atd.dimension = WGPUTextureDimension_2D;
-        atd.size = { s, s, 1 };
+        atd.size = { w, h, 1 };
         atd.format = WGPUTextureFormat_RGBA8Unorm;
         atd.mipLevelCount = 1; atd.sampleCount = 1;
         WGPUTexture atex = wgpuDeviceCreateTexture(_device, &atd);
         WGPUTexelCopyTextureInfo adst = {};
         adst.texture = atex; adst.aspect = WGPUTextureAspect_All; adst.origin = { 0, 0, 0 };
         WGPUTexelCopyBufferLayout alay = {};
-        alay.bytesPerRow = s * 4; alay.rowsPerImage = s;
-        WGPUExtent3D asize = { s, s, 1 };
-        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels, size_t(s) * s * 4, &alay, &asize);
+        alay.bytesPerRow = w * 4; alay.rowsPerImage = h;
+        WGPUExtent3D asize = { w, h, 1 };
+        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels, size_t(w) * h * 4, &alay, &asize);
         albedoView = wgpuTextureCreateView(atex, nullptr);
         _frameTextures.push_back(atex);
         _frameTextureViews.push_back(albedoView);
@@ -1076,9 +1077,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.invModel = glm::inverse(_model);
     
     glm::vec3 albedo(1.0f);
-    if (mat.albedoPixels && mat.albedoSize > 0) {
-        const int   half = mat.albedoSize / 2;
-        const size_t idx = (size_t(half) * mat.albedoSize + half) * 4;
+    if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
+        const int halfW = mat.albedoWidth / 2;
+        const int halfH = mat.albedoHeight / 2;
+        const size_t idx = (size_t(halfH) * mat.albedoWidth + halfW) * 4;
         albedo = glm::vec3(mat.albedoPixels[idx + 0] / 255.0f,
                            mat.albedoPixels[idx + 1] / 255.0f,
                            mat.albedoPixels[idx + 2] / 255.0f);

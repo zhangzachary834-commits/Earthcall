@@ -69,8 +69,14 @@ public:
     // which is NOT `root` once the path descends through a nested Singular
     // ("body.head.position" resolves on the head). Change notification needs
     // that being, not the one the walk started from.
-    Property* resolve(Singular& root, std::string* trailingComponent = nullptr,
-                      Singular** owner = nullptr, std::size_t startIndex = 0) const;
+    struct ResolvedSlot {
+        Property* prop = nullptr;
+        PropertyValue* dynamicSlot = nullptr;
+        Singular* owner = nullptr;
+        std::string trailingComponent;
+    };
+
+    ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
 
     enum class PathResult {
         Ok,

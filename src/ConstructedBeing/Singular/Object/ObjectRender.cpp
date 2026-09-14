@@ -201,7 +201,7 @@ void Object::drawCube() const {
     for (int f = 1; f < 6 && allFacesSame; ++f) {
         const FaceAlbedo fa = faceAlbedo(f);
         allFacesSame = (fa.handle == first.handle && fa.pixels == first.pixels &&
-                        fa.size == first.size);
+                        fa.width == first.width && fa.height == first.height);
     }
     if (allFacesSame) {
         currentRenderer().drawMesh(mergedCubeMesh(), resolveRenderMaterial(_materialId, first));
@@ -230,16 +230,16 @@ FaceAlbedo Object::faceAlbedo(size_t face) const {
     auto mat = materials.resolveOrDefault(_materialId);
     if (!mat || face >= mat->faceTextures.size()) return {};
     const FaceTexture& ft = mat->faceTextures[face];
-    // A backend uploading from `pixels` trusts `size` to describe it. If the two
+    // A backend uploading from `pixels` trusts `width` and `height` to describe it. If the two
     // ever disagree it would read past the end of the buffer, so treat a mismatch
     // as "no paint" rather than handing out an overrun.
-    const size_t expected = static_cast<size_t>(ft.size) * ft.size * 4;
-    if (ft.size <= 0 || ft.pixels.size() != expected) return {};
+    const size_t expected = static_cast<size_t>(ft.width) * ft.height * 4;
+    if (ft.width <= 0 || ft.height <= 0 || ft.pixels.size() != expected) return {};
     // Loaded paint restores CPU pixels; the GPU handle is 0 until something
     // uploads. First draw after a load is that something. uploadToGPU is
     // const (the handle is mutable); the paint itself does not change.
-    if (ft.id == 0) ft.uploadToGPU();
-    return FaceAlbedo{ft.id, ft.pixels.data(), ft.size};
+    if (ft.id == 0 && !ft.pixels.empty()) ft.uploadToGPU();
+    return {ft.id, ft.pixels.data(), ft.width, ft.height};
 }
 
 // ---------------------------------------------------------------------------
@@ -337,7 +337,7 @@ bool parsePixelAddress(const std::string& name, PixelAddress& out) {
 }
 
 glm::vec3 readTexel(const FaceTexture& ft, int x, int y) {
-    const std::size_t offset = static_cast<std::size_t>(y * ft.size + x) * 4;
+    const std::size_t offset = static_cast<std::size_t>(y * ft.width + x) * 4;
     return glm::vec3(ft.pixels[offset], ft.pixels[offset + 1], ft.pixels[offset + 2]) /
            255.0f;
 }
@@ -376,10 +376,10 @@ std::vector<glm::ivec2> selectedTexels(const FaceTexture& ft,
                                        const OntoMath::Piecewise& selector,
                                        const Object& subject) {
     std::vector<glm::ivec2> selected;
-    for (int y = 0; y < ft.size; ++y) {
-        for (int x = 0; x < ft.size; ++x) {
-            const float u = (static_cast<float>(x) + 0.5f) / ft.size;
-            const float v = (static_cast<float>(y) + 0.5f) / ft.size;
+    for (int y = 0; y < ft.height; ++y) {
+        for (int x = 0; x < ft.width; ++x) {
+            const float u = (static_cast<float>(x) + 0.5f) / ft.width;
+            const float v = (static_cast<float>(y) + 0.5f) / ft.height;
             if (selectorIncludes(selector, u, v, subject)) selected.emplace_back(x, y);
         }
     }
@@ -406,8 +406,8 @@ bool Object::writeSurfacePixel(int faceIndex, const glm::vec2& uv,
 
     // An elevated sample/set is an ordinary Property: a direct Screen act
     // touching it wakes the same change feed as a PropertyPath write.
-    const int px = std::min(ft.size - 1, static_cast<int>(std::floor(uv.x * ft.size)));
-    const int py = std::min(ft.size - 1, static_cast<int>(std::floor(uv.y * ft.size)));
+    const int px = std::min(ft.width - 1, static_cast<int>(std::floor(uv.x * ft.width)));
+    const int py = std::min(ft.height - 1, static_cast<int>(std::floor(uv.y * ft.height)));
     for (const auto& entry : dynamicProperties()) {
         const std::string name = Earthcall::StringInterner::resolve(entry.first);
         PixelAddress pixel;
@@ -498,10 +498,10 @@ bool Object::readAuthoredPropertyProjection(Earthcall::StringId id,
     auto mat = materials.resolveOrDefault(_materialId);
     if (!mat || face < 0 || face >= static_cast<int>(mat->faceTextures.size())) return false;
     const FaceTexture& ft = mat->faceTextures[static_cast<std::size_t>(face)];
-    const std::size_t expected = static_cast<std::size_t>(ft.size) * ft.size * 4;
-    if (ft.size <= 0 || ft.pixels.size() != expected) return false;
+    const std::size_t expected = static_cast<std::size_t>(ft.width) * ft.height * 4;
+    if (ft.width <= 0 || ft.height <= 0 || ft.pixels.size() != expected) return false;
     if (single) {
-        if (pixel.x >= ft.size || pixel.y >= ft.size) return false;
+        if (pixel.x >= ft.width || pixel.y >= ft.height) return false;
         out = PropertyValue(readTexel(ft, pixel.x, pixel.y));
         return true;
     }
@@ -532,7 +532,7 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(face)];
     std::vector<glm::ivec2> selected;
     if (single) {
-        if (pixel.x >= ft.size || pixel.y >= ft.size) return false;
+        if (pixel.x >= ft.width || pixel.y >= ft.height) return false;
         selected.emplace_back(pixel.x, pixel.y);
     } else {
         selected = selectedTexels(ft, selector, *this);
@@ -901,13 +901,13 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         {x0, y0}, {x1, y1}, {x0, y1},
     };
     const FaceAlbedo albedo = faceAlbedo(0);
-    if (albedo.pixels && albedo.size > 0) {
-        auto mat = materials.resolveOrDefault(_materialId);
-        const glm::vec4 tint(mat ? mat->baseColor : glm::vec3(1.0f),
-                             mat ? mat->opacity : 1.0f);
+    auto mat = materials.resolveOrDefault(_materialId);
+    const glm::vec4 tint(mat ? mat->baseColor : glm::vec3(1.0f),
+                         mat ? mat->opacity : 1.0f);
+    if (albedo.pixels && albedo.width > 0 && albedo.height > 0) {
         currentRenderer().drawImage2D(
-            albedo.pixels, static_cast<uint32_t>(albedo.size),
-            static_cast<uint32_t>(albedo.size), glm::vec4(x0, y0, x1, y1), tint);
+            albedo.pixels, static_cast<uint32_t>(albedo.width),
+            static_cast<uint32_t>(albedo.height), glm::vec4(x0, y0, x1, y1), tint);
     } else {
         currentRenderer().drawTris2D(tris, color);
     }

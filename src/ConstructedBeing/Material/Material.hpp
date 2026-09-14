@@ -64,5 +64,5 @@ public:
     std::vector<struct FaceTexture> faceTextures;
     
     // Initialise or reinitialise textures after geometry type set/changed
-    void initFaceTextures(int numFaces);
+    void initFaceTextures(int numFaces, int defaultWidth = 64, int defaultHeight = 64);
 };

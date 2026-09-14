@@ -18,7 +18,7 @@ A **framework name is not a directory name.** `Integration/` stays
 | [`migration/`](migration/) | In-flight plans: game-elimination, keyboard, security, semantic network, leftover UI todo |
 | [`Integration/`](Integration/) | Foreign-app integration (docs twin of `src/Singularity/Foreign/`) |
 | [`interrelations/`](interrelations/) | Cross-checks between architectural systems (e.g. Rete + Semantics, UI + Multiplayer, Substrate + IR); the human-origin chain and Git genealogy behind grounded Relation-kind identity are recorded in [`RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md`](interrelations/RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md) |
-| [`Design/`](Design/) | 2D/3D visual grammar, OntoMath raster formations, granular pixel mastery ([`Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)), and foundational design specifications |
+| [`Design/`](Design/) | 2D/3D visual grammar, OntoMath raster formations, granular pixel mastery ([`Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)), Lexeme-Relation serialization ([`Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md`](Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md)), and foundational design specifications |
 
 Bare filenames in older notes (`NEW_KIND_FRAMEWORK.md`) mean the file in the
 folder above. Prefer the folder-qualified path from now on.

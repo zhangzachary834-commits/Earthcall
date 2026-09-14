@@ -660,6 +660,94 @@ Where I have extended Zach's ideas rather than originated something, §4 and §7
 cases: both are his doctrines (Moment-as-being, Refusal 6) carried into a domain he had not yet
 applied them to.
 
+## 12. Addendum, 2026-09-14 — what four days and 171 commits did to these claims
+
+*Written after surveying `5494db6e..c2e53b34`. Nothing above has been rewritten; this section
+records what later work confirmed, corrected, or newly threatened.*
+
+### 12a. §9d's open question is closed — and the answer is finding 5
+
+Antigravity (Gemini 3.1 Pro) resolved the `LawManager::tick` exponent flag in
+`docs/Analysis/LawManager_Scaling_Analysis.md` and commit `be25ad9b`. Its conclusion: **the
+pre-session baseline of ~0.94 was a phantom — the benchmark's own probe law never fired, so the
+exponent measured an empty loop.** When the law came back to life, the curve steepened. That is
+§9d's candidate hypothesis, confirmed — and it is the answer to §10's first open item. The first
+measured casualty of finding 5 was not an authored world. It was the engine's performance
+benchmark.
+
+**The conclusion is right; the stated mechanism is wrong in two details, verified 2026-09-14:**
+
+- It says *"Looking up `position.y` would silently fail."* It would not. `position` is a registered
+  property name (`ObjectProperties.cpp:534`), and always resolved. The law is
+  `Compare(position.y > -1000)` → `set shape.fillet 0.25`, so its required vocabulary is
+  `{position, shape}` — and **`shape` is the name that does not exist.** It came from the
+  **action**, not the condition.
+- It says *"the condition failed for all objects, [so] the reactive path entirely skipped."* The
+  reactive path was never taken: `frame_lag_test` does not call `connectToEventBus()`, so
+  `hasTerminals` is false and the law runs on the **sweep** path, where `couldApplyTo` rejected
+  every being on vocabulary grounds before the condition was ever evaluated.
+
+The distinction is not pedantry. It is §1a finding 5 exactly as written — a law killed by the
+root-vs-dotted-name mismatch *through what it writes* — and "the condition failed" would send a
+reader looking in the wrong place.
+
+**One residual inconsistency, stated rather than smoothed over.** §9d's bisect table records
+"HEAD, rung 3 stashed → k = 1.416". If the dotted-name fix is what woke the probe law, removing it
+should have returned the empty loop. I cannot reconcile that row without re-running it, and I have
+not. The likeliest explanation is that the stash did not contain what I believed, but that is a
+guess, and this document has been disciplined about not promoting guesses.
+
+Antigravity also rewrote hot-path costs in the same commit — condition and onset memory keyed by
+`const Singular*` instead of `std::string`, `Moment` construction stripped from `applyTo`, and
+`collectTerminalSubjects` moved to sort-unique — and reports `LawManager::tick` on chess
+0.247 → 0.166 ms. All eleven law tests from this work pass on the new HEAD.
+
+### 12b. §4's mechanism changed shape, and the guard became more load-bearing, not less
+
+Commit `2708bf4a` ("Events are now full Moments") replaced `ECA::Event`'s by-value
+`Moment timestamp{}` with `using Event = ::Event`, where `class Event : public Moment`. §4's
+wording — *"`ECA::Event` carries `Moment timestamp{}` by value"* — is therefore stale.
+
+Its argument is not. An `ECA::Event` no longer *contains* a `Singular`; it **is** one. Every
+transient Event is still a `Singular` destructor firing `notifyBeingReleased`. §4's principle — an
+ontological commitment (*an Event is a Moment is a being*) must not silently imply an operational
+one (*every Event pays what beings pay*) — now applies to the Event itself, and
+`_factParticipants` is the only thing standing between that commitment and a fact-table scan per
+temporary. It is still present.
+
+### 12c. A new seam of the §2b nominal family, arriving prospectively
+
+Sol's Relation-identity arc (`700ec208`, `4d95c536`, `d135a5b5`, `2722ecc4` and neighbours) grounds
+Relation kinds in Lexemes. For a grounded Relation, `type` now holds **the Lexeme's stable
+identifier**, and the human spelling moves to `typeLabel()`. `Relation.hpp` states this is
+deliberate: *"two independently authored Relation kinds [may] share the same spelling without
+becoming the same semantic relation."*
+
+The law engine was not told. Nothing in `ConditionModel.cpp` or `Law.cpp` reads `typeLabel()` or
+`getTypeLexeme()`. So, measured with a reachability probe (`scratch/probes/grounded_related_probe.cpp`):
+
+| Relation | `type` | reached by `Related("instance-of")`? |
+|---|---|---|
+| legacy | `instance-of` | **yes** |
+| Lexeme-grounded | `lexeme.kind.instance-of` (label `instance-of`) | **no** — and the raw predicate returns 0 |
+
+**Nothing is broken today**: chess's relations are still legacy-typed, which is why
+`chess_app_test` passes. But 132 laws name `category.chess.piece` through `instance-of` *by
+spelling*, and Sol's arc states the direction of travel — relations explicitly grounded in a
+kind-being. The day a world's relations are grounded, those laws go silent, with no error: every
+property of the five findings in §1a, in advance.
+
+**This is a decision, not a bug, and I have not "fixed" it.** Making spellings match grounded kinds
+would directly contradict the design Sol wrote down. The real gap is that the condition language
+has no first-class way to name a grounded kind — only a raw Lexeme id in a string — and no
+migration exists for laws that name kinds by spelling. That is ⚑ AUTHOR, filed as such. The probe
+is deliberately left unregistered: asserting today's behaviour would lock in an answer nobody has
+chosen yet.
+
+It is also the cleanest vindication of §2b's claim available: a nominal mismatch, introduced by
+careful, well-documented work in one subsystem, invisible to every test in another, and silent in
+exactly the way §3 says the suite cannot see.
+
 ---
 
 **Signed:** Claude Opus 5 · session `session_01F9nK3FZ7VR4PFPTUWfYyvm` · 2026-09-10

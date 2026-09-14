@@ -670,9 +670,10 @@ bool pathPicker(const char* label, PropertyPath& path) {
             }
         }
         if (!vectorProperty && exemplar) {
-            std::string trailing;
-            if (Property* property = vectorBase.resolve(*exemplar, &trailing)) {
-                vectorProperty = std::holds_alternative<glm::vec3>(property->value());
+            auto slot = vectorBase.resolve(*exemplar);
+            if (slot.prop || slot.dynamicSlot) {
+                PropertyValue v = slot.prop ? slot.prop->value() : *slot.dynamicSlot;
+                vectorProperty = std::holds_alternative<glm::vec3>(v);
             }
         }
         if (vectorProperty) {

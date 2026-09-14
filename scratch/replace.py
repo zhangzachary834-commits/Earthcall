@@ -1,116 +1,14 @@
-#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+import re
 
-#include "ConstructedBeing/Singular/Property/Property.hpp"
-#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
-#include "ConstructedBeing/Singular/Singular.hpp"
-#include "Singularity/Core/StringId.hpp"
+with open('src/ConstructedBeing/Singular/Property/PropertyPath.cpp', 'r') as f:
+    content = f.read()
 
-#include <algorithm>
-#include <cmath>
-#include <glm/glm.hpp>
-#include <utility>
-#include <variant>
+# We want to replace from "Property* PropertyPath::resolve(" down to the end of the file.
+start_idx = content.find("PropertyPath::ResolvedSlot PropertyPath::resolve(")
+if start_idx == -1:
+    start_idx = content.find("Property* PropertyPath::resolve(")
 
-namespace {
-
-// Re-express n in the same alternative `like` currently holds, so a float
-// arriving for a double slot (or an int for a float slot) still lands.
-bool coerceLike(const PropertyValue& like, double n, PropertyValue& out) {
-    return std::visit([&](auto&& t) {
-        using X = std::decay_t<decltype(t)>;
-        if constexpr (std::is_arithmetic_v<X>) {
-            out = PropertyValue(static_cast<X>(n));
-            return true;
-        } else {
-            return false;
-        }
-    }, like);
-}
-
-float* componentOf(glm::vec3& v, const std::string& c) {
-    // r/g/b alias x/y/z so color-shaped vectors read naturally ("color.g").
-    if (c == "x" || c == "r") return &v.x;
-    if (c == "y" || c == "g") return &v.y;
-    if (c == "z" || c == "b") return &v.z;
-    return nullptr;
-}
-
-bool isVec3Component(const std::string& c) {
-    return c == "x" || c == "y" || c == "z" || c == "r" || c == "g" || c == "b";
-}
-
-} // namespace
-
-// ============================================================================
-// COLD PATH: Parse and pre-calculate all joined combinations
-//
-// This happens ONCE at Law author time (when the Law text is compiled).
-// We intern every possible joined combination as StringIds, so resolve()
-// never allocates strings.
-//
-// Example: "shape.color.r" → segments ["shape", "color", "r"]
-//
-// Pre-calculate:
-//   From index 0: "shape", "shape.color", "shape.color.r"
-//   From index 1:          "color",       "color.r"
-//   From index 2:                         "r"
-//
-// Store as _joinedIds[segmentIndex][runLength - 1]
-// ============================================================================
-PropertyPath PropertyPath::parse(const std::string& dotted) {
-    PropertyPath path;
-    std::string current;
-
-    // Parse segments (unchanged)
-    for (char ch : dotted) {
-        if (ch == '.') {
-            if (!current.empty()) path.segments.push_back(current);
-            current.clear();
-        } else {
-            current += ch;
-        }
-    }
-    if (!current.empty()) path.segments.push_back(current);
-
-    // Pre-calculate all joined combinations and intern as StringIds
-    path._joinedIds.resize(path.segments.size());
-    for (std::size_t i = 0; i < path.segments.size(); ++i) {
-        std::string joined;
-        for (std::size_t j = i; j < path.segments.size(); ++j) {
-            if (j > i) joined += '.';
-            joined += path.segments[j];
-
-            // Intern this combination
-            Earthcall::StringId id = Earthcall::StringInterner::intern(joined);
-            path._joinedIds[i].push_back(id);
-        }
-    }
-
-    return path;
-}
-
-Earthcall::StringId PropertyPath::fullId() const {
-    if (_joinedIds.empty() || _joinedIds[0].empty()) return Earthcall::StringId();
-    return _joinedIds[0].back();
-}
-
-std::string PropertyPath::toString() const {
-    std::string joined;
-    for (std::size_t i = 0; i < segments.size(); ++i) {
-        if (i) joined += '.';
-        joined += segments[i];
-    }
-    return joined;
-}
-
-// ============================================================================
-// HOT PATH: Resolve with zero allocations
-//
-// Uses pre-calculated _joinedIds for pure integer lookups. No string
-// allocations, no string comparisons. When a Law fires on 500 targets,
-// this runs 500 times with ZERO heap allocations.
-// ============================================================================
-PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
+new_methods = """PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
     ResolvedSlot slot;
     if (segments.empty() || startIndex >= segments.size()) return slot;
 
@@ -125,20 +23,20 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             std::size_t consumed = 0;
             const auto& idsFromHere = _joinedIds[i];
             
-            PropertyValue* foundDyn = nullptr;
             for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
                 Earthcall::StringId id = idsFromHere[runLength - 1];
-                if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
-                    foundDyn = candidate;
+                if (Property* candidate = currentOwner->findProperty(id)) {
+                    foundReg = candidate;
                     consumed = runLength;
                 }
             }
 
-            if (!foundDyn) {
+            PropertyValue* foundDyn = nullptr;
+            if (!foundReg) {
                 for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
                     Earthcall::StringId id = idsFromHere[runLength - 1];
-                    if (Property* candidate = currentOwner->findProperty(id)) {
-                        foundReg = candidate;
+                    if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
+                        foundDyn = candidate;
                         consumed = runLength;
                     }
                 }
@@ -330,3 +228,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     }
     return PathResult::NoSuchProperty;
 }
+"""
+
+with open('src/ConstructedBeing/Singular/Property/PropertyPath.cpp', 'w') as f:
+    f.write(content[:start_idx] + new_methods)

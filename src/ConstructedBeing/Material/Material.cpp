@@ -85,7 +85,8 @@ json faceTexturesToJson(const std::vector<FaceTexture>& textures) {
     json arr = json::array();
     for (const auto& ft : textures) {
         json ftj;
-        ftj["size"] = ft.size;
+        ftj["width"] = ft.width;
+        ftj["height"] = ft.height;
         if (ft.useLayers) ft.compositeLayers();
         ftj["pixelsB64"] = base64Encode(ft.pixels);
         arr.push_back(std::move(ftj));
@@ -99,14 +100,20 @@ void faceTexturesFromJson(Material& m, const json& arr) {
     m.faceTextures.reserve(arr.size());
     for (const auto& ftj : arr) {
         FaceTexture ft;
-        const int size = ftj.value("size", 64);
-        if (size <= 0 || size > 4096) continue;
-        ft.size = size;
+        int width = ftj.value("width", 64);
+        int height = ftj.value("height", 64);
+        if (ftj.contains("size")) {
+            width = ftj.value("size", 64);
+            height = width;
+        }
+        if (width <= 0 || width > 4096 || height <= 0 || height > 4096) continue;
+        ft.width = width;
+        ft.height = height;
         const std::string b64 = ftj.value("pixelsB64", std::string());
         std::vector<uint8_t> data = base64Decode(b64);
-        const size_t expected = static_cast<size_t>(size) * static_cast<size_t>(size) * 4;
+        const size_t expected = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
         if (data.size() != expected) {
-            ft.create(0xFFFFFFFFu);
+            ft.create(width, height, 0xFFFFFFFFu);
         } else {
             ft.pixels = std::move(data);
             ft.updateWholeGPU();
@@ -165,14 +172,14 @@ Material Material::fromJson(const json& j) {
     return m;
 }
 
-void Material::initFaceTextures(int numFaces) {
+void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeight) {
     if (faceTextures.size() == static_cast<size_t>(numFaces)) {
         return; // Already initialised correctly
     }
     faceTextures.clear();
     for (int i = 0; i < numFaces; ++i) {
         FaceTexture tex;
-        tex.create(); // Default 64x64 white texture
+        tex.create(defaultWidth, defaultHeight); // Default white texture
         faceTextures.push_back(std::move(tex));
     }
 }

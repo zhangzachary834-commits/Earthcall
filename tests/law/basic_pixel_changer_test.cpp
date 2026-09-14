@@ -54,7 +54,7 @@ Object* findPicker(Zone& zone) {
 }
 
 glm::vec3 texel(const FaceTexture& texture, int x, int y) {
-    const std::size_t offset = static_cast<std::size_t>(y * texture.size + x) * 4;
+    const std::size_t offset = static_cast<std::size_t>(y * texture.width + x) * 4;
     return glm::vec3(texture.pixels[offset], texture.pixels[offset + 1],
                      texture.pixels[offset + 2]) / 255.0f;
 }

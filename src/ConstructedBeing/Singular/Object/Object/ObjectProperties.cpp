@@ -443,7 +443,7 @@ public:
                 return PropertyValue(tex->blendModes[layer]);
             }
             case Field::TextureSize:
-                return PropertyValue(tex ? tex->size : 0);
+                return PropertyValue(tex ? tex->width : 0);
         }
         return PropertyValue{};
     }

@@ -412,3 +412,13 @@ const DataStructure* Singular::getDataStructure(const std::string& name) const {
 bool Singular::removeDataStructure(const std::string& name) {
     return _dataStructures.erase(name) > 0;
 }
+
+PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) {
+    auto it = _dynamicProperties.find(id);
+    return (it != _dynamicProperties.end()) ? &it->second : nullptr;
+}
+
+const PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) const {
+    auto it = _dynamicProperties.find(id);
+    return (it != _dynamicProperties.end()) ? &it->second : nullptr;
+}
