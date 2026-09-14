@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 31571)
-Total output lines: 2943
-
 #include "Law.hpp"
 #include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 
@@ -1427,7 +1424,165 @@ void ReteNetwork::unbindLawFromAlpha(const std::string& lawId, std::size_t alpha
     auto it = _alphaLawBindings.find(alphaNodeId);
     if (it == _alphaLawBindings.end()) return;
     auto& laws = it->second;
-    laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws…1571 tokens truncated…", beta.rightAlphaId},
+    laws.erase(std::remove(laws.begin(), laws.end(), lawId), laws.end());
+    // Activations do not record which alpha queued them, so only purge once
+    // this law has no alpha binding left to fire it -- otherwise unbinding
+    // one trigger would silently cancel pending work from another.
+    bool stillBound = false;
+    for (const auto& binding : _alphaLawBindings) {
+        if (std::find(binding.second.begin(), binding.second.end(), lawId) !=
+            binding.second.end()) {
+            stillBound = true;
+            break;
+        }
+    }
+    if (!stillBound) purgeAgendaOf(lawId);
+    dropUnboundAlphaNodes();
+}
+
+void ReteNetwork::purgeAgendaOf(const std::string& lawId) {
+    _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),
+                                 [&](const ReteActivation& a) { return a.lawId == lawId; }),
+                  _agenda.end());
+}
+
+std::size_t ReteNetwork::internAuthoredAlpha(const std::string& conditionKey,
+                                             const std::string& description,
+                                             AlphaPredicate predicate) {
+    // The findAlpha check is load-bearing, exactly as it is in internTypeAlpha:
+    // dropUnboundAlphaNodes can remove a node this map still names. Ids are
+    // never reused, so a stale entry resolves to nothing rather than to the
+    // wrong node, and we rebuild.
+    auto existing = _authoredAlphaIndex.find(conditionKey);
+    if (existing != _authoredAlphaIndex.end() && findAlpha(existing->second)) {
+        return existing->second;
+    }
+    const std::size_t id = addAlphaNode(description, std::move(predicate),
+                                        AlphaSource::Authored);
+    _authoredAlphaIndex[conditionKey] = id;
+    return id;
+}
+
+std::size_t ReteNetwork::internTypeAlpha(const std::string& eventType) {
+    auto existing = _typeAlphaIndex.find(eventType);
+    if (existing != _typeAlphaIndex.end() && findAlpha(existing->second)) {
+        return existing->second;
+    }
+    const std::size_t id = addAlphaNode(
+        "type == " + eventType,
+        [eventType](const FactPtr& f) { return f->type == eventType; },
+        AlphaSource::Interned);
+    _typeAlphaIndex[eventType] = id;
+    return id;
+}
+
+bool ReteNetwork::hearsType(const std::string& eventType) const {
+    auto interned = _typeAlphaIndex.find(eventType);
+    if (interned == _typeAlphaIndex.end()) return false;
+    auto binding = _alphaLawBindings.find(interned->second);
+    if (binding != _alphaLawBindings.end() && !binding->second.empty()) return true;
+    for (const auto& beta : _betaNodes) {
+        if ((!beta.leftIsBeta && beta.leftId == interned->second) || beta.rightAlphaId == interned->second) {
+            auto betaBinding = _betaLawBindings.find(beta.id);
+            if (betaBinding != _betaLawBindings.end() && !betaBinding->second.empty()) return true;
+        }
+    }
+    return false;
+}
+
+bool ReteNetwork::hasForeignBoundAlpha() const {
+    for (const auto& binding : _alphaLawBindings) {
+        if (binding.second.empty()) continue;
+        const AlphaNode* alpha = findAlpha(binding.first);
+        if (alpha && alpha->source == AlphaSource::Foreign) return true;
+    }
+    return false;
+}
+
+bool ReteNetwork::hasOpaqueBoundAlpha() const {
+    for (const auto& binding : _alphaLawBindings) {
+        if (binding.second.empty()) continue;
+        bool interned = false;
+        for (const auto& entry : _typeAlphaIndex) {
+            if (entry.second == binding.first) { interned = true; break; }
+        }
+        if (!interned) return true;   // an unreadable predicate: assume it listens
+    }
+    return false;
+}
+
+// A node nobody is bound to can never produce an activation. Propagation
+// already skips it, but it still costs the beta scan on every assert and a
+// full refill on every bind, so reclaim it rather than letting a session's
+// worth of rebinds and world loads pile up.
+void ReteNetwork::dropUnboundAlphaNodes() {
+    std::vector<std::size_t> doomed;
+    for (const auto& alpha : _alphaNodes) {
+        auto binding = _alphaLawBindings.find(alpha.id);
+        const bool boundToLaw = binding != _alphaLawBindings.end() && !binding->second.empty();
+        if (boundToLaw) continue;
+        // A beta node reading this alpha still needs it alive.
+        bool feedsBeta = false;
+        for (const auto& beta : _betaNodes) {
+            if ((!beta.leftIsBeta && beta.leftId == alpha.id) || beta.rightAlphaId == alpha.id) {
+                feedsBeta = true;
+                break;
+            }
+        }
+        if (!feedsBeta) doomed.push_back(alpha.id);
+    }
+    if (doomed.empty()) return;
+
+    for (std::size_t id : doomed) {
+        _alphaLawBindings.erase(id);
+        for (auto it = _typeAlphaIndex.begin(); it != _typeAlphaIndex.end();) {
+            it = it->second == id ? _typeAlphaIndex.erase(it) : std::next(it);
+        }
+    }
+    _alphaNodes.erase(
+        std::remove_if(_alphaNodes.begin(), _alphaNodes.end(),
+                       [&doomed](const AlphaNode& alpha) {
+                           return std::find(doomed.begin(), doomed.end(), alpha.id) !=
+                                  doomed.end();
+                       }),
+        _alphaNodes.end());
+}
+
+std::vector<ReteActivation> ReteNetwork::drainAgenda() {
+    std::vector<ReteActivation> drained = std::move(_agenda);
+    _agenda.clear();
+    return drained;
+}
+
+nlohmann::json ReteNetwork::toJson() const {
+    nlohmann::json factsJson = nlohmann::json::array();
+    for (const auto& fact : _facts) {
+        factsJson.push_back({
+            {"id", fact->id},
+            {"type", fact->type},
+            {"subjectId", fact->subjectId},
+            {"attribute", fact->attribute},
+            {"value", fact->value}
+        });
+    }
+
+    nlohmann::json alphaJson = nlohmann::json::array();
+    for (const auto& alpha : _alphaNodes) {
+        alphaJson.push_back({
+            {"id", alpha.id},
+            {"description", alpha.description},
+            {"memorySize", alpha.memory.size()}
+        });
+    }
+
+    nlohmann::json betaJson = nlohmann::json::array();
+    for (const auto& beta : _betaNodes) {
+        betaJson.push_back({
+            {"id", beta.id},
+            {"description", beta.description},
+            {"leftIsBeta", beta.leftIsBeta},
+            {"leftId", beta.leftId},
+            {"rightAlphaId", beta.rightAlphaId},
             {"memorySize", beta.memory.size()}
         });
     }
