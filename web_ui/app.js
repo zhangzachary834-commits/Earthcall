@@ -102,6 +102,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Escape') {
             inputField.value = '';
             inputField.dispatchEvent(new Event('input'));
+            inputField.blur();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            if (document.activeElement === document.body || document.activeElement === document.getElementById('earthcall-canvas')) {
+                e.preventDefault();
+                inputField.focus();
+            }
         }
     });
 
