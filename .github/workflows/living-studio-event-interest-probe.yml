@@ -14,6 +14,13 @@ jobs:
     name: Same-runner event-interest A/B
     runs-on: macos-14
     timeout-minutes: 45
+    env:
+      # This is a timing comparison. A previous diagnostic runner inherited
+      # AddressSanitizer instrumentation and correctly exposed an independent
+      # UAF, but that makes absolute frame timings unusable for this A/B.
+      CXXFLAGS: -fno-sanitize=address
+      OBJCXXFLAGS: -fno-sanitize=address
+      LDFLAGS: -fno-sanitize=address
 
     steps:
       - name: Check out probe branch
@@ -21,19 +28,24 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Report runner
+      - name: Report runner and timing flags
         shell: bash
         run: |
           set -euxo pipefail
           uname -a
           uname -m
           cmake --version
+          printf 'CXXFLAGS=%s\nOBJCXXFLAGS=%s\nLDFLAGS=%s\n' "$CXXFLAGS" "$OBJCXXFLAGS" "$LDFLAGS"
 
       - name: Configure baseline source
         shell: bash
         run: |
           set -euxo pipefail
+          rm -rf build
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+            -DCMAKE_OBJCXX_FLAGS="$OBJCXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
@@ -45,6 +57,7 @@ jobs:
         run: |
           set -euxo pipefail
           cmake --build build --parallel 4 --target frame_lag_test
+          otool -L build/frame_lag_test | grep -i asan && exit 1 || true
 
       - name: Living Instrument A — production callback
         shell: bash
@@ -70,6 +83,9 @@ jobs:
         run: |
           set -euxo pipefail
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+            -DCMAKE_OBJCXX_FLAGS="$OBJCXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
             -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
@@ -101,10 +117,10 @@ jobs:
         run: |
           set -euxo pipefail
           echo '=== A: production callback ==='
-          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions' \
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions|machine calibration|machine steadiness' \
             living-event-interest-A-production.txt || true
           echo '=== B: foreign-only fail-open ==='
-          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions' \
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|broken invariants|timing regressions|machine calibration|machine steadiness' \
             living-event-interest-B-foreign-only.txt || true
 
       - name: Upload A/B reports
@@ -116,5 +132,5 @@ jobs:
             living-event-interest-A-production.txt
             living-event-interest-B-foreign-only.txt
             event-interest-semantic-witness.txt
-          if-no-files-found: error
+          if-no-files-found: warn
           overwrite: true
