@@ -1,0 +1,136 @@
+name: Zone persistence continuation gate
+
+# Cloud-only integration gate for the independent Zone persistence work.
+# This workflow never launches Earthcall or touches a Person's local device or
+# authored save tree. Persistence tests must use disposable roots.
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zone-persistence-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: Zone persistence integration (macOS cloud VM)
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out continuation branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Repair accidental Law.cpp transcript truncation if present
+        shell: bash
+        run: |
+          set -euo pipefail
+          law='src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
+          parent='5665fa735e3d2014a3036889b520a7f86944c292'
+          if ! grep -q 'Warning: truncated output (original token count:' "$law"; then
+            echo 'Law.cpp has no transcript-truncation marker; no repair needed.'
+            exit 0
+          fi
+
+          echo 'Restoring Law.cpp from the exact pre-persistence parent and reapplying only the intended SingularId codec edits.'
+          git show "$parent:$law" > "$law"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          s = p.read_text()
+
+          include_anchor = '#include "Law.hpp"\n'
+          include_line = '#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"\n'
+          assert include_anchor in s
+          s = s.replace(include_anchor, include_anchor + include_line, 1)
+
+          from_anchor = '    auto law = std::make_shared<Law>(j.value("name", std::string("Law")));\n'
+          from_line = '    Singularity::Storage::readSingularIdentity(j, *law);\n'
+          assert from_anchor in s
+          s = s.replace(from_anchor, from_anchor + from_line, 1)
+
+          fn = s.index('nlohmann::json Law::toJson() const {')
+          comment = s.index('    // The law\'s text', fn)
+          write_line = '    Singularity::Storage::writeSingularIdentity(j, *this);\n'
+          assert write_line not in s[fn:comment]
+          s = s[:comment] + write_line + s[comment:]
+
+          assert 'Warning: truncated output (original token count:' not in s
+          assert 'tokens truncated' not in s
+          p.write_text(s)
+          PY
+
+          git diff --check -- "$law"
+          git diff --stat -- "$law"
+          git diff -- "$law" | sed -n '1,160p'
+
+          git config user.name 'Earthcall Cloud Gate'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$law"
+          git commit -m 'law: repair truncated source while preserving persisted identity'
+          git push origin HEAD:sol/event-interest-fastpath-20260913
+
+      - name: Record exact cloud toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          uname -a
+          uname -m
+          sw_vers
+          cmake --version
+          c++ --version
+          git rev-parse HEAD
+          git status --short
+          file local_deps/glfw_install/lib/libglfw3.a || true
+          file local_deps/openssl-3.0.13/libcrypto.a || true
+          file local_deps/openssl-3.0.13/libssl.a || true
+          file third_party/wgpu/lib/libwgpu_native.a || true
+
+      - name: Configure with Earthcall required flags
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build WebGPU application target
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target earthcall_webgpu
+
+      - name: Build default target including active tests
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4
+
+      - name: Run persisted identity catalog generation witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(singular_persistence_id_test|immutable_generation_store_test|zone_catalog_boot_test)$'
+
+      - name: Run full non-GPU suite
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # BUILD_AND_ENVIRONMENT.md explicitly classifies WebGPU tests and
+          # zone_facetexture_test as requiring a desktop GPU/display session.
+          # Everything else remains in this cloud integration verdict.
+          ctest --test-dir build --output-on-failure -j4 \
+            -E '^(webgpu_.*|gpu_mastery_test|zone_facetexture_test)$'
