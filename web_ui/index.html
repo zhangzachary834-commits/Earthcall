@@ -113,7 +113,13 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #f5a623; /* Connecting */
+            background: #f5a623; /* Default/Connecting */
+            transition: background-color 0.3s ease;
+        }
+
+        .connecting .status-dot {
+            background: #f5a623;
+            animation: pulse 1.5s infinite;
         }
 
         .connected .status-dot {
@@ -122,6 +128,12 @@
 
         .disconnected .status-dot {
             background: #d0021b;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
         }
     </style>
 </head>

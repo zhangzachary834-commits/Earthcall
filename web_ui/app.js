@@ -16,12 +16,15 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.innerText = text;
 
         const wasDisconnected = !statusContainer.classList.contains('connected') && statusContainer.classList.contains('disconnected');
+        const isConnecting = !isConnected && text.includes("Connecting");
+
+        statusContainer.classList.remove('connected', 'disconnected', 'connecting');
 
         if (isConnected) {
             statusContainer.classList.add('connected');
-            statusContainer.classList.remove('disconnected');
+        } else if (isConnecting) {
+            statusContainer.classList.add('connecting');
         } else {
-            statusContainer.classList.remove('connected');
             statusContainer.classList.add('disconnected');
         }
 

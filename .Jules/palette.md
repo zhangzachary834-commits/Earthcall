@@ -19,3 +19,6 @@
 ## 2024-11-26 - [Dynamic Dependent Button State Under Connection Loss]
 **Learning:** Even if you dispatch an `input` event when a form input gets disabled due to a system disconnect, the dependent buttons (like a Submit button) won't automatically disable unless the input event handler specifically checks the `disabled` state of the input field. This oversight can leave a Submit button visually enabled while the system is disconnected, leading to silent data loss if clicked.
 **Action:** Always verify both the content (e.g., `value.trim() === ''`) AND the accessibility state (`disabled`) of the input when computing the dependent state of submission buttons in `input` handlers.
+## 2024-11-26 - [Three-State Network UI Model vs Boolean]
+**Learning:** Using a single boolean flag (`isConnected`) to drive network UI states often forces intermediate states (like "Connecting...") to incorrectly inherit the visual styling of the "disconnected" state (e.g., a red indicator). This confuses users who expect a distinct visual signal for in-progress operations.
+**Action:** When designing connection status indicators, always use an explicit three-state model (e.g., `connecting`, `connected`, `disconnected`) or infer the intermediate state explicitly from parameters, rather than falling back to binary boolean logic.
