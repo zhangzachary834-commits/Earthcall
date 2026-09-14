@@ -246,11 +246,15 @@ def material_apply_law() -> dict[str, Any]:
             "pixelUPath": "@interaction-channel.hoveredU",
             "pixelVPath": "@interaction-channel.hoveredV"
         },
-        # 3. Canvas Inking: synchronize canvas paintColor with active selectedColor
+        # 3. Tool Brush Radius: sync brush radius if clicking a tool button
+        map_action(
+            "@basic-pixel-canvas.brushRadius",
+            scalar_node("r"), "r", "@event.subject.swatchBrushRadius"),
+        # 4. Canvas Inking: synchronize canvas paintColor with active selectedColor
         map_action(
             "@basic-pixel-canvas.paintColor",
             vector_node("c"), "c", "@material-color-picker.selectedColor"),
-        # 4. Preview and Target Material live updates
+        # 5. Preview and Target Material live updates
         map_action(
             "@material.material-color-picker-preview.baseColor",
             vector_node("c"), "c", "@material-color-picker.selectedColor"),
@@ -298,6 +302,7 @@ def material_apply_law() -> dict[str, Any]:
             "object-clicked",
             "object-pressed",
             "object-drag-started",
+            "object-dragged",
             "object-drag-ended"
         ],
     }
@@ -423,6 +428,8 @@ def main() -> None:
     if canvas is not None:
         canvas.setdefault("authoredProperties", {}).setdefault(
             "paintColor", {"t": "vec3", "x": 1.0, "y": 0.15, "z": 0.15})
+        canvas.setdefault("authoredProperties", {}).setdefault(
+            "brushRadius", {"t": "double", "v": 1.0})
         canvas["zOrder2D"] = 5
         canvas["authoredProperties"]["displayName"] = {"t": "string", "v": "Basic Pixel Canvas (64x64)"}
         full_canvas_selector = {
@@ -451,13 +458,16 @@ def main() -> None:
         # GIMP / Clip Studio Primary Tool Rack (6 Action Cards)
         object_2d("tool-btn-pen", 26, 58, 104, 26, "tool-pen-material", "PEN [1px]",
                   color=(0.20, 0.28, 0.42), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 0.10, "y": 0.70, "z": 0.25}}),
+                  properties={"swatchColor": {"t": "vec3", "x": 0.10, "y": 0.70, "z": 0.25},
+                              "swatchBrushRadius": {"t": "double", "v": 1.0}}),
         object_2d("tool-btn-brush", 26, 88, 104, 26, "tool-brush-material", "BRUSH [2px]",
                   color=(0.18, 0.32, 0.48), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 0.18, "y": 0.38, "z": 0.92}}),
+                  properties={"swatchColor": {"t": "vec3", "x": 0.18, "y": 0.38, "z": 0.92},
+                              "swatchBrushRadius": {"t": "double", "v": 2.0}}),
         object_2d("tool-btn-eraser", 26, 118, 104, 26, "tool-eraser-material", "ERASER",
                   color=(0.24, 0.28, 0.35), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0}}),
+                  properties={"swatchColor": {"t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0},
+                              "swatchBrushRadius": {"t": "double", "v": 2.0}}),
         object_2d("tool-btn-fill", 26, 148, 104, 26, "tool-fill-material", "FILL INK",
                   color=(0.18, 0.32, 0.50), z=20,
                   properties={"swatchColor": {"t": "vec3", "x": 0.10, "y": 0.70, "z": 0.25}}),

@@ -394,6 +394,7 @@ bool Object::writeSurfacePixel(int faceIndex, const glm::vec2& uv,
         !std::isfinite(uv.y) || uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f ||
         uv.y > 1.0f || !std::isfinite(color.r) || !std::isfinite(color.g) ||
         !std::isfinite(color.b)) {
+        endSurfaceStroke();
         return false;
     }
     auto mine = ownMaterial();
@@ -402,7 +403,31 @@ bool Object::writeSurfacePixel(int faceIndex, const glm::vec2& uv,
         mine->initFaceTextures(faces);
     }
     FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(faceIndex)];
-    if (!ft.writePixel(uv, color)) return false;
+
+    int brushRadius = 1;
+    Property* bProp = findProperty("brushRadius");
+    if (!bProp) bProp = findProperty("brushSize");
+    if (bProp) {
+        const auto& v = bProp->value();
+        if (std::holds_alternative<double>(v)) {
+            brushRadius = std::max(1, static_cast<int>(std::floor(std::get<double>(v))));
+        } else if (std::holds_alternative<float>(v)) {
+            brushRadius = std::max(1, static_cast<int>(std::floor(std::get<float>(v))));
+        } else if (std::holds_alternative<int>(v)) {
+            brushRadius = std::max(1, std::get<int>(v));
+        }
+    }
+
+    bool ok = false;
+    if (_lastStrokeFace == faceIndex && _lastStrokeUV.x >= 0.0f && _lastStrokeUV.y >= 0.0f) {
+        ok = ft.writeLine(_lastStrokeUV, uv, color, brushRadius);
+    } else {
+        ok = ft.writePixelWithRadius(uv, color, brushRadius);
+    }
+    _lastStrokeFace = faceIndex;
+    _lastStrokeUV = uv;
+
+    if (!ok) return false;
 
     // An elevated sample/set is an ordinary Property: a direct Screen act
     // touching it wakes the same change feed as a PropertyPath write.
