@@ -163,6 +163,7 @@ Earthcall/
           ZonesOfEarth/
     Time/                  the world clock itself lives on Universe
       Moment/              (instant or interval)
+      Event/               (the distinguished Moment: occurrence in time)
     ZonesOfEarth/
       AuthorsOfLaw/        (Law)
         py/

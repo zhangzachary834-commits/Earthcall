@@ -663,7 +663,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "Basic Pixel Canvas"
+            "v": "2D CHROMATIC FIELD [HUE x SATURATION]"
           },
           "paintColor": {
             "t": "vec3",
@@ -684,42 +684,42 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ]
         ],
-        "geometryType": 12,
-        "materialId": "material.default",
-        "objectID": "basic-pixel-canvas",
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "color-spectrum-label",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        "shapeKind": 13,
         "shapeParams": [
           1.0,
           1.0,
@@ -730,8 +730,8 @@
           0.0,
           0.0,
           0.0,
-          512.0,
-          512.0
+          300,
+          16
         ],
         "targetRotation": [
           0.0,
@@ -756,9 +756,9 @@
           0.0,
           1.0
         ],
-        "x2D": 160.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+        "x2D": 710,
+        "y2D": 75,
+        "zOrder2D": 30
       },
       {
         "authoritativeAxis": [
@@ -773,42 +773,42 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.6,
+            0.68,
+            0.8
           ]
         ],
-        "geometryType": 12,
-        "materialId": "color-picker-panel",
-        "objectID": "material-color-picker-panel",
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "color-sliders-label",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        "shapeKind": 13,
         "shapeParams": [
           1.0,
           1.0,
@@ -908,7 +908,7 @@
         ],
         "geometryType": 13,
         "materialId": "",
-        "objectID": "material-color-picker-title",
+        "objectID": "color-target-header",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 13,
@@ -1023,12 +1023,12 @@
             0.15000000596046448
           ]
         ],
-        "geometryType": 12,
-        "materialId": "material-color-picker-preview",
-        "objectID": "material-color-picker",
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "color-tones-header",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        "shapeKind": 13,
         "shapeParams": [
           1.0,
           1.0,
@@ -1073,11 +1073,11 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "RED"
+            "v": "TINT [PASTEL]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 14.7
+            "v": 13.68
           }
         },
         "authoritativeAxis": [
@@ -1092,39 +1092,39 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.95,
+            0.72,
+            0.75
           ]
         ],
         "geometryType": 12,
-        "materialId": "color-picker-red-ramp",
-        "objectID": "material-color-picker-red",
+        "materialId": "swatch-tone-light-material",
+        "objectID": "swatch-tone-light",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 12,
@@ -1172,11 +1172,11 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "GREEN"
+            "v": "MIDTONE [BASE]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 14.7
+            "v": 13.68
           }
         },
         "authoritativeAxis": [
@@ -1191,39 +1191,39 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.85,
+            0.18,
+            0.22
           ]
         ],
         "geometryType": 12,
-        "materialId": "color-picker-green-ramp",
-        "objectID": "material-color-picker-green",
+        "materialId": "swatch-tone-mid-material",
+        "objectID": "swatch-tone-mid",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 12,
@@ -1271,11 +1271,11 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "BLUE"
+            "v": "SHADE [SHADOW]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 14.7
+            "v": 13.68
           }
         },
         "authoritativeAxis": [
@@ -1290,39 +1290,39 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.32,
+            0.07,
+            0.09
           ]
         ],
         "geometryType": 12,
-        "materialId": "color-picker-blue-ramp",
-        "objectID": "material-color-picker-blue",
+        "materialId": "swatch-tone-dark-material",
+        "objectID": "swatch-tone-dark",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 12,
@@ -1367,16 +1367,7 @@
         "zOrder2D": 20
       },
       {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "TARGET MATERIAL"
-          },
-          "label.size2D": {
-            "t": "double",
-            "v": 18.0
-          }
-        },
+        "authoredProperties": {},
         "authoritativeAxis": [
           0.0,
           1.0,
@@ -1420,8 +1411,8 @@
           ]
         ],
         "geometryType": 12,
-        "materialId": "authored-color-target",
-        "objectID": "material-color-target",
+        "materialId": "card-bg-material",
+        "objectID": "studio-specs-card",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
         "shapeKind": 12,
@@ -1473,7 +1464,11 @@
           },
           "label.size2D": {
             "t": "double",
-            "v": 18.0
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "ONTOMATH ENGINE"
           }
         },
         "authoritativeAxis": [
@@ -1488,42 +1483,42 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ],
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ],
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ],
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ],
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ],
           [
-            1.0,
-            1.0,
+            0.82,
+            0.88,
             1.0
           ]
         ],
-        "geometryType": 12,
-        "materialId": "color-picker-chromatic-field",
-        "objectID": "material-color-picker-chromatic",
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "studio-specs-title",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        "shapeKind": 13,
         "shapeParams": [
           1.0,
           1.0,
@@ -1568,11 +1563,15 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "VALUE / BRIGHTNESS"
+            "v": "6-PIECE EXACT HSV\nPIXEL SINK: 64x64\nLAW COPY-ON-WRITE"
           },
           "label.size2D": {
             "t": "double",
-            "v": 14.7
+            "v": 16.72
+          },
+          "label2D": {
+            "t": "string",
+            "v": "6-PIECE EXACT HSV\nPIXEL SINK: 64x64\nLAW COPY-ON-WRITE"
           }
         },
         "authoritativeAxis": [
@@ -1587,42 +1586,42 @@
         ],
         "faceColors": [
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ],
           [
-            1.0,
-            1.0,
-            1.0
+            0.5,
+            0.58,
+            0.7
           ]
         ],
-        "geometryType": 12,
-        "materialId": "color-picker-value-ramp",
-        "objectID": "material-color-picker-value",
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "studio-specs-body",
         "renderMode": 0,
         "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
+        "shapeKind": 13,
         "shapeParams": [
           1.0,
           1.0,

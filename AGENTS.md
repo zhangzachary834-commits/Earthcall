@@ -86,7 +86,7 @@ src/
   ZonesOfEarth/   Zone · Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys
-  Time/           Moment (instant or interval) — the world clock itself lives on Universe
+  Time/           Moment · Event (distinguished Moment) — world clock lives on Universe
   Legacy/         not yet ontologically placed
 docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
