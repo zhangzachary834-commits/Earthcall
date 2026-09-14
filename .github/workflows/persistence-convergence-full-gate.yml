@@ -1,0 +1,94 @@
+name: Persistence convergence full gate
+
+on:
+  push:
+    branches:
+      - sol/persistence-gemini-convergence-20260914
+    paths:
+      - .github/workflows/persistence-convergence-full-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-gate:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: Check out converged branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/persistence-gemini-convergence-20260914
+          fetch-depth: 0
+
+      - name: Record exact branch and toolchain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rev-parse HEAD | tee gate-head.txt
+          git show --no-patch --pretty=raw HEAD | tee gate-head-detail.txt
+          sw_vers | tee toolchain.txt
+          uname -m | tee -a toolchain.txt
+          cmake --version | tee -a toolchain.txt
+          c++ --version | tee -a toolchain.txt
+
+      - name: Configure with Earthcall required flags
+        shell: bash
+        run: |
+          set -o pipefail
+          rm -rf build
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a" \
+            2>&1 | tee configure.log
+
+      - name: Build WebGPU application
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake --build build --parallel 4 --target earthcall_webgpu \
+            2>&1 | tee build-earthcall-webgpu.log
+
+      - name: Build default target
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake --build build --parallel 4 \
+            2>&1 | tee build-default.log
+
+      - name: Run convergence witnesses
+        shell: bash
+        run: |
+          set -o pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(event_test|singular_persistence_id_test|immutable_generation_store_test|zone_catalog_boot_test)$' \
+            2>&1 | tee focused-tests.log
+
+      - name: Run full non-GPU suite
+        shell: bash
+        run: |
+          set -o pipefail
+          ctest --test-dir build --output-on-failure -j4 \
+            -E '^(webgpu_.*|gpu_mastery_test|zone_facetexture_test)$' \
+            2>&1 | tee full-non-gpu.log
+
+      - name: Upload exact gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-convergence-gate-${{ github.run_id }}
+          path: |
+            gate-head.txt
+            gate-head-detail.txt
+            toolchain.txt
+            configure.log
+            build-earthcall-webgpu.log
+            build-default.log
+            focused-tests.log
+            full-non-gpu.log
+          if-no-files-found: warn
+          overwrite: true
