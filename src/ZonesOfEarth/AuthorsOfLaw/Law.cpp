@@ -1713,7 +1713,7 @@ void LawManager::connectToEventBus() {
     // Captured by `this`: the LawManager is an engine-lifetime object, the
     // same contract as the bus subscriptions below.
     Universe::instance().setEventInterest([this](const std::string& type) {
-        return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();
+        return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();
     });
 
     // A being that stops existing takes its facts with it. Facts hold RAW
