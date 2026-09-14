@@ -108,7 +108,7 @@ Object reborn(const Object& src) {
             if (!ft.pixels.empty()) {
                 auto pix_vec = builder.CreateVector(ft.pixels);
                 fts.push_back(Earthcall::Schema::CreateFaceTexture(
-                    builder, static_cast<int>(f), ft.size, pix_vec));
+                    builder, static_cast<int>(f), ft.width, pix_vec));
             }
         }
     }
@@ -213,7 +213,7 @@ Object reborn(const Object& src) {
                     int sz = ft->size();
                     if (fIdx >= 0 && fIdx < static_cast<int>(outMat->faceTextures.size()) && sz > 0) {
                         auto& oft = outMat->faceTextures[fIdx];
-                        oft.size = sz;
+                        oft.width = sz;
                         oft.pixels.assign(ft->pixels()->begin(), ft->pixels()->end());
                         oft.updateWholeGPU();
                     }

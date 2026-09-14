@@ -148,6 +148,9 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
 
             i += consumed;
             slot.owner = currentOwner;
+            if (foundDyn) {
+                slot.dynamicKey = Earthcall::StringInterner::resolve(_joinedIds[i - consumed][consumed - 1]);
+            }
             currentRegistered = foundReg;
             currentDynamic = foundDyn;
             currentOwner = nullptr;
@@ -302,8 +305,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             }
             // Announce on the owner with the appropriate segment name
             // (If it was a nested dict write, slot.owner might be the top-level singular)
-            std::string announceName = segments.back();
-            return announce(PathResult::Ok, nullptr, slot.owner, announceName);
+            return announce(PathResult::Ok, nullptr, slot.owner, slot.dynamicKey);
         }
     }
 
@@ -326,7 +328,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return PathResult::ReadOnly;
     } else if (slot.dynamicSlot) {
         *slot.dynamicSlot = PropertyValue(*vec);
-        return announce(PathResult::Ok, nullptr, slot.owner, segments.back());
+        return announce(PathResult::Ok, nullptr, slot.owner, slot.dynamicKey);
     }
     return PathResult::NoSuchProperty;
 }

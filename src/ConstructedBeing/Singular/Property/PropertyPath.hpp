@@ -74,6 +74,7 @@ public:
         PropertyValue* dynamicSlot = nullptr;
         Singular* owner = nullptr;
         std::string trailingComponent;
+        std::string dynamicKey;
     };
 
     ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
