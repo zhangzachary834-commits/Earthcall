@@ -1939,6 +1939,18 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
+    static bool printed = false;
+    if (!printed) {
+        printed = true;
+        fprintf(stderr, "=== ALL LAWS IN LAWMANAGER ===\n");
+        for (const auto& law_ptr : _laws) {
+            fprintf(stderr, "ID: %s | NAME: %s | ACT: %d | SCOPE: %d\n", 
+                law_ptr->getIdentifier().c_str(), law_ptr->name().c_str(), 
+                (int)law_ptr->activation(), (int)law_ptr->scope());
+        }
+        fprintf(stderr, "==============================\n");
+    }
+
     auto T0 = glfwGetTime();
 
     syncProphetic();
@@ -2037,25 +2049,9 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
         const bool hasTerminals =
             _connected && termIt != _reteTerminals.end() && !termIt->second.empty();
 
-        if (law->activation() == Law::Activation::WhileTrue) {
-            if (!hasTerminals) {
-                static std::unordered_set<std::string> printed;
-                if (printed.insert(law->getIdentifier()).second) {
-                    fprintf(stderr, "--- NO TERMINALS FOR LAW: %s ---\n", law->getIdentifier().c_str());
-                    fflush(stderr);
-                }
-            }
-        }
-        if (law->activation() == Law::Activation::WhileTrue) {
-            static int no_term = 0, yes_term = 0;
-            if (hasTerminals) yes_term++; else no_term++;
-            static int pp = 0;
-            if (++pp == 5000) {
-                printf("--- WHILE TRUE TERMINALS: Yes %d, No %d ---\n", yes_term, no_term);
-                yes_term = 0; no_term = 0; pp = 0;
-            }
-        }
-        if (hasTerminals && law->activation() == Law::Activation::WhileTrue) {
+
+
+        if (hasTerminals && (law->activation() == Law::Activation::WhileTrue || law->activation() == Law::Activation::OnBecomeTrue)) {
             std::vector<std::size_t> termIds;
             termIds.reserve(termIt->second.size());
             for (const auto& info : termIt->second) termIds.push_back(info.nodeId);
@@ -2073,14 +2069,18 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             std::unordered_set<const Singular*> matching;
+            std::vector<Singular*> newlyTrue;
             matching.reserve(subjects.size());
             for (Singular* subject : subjects) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
                 matching.insert(subject);
                 const bool wasHolding = law->lastConditionState(subject);
                 law->rememberConditionState(subject, true);
-                if (!wasHolding && Universe::instance().hasClock()) {
-                    law->rememberOnset(subject, Universe::instance().now());
+                if (!wasHolding) {
+                    newlyTrue.push_back(subject);
+                    if (Universe::instance().hasClock()) {
+                        law->rememberOnset(subject, Universe::instance().now());
+                    }
                 }
             }
 
