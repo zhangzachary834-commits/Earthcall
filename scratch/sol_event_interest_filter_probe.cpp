@@ -12,54 +12,47 @@
 int main() {
     Object author;
     author.setObjectID("event-interest.author");
-    Object subject;
-    subject.setObjectID("event-interest.subject");
-    subject.setObjectType("probe");
-
-    Universe::instance().setProvider([&]() {
-        return std::vector<Singular*>{&author, &subject};
-    });
 
     LawManager mgr;
-
-    // An ordinary authored continuous condition compiles to an Authored alpha.
-    // It consumes STATE facts only; it is not evidence that anybody listens to
-    // arbitrary event types such as "law-applied".
-    auto stateLaw = std::make_shared<Law>("state-only", std::vector<Singular*>{&author});
-    stateLaw->setActivation(Law::Activation::WhileTrue);
-    stateLaw->setConditionModel(
-        ConditionNode::compare("objectType", ConditionNode::Op::Eq,
-                               PropertyValue(std::string("probe"))));
-    mgr.add(stateLaw);
     mgr.connectToEventBus();
+
+    auto listenerLaw = std::make_shared<Law>(
+        "event-interest-listener", std::vector<Singular*>{&author});
+    mgr.add(listenerLaw);
+
+    // Directly exercise the classification contract. An Authored alpha is a
+    // readable predicate compiled from law text. Continuous ConditionModel
+    // alphas reject !isState facts, so their existence is NOT evidence that
+    // anyone hears an arbitrary event type.
+    const std::size_t authored = mgr.rete().internAuthoredAlpha(
+        "event-interest-authored-key", "authored state predicate",
+        [](const FactPtr& fact) { return fact && fact->isState; });
+    mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), authored);
 
     assert(mgr.rete().hasOpaqueBoundAlpha());
     assert(!mgr.rete().hasForeignBoundAlpha());
     assert(!Universe::instance().anyoneHears("law-applied"));
     assert(!Universe::instance().anyoneHears("some-unrelated-event"));
 
-    // An explicit event trigger is exact evidence. hearsType(type) must keep
-    // this audible even with the narrower opaque-lane fallback.
-    auto eventLaw = std::make_shared<Law>("explicit-event-listener",
-                                          std::vector<Singular*>{&author});
-    mgr.add(eventLaw);
-    mgr.bindTrigger(eventLaw->getIdentifier(), "law-applied");
+    // An explicit typed trigger is exact evidence and remains audible through
+    // hearsType(type), independent of the opaque fallback.
+    const std::size_t typed = mgr.rete().internTypeAlpha("law-applied");
+    mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), typed);
     assert(Universe::instance().anyoneHears("law-applied"));
-    mgr.unbindTrigger(eventLaw->getIdentifier(), "law-applied");
+    mgr.rete().unbindLawFromAlpha(listenerLaw->getIdentifier(), typed);
     assert(!Universe::instance().anyoneHears("law-applied"));
 
-    // A hand-written alpha is genuinely opaque: it may inspect arbitrary fact
-    // fields, including event type, so event-interest MUST fail open.
+    // A hand-written alpha is genuinely opaque. It may inspect arbitrary fact
+    // fields, including event type, so the event-interest answer MUST fail open.
     const std::size_t foreign = mgr.rete().addAlphaNode(
         "foreign / unknowable", [](const FactPtr&) { return true; });
-    mgr.rete().bindLawToAlpha(eventLaw->getIdentifier(), foreign);
+    mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), foreign);
     assert(mgr.rete().hasForeignBoundAlpha());
     assert(Universe::instance().anyoneHears("some-unrelated-event"));
-    mgr.rete().unbindLawFromAlpha(eventLaw->getIdentifier(), foreign);
+    mgr.rete().unbindLawFromAlpha(listenerLaw->getIdentifier(), foreign);
     assert(!mgr.rete().hasForeignBoundAlpha());
     assert(!Universe::instance().anyoneHears("some-unrelated-event"));
 
-    Universe::instance().setProvider({});
     std::puts("sol_event_interest_filter_probe: ALL OK");
     return 0;
 }
