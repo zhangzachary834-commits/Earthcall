@@ -114,6 +114,16 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 
 ## Basic Pixel Changer
 
+- [ ] **Enhanced 2D Pixel Creator Studio (Gemini Spark, 2026-09-13)** → Load `BasicPixelChanger` (or `saves/worlds/basic_pixel_changer.json`) in `earthcall_webgpu`:
+  1. **Visual Hierarchy & Framing**: Verify the 3-zone studio layout renders cleanly at 1280×720 without clipping:
+     - Left Toolbar (`x = 18..138`): `STUDIO TOOLS` header, `PEN [DRAW]` & `ERASER` cards, `QUICK PALETTE` with 12 two-column color tiles, and `STUDIO HINTS`.
+     - Center Artboard (`x = 152..680`): Recessed matte frame behind the 512×512 canvas, top header `CANVAS • 64×64 PIXEL MATRIX [NORMALIZED UV SINK]`, and bottom status bar.
+     - Right Inspector (`x = 690..1260`): `COLOR INSPECTOR` header, `2D CHROMATIC SPECTRUM [HUE × SATURATION]`, channel sliders, `SELECTED INK`, `TARGET MATERIAL`, `COLOR HARMONY TONES` (Tint, Midtone, Shade), and `ONTOMATH ENGINE` card.
+  2. **Interactivity & Painting**:
+     - Click across the 2D chromatic field and channel sliders; verify `SELECTED INK` and `TARGET MATERIAL` swatches update instantly.
+     - Click several coordinates on the canvas; verify addressed pixels paint with the selected color and copy-on-write Material preserves the paint.
+     - Verify all 50 objects in the zone render cleanly with their authored labels and z-orders.
+
 - [x] **Basic Pixel Changer — actual Zone-only click path VERIFIED by Zach, 2026-09-10 20:36 PDT.** Zach relaunched after the Zone-scoped Law closure, clicked the canvas, and reported: “IT WORKS” and “I put red dots on it.” The native WebGPU manifestation, click edge, authored Law, and selected-color pixel write are now Person-witnessed. The separate second-color, disable-Law, and quit/reload persistence experiments below remain open where not explicitly witnessed.
 - [x] **Basic Pixel Changer (Zach + Codex, session `01a07d15-f266-7902-bc11-cf7b06b0b343`)** → VERIFIED BY ZACH: Clicking canvas successfully paints addressed pixels without crashing; verified drawing red dots on canvas (commit 3763c05f: "YAAAYYYYYY I FINALLY DREW RED DOT ON THE CANVAS THING") and subsequent fixes in c72d97d8 and 3b3f343d.
 - [x] **Basic Pixel Changer — first-click render crash** → VERIFIED FIXED BY ZACH: App no longer aborts on clicking canvas; Zach clicked and verified live in-app (commit 3763c05f).

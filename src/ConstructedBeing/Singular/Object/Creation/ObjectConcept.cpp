@@ -487,10 +487,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         const MemberTemplate& member = _members[i];
         std::string refusal;
         if (!birthKind(member.beingKind, refusal)) {
-            ECA::Event refused;
-            refused.type = "concept-member-refused";
-            refused.subject = this;
-            refused.timestamp = std::time(nullptr);
+            ECA::Event refused("concept-member-refused", this, nullptr, std::time(nullptr));
             Core::EventBus::instance().publish(refused);
             continue;
         }
@@ -742,10 +739,7 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
     // A birth can wake laws: the echo announces WHICH concept just
     // manifested (subject: the concept — the newborns' provenance names it).
     if (!newborns.empty()) {
-        ECA::Event echo;
-        echo.type = "concept-instantiated";
-        echo.subject = this;
-        echo.timestamp = std::time(nullptr);
+        ECA::Event echo("concept-instantiated", this, nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
     }
     return newborns;
@@ -926,10 +920,7 @@ void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& concept) {
     _concepts.push_back(concept);
     _formation.addMember(concept.get());
 
-    ECA::Event echo;
-    echo.type = "concept-registered";
-    echo.subject = concept.get();
-    echo.timestamp = std::time(nullptr);
+    ECA::Event echo("concept-registered", concept.get(), nullptr, std::time(nullptr));
     Core::EventBus::instance().publish(echo);
 }
 

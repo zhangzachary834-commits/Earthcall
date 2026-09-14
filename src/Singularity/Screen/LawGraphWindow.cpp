@@ -2214,10 +2214,7 @@ bool editActionNode(ActionNode& node) {
         if (g.testSubject) {
             const std::string label = "Run now on " + g.selectedSubjectId;
             if (ImGui::Button(label.c_str(), ImVec2(-1.0f, 0.0f))) {
-                ECA::Event event;
-                event.type = "debug-test";
-                event.subject = g.testSubject;
-                event.timestamp = std::time(nullptr);
+                ECA::Event event("debug-test", g.testSubject, nullptr, std::time(nullptr));
                 node.compile()(event, *g.testSubject);
             }
         } else {
