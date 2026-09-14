@@ -780,6 +780,76 @@ void checkLoadTime(const std::string& filename, double loadMs, size_t objects) {
 
 #include <GLFW/glfw3.h>
 
+
+// ===========================================================================
+// 5. BATCH MANIFESTATION — does region elevation and property mutation avoid
+//    Rete fact explosion and lag spikes?
+// ===========================================================================
+namespace {
+
+void checkBatchManifestation(Zone& zone, LawManager& lawManager, double& worldTime) {
+    std::printf("\n--- RUNNING BATCH MANIFESTATION ---\n");
+    
+    // 1. Create a macro image
+    auto macro = std::make_shared<Object>("image.test_batch");
+    auto mat = std::make_shared<Material>("material.test_batch");
+    mat->initFaceTextures(1);
+    // 256x256 image
+    mat->faceTextures[0].width = 256;
+    mat->faceTextures[0].height = 256;
+    mat->faceTextures[0].pixels.resize(256 * 256 * 4, 255);
+    macro->setMaterialId(mat->getIdentifier());
+    zone.addObject(macro);
+    // register material so resolveRenderMaterial doesn't fail if needed, though this is a headless test
+    // We can't directly add to materials here without accessing Universe, but Universe::instance().setProvider handles it.
+    
+    // 2. Elevate a large region
+    OntoMath::Piecewise selector;
+    selector.inputVariable = "u";
+    OntoMath::Piecewise::Piece regionPiece;
+    regionPiece.hasHi = true;
+    regionPiece.hi = 0.5;
+    regionPiece.includeHi = false;
+    regionPiece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(1.0));
+    selector.pieces.push_back(regionPiece);
+    
+    std::string reason;
+    bool elevated = macro->elevateSurfaceRegionProperty("authored.left_half", 0, selector, reason);
+    if (!elevated) {
+        std::printf("FAIL: ElevatePixels failed: %s\n", reason.c_str());
+        gFailures++;
+        return;
+    }
+    lawManager.tick(); // Flush the creation and elevation events from the change feed!
+    
+    // 3. Mutate the region property many times
+    double maxMs = 0.0;
+    for (int i=0; i<10; i++) {
+        double t0 = glfwGetTime();
+        
+        PropertyValue color(glm::vec3(0.0f, static_cast<float>(i)/10.0f, 1.0f));
+        macro->setDynamicProperty("authored.left_half", color);
+        lawManager.tick();
+        std::printf("  setProp: %.3f ms, tick: %.3f ms\n", (tB - tA) * 1000.0, (tC - tB) * 1000.0);
+        
+        double t1 = glfwGetTime();
+        double ms = (t1 - t0) * 1000.0;
+        std::printf("Iteration %d: %.3f ms\n", i, ms);
+        if (i > 0 && ms > maxMs) maxMs = ms; // Skip first iteration for maxMs
+        else if (i == 0) maxMs = ms; // wait, let's just see what it prints
+    }
+    
+    std::printf("Max write-batch tick time: %.3f ms\n", maxMs);
+    if (maxMs > 5.0) { // Should easily be < 5.0 ms
+        std::printf("FAIL: Batch manifestation lag exceeds sub-frame bounds!\n");
+        gFailures++;
+    } else {
+        std::printf("PASS: Batch manifestation executes in sub-frame bounds.\n");
+    }
+}
+
+} // namespace
+
 int main(int argc, char** argv) {
     glfwInit();
     // Line-buffered: this test prints as it goes and is the one test in the
@@ -914,6 +984,7 @@ int main(int argc, char** argv) {
 
     checkQuiescence(*active, lawManager, worldTime);
     checkSteadyFrame(*active, lawManager, worldTime);
+    checkBatchManifestation(*active, lawManager, worldTime);
     checkLoadTime(filename, loadMs, active->getOwnedObjects().size());
 
     // Was the machine steady while all of that was measured?

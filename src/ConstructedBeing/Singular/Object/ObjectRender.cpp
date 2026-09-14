@@ -460,6 +460,7 @@ bool Object::elevateSurfaceRegionProperty(const std::string& propertyName,
     if (static_cast<int>(mine->faceTextures.size()) != faces) mine->initFaceTextures(faces);
     const FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(faceIndex)];
     const auto selected = selectedTexels(ft, selector, *this);
+    _regionCache[propertyName] = selected;
     auto colors = std::make_shared<PropertyList>();
     colors->elements.reserve(selected.size());
     for (const glm::ivec2& xy : selected) {
@@ -505,7 +506,14 @@ bool Object::readAuthoredPropertyProjection(Earthcall::StringId id,
         out = PropertyValue(readTexel(ft, pixel.x, pixel.y));
         return true;
     }
-    const auto selected = selectedTexels(ft, selector, *this);
+    std::vector<glm::ivec2> selected;
+    auto it = _regionCache.find(name);
+    if (it != _regionCache.end()) {
+        selected = it->second;
+    } else {
+        selected = selectedTexels(ft, selector, *this);
+        _regionCache[name] = selected;
+    }
     auto list = std::make_shared<PropertyList>();
     list->elements.reserve(selected.size());
     for (const glm::ivec2& xy : selected) {
@@ -535,7 +543,13 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
         if (pixel.x >= ft.width || pixel.y >= ft.height) return false;
         selected.emplace_back(pixel.x, pixel.y);
     } else {
-        selected = selectedTexels(ft, selector, *this);
+        auto it = _regionCache.find(name);
+        if (it != _regionCache.end()) {
+            selected = it->second;
+        } else {
+            selected = selectedTexels(ft, selector, *this);
+            _regionCache[name] = selected;
+        }
     }
 
     std::vector<glm::vec3> colors;

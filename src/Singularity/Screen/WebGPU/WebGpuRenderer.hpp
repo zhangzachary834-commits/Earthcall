@@ -127,6 +127,9 @@ public:
     // costs one upload instead of one per face per frame.
     TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                 uint32_t width, uint32_t height) override;
+    TextureHandle uploadTextureRegion(TextureHandle handle, const uint8_t* rgba,
+                                uint32_t texWidth, uint32_t texHeight,
+                                uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
     void reloadShaders() override;
 

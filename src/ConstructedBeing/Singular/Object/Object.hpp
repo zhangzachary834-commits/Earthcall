@@ -229,6 +229,7 @@ private:
     // materials stay shared and the reference survives save/load. Resolved against
     // the global MaterialManager at draw time. Defaults to the always-present
     // material.default, so an object with no material assigned still renders.
+    mutable std::unordered_map<std::string, std::vector<glm::ivec2>> _regionCache;
     std::string _materialId = "material.default";
 
     // Cached local-space surface vertices for GJK support queries on the new

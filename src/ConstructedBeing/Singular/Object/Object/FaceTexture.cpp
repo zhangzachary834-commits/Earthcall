@@ -162,12 +162,23 @@ bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
     return writeSamples(coordinates, colors);
 }
 
+
 bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
                                const std::vector<glm::vec3>& colors) {
     if (width <= 0 || height <= 0 || coordinates.size() != colors.size()) return false;
+    
+    int minX = width, minY = height, maxX = -1, maxY = -1;
+    
     for (const glm::ivec2& xy : coordinates) {
         if (xy.x < 0 || xy.y < 0 || xy.x >= width || xy.y >= height) return false;
+        if (xy.x < minX) minX = xy.x;
+        if (xy.y < minY) minY = xy.y;
+        if (xy.x > maxX) maxX = xy.x;
+        if (xy.y > maxY) maxY = xy.y;
     }
+    
+    if (minX > maxX || minY > maxY) return false;
+    
     for (const glm::vec3& color : colors) {
         if (!std::isfinite(color.r) || !std::isfinite(color.g) ||
             !std::isfinite(color.b)) {
@@ -200,11 +211,18 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
             !write(layers[activeLayer])) {
             return false;
         }
-        compositeLayers();
+        compositeLayers(); // Wait, compositeLayers updates the whole thing! 
     } else if (!write(pixels)) {
         return false;
     }
-    uploadToGPU();
+    
+    if (id == 0 || useLayers) {
+        uploadToGPU();
+    } else {
+        uint32_t regionW = maxX - minX + 1;
+        uint32_t regionH = maxY - minY + 1;
+        currentRenderer().uploadTextureRegion(id, pixels.data(), width, height, minX, minY, regionW, regionH);
+    }
     return true;
 }
 
