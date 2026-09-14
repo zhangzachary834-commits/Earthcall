@@ -163,7 +163,20 @@ std::string sanitizeLabel(const std::string& label) {
     // A name that is only dots still resolves to a directory entry rather than
     // a save, and an over-long one is rejected by the filesystem.
     if (safe.find_first_not_of('.') == std::string::npos) return "";
-    if (safe.size() > 128) safe.resize(128);
+    if (safe.size() > 128) {
+        size_t len = 128;
+        // Look at the first byte we are DROPPING (index 128).
+        // In UTF-8, continuation bytes always start with binary 10xxxxxx (0x80 to 0xBF).
+        // If it's a continuation byte, it means our cut severed a multi-byte character.
+        if ((safe[128] & 0xC0) == 0x80) {
+            // Step back through the kept string to remove the rest of the severed character
+            while (len > 0 && (safe[len - 1] & 0xC0) == 0x80) {
+                len--;
+            }
+            if (len > 0) len--; // Drop the leading byte of the severed character too
+        }
+        safe.resize(len);
+    }
 
     return safe;
 }
