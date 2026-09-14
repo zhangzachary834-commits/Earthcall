@@ -2,6 +2,7 @@
 
 **Status:** REOPENED — identity files exist, but Zones are not independently complete, discoverable, loadable, and saveable yet
 **Section in the To-Do list:** Joys · Ourverse · Zones  
+**Implementation plan:** [Independent Zone Catalog, Activation, Save, and Legacy Retirement Plan (2026-09-14)](../../../../plans/INDEPENDENT_ZONE_CATALOG_ACTIVATION_AND_SAVE_PLAN_2026-09-14.md)  
 **Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
 
 ---
