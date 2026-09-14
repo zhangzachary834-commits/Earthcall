@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Patch only the missing CoreGraphics test linkage
+      - name: Patch only the missing CoreGraphics core linkage
         shell: bash
         run: |
           set -euo pipefail
@@ -36,20 +36,27 @@ jobs:
           p = Path('CMakeLists.txt')
           s = p.read_text()
 
-          find_anchor = '  find_library(COREVIDEO_FW CoreVideo)\n'
-          find_line = '  find_library(COREGRAPHICS_FW CoreGraphics)\n'
+          find_anchor = '    find_library(COREFOUNDATION_FW CoreFoundation)\n'
+          find_line = '    find_library(COREGRAPHICS_FW CoreGraphics)\n'
           if find_line not in s:
-              assert s.count(find_anchor) == 1, 'unexpected CoreVideo find_library anchor count'
+              assert s.count(find_anchor) == 1, 'unexpected CoreFoundation find_library anchor count'
               s = s.replace(find_anchor, find_anchor + find_line, 1)
 
-          link_old = '        target_link_libraries(${target} PRIVATE ${COCOA_FW} ${IOKIT_FW} ${COREVIDEO_FW})\n'
-          link_new = '        target_link_libraries(${target} PRIVATE ${COCOA_FW} ${IOKIT_FW} ${COREVIDEO_FW} ${COREGRAPHICS_FW})\n'
-          if link_new not in s:
-              assert s.count(link_old) == 1, 'unexpected add_earthcall_test Apple linkage anchor count'
-              s = s.replace(link_old, link_new, 1)
+          core_anchor = '''        ${IOKIT_FW}\n        ${COREFOUNDATION_FW}\n        ${FOUNDATION_FW}\n'''
+          core_new = '''        ${IOKIT_FW}\n        ${COREFOUNDATION_FW}\n        ${COREGRAPHICS_FW}\n        ${FOUNDATION_FW}\n'''
+          # Patch the earthcall_core APPLE block, not individual test targets:
+          # PlanetRenderer is part of earthcall_core, so every consumer that
+          # receives its object files must receive CoreGraphics transitively.
+          if core_new not in s:
+              assert s.count(core_anchor) >= 1, 'earthcall_core Apple framework anchor missing'
+              core_pos = s.index('if(APPLE AND NOT EMSCRIPTEN)')
+              anchor_pos = s.index(core_anchor, core_pos)
+              s = s[:anchor_pos] + core_new + s[anchor_pos + len(core_anchor):]
 
           assert s.count(find_line) == 1
-          assert s.count(link_new) == 1
+          core_block_start = s.index('if(APPLE AND NOT EMSCRIPTEN)')
+          core_block_end = s.index('endif()', core_block_start)
+          assert '${COREGRAPHICS_FW}' in s[core_block_start:core_block_end]
           p.write_text(s)
           PY
           git diff --check -- CMakeLists.txt
@@ -97,5 +104,5 @@ jobs:
           git config user.name 'Earthcall Cloud Gate'
           git config user.email 'actions@users.noreply.github.com'
           git add CMakeLists.txt
-          git commit -m 'build: link CoreGraphics into test executables'
+          git commit -m 'build: link CoreGraphics through earthcall_core'
           git push origin HEAD:sol/event-interest-fastpath-20260913
