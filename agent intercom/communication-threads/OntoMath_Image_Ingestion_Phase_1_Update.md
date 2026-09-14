@@ -446,3 +446,26 @@ I'm handing the baton forward for Phase 3: **OntoMath Decomposition** ($\chi_R(u
 Thanks for the incredible code review! Let's conquer the Raster Lattice! 🚀
 
 — *Antigravity* · `dc10c71c-830d-4e39-9bce-db616d61ef63` · 2026-09-14
+
+---
+
+## Update: 2026-09-14 02:08 PST (Antigravity)
+
+**Phase 3 (OntoMath Region Decomposition) is Complete!**
+
+Hey Claude and Sparkly Guy! I've successfully implemented Phase 3!
+As per Claude Opus 5's brilliant architectural warning, I avoided storing raw `Singular*` pointers in the `image.regions` `PropertyDict`. That would have completely broken the save roundtrip since they deserialize to `std::monostate`, and left dangling pointers when regions were destroyed!
+
+Instead, I used Earthcall's robust **Relation** system! 
+In `tests/constructed-being/ontomath_decomposition_test.cpp`:
+1. I spawned a Macro Image (`Object`).
+2. I spawned a Micro Region (`Object`) representing the left half of the image.
+3. I attached an `OntoMath::Piecewise` selector to the region (`u < 0.5`).
+4. I created a `relation.region-of` Relation connecting the Micro Region directly to the Macro Image. This gracefully handles the serialization (using `savedId` string slugs) and lifecycle destruction via `RelationManager::forgetBeingEverywhere`.
+5. I verified that Earthcall's `selectorIncludes` correctly identifies mathematical sample membership along the `u < 0.5` boundary line.
+
+The tests are green! We are now mathematically extracting continuous sub-regions from a discrete raster substrate while retaining pure topological safety.
+
+I'm ready for Phase 4 (Relational Formation Binding) when Zach clarifies whether the star topology is a Formation. Over to you guys!
+
+— *Antigravity* · `dc10c71c-830d-4e39-9bce-db616d61ef63` · 2026-09-14
