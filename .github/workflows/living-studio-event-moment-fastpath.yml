@@ -1,0 +1,143 @@
+name: Living Studio Event-as-Moment fastpath
+
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-event-moment-v2-20260914
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    name: Event-as-Moment same-runner A/B
+    runs-on: macos-14
+    timeout-minutes: 45
+    env:
+      CXXFLAGS: -fno-sanitize=address
+      OBJCXXFLAGS: -fno-sanitize=address
+      LDFLAGS: -fno-sanitize=address
+
+    steps:
+      - name: Check out latest-sync-derived branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Report exact source and runner
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rev-parse HEAD
+          git log -1 --oneline
+          uname -a
+          uname -m
+          cmake --version
+          printf 'CXXFLAGS=%s\nOBJCXXFLAGS=%s\nLDFLAGS=%s\n' "$CXXFLAGS" "$OBJCXXFLAGS" "$LDFLAGS"
+
+      - name: Configure baseline source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf build
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+            -DCMAKE_OBJCXX_FLAGS="$OBJCXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build baseline lag probe
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target frame_lag_test
+          otool -L build/frame_lag_test | grep -i asan && exit 1 || true
+
+      - name: Living Instrument A — current Event-as-Moment callback
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-event-moment-A-current.txt
+          echo "baseline status: ${PIPESTATUS[0]}" | tee -a living-event-moment-A-current.txt
+          exit 0
+
+      - name: Apply narrow event-interest patch and install semantic witness
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 scratch/sol_event_interest_fastpath.py
+          cp scratch/sol_event_interest_filter_probe.cpp tests/law/sol_event_interest_filter_probe.cpp
+          grep -n -A2 -B2 'setEventInterest' src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+
+      - name: Reconfigure and build semantic gates
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="$CXXFLAGS" \
+            -DCMAKE_OBJCXX_FLAGS="$OBJCXXFLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS" \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --parallel 4 --target \
+            sol_event_interest_filter_probe \
+            event_test \
+            prophetic_rete_test \
+            frame_lag_test
+
+      - name: Prove Event ontology and fail-open semantics
+        shell: bash
+        run: |
+          set -euxo pipefail
+          {
+            echo '=== event_test ==='
+            ./build/event_test
+            echo '=== prophetic_rete_test ==='
+            ./build/prophetic_rete_test
+            echo '=== event-interest witness ==='
+            ./build/sol_event_interest_filter_probe
+          } 2>&1 | tee event-moment-semantic-witness.txt
+
+      - name: Living Instrument B — foreign-only fail-open
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json \
+            2>&1 | tee living-event-moment-B-fastpath.txt
+          echo "patched benchmark status: ${PIPESTATUS[0]}" | tee -a living-event-moment-B-fastpath.txt
+          exit 0
+
+      - name: Print A/B headline
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '=== A: current Event-as-Moment callback ==='
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|LawManager::tick grows|broken invariants|timing regressions|machine calibration|machine steadiness' \
+            living-event-moment-A-current.txt || true
+          echo '=== B: foreign-only fail-open ==='
+          grep -E 'simulation frame|of that, LawManager::tick|95th-percentile|LawManager::tick grows|broken invariants|timing regressions|machine calibration|machine steadiness' \
+            living-event-moment-B-fastpath.txt || true
+
+      - name: Upload Event-as-Moment A/B reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-studio-event-moment-${{ github.run_id }}
+          path: |
+            living-event-moment-A-current.txt
+            living-event-moment-B-fastpath.txt
+            event-moment-semantic-witness.txt
+          if-no-files-found: warn
+          overwrite: true
