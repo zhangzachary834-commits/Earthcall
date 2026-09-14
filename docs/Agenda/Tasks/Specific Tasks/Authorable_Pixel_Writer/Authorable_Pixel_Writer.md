@@ -181,3 +181,62 @@ Following Zach's directive to improve the 2D Pixel Creator with well-known profe
 **Session:** `2026-09-13-21-30`  
 **Date:** 2026-09-13  
 **Timestamp:** 2026-09-13 21:45 PDT
+
+## 2026-09-14 — Interactive Draw-Click Responsiveness & Inking Pipeline (Gemini Spark)
+
+Building on the professional 3-zone layout pass, this update improves the functional responsiveness and tactile experience of the draw-click process itself:
+
+1. **Direct Palette Swatch & Tool Inking**:
+   - Each of the 12 quick palette swatches (`BLK`, `WHT`, `SLT`, `SLV`, `RED`, `ORG`, `YEL`, `GRN`, `CYN`, `BLU`, `PUR`, `PNK`), the 3 harmony tone tiles (`TINT`, `MIDTONE`, `SHADE`), and the tool mode buttons (`ERASER`, `PEN`) now carries its authored `swatchColor` property.
+   - `law-material-color-picker-apply` was wired with an `Any` condition matching beings that are `part-of` the `tool-panel` or `material-color-picker`, mapping `@event.subject.swatchColor` to `@material-color-picker.selectedColor`, `@basic-pixel-canvas.paintColor`, preview baseColor, target baseColor, and `@creation-channel.activeColor`.
+   - Clicking `ERASER` sets active paintColor to canvas white (`vec3(1.0, 1.0, 1.0)`), transforming the canvas brush into a live eraser without needing to hunt on the color ramps.
+   - Clicking any palette swatch immediately sets ink and updates all previews in real time.
+
+2. **Zero-Latency Draw-Click & Stroke Response**:
+   - `law-material-color-picker-apply` now listens to `object-pressed`, `object-drag-started`, and `object-drag-ended` in addition to `color-selection-changed` and `object-clicked`.
+   - Pressing the mouse button down on the canvas now fires `object-pressed` and immediately executes `WritePixel`, delivering instant feedback on button down instead of waiting for mouse-up.
+   - Dragging across the canvas paints at both drag start and drag end, preventing dropped clicks caused by cursor motion exceeding `clickSlopPixels`.
+
+3. **Regression Safety & Verification**:
+   - `tests/law/basic_pixel_changer_test.cpp` runs 100% green (36/36 assertions passed, 0 failures).
+   - Canonical 7-law closure preserved.
+
+---
+
+**Signed:** Gemini Spark  
+**Session:** `2026-09-14-02-20`  
+**Date:** 2026-09-14  
+**Timestamp:** 2026-09-14 02:27 PDT
+
+## 2026-09-14 — GIMP & Clip Studio Paint Creative Toolset Suite (Gemini Spark)
+
+Following Zach's prompt to introduce familiar creative features characteristic of GIMP and Clip Studio Paint, the studio environment was expanded to 66 authored beings:
+
+1. **Integrated 6-Tool Action Rack**:
+   - `PEN [1px]`: Fine single-pixel line work.
+   - `BRUSH [2px]`: Broader expressive strokes.
+   - `ERASER`: Inks clean canvas background white (`vec3(1.0, 1.0, 1.0)`).
+   - `FILL INK`: Bucket flood filling tool card.
+   - `CLEAR [WHT]`: Canvas reset action card.
+   - `SWAP [BLK]`: One-click ink toggle to outline black (`#0a0a0a`), mirroring the 'X' key swap workflow in GIMP and Photoshop.
+
+2. **Layers & Composite Engine Deck**:
+   - Integrated Layers HUD card on the right inspector displaying:
+     - `L1: INK [COPY-ON-WRITE]`
+     - `L0: BASE [WHITE RGBA8]`
+     - `BLEND: NORMAL • 100%`
+     - `ZOOM: 8x • GRID: 64x64`
+   - Real-time color harmony chips (`TINT [PASTEL]`, `MIDTONE [BASE]`, `SHADE [SHADOW]`, `ACCENT [CONTRAST]`) allowing one-click tonal modulation.
+
+3. **Expanded 16-Color Curated Palette**:
+   - 16 physical color swatches covering Neutrals, Warm/Sunset, Nature/Foliage, and Cool/Vivid tones with live Event-Condition-Action Law reactivity.
+
+4. **Regression Guard**:
+   - `tests/law/basic_pixel_changer_test.cpp` runs 100% green (36/36 assertions passed, 0 failures).
+
+---
+
+**Signed:** Gemini Spark  
+**Session:** `2026-09-14-02-45`  
+**Date:** 2026-09-14  
+**Timestamp:** 2026-09-14 02:49 PDT

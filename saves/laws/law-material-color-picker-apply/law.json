@@ -3,11 +3,36 @@
     "Zach"
   ],
   "identifier": "law-material-color-picker-apply",
-  "injected_by": "Gemini Spark, session 2026-09-13-21-30",
+  "injected_by": "Gemini Spark, session 2026-09-14-02-45",
   "law": {
     "actionModel": {
       "kind": 5,
       "children": [
+        {
+          "kind": 8,
+          "path": "@material-color-picker.selectedColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@event.subject.swatchColor"
+          }
+        },
+        {
+          "kind": 21,
+          "pixelColorPath": "paintColor",
+          "pixelFacePath": "@interaction-channel.hoveredFace",
+          "pixelUPath": "@interaction-channel.hoveredU",
+          "pixelVPath": "@interaction-channel.hoveredV"
+        },
         {
           "kind": 8,
           "path": "@basic-pixel-canvas.paintColor",
@@ -61,6 +86,24 @@
           "bindings": {
             "c": "@material-color-picker.selectedColor"
           }
+        },
+        {
+          "kind": 8,
+          "path": "@creation-channel.activeColor",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor"
+          }
         }
       ]
     },
@@ -72,14 +115,33 @@
     "authority": 0,
     "conditionMode": "all",
     "conditionModel": {
-      "kind": 8,
-      "otherId": "material-color-picker"
+      "kind": 4,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "material-color-picker"
+        },
+        {
+          "kind": 2,
+          "relationType": "part-of",
+          "otherId": "tool-panel"
+        },
+        {
+          "kind": 2,
+          "relationType": "part-of",
+          "otherId": "material-color-picker"
+        },
+        {
+          "kind": 8,
+          "otherId": "basic-pixel-canvas"
+        }
+      ]
     },
     "conditionSubjects": [],
     "drives": false,
     "enabled": true,
     "id": "law-material-color-picker-apply",
-    "name": "Material Color Picker \u2014 apply to Material",
+    "name": "Material Color Picker \u2014 apply to Material & Canvas",
     "provenance": [
       {
         "directed": true,
@@ -95,6 +157,10 @@
     "targets": []
   },
   "triggers": [
-    "color-selection-changed"
+    "color-selection-changed",
+    "object-clicked",
+    "object-pressed",
+    "object-drag-started",
+    "object-drag-ended"
   ]
 }

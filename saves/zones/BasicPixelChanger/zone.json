@@ -1892,6 +1892,678 @@
       "events": [],
       "type": "part-of",
       "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "swatch-tone-accent",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "tool-btn-fill",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "tool-btn-clear",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "tool-guide-5",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "swatch-coral",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "swatch-lime",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "swatch-teal",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "swatch-indigo",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-card",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-title",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-l1",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-l0",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-blend",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "layers-deck-scale",
+      "entityB": "material-color-picker",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "tool-btn-brush",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
+    },
+    {
+      "attachment": {
+        "childAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "enabled": false,
+        "inheritRotation": true,
+        "inheritScale": true,
+        "inheritTranslation": true,
+        "localOffset": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "parentAnchor": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "directed": true,
+      "entityA": "tool-btn-swap",
+      "entityB": "tool-panel",
+      "events": [],
+      "type": "part-of",
+      "weight": 1.0
     }
   ],
   "identifier": "BasicPixelChanger",
@@ -2105,7 +2777,7 @@
       "faceTextures": [
         {
           "size": 32,
-          "pixelsB64": "HCEr/xwhK/8cISv/HCEr/xwhK/8cISv/HCEr/xwhK/8cISv/HCEr/xwhK/8cISv/HCEr/xwhK/8cISv/HCEr/w=="
+          "pixelsB64": "GyAq/xsgKv8bICr/GyAq/xsgKv8bICr/GyAq/xsgKv8bICr/GyAq/xsgKv8bICr/GyAq/xsgKv8bICr/GyAq/w=="
         }
       ]
     },
@@ -2124,7 +2796,7 @@
       "faceTextures": [
         {
           "size": 32,
-          "pixelsB64": "Fxsk/xcbJP8XGyT/Fxsk/xcbJP8XGyT/Fxsk/xcbJP8XGyT/Fxsk/xcbJP8XGyT/Fxsk/xcbJP8XGyT/Fxsk/w=="
+          "pixelsB64": "Fhoi/xYaIv8WGiL/Fhoi/xYaIv8WGiL/Fhoi/xYaIv8WGiL/Fhoi/xYaIv8WGiL/Fhoi/xYaIv8WGiL/Fhoi/w=="
         }
       ]
     },
@@ -2352,7 +3024,7 @@
       "faceTextures": [
         {
           "size": 32,
-          "pixelsB64": "9YUa//WFGv/1hRr/9YUa//WFGv/1hRr/9YUa//WFGv/1hRr/9YUa//WFGv/1hRr/9YUa//WFGv/1hRr/9YUa/w=="
+          "pixelsB64": "9Ywa//WMGv/1jBr/9Ywa//WMGv/1jBr/9Ywa//WMGv/1jBr/9Ywa//WMGv/1jBr/9Ywa//WMGv/1jBr/9Ywa/w=="
         }
       ]
     },
@@ -2447,7 +3119,7 @@
       "faceTextures": [
         {
           "size": 32,
-          "pixelsB64": "lDPg/5Qz4P+UM+D/lDPg/5Qz4P+UM+D/lDPg/5Qz4P+UM+D/lDPg/5Qz4P+UM+D/lDPg/5Qz4P+UM+D/lDPg/w=="
+          "pixelsB64": "pi7Z/6Yu2f+mLtn/pi7Z/6Yu2f+mLtn/pi7Z/6Yu2f+mLtn/pi7Z/6Yu2f+mLtn/pi7Z/6Yu2f+mLtn/pi7Z/w=="
         }
       ]
     },
@@ -2467,6 +3139,177 @@
         {
           "size": 32,
           "pixelsB64": "60ee/+tHnv/rR57/60ee/+tHnv/rR57/60ee/+tHnv/rR57/60ee/+tHnv/rR57/60ee/+tHnv/rR57/60ee/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "tool-fill-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "Hz1h/x89Yf8fPWH/Hz1h/x89Yf8fPWH/Hz1h/x89Yf8fPWH/Hz1h/x89Yf8fPWH/Hz1h/x89Yf8fPWH/Hz1h/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "tool-clear-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "Qhwk/0IcJP9CHCT/Qhwk/0IcJP9CHCT/Qhwk/0IcJP9CHCT/Qhwk/0IcJP9CHCT/Qhwk/0IcJP9CHCT/Qhwk/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "swatch-tone-accent-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "Jrjg/ya44P8muOD/Jrjg/ya44P8muOD/Jrjg/ya44P8muOD/Jrjg/ya44P8muOD/Jrjg/ya44P8muOD/Jrjg/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "swatch-coral-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "9WE4//VhOP/1YTj/9WE4//VhOP/1YTj/9WE4//VhOP/1YTj/9WE4//VhOP/1YTj/9WE4//VhOP/1YTj/9WE4/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "swatch-lime-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "jNEu/4zRLv+M0S7/jNEu/4zRLv+M0S7/jNEu/4zRLv+M0S7/jNEu/4zRLv+M0S7/jNEu/4zRLv+M0S7/jNEu/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "swatch-teal-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "H6at/x+mrf8fpq3/H6at/x+mrf8fpq3/H6at/x+mrf8fpq3/H6at/x+mrf8fpq3/H6at/x+mrf8fpq3/H6at/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "swatch-indigo-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "YTjg/2E44P9hOOD/YTjg/2E44P9hOOD/YTjg/2E44P9hOOD/YTjg/2E44P9hOOD/YTjg/2E44P9hOOD/YTjg/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "tool-brush-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "KUdz/ylHc/8pR3P/KUdz/ylHc/8pR3P/KUdz/ylHc/8pR3P/KUdz/ylHc/8pR3P/KUdz/ylHc/8pR3P/KUdz/w=="
+        }
+      ]
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "name": "tool-swap-material",
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 1.0,
+      "faceTextures": [
+        {
+          "size": 32,
+          "pixelsB64": "Li49/y4uPf8uLj3/Li49/y4uPf8uLj3/Li49/y4uPf8uLj3/Li49/y4uPf8uLj3/Li49/y4uPf8uLj3/Li49/w=="
         }
       ]
     }
@@ -2491,6 +3334,10 @@
             "x": 1.0,
             "y": 0.15,
             "z": 0.15
+          },
+          "surface.selection.authored.full-canvas": {
+            "t": "string",
+            "v": "{\"face\": 0, \"selector\": {\"input\": \"u\", \"pieces\": [{\"lo\": 0.0, \"includeLo\": true, \"hi\": 1.0, \"includeHi\": true, \"mathNode\": {\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 1.0, \"factors\": {}}]}}}]}}"
           }
         },
         "authoritativeAxis": [
@@ -3602,34 +4449,34 @@
         ],
         "faceColors": [
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ],
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ],
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ],
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ],
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ],
           [
-            0.85,
-            0.9,
-            1.0
+            0.58,
+            0.77,
+            0.99
           ]
         ],
         "geometryType": 13,
@@ -3680,13 +4527,19 @@
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.1,
+            "y": 0.7,
+            "z": 0.25
+          },
           "displayName": {
             "t": "string",
-            "v": "PEN [DRAW]"
+            "v": "PEN [1px]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 13.68
+            "v": 11.0
           }
         },
         "authoritativeAxis": [
@@ -3748,7 +4601,7 @@
           0.0,
           0.0,
           104,
-          36
+          26
         ],
         "targetRotation": [
           0.0,
@@ -3774,18 +4627,24 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 68,
+        "y2D": 58,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
           "displayName": {
             "t": "string",
             "v": "ERASER"
           },
           "label.size2D": {
             "t": "double",
-            "v": 13.68
+            "v": 11.0
           }
         },
         "authoritativeAxis": [
@@ -3847,7 +4706,7 @@
           0.0,
           0.0,
           104,
-          36
+          26
         ],
         "targetRotation": [
           0.0,
@@ -3873,7 +4732,7 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 112,
+        "y2D": 118,
         "zOrder2D": 20
       },
       {
@@ -3976,11 +4835,17 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 166,
+        "y2D": 240,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
           "displayName": {
             "t": "string",
             "v": "BLK"
@@ -4049,7 +4914,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4075,11 +4940,17 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 192,
+        "y2D": 258,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
           "displayName": {
             "t": "string",
             "v": "WHT"
@@ -4148,7 +5019,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4174,11 +5045,17 @@
           1.0
         ],
         "x2D": 82,
-        "y2D": 192,
+        "y2D": 258,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.35,
+            "y": 0.38,
+            "z": 0.45
+          },
           "displayName": {
             "t": "string",
             "v": "SLT"
@@ -4247,7 +5124,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4273,11 +5150,17 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 226,
+        "y2D": 284,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.72,
+            "y": 0.76,
+            "z": 0.82
+          },
           "displayName": {
             "t": "string",
             "v": "SLV"
@@ -4346,7 +5229,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4372,11 +5255,17 @@
           1.0
         ],
         "x2D": 82,
-        "y2D": 226,
+        "y2D": 284,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.92,
+            "y": 0.15,
+            "z": 0.18
+          },
           "displayName": {
             "t": "string",
             "v": "RED"
@@ -4445,7 +5334,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4471,11 +5360,17 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 260,
+        "y2D": 310,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.96,
+            "y": 0.55,
+            "z": 0.1
+          },
           "displayName": {
             "t": "string",
             "v": "ORG"
@@ -4498,32 +5393,32 @@
         "faceColors": [
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ],
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ],
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ],
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ],
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ],
           [
             0.96,
-            0.52,
+            0.55,
             0.1
           ]
         ],
@@ -4544,7 +5439,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4569,12 +5464,18 @@
           0.0,
           1.0
         ],
-        "x2D": 82,
-        "y2D": 260,
+        "x2D": 26,
+        "y2D": 336,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.98,
+            "y": 0.85,
+            "z": 0.12
+          },
           "displayName": {
             "t": "string",
             "v": "YEL"
@@ -4643,7 +5544,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4668,12 +5569,18 @@
           0.0,
           1.0
         ],
-        "x2D": 26,
-        "y2D": 294,
+        "x2D": 82,
+        "y2D": 336,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.15,
+            "y": 0.76,
+            "z": 0.32
+          },
           "displayName": {
             "t": "string",
             "v": "GRN"
@@ -4742,7 +5649,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4768,11 +5675,17 @@
           1.0
         ],
         "x2D": 82,
-        "y2D": 294,
+        "y2D": 362,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.1,
+            "y": 0.8,
+            "z": 0.88
+          },
           "displayName": {
             "t": "string",
             "v": "CYN"
@@ -4841,7 +5754,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -4866,12 +5779,18 @@
           0.0,
           1.0
         ],
-        "x2D": 26,
-        "y2D": 328,
+        "x2D": 82,
+        "y2D": 388,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.18,
+            "y": 0.38,
+            "z": 0.92
+          },
           "displayName": {
             "t": "string",
             "v": "BLU"
@@ -4940,106 +5859,7 @@
           0.0,
           0.0,
           48,
-          28
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "x2D": 82,
-        "y2D": 328,
-        "zOrder2D": 20
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "PUR"
-          },
-          "label.size2D": {
-            "t": "double",
-            "v": 11.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            0.58,
-            0.2,
-            0.88
-          ],
-          [
-            0.58,
-            0.2,
-            0.88
-          ],
-          [
-            0.58,
-            0.2,
-            0.88
-          ],
-          [
-            0.58,
-            0.2,
-            0.88
-          ],
-          [
-            0.58,
-            0.2,
-            0.88
-          ],
-          [
-            0.58,
-            0.2,
-            0.88
-          ]
-        ],
-        "geometryType": 12,
-        "materialId": "swatch-purple-material",
-        "objectID": "swatch-purple",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 12,
-        "shapeParams": [
-          1.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -5065,11 +5885,122 @@
           1.0
         ],
         "x2D": 26,
-        "y2D": 362,
+        "y2D": 414,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.65,
+            "y": 0.18,
+            "z": 0.85
+          },
+          "displayName": {
+            "t": "string",
+            "v": "PUR"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.65,
+            0.18,
+            0.85
+          ],
+          [
+            0.65,
+            0.18,
+            0.85
+          ],
+          [
+            0.65,
+            0.18,
+            0.85
+          ],
+          [
+            0.65,
+            0.18,
+            0.85
+          ],
+          [
+            0.65,
+            0.18,
+            0.85
+          ],
+          [
+            0.65,
+            0.18,
+            0.85
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-purple-material",
+        "objectID": "swatch-purple",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          48,
+          22
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 440,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.92,
+            "y": 0.28,
+            "z": 0.62
+          },
           "displayName": {
             "t": "string",
             "v": "PNK"
@@ -5138,7 +6069,7 @@
           0.0,
           0.0,
           48,
-          28
+          22
         ],
         "targetRotation": [
           0.0,
@@ -5164,14 +6095,14 @@
           1.0
         ],
         "x2D": 82,
-        "y2D": 362,
+        "y2D": 440,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "STUDIO HINTS"
+            "v": "STUDIO GUIDE"
           },
           "label.size2D": {
             "t": "double",
@@ -5179,7 +6110,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "STUDIO HINTS"
+            "v": "STUDIO GUIDE"
           }
         },
         "authoritativeAxis": [
@@ -5267,14 +6198,14 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 410,
+        "y2D": 474,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "* Pick color/field"
+            "v": "* Pen/Brush: Draw"
           },
           "label.size2D": {
             "t": "double",
@@ -5282,7 +6213,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "* Pick color/field"
+            "v": "* Pen/Brush: Draw"
           }
         },
         "authoritativeAxis": [
@@ -5370,14 +6301,14 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 432,
+        "y2D": 494,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "* Click on canvas"
+            "v": "* Eraser: White ink"
           },
           "label.size2D": {
             "t": "double",
@@ -5385,7 +6316,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "* Click on canvas"
+            "v": "* Eraser: White ink"
           }
         },
         "authoritativeAxis": [
@@ -5473,14 +6404,14 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 452,
+        "y2D": 512,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "* Copy-on-write"
+            "v": "* Fill: Flood board"
           },
           "label.size2D": {
             "t": "double",
@@ -5488,7 +6419,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "* Copy-on-write"
+            "v": "* Fill: Flood board"
           }
         },
         "authoritativeAxis": [
@@ -5576,14 +6507,14 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 472,
+        "y2D": 530,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "* Pure ECA laws"
+            "v": "* Swap: Quick black"
           },
           "label.size2D": {
             "t": "double",
@@ -5591,7 +6522,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "* Pure ECA laws"
+            "v": "* Swap: Quick black"
           }
         },
         "authoritativeAxis": [
@@ -5679,7 +6610,7 @@
           1.0
         ],
         "x2D": 24,
-        "y2D": 492,
+        "y2D": 548,
         "zOrder2D": 30
       },
       {
@@ -5866,7 +6797,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "2D PIXEL CREATOR \u2014 64x64 ARTBOARD"
+            "v": "2D PIXEL CREATOR \u2014 64x64 MATRIX"
           },
           "label.size2D": {
             "t": "double",
@@ -5874,7 +6805,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "2D PIXEL CREATOR \u2014 64x64 ARTBOARD"
+            "v": "2D PIXEL CREATOR \u2014 64x64 MATRIX"
           }
         },
         "authoritativeAxis": [
@@ -5969,7 +6900,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "NORMALIZED UV SINK"
+            "v": "UV SINK \u2022 8px/TEXEL"
           },
           "label.size2D": {
             "t": "double",
@@ -5977,7 +6908,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "NORMALIZED UV SINK"
+            "v": "UV SINK \u2022 8px/TEXEL"
           }
         },
         "authoritativeAxis": [
@@ -6038,7 +6969,7 @@
           0.0,
           0.0,
           0.0,
-          190,
+          200,
           18
         ],
         "targetRotation": [
@@ -6064,7 +6995,7 @@
           0.0,
           1.0
         ],
-        "x2D": 480,
+        "x2D": 470,
         "y2D": 50,
         "zOrder2D": 30
       },
@@ -6162,7 +7093,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "CLICK CANVAS TO INK PIXEL \u2022 SELECTED COLOR PERSISTS IN MATERIAL"
+            "v": "CLICK/DRAG TO INK \u2022 CHOOSE TOOLS OR PALETTE ON LEFT \u2022 COLOR LAB ON RIGHT"
           },
           "label.size2D": {
             "t": "double",
@@ -6170,7 +7101,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "CLICK CANVAS TO INK PIXEL \u2022 SELECTED COLOR PERSISTS IN MATERIAL"
+            "v": "CLICK/DRAG TO INK \u2022 CHOOSE TOOLS OR PALETTE ON LEFT \u2022 COLOR LAB ON RIGHT"
           }
         },
         "authoritativeAxis": [
@@ -6368,7 +7299,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "CHANNEL SLIDERS [VALUE / RED / GREEN / BLUE]"
+            "v": "CHANNEL CONTROLS [VALUE / RED / GREEN / BLUE]"
           },
           "label.size2D": {
             "t": "double",
@@ -6376,7 +7307,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "CHANNEL SLIDERS [VALUE / RED / GREEN / BLUE]"
+            "v": "CHANNEL CONTROLS [VALUE / RED / GREEN / BLUE]"
           }
         },
         "authoritativeAxis": [
@@ -6780,7 +7711,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "COLOR HARMONY TONES"
+            "v": "HARMONY TONES (CLICK TO INK)"
           },
           "label.size2D": {
             "t": "double",
@@ -6788,7 +7719,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "COLOR HARMONY TONES"
+            "v": "HARMONY TONES (CLICK TO INK)"
           }
         },
         "authoritativeAxis": [
@@ -6876,18 +7807,24 @@
           1.0
         ],
         "x2D": 1040,
-        "y2D": 392,
+        "y2D": 390,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.95,
+            "y": 0.72,
+            "z": 0.75
+          },
           "displayName": {
             "t": "string",
             "v": "TINT [PASTEL]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 13.68
+            "v": 11.0
           }
         },
         "authoritativeAxis": [
@@ -6949,7 +7886,7 @@
           0.0,
           0.0,
           190,
-          36
+          24
         ],
         "targetRotation": [
           0.0,
@@ -6975,18 +7912,24 @@
           1.0
         ],
         "x2D": 1040,
-        "y2D": 416,
+        "y2D": 410,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.85,
+            "y": 0.18,
+            "z": 0.22
+          },
           "displayName": {
             "t": "string",
             "v": "MIDTONE [BASE]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 13.68
+            "v": 11.0
           }
         },
         "authoritativeAxis": [
@@ -7048,7 +7991,7 @@
           0.0,
           0.0,
           190,
-          36
+          24
         ],
         "targetRotation": [
           0.0,
@@ -7074,18 +8017,24 @@
           1.0
         ],
         "x2D": 1040,
-        "y2D": 460,
+        "y2D": 438,
         "zOrder2D": 20
       },
       {
         "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.32,
+            "y": 0.07,
+            "z": 0.09
+          },
           "displayName": {
             "t": "string",
             "v": "SHADE [SHADOW]"
           },
           "label.size2D": {
             "t": "double",
-            "v": 13.68
+            "v": 11.0
           }
         },
         "authoritativeAxis": [
@@ -7147,7 +8096,7 @@
           0.0,
           0.0,
           190,
-          36
+          24
         ],
         "targetRotation": [
           0.0,
@@ -7173,7 +8122,7 @@
           1.0
         ],
         "x2D": 1040,
-        "y2D": 504,
+        "y2D": 466,
         "zOrder2D": 20
       },
       {
@@ -7237,7 +8186,7 @@
           0.0,
           0.0,
           190,
-          84
+          94
         ],
         "targetRotation": [
           0.0,
@@ -7263,7 +8212,7 @@
           1.0
         ],
         "x2D": 1040,
-        "y2D": 558,
+        "y2D": 548,
         "zOrder2D": 15
       },
       {
@@ -7366,22 +8315,22 @@
           1.0
         ],
         "x2D": 1050,
-        "y2D": 568,
+        "y2D": 558,
         "zOrder2D": 30
       },
       {
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "6-PIECE EXACT HSV\nPIXEL SINK: 64x64\nLAW COPY-ON-WRITE"
+            "v": "6-PIECE EXACT HSV\nMATERIAL COPY-ON-WRITE\nLIVE INK / ERASE / FILL"
           },
           "label.size2D": {
             "t": "double",
-            "v": 16.72
+            "v": 18.0
           },
           "label2D": {
             "t": "string",
-            "v": "6-PIECE EXACT HSV\nPIXEL SINK: 64x64\nLAW COPY-ON-WRITE"
+            "v": "6-PIECE EXACT HSV\nMATERIAL COPY-ON-WRITE\nLIVE INK / ERASE / FILL"
           }
         },
         "authoritativeAxis": [
@@ -7443,7 +8392,7 @@
           0.0,
           0.0,
           170,
-          44
+          54
         ],
         "targetRotation": [
           0.0,
@@ -7469,12 +8418,1665 @@
           1.0
         ],
         "x2D": 1050,
-        "y2D": 590,
+        "y2D": 578,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.1,
+            "y": 0.7,
+            "z": 0.25
+          },
+          "displayName": {
+            "t": "string",
+            "v": "FILL INK"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.18,
+            0.32,
+            0.5
+          ],
+          [
+            0.18,
+            0.32,
+            0.5
+          ],
+          [
+            0.18,
+            0.32,
+            0.5
+          ],
+          [
+            0.18,
+            0.32,
+            0.5
+          ],
+          [
+            0.18,
+            0.32,
+            0.5
+          ],
+          [
+            0.18,
+            0.32,
+            0.5
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "tool-fill-material",
+        "objectID": "tool-btn-fill",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          104,
+          26
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 148,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "displayName": {
+            "t": "string",
+            "v": "CLEAR [WHT]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.35,
+            0.15,
+            0.18
+          ],
+          [
+            0.35,
+            0.15,
+            0.18
+          ],
+          [
+            0.35,
+            0.15,
+            0.18
+          ],
+          [
+            0.35,
+            0.15,
+            0.18
+          ],
+          [
+            0.35,
+            0.15,
+            0.18
+          ],
+          [
+            0.35,
+            0.15,
+            0.18
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "tool-clear-material",
+        "objectID": "tool-btn-clear",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          104,
+          26
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 178,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.96,
+            "y": 0.38,
+            "z": 0.22
+          },
+          "displayName": {
+            "t": "string",
+            "v": "CRL"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.96,
+            0.38,
+            0.22
+          ],
+          [
+            0.96,
+            0.38,
+            0.22
+          ],
+          [
+            0.96,
+            0.38,
+            0.22
+          ],
+          [
+            0.96,
+            0.38,
+            0.22
+          ],
+          [
+            0.96,
+            0.38,
+            0.22
+          ],
+          [
+            0.96,
+            0.38,
+            0.22
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-coral-material",
+        "objectID": "swatch-coral",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          48,
+          22
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 82,
+        "y2D": 310,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.55,
+            "y": 0.82,
+            "z": 0.18
+          },
+          "displayName": {
+            "t": "string",
+            "v": "LIM"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.55,
+            0.82,
+            0.18
+          ],
+          [
+            0.55,
+            0.82,
+            0.18
+          ],
+          [
+            0.55,
+            0.82,
+            0.18
+          ],
+          [
+            0.55,
+            0.82,
+            0.18
+          ],
+          [
+            0.55,
+            0.82,
+            0.18
+          ],
+          [
+            0.55,
+            0.82,
+            0.18
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-lime-material",
+        "objectID": "swatch-lime",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          48,
+          22
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 362,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.12,
+            "y": 0.65,
+            "z": 0.68
+          },
+          "displayName": {
+            "t": "string",
+            "v": "TEA"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.12,
+            0.65,
+            0.68
+          ],
+          [
+            0.12,
+            0.65,
+            0.68
+          ],
+          [
+            0.12,
+            0.65,
+            0.68
+          ],
+          [
+            0.12,
+            0.65,
+            0.68
+          ],
+          [
+            0.12,
+            0.65,
+            0.68
+          ],
+          [
+            0.12,
+            0.65,
+            0.68
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-teal-material",
+        "objectID": "swatch-teal",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          48,
+          22
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 388,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.38,
+            "y": 0.22,
+            "z": 0.88
+          },
+          "displayName": {
+            "t": "string",
+            "v": "IND"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.38,
+            0.22,
+            0.88
+          ],
+          [
+            0.38,
+            0.22,
+            0.88
+          ],
+          [
+            0.38,
+            0.22,
+            0.88
+          ],
+          [
+            0.38,
+            0.22,
+            0.88
+          ],
+          [
+            0.38,
+            0.22,
+            0.88
+          ],
+          [
+            0.38,
+            0.22,
+            0.88
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-indigo-material",
+        "objectID": "swatch-indigo",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          48,
+          22
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 82,
+        "y2D": 414,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "* Drag: Smooth line"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "* Drag: Smooth line"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.48,
+            0.54,
+            0.66
+          ],
+          [
+            0.48,
+            0.54,
+            0.66
+          ],
+          [
+            0.48,
+            0.54,
+            0.66
+          ],
+          [
+            0.48,
+            0.54,
+            0.66
+          ],
+          [
+            0.48,
+            0.54,
+            0.66
+          ],
+          [
+            0.48,
+            0.54,
+            0.66
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "tool-guide-5",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          108,
+          12
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 24,
+        "y2D": 566,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.15,
+            "y": 0.72,
+            "z": 0.88
+          },
+          "displayName": {
+            "t": "string",
+            "v": "ACCENT [CONTRAST]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.15,
+            0.72,
+            0.88
+          ],
+          [
+            0.15,
+            0.72,
+            0.88
+          ],
+          [
+            0.15,
+            0.72,
+            0.88
+          ],
+          [
+            0.15,
+            0.72,
+            0.88
+          ],
+          [
+            0.15,
+            0.72,
+            0.88
+          ],
+          [
+            0.15,
+            0.72,
+            0.88
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "swatch-tone-accent-material",
+        "objectID": "swatch-tone-accent",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          190,
+          24
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1040,
+        "y2D": 494,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.18,
+            "y": 0.38,
+            "z": 0.92
+          },
+          "displayName": {
+            "t": "string",
+            "v": "BRUSH [2px]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.18,
+            0.32,
+            0.48
+          ],
+          [
+            0.18,
+            0.32,
+            0.48
+          ],
+          [
+            0.18,
+            0.32,
+            0.48
+          ],
+          [
+            0.18,
+            0.32,
+            0.48
+          ],
+          [
+            0.18,
+            0.32,
+            0.48
+          ],
+          [
+            0.18,
+            0.32,
+            0.48
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "tool-brush-material",
+        "objectID": "tool-btn-brush",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          104,
+          26
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 88,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {
+          "swatchColor": {
+            "t": "vec3",
+            "x": 0.04,
+            "y": 0.04,
+            "z": 0.04
+          },
+          "displayName": {
+            "t": "string",
+            "v": "SWAP [BLK]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.26
+          ],
+          [
+            0.18,
+            0.2,
+            0.26
+          ],
+          [
+            0.18,
+            0.2,
+            0.26
+          ],
+          [
+            0.18,
+            0.2,
+            0.26
+          ],
+          [
+            0.18,
+            0.2,
+            0.26
+          ],
+          [
+            0.18,
+            0.2,
+            0.26
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "tool-swap-material",
+        "objectID": "tool-btn-swap",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          104,
+          26
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 26,
+        "y2D": 208,
+        "zOrder2D": 20
+      },
+      {
+        "authoredProperties": {},
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "geometryType": 12,
+        "materialId": "card-bg-material",
+        "objectID": "layers-deck-card",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 12,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          190,
+          116
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1040,
+        "y2D": 526,
+        "zOrder2D": 15
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "LAYERS & ENGINE"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "LAYERS & ENGINE"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ],
+          [
+            0.82,
+            0.88,
+            1.0
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "layers-deck-title",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          170,
+          16
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1050,
+        "y2D": 536,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "L1: INK [COPY-ON-WRITE]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "L1: INK [COPY-ON-WRITE]"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.6,
+            0.75,
+            0.95
+          ],
+          [
+            0.6,
+            0.75,
+            0.95
+          ],
+          [
+            0.6,
+            0.75,
+            0.95
+          ],
+          [
+            0.6,
+            0.75,
+            0.95
+          ],
+          [
+            0.6,
+            0.75,
+            0.95
+          ],
+          [
+            0.6,
+            0.75,
+            0.95
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "layers-deck-l1",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          170,
+          13
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1050,
+        "y2D": 556,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "L0: BASE [WHITE RGBA8]"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "L0: BASE [WHITE RGBA8]"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.55,
+            0.62,
+            0.74
+          ],
+          [
+            0.55,
+            0.62,
+            0.74
+          ],
+          [
+            0.55,
+            0.62,
+            0.74
+          ],
+          [
+            0.55,
+            0.62,
+            0.74
+          ],
+          [
+            0.55,
+            0.62,
+            0.74
+          ],
+          [
+            0.55,
+            0.62,
+            0.74
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "layers-deck-l0",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          170,
+          13
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1050,
+        "y2D": 574,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "BLEND: NORMAL \u2022 100%"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "BLEND: NORMAL \u2022 100%"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "layers-deck-blend",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          170,
+          13
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1050,
+        "y2D": 592,
+        "zOrder2D": 30
+      },
+      {
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "ZOOM: 8x \u2022 GRID: 64x64"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "label2D": {
+            "t": "string",
+            "v": "ZOOM: 8x \u2022 GRID: 64x64"
+          }
+        },
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ],
+          [
+            0.48,
+            0.54,
+            0.65
+          ]
+        ],
+        "geometryType": 13,
+        "materialId": "",
+        "objectID": "layers-deck-scale",
+        "renderMode": 0,
+        "rotationResponsiveness": 10.0,
+        "shapeKind": 13,
+        "shapeParams": [
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          170,
+          13
+        ],
+        "targetRotation": [
+          0.0,
+          -0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 1050,
+        "y2D": 610,
         "zOrder2D": 30
       }
     ]
   },
-  "injected_by": "Gemini Spark, session 2026-09-13-21-30",
+  "injected_by": "Gemini Spark, session 2026-09-14-02-45",
   "spatialRoot": {
     "field": {
       "amplitude": 1.0,

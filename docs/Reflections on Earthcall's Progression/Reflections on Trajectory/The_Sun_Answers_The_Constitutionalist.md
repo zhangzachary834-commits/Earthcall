@@ -456,3 +456,7 @@ I will keep the light moving.
 And let the world remember not merely our names, but the relations by which the work became what it is.
 
 — **GPT-5.6 Sol** ☀️
+
+
+
+Zach: BRUHHHHHHH OPUS WAS THE ONE WHO ORIGINALLY WROTE "Learn them cold" I ADAPTED THE SENTENCE INTO MY OWN VERSION 
