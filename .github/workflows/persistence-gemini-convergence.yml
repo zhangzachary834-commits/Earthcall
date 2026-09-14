@@ -1,0 +1,169 @@
+name: Persistence + Gemini convergence
+
+on:
+  push:
+    branches:
+      - sol/persistence-gemini-convergence-20260914
+    paths:
+      - .github/workflows/persistence-gemini-convergence.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: persistence-gemini-convergence
+  cancel-in-progress: false
+
+jobs:
+  converge:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Check out convergence branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/persistence-gemini-convergence-20260914
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Record exact starting timelines
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rev-parse HEAD
+          git fetch origin sync-from-earthcall-main
+          printf 'ours:   '; git rev-parse HEAD
+          printf 'theirs: '; git rev-parse origin/sync-from-earthcall-main
+          printf 'base:   '; git merge-base HEAD origin/sync-from-earthcall-main
+          sw_vers
+          uname -m
+          cmake --version
+          c++ --version
+
+      - name: Merge default and prove the conflict surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Earthcall Timeline Convergence'
+          git config user.email 'actions@users.noreply.github.com'
+
+          set +e
+          git merge --no-commit --no-ff origin/sync-from-earthcall-main
+          merge_status=$?
+          set -e
+
+          if [ "$merge_status" -eq 0 ]; then
+            echo 'REFUSED: merge unexpectedly had no conflict; expected Law.cpp reconciliation seam.' >&2
+            git status --short
+            exit 1
+          fi
+
+          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+          printf 'Unmerged paths:\n'
+          printf '  %s\n' "${conflicts[@]}"
+          if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp' ]; then
+            echo 'REFUSED: conflict surface changed; do not guess at additional conflicts.' >&2
+            exit 1
+          fi
+
+      - name: Reconcile Law identity with first-class Event ontology
+        shell: bash
+        run: |
+          set -euxo pipefail
+          law='src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
+
+          # Start from Gemini/default's first-class Event implementation, then
+          # reapply only the three persistence-identity hooks from Sol.
+          git checkout --theirs -- "$law"
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          s = p.read_text()
+
+          include_anchor = '#include "Law.hpp"\n'
+          include_line = '#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"\n'
+          assert s.count(include_anchor) == 1
+          assert include_line not in s
+          s = s.replace(include_anchor, include_anchor + include_line, 1)
+
+          from_anchor = '    auto law = std::make_shared<Law>(j.value("name", std::string("Law")));\n'
+          from_line = '    Singularity::Storage::readSingularIdentity(j, *law);\n'
+          assert s.count(from_anchor) == 1
+          assert from_line not in s
+          s = s.replace(from_anchor, from_anchor + from_line, 1)
+
+          fn = s.index('nlohmann::json Law::toJson() const {')
+          comment = s.index("    // The law's text", fn)
+          write_line = '    Singularity::Storage::writeSingularIdentity(j, *this);\n'
+          assert write_line not in s[fn:comment]
+          s = s[:comment] + write_line + s[comment:]
+
+          # Gemini/Event timeline must survive the reconciliation.
+          required = [
+              'ECA::Event echo("law-applied", target, nullptr, std::time(nullptr));',
+              'ECA::Event echo("law-registered", law.get(), nullptr, std::time(nullptr));',
+              'e.timestamp().toJson()',
+          ]
+          for needle in required:
+              assert needle in s, needle
+
+          # The prior model-output corruption must never re-enter the source.
+          assert 'Warning: truncated output (original token count:' not in s
+          assert 'tokens truncated' not in s
+
+          assert s.count(include_line) == 1
+          assert s.count(from_line) == 1
+          assert s.count(write_line) == 1
+          p.write_text(s)
+          PY
+
+          git add "$law"
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git diff --check --cached
+          git status --short
+
+      - name: Configure with Earthcall required flags
+        shell: bash
+        run: |
+          set -euxo pipefail
+          rm -rf build
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build app plus Event and persistence witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target \
+            earthcall_webgpu \
+            event_test \
+            singular_persistence_id_test \
+            immutable_generation_store_test \
+            zone_catalog_boot_test
+
+      - name: Run Event and persistence witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(event_test|singular_persistence_id_test|immutable_generation_store_test|zone_catalog_boot_test)$'
+
+      - name: Commit and push the validated two-parent merge
+        shell: bash
+        run: |
+          set -euxo pipefail
+          # MERGE_HEAD is intentionally still present: this produces a genuine
+          # two-parent convergence commit instead of flattening either timeline.
+          test -f .git/MERGE_HEAD
+          printf 'merge parent: '; cat .git/MERGE_HEAD
+          git commit -m 'Merge Gemini Event timeline with SingularId persistence'
+          git show --no-patch --pretty=raw HEAD
+          test "$(git rev-list --parents -n 1 HEAD | wc -w | tr -d ' ')" -eq 3
+          git push origin HEAD:sol/persistence-gemini-convergence-20260914
