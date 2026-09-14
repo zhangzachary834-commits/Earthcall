@@ -53,18 +53,18 @@ jobs:
           merge_status=$?
           set -e
 
-          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+          conflicts="$(git diff --name-only --diff-filter=U)"
+          conflict_count="$(printf '%s\n' "$conflicts" | sed '/^$/d' | wc -l | tr -d ' ')"
           if [ "$merge_status" -eq 0 ]; then
             echo 'Git merged the timelines cleanly; semantic assertions will still verify both sides survived.'
-            if [ "${#conflicts[@]}" -ne 0 ]; then
+            if [ "$conflict_count" -ne 0 ]; then
               echo 'REFUSED: Git reported success while unmerged paths remain.' >&2
-              printf '  %s\n' "${conflicts[@]}"
+              printf '%s\n' "$conflicts"
               exit 1
             fi
           else
-            printf 'Unmerged paths:\n'
-            printf '  %s\n' "${conflicts[@]}"
-            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp' ]; then
+            printf 'Unmerged paths:\n%s\n' "$conflicts"
+            if [ "$conflict_count" -ne 1 ] || [ "$conflicts" != 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp' ]; then
               echo 'REFUSED: conflict surface changed; do not guess at additional conflicts.' >&2
               exit 1
             fi
@@ -76,9 +76,9 @@ jobs:
           set -euxo pipefail
           law='src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
 
-          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
-          if [ "${#conflicts[@]}" -eq 1 ]; then
-            # Start from Gemini/default's first-class Event implementation.
+          conflicts="$(git diff --name-only --diff-filter=U)"
+          conflict_count="$(printf '%s\n' "$conflicts" | sed '/^$/d' | wc -l | tr -d ' ')"
+          if [ "$conflict_count" -eq 1 ]; then
             git checkout --theirs -- "$law"
           fi
 
