@@ -41,7 +41,7 @@ jobs:
           cmake --version
           c++ --version
 
-      - name: Merge default and prove the conflict surface
+      - name: Merge default and prove any conflict surface
         shell: bash
         run: |
           set -euo pipefail
@@ -53,29 +53,34 @@ jobs:
           merge_status=$?
           set -e
 
-          if [ "$merge_status" -eq 0 ]; then
-            echo 'REFUSED: merge unexpectedly had no conflict; expected Law.cpp reconciliation seam.' >&2
-            git status --short
-            exit 1
-          fi
-
           mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
-          printf 'Unmerged paths:\n'
-          printf '  %s\n' "${conflicts[@]}"
-          if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp' ]; then
-            echo 'REFUSED: conflict surface changed; do not guess at additional conflicts.' >&2
-            exit 1
+          if [ "$merge_status" -eq 0 ]; then
+            echo 'Git merged the timelines cleanly; semantic assertions will still verify both sides survived.'
+            if [ "${#conflicts[@]}" -ne 0 ]; then
+              echo 'REFUSED: Git reported success while unmerged paths remain.' >&2
+              printf '  %s\n' "${conflicts[@]}"
+              exit 1
+            fi
+          else
+            printf 'Unmerged paths:\n'
+            printf '  %s\n' "${conflicts[@]}"
+            if [ "${#conflicts[@]}" -ne 1 ] || [ "${conflicts[0]}" != 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp' ]; then
+              echo 'REFUSED: conflict surface changed; do not guess at additional conflicts.' >&2
+              exit 1
+            fi
           fi
 
-      - name: Reconcile Law identity with first-class Event ontology
+      - name: Reconcile and assert Law identity plus first-class Event ontology
         shell: bash
         run: |
           set -euxo pipefail
           law='src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
 
-          # Start from Gemini/default's first-class Event implementation, then
-          # reapply only the three persistence-identity hooks from Sol.
-          git checkout --theirs -- "$law"
+          mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+          if [ "${#conflicts[@]}" -eq 1 ]; then
+            # Start from Gemini/default's first-class Event implementation.
+            git checkout --theirs -- "$law"
+          fi
 
           python3 - <<'PY'
           from pathlib import Path
@@ -86,34 +91,31 @@ jobs:
           include_anchor = '#include "Law.hpp"\n'
           include_line = '#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"\n'
           assert s.count(include_anchor) == 1
-          assert include_line not in s
-          s = s.replace(include_anchor, include_anchor + include_line, 1)
+          if include_line not in s:
+              s = s.replace(include_anchor, include_anchor + include_line, 1)
 
           from_anchor = '    auto law = std::make_shared<Law>(j.value("name", std::string("Law")));\n'
           from_line = '    Singularity::Storage::readSingularIdentity(j, *law);\n'
           assert s.count(from_anchor) == 1
-          assert from_line not in s
-          s = s.replace(from_anchor, from_anchor + from_line, 1)
+          if from_line not in s:
+              s = s.replace(from_anchor, from_anchor + from_line, 1)
 
           fn = s.index('nlohmann::json Law::toJson() const {')
           comment = s.index("    // The law's text", fn)
           write_line = '    Singularity::Storage::writeSingularIdentity(j, *this);\n'
-          assert write_line not in s[fn:comment]
-          s = s[:comment] + write_line + s[comment:]
+          if write_line not in s[fn:comment]:
+              s = s[:comment] + write_line + s[comment:]
 
-          # Gemini/Event timeline must survive the reconciliation.
-          required = [
+          required_event = [
               'ECA::Event echo("law-applied", target, nullptr, std::time(nullptr));',
               'ECA::Event echo("law-registered", law.get(), nullptr, std::time(nullptr));',
               'e.timestamp().toJson()',
           ]
-          for needle in required:
+          for needle in required_event:
               assert needle in s, needle
 
-          # The prior model-output corruption must never re-enter the source.
           assert 'Warning: truncated output (original token count:' not in s
           assert 'tokens truncated' not in s
-
           assert s.count(include_line) == 1
           assert s.count(from_line) == 1
           assert s.count(write_line) == 1
@@ -159,8 +161,6 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          # MERGE_HEAD is intentionally still present: this produces a genuine
-          # two-parent convergence commit instead of flattening either timeline.
           test -f .git/MERGE_HEAD
           printf 'merge parent: '; cat .git/MERGE_HEAD
           git commit -m 'Merge Gemini Event timeline with SingularId persistence'
