@@ -88,12 +88,17 @@ Earthcall/
       Singular/
         Lexeme/
         Object/
+          Automation/
+          Creation/
+          Geometry/
+          Object/
         Property/
         py/
     Identity/              First Mover register, identity ledger, key pairs, claims
     Person/                Person
       Body/
         BodyPart/
+          Limb/
         Head/
       Perspective/
       Relationship/
@@ -108,6 +113,8 @@ Earthcall/
       Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
       FirstMoverOntology/
         FirstMoverWindowTools/
+          CreatorConsole/
+          Menu/
         Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
@@ -115,8 +122,20 @@ Earthcall/
         Adapters/          MacOSAccessibilityAdapter
         Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
         Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
         mcp/               earthcall-mcp-server.js
         py/                app.py
+          agent/
+          api/
+          static/
+            css/
+            js/
+            ui/
+          templates/
+          web/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -129,6 +148,8 @@ Earthcall/
       Physical/            the Physical hardware modality (PhysicalChannel)
         Adapters/
         py/
+          robotics/
+            drivers/
       Screen/              the Screen/Light modality (Renderer, BrushSystem, ScreenRecorder)
         GL/
         WebGPU/
@@ -136,6 +157,10 @@ Earthcall/
         FlatBuffers/
         Schema/
         Serialization/
+          ConstructedBeing/
+          Person/
+          Relation/
+          ZonesOfEarth/
     Time/                  the world clock itself lives on Universe
       Moment/              (instant or interval)
     ZonesOfEarth/
