@@ -2,6 +2,7 @@
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
+#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -166,6 +167,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
     nlohmann::json zj;
     zj["name"] = zone.name();
     zj["identifier"] = zone.getIdentifier();
+    Singularity::Storage::writeSingularIdentity(zj, zone);
     zj["owner"] = zone.owner();
     zj["parentZone"] = zone.getParentZone();
     zj["scope"] = zone.scopeName();
@@ -223,6 +225,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
 }
 
 void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+    Singularity::Storage::readSingularIdentity(zj, zone);
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
     }

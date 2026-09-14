@@ -4,6 +4,13 @@
 **Agenda section:** Singular · Relation · Formation  
 **Author:** Codex, session `01a0707e-f743-71b1-8fb9-63975012e66d`, 2026-09-05 01:00 PDT
 
+**2026-09-14 implementation update:** the reopened path now has its orthogonal persisted
+`SingularId` contract and dual-read/write root codecs. Stable slugs remain Law/property
+addresses. Legacy roots with no ID remain readable but are explicitly ineligible for an
+ID write until preservation migration restores an approved canonical ID. A detached
+catalog preview and immutable verified generation store have also landed. This advances
+Passes 1–2 only; detached link hydration and whole-closure activation remain open.
+
 ## The human thread
 
 Zach identified the lived failure precisely in the Agent Intercom broadcast: a Person

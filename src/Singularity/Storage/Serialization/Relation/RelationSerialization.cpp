@@ -1,6 +1,7 @@
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -76,12 +77,14 @@ nlohmann::json relationToJson(const Relation& relation) {
     if (relation.hasGroundedType()) {
         out["typeId"] = relation.type;
     }
+    Singularity::Storage::writeSingularIdentity(out, relation);
     return out;
 }
 
 Relation relationFromJson(const nlohmann::json& json,
                           const RelationEndpointResolver& resolve) {
     Relation relation;
+    Singularity::Storage::readSingularIdentity(json, relation);
     const std::string legacyType = json.at("type").get<std::string>();
     const std::string savedTypeId = json.value("typeId", std::string{});
     relation.type = savedTypeId.empty() ? legacyType : savedTypeId;

@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 
 #include <cstdint>
 #include <string>
@@ -141,6 +142,7 @@ json Material::toJson() const {
         {"ambient", ambient},
         {"diffuse", diffuse},
     };
+    Singularity::Storage::writeSingularIdentity(j, *this);
     if (!faceTextures.empty()) {
         j["faceTextures"] = faceTexturesToJson(faceTextures);
     }
@@ -149,6 +151,7 @@ json Material::toJson() const {
 
 Material Material::fromJson(const json& j) {
     Material m(j.value("name", std::string("default")));
+    Singularity::Storage::readSingularIdentity(j, m);
     if (j.contains("baseColor") && j["baseColor"].is_array() && j["baseColor"].size() == 3) {
         m.baseColor = glm::vec3(j["baseColor"][0].get<float>(),
                                 j["baseColor"][1].get<float>(),

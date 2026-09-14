@@ -94,21 +94,23 @@ public:
     //               authority -- that is exactly why it is safe to let people
     //               pick it.
     // ------------------------------------------------------------------
-    const Identity::SingularId& personId() const { return _personId; }
-    bool hasIdentity() const { return _personId.canAuthenticate(); }
+    const Identity::SingularId& personId() const { return singularId(); }
+    bool hasIdentity() const { return singularId().canAuthenticate(); }
 
     // Assigning identity is a distinct act from constructing a Person: a
     // Person may exist in a loaded world before their key is available, and
     // minting one on every construction would hand out a fresh identity to
     // every temporary copy.
-    void setPersonId(const Identity::SingularId& id) { _personId = id; }
+    void setPersonId(const Identity::SingularId& id) {
+        if (id.canAuthenticate()) restoreSingularId(id);
+    }
 
     // Singular interface implementation. Prefers the cryptographic identity;
     // falls back to the display name only for worlds saved before identities
     // existed, which is what keeps legacy law-author resolution working until
     // migration has run.
     std::string getIdentifier() const override {
-        return _personId.canAuthenticate() ? _personId.toString() : getDisplayName();
+        return singularId().canAuthenticate() ? singularId().toString() : getDisplayName();
     }
 
     // Law-author resolution scans beings for a matching identifier. During
@@ -116,7 +118,7 @@ public:
     // both -- but never let a display name match a Person who has a real
     // identity, or picking someone's name would again be enough to be them.
     bool matchesIdentifier(const std::string& candidate) const {
-        if (_personId.canAuthenticate()) return candidate == _personId.toString();
+        if (singularId().canAuthenticate()) return candidate == singularId().toString();
         return candidate == getDisplayName();
     }
 
@@ -130,7 +132,6 @@ private:
     // Its identifier is this Person's. See Soul.hpp.
     Soul _soul;
     Formation _joys;
-    Identity::SingularId _personId;
     std::shared_ptr<Singularity::Language::Lexeme> _called;
     std::vector<Body> bodies;
     int activeBodyIndex = 0;

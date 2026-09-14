@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -726,6 +727,8 @@ nlohmann::json Formation::toJson() const {
 
 nlohmann::json Formation::toJsonAt(int depth, std::vector<const Formation*>& seen) const {
     nlohmann::json j = nlohmann::json::object();
+    j["identifier"] = getIdentifier();
+    Singularity::Storage::writeSingularIdentity(j, *this);
     // Serialize members (Lexemes, etc.)
     nlohmann::json jMembers = nlohmann::json::array();
     for (auto* m : members) {
@@ -797,6 +800,10 @@ std::shared_ptr<Formation> Formation::fromJson(const nlohmann::json& json,
     }
 
     auto f = std::make_shared<Formation>();
+    if (json.contains("identifier") && json["identifier"].is_string()) {
+        f->setIdentifier(json["identifier"].get<std::string>());
+    }
+    Singularity::Storage::readSingularIdentity(json, *f);
 
     if (json.contains("members") && json["members"].is_array()) {
         for (const auto& m : json["members"]) {

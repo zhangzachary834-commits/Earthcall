@@ -1,6 +1,7 @@
 #pragma once
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
+#include "Identity/SingularId.hpp"
 
 #include <ctime>
 #include <memory>
@@ -29,6 +30,16 @@ public:
     Singular& operator=(Singular&&) noexcept;
     virtual ~Singular();
     virtual std::string getIdentifier() const = 0;
+
+    // Persisted referential identity. This is deliberately orthogonal to
+    // getIdentifier(), which remains the stable, Person-authored slug used by
+    // Law/property paths. Storage is the only layer permitted to restore an
+    // existing value; ordinary runtime code cannot rename identity.
+    const Identity::SingularId& singularId() const { return _singularId; }
+    bool hasPersistableSingularId() const { return _singularIdPersistenceEligible; }
+    bool restoreSingularId(const Identity::SingularId& id);
+    void markLegacyIdentityUnpersisted() { _singularIdPersistenceEligible = false; }
+    std::string propSingularId() const { return _singularId.toString(); }
     
     static int getAliveCount();
 
@@ -172,6 +183,7 @@ protected:
     // Registered on every Singular after the subclass vocabulary, so a being
     // that forgets to mention telos is not a black box.
     void registerTelosProperty();
+    void registerSingularIdProperty();
     std::vector<std::string> designatedZones;
     std::vector<StakeholderRecord> _stakeholders;
 
@@ -237,6 +249,8 @@ protected:
     std::string name;
     bool _propertiesBuilt = false;
     std::string _telosId;
+    Identity::SingularId _singularId;
+    bool _singularIdPersistenceEligible = true;
 
     /*
      * RELATION AND FORMATION OWNERSHIP AND POINTERS

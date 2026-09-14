@@ -1,6 +1,6 @@
 # Independent Zone Catalog, Activation, Save, and Legacy Retirement Plan
 
-**Status:** implementation plan only; no feature code or authored save data changed in this pass  
+**Status:** IMPLEMENTATION IN PROGRESS — the Pass 1 root-ID foundation and Pass 2 catalog/generation storage foundations landed on 2026-09-14. ID-based cross-root references/managers and Passes 3–9, witness migrations, Save Zone, activation/default flips, Person verification, and UI retirement remain open. No authored save data has been modified by these implementation passes.
 **Target branch:** `sol/event-interest-fastpath-20260913` at planning baseline `f0c259b4656f30daacecac309541aa91fc52eb6d`  
 **Authorial requirement:** Zach requires Creator Console → Zones → **Move to Zone** to yield the complete Zone, and **Save Zone** to persist that Zone without Assets → Files → Load or a named conglomerate session.  
 **Origin and extension:** Zach supplied the lived boundary and the preservation requirement. This plan integrates the existing Per-Zone and Singular Serialization task documents, the Basic Pixel Changer and split-substrate intercom findings, and the current branch implementation into a staged transaction design.
@@ -268,6 +268,7 @@ The transactional path becomes the only ordinary Zone move/save path after all a
 | `src/ZonesOfEarth/AuthorsOfLaw/Law.hpp`, `Law.cpp` | LawManager detached admission, trigger binding batch, Rete rebuild/rollback boundary. |
 | `src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp` | Batch admission/removal hooks used only during activation commit; no partial registration. |
 | `src/Singularity/Storage/ZoneCatalog.hpp`, `ZoneCatalog.cpp` (new) | Lightweight derived catalog read/validate/rebuild-preview/atomic head publication. Mechanism, not domain ontology. |
+| `src/Singularity/Storage/ImmutableGeneration.hpp`, `ImmutableGeneration.cpp` (added in Pass 2) | Content-addressed JSON generation write/reread verification and compare-and-replace root heads with prior-head retention. |
 | `src/Singularity/Storage/ZoneClosure.hpp`, `ZoneClosure.cpp` (new) | Typed closure traversal, detached bundle, validation/refusal report, generation ledger. Mechanism, not a new kind of being. |
 | `src/Singularity/Storage/SaveSystem.hpp`, `SaveSystem.cpp` | Content-addressed paths, staging/fsync/atomic primitives, immutable generations, legacy read-only access. |
 | `src/ZonesOfEarth/ZoneManager.hpp`, `ZoneManager.cpp` | Replace Law-only `switchTo` preparation with whole-closure orchestration; add explicit target `saveZone`; retain `loadState` as legacy import/recovery. |
@@ -291,6 +292,7 @@ The implementation may split a listed mechanism file further only within the sam
 |---|---|
 | `tests/identity/singular_persistence_id_test.cpp` | Persisted ID round-trip, invalid/noncanonical refusal, slug rename without identity change, duplicate slug activation refusal. |
 | `tests/zones/zone_catalog_boot_test.cpp` | Boot reads lightweight rows only; 25-Zone/2-Home baseline discoverability; malformed/stale catalog refusal and read-only rebuild preview. |
+| `tests/zones/immutable_generation_store_test.cpp` (added in Pass 2) | Deterministic generation address, idempotent write, verified read, stale-head refusal, prior-head retention, and corruption refusal under a disposable root. |
 | `tests/zones/zone_transitive_closure_test.cpp` | Complete Object/Material/Law/trigger/Category/Relation/Formation/matter closure, cycles handled by ID visited set, shared roots not copied. |
 | `tests/zones/zone_activation_transaction_test.cpp` | Missing/malformed/ambiguous dependency leaves current Zone, managers, EventBus, Rete, and active Object view unchanged; successful commit becomes visible all at once. |
 | `tests/zones/zone_matter_membership_test.cpp` | Exact semantic/matter membership, owner+Object SingularId resolution, hash/schema/duplicate/missing/extra refusal. |
@@ -413,3 +415,8 @@ No Person checkbox is added by this planning-only pass because there is no new e
 **Task/session ID:** `zone-independent-persistence-plan-20260914`  
 **Date:** 2026-09-14  
 **Timestamp:** 2026-09-14T03:10:55Z
+
+**Implementation continuation signed:** Codex / GPT-5.6 Sol
+**Task/session ID:** `zone-independent-persistence-implementation-20260914`
+**Date:** 2026-09-14
+**Timestamp:** 2026-09-14T03:33:02Z

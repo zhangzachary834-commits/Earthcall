@@ -2,6 +2,7 @@
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 #include "Singularity/Core/StringId.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -14,7 +15,7 @@ int Singular::getAliveCount() {
     return s_singularAliveCount.load(std::memory_order_relaxed);
 }
 
-Singular::Singular() {
+Singular::Singular() : _singularId(Identity::SingularId::mintOpaque()) {
     s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
 }
 
@@ -32,7 +33,8 @@ Singular::Singular(const Singular& o)
       _dynamicProperties(o._dynamicProperties),
       _dataStructures(o._dataStructures),
       name(o.name),
-      _telosId(o._telosId) {
+      _telosId(o._telosId),
+      _singularId(Identity::SingularId::mintOpaque()) {
     s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
 }
 
@@ -58,7 +60,9 @@ Singular::Singular(Singular&& o) noexcept
       _dynamicProperties(std::move(o._dynamicProperties)),
       _dataStructures(std::move(o._dataStructures)),
       name(std::move(o.name)),
-      _telosId(std::move(o._telosId)) {
+      _telosId(std::move(o._telosId)),
+      _singularId(o._singularId),
+      _singularIdPersistenceEligible(o._singularIdPersistenceEligible) {
     s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
 }
 
@@ -70,12 +74,21 @@ Singular& Singular::operator=(Singular&& o) noexcept {
         _dataStructures = std::move(o._dataStructures);
         name = std::move(o.name);
         _telosId = std::move(o._telosId);
+        _singularId = o._singularId;
+        _singularIdPersistenceEligible = o._singularIdPersistenceEligible;
     }
     _propertyNames.clear();
     _propertyRegistry.clear();
     _property_formation = nullptr;
     _propertiesBuilt = false;
     return *this;
+}
+
+bool Singular::restoreSingularId(const Identity::SingularId& id) {
+    if (!id.isValid()) return false;
+    _singularId = id;
+    _singularIdPersistenceEligible = true;
+    return true;
 }
 
 static Singular::PropertyChangeCallback s_propertyChangeCallback = nullptr;
@@ -201,6 +214,15 @@ void Singular::registerTelosProperty() {
     registerProperty(std::move(prop));
 }
 
+void Singular::registerSingularIdProperty() {
+    const Earthcall::StringId id = Earthcall::StringInterner::intern("singularId");
+    for (const Earthcall::StringId registered : _propertyNames) {
+        if (registered == id) return;
+    }
+    registerProperty(std::make_unique<ComputedProperty<Singular, std::string>>(
+        "singularId", this, &Singular::propSingularId));
+}
+
 // ============================================================================
 // HOT PATH: Find property by StringId (cache-optimal integer scan)
 //
@@ -217,6 +239,7 @@ Property* Singular::findProperty(Earthcall::StringId id) {
         _propertiesBuilt = true;   // set first: buildProperties may itself query
         buildProperties();
         registerTelosProperty();
+        registerSingularIdProperty();
     }
 
     // Scan the integer array (cache-friendly)
@@ -268,6 +291,7 @@ std::vector<Property*> Singular::listProperties() {
         _propertiesBuilt = true;
         buildProperties();
         registerTelosProperty();
+        registerSingularIdProperty();
     }
 
     // AUTHORED PROPERTIES ARE AS REAL AS FIRST-MOVER ONES, and this is where
@@ -303,6 +327,7 @@ bool Singular::hasPropertyStartingWith(const std::string& prefix) {
         _propertiesBuilt = true;
         buildProperties();
         registerTelosProperty();
+        registerSingularIdProperty();
     }
     for (const auto& entry : _dynamicProperties) {
         findProperty(entry.first);

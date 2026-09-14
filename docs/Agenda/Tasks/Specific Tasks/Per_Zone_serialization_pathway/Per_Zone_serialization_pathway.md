@@ -7,6 +7,36 @@
 
 ---
 
+## Implementation progress — 2026-09-14 cloud/VM continuation
+
+Zach explicitly authorized implementation. Codex (GPT-5.6 Sol), task/session
+`zone-independent-persistence-implementation-20260914`, landed the first reversible
+Pass 1/2 foundations without editing any authored save:
+
+- every `Singular` now has an immutable persisted `SingularId` distinct from its stable
+  `getIdentifier()` slug; Object, Material, Zone/Home, Formation, Relation, Law, and
+  Person codecs dual-read/write the ID;
+- an explicit malformed/noncanonical ID refuses, while a legacy record with no ID is
+  marked migration-ineligible and reserializes without inventing one—inspection and
+  ordinary legacy hydration therefore cannot masquerade as migration;
+- the read-only Zone catalog preview enumerates detached metadata, reports malformed
+  IDs and duplicate aliases, and creates no directory/file until explicit publication;
+- immutable root generations are SHA-256 addressed, reread-verified, idempotent, and
+  published through a compare-and-replace head while retaining the prior head.
+
+`singular_persistence_id_test`, `zone_catalog_boot_test`, and
+`immutable_generation_store_test` were added. The two storage-only tests compile and run
+green directly with the VM compiler and disposable temporary roots; all modified C++
+translation units pass `g++ -fsyntax-only`. The prescribed CMake targets/full suite are
+environment-blocked because this VM image has no `cmake` executable.
+
+This is **not** completion. ID-based cross-root references/managers remain open. Boot
+still calls `hydrateFromZoneStore()` and the Zones UI
+still lists live hydrated Zones. Detached full closure, atomic activation/Rete barrier,
+verified Zone matter, isolated Save Zone, preservation migration and ordered witnesses,
+Person checks, fleet apply, default flip, and Assets retirement remain Passes 3–9. No
+witness migration or UI gate is authorized to advance merely from these foundations.
+
 ✅ **Per-Zone serialization pathway** — done and verified (2026-08-21, tests; in-app click still open): `saves/zones/<id>/zone.json` is the Zone identity; Homes live under `saves/homes/<id>/home.json`. Session files under `saves/worlds/` write `zoneRefs` + a dual-write `zones[]` snapshot; load keeps a live Zone, else the store, else migrates the snapshot. Empty persist over a populated identity is refused, so a boot-empty Home cannot wipe the room. `forkZone` / `diffZones` name, branch, and compare. Boot `hydrateFromZoneStore` fills empty Home/Sanctum from the store. Guarded by `tests/zones/zone_identity_test.cpp`; `save_roundtrip_test`, `world_switch_test`, `unsaved_preserve_test` updated to the identity contract. **In-app (Zach, 2026-08-23):** shapes in Home survived loading another save; FaceTextures went white (materials were session-scoped). See Home/Zone item for the paint fix. See [FIRST_MOVER_AUTHORING.md](../../../../architecture/law/FIRST_MOVER_AUTHORING.md) §4f. - Zach's click-through and GPT-4o's "STAGNANT" save note. 
 
 ## Why the “done” status was wrong

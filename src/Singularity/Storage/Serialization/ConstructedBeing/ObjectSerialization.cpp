@@ -2,6 +2,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
+#include "Singularity/Storage/Serialization/SingularIdentityJson.hpp"
 #include <cstring>
 #include <ctime>
 #include <memory>
@@ -53,6 +54,7 @@ void to_json(nlohmann::json& j, const Object& obj){
         }
     }
     j["objectID"] = obj.getIdentifier();
+    Singularity::Storage::writeSingularIdentity(j, obj);
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
 
     // Placement is Person-meaningful, Law-addressable state — not "purely
@@ -172,6 +174,7 @@ static Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
 }
 
 void from_json(const nlohmann::json& j, Object& obj){
+    Singularity::Storage::readSingularIdentity(j, obj);
     // Prefer the topology framework's shapeKind; fall back to the legacy
     // geometryType int (which setShapeKind migrates into the new model).
     if (j.contains("patch")) {

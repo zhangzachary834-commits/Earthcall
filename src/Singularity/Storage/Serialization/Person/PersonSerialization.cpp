@@ -9,7 +9,10 @@ nlohmann::json personToJson(const Person& person) {
     if (person.called()) j["displayLexemeId"] = person.called()->getIdentifier();
     // Keep this legacy alias: older profile readers still use it as a label.
     j["soulName"] = person.getDisplayName();
-    if (person.personId().canAuthenticate()) j["personId"] = person.personId().toString();
+    if (person.personId().canAuthenticate()) {
+        j["singularId"] = person.personId().toString();
+        j["personId"] = person.personId().toString();
+    }
     const auto& position = person.position();
     const auto& velocity = person.velocity();
     j["position"] = {position.x, position.y, position.z};
@@ -28,9 +31,10 @@ void personFromJson(const nlohmann::json& j, Person& person) {
 
     // A personId read from a file is only a claim. Signature/authority
     // verification remains outside this storage codec, as it did before.
-    if (j.contains("personId") && j["personId"].is_string()) {
+    const char* identityField = j.contains("singularId") ? "singularId" : "personId";
+    if (j.contains(identityField) && j[identityField].is_string()) {
         Identity::SingularId claimed =
-            Identity::SingularId::parse(j["personId"].get<std::string>());
+            Identity::SingularId::parse(j[identityField].get<std::string>());
         if (claimed.canAuthenticate()) person.setPersonId(claimed);
     }
     if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
