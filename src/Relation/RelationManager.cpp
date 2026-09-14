@@ -186,10 +186,7 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         // ECA echo so LAWS can hear it (string-typed events are what the
         // Rete network binds): subject is the newborn relation — itself a
         // Singular whose endpoints laws can read.
-        ECA::Event echo;
-        echo.type = "relation-formed";
-        echo.subject = r.get();
-        echo.timestamp = std::time(nullptr);
+        ECA::Event echo("relation-formed", r.get(), nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
     }
 }
@@ -223,10 +220,7 @@ bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
         auto removed = *it;
         relations.erase(it);
 
-        ECA::Event echo;
-        echo.type = "relation-destroyed";
-        echo.subject = removed.get();
-        echo.timestamp = std::time(nullptr);
+        ECA::Event echo("relation-destroyed", removed.get(), nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
         return true;
     }
@@ -240,10 +234,7 @@ bool RelationManager::removeBetween(const Singular& a, const Singular& b, const 
         bool matchesEntities = r->isBetween(a, b);
         bool matchesType = type.empty() || r->type == type;
         if (matchesEntities && matchesType) {
-            ECA::Event echo;
-            echo.type = "relation-destroyed";
-            echo.subject = r.get();
-            echo.timestamp = std::time(nullptr);
+            ECA::Event echo("relation-destroyed", r.get(), nullptr, std::time(nullptr));
             Core::EventBus::instance().publish(echo);
             return true;
         }
@@ -259,10 +250,7 @@ bool RelationManager::removeBetween(const std::string& a, const std::string& b, 
         bool matchesEntities = r->isBetween(a, b);
         bool matchesType = type.empty() || r->type == type;
         if (matchesEntities && matchesType) {
-            ECA::Event echo;
-            echo.type = "relation-destroyed";
-            echo.subject = r.get();
-            echo.timestamp = std::time(nullptr);
+            ECA::Event echo("relation-destroyed", r.get(), nullptr, std::time(nullptr));
             Core::EventBus::instance().publish(echo);
             return true;
         }
@@ -276,10 +264,7 @@ bool RelationManager::removeInvolving(const Singular* being) {
     auto oldSize = relations.size();
     relations.erase(std::remove_if(relations.begin(), relations.end(), [&](const std::shared_ptr<Relation>& r) {
         if (!r || !r->involves(being)) return false;
-        ECA::Event echo;
-        echo.type = "relation-destroyed";
-        echo.subject = r.get();
-        echo.timestamp = std::time(nullptr);
+        ECA::Event echo("relation-destroyed", r.get(), nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
         return true;
     }), relations.end());

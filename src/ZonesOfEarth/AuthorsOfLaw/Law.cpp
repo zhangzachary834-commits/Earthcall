@@ -607,10 +607,7 @@ void Law::publishAppliedEvent(Singular* target, ApplicationResult result) const 
     // the absence of one.
     if (result == ApplicationResult::Applied &&
         Universe::instance().anyoneHears("law-applied")) {
-        ECA::Event echo;
-        echo.type = "law-applied";
-        echo.subject = target;
-        echo.timestamp = std::time(nullptr);
+        ECA::Event echo("law-applied", target, nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
     }
 }
@@ -1688,10 +1685,7 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
     LawRegisteredEvent event{law, std::time(nullptr)};
     Core::EventBus::instance().publish(event);
 
-    ECA::Event echo;
-    echo.type = "law-registered";
-    echo.subject = law.get();
-    echo.timestamp = std::time(nullptr);
+    ECA::Event echo("law-registered", law.get(), nullptr, std::time(nullptr));
     Core::EventBus::instance().publish(echo);
 }
 
@@ -1799,7 +1793,7 @@ void LawManager::connectToEventBus() {
             {"eventType", e.type},
             {"subjectId", subjectId},
             {"objectId", objectId},
-            {"timestamp", e.timestamp.toJson()}
+            {"timestamp", e.timestamp().toJson()}
         });
 
         // A being that has just left the world is released from every law
