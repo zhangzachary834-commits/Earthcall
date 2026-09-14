@@ -1,4 +1,4 @@
-// CI-only semantic witness for the Event-as-Moment event-interest fast path.
+// Regression witness: authored state alphas are not arbitrary Event listeners.
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -44,6 +44,6 @@ int main() {
     assert(!mgr.rete().hasForeignBoundAlpha());
     assert(!Universe::instance().anyoneHears("some-unrelated-event"));
 
-    std::puts("sol_event_interest_filter_probe: ALL OK");
+    std::puts("event_interest_filter_test: ALL OK");
     return 0;
 }
