@@ -1,0 +1,117 @@
+name: Living Studio event-interest A/B
+
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-latest-20260914
+
+jobs:
+  event-interest-ab:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Report exact source
+        run: |
+          git rev-parse HEAD
+          cmake --version
+          uname -a
+
+      - name: Preserve fixed source and restore old predicate for A
+        run: |
+          cp src/ZonesOfEarth/AuthorsOfLaw/Law.cpp /tmp/Law.cpp.fixed
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          s = p.read_text()
+          old = 'return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();'
+          legacy = 'return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();'
+          assert s.count(old) == 1, s.count(old)
+          p.write_text(s.replace(old, legacy, 1))
+          PY
+          git diff -- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+
+      - name: Configure A
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build A lag probe
+        run: cmake --build build --target frame_lag_test -j8
+
+      - name: Living Instrument A — broad opaque predicate
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-A-broad-opaque.txt
+          echo "A_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Restore production fix
+        run: |
+          cp /tmp/Law.cpp.fixed src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+          grep -n "setEventInterest\|hasForeignBoundAlpha" src/ZonesOfEarth/AuthorsOfLaw/Law.cpp | head -20
+
+      - name: Reconfigure B and build semantic gates
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target event_test event_interest_filter_test prophetic_rete_test frame_lag_test -j8
+
+      - name: Hard semantic gates — Event ontology and event interest
+        run: |
+          ./build/event_test 2>&1 | tee event-test.txt
+          ./build/event_interest_filter_test 2>&1 | tee event-interest-test.txt
+
+      - name: Prophetic Rete safety gate — classify headless GL honestly
+        run: |
+          set +e
+          ./build/prophetic_rete_test > prophetic-rete-test.txt 2>&1
+          rc=$?
+          cat prophetic-rete-test.txt
+          if [ "$rc" -eq 0 ]; then
+            echo "prophetic_rete_test: PASS"
+            exit 0
+          fi
+          if grep -Eqi 'no GL context|glfwInit failed|failed to initialize GLFW' prophetic-rete-test.txt; then
+            echo "prophetic_rete_test: ENV-SKIP (headless GL unavailable)"
+            exit 0
+          fi
+          echo "prophetic_rete_test: REAL FAILURE rc=$rc"
+          exit "$rc"
+
+      - name: Living Instrument B — foreign-only fail-open
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-B-foreign-only.txt
+          echo "B_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Print A/B headline
+        run: |
+          echo '===== A: broad opaque ====='
+          grep -E 'machine calibration:|LAG +median simulation frame|of that, LawManager::tick|95th-percentile|LawManager::tick grows|machine steadiness:' living-A-broad-opaque.txt || true
+          echo '===== B: foreign-only ====='
+          grep -E 'machine calibration:|LAG +median simulation frame|of that, LawManager::tick|95th-percentile|LawManager::tick grows|machine steadiness:' living-B-foreign-only.txt || true
+          echo "frame_lag exits: A=${A_EXIT:-unknown} B=${B_EXIT:-unknown} (timing regressions may intentionally return nonzero)"
+
+      - name: Upload text reports for diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-studio-event-interest-${{ github.run_id }}
+          path: |
+            living-A-broad-opaque.txt
+            living-B-foreign-only.txt
+            event-test.txt
+            event-interest-test.txt
+            prophetic-rete-test.txt
