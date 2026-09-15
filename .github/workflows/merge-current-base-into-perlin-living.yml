@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Merge protected base and resolve only known overlaps
+      - name: Merge protected base without mutating workflow content
         shell: bash
         run: |
           set -euo pipefail
@@ -33,7 +33,7 @@ jobs:
           set -e
 
           conflicts="$(git diff --name-only --diff-filter=U | sort)"
-          expected="$(printf '%s\n' '.github/workflows/earthcall-ci.yml' 'docs/Agenda/Tasks/For Zach/Person Verification List.md' | sort)"
+          expected=".github/workflows/earthcall-ci.yml"
           unexpected="$(comm -23 <(printf '%s\n' "$conflicts") <(printf '%s\n' "$expected"))"
           if [[ -n "$unexpected" ]]; then
             echo "Unexpected merge conflicts; refusing to guess:"
@@ -41,53 +41,16 @@ jobs:
             exit 1
           fi
 
-          # Keep every newer focused-CI witness from base, then restore the two
-          # preservation witnesses this branch introduced.
+          # The Actions token may not push a commit whose first-parent diff
+          # changes a workflow. Keep this branch's already-green CI file for
+          # the merge commit itself. After the base ancestry is integrated,
+          # the authenticated GitHub connector will union the base's newest
+          # witness into this file directly.
           if grep -Fxq '.github/workflows/earthcall-ci.yml' <<<"$conflicts"; then
-            git checkout --theirs -- .github/workflows/earthcall-ci.yml
+            git checkout --ours -- .github/workflows/earthcall-ci.yml
+            git add .github/workflows/earthcall-ci.yml
           fi
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('.github/workflows/earthcall-ci.yml')
-          text = path.read_text()
-          anchor = '            zone_native_save_isolation_test\n'
-          additions = ('            perlin_zone_field_restore_test \\\n'
-                       '            synthesis_studio_zone_closure_test\n')
-          if 'perlin_zone_field_restore_test' not in text:
-              if anchor not in text:
-                  raise SystemExit('focused CI build anchor drifted; refusing blind edit')
-              text = text.replace(anchor, '            zone_native_save_isolation_test \\\n' + additions, 1)
-          regex_anchor = 'zone_native_save_isolation_test)$\''
-          if 'synthesis_studio_zone_closure_test)' not in text:
-              if regex_anchor not in text:
-                  raise SystemExit('focused CI regex anchor drifted; refusing blind edit')
-              text = text.replace(
-                  regex_anchor,
-                  'zone_native_save_isolation_test|perlin_zone_field_restore_test|synthesis_studio_zone_closure_test)$\'',
-                  1)
-          path.write_text(text)
-          PY
 
-          # Keep all newer Person-verification entries from base, then restore
-          # the single restoration witness under the existing Studio section.
-          person='docs/Agenda/Tasks/For Zach/Person Verification List.md'
-          if grep -Fxq "$person" <<<"$conflicts"; then
-            git checkout --theirs -- "$person"
-          fi
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('docs/Agenda/Tasks/For Zach/Person Verification List.md')
-          text = path.read_text()
-          marker = "## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)\n"
-          bullet = "\n- [ ] **Perlin hills + Living Studio Zone-native restoration — GPT-5.6 Sol, 2026-09-14:** fully quit any stale running Earthcall instance **without saving its old live Zones**, relaunch this restored build, then use Creator Console → Zones. Move to `NoiseFloorWorld` and verify the rolling Perlin SDF hills are visible again. Then Move to `SynthesisStudio.LivingInstrument` without loading a legacy World: play C5 and several other pads, verify each note is audible, and verify the corresponding floating resonator sphere visibly swells/rises and relaxes while the pad still depresses/releases. Automated Zone-native witnesses prove the SDF payload rehydrates and C5 reaches the audio sink at 523.25 Hz and grows its matching sphere; this checkbox is the remaining Person-facing visual/audio manifestation witness.\n"
-          if bullet.strip() not in text:
-              if marker not in text:
-                  raise SystemExit('Synthesis Studio heading drifted; refusing blind append')
-              text = text.replace(marker, marker + bullet, 1)
-          path.write_text(text)
-          PY
-
-          git add .github/workflows/earthcall-ci.yml "$person"
           remaining="$(git diff --name-only --diff-filter=U)"
           if [[ -n "$remaining" ]]; then
             echo "Unresolved paths remain; refusing merge commit:"
