@@ -44,6 +44,25 @@ void LanguageSystem::rebindSymbolIndex(const std::string& symbol) {
     _symbolIndex.erase(symbol);
 }
 
+void LanguageSystem::noteSymbolAdded(const std::string& symbol) {
+    ++_symbolCounts[symbol];
+    // The candidate set changed, so the next ambiguous human-facing lookup
+    // deserves a fresh diagnostic listing the identities now in play.
+    _reportedAmbiguities.erase(symbol);
+}
+
+void LanguageSystem::noteSymbolRemoved(const std::string& symbol) {
+    auto it = _symbolCounts.find(symbol);
+    if (it != _symbolCounts.end()) {
+        if (it->second <= 1) {
+            _symbolCounts.erase(it);
+        } else {
+            --it->second;
+        }
+    }
+    _reportedAmbiguities.erase(symbol);
+}
+
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
     Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
@@ -84,6 +103,7 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
                 if (sit != _symbolIndex.end() && sit->second == oldest) {
                     _symbolIndex.erase(sit);
                 }
+                noteSymbolRemoved(oldestSymbol);
             }
             _lexemes.erase(_lexemes.begin() + static_cast<std::ptrdiff_t>(evict));
             if (!oldestSymbol.empty()) rebindSymbolIndex(oldestSymbol);
@@ -95,6 +115,7 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
     _lexemes.push_back(lexeme);
     _symbolIndex[symbol] = lexeme;
     _idIndex[lexeme->getIdentifier()] = lexeme;
+    noteSymbolAdded(symbol);
 
     return lexeme;
 }
@@ -108,6 +129,7 @@ std::shared_ptr<Lexeme> LanguageSystem::foundation() {
     _lexemes.push_back(lexeme);
     _symbolIndex[kFoundationSymbol] = lexeme;
     _idIndex[kFoundationId] = lexeme;
+    noteSymbolAdded(kFoundationSymbol);
     return lexeme;
 }
 
@@ -119,11 +141,15 @@ std::shared_ptr<Lexeme> LanguageSystem::intern(const std::string& symbol, const 
     _lexemes.push_back(lexeme);
     _symbolIndex[symbol] = lexeme;
     _idIndex[stableId] = lexeme;
+    noteSymbolAdded(symbol);
     return lexeme;
 }
 
 std::vector<std::shared_ptr<Lexeme>> LanguageSystem::findAllBySymbol(const std::string& symbol) const {
     std::vector<std::shared_ptr<Lexeme>> matches;
+    auto countIt = _symbolCounts.find(symbol);
+    if (countIt == _symbolCounts.end()) return matches;
+    matches.reserve(countIt->second);
     for (const auto& lexeme : _lexemes) {
         if (lexeme && lexeme->getSymbol() == symbol) {
             matches.push_back(lexeme);
@@ -144,8 +170,12 @@ std::shared_ptr<Lexeme> LanguageSystem::findBySymbol(const std::string& symbol) 
     auto it = _symbolIndex.find(symbol);
     if (it == _symbolIndex.end()) return nullptr;
 
-    const auto matches = findAllBySymbol(symbol);
-    if (matches.size() > 1) {
+    // Keep the ordinary unique-word path O(1). Only enumerate identities when
+    // multiplicity proves there is something a Person actually needs to choose.
+    auto countIt = _symbolCounts.find(symbol);
+    if (countIt != _symbolCounts.end() && countIt->second > 1 &&
+        _reportedAmbiguities.insert(symbol).second) {
+        const auto matches = findAllBySymbol(symbol);
         std::cerr << "[LanguageSystem] Ambiguous Lexeme spelling '" << symbol << "': "
                   << matches.size() << " live beings share this word. Default binding is "
                   << it->second->getIdentifier() << ". Exact identifiers:";
@@ -185,6 +215,7 @@ void LanguageSystem::remove(const std::string& symbol) {
     if (vecIt != _lexemes.end()) {
         _lexemes.erase(vecIt);
     }
+    noteSymbolRemoved(spelling);
     rebindSymbolIndex(spelling);
 }
 
@@ -278,6 +309,8 @@ void LanguageSystem::clear() {
     _lexemes.clear();
     _symbolIndex.clear();
     _idIndex.clear();
+    _symbolCounts.clear();
+    _reportedAmbiguities.clear();
 }
 
 } // namespace Language
