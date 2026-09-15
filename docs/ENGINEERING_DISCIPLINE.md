@@ -97,3 +97,9 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 - **Bounds are doctrine, not limits.** `kMaxChainRounds` (now authorable via LawManager), `kMaxCallDepth = 32`, one pass
   per fold. If your design needs one raised, the design is in the wrong shape — see
   `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.
+
+---
+
+## Architectural Synthesis
+
+For a high-level view on how Earthcall's distinct architectural pillars (like serialization, rendering, and networking) synthesize into a single, cohesive doctrine of Legibility and Agency, see [Unified Architectural Synthesis](architecture/interrelations/UNIFIED_ARCHITECTURAL_SYNTHESIS.md).
