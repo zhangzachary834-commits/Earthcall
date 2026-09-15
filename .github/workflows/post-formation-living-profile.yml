@@ -1,4 +1,4 @@
-name: Dirty state refresh semantic witness report
+name: Dirty state refresh A/B with headless witness
 
 on:
   push:
@@ -9,13 +9,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  witness:
+  profile:
     runs-on: macos-14
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
-      - name: Patch dirty state refresh candidate
+      - name: Configure
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build and profile baseline
+        run: |
+          cmake --build build --target frame_lag_test -j3
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
+          exit 0
+
+      - name: Patch resident dirty-state refresh candidate
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -49,54 +65,163 @@ jobs:
                '''            retractFact(fact->id, true);\n            fact->value = newValue;\n            assertFact(fact, true);''')
           PY
 
-      - name: Configure and build semantic witnesses
+      - name: Build candidate and existing headless witness
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
-          cmake --build build --target \
-            prophetic_rete_test \
-            event_interest_filter_test \
-            rete_compile_test \
-            rete_relation_state_test \
-            edge_reactive_path_test \
-            reactive_departure_test \
-            vocabulary_index_test \
-            -j3
+          cmake --build build --target frame_lag_test event_interest_filter_test -j3
+          ./build/event_interest_filter_test
 
-      - name: Run and record every semantic witness
+      - name: Install exact dirty-refresh Rete witness
+        run: |
+          cat > tests/law/event_interest_filter_test.cpp <<'CPP'
+          #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+          #include "ConstructedBeing/Singular/Object/Object.hpp"
+          #include <cassert>
+          #include <cstdio>
+          #include <memory>
+          #include <string>
+          #include <vector>
+
+          static FactPtr stateFact(Object& o, const char* attr, double v) {
+              auto f = std::make_shared<ReteFact>();
+              f->type = "property-state";
+              f->subject = &o;
+              f->subjectId = o.getIdentifier();
+              f->attribute = attr;
+              f->value = v;
+              f->isState = true;
+              f->dirty = false;
+              return f;
+          }
+
+          static bool hasLaw(const std::vector<ReteActivation>& agenda, const char* id) {
+              for (const auto& a : agenda) if (a.lawId == id) return true;
+              return false;
+          }
+
+          int main() {
+              Object subject;
+              subject.setObjectID("dirty-refresh.subject");
+              subject.setDynamicProperty("x", PropertyValue(1.0));
+              subject.setDynamicProperty("y", PropertyValue(1.0));
+
+              ReteNetwork net;
+              const auto ax = net.addAlphaNode("x > 0", [](const FactPtr& f) {
+                  return f && f->isState && f->attribute == "x" && f->value.is_number() && f->value.get<double>() > 0.0;
+              });
+              const auto ay = net.addAlphaNode("y > 0", [](const FactPtr& f) {
+                  return f && f->isState && f->attribute == "y" && f->value.is_number() && f->value.get<double>() > 0.0;
+              });
+              const auto both = net.addBetaNode("x > 0 AND y > 0", false, ax, ay);
+              net.bindLawToAlpha("law-x", ax);
+              net.bindLawToBeta("law-both", both);
+
+              auto fx = stateFact(subject, "x", 1.0);
+              auto fy = stateFact(subject, "y", 1.0);
+              const std::string xid = net.assertFact(fx);
+              const std::string yid = net.assertFact(fy);
+              assert(net.facts().size() == 2);
+              assert(net.collectTerminalSubjects({both}).size() == 1);
+              auto initial = net.drainAgenda();
+              assert(hasLaw(initial, "law-x"));
+              assert(hasLaw(initial, "law-both"));
+
+              // Matching -> non-matching: old alpha membership, beta token and
+              // queued activations must disappear while the persistent fact
+              // keeps its identity and cardinality.
+              subject.setDynamicProperty("x", PropertyValue(-1.0));
+              assert(net.markFactDirty(subject.getIdentifier(), "x"));
+              net.evaluateDirty();
+              assert(net.facts().size() == 2);
+              bool sawX = false, sawY = false;
+              for (const auto& f : net.facts()) {
+                  if (f->id == xid) { sawX = true; assert(f->value == -1.0); }
+                  if (f->id == yid) sawY = true;
+              }
+              assert(sawX && sawY);
+              assert(net.collectTerminalSubjects({both}).empty());
+              assert(!hasLaw(net.agenda(), "law-x"));
+              assert(!hasLaw(net.agenda(), "law-both"));
+
+              // Non-matching -> matching: alpha and beta consequences must be
+              // rebuilt and the same state fact id must be heard again.
+              subject.setDynamicProperty("x", PropertyValue(2.0));
+              assert(net.markFactDirty(subject.getIdentifier(), "x"));
+              net.evaluateDirty();
+              assert(net.facts().size() == 2);
+              assert(net.collectTerminalSubjects({both}).size() == 1);
+              auto reentered = net.drainAgenda();
+              assert(hasLaw(reentered, "law-x"));
+              assert(hasLaw(reentered, "law-both"));
+
+              // Dirty notification without a value change is a no-op: no
+              // duplicate memories or activations.
+              assert(net.markFactDirty(subject.getIdentifier(), "x"));
+              net.evaluateDirty();
+              assert(net.facts().size() == 2);
+              assert(net.collectTerminalSubjects({both}).size() == 1);
+              assert(net.agenda().empty());
+
+              // Prefix consumption must retain persistent state but consume
+              // old transient events, while events asserted during a round
+              // remain for the next round.
+              auto oldEvent = std::make_shared<ReteFact>();
+              oldEvent->type = "old-event";
+              oldEvent->subject = &subject;
+              oldEvent->subjectId = subject.getIdentifier();
+              const std::string oldId = net.assertFact(oldEvent);
+              const std::size_t consumed = net.facts().size();
+              auto nextEvent = std::make_shared<ReteFact>();
+              nextEvent->type = "next-event";
+              nextEvent->subject = &subject;
+              nextEvent->subjectId = subject.getIdentifier();
+              const std::string nextId = net.assertFact(nextEvent);
+              net.retractFirst(consumed);
+              bool oldAlive = false, nextAlive = false, xAlive = false, yAlive = false;
+              for (const auto& f : net.facts()) {
+                  oldAlive |= f->id == oldId;
+                  nextAlive |= f->id == nextId;
+                  xAlive |= f->id == xid;
+                  yAlive |= f->id == yid;
+              }
+              assert(!oldAlive && nextAlive && xAlive && yAlive);
+
+              // A REAL retraction still removes the fact completely and tears
+              // down its beta consequence; the fast path is refresh-only.
+              assert(net.retractFact(xid));
+              assert(net.facts().size() == 2); // y state + next event
+              assert(net.collectTerminalSubjects({both}).empty());
+              assert(!net.markFactDirty(subject.getIdentifier(), "x"));
+
+              std::puts("dirty_state_refresh_test: ALL OK");
+              return 0;
+          }
+          CPP
+          cmake --build build --target event_interest_filter_test -j3
+
+      - name: Run exact dirty-refresh witness
+        run: |
+          ./build/event_interest_filter_test 2>&1 | tee dirty-refresh-witness.txt
+
+      - name: Profile candidate
         run: |
           set +e
-          : > semantic-witnesses.txt
-          overall=0
-          for test in \
-            prophetic_rete_test \
-            event_interest_filter_test \
-            rete_compile_test \
-            rete_relation_state_test \
-            edge_reactive_path_test \
-            reactive_departure_test \
-            vocabulary_index_test
-          do
-            echo "===== $test =====" | tee -a semantic-witnesses.txt
-            ./build/$test 2>&1 | tee -a semantic-witnesses.txt
-            code=${PIPESTATUS[0]}
-            echo "EXIT_CODE=$code" | tee -a semantic-witnesses.txt
-            echo | tee -a semantic-witnesses.txt
-            if [ "$code" -ne 0 ]; then overall=1; fi
-          done
-          echo "OVERALL_EXIT=$overall" | tee -a semantic-witnesses.txt
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
           exit 0
 
-      - name: Print witness summary
+      - name: Print A/B headlines
         run: |
-          grep -E '^=====|EXIT_CODE=|OVERALL_EXIT=' semantic-witnesses.txt || true
+          echo '=== BASELINE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' baseline.txt || true
+          echo '=== CANDIDATE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' candidate.txt || true
+          echo '=== WITNESS ==='
+          cat dirty-refresh-witness.txt
 
-      - name: Upload witness report
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
-          name: dirty-state-resident-witnesses-${{ github.run_id }}
-          path: semantic-witnesses.txt
+          name: dirty-state-resident-ab-${{ github.run_id }}
+          path: |
+            baseline.txt
+            candidate.txt
+            dirty-refresh-witness.txt
