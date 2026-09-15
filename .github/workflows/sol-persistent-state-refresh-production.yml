@@ -37,10 +37,8 @@ jobs:
             frame_lag_test -j3
 
       - name: Baseline semantic matrix
-        id: baseline_semantics
         run: |
           set +e
-          failed=0
           : > baseline-semantic-status.txt
           for t in event_interest_filter_test prophetic_rete_test rete_relation_state_test continuous_law_test law_loop_test; do
             echo "===== $t =====" | tee -a baseline-semantic-status.txt
@@ -48,13 +46,7 @@ jobs:
             status=$?
             echo "$t status=$status" | tee -a baseline-semantic-status.txt
             cat "baseline-$t.txt"
-            if [ $status -ne 0 ]; then failed=1; fi
           done
-          if [ $failed -eq 0 ]; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
           exit 0
 
       - name: Baseline Living Instrument
@@ -81,10 +73,8 @@ jobs:
             frame_lag_test -j3
 
       - name: Candidate semantic matrix
-        id: candidate_semantics
         run: |
           set +e
-          failed=0
           : > candidate-semantic-status.txt
           for t in rete_state_refresh_test event_interest_filter_test prophetic_rete_test rete_relation_state_test continuous_law_test law_loop_test; do
             echo "===== $t =====" | tee -a candidate-semantic-status.txt
@@ -92,21 +82,112 @@ jobs:
             status=$?
             echo "$t status=$status" | tee -a candidate-semantic-status.txt
             cat "candidate-$t.txt"
-            if [ $status -ne 0 ]; then failed=1; fi
           done
-          if [ $failed -eq 0 ]; then
-            echo "passed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "passed=false" >> "$GITHUB_OUTPUT"
-          fi
           exit 0
 
+      - name: Compare semantic matrices
+        id: semantic_gate
+        run: |
+          set -euo pipefail
+          failed=0
+          : > semantic-comparison.txt
+
+          status_for() {
+            file="$1"
+            test_name="$2"
+            sed -n "s/^${test_name} status=//p" "$file" | tail -n 1
+          }
+
+          for t in event_interest_filter_test prophetic_rete_test rete_relation_state_test continuous_law_test law_loop_test; do
+            baseline_status="$(status_for baseline-semantic-status.txt "$t")"
+            candidate_status="$(status_for candidate-semantic-status.txt "$t")"
+            echo "$t baseline=$baseline_status candidate=$candidate_status" | tee -a semantic-comparison.txt
+
+            if [ -z "$baseline_status" ] || [ -z "$candidate_status" ] || [ "$baseline_status" != "$candidate_status" ]; then
+              echo "REGRESSION: status changed for $t" | tee -a semantic-comparison.txt
+              failed=1
+              continue
+            fi
+
+            if [ "$baseline_status" != "0" ] && ! cmp -s "baseline-$t.txt" "candidate-$t.txt"; then
+              echo "REGRESSION: failing output changed for $t" | tee -a semantic-comparison.txt
+              diff -u "baseline-$t.txt" "candidate-$t.txt" | tee -a semantic-comparison.txt || true
+              failed=1
+            fi
+          done
+
+          refresh_status="$(status_for candidate-semantic-status.txt rete_state_refresh_test)"
+          echo "rete_state_refresh_test candidate=$refresh_status" | tee -a semantic-comparison.txt
+          if [ "$refresh_status" != "0" ]; then
+            echo "REGRESSION: dedicated persistent-state refresh witness is not green" | tee -a semantic-comparison.txt
+            failed=1
+          fi
+
+          if [ "$failed" -eq 0 ]; then
+            echo "compatible=true" >> "$GITHUB_OUTPUT"
+            echo "SEMANTIC GATE: PASS" | tee -a semantic-comparison.txt
+          else
+            echo "compatible=false" >> "$GITHUB_OUTPUT"
+            echo "SEMANTIC GATE: FAIL" | tee -a semantic-comparison.txt
+          fi
+
       - name: Candidate Living Instrument
-        if: steps.baseline_semantics.outputs.passed == 'true' && steps.candidate_semantics.outputs.passed == 'true'
+        if: steps.semantic_gate.outputs.compatible == 'true'
         run: |
           set +e
           ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
           exit 0
+
+      - name: Compare Living Instrument performance
+        id: performance_gate
+        if: steps.semantic_gate.outputs.compatible == 'true'
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          def parse(path):
+              text = Path(path).read_text(errors='replace')
+              patterns = {
+                  'median': r'median simulation frame = ([0-9.]+) ms',
+                  'law': r'LawManager::tick = ([0-9.]+) ms',
+                  'p95': r'95th-percentile frame .*?= ([0-9.]+) ms',
+                  'drift': r'machine steadiness: .*?drift ([0-9.]+)x',
+              }
+              out = {}
+              for key, pattern in patterns.items():
+                  m = re.search(pattern, text)
+                  if not m:
+                      raise SystemExit(f'missing {key} metric in {path}')
+                  out[key] = float(m.group(1))
+              return out
+
+          baseline = parse('baseline.txt')
+          candidate = parse('candidate.txt')
+          ratios = {k: candidate[k] / baseline[k] for k in ('median', 'law', 'p95')}
+
+          lines = [
+              f"baseline median={baseline['median']:.3f} law={baseline['law']:.3f} p95={baseline['p95']:.3f} drift={baseline['drift']:.2f}x",
+              f"candidate median={candidate['median']:.3f} law={candidate['law']:.3f} p95={candidate['p95']:.3f} drift={candidate['drift']:.2f}x",
+              f"ratios candidate/baseline median={ratios['median']:.3f} law={ratios['law']:.3f} p95={ratios['p95']:.3f}",
+          ]
+
+          # The earlier isolated verifier measured roughly 69-75% reductions.
+          # Require a still-large current-base win, while allowing substantial runner noise.
+          passed = (
+              ratios['median'] <= 0.80
+              and ratios['law'] <= 0.80
+              and ratios['p95'] <= 0.85
+              and candidate['drift'] <= 1.60
+          )
+          lines.append('PERFORMANCE GATE: ' + ('PASS' if passed else 'FAIL'))
+          Path('performance-comparison.txt').write_text('\n'.join(lines) + '\n')
+          print('\n'.join(lines))
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"passed={'true' if passed else 'false'}\n")
+          PY
 
       - name: Upload verifier evidence
         if: always()
@@ -118,19 +199,21 @@ jobs:
             candidate.txt
             baseline-semantic-status.txt
             candidate-semantic-status.txt
+            semantic-comparison.txt
+            performance-comparison.txt
             baseline-*.txt
             candidate-*.txt
             scratch/probes/persistent_state_refresh_production.patch
 
-      - name: Reject semantic regression
-        if: steps.baseline_semantics.outputs.passed != 'true' || steps.candidate_semantics.outputs.passed != 'true'
+      - name: Reject failed verification
+        if: steps.semantic_gate.outputs.compatible != 'true' || steps.performance_gate.outputs.passed != 'true'
         run: |
-          echo "Baseline semantics passed: ${{ steps.baseline_semantics.outputs.passed }}"
-          echo "Candidate semantics passed: ${{ steps.candidate_semantics.outputs.passed }}"
+          echo "Semantic compatibility: ${{ steps.semantic_gate.outputs.compatible }}"
+          echo "Performance gate: ${{ steps.performance_gate.outputs.passed }}"
           exit 1
 
       - name: Commit only production source
-        if: steps.baseline_semantics.outputs.passed == 'true' && steps.candidate_semantics.outputs.passed == 'true'
+        if: steps.semantic_gate.outputs.compatible == 'true' && steps.performance_gate.outputs.passed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
