@@ -1,0 +1,119 @@
+name: Living Studio event-interest latest A/B
+
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-latest-20260914
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure baseline
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target frame_lag_test -j3
+
+      - name: A - current callback
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-A.txt
+          echo "FRAME_LAG_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Install narrow callback and semantic witness
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          s = p.read_text()
+          old = '_rete.hearsType(type) || _rete.hasOpaqueBoundAlpha()'
+          new = '_rete.hearsType(type) || _rete.hasForeignBoundAlpha()'
+          if old not in s:
+              raise SystemExit('expected current callback not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          cat > tests/law/event_interest_filter_test.cpp <<'CPP'
+          #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+          #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+          #include "ConstructedBeing/Singular/Object/Object.hpp"
+          #include <cassert>
+          #include <cstdio>
+          #include <memory>
+          int main() {
+              Object author;
+              author.setObjectID("event-interest.author");
+              LawManager mgr;
+              mgr.connectToEventBus();
+              auto law = std::make_shared<Law>("listener", std::vector<Singular*>{&author});
+              mgr.add(law);
+              const auto authored = mgr.rete().internAuthoredAlpha(
+                  "event-interest-authored-key", "authored state predicate",
+                  [](const FactPtr& fact) { return fact && fact->isState; });
+              mgr.rete().bindLawToAlpha(law->getIdentifier(), authored);
+              assert(mgr.rete().hasOpaqueBoundAlpha());
+              assert(!mgr.rete().hasForeignBoundAlpha());
+              assert(!Universe::instance().anyoneHears("law-applied"));
+              const auto typed = mgr.rete().internTypeAlpha("law-applied");
+              mgr.rete().bindLawToAlpha(law->getIdentifier(), typed);
+              assert(Universe::instance().anyoneHears("law-applied"));
+              mgr.rete().unbindLawFromAlpha(law->getIdentifier(), typed);
+              assert(!Universe::instance().anyoneHears("law-applied"));
+              const auto foreign = mgr.rete().addAlphaNode(
+                  "foreign / unknowable", [](const FactPtr&) { return true; });
+              mgr.rete().bindLawToAlpha(law->getIdentifier(), foreign);
+              assert(mgr.rete().hasForeignBoundAlpha());
+              assert(Universe::instance().anyoneHears("some-unrelated-event"));
+              mgr.rete().unbindLawFromAlpha(law->getIdentifier(), foreign);
+              assert(!Universe::instance().anyoneHears("some-unrelated-event"));
+              std::puts("event_interest_filter_test: ALL OK");
+          }
+          CPP
+
+      - name: Reconfigure and build semantic gates
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target event_test event_interest_filter_test frame_lag_test -j3
+
+      - name: Hard semantic gates
+        run: |
+          ./build/event_test | tee event-test.txt
+          ./build/event_interest_filter_test | tee event-interest-test.txt
+
+      - name: B - foreign-only fail-open
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee living-B.txt
+          echo "FRAME_LAG_PATCHED_EXIT=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Print A/B headline
+        run: |
+          echo '=== A current ==='
+          grep -E 'LAG +median simulation frame|of that, LawManager::tick|95th-percentile frame|LawManager::tick grows' living-A.txt || true
+          echo '=== B narrow interest ==='
+          grep -E 'LAG +median simulation frame|of that, LawManager::tick|95th-percentile frame|LawManager::tick grows' living-B.txt || true
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-event-interest-latest-${{ github.run_id }}
+          path: |
+            living-A.txt
+            living-B.txt
+            event-test.txt
+            event-interest-test.txt
