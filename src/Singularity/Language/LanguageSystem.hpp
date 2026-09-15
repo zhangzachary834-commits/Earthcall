@@ -35,7 +35,7 @@ public:
     // Legacy/default spelling lookup. When multiple live Lexemes share the same
     // spelling, this preserves the existing last-bound behavior but reports the
     // ambiguity loudly so a human-facing channel cannot mistake spelling for
-    // durable identity. Use findById when the caller means one exact being.
+    // durable identity. Exact IDs (and @<exact-id>) select one exact being.
     std::shared_ptr<Lexeme> findBySymbol(const std::string& symbol) const;
 
     // Return every live Lexeme with this exact spelling. Human-facing channels
@@ -72,6 +72,11 @@ private:
     // Remove a Lexeme from every Zone's Formation before its owning
     // shared_ptr is released. Formations store raw pointers.
     void detachFromAllZones(Lexeme* lexeme);
+
+    // _symbolIndex is a convenience/default binding, not semantic identity.
+    // Whenever its selected Lexeme leaves, bind the spelling to another live
+    // duplicate if one remains instead of making the remaining beings unreachable.
+    void rebindSymbolIndex(const std::string& symbol);
 
     std::vector<std::shared_ptr<Lexeme>> _lexemes;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _symbolIndex;
