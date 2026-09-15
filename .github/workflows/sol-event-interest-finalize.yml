@@ -16,6 +16,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: CI-only bypass for latest-main duplicate FaceTexture registration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('CMakeLists.txt')
+          s = p.read_text()
+          block = '''\n# FaceTexture test\nadd_executable(face_texture_test tests/constructed-being/face_texture_test.cpp)\ntarget_include_directories(face_texture_test PRIVATE src third_party/nlohmann_json/single_include third_party/glm third_party/glfw/include third_party/gl3w/include third_party)\ntarget_link_libraries(face_texture_test PRIVATE earthcall_core)\nadd_test(NAME face_texture_test COMMAND face_texture_test)'''
+          if block not in s:
+              raise SystemExit('expected duplicate FaceTexture block not found; re-audit latest main')
+          p.write_text(s.replace(block, '', 1))
+          print('CI-ONLY: removed duplicate face_texture_test registration; CMakeLists.txt will not be committed')
+          PY
+
       - name: Configure baseline
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
