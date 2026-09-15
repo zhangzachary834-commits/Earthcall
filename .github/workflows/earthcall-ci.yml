@@ -73,6 +73,19 @@ jobs:
             perlin_zone_field_restore_test \
             synthesis_studio_zone_closure_test
 
+      - name: Run Terminal exact-reference smoke
+        shell: bash
+        run: |
+          set -euxo pipefail
+          printf 'lex weight @lexeme.christ 0.42\nlex get @lexeme.christ\nform add @lexeme.christ\nexit\n' \
+            | ./build/earthcall_terminal > terminal-smoke.log 2>&1
+          grep -F 'lexeme.christ' terminal-smoke.log
+          grep -F '0.42' terminal-smoke.log
+          if grep -F "Lexeme '@lexeme.christ' not found" terminal-smoke.log; then
+            cat terminal-smoke.log
+            exit 1
+          fi
+
       - name: Run focused regression witnesses
         shell: bash
         run: |
