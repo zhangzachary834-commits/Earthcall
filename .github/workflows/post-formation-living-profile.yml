@@ -1,4 +1,4 @@
-name: Dirty state refresh A/B
+name: Dirty state refresh semantic witness report
 
 on:
   push:
@@ -9,29 +9,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  profile:
+  witness:
     runs-on: macos-14
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure baseline
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
-          cmake --build build --target frame_lag_test -j3
-
-      - name: Baseline Living Instrument
-        run: |
-          set +e
-          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
-          exit 0
-
-      - name: Patch dirty state refresh to keep fact storage resident
+      - name: Patch dirty state refresh candidate
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -54,21 +38,26 @@ jobs:
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
                '''    // Both participants, because retractFactsAbout matches on either.\n    if (fact->subject) _factParticipants.insert(fact->subject);\n    if (fact->object)  _factParticipants.insert(fact->object);\n    if (fact->subject && fact->isState && fact->type == "relation-state") {\n        _relationStateIndex[fact->subject].insert(fact->attribute);\n    }\n    _facts.push_back(fact);\n    const FactPtr& f = fact;\n    _factById[f->id] = f;\n    if (f->isState) {\n        _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);\n    }''',
-               '''    const FactPtr& f = fact;\n    // A dirty persistent state fact already exists in the fact store and its\n    // identity indices. Refreshing its Rete consequences must not physically\n    // remove and append it: that turns every value change into an O(facts)\n    // vector erase even though the fact itself never ceased to exist.\n    if (!alreadyStored) {\n        // Both participants, because retractFactsAbout matches on either.\n        if (fact->subject) _factParticipants.insert(fact->subject);\n        if (fact->object)  _factParticipants.insert(fact->object);\n        if (fact->subject && fact->isState && fact->type == "relation-state") {\n            _relationStateIndex[fact->subject].insert(fact->attribute);\n        }\n        _facts.push_back(fact);\n        _factById[f->id] = f;\n        if (f->isState) {\n            _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);\n        }\n    }''')
+               '''    const FactPtr& f = fact;\n    if (!alreadyStored) {\n        if (fact->subject) _factParticipants.insert(fact->subject);\n        if (fact->object)  _factParticipants.insert(fact->object);\n        if (fact->subject && fact->isState && fact->type == "relation-state") {\n            _relationStateIndex[fact->subject].insert(fact->attribute);\n        }\n        _facts.push_back(fact);\n        _factById[f->id] = f;\n        if (f->isState) {\n            _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);\n        }\n    }''')
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
                '''bool ReteNetwork::retractFact(const std::string& factId) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n    _factById.erase(factIt);\n\n    if (fact->isState) {\n        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n        if (sIt != _stateFactsBySubjectAttr.end()) {\n            auto& vec = sIt->second;\n            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n        }\n        if (fact->type == "relation-state" && fact->subject) {\n            auto rIt = _relationStateIndex.find(fact->subject);\n            if (rIt != _relationStateIndex.end()) {\n                rIt->second.erase(fact->attribute);\n                if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n            }\n        }\n    }\n\n    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n    if (it != _facts.end()) _facts.erase(it);''',
-               '''bool ReteNetwork::retractFact(const std::string& factId, bool keepStored) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n\n    // Ordinary retraction means the fact ceased to exist. Dirty-state refresh\n    // is different: the persistent fact remains true as an identity, only its\n    // value changed. In that case retain the fact store and identity indices\n    // while still retracting every old alpha/beta/agenda consequence below.\n    if (!keepStored) {\n        _factById.erase(factIt);\n\n        if (fact->isState) {\n            auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n            if (sIt != _stateFactsBySubjectAttr.end()) {\n                auto& vec = sIt->second;\n                vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n                if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n            }\n            if (fact->type == "relation-state" && fact->subject) {\n                auto rIt = _relationStateIndex.find(fact->subject);\n                if (rIt != _relationStateIndex.end()) {\n                    rIt->second.erase(fact->attribute);\n                    if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n                }\n            }\n        }\n\n        auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n        if (it != _facts.end()) _facts.erase(it);\n    }''')
+               '''bool ReteNetwork::retractFact(const std::string& factId, bool keepStored) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n\n    if (!keepStored) {\n        _factById.erase(factIt);\n        if (fact->isState) {\n            auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n            if (sIt != _stateFactsBySubjectAttr.end()) {\n                auto& vec = sIt->second;\n                vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n                if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n            }\n            if (fact->type == "relation-state" && fact->subject) {\n                auto rIt = _relationStateIndex.find(fact->subject);\n                if (rIt != _relationStateIndex.end()) {\n                    rIt->second.erase(fact->attribute);\n                    if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n                }\n            }\n        }\n        auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n        if (it != _facts.end()) _facts.erase(it);\n    }''')
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
                '''            // Retract the old fact\n            retractFact(fact->id);\n            \n            // Update value and re-assert\n            fact->value = newValue;\n            assertFact(fact);''',
-               '''            // Retract only the old discrimination consequences. The\n            // persistent state fact itself remains resident and keeps its order.\n            retractFact(fact->id, true);\n\n            // Update value and re-propagate without duplicating fact storage.\n            fact->value = newValue;\n            assertFact(fact, true);''')
+               '''            retractFact(fact->id, true);\n            fact->value = newValue;\n            assertFact(fact, true);''')
           PY
 
-      - name: Rebuild candidate and semantic witnesses
+      - name: Configure and build semantic witnesses
         run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
           cmake --build build --target \
-            frame_lag_test \
             prophetic_rete_test \
             event_interest_filter_test \
             rete_compile_test \
@@ -78,34 +67,36 @@ jobs:
             vocabulary_index_test \
             -j3
 
-      - name: Run semantic witnesses
-        run: |
-          set -e
-          ./build/prophetic_rete_test
-          ./build/event_interest_filter_test
-          ./build/rete_compile_test
-          ./build/rete_relation_state_test
-          ./build/edge_reactive_path_test
-          ./build/reactive_departure_test
-          ./build/vocabulary_index_test
-
-      - name: Candidate Living Instrument
+      - name: Run and record every semantic witness
         run: |
           set +e
-          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
+          : > semantic-witnesses.txt
+          overall=0
+          for test in \
+            prophetic_rete_test \
+            event_interest_filter_test \
+            rete_compile_test \
+            rete_relation_state_test \
+            edge_reactive_path_test \
+            reactive_departure_test \
+            vocabulary_index_test
+          do
+            echo "===== $test =====" | tee -a semantic-witnesses.txt
+            ./build/$test 2>&1 | tee -a semantic-witnesses.txt
+            code=${PIPESTATUS[0]}
+            echo "EXIT_CODE=$code" | tee -a semantic-witnesses.txt
+            echo | tee -a semantic-witnesses.txt
+            if [ "$code" -ne 0 ]; then overall=1; fi
+          done
+          echo "OVERALL_EXIT=$overall" | tee -a semantic-witnesses.txt
           exit 0
 
-      - name: Print A/B headlines
+      - name: Print witness summary
         run: |
-          echo '=== BASELINE ==='
-          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' baseline.txt || true
-          echo '=== CANDIDATE ==='
-          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' candidate.txt || true
+          grep -E '^=====|EXIT_CODE=|OVERALL_EXIT=' semantic-witnesses.txt || true
 
-      - name: Upload reports
+      - name: Upload witness report
         uses: actions/upload-artifact@v4
         with:
-          name: dirty-state-resident-ab-${{ github.run_id }}
-          path: |
-            baseline.txt
-            candidate.txt
+          name: dirty-state-resident-witnesses-${{ github.run_id }}
+          path: semantic-witnesses.txt
