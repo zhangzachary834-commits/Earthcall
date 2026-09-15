@@ -1,0 +1,34 @@
+name: Apply Living resolver patch
+
+on:
+  push:
+    branches:
+      - sol/fix-living-studio-real-boot-refusal-20260915
+    paths:
+      - .github/workflows/apply-living-resolver-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply resolver patch
+        run: python3 scripts/patch_living_reference_scope.py
+
+      - name: Verify and commit
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git diff --check
+          git config user.name "GPT-5.6 Sol"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/ZonesOfEarth/ZoneManager.cpp
+          git commit -m "Resolve Zone Law references within target closure first"
+          git push origin HEAD:sol/fix-living-studio-real-boot-refusal-20260915
