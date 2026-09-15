@@ -1,0 +1,89 @@
+name: Post-Formation retractFact breakdown
+
+on:
+  push:
+    branches:
+      - sol/post-formation-rete-living-profile-20260915
+    paths:
+      - .github/workflows/post-formation-retract-breakdown.yml
+  workflow_dispatch:
+
+jobs:
+  profile:
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instrument retractFact internals during evaluateDirty
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected one match, found {n}: {old!r}')
+              p.write_text(s.replace(old, new, 1))
+
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
+               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    void evaluateDirty();\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''',
+               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    struct DirtyTiming {\n        float totalMs{0.0f};\n        float retractMs{0.0f};\n        float retractBookkeepingMs{0.0f};\n        float retractFactVectorMs{0.0f};\n        float retractAlphaMs{0.0f};\n        float retractBetaMs{0.0f};\n        float retractAgendaMs{0.0f};\n        std::size_t changed{0};\n        std::size_t factCount{0};\n    };\n    void evaluateDirty();\n    const DirtyTiming& lastDirtyTiming() const { return _lastDirtyTiming; }\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''')
+
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
+               '''    std::vector<FactPtr> _dirtyFacts;\n    std::vector<AlphaNode> _alphaNodes;''',
+               '''    std::vector<FactPtr> _dirtyFacts;\n    DirtyTiming _lastDirtyTiming{};\n    bool _profilingDirtyRetract{false};\n    std::vector<AlphaNode> _alphaNodes;''')
+
+          old_retract = '''bool ReteNetwork::retractFact(const std::string& factId) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n    _factById.erase(factIt);\n\n    if (fact->isState) {\n        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n        if (sIt != _stateFactsBySubjectAttr.end()) {\n            auto& vec = sIt->second;\n            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n        }\n        if (fact->type == "relation-state" && fact->subject) {\n            auto rIt = _relationStateIndex.find(fact->subject);\n            if (rIt != _relationStateIndex.end()) {\n                rIt->second.erase(fact->attribute);\n                if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n            }\n        }\n    }\n\n    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n    if (it != _facts.end()) _facts.erase(it);\n\n    auto aIt = _factAlphaNodes.find(factId);\n    if (aIt != _factAlphaNodes.end()) {\n        for (std::size_t alphaId : aIt->second) {\n            AlphaNode* alpha = findAlpha(alphaId);\n            if (alpha) {\n                auto mIt = std::find_if(alpha->memory.begin(), alpha->memory.end(),\n                                        [&](const FactPtr& f) { return f->id == factId; });\n                if (mIt != alpha->memory.end()) alpha->memory.erase(mIt);\n            }\n        }\n        _factAlphaNodes.erase(aIt);\n    }\n\n    auto bIt = _factBetaNodes.find(factId);\n    if (bIt != _factBetaNodes.end()) {\n        for (std::size_t betaId : bIt->second) {\n            auto bNodeIt = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });\n            if (bNodeIt != _betaNodes.end()) {\n                bNodeIt->memory.erase(std::remove_if(bNodeIt->memory.begin(), bNodeIt->memory.end(),\n                                                    [&](const ReteToken& token) {\n                                                        for (const auto& f : token.facts) if (f->id == factId) return true;\n                                                        return false;\n                                                    }),\n                                      bNodeIt->memory.end());\n            }\n        }\n        _factBetaNodes.erase(bIt);\n    }\n\n    if (_agendaFactIds.count(factId)) {\n        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),\n                                     [&](const ReteActivation& act) {\n                                         for (const auto& f : act.token.facts) if (f->id == factId) return true;\n                                         return false;\n                                     }),\n                      _agenda.end());\n        _agendaFactIds.erase(factId);\n    }\n    return true;\n}\n'''
+
+          new_retract = '''bool ReteNetwork::retractFact(const std::string& factId) {\n    const double tAll0 = glfwGetTime();\n    const double tBook0 = tAll0;\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n    _factById.erase(factIt);\n\n    if (fact->isState) {\n        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n        if (sIt != _stateFactsBySubjectAttr.end()) {\n            auto& vec = sIt->second;\n            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n        }\n        if (fact->type == "relation-state" && fact->subject) {\n            auto rIt = _relationStateIndex.find(fact->subject);\n            if (rIt != _relationStateIndex.end()) {\n                rIt->second.erase(fact->attribute);\n                if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n            }\n        }\n    }\n    const double tBook1 = glfwGetTime();\n\n    const double tVec0 = tBook1;\n    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n    if (it != _facts.end()) _facts.erase(it);\n    const double tVec1 = glfwGetTime();\n\n    const double tAlpha0 = tVec1;\n    auto aIt = _factAlphaNodes.find(factId);\n    if (aIt != _factAlphaNodes.end()) {\n        for (std::size_t alphaId : aIt->second) {\n            AlphaNode* alpha = findAlpha(alphaId);\n            if (alpha) {\n                auto mIt = std::find_if(alpha->memory.begin(), alpha->memory.end(),\n                                        [&](const FactPtr& f) { return f->id == factId; });\n                if (mIt != alpha->memory.end()) alpha->memory.erase(mIt);\n            }\n        }\n        _factAlphaNodes.erase(aIt);\n    }\n    const double tAlpha1 = glfwGetTime();\n\n    const double tBeta0 = tAlpha1;\n    auto bIt = _factBetaNodes.find(factId);\n    if (bIt != _factBetaNodes.end()) {\n        for (std::size_t betaId : bIt->second) {\n            auto bNodeIt = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });\n            if (bNodeIt != _betaNodes.end()) {\n                bNodeIt->memory.erase(std::remove_if(bNodeIt->memory.begin(), bNodeIt->memory.end(),\n                                                    [&](const ReteToken& token) {\n                                                        for (const auto& f : token.facts) if (f->id == factId) return true;\n                                                        return false;\n                                                    }),\n                                      bNodeIt->memory.end());\n            }\n        }\n        _factBetaNodes.erase(bIt);\n    }\n    const double tBeta1 = glfwGetTime();\n\n    const double tAgenda0 = tBeta1;\n    if (_agendaFactIds.count(factId)) {\n        _agenda.erase(std::remove_if(_agenda.begin(), _agenda.end(),\n                                     [&](const ReteActivation& act) {\n                                         for (const auto& f : act.token.facts) if (f->id == factId) return true;\n                                         return false;\n                                     }),\n                      _agenda.end());\n        _agendaFactIds.erase(factId);\n    }\n    const double tAgenda1 = glfwGetTime();\n    if (_profilingDirtyRetract) {\n        _lastDirtyTiming.retractBookkeepingMs += static_cast<float>((tBook1 - tBook0) * 1000.0);\n        _lastDirtyTiming.retractFactVectorMs += static_cast<float>((tVec1 - tVec0) * 1000.0);\n        _lastDirtyTiming.retractAlphaMs += static_cast<float>((tAlpha1 - tAlpha0) * 1000.0);\n        _lastDirtyTiming.retractBetaMs += static_cast<float>((tBeta1 - tBeta0) * 1000.0);\n        _lastDirtyTiming.retractAgendaMs += static_cast<float>((tAgenda1 - tAgenda0) * 1000.0);\n        _lastDirtyTiming.retractMs += static_cast<float>((tAgenda1 - tAll0) * 1000.0);\n    }\n    return true;\n}\n'''
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp', old_retract, new_retract)
+
+          old_eval = '''void ReteNetwork::evaluateDirty() {\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    \n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n        \n        if (!fact->subject) continue;\n        \n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (prop) {\n            nlohmann::json newValue = propertyValueToJson(prop->value());\n            if (fact->value == newValue) continue; // no change\n            \n            // Retract the old fact\n            retractFact(fact->id);\n            \n            // Update value and re-assert\n            fact->value = newValue;\n            assertFact(fact);\n        }\n    }\n}\n'''
+          new_eval = '''void ReteNetwork::evaluateDirty() {\n    _lastDirtyTiming = {};\n    _lastDirtyTiming.factCount = _facts.size();\n    const double tAll0 = glfwGetTime();\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    _profilingDirtyRetract = true;\n    \n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n        if (!fact->subject) continue;\n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (prop) {\n            nlohmann::json newValue = propertyValueToJson(prop->value());\n            if (fact->value == newValue) continue;\n            ++_lastDirtyTiming.changed;\n            retractFact(fact->id);\n            fact->value = newValue;\n            assertFact(fact);\n        }\n    }\n    _profilingDirtyRetract = false;\n    _lastDirtyTiming.totalMs = static_cast<float>((glfwGetTime() - tAll0) * 1000.0);\n}\n'''
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp', old_eval, new_eval)
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    double physicsMs = 0.0;\n};''',
+               '''    double physicsMs = 0.0;\n    double retractTotalMs = 0.0;\n    double retractBookMs = 0.0;\n    double retractVectorMs = 0.0;\n    double retractAlphaMs = 0.0;\n    double retractBetaMs = 0.0;\n    double retractAgendaMs = 0.0;\n    double retractChanged = 0.0;\n    double reteFactCount = 0.0;\n};''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    r.firings = lawManager.tick().size();\n    const auto t3 = Clock::now();''',
+               '''    r.firings = lawManager.tick().size();\n    const auto dirtyTiming = lawManager.rete().lastDirtyTiming();\n    const auto t3 = Clock::now();''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    r.physicsMs    = zoneTiming.physicsMs;\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''',
+               '''    r.physicsMs    = zoneTiming.physicsMs;\n    r.retractTotalMs  = dirtyTiming.retractMs;\n    r.retractBookMs   = dirtyTiming.retractBookkeepingMs;\n    r.retractVectorMs = dirtyTiming.retractFactVectorMs;\n    r.retractAlphaMs  = dirtyTiming.retractAlphaMs;\n    r.retractBetaMs   = dirtyTiming.retractBetaMs;\n    r.retractAgendaMs = dirtyTiming.retractAgendaMs;\n    r.retractChanged  = static_cast<double>(dirtyTiming.changed);\n    r.reteFactCount   = static_cast<double>(dirtyTiming.factCount);\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));''',
+               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));\n    std::printf("  RETRACT-INTERNAL medians: total %.3f ms | bookkeeping %.3f | _facts-vector %.3f | alpha %.3f | beta %.3f | agenda %.3f | changed %.0f | facts %.0f\\n",\n                samples.medianOf(&FrameResult::retractTotalMs),\n                samples.medianOf(&FrameResult::retractBookMs),\n                samples.medianOf(&FrameResult::retractVectorMs),\n                samples.medianOf(&FrameResult::retractAlphaMs),\n                samples.medianOf(&FrameResult::retractBetaMs),\n                samples.medianOf(&FrameResult::retractAgendaMs),\n                samples.medianOf(&FrameResult::retractChanged),\n                samples.medianOf(&FrameResult::reteFactCount));''')
+          PY
+
+      - name: Configure and build diagnostic benchmark
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target frame_lag_test -j3
+
+      - name: Profile retractFact internals
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee retract-breakdown.txt
+          exit 0
+
+      - name: Print diagnostic headline
+        run: |
+          grep -E 'Tick [0-9]+:|median simulation frame|of that, LawManager::tick|RETRACT-INTERNAL|machine steadiness' retract-breakdown.txt || true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-formation-retract-breakdown-${{ github.run_id }}
+          path: retract-breakdown.txt
