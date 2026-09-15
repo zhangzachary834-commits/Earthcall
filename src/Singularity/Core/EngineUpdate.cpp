@@ -125,9 +125,13 @@ namespace Core {
             return std::chrono::duration<float, std::milli>(end - start).count();
         };
 
-        // Update input handlers
+        // Update input handlers. Snapshot the shell boundary before processing
+        // it: a click on Resume may close the menu during processInput(), but
+        // that same physical click still belongs to the menu for this frame and
+        // must never fall through to a creation tool or authored object.
         auto tInput0 = clock::now();
-        if (_mainMenu.isOpen()) {
+        const bool menuOwnedThisFrame = _mainMenu.isOpen();
+        if (menuOwnedThisFrame) {
             _mainMenu.processInput(_window);
         }
         
@@ -156,9 +160,13 @@ namespace Core {
         // Creation first mover — sense placement, honour L, push the
         // console's live selection onto the channel, actuate the armed
         // tool. Used to run inside render3DConsole / DeveloperToolsWindow,
-        // so collapsing the console froze every 3D tool.
+        // so collapsing the console froze every 3D tool. The main menu is a
+        // stronger shell boundary, though: while it owns this frame the Person
+        // is choosing a shell command, not authoring the world behind it.
         auto tCreate0 = clock::now();
-        Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+        if (!menuOwnedThisFrame) {
+            Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+        }
         auto tCreate1 = clock::now();
         g_frameTimings.creation_ms = getMs(tCreate0, tCreate1);
 
@@ -168,12 +176,13 @@ namespace Core {
         // while a window is on screen is a channel that freezes when the
         // window collapses.
         //
-        // WantCaptureMouse is the foreign-surface veto: while an ImGui panel
-        // owns the pointer, the world must see no pointer at all, or the
-        // Person clicks a menu and a button behind it fires too.
+        // WantCaptureMouse is the foreign-surface veto. The custom main menu
+        // is not an ImGui window, so it must explicitly join that veto or a
+        // menu click/wheel can also actuate the authored world behind it.
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
-            interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
+            const bool shellCapturedPointer = ImGui::GetIO().WantCaptureMouse || menuOwnedThisFrame;
+            interaction->step(_window, *_camera, mgr, shellCapturedPointer);
             static int frameCount = 0;
             frameCount++;
         }
