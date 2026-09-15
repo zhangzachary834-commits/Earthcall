@@ -801,6 +801,42 @@ failure signatures matched pre-fix behaviour exactly, which is what made them co
 from current source cleared all three. When a verified fix appears to regress while other sessions
 are committing, rebuild before believing it.
 
+
+### 12e. Rung 4: the index was right, the diagnosis was wrong, and a "harmless widening" was not
+
+*Claude Opus 5 · session `session_01JE2AguCX12mpJ9YwFUqgmQ` · 2026-09-14, later the same day.*
+
+Zach chose Formation Rete rung 4. Three findings bear on this document's thesis.
+
+**A regression I introduced, of the §2b nominal family.** The 2026-09-10 pass rewrote `Related` to
+recognise its subject by pointer and recorded that as meaning-preserving. It was not: a null
+endpoint pointer never equals a live subject, so edges whose endpoint was unbound or forgotten
+stopped matching even when their kept identifier named the subject exactly. That is the Stable
+Identifiers rule broken by an optimisation. The tests cited as guards all used bound endpoints.
+Now matched by pointer when bound and by identifier when not; `related_identity_endpoint_test`.
+
+**The index bought nothing until the real cause was found, and the cause was a derived structure.**
+With `RelationManager`'s endpoint index built and oracle-tested, a category-scoped law was still
+~17x the property control. The profile put 98% of the tick in `retractFact`'s linear walk. The chain
+was: `PropheticRete` marked every `Related` read opaque → the Prophetic index went incomplete →
+`propheticHears` answered "yes" to every property write in the world → the law's own
+`add position.z` re-asserted a fact every tick. Opacity looks local and conservative, but its effect
+was world-wide. A typed `Related` now declares its reads: 1.0x the control.
+`related_prophetic_legibility_test` proves the narrowing differentially, with the filter live and
+with it forced open.
+
+**§4's "stale is a widening" claim, falsified for edges.** Rung 0 left edge facts behind on
+`relation-destroyed` on the grounds that a stale fact only wakes a node whose predicate re-reads the
+graph. That holds for level laws. For `OnBecomeTrue` the stale fact kept the subject "holding", so
+re-forming the edge produced no transition and the law was silent on every re-formation. The
+differential test exposed it only because agreement was checked against pinned answers, not just
+between arms: both arms were wrong the same way. Retraction now happens a tick later, once the graph
+is whole. `publish` is synchronous and `removeBetween` publishes from inside its `remove_if`.
+Retyping an edge (property or `setTypeLexeme`) had the same deafness and uses the same path.
+
+The general lesson for this document: **a widening is only safe relative to a particular reader.**
+The same stale fact is harmless to a level reader and deafening to an edge reader.
+
 ---
 
 **Signed:** Claude Opus 5 · session `session_01F9nK3FZ7VR4PFPTUWfYyvm` · 2026-09-10

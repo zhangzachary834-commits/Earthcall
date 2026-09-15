@@ -3342,6 +3342,12 @@
           "brushRadius": {
             "t": "double",
             "v": 1.0
+          },
+          "authored.full-canvas": {
+            "t": "vec3",
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
           }
         },
         "authoritativeAxis": [
@@ -4531,12 +4537,6 @@
       },
       {
         "authoredProperties": {
-          "swatchColor": {
-            "t": "vec3",
-            "x": 0.1,
-            "y": 0.7,
-            "z": 0.25
-          },
           "swatchBrushRadius": {
             "t": "double",
             "v": 1.0
@@ -6526,7 +6526,7 @@
         "authoredProperties": {
           "displayName": {
             "t": "string",
-            "v": "* Swap: Quick black"
+            "v": "* Ink: Quick black"
           },
           "label.size2D": {
             "t": "double",
@@ -6534,7 +6534,7 @@
           },
           "label2D": {
             "t": "string",
-            "v": "* Swap: Quick black"
+            "v": "* Ink: Quick black"
           }
         },
         "authoritativeAxis": [
@@ -8435,11 +8435,9 @@
       },
       {
         "authoredProperties": {
-          "swatchColor": {
-            "t": "vec3",
-            "x": 0.1,
-            "y": 0.7,
-            "z": 0.25
+          "fillCanvasTrigger": {
+            "t": "double",
+            "v": 1.0
           },
           "displayName": {
             "t": "string",
@@ -8540,7 +8538,7 @@
       },
       {
         "authoredProperties": {
-          "swatchColor": {
+          "clearCanvasColor": {
             "t": "vec3",
             "x": 1.0,
             "y": 1.0,
@@ -9273,12 +9271,6 @@
       },
       {
         "authoredProperties": {
-          "swatchColor": {
-            "t": "vec3",
-            "x": 0.18,
-            "y": 0.38,
-            "z": 0.92
-          },
           "swatchBrushRadius": {
             "t": "double",
             "v": 2.0
@@ -9390,7 +9382,7 @@
           },
           "displayName": {
             "t": "string",
-            "v": "SWAP [BLK]"
+            "v": "INK [BLK]"
           },
           "label.size2D": {
             "t": "double",

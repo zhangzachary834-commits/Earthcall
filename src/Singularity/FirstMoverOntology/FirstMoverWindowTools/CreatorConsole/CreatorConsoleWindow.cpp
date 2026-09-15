@@ -1,6 +1,9 @@
 #include "CreatorConsoleWindow.hpp"
 #include <imgui.h>
 #include "Singularity/Core/Engine.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
 
 // Include the individual console tabs
 namespace Rendering {
@@ -20,6 +23,25 @@ namespace Rendering {
         if (!window && engine) window = engine->window();
 
         auto& state = getCreatorConsoleState();
+
+        // 1. Top Status Banner (Active Zone & Target Object)
+        {
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.09f, 0.11f, 0.85f));
+            if (ImGui::BeginChild("##CreatorConsoleHeaderBar", ImVec2(0, 24.0f), false, ImGuiWindowFlags_NoScrollbar)) {
+                ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f), "Zone: %s", zoneMgr.active().name().c_str());
+                ImGui::SameLine();
+                ImGui::TextDisabled("|");
+                ImGui::SameLine();
+                Object* liveSel = selected ? selected : state.selectedObject3D;
+                if (liveSel) {
+                    ImGui::TextColored(ImVec4(0.5f, 0.9f, 0.5f, 1.0f), "Target: %s", liveSel->getIdentifier().c_str());
+                } else {
+                    ImGui::TextDisabled("Target: (None)");
+                }
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleColor();
+        }
 
         // Track external changes to state.currentSection (hotkeys, menus, initial boot state)
         static CreatorSection s_lastActiveSection = state.currentSection;
@@ -107,7 +129,7 @@ namespace Rendering {
         if (!engine) engine = &Core::Engine::instance();
         if (!window && engine) window = engine->window();
 
-        ImGui::SetNextWindowSize(ImVec2(400, 600), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(420, 640), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
             renderCreatorConsoleContent(player, selected, zoneMgr, window, engine);
         }
@@ -115,10 +137,30 @@ namespace Rendering {
     }
 
     void renderCreatorConsole3DPreviews(Person* player, Object* selected) {
-        // Handle rendering of 3D previews
+        (void)player;
+        (void)selected;
         auto& state = getCreatorConsoleState();
         if (state.currentSection == CreatorSection::Create3D && state.current3DMode == Mode3D::BrushCreate) {
-            // Render primitive preview...
+            // Renders in-console visual parameter badge
+            const char* kindStr = "Cube";
+            switch (state.polyhedron.shapeKind) {
+                case ObjectTypes::ShapeKind::Cube: kindStr = "Cube"; break;
+                case ObjectTypes::ShapeKind::Polyhedron: kindStr = "Polyhedron"; break;
+                case ObjectTypes::ShapeKind::Sphere: kindStr = "Sphere"; break;
+                case ObjectTypes::ShapeKind::Ellipsoid: kindStr = "Ellipsoid"; break;
+                case ObjectTypes::ShapeKind::Ovoid: kindStr = "Ovoid"; break;
+                case ObjectTypes::ShapeKind::Paraboloid: kindStr = "Paraboloid"; break;
+                case ObjectTypes::ShapeKind::Torus: kindStr = "Torus"; break;
+                case ObjectTypes::ShapeKind::Cylinder: kindStr = "Cylinder"; break;
+                case ObjectTypes::ShapeKind::Cone: kindStr = "Cone"; break;
+                case ObjectTypes::ShapeKind::RoundedBox: kindStr = "Rounded Box"; break;
+                default: break;
+            }
+
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Preview: [%s]", kindStr);
+            ImGui::SameLine();
+            ImGui::ColorButton("##previewColor", ImVec4(state.createColor.x, state.createColor.y, state.createColor.z, 1.0f),
+                               ImGuiColorEditFlags_NoTooltip, ImVec2(16, 16));
         }
     }
 

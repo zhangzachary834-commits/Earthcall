@@ -10,7 +10,7 @@ A **framework name is not a directory name.** `Integration/` stays
 
 | Folder | Holds |
 |---|---|
-| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys |
+| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys, primary and sub-Relations |
 | [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law, Prophetic Rete |
 | [`events/`](events/) | Event bus vs handler, hover / person / relation / physics & collision events ([`events/PHYSICS_AND_COLLISION.md`](events/PHYSICS_AND_COLLISION.md)) |
 | [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication, and the [`Geometry Execution Substrate Manifesto`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md) separating authored meaning from geometry IR/backend execution |

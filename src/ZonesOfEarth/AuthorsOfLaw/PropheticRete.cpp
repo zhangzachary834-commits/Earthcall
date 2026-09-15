@@ -561,9 +561,40 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
             out.opaqueReads = true;
             note("opaque read: Overlaps consults the collision test");
             break;
+        // A TYPED Related is legible, and must be: marking it opaque made the
+        // whole index incomplete, which turned LawManager::propheticHears off
+        // for EVERY property write in the world. One category-scoped law
+        // ("every instance-of category.target") then sent each unrelated write
+        // (position.z) through markFactDirty -> evaluateDirty -> retractFact,
+        // a linear walk of every fact. Measured 2026-09-14 at 400 beings: 6.5
+        // ms/tick against 0.63 for the same law reading a property — and the
+        // relation endpoint index (rung 4) could not touch it, because the
+        // cost was never in walking relations.
+        //
+        // What it hears, exactly (FORMATION_RETE.md §8 rung 4):
+        //   - graph changes arrive as relation-state facts, asserted by the
+        //     relation-formed handler and the back-seed — never through the
+        //     property-change callback this filter gates;
+        //   - its Rete node (ConditionNode::compileToRete) wakes on a state
+        //     fact only when the fact's attribute ROOT is the relation type,
+        //     so a write to "<type>" or "<type>.<x>" is heard, by root;
+        //   - the Relation's own fields the predicate reads, by name.
+        // The subject's identifier is not listed, following IsKind/Identity
+        // below: it names the being, and no write to it wakes this node.
+        //
+        // An UNTYPED Related has no attribute filter — its node re-runs on
+        // every state fact — so it stays opaque. Guarded by
+        // tests/law/related_prophetic_legibility_test.cpp.
         case ConditionNode::Kind::Related:
-            out.opaqueReads = true;
-            note("opaque read: Related consults the relation graph");
+            if (node.relationType.empty()) {
+                out.opaqueReads = true;
+                note("opaque read: an untyped Related wakes on every state fact");
+                break;
+            }
+            out.readRoots.insert(node.relationType);
+            for (const char* field : {"type", "directed", "entityA", "entityB"}) {
+                out.readNames.insert(field);
+            }
             break;
 
         // A kind this build does not know. It never holds — but it also never
@@ -694,6 +725,7 @@ void collectSelfImpossible(const ConditionNode& node, const std::string& lawId,
 void Index::clear() {
     _facts.clear();
     _readNames.clear();
+    _readRoots.clear();
     _writeRanges.clear();
     _unreachable.clear();
     _complete = true;
@@ -710,6 +742,7 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
         if (facts.opaqueReads) _complete = false;
         if (facts.opaqueWrites) anyOpaqueWrite = true;
         _readNames.insert(facts.readNames.begin(), facts.readNames.end());
+        _readRoots.insert(facts.readRoots.begin(), facts.readRoots.end());
 
         // Pass 1: the union of everything any law can put at each path.
         for (const auto& write : facts.writes) {
@@ -760,7 +793,11 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
 
 bool Index::anyConditionReads(const std::string& propertyName) const {
     if (!_complete) return true;
-    return _readNames.count(propertyName) != 0;
+    if (_readNames.count(propertyName) != 0) return true;
+    if (_readRoots.empty()) return false;
+    const std::size_t dot = propertyName.find('.');
+    return _readRoots.count(dot == std::string::npos ? propertyName
+                                                     : propertyName.substr(0, dot)) != 0;
 }
 
 Range Index::writeRangeOf(const std::string& path) const {

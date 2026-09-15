@@ -91,6 +91,18 @@ struct BootedEngineHarness {
                 if (rel) relations.push_back(rel.get());
             }
         });
+        // The endpoint index, exactly as Engine::initLogic installs it — after
+        // setRelationProvider, which clears it. Without this every app test
+        // evaluated `Related` by scanning while the app indexes, so the path a
+        // Person runs was not the path tested (found 2026-09-15, rung 5).
+        Universe::instance().setRelationsInvolvingProvider(
+            [this](const Singular& being, std::vector<Relation*>& out) {
+                out.clear();
+                if (zones.zones().empty()) return;
+                auto active = zones.zones()[zones.currentIndex()];
+                if (!active) return;
+                active->formation().relations().relationsInvolving(being, out);
+            });
 
         Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
             if (zones.zones().empty()) return;

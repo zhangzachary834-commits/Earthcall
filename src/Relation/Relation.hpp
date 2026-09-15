@@ -55,6 +55,8 @@ class Relation : public Singular {
 public:
     struct AttachmentData {
         bool enabled = false;
+
+        // WHAT IS THISSSSSSS?!?!?!??! - Zach
         glm::mat4 localOffset = glm::mat4(1.0f); // child relative to parent
         glm::vec3 parentAnchor = glm::vec3(0.0f);
         glm::vec3 childAnchor = glm::vec3(0.0f);
@@ -130,12 +132,44 @@ public:
     // ---------------------------------------------------------------------
     // Endpoints — the beings this relation holds, not their names.
     // ---------------------------------------------------------------------
+    // Every Endpoint counts the pointer it holds in one process-wide register,
+    // so Relation::mayBeEndpoint can answer "no relation anywhere holds this
+    // being" in O(1). RelationManager::forgetBeingEverywhere runs on EVERY
+    // Singular destructor — every transient ECA::Event is a Moment is a
+    // Singular — and used to walk every relation in every live manager (each
+    // Law's formations own one). Measured 2026-09-15 in the chess world: 39.5 µs
+    // of a 42 µs Moment lifetime, 92% of a Scope::Everyone event sweep's
+    // per-candidate cost. Same shape as ReteNetwork::_factParticipants.
+    //
+    // A SUPERSET on purpose: it counts endpoints of relations no manager owns
+    // too, so it can only answer "maybe" too often, never "no" wrongly. The
+    // counting lives in these special members and bind/forget, which are the
+    // only writes to `ptr` — keep it that way (Jules: if you add a path that
+    // sets `ptr`, go through bind()).
     struct Endpoint {
         Singular* ptr = nullptr;
         std::string savedId;
         mutable std::string cachedId;
 
+        Endpoint() = default;
+        Endpoint(const Endpoint& o) : ptr(o.ptr), savedId(o.savedId), cachedId(o.cachedId) {
+            retainEndpoint(ptr);
+        }
+        Endpoint& operator=(const Endpoint& o) {
+            if (this != &o) {
+                retainEndpoint(o.ptr);
+                releaseEndpoint(ptr);
+                ptr = o.ptr;
+                savedId = o.savedId;
+                cachedId = o.cachedId;
+            }
+            return *this;
+        }
+        ~Endpoint() { releaseEndpoint(ptr); }
+
         void bind(Singular* s) {
+            retainEndpoint(s);
+            releaseEndpoint(ptr);
             ptr = s;
             if (ptr) savedId.clear();
         }
@@ -143,6 +177,7 @@ public:
         void forget(const Singular* s) {
             if (ptr && ptr == s) {
                 if (savedId.empty()) savedId = cachedId;
+                releaseEndpoint(ptr);
                 ptr = nullptr;
             }
         }
@@ -157,6 +192,12 @@ public:
 
         bool hasValue() const { return ptr != nullptr; }
     };
+
+    // False only when no Endpoint of any live Relation holds this pointer.
+    // Pointer-compared; never dereferenced (callers may be mid-destruction).
+    static bool mayBeEndpoint(const Singular* being);
+    static void retainEndpoint(const Singular* being);
+    static void releaseEndpoint(const Singular* being);
 
     Singular* a() const { return _endpointA.ptr; }
     Singular* b() const { return _endpointB.ptr; }

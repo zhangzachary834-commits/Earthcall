@@ -4,6 +4,7 @@
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <imgui.h>
+#include <algorithm>
 
 namespace Rendering {
 
@@ -56,6 +57,20 @@ namespace Rendering {
 
     void sameLineEvery(int index, int perRow) {
         if ((index + 1) % perRow != 0) {
+            ImGui::SameLine();
+        }
+    }
+
+    float responsiveItemWidth(int columns, float minWidth) {
+        if (columns <= 1) return ImGui::GetContentRegionAvail().x;
+        const float avail = ImGui::GetContentRegionAvail().x;
+        const float spacing = ImGui::GetStyle().ItemSpacing.x;
+        float w = (avail - static_cast<float>(columns - 1) * spacing) / static_cast<float>(columns);
+        return (w > minWidth) ? w : minWidth;
+    }
+
+    void responsiveSameLine(int index, int columns) {
+        if (columns > 1 && ((index + 1) % columns != 0)) {
             ImGui::SameLine();
         }
     }

@@ -17,6 +17,15 @@
 // A law scoped to one category therefore pays for every categorised being in
 // the world. This measures that: the population grows, the target category
 // does not.
+//
+// WHAT IT FOUND (2026-09-14, Claude Opus 5). At 400 beings the Related arm cost
+// ~17x the control, and the endpoint index built for rung 4 changed nothing —
+// the cost was never in walking relations. PropheticRete marked every Related
+// read opaque, which switched the write filter off for the whole world, so the
+// law's own `add position.z` re-asserted a fact through a linear walk of ~49k
+// facts every tick. With a typed Related made legible (PropheticRete.cpp;
+// behaviour proved by related_prophetic_legibility_test): index 1.0x the
+// control, scan 1.2x. The last assert below guards that gap from reopening.
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -47,7 +56,7 @@ double fittedExponent(const std::vector<double>& ns, const std::vector<double>& 
 }
 
 // `n` beings, ALL categorised, but only `inTarget` in the category the law names.
-double costPerTick(int n, int inTarget, int ticks, bool viaRelation) {
+double costPerTick(int n, int inTarget, int ticks, bool viaRelation, bool indexed = false) {
     std::vector<std::unique_ptr<Object>> owned;
     std::vector<Singular*> population;
     auto target = std::make_unique<Object>();  target->setObjectID("category.target");
@@ -74,6 +83,15 @@ double costPerTick(int n, int inTarget, int ticks, bool viaRelation) {
         for (Singular* s : population) b.push_back(s); });
     Universe::instance().setRelationProvider([&](std::vector<Relation*>& out){
         for (const auto& r : graph.getAll()) if (r) out.push_back(r.get()); });
+    // The INDEXED arm installs the endpoint index exactly as EngineInit does —
+    // after setRelationProvider, which clears it. Without this line the Related
+    // condition scans every relation, which is the pre-rung-4 engine.
+    if (indexed) {
+        Universe::instance().setRelationsInvolvingProvider(
+            [&](const Singular& being, std::vector<Relation*>& out) {
+                graph.relationsInvolving(being, out);
+            });
+    }
     Universe::instance().setClock(100.0, 0.1);
 
     LawManager mgr;
@@ -125,25 +143,41 @@ int main() {
 
     const int kInTarget = 8;
     const int ticks = 8;
-    std::vector<double> ns, viaRel, viaProp;
+    std::vector<double> ns, viaRel, viaIdx, viaProp;
     std::printf("\nCATEGORY-SCOPED LAW — only %d beings match, however membership is asked\n", kInTarget);
-    std::printf("  %8s  %14s  %14s  %8s\n", "beings", "Related(cat)", "Compare(prop)", "ratio");
+    std::printf("  %8s  %13s  %13s  %13s  %9s  %9s\n", "beings", "Related scan", "Related index",
+                "Compare prop", "scan/prop", "index/prop");
     for (int n : {50, 100, 200, 400}) {
+        // All three arms back to back, so machine load hits them alike and the
+        // RATIOS are the trustworthy numbers — absolute times swing with
+        // whatever else is building.
         const double prop = costPerTick(n, kInTarget, ticks, false);
-        const double rel  = costPerTick(n, kInTarget, ticks, true);
-        ns.push_back(n); viaRel.push_back(rel); viaProp.push_back(prop);
-        std::printf("  %8d  %14.4f  %14.4f  %8.1fx\n", n, rel, prop,
-                    prop > 1e-9 ? rel / prop : 0.0);
+        const double scan = costPerTick(n, kInTarget, ticks, true, false);
+        const double idx  = costPerTick(n, kInTarget, ticks, true, true);
+        ns.push_back(n); viaRel.push_back(scan); viaIdx.push_back(idx); viaProp.push_back(prop);
+        std::printf("  %8d  %13.4f  %13.4f  %13.4f  %8.1fx  %8.1fx\n", n, scan, idx, prop,
+                    prop > 1e-9 ? scan / prop : 0.0, prop > 1e-9 ? idx / prop : 0.0);
     }
     const double kRel = fittedExponent(ns, viaRel);
+    const double kIdx = fittedExponent(ns, viaIdx);
     const double kProp = fittedExponent(ns, viaProp);
     std::printf("\n  fitted k against POPULATION (matching set held at %d):\n", kInTarget);
-    std::printf("    Related(instance-of, category)  = %.3f\n", kRel);
-    std::printf("    Compare(own property)           = %.3f   <- the control\n", kProp);
-    std::printf("\n  Same selectivity, same firing set. Any gap is the cost of asking\n"
-                "  the RELATION GRAPH instead of the being — Universe::relations() is\n"
-                "  rebuilt per evaluation and scanned with by-value string ids.\n\n");
+    std::printf("    Related, scanning every relation  = %.3f   <- before rung 4\n", kRel);
+    std::printf("    Related, endpoint index           = %.3f   <- rung 4\n", kIdx);
+    std::printf("    Compare(own property)             = %.3f   <- the control\n", kProp);
+    std::printf("\n  Same selectivity, same firing set. The scan arm pays for walking every\n"
+                "  relation per candidate; the index arm pays for the subject's own edges.\n"
+                "  Both once paid ~17x for an opaque Prophetic read; see the header.\n\n");
     assert(kProp < 1.75 && "the control is not the shape it should be");
+    // Rung 4's claim, stated loosely because this machine is shared: an indexed
+    // category-scoped law must not cost MORE than scanning every relation.
+    assert(viaIdx.back() <= viaRel.back() * 1.25 &&
+           "the endpoint index made a category-scoped law slower than scanning");
+    // Loose on purpose (shared machine): measured 1.0x. It was 17x while a
+    // Related condition made the Prophetic index incomplete.
+    assert(viaIdx.back() <= viaProp.back() * 4.0 &&
+           "a category-scoped Related law costs far more than the same law reading a "
+           "property -- is a Related read making the Prophetic index incomplete again?");
     glfwDestroyWindow(w); glfwTerminate();
     std::printf("category_membership_scaling_test: OK\n");
     return 0;

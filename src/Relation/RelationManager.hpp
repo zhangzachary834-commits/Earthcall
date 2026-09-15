@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include "Relation.hpp"
 #include "json.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -79,6 +80,54 @@ public:
 
     const std::vector<std::shared_ptr<Relation>>& getAll() const { return relations; }
 
+    // ---------------------------------------------------------------------
+    // Every relation that could involve this being — FORMATION_RETE.md §8 rung 4.
+    //
+    // The `Related` condition used to find a subject's edges by walking EVERY
+    // relation in the world, once per candidate per tick. It is the dominant
+    // scoping idiom in the tree (132 saved laws name `category.chess.piece`
+    // through `instance-of`), and measured against an identical law reading a
+    // plain property it cost 3.1x at 400 beings, the gap widening with the
+    // world. This answers from an index instead, in O(degree).
+    //
+    // A CANDIDATE list, not a verdict: callers must still check which end the
+    // being is and whether the edge's type and far end match. That is what lets
+    // a stale entry cost a wasted check rather than a wrong answer.
+    //
+    // Keyed TWO ways, and both are load-bearing:
+    //   by POINTER    — a bound endpoint; immune to the being being renamed.
+    //   by IDENTIFIER — a bound endpoint's current name, or an UNBOUND or
+    //                   FORGOTTEN endpoint's kept name. Stable Identifiers is a
+    //                   non-negotiable: that name IS the being, and a Zone reload
+    //                   recreates beings under the same names. Keying by pointer
+    //                   alone would make every such edge invisible (the regression
+    //                   related_identity_endpoint_test guards).
+    // Because the identifier key is captured while the endpoint is still bound,
+    // an edge forgotten WITHOUT this manager being told is still found again by
+    // name. `out` is cleared first.
+    // ---------------------------------------------------------------------
+    void relationsInvolving(const Singular& being, std::vector<Relation*>& out) const;
+
 private:
     std::vector<std::shared_ptr<Relation>> relations;
+
+    // CACHE STAMP for the index above — private bookkeeping, not a change
+    // signal. Nothing outside this class reads it. It is NOT a second
+    // world-level revision beside Universe::structuralRevision (one was started
+    // and reverted on 2026-09-14 at Zach's question); it only tells this
+    // manager's own index that its own vector changed.
+    //
+    // COMPLETENESS, which is the whole risk: `relations` is private, so every
+    // write is in RelationManager.cpp. Each of them calls touch() — the four
+    // copy/move members, add, remove, both removeBetween, removeInvolving,
+    // loadFromJson — and forgetBeingEverywhere touches every live manager.
+    // IF YOU ADD A WRITE TO `relations`, CALL touch(), and add a section to
+    // tests/law/relation_endpoint_index_test.cpp that goes through it. An index
+    // that misses an insertion hides an edge from every law, silently.
+    void touch() { ++_generation; }
+    void rebuildEndpointIndex() const;
+    std::size_t _generation = 0;
+    mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
+    mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
+    mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
 };

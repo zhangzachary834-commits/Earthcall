@@ -199,7 +199,13 @@ def picker_law(law_id: str, name: str, strip_id: str, component: str) -> dict[st
             "scope": 0,
             "targets": [],
         },
-        "triggers": ["object-clicked"],
+        "triggers": [
+            "object-clicked",
+            "object-pressed",
+            "object-drag-started",
+            "object-dragged",
+            "object-drag-ended"
+        ],
     }
 
 
@@ -250,7 +256,18 @@ def material_apply_law() -> dict[str, Any]:
         map_action(
             "@basic-pixel-canvas.brushRadius",
             scalar_node("r"), "r", "@event.subject.swatchBrushRadius"),
-        # 4. Canvas Inking: synchronize canvas paintColor with active selectedColor
+        # 4. Clear Canvas: if clicked subject carries clearCanvasColor, reset canvas to that color
+        map_action(
+            "@basic-pixel-canvas.authored.full-canvas",
+            vector_node("c"), "c", "@event.subject.clearCanvasColor"),
+        # 5. Fill Canvas: if clicked subject carries fillCanvasTrigger, flood fill canvas with selectedColor
+        map_action(
+            "@basic-pixel-canvas.authored.full-canvas",
+            vector_node("c"), "c", {
+                "c": "@material-color-picker.selectedColor",
+                "t": "@event.subject.fillCanvasTrigger",
+            }),
+        # 6. Canvas Inking: synchronize canvas paintColor with active selectedColor
         map_action(
             "@basic-pixel-canvas.paintColor",
             vector_node("c"), "c", "@material-color-picker.selectedColor"),
@@ -448,6 +465,9 @@ def main() -> None:
             "t": "string",
             "v": json.dumps({"face": 0, "selector": full_canvas_selector})
         }
+        canvas["authoredProperties"]["authored.full-canvas"] = {
+            "t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0
+        }
 
     authored = [
         # --- Left Studio Toolbar (x = 18..138, width = 120, y = 20..700) ---
@@ -458,23 +478,21 @@ def main() -> None:
         # GIMP / Clip Studio Primary Tool Rack (6 Action Cards)
         object_2d("tool-btn-pen", 26, 58, 104, 26, "tool-pen-material", "PEN [1px]",
                   color=(0.20, 0.28, 0.42), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 0.10, "y": 0.70, "z": 0.25},
-                              "swatchBrushRadius": {"t": "double", "v": 1.0}}),
+                  properties={"swatchBrushRadius": {"t": "double", "v": 1.0}}),
         object_2d("tool-btn-brush", 26, 88, 104, 26, "tool-brush-material", "BRUSH [2px]",
                   color=(0.18, 0.32, 0.48), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 0.18, "y": 0.38, "z": 0.92},
-                              "swatchBrushRadius": {"t": "double", "v": 2.0}}),
+                  properties={"swatchBrushRadius": {"t": "double", "v": 2.0}}),
         object_2d("tool-btn-eraser", 26, 118, 104, 26, "tool-eraser-material", "ERASER",
                   color=(0.24, 0.28, 0.35), z=20,
                   properties={"swatchColor": {"t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0},
                               "swatchBrushRadius": {"t": "double", "v": 2.0}}),
         object_2d("tool-btn-fill", 26, 148, 104, 26, "tool-fill-material", "FILL INK",
                   color=(0.18, 0.32, 0.50), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 0.10, "y": 0.70, "z": 0.25}}),
+                  properties={"fillCanvasTrigger": {"t": "double", "v": 1.0}}),
         object_2d("tool-btn-clear", 26, 178, 104, 26, "tool-clear-material", "CLEAR [WHT]",
                   color=(0.35, 0.15, 0.18), z=20,
-                  properties={"swatchColor": {"t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0}}),
-        object_2d("tool-btn-swap", 26, 208, 104, 26, "tool-swap-material", "SWAP [BLK]",
+                  properties={"clearCanvasColor": {"t": "vec3", "x": 1.0, "y": 1.0, "z": 1.0}}),
+        object_2d("tool-btn-swap", 26, 208, 104, 26, "tool-swap-material", "INK [BLK]",
                   color=(0.18, 0.20, 0.26), z=20,
                   properties={"swatchColor": {"t": "vec3", "x": 0.04, "y": 0.04, "z": 0.04}}),
 
@@ -524,7 +542,7 @@ def main() -> None:
                   color=(0.48, 0.54, 0.66), z=30, text=True),
         object_2d("tool-guide-3", 24, 530, 108, 12, "", "* Fill: Flood board",
                   color=(0.48, 0.54, 0.66), z=30, text=True),
-        object_2d("tool-guide-4", 24, 548, 108, 12, "", "* Swap: Quick black",
+        object_2d("tool-guide-4", 24, 548, 108, 12, "", "* Ink: Quick black",
                   color=(0.48, 0.54, 0.66), z=30, text=True),
         object_2d("tool-guide-5", 24, 566, 108, 12, "", "* Drag: Smooth line",
                   color=(0.48, 0.54, 0.66), z=30, text=True),

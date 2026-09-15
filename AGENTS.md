@@ -65,6 +65,7 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | render an authored expression to a channel (sound, shader, physics) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
+| remove, break, or dissolve a Relation — or decide what a stale one becomes | `ontology/PRIMARY_AND_SUB_RELATIONS.md` §2, §7 | the primary Relation between two Singulars never disappears; sub-Relations dissolve only on proved impossibility |
 | touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
 | ask what a *when* is — a timestamp, a duration, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | the world clock and `Moment` answer two different questions; no `class Duration` |
 | build a button, panel, control, menu, or any interface at all | `law/INTERACTION_AS_LAW.md` | Law + set-to-set aimed at the pointer; no widget, no `src/UI/` |

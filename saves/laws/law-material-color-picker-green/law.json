@@ -91,6 +91,10 @@
     "targets": []
   },
   "triggers": [
-    "object-clicked"
+    "object-clicked",
+    "object-pressed",
+    "object-drag-started",
+    "object-dragged",
+    "object-drag-ended"
   ]
 }
