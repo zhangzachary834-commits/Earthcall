@@ -6,6 +6,8 @@
 
 #include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace {
 
@@ -26,6 +28,11 @@ std::size_t storedObjectCount(const nlohmann::json& identity) {
     }
     return 0;
 }
+
+struct PreparedLawRoot {
+    std::string identifier;
+    nlohmann::json document;
+};
 
 } // namespace
 
@@ -101,26 +108,43 @@ bool ZoneManager::persistZone(size_t index) const {
         }
     }
 
-    const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(id, doc)
-                                : SaveSystem::writeZoneIdentity(id, doc);
-    if (!wrote) {
-        std::cerr << "[zones] REFUSED or failed Save Zone for '" << id << "'.\n";
-        return false;
-    }
+    // Preflight the shared Law portion of this Zone's closure BEFORE writing
+    // the Zone identity. This does not yet make the multi-file write a fully
+    // detached transaction (that larger rung remains open), but semantic
+    // refusal cannot happen after we have already mutated the Zone file.
+    std::vector<PreparedLawRoot> preparedLawRoots;
+    if (doc.contains("lawRefs")) {
+        if (!doc["lawRefs"].is_array()) {
+            std::cerr << "[zones] REFUSED Save Zone for '" << id
+                      << "': lawRefs is not an array. Nothing written.\n";
+            return false;
+        }
+        if (!doc["lawRefs"].empty() && !_lawManager) {
+            std::cerr << "[zones] REFUSED Save Zone for '" << id
+                      << "': Zone names authored Laws but no LawManager is bound. Nothing written.\n";
+            return false;
+        }
 
-    // A Zone names shared Law roots by stable id. Save only those roots named
-    // by THIS Zone; an unrelated Zone's Laws are outside this transaction.
-    if (_lawManager && doc.contains("lawRefs") && doc["lawRefs"].is_array()) {
         for (const auto& refJson : doc["lawRefs"]) {
-            if (!refJson.is_string()) {
-                std::cerr << "[zones] REFUSED shared Law persistence for Zone '" << id
-                          << "': lawRef is not a string. Zone identity was already written; "
-                             "repair the authored reference before relying on this closure.\n";
+            if (!refJson.is_string() || refJson.get<std::string>().empty()) {
+                std::cerr << "[zones] REFUSED Save Zone for '" << id
+                          << "': lawRef is not a non-empty string. Nothing written.\n";
                 return false;
             }
             const std::string lawId = refJson.get<std::string>();
             Law* law = _lawManager->find(lawId);
-            if (!law || law->isFirstMover()) continue;
+            if (!law) {
+                std::cerr << "[zones] REFUSED Save Zone for '" << id
+                          << "': named Law '" << lawId
+                          << "' is not in the running Law register. Nothing written.\n";
+                return false;
+            }
+            if (law->isFirstMover()) {
+                // First Movers are engine-owned substrate, not Zone-authored
+                // shared roots. Preserve the reference if legacy data names
+                // one, but do not serialize the engine into saves/laws/.
+                continue;
+            }
 
             const nlohmann::json lawJson = law->toJson();
             nlohmann::json lawRoot{
@@ -133,11 +157,26 @@ bool ZoneManager::persistZone(size_t index) const {
             if (existingRoot.is_object() && existingRoot.contains("injected_by")) {
                 lawRoot["injected_by"] = existingRoot["injected_by"];
             }
-            if (!SaveSystem::writeLawIdentity(lawId, lawRoot)) {
-                std::cerr << "[zones] Failed to persist shared Law '" << lawId
-                          << "' named by Zone '" << id << "'.\n";
-                return false;
-            }
+            preparedLawRoots.push_back(PreparedLawRoot{lawId, std::move(lawRoot)});
+        }
+    }
+
+    const bool wrote = dwelling ? SaveSystem::writeHomeIdentity(id, doc)
+                                : SaveSystem::writeZoneIdentity(id, doc);
+    if (!wrote) {
+        std::cerr << "[zones] REFUSED or failed Save Zone for '" << id << "'.\n";
+        return false;
+    }
+
+    // Save only the shared Law roots named by THIS Zone; an unrelated Zone's
+    // Laws are outside this operation. Each root writer is itself atomic.
+    for (const auto& prepared : preparedLawRoots) {
+        if (!SaveSystem::writeLawIdentity(prepared.identifier, prepared.document)) {
+            std::cerr << "[zones] Failed to persist shared Law '" << prepared.identifier
+                      << "' named by Zone '" << id
+                      << "'. Zone identity was written; whole-closure transactional commit "
+                         "remains an open serialization rung.\n";
+            return false;
         }
     }
 
