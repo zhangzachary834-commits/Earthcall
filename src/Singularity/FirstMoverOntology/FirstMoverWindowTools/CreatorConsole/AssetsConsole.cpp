@@ -47,13 +47,16 @@ namespace Rendering {
 
         if (sl.showSaveWindow) {
             if (engine) engine->ensureCursorUnlocked();
-            ImGui::SetNextWindowSize(ImVec2(420, 180), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(480, 220), ImGuiCond_FirstUseEver);
             ImGui::SetNextWindowPos(ImVec2(80, 80), ImGuiCond_Appearing);
             ImGui::SetNextWindowFocus();
-            if (ImGui::Begin("Save As", &sl.showSaveWindow)) {
-                ImGui::InputText("Name", sl.customName, IM_ARRAYSIZE(sl.customName));
+            if (ImGui::Begin("Legacy Session Export", &sl.showSaveWindow)) {
+                ImGui::TextWrapped(
+                    "Legacy compatibility/recovery only. Ordinary authorship saves the active Zone from Creator Console -> Zones -> Save Zone.");
+                ImGui::Separator();
+                ImGui::InputText("Session Name", sl.customName, IM_ARRAYSIZE(sl.customName));
                 ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
-                if (ImGui::Button("Save") && engine) {
+                if (ImGui::Button("Export Legacy Session") && engine) {
                     SaveContext ctx = makeSaveContext(engine);
                     double t = engine->getWorldTime();
                     ctx.worldTime = &t;
@@ -70,15 +73,18 @@ namespace Rendering {
 
         if (sl.showLoadWindow) {
             if (engine) engine->ensureCursorUnlocked();
-            ImGui::SetNextWindowSize(ImVec2(520, 360), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(540, 390), ImGuiCond_FirstUseEver);
             ImGui::SetNextWindowPos(ImVec2(80, 80), ImGuiCond_Appearing);
             ImGui::SetNextWindowFocus();
-            if (ImGui::Begin("Load World", &sl.showLoadWindow)) {
+            if (ImGui::Begin("Legacy Session Import / Recovery", &sl.showLoadWindow)) {
+                ImGui::TextWrapped(
+                    "Legacy session files may restore/import old working-set and pose data. Moving among living Zones belongs in Creator Console -> Zones.");
+                ImGui::Separator();
                 if (ImGui::Button("Refresh")) mgr.updateSaveFiles();
                 ImGui::SameLine();
                 ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
                 ImGui::Separator();
-                ImGui::TextDisabled("Sessions (camera, laws, working set). Home and other Zones live in saves/zones/ and are shared across sessions — loading a file does not mint a second Home.");
+                ImGui::TextDisabled("Legacy sessions (camera, laws, old working-set envelope). Home and other Zones remain identity-stable across imports.");
                 {
                     auto zoneIds = SaveSystem::listZoneIdentities();
                     if (!zoneIds.empty()) {
@@ -91,13 +97,13 @@ namespace Rendering {
                     }
                 }
                 ImGui::Separator();
-                ImGui::TextDisabled("One entry per session. Binary twins, empty files, and delta chunks are not listed.");
+                ImGui::TextDisabled("One entry per legacy session. Binary twins, empty files, and delta chunks are not listed.");
                 {
                     const std::string stash = ZoneManager::beforeLoadSnapshotPath();
                     std::error_code ec;
                     if (!stash.empty() && std::filesystem::exists(stash, ec) &&
                         std::filesystem::file_size(stash, ec) > 0) {
-                        if (ImGui::Button("Restore unsaved (before last load)")) {
+                        if (ImGui::Button("Restore unsaved (before last legacy import)")) {
                             loadWorld(engine, stash);
                             sl.showLoadWindow = false;
                         }
@@ -109,18 +115,18 @@ namespace Rendering {
                 }
                 auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
                 if (worlds.empty()) {
-                    ImGui::TextDisabled("No world saves in saves/worlds/.");
+                    ImGui::TextDisabled("No legacy session files in saves/worlds/.");
                 }
                 const std::string& current = sl.loadedSaveName;
                 for (const auto& w : worlds) {
                     ImGui::PushID(w.path.c_str());
-                    if (ImGui::Button("Load")) {
+                    if (ImGui::Button("Import")) {
                         loadWorld(engine, w.path);
                         sl.showLoadWindow = false;
                     }
                     ImGui::SameLine();
                     if (w.label == current) {
-                        ImGui::Text("%s  (loaded)", w.label.c_str());
+                        ImGui::Text("%s  (imported)", w.label.c_str());
                     } else {
                         ImGui::TextUnformatted(w.label.c_str());
                     }
@@ -136,23 +142,26 @@ namespace Rendering {
         }
 
         if (sl.showManager) {
-            ImGui::SetNextWindowSize(ImVec2(560, 420), ImGuiCond_FirstUseEver);
-            if (ImGui::Begin("Save Manager", &sl.showManager)) {
+            ImGui::SetNextWindowSize(ImVec2(580, 440), ImGuiCond_FirstUseEver);
+            if (ImGui::Begin("Legacy Session Manager", &sl.showManager)) {
+                ImGui::TextWrapped(
+                    "Migration/recovery surface for saves/worlds/. Zone identities are managed from the Zones console.");
+                ImGui::Separator();
                 if (ImGui::Button("Refresh##mgr")) mgr.updateSaveFiles();
                 ImGui::SameLine();
-                if (ImGui::Button("Cleanup old (keep 10)")) {
+                if (ImGui::Button("Cleanup old legacy sessions (keep 10)")) {
                     SaveSystem::cleanupOldSaves(SaveSystem::SaveType::WORLD, 10);
                     mgr.updateSaveFiles();
                 }
                 ImGui::Separator();
                 auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
                 if (worlds.empty()) {
-                    ImGui::TextDisabled("No world saves.");
+                    ImGui::TextDisabled("No legacy session files.");
                 }
                 for (const auto& w : worlds) {
                     ImGui::PushID(w.path.c_str());
                     ImGui::TextUnformatted(w.label.c_str());
-                    if (ImGui::SmallButton("Load") && engine) {
+                    if (ImGui::SmallButton("Import") && engine) {
                         loadWorld(engine, w.path);
                         sl.showManager = false;
                     }
@@ -173,66 +182,70 @@ namespace Rendering {
     }
 
     void renderAssetsConsole(Core::Engine* engine) {
-        ImGui::TextUnformatted("Assets & Save Management");
+        ImGui::TextUnformatted("Assets & Legacy Session Tools");
         ImGui::Separator();
+        ImGui::TextWrapped(
+            "Ordinary save/movement is Zone-native. Use Creator Console -> Zones -> Move to Zone / Save Zone. The controls below retain saves/worlds compatibility for migration and recovery.");
 
-        static char saveName[128] = "my_world";
-        ImGui::InputText("Save Name", saveName, IM_ARRAYSIZE(saveName));
+        if (ImGui::TreeNode("Legacy session import/export / recovery")) {
+            static char saveName[128] = "legacy_session";
+            ImGui::InputText("Legacy Session Name", saveName, IM_ARRAYSIZE(saveName));
 
-        if (ImGui::Button("Quick Save") && engine) {
-            SaveContext ctx = makeSaveContext(engine);
-            mgr.saveStateWithLog(saveName, ctx);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Save As") && engine) {
-            auto& sl = mgr.getSaveLoadState();
-            if (saveName[0] != '\0') {
-                std::strncpy(sl.customName, saveName, sizeof(sl.customName) - 1);
-                sl.customName[sizeof(sl.customName) - 1] = '\0';
+            if (ImGui::Button("Export Legacy Session") && engine) {
+                SaveContext ctx = makeSaveContext(engine);
+                mgr.saveStateWithLog(saveName, ctx);
             }
-            SaveContext ctx = makeSaveContext(engine);
-            mgr.saveStateWithLog(sl.customName, ctx);
-        }
-
-        ImGui::Separator();
-        ImGui::TextUnformatted("Load a session");
-        ImGui::TextDisabled("One name per session. json and .ecsave of the same name are the same session. Zones (Home included) persist in saves/zones/.");
-        {
-            auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
-            if (worlds.empty()) {
-                ImGui::TextDisabled("No world saves in saves/worlds/ yet.");
-            }
-            const std::string& current = mgr.getSaveLoadState().loadedSaveName;
-            for (const auto& w : worlds) {
-                ImGui::PushID(w.path.c_str());
-                if (ImGui::Button("Load") && engine) {
-                    loadWorld(engine, w.path);
+            ImGui::SameLine();
+            if (ImGui::Button("Export As...") && engine) {
+                auto& sl = mgr.getSaveLoadState();
+                if (saveName[0] != '\0') {
+                    std::strncpy(sl.customName, saveName, sizeof(sl.customName) - 1);
+                    sl.customName[sizeof(sl.customName) - 1] = '\0';
                 }
-                ImGui::SameLine();
-                if (w.label == current) {
-                    ImGui::Text("%s  (loaded)", w.label.c_str());
-                } else {
-                    ImGui::TextUnformatted(w.label.c_str());
-                }
-                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", w.path.c_str());
-                ImGui::PopID();
+                sl.showSaveWindow = true;
+                if (engine) engine->ensureCursorUnlocked();
             }
-        }
-        if (ImGui::Button("Save Manager")) {
-            mgr.updateSaveFiles();
-            mgr.getSaveLoadState().showManager = true;
-            if (engine) engine->ensureCursorUnlocked();
-        }
 
-        {
-            auto& sl = mgr.getSaveLoadState();
-            if (!sl.lastSaveReport.empty()) {
-                ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
+            ImGui::Separator();
+            ImGui::TextUnformatted("Import a legacy session");
+            {
+                auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
+                if (worlds.empty()) {
+                    ImGui::TextDisabled("No legacy session files in saves/worlds/ yet.");
+                }
+                const std::string& current = mgr.getSaveLoadState().loadedSaveName;
+                for (const auto& w : worlds) {
+                    ImGui::PushID(w.path.c_str());
+                    if (ImGui::Button("Import") && engine) {
+                        loadWorld(engine, w.path);
+                    }
+                    ImGui::SameLine();
+                    if (w.label == current) {
+                        ImGui::Text("%s  (imported)", w.label.c_str());
+                    } else {
+                        ImGui::TextUnformatted(w.label.c_str());
+                    }
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", w.path.c_str());
+                    ImGui::PopID();
+                }
             }
-            if (!sl.lastLoadReport.empty()) {
-                ImGui::TextWrapped("%s", sl.lastLoadReport.c_str());
+            if (ImGui::Button("Legacy Session Manager")) {
+                mgr.updateSaveFiles();
+                mgr.getSaveLoadState().showManager = true;
+                if (engine) engine->ensureCursorUnlocked();
             }
-            ImGui::Checkbox("Unpack for authoring", &sl.unpackForAuthoring);
+
+            {
+                auto& sl = mgr.getSaveLoadState();
+                if (!sl.lastSaveReport.empty()) {
+                    ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
+                }
+                if (!sl.lastLoadReport.empty()) {
+                    ImGui::TextWrapped("%s", sl.lastLoadReport.c_str());
+                }
+                ImGui::Checkbox("Unpack legacy session for authoring", &sl.unpackForAuthoring);
+            }
+            ImGui::TreePop();
         }
 
         ImGui::Separator();

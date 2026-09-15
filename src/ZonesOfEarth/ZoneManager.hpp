@@ -98,12 +98,14 @@ public:
     void loadState(const std::string& filename, SaveContext& ctx);
     void saveStateWithLog(const std::string& customName, SaveContext& ctx);
 
-    // Zone identity store (saves/zones/<id>/zone.json). A session/"world"
-    // file names a working set; the Zone itself is not a copy inside that
-    // file. persistZones writes every live identity-stable Zone; hydrate
-    // fills empty boot Zones and admits stored Zones the manager does not
-    // yet hold. forkZone copies an identity under a new name (branch);
-    // diffZones compares object identifiers of two identities.
+    // Zone identity store (saves/zones/<id>/zone.json). The ordinary authoring
+    // path is Zone-native: persistZone/persistActiveZone write exactly one
+    // Zone/Home identity plus the shared Law roots it names. They MUST NOT
+    // create or rewrite a conglomerate saves/worlds session file, nor touch
+    // unrelated Zone identities. persistZones remains the compatibility/bulk
+    // writer used by legacy session migration and cross-root operations.
+    bool persistZone(size_t index) const;
+    bool persistActiveZone() const;
     void persistZones() const;
     void hydrateFromZoneStore();
     bool forkZone(const std::string& sourceId, const std::string& newId);
