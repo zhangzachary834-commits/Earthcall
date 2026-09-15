@@ -1,4 +1,4 @@
-name: Post-Formation Rete dirty-path profile
+name: Dirty state refresh A/B
 
 on:
   push:
@@ -11,11 +11,27 @@ on:
 jobs:
   profile:
     runs-on: macos-14
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      - name: Instrument dirty Rete internals
+      - name: Configure baseline
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target frame_lag_test -j3
+
+      - name: Baseline Living Instrument
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
+          exit 0
+
+      - name: Patch dirty state refresh to keep fact storage resident
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -29,60 +45,67 @@ jobs:
               p.write_text(s.replace(old, new, 1))
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
-               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    void evaluateDirty();\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''',
-               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    struct DirtyTiming {\n        double readCompareMs = 0.0;\n        double retractMs = 0.0;\n        double assertMs = 0.0;\n        std::size_t dequeued = 0;\n        std::size_t changed = 0;\n        std::size_t unchanged = 0;\n        std::size_t missing = 0;\n    };\n    void evaluateDirty();\n    void resetDirtyTiming() { _dirtyTiming = {}; }\n    const DirtyTiming& lastDirtyTiming() const { return _dirtyTiming; }\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''')
-
-          once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
-               '''    std::vector<FactPtr> _dirtyFacts;\n    std::vector<AlphaNode> _alphaNodes;''',
-               '''    std::vector<FactPtr> _dirtyFacts;\n    DirtyTiming _dirtyTiming{};\n    std::vector<AlphaNode> _alphaNodes;''')
+               '''    std::string assertFact(FactPtr fact);\n    bool retractFact(const std::string& factId);''',
+               '''    std::string assertFact(FactPtr fact, bool alreadyStored = false);\n    bool retractFact(const std::string& factId, bool keepStored = false);''')
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
-               '''void ReteNetwork::evaluateDirty() {\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    \n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n        \n        if (!fact->subject) continue;\n        \n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (prop) {\n            nlohmann::json newValue = propertyValueToJson(prop->value());\n            if (fact->value == newValue) continue; // no change\n            \n            // Retract the old fact\n            retractFact(fact->id);\n            \n            // Update value and re-assert\n            fact->value = newValue;\n            assertFact(fact);\n        }\n    }\n}''',
-               '''void ReteNetwork::evaluateDirty() {\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    _dirtyTiming.dequeued = dirty.size();\n\n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n\n        const double read0 = glfwGetTime();\n        if (!fact->subject) {\n            _dirtyTiming.readCompareMs += (glfwGetTime() - read0) * 1000.0;\n            ++_dirtyTiming.missing;\n            continue;\n        }\n\n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (!prop) {\n            _dirtyTiming.readCompareMs += (glfwGetTime() - read0) * 1000.0;\n            ++_dirtyTiming.missing;\n            continue;\n        }\n        nlohmann::json newValue = propertyValueToJson(prop->value());\n        const bool same = fact->value == newValue;\n        _dirtyTiming.readCompareMs += (glfwGetTime() - read0) * 1000.0;\n        if (same) {\n            ++_dirtyTiming.unchanged;\n            continue;\n        }\n        ++_dirtyTiming.changed;\n\n        const double retract0 = glfwGetTime();\n        retractFact(fact->id);\n        _dirtyTiming.retractMs += (glfwGetTime() - retract0) * 1000.0;\n\n        fact->value = newValue;\n        const double assert0 = glfwGetTime();\n        assertFact(fact);\n        _dirtyTiming.assertMs += (glfwGetTime() - assert0) * 1000.0;\n    }\n}''')
+               '''std::string ReteNetwork::assertFact(FactPtr fact) {''',
+               '''std::string ReteNetwork::assertFact(FactPtr fact, bool alreadyStored) {''')
 
           once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
-               '''    if (_rete.hasDirtyFacts()) {\n        _rete.evaluateDirty();\n        _dirty = true;\n    }''',
-               '''    _rete.resetDirtyTiming();\n    if (_rete.hasDirtyFacts()) {\n        _rete.evaluateDirty();\n        _dirty = true;\n    }''')
+               '''    // Both participants, because retractFactsAbout matches on either.\n    if (fact->subject) _factParticipants.insert(fact->subject);\n    if (fact->object)  _factParticipants.insert(fact->object);\n    if (fact->subject && fact->isState && fact->type == "relation-state") {\n        _relationStateIndex[fact->subject].insert(fact->attribute);\n    }\n    _facts.push_back(fact);\n    const FactPtr& f = fact;\n    _factById[f->id] = f;\n    if (f->isState) {\n        _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);\n    }''',
+               '''    const FactPtr& f = fact;\n    // A dirty persistent state fact already exists in the fact store and its\n    // identity indices. Refreshing its Rete consequences must not physically\n    // remove and append it: that turns every value change into an O(facts)\n    // vector erase even though the fact itself never ceased to exist.\n    if (!alreadyStored) {\n        // Both participants, because retractFactsAbout matches on either.\n        if (fact->subject) _factParticipants.insert(fact->subject);\n        if (fact->object)  _factParticipants.insert(fact->object);\n        if (fact->subject && fact->isState && fact->type == "relation-state") {\n            _relationStateIndex[fact->subject].insert(fact->attribute);\n        }\n        _facts.push_back(fact);\n        _factById[f->id] = f;\n        if (f->isState) {\n            _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);\n        }\n    }''')
 
-          once('tests/singularity/frame_lag_test.cpp',
-               '''    double physicsMs = 0.0;\n};''',
-               '''    double physicsMs = 0.0;\n    double dirtyReadMs = 0.0;\n    double dirtyRetractMs = 0.0;\n    double dirtyAssertMs = 0.0;\n    double dirtyDequeued = 0.0;\n    double dirtyChanged = 0.0;\n    double dirtyUnchanged = 0.0;\n    double dirtyMissing = 0.0;\n};''')
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
+               '''bool ReteNetwork::retractFact(const std::string& factId) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n    _factById.erase(factIt);\n\n    if (fact->isState) {\n        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n        if (sIt != _stateFactsBySubjectAttr.end()) {\n            auto& vec = sIt->second;\n            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n        }\n        if (fact->type == "relation-state" && fact->subject) {\n            auto rIt = _relationStateIndex.find(fact->subject);\n            if (rIt != _relationStateIndex.end()) {\n                rIt->second.erase(fact->attribute);\n                if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n            }\n        }\n    }\n\n    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n    if (it != _facts.end()) _facts.erase(it);''',
+               '''bool ReteNetwork::retractFact(const std::string& factId, bool keepStored) {\n    auto factIt = _factById.find(factId);\n    if (factIt == _factById.end()) return false;\n    FactPtr fact = factIt->second;\n\n    // Ordinary retraction means the fact ceased to exist. Dirty-state refresh\n    // is different: the persistent fact remains true as an identity, only its\n    // value changed. In that case retain the fact store and identity indices\n    // while still retracting every old alpha/beta/agenda consequence below.\n    if (!keepStored) {\n        _factById.erase(factIt);\n\n        if (fact->isState) {\n            auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);\n            if (sIt != _stateFactsBySubjectAttr.end()) {\n                auto& vec = sIt->second;\n                vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());\n                if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);\n            }\n            if (fact->type == "relation-state" && fact->subject) {\n                auto rIt = _relationStateIndex.find(fact->subject);\n                if (rIt != _relationStateIndex.end()) {\n                    rIt->second.erase(fact->attribute);\n                    if (rIt->second.empty()) _relationStateIndex.erase(rIt);\n                }\n            }\n        }\n\n        auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });\n        if (it != _facts.end()) _facts.erase(it);\n    }''')
 
-          once('tests/singularity/frame_lag_test.cpp',
-               '''    r.firings = lawManager.tick().size();\n    const auto t3 = Clock::now();''',
-               '''    r.firings = lawManager.tick().size();\n    const auto dirty = lawManager.rete().lastDirtyTiming();\n    const auto t3 = Clock::now();''')
-
-          once('tests/singularity/frame_lag_test.cpp',
-               '''    r.physicsMs    = zoneTiming.physicsMs;\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''',
-               '''    r.physicsMs    = zoneTiming.physicsMs;\n    r.dirtyReadMs = dirty.readCompareMs;\n    r.dirtyRetractMs = dirty.retractMs;\n    r.dirtyAssertMs = dirty.assertMs;\n    r.dirtyDequeued = static_cast<double>(dirty.dequeued);\n    r.dirtyChanged = static_cast<double>(dirty.changed);\n    r.dirtyUnchanged = static_cast<double>(dirty.unchanged);\n    r.dirtyMissing = static_cast<double>(dirty.missing);\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''')
-
-          once('tests/singularity/frame_lag_test.cpp',
-               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));''',
-               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));\n    std::printf("  DIRTY-INTERNAL medians: queued %.0f | changed %.0f | unchanged %.0f | missing %.0f | read+compare %.3f ms | retract %.3f ms | assert %.3f ms\\n",\n                samples.medianOf(&FrameResult::dirtyDequeued),\n                samples.medianOf(&FrameResult::dirtyChanged),\n                samples.medianOf(&FrameResult::dirtyUnchanged),\n                samples.medianOf(&FrameResult::dirtyMissing),\n                samples.medianOf(&FrameResult::dirtyReadMs),\n                samples.medianOf(&FrameResult::dirtyRetractMs),\n                samples.medianOf(&FrameResult::dirtyAssertMs));''')
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp',
+               '''            // Retract the old fact\n            retractFact(fact->id);\n            \n            // Update value and re-assert\n            fact->value = newValue;\n            assertFact(fact);''',
+               '''            // Retract only the old discrimination consequences. The\n            // persistent state fact itself remains resident and keeps its order.\n            retractFact(fact->id, true);\n\n            // Update value and re-propagate without duplicating fact storage.\n            fact->value = newValue;\n            assertFact(fact, true);''')
           PY
 
-      - name: Configure and build diagnostic benchmark
+      - name: Rebuild candidate and semantic witnesses
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
-          cmake --build build --target frame_lag_test -j3
+          cmake --build build --target \
+            frame_lag_test \
+            prophetic_rete_test \
+            event_interest_filter_test \
+            rete_compile_test \
+            rete_relation_state_test \
+            edge_reactive_path_test \
+            reactive_departure_test \
+            vocabulary_index_test \
+            -j3
 
-      - name: Profile Living Instrument dirty path
+      - name: Run semantic witnesses
+        run: |
+          set -e
+          ./build/prophetic_rete_test
+          ./build/event_interest_filter_test
+          ./build/rete_compile_test
+          ./build/rete_relation_state_test
+          ./build/edge_reactive_path_test
+          ./build/reactive_departure_test
+          ./build/vocabulary_index_test
+
+      - name: Candidate Living Instrument
         run: |
           set +e
-          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee dirty-internal-profile.txt
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
           exit 0
 
-      - name: Print diagnostic headline
+      - name: Print A/B headlines
         run: |
-          grep -E 'Tick [0-9]+:|median simulation frame|of that, LawManager::tick|DIRTY-INTERNAL|machine steadiness' dirty-internal-profile.txt || true
+          echo '=== BASELINE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' baseline.txt || true
+          echo '=== CANDIDATE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' candidate.txt || true
 
-      - name: Upload report
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
-          name: post-formation-dirty-internal-${{ github.run_id }}
-          path: dirty-internal-profile.txt
+          name: dirty-state-resident-ab-${{ github.run_id }}
+          path: |
+            baseline.txt
+            candidate.txt
