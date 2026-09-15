@@ -1,4 +1,5 @@
 name: Apply Living resolver patch
+# One-shot branch helper; deleted before PR.
 
 on:
   push:
