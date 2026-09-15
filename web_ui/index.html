@@ -84,11 +84,11 @@
             transition: background 0.2s, opacity 0.2s;
         }
 
-        #emit-btn:hover:not(:disabled) {
+        #emit-btn:hover:not([aria-disabled="true"]) {
             background: #357abd;
         }
 
-        #emit-btn:active:not(:disabled) {
+        #emit-btn:active:not([aria-disabled="true"]) {
             transform: scale(0.96);
         }
 
@@ -97,7 +97,7 @@
             outline-offset: 2px;
         }
 
-        #emit-btn:disabled {
+        #emit-btn[aria-disabled="true"] {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -154,7 +154,7 @@
 
         <form id="logos-interface">
             <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World" autofocus>
-            <button type="submit" id="emit-btn" disabled title="Enter a word to emit" aria-disabled="true">Emit</button>
+            <button type="submit" id="emit-btn" title="Enter a word to emit" aria-disabled="true">Emit</button>
         </form>
     </main>
 
