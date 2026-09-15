@@ -6,6 +6,8 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include <iostream>
+#include <mutex>
+#include <unordered_map>
 
 // Specific Implementation Vision: Recursive, custom tool creation
 // With a combination of the basic tools here, with a Formation system comprised of relations between things, people can create their own tools on top of that.
@@ -14,6 +16,44 @@
 // User can have the choice to have the tools themselves be integrated under relations. Every act of drawing can call a relation between the tool and the other Singulars involved. (tool isn't Singular yet, so we'll make them Singular in the future.)
 
 using json = nlohmann::json;
+
+// The endpoint register behind Relation::mayBeEndpoint (see Relation.hpp,
+// struct Endpoint). Leaked on purpose: Relations and Singulars are destroyed
+// during static teardown, after any ordinary static would already be gone.
+// Mutex-guarded because Singular destructors run on whatever thread frees them.
+namespace {
+struct EndpointRegister {
+    std::mutex mutex;
+    std::unordered_map<const Singular*, std::size_t> counts;
+};
+EndpointRegister& endpointRegister() {
+    static auto* reg = new EndpointRegister();
+    return *reg;
+}
+} // namespace
+
+void Relation::retainEndpoint(const Singular* being) {
+    if (!being) return;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    ++reg.counts[being];
+}
+
+void Relation::releaseEndpoint(const Singular* being) {
+    if (!being) return;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    auto it = reg.counts.find(being);
+    if (it == reg.counts.end()) return;
+    if (--it->second == 0) reg.counts.erase(it);
+}
+
+bool Relation::mayBeEndpoint(const Singular* being) {
+    if (!being) return false;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    return reg.counts.count(being) != 0;
+}
 
 namespace {
 bool readIntProperty(Singular* being, const char* name, int& out) {

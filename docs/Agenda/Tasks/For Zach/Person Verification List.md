@@ -356,3 +356,13 @@ Laws scoped as "every instance of category X" (`Related(instance-of, category.X)
 - [ ] **Chess and Go feel no slower, and ideally smoother.** Load a chess world in `earthcall_webgpu` and play a few moves. Nothing should respond more slowly than before. Measured headless, the category-scoped law itself got ~17x cheaper.
 - [ ] **A relation removed and re-made fires its "became true" law again.** In a world with a law that reacts once when a being becomes related to something (`OnBecomeTrue` + `Related`), use the Relations console to **Break** that relation and then **Create Relation in Zone** again with the same endpoints and kind. The reaction should happen again. Before the fix it happened the first time only.
 - [ ] **Changing a relation's type reaches laws.** The console cannot retype a relation; write its `type` property instead, with a law or the `earthcall_write_property` tool, to a kind a law is watching. That law should start acting on the endpoint. Before the fix it never did.
+
+## Clicking a chess piece should feel lighter
+
+*Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+Every click in chess runs ~30 "every piece" move laws, each checking every candidate piece. Checking a piece that didn't match cost 49 µs, and 45 µs of that was a temporary event object walking every relation in the world when it was thrown away. It now costs 8.7 µs (Debug build, headless).
+
+- [ ] **Select and move pieces quickly in a chess world in `earthcall_webgpu`.** The response to a click should feel at least as immediate as before, ideally snappier. Nothing about which moves are legal should have changed.
+- [ ] **Delete a piece or relation while playing, then keep playing.** Relations still have to let go of beings that are removed. A crash or strange behaviour right after deleting something would point at this change.

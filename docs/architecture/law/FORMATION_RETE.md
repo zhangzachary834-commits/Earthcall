@@ -236,6 +236,14 @@ inherits defect (a) at N² scale. What Zach specified instead is a **slow adapte
 That last clause is what makes approximation admissible at all, and §6 states the condition
 under which it stays admissible.
 
+**Refined by Zach, 2026-09-15 (§9.1).** The adapter doesn't only maintain nearest neighbours. On
+its slow clock it can run broader bounded searches (BFS, Dijkstra) across Singulars, properties,
+Relations and similarity indices. When crossing into another index or Relation family gives a
+better route, that route is **retained as a first-class Relation**, so later Law evaluation mostly
+walks pre-established structure and the expensive discovery is amortised. Similarity is one source
+of routing among several: relevance ≠ similarity, and a Person can author a relevance Relation
+directly.
+
 ### 3.2 Layer 2 — Relations of Relations: the path index is itself authored structure
 
 Because a Relation is a Singular, there can be Relations *between* Relations, and Formations
@@ -342,7 +350,11 @@ from the root along `grounds`**, which is a one-hub labeling structure that exis
 
 **Two caveats.** (i) HNSW assumes roughly metric behavior; overlap has three subkinds that
 may not form one metric space, and greedy traversal can stall where the triangle inequality
-fails badly — see §9.1. (ii) HNSW **rots** under heavy update. The independent clock needs
+fails badly. **§9.1 is now answered (Zach, 2026-09-15):** there is no single metric, and HNSW is an
+analogy for bounded, incrementally improved neighbourhoods, not an architectural constraint. Each
+similarity index keeps its own coherent ordering. Moving *between* indices is governed by
+first-class relevance Relations, some discovered by the slow adapter and retained, some authored
+by Persons. The triangle inequality matters only as local efficiency inside one index. (ii) HNSW **rots** under heavy update. The independent clock needs
 *two* rates, an improve rate **and** a revisit/decay rate, or "finds better overlap over
 time" degrades into "found better overlap once."
 
@@ -636,7 +648,15 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    §8, `add_relation_action_test` and `rete_relation_state_test`.
 
    Measurement: `tests/law/category_membership_scaling_test.cpp`.
-5. **The instance-side slow adapter** — capped, two-rate clock, candidates only.
+5. ⚠️ **The instance-side slow adapter** — capped, two-rate clock, candidates only. *Measured
+   2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), adapter deferred.* Real
+   worlds sweep only in `Scope::Everyone` event laws (chess: 0.3% hit rate), and 92% of each
+   missed candidate's cost was the transient `ECA::Event`'s destructor walking the whole
+   relation graph in `RelationManager::forgetBeingEverywhere`. Fixed with an O(1) endpoint
+   register (49 → 8.7 µs per candidate). §9.1 was answered 2026-09-15: several coherent similarity
+   indices plus a reified relevance graph, not one metric. The adapter still waits on §9.1's new
+   sub-questions (a)–(d), on §9.2, and on rung 7, which §6 makes its prerequisite. Record:
+   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 5.
 6. **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
    restriction.
 7. **Departure reporting on the reactive path.** The sweep currently owns edge detection
@@ -652,9 +672,159 @@ joins they exist for.
 
 ## 9. Open questions — ⚑ AUTHOR, Zach's decisions
 
-1. **The distance function.** What is the metric across the three overlap subkinds
-   (property, kind, quantitative)? One unified function, or three layered indices? Does it
-   satisfy the triangle inequality closely enough for greedy traversal not to stall?
+1. ~~**The distance function.**~~ **ANSWERED — Zach, 2026-09-15: no single distance.** The
+   question was: what metric spans the three overlap subkinds (property, kind, quantitative)?
+   One unified function or three layered indices? Does it satisfy the triangle inequality
+   closely enough for greedy traversal not to stall? Zach's answer, in his words:
+
+   > I do not think Formation Rete should use one global scalar "distance" across property
+   > overlap, kind overlap, and quantitative overlap.
+   >
+   > What I mean by similarity is the ordinary broad sense: two beings may be similar because of
+   > any real qualitative or quantitative overlap. But the evaluation should stay coherent to the
+   > kind of similarity being traversed. Kind similarity, category/taxonomic similarity, property
+   > similarity, and quantitative similarity can each have their own index and their own
+   > internally consistent ordering. I specifically do not mean pure quantitative comparison
+   > across semantically unrelated properties, where values are compared merely because they
+   > happen to be numerical.
+   >
+   > So I would answer "three layered indices" only loosely: really, several coherent similarity
+   > indices, potentially traversed simultaneously, rather than one forced universal metric.
+   >
+   > I also think the triangle-inequality concern is less foundational here than it would be in
+   > ordinary HNSW.
+   >
+   > First, pure similarity traversal should not arbitrarily jump between index kinds. Within a
+   > given index, I intend similarity to follow a consistent objective gradient: e.g. quantitative
+   > orderings remain ordered, taxonomic traversal follows the logical category structure, and
+   > like properties are compared within their meaningful domain. A traversal should only switch
+   > index kinds if some higher-order principle of relevance says that doing so is useful.
+   > Otherwise it remains inside the current similarity space, so it should not "jerk" between
+   > incomparable metrics and trap itself in a loop.
+   >
+   > Second, several similarity traversals can run at once, both from different indices and from
+   > different starting locations. If a Law condition involves two category regions, for example,
+   > traversal can begin from both sides. Since the condition nodes are themselves Singulars, the
+   > system already knows useful facts about both ends. Magic-set-style restriction can therefore
+   > constrain both searches, and bidirectional traversal can guide them toward a meeting region
+   > rather than forcing one blind greedy walk through the entire graph.
+   >
+   > Third, I mean pure similarity search to be only a subset of a much broader relevance-Relation
+   > framework. Relevance is not the same thing as similarity. Two Singulars may be highly relevant
+   > while being very dissimilar. Existing Relations, category structure, causal structure, Law
+   > structure, Person-authored knowledge, Relations between Relations, etc. can all supply
+   > relevance independently of nearest-neighbor similarity.
+   >
+   > That broader relevance graph is important because the slow independent-clock adapter is not
+   > merely maintaining nearest neighbors. It can perform more expensive searches across possible
+   > Singular/property/Relation traversals — potentially BFS, Dijkstra, or another bounded graph
+   > search — even across multiple indices. When it discovers that crossing through another index
+   > or Relation family gives a better route, that fact can itself be retained as first-class
+   > Relation structure. Future searches then pay very little for the same discovery.
+   >
+   > So the expensive cost is amortized: occasionally the slow adapter searches broadly and
+   > discovers better routes; ordinary Law evaluation mostly traverses the resulting
+   > pre-established Relation structure. The adapter can continually improve and revisit those
+   > routes as the world changes.
+   >
+   > This is also why I do not see exact triangle inequality as a correctness requirement. It may
+   > still matter as a local efficiency property inside a particular similarity index: a badly
+   > behaved distance function can obviously make greedy search inefficient. But correctness does
+   > not depend on one greedy traversal successfully finding the global nearest neighbor. Multiple
+   > constrained searches may run; broader independent-clock searches can discover bridges;
+   > discovered bridges can become persistent Relations; and the complete sweep remains the
+   > correctness floor.
+   >
+   > I would therefore distinguish:
+   >
+   > 1. **Similarity Relations** — objective, locally coherent nearest-neighbor structures within
+   >    particular meaningful comparison spaces.
+   > 2. **Relevance Relations** — the larger routing structure saying what is useful to traverse
+   >    for the current problem, whether or not the connected beings are similar.
+   > 3. **Learned/discovered routing Relations** — produced by the slow adapter when broader
+   >    exploration finds useful bridges between regions or indices.
+   > 4. **Authored relevance Relations** — a Person can directly state knowledge the program has
+   >    not discovered yet. If a Person knows that a distant Singular or category is relevant, that
+   >    Relation should immediately become usable by the same traversal machinery.
+   >
+   > So I would revise §9.1 away from "find one distance function satisfying metric-space
+   > assumptions" and toward: define locally coherent similarity measures per index, then let
+   > first-class relevance Relations govern when and how traversal moves between those spaces.
+   >
+   > HNSW is therefore useful as an analogy for bounded, incrementally improved neighborhood
+   > structure, but I do not think Formation Rete should be architecturally constrained to HNSW's
+   > assumption of a single approximately metric space. The larger system is a continuously
+   > improving, reified relevance graph in which similarity is one source of routing information
+   > among several.
+
+   **What follows from it** (Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`: my
+   reading and extensions, marked so authorship stays legible; nothing here is decided):
+
+   - **The design object changes** from "a similarity index" to **a reified relevance graph**.
+     Similarity indices are one of its sources. The slow adapter becomes a route *discoverer*
+     whose findings persist as Relations, which is the same move §3.2 makes for paths. Its
+     findings are therefore governable and legible by construction (Refusal 6), and a Person can
+     author a route directly (Zach's family 4) through the machinery that consumes discovered ones.
+   - **Soundness is unchanged, and this answer relies on it.** Every relevance or routing Relation
+     only *proposes* where to look. A discovered route that goes stale costs efficiency, never
+     truth, because the Law's own conditions decide and the sweep stays the floor (§6). That is
+     why the triangle inequality drops from a correctness requirement to a local efficiency
+     property, as Zach says.
+   - **The four families must be authored categories of Relation, not code.** Refusal 3: they are
+     Lexeme-grounded relation kinds under a category, not an enum and not four C++ classes. A world
+     could author a fifth.
+   - **Magic sets become concrete.** Condition nodes are Singulars, so a conjunction naming two
+     category regions (chess move laws name several) supplies both seeds for bidirectional,
+     restricted search. This is §3.3 and §4C meeting in the middle.
+
+   **Sub-questions this answer raised** (asked 2026-09-15; Zach's replies the same day follow):
+   - **(a) Who authors a discovered routing Relation?** "Nothing enters the world without an
+     author." Is the adapter a First Mover recording itself as injector under the authority of the
+     Person(s) whose world it is, or of the Laws whose evaluation motivated the search?
+   - **(b) What makes two properties "like properties … within their meaningful domain"?** Same
+     property path only, a shared Lexeme, a shared unit, or an authored Relation between the
+     properties saying they are commensurable? The answer decides whether quantitative similarity
+     can ever cross property names.
+   - **(c) What is the "higher-order principle of relevance" that licenses switching index kinds?**
+     Only an existing relevance Relation, or also a cost/value estimate (which reaches §9.2)?
+   - **(d) Retention and decay of discovered routes.** §4B's two-rate clock (improve and revisit)
+     now applies to reified Relations in the world. Are stale routes dissolved, down-weighted, or
+     kept as history (ties to ⚑ `mathematics/ONTOMATH_FRAMEWORK.md` §6 on the past)?
+
+   **Zach's replies, 2026-09-15:**
+   - **(a) First Mover.** The adapter that discovers and retains routing Relations is a First
+     Mover.
+   - **(b) Set by the index being traversed.** *"The meaningful domain depends on which index is
+     the one a specific traversal is evaluating, and the index could be property root, property
+     type class, or any other objective gradient."* So commensurability isn't a global property of
+     two properties. It belongs to the index: a property-root index compares within a root, a
+     type-class index within a type class, and so on for any index with an objective gradient.
+   - **(c) Deferred to §9.2.** Zach will settle what licenses switching indices together with what
+     `Relation::weight` means.
+   - **(d) Primary Relations persist; sub-Relations are dissolved or deprioritised.** In Zach's
+     words: *"My principle for Earthcall is the primary Relation between two Singulars doesn't
+     disappear — only their sub-Relations do, the ones that are part of the primary Relation, and
+     this allows for a hybrid approach."* Three outcomes:
+     1. **Primary Relation** between two Singulars: **never removed**. It keeps the history of its
+        sub-Relations in case one is needed again.
+     2. **A sub-Relation whose foundational premise has become logically impossible** is
+        **dissolved**. Zach's example: a relevance sub-Relation necessarily conditioned on "this
+        polyhedron is red", after the polyhedron turns blue.
+     3. **A sub-Relation that has merely become less optimal**, its founding premise still true, is
+        **deprioritised, not removed**.
+
+     *Opus 5, reading it against the tree (not decided):*
+     - This is stated as a principle **for Earthcall**, not only for routing, and no document in
+       `docs/architecture` records it yet.
+     - The engine doesn't honour it today. `RelationManager::remove`, both `removeBetween`
+       overloads and `removeInvolving` erase a Relation outright, and there is no primary/sub
+       distinction in `Relation`.
+     - **Outcome 2 is exactly the IMPOSSIBLE-only conclusion `PROPHETIC_RETE.md` §2 already
+       permits.** The abstract interpreter proves "this premise can no longer hold" the same way it
+       proves a condition unreachable, so dissolution has a sound trigger that already exists.
+     - Outcome 3 is where §9.2's weight/priority lands.
+     - Dropping a Rete *fact* about an edge (rung 4's re-validation) doesn't conflict: facts are
+       derived state, not Relations.
 2. **What `Relation::weight` means.** Value (strength/telos, in the sense of the Hierarchy
    of Joys) or cost (fan-out)? §5 argues for two axes; if weight is strength, traversal cost
    needs its own home. Zach is *"not too sure yet"* and leaning toward strength.

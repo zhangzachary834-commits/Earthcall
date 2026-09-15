@@ -67,6 +67,11 @@ std::unordered_set<RelationManager*>& liveManagers() {
 
 void RelationManager::forgetBeingEverywhere(const Singular* being) {
     if (!being) return;
+    // O(1) for the common case — a transient Moment, or any being no relation
+    // holds. Without this every Singular destructor walked every relation in
+    // every live manager (Relation.hpp, struct Endpoint, has the measurement).
+    // Guarded by tests/relation/endpoint_register_test.cpp.
+    if (!Relation::mayBeEndpoint(being)) return;
     for (RelationManager* manager : liveManagers()) {
         if (!manager) continue;
         bool changed = false;

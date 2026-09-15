@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0–4 of 7 done (2026-09-08, 09-09, 09-14; rung 4 was first deferred 2026-09-10, then built when its real cause turned out to be an opaque Prophetic read). Rung 2's Formation half and rungs 5–7 specified.
+**Status:** rungs 0–4 of 7 done (2026-09-08, 09-09, 09-14; rung 4 was first deferred 2026-09-10, then built when its real cause turned out to be an opaque Prophetic read). Rung 5 measured 2026-09-15: the adapter itself is deferred (no consumer, ⚑ AUTHOR metric), and the cost it was meant to cut was fixed at its real source. Rung 2's Formation half and rungs 6–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -314,6 +314,66 @@ section above.
 - Any new write to `RelationManager::relations` must call `touch()` and get a case in
   `relation_endpoint_index_test`.
 
+## Rung 5 — ⚠️ measured 2026-09-15; the adapter is deferred, the cost it targets is fixed
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`. Zach: "NOW DO PHASE 5".* The spec's rung
+is **the instance-side slow adapter**: an HNSW-style overlap index (§3.1, §4B) that proposes
+candidates, never truth, so that sweeps can be rarer. Per rungs 1 and 4, I measured before
+building.
+
+**Where sweeps actually happen.** Across every saved world there are 353 laws: 283 `OnEvent`, 68
+`WhileTrue`, 2 `OnBecomeTrue`. In chess, Go, the pixel changer and Synthesis Studio, **no
+continuous law took the sweep path**; all have Rete terminals. The live sweeps are `OnEvent`
+laws with `Scope::Everyone`: in `chess_app_test`, **413 event sweeps, 12,856 candidates, 38
+matches (0.3%)**, already narrowed from 917 beings by the rung 2 vocabulary index.
+
+**What a missed candidate cost, measured by part:** **49 µs**, of which **45 µs was building and
+destroying the transient `ECA::Event`** in `Law::conditionsSatisfied`; `Related` was 5.6 µs and a
+`Compare` 0.7 µs. Of the Event's cost, **39.5 µs was `RelationManager::forgetBeingEverywhere`**.
+Every Singular destructor calls it, an Event is a `Moment` is a `Singular`, and it walked every
+relation in every live `RelationManager` (every Law's formations own one) with no guard. This is
+the rung 1 trap (`_factParticipants`) again, in the relation graph instead of the fact table.
+
+**Fixed.** `Relation::Endpoint` now counts the pointer it holds in a process-wide register
+(its copy, assign, destruct, `bind` and `forget` are the only writes to `ptr`).
+`forgetBeingEverywhere` returns in O(1) when `Relation::mayBeEndpoint` says no relation holds the
+being. It's a deliberate superset: it also counts relations no manager owns, so it can only say
+"maybe" too often. **Chess event sweeps: 49.1 → 8.7 µs per missed candidate; transient `Moment`
+42 → 2.2 µs; time on misses over the test 629 → 111 ms.**
+Guarded by `tests/relation/endpoint_register_test.cpp`: an oracle that every pointer any relation
+holds is reported, plus a timing guard (6,000 relations: 0.56 µs, 35.4 µs with the early return
+removed). Both mutations were confirmed red, the timing one and a copy that doesn't register.
+
+**Why the adapter itself is not built:**
+1. **It has no consumer.** Continuous laws in real worlds don't sweep. Event sweeps are already
+   exact-narrowed, and after this fix their cost is dominated by `Related` evaluation (≈5 µs,
+   unindexed in the test harness) and the ~260 µs of the few candidates that pass the cheap
+   conjuncts, not by candidates an approximate index could skip.
+2. **Its metric was ⚑ AUTHOR** (§9.1 *answered by Zach 2026-09-15, after this was written: no
+   single metric; see the ⚑ AUTHOR section below*). §9.1 (the distance function across property, kind and
+   quantitative overlap) and §9.2 (what `Relation::weight` means) decide what "most similar" is.
+   Building HNSW before Zach answers them would be choosing for him.
+3. **§6 says its only job is to make the sweep rarer**, and §8 rung 7 (departure reporting on
+   the reactive path) is the named prerequisite for that. Rung 7 comes before rung 5 has
+   anything safe to schedule.
+
+**Measured next targets, recorded rather than fixed:**
+- A candidate that passes the cheap conjuncts costs ~260 µs because chess move laws carry
+  **subject-independent** `Not ForAny(…)` conjuncts that walk the world. Rung 3 hoisted such
+  gates for the continuous path only (`LawManager::gatesHold`); `Scope::Everyone` event sweeps
+  re-evaluate them per candidate. Hoisting there needs the same guard `gatesHold` has: a law that
+  writes a qualified root can flip its own gate mid-sweep.
+- ✅ *Fixed in the same pass:* `tests/support/test_harness.hpp` installed the relation *provider*
+  but not the endpoint *index* `EngineInit` installs, so app tests evaluated `Related` by scanning
+  while the app indexes. It now installs both; the 15 harness tests keep their prior results
+  (11 pass; the 4 that already failed still fail with the same assertions).
+
+**For Jules and any agent touching this:**
+- Anything that runs inside `Singular::~Singular` runs for every transient `ECA::Event`. It must be
+  O(1) for a being it has never seen. That has now cost the engine twice (rung 1 and rung 5).
+- Never write `Relation::Endpoint::ptr` directly; use `bind`/`forget`, or the register goes stale and
+  a freed being keeps its relations pointing at it.
+
 ## Next rungs
 
 2. ~~**Categories as authored Formations**~~ — index half done 2026-09-09 (above). The Formation
@@ -331,6 +391,21 @@ section above.
 ## ⚑ AUTHOR — open, Zach's
 
 §9 of the spec. **§9.3 (the sweep schedule) is answered — on structural revision, 2026-09-07.**
-Still open: the distance function (9.1), what `Relation::weight` means (9.2 — value or cost;
+**§9.1 (the distance function) is answered — Zach, 2026-09-15: no single metric.** Several
+locally coherent similarity indices (kind, taxonomic, property, quantitative-within-a-meaningful-
+domain), traversed possibly at once and from both ends of a condition. Movement between them is
+governed by a broader, reified **relevance graph** of four Relation families: similarity,
+relevance, discovered routing (found by the slow adapter and retained), and Person-authored
+relevance. Triangle inequality is a local efficiency property, not correctness, and the sweep stays
+the floor. His full answer and the four sub-questions it raises (who authors a discovered route;
+what makes properties commensurable; what licenses switching indices; retention and decay of
+routes) are in the spec's §9.1. **Zach answered those the same day:** (a) the adapter is a First
+Mover; (b) commensurability is set by the index being traversed (property root, property type
+class, or any other objective gradient); (c) deferred to §9.2; (d) a **primary Relation between
+two Singulars never disappears**. Of its sub-Relations, those whose founding premise has become
+logically impossible are dissolved; those merely less optimal are deprioritised; the primary keeps
+their history. (d) is an Earthcall-wide principle the engine doesn't yet follow: every
+`RelationManager` removal erases outright.
+Still open: what `Relation::weight` means (9.2 — value or cost;
 Zach leaning strength), the stratification rule (9.4), hysteresis bands on derived relations
 (9.5), and 9.6, which Zach marked open rather than closed.
