@@ -404,8 +404,8 @@ Mover; (b) commensurability is set by the index being traversed (property root, 
 class, or any other objective gradient); (c) deferred to §9.2; (d) a **primary Relation between
 two Singulars never disappears**. Of its sub-Relations, those whose founding premise has become
 logically impossible are dissolved; those merely less optimal are deprioritised; the primary keeps
-their history. (d) is an Earthcall-wide principle the engine doesn't yet follow: every
-`RelationManager` removal erases outright.
+their history. (d) is an Earthcall-wide principle the engine doesn't yet follow (every
+`RelationManager` removal erases outright); specified in `docs/architecture/ontology/PRIMARY_AND_SUB_RELATIONS.md`.
 Still open: what `Relation::weight` means (9.2 — value or cost;
 Zach leaning strength), the stratification rule (9.4), hysteresis bands on derived relations
 (9.5), and 9.6, which Zach marked open rather than closed.

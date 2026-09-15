@@ -814,8 +814,8 @@ joins they exist for.
         **deprioritised, not removed**.
 
      *Opus 5, reading it against the tree (not decided):*
-     - This is stated as a principle **for Earthcall**, not only for routing, and no document in
-       `docs/architecture` records it yet.
+     - This is stated as a principle **for Earthcall**, not only for routing. It now has its own
+       document: `ontology/PRIMARY_AND_SUB_RELATIONS.md` (four open ⚑ questions there).
      - The engine doesn't honour it today. `RelationManager::remove`, both `removeBetween`
        overloads and `removeInvolving` erase a Relation outright, and there is no primary/sub
        distinction in `Relation`.
