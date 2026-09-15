@@ -1,0 +1,148 @@
+diff --git a/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp b/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+index 1ff668e..2c4062b 100644
+--- a/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+@@ -796,6 +796,11 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
+         _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);
+     }
+ 
++    propagateFact(f);
++    return f->id;
++}
++
++void ReteNetwork::propagateFact(const FactPtr& f) {
+     std::vector<std::size_t> activatedAlphas;
+     for (auto& alpha : _alphaNodes) {
+         auto bindingIt = _alphaLawBindings.find(alpha.id);
+@@ -940,7 +945,6 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
+         if (betaActivated) activatedBetas.push_back(beta.id);
+     }
+ 
+-    return f->id;
+ }
+ 
+ void ReteNetwork::retractFirst(std::size_t count) {
+@@ -1016,31 +1020,9 @@ void ReteNetwork::retractFirst(std::size_t count) {
+     _facts = std::move(new_facts);
+ }
+ 
+-bool ReteNetwork::retractFact(const std::string& factId) {
+-    auto factIt = _factById.find(factId);
+-    if (factIt == _factById.end()) return false;
+-    FactPtr fact = factIt->second;
+-    _factById.erase(factIt);
+-
+-    if (fact->isState) {
+-        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
+-        if (sIt != _stateFactsBySubjectAttr.end()) {
+-            auto& vec = sIt->second;
+-            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());
+-            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
+-        }
+-        if (fact->type == "relation-state" && fact->subject) {
+-            auto rIt = _relationStateIndex.find(fact->subject);
+-            if (rIt != _relationStateIndex.end()) {
+-                rIt->second.erase(fact->attribute);
+-                if (rIt->second.empty()) _relationStateIndex.erase(rIt);
+-            }
+-        }
+-    }
+-
+-    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });
+-    if (it != _facts.end()) _facts.erase(it);
+-
++void ReteNetwork::detachFactConsequences(const FactPtr& fact) {
++    if (!fact) return;
++    const std::string& factId = fact->id;
+     auto aIt = _factAlphaNodes.find(factId);
+     if (aIt != _factAlphaNodes.end()) {
+         for (std::size_t alphaId : aIt->second) {
+@@ -1079,6 +1061,35 @@ bool ReteNetwork::retractFact(const std::string& factId) {
+                       _agenda.end());
+         _agendaFactIds.erase(factId);
+     }
++}
++
++bool ReteNetwork::retractFact(const std::string& factId) {
++    auto factIt = _factById.find(factId);
++    if (factIt == _factById.end()) return false;
++    FactPtr fact = factIt->second;
++    _factById.erase(factIt);
++
++    if (fact->isState) {
++        auto sIt = _stateFactsBySubjectAttr.find(fact->subjectId + ":" + fact->attribute);
++        if (sIt != _stateFactsBySubjectAttr.end()) {
++            auto& vec = sIt->second;
++            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());
++            if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
++        }
++        if (fact->type == "relation-state" && fact->subject) {
++            auto rIt = _relationStateIndex.find(fact->subject);
++            if (rIt != _relationStateIndex.end()) {
++                rIt->second.erase(fact->attribute);
++                if (rIt->second.empty()) _relationStateIndex.erase(rIt);
++            }
++        }
++    }
++
++    auto it = std::find_if(_facts.begin(), _facts.end(), [&](const FactPtr& f) { return f->id == factId; });
++    if (it != _facts.end()) _facts.erase(it);
++
++    detachFactConsequences(fact);
++
+     return true;
+ }
+ 
+@@ -1194,6 +1205,20 @@ bool ReteNetwork::markFactDirty(const std::string& subjectId, const std::string&
+     return true;
+ }
+ 
++void ReteNetwork::refreshStateFact(const FactPtr& fact, nlohmann::json newValue) {
++    if (!fact) return;
++
++    // A persistent property changing value is not structural deletion.
++    // Detach every consequence of the OLD value before mutating the shared
++    // FactPtr: Alpha/Beta memories and agenda tokens retain FactPtr identity,
++    // so mutating first would rewrite history under the old memberships.
++    // Fact-store residency and ordering remain unchanged; only genuine
++    // retractFact() removes from _facts.
++    detachFactConsequences(fact);
++    fact->value = std::move(newValue);
++    propagateFact(fact);
++}
++
+ void ReteNetwork::evaluateDirty() {
+     std::vector<FactPtr> dirty = std::move(_dirtyFacts);
+     _dirtyFacts.clear();
+@@ -1209,12 +1234,11 @@ void ReteNetwork::evaluateDirty() {
+             nlohmann::json newValue = propertyValueToJson(prop->value());
+             if (fact->value == newValue) continue; // no change
+             
+-            // Retract the old fact
+-            retractFact(fact->id);
+-            
+-            // Update value and re-assert
+-            fact->value = newValue;
+-            assertFact(fact);
++            // The state fact persists. Invalidate consequences of its old
++            // value, mutate the same identity in place, then discriminate the
++            // new value. Do not erase/reappend _facts: its order is consumed
++            // by retractFirst(), and a value change is not fact death.
++            refreshStateFact(fact, std::move(newValue));
+         }
+     }
+ }
+diff --git a/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp b/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+index 98aa4a8..5055fd1 100644
+--- a/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
++++ b/src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+@@ -719,6 +719,9 @@ public:
+ private:
+     const AlphaNode* findAlpha(std::size_t id) const;
+     AlphaNode* findAlpha(std::size_t id);
++    void propagateFact(const FactPtr& fact);
++    void detachFactConsequences(const FactPtr& fact);
++    void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
+ 
+     // ------------------------------------------------------------------
+     // Backfill. Propagation is incremental — assertFact maintains the
