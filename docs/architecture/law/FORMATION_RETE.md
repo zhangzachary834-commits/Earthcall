@@ -2,7 +2,7 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is measured and deliberately deferred** (2026-09-10) — its stated subject has no users, and the adjacent real cost needs an invalidation signal the tree does not have. Rung 0 closed §1.2(a):
+**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is done** (2026-09-14) — overlap still has no users; membership, the real idiom, now costs what a property read costs, and the cause turned out to be an opaque Prophetic read rather than the relation walk (see §8 item 4). Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
@@ -576,7 +576,16 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
 
    Guarded by `tests/law/gate_hoist_test.cpp` (six ways the hoist could silence a law) and
    `tests/law/referent_resolution_test.cpp` (the measurement).
-4. ⚠️ **Category-level overlap** (§3.1). *Measured 2026-09-10 (Opus 5, session
+4. ✅ **Category-level overlap** (§3.1) → **category membership**. *Built 2026-09-14 (Opus 5,
+   session `session_01JE2AguCX12mpJ9YwFUqgmQ`).* The measured ~17x gap at 400 beings was an
+   opaque `Related` read in `PropheticRete` turning the write filter off world-wide, not the
+   O(relations) walk below. With a typed `Related` made legible and `RelationManager`'s endpoint
+   index: **1.0x the property control**. It also closed two edge-fact deafnesses (re-formed
+   edges and retyped edges). Record and guards:
+   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 4 — ✅ 2026-09-14.
+   The 2026-09-10 measurement is kept below as history; its causal claim was wrong.
+
+   *Measured 2026-09-10 (Opus 5, session
    `session_01F9nK3FZ7VR4PFPTUWfYyvm`) and **deliberately not built**. The measurement says this
    rung is aimed at something nothing does, while the thing everything does is next door.*
 

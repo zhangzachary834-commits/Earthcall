@@ -1089,6 +1089,22 @@ bool ReteNetwork::hasRelationStateFact(const Singular* subject,
     return it != _relationStateIndex.end() && it->second.count(relationType) != 0;
 }
 
+bool ReteNetwork::retractRelationStateFact(const Singular* subject,
+                                           const std::string& relationType) {
+    if (!subject) return false;
+    std::string factId;
+    for (const auto& fact : _facts) {
+        if (fact->isState && fact->type == "relation-state" && fact->subject == subject &&
+            fact->attribute == relationType) {
+            factId = fact->id;
+            break;
+        }
+    }
+    if (factId.empty()) return false;
+    retractFact(factId);
+    return true;
+}
+
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
     _relationStateIndex.clear();
     std::unordered_set<std::string> removedIds;
@@ -1733,6 +1749,7 @@ void LawManager::connectToEventBus() {
         for (auto& law : _laws) {
             law->forgetSubject(being);
         }
+        _relationStateToRevalidate.erase(being);
         // …and every RELATION that held it lets go of the pointer, keeping the
         // name. Relations outlive their endpoints all the time (a Formation, a
         // provenance record, a test's own graph), and aId()/bId() call a
@@ -1745,6 +1762,19 @@ void LawManager::connectToEventBus() {
 
     Singular::setPropertyChangeCallback([this](Singular* owner, const std::string& name) {
         if (!owner) return;
+        // A Relation RETYPED through its property: its endpoints' edge facts
+        // are keyed on the type, so the old type's may now be stale and the new
+        // type's missing. The old type is already overwritten, so every type in
+        // play is re-checked for both ends. Before the Prophetic gate on
+        // purpose: this is the edge-fact stream, not a property read.
+        if (name == "type") {
+            if (auto* relation = dynamic_cast<Relation*>(owner)) {
+                for (const std::string& type : _relationTypesInPlay) {
+                    queueRelationStateRevalidation(*relation, type);
+                }
+                _dirty = true;
+            }
+        }
         // Prophetic Rete, Pass 1/2: a property no authored condition can read
         // cannot matter, whoever just wrote it. markFactDirty scans the whole
         // fact list — one state fact per property per being — so this is the
@@ -1801,6 +1831,13 @@ void LawManager::connectToEventBus() {
         if ((e.type == "object-destroyed" || e.type == "relation-destroyed") && e.subject) {
             releaseFromLaws(e.subject);
             _rete.retractStateFactsBySubject(e.subject->getIdentifier());
+        }
+        // The endpoints' edge facts, decided next tick — see
+        // LawManager::_relationStateToRevalidate for why not here.
+        if (e.type == "relation-destroyed" && e.subject) {
+            if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
+                queueRelationStateRevalidation(*relation, relation->type);
+            }
         }
 
         
@@ -1972,6 +2009,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     }
 
     refreshVocabularyIndex();
+    revalidateRelationStateFacts();
 
     auto T2 = glfwGetTime();
 
@@ -2703,6 +2741,54 @@ void LawManager::assertRelationStateFact(Singular* endpoint, const std::string& 
     edgeFact->isState = true;
     edgeFact->dirty = false;
     _rete.assertFact(edgeFact);
+}
+
+// See the header: the retraction half of the edge-fact stream.
+void LawManager::queueRelationStateRevalidation(const Relation& relation,
+                                                const std::string& relationType) {
+    if (!_relationTypesInPlay.count(relationType)) return;   // no fact was ever asserted
+    if (Singular* a = relation.a()) _relationStateToRevalidate[a].insert(relationType);
+    if (Singular* b = relation.b()) _relationStateToRevalidate[b].insert(relationType);
+}
+
+void LawManager::revalidateRelationStateFacts() {
+    if (_relationStateToRevalidate.empty()) return;
+    auto pending = std::move(_relationStateToRevalidate);
+    _relationStateToRevalidate.clear();
+
+    std::vector<Relation*> edges;
+    for (const auto& entry : pending) {
+        // Non-const only because the Universe and fact APIs take Singular*;
+        // nothing here writes to the being.
+        Singular* being = const_cast<Singular*>(entry.first);
+        const auto& types = entry.second;
+        if (!being || Universe::instance().isUnmade(being)) continue;
+        if (!Universe::instance().relationsInvolving(*being, edges)) {
+            edges = Universe::instance().relations();
+        }
+        const std::string beingId = being->getIdentifier();
+        const auto involves = [&](const Relation& r) {
+            // Pointer when bound, kept identifier when not — the same identity
+            // rule the Related predicate uses (ConditionModel.cpp).
+            const auto isBeing = [&](const Singular* ptr, const std::string& keptId) {
+                return ptr ? ptr == being : (!beingId.empty() && keptId == beingId);
+            };
+            return isBeing(r.a(), r.a() ? std::string() : r.aId()) ||
+                   isBeing(r.b(), r.b() ? std::string() : r.bId());
+        };
+        for (const std::string& type : types) {
+            const bool stillHeld = std::any_of(edges.begin(), edges.end(), [&](Relation* r) {
+                return r && r->type == type && involves(*r);
+            });
+            if (stillHeld) {
+                // A retype can make an edge newly of this type; make sure the
+                // fact exists (idempotent).
+                assertRelationStateFact(being, type);
+            } else if (_rete.retractRelationStateFact(being, type)) {
+                _dirty = true;
+            }
+        }
+    }
 }
 
 void LawManager::syncReteCompilation(Law& law) {

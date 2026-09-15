@@ -89,11 +89,11 @@ namespace Rendering {
             configurePaintBrushPreset(state, brushSys, type);
         }
 
-        void renderPaintToolButton(CreatorConsoleState& state, BrushSystem* brushSys, Tool::Type type, const char* label) {
+        void renderPaintToolButton(CreatorConsoleState& state, BrushSystem* brushSys, Tool::Type type, const char* label, float btnWidth) {
             const bool active = state.current3DMode == Mode3D::None && state.currentTool.getType() == type;
-            pushActiveButtonStyle(active, ImVec4(0.30f, 0.50f, 0.31f, 1.0f),
-                                  ImVec4(0.36f, 0.62f, 0.38f, 1.0f));
-            const bool pressed = ImGui::Button(label, ImVec2(118.0f, 0.0f));
+            pushActiveButtonStyle(active, ImVec4(0.25f, 0.50f, 0.35f, 1.0f),
+                                  ImVec4(0.32f, 0.62f, 0.44f, 1.0f));
+            const bool pressed = ImGui::Button(label, ImVec2(btnWidth, 24.0f));
             popActiveButtonStyle(active);
             if (pressed) {
                 setPaintTool(state, brushSys, type);
@@ -148,40 +148,44 @@ namespace Rendering {
             {Tool::Type::TextPath, "Path"}
         };
 
-        ImGui::TextUnformatted("2D Paint Tool Belt");
+        const float avail = ImGui::GetContentRegionAvail().x;
+        const int cols = (avail >= 320.0f) ? 3 : 2;
+        const float btnW = responsiveItemWidth(cols, 70.0f);
+
+        ImGui::TextColored(ImVec4(0.85f, 0.90f, 0.95f, 1.0f), "2D Paint Tool Belt");
         ImGui::Separator();
 
         for (int i = 0; i < IM_ARRAYSIZE(drawingTools); ++i) {
-            renderPaintToolButton(state, brushSys, drawingTools[i].type, drawingTools[i].label);
-            sameLineEvery(i, 3);
+            renderPaintToolButton(state, brushSys, drawingTools[i].type, drawingTools[i].label, btnW);
+            responsiveSameLine(i, cols);
         }
 
         ImGui::Spacing();
         if (ImGui::CollapsingHeader("Shapes", ImGuiTreeNodeFlags_DefaultOpen)) {
             for (int i = 0; i < IM_ARRAYSIZE(shapeTools); ++i) {
-                renderPaintToolButton(state, brushSys, shapeTools[i].type, shapeTools[i].label);
-                sameLineEvery(i, 3);
+                renderPaintToolButton(state, brushSys, shapeTools[i].type, shapeTools[i].label, btnW);
+                responsiveSameLine(i, cols);
             }
         }
 
         if (ImGui::CollapsingHeader("Utility")) {
             for (int i = 0; i < IM_ARRAYSIZE(utilityTools); ++i) {
-                renderPaintToolButton(state, brushSys, utilityTools[i].type, utilityTools[i].label);
-                sameLineEvery(i, 3);
+                renderPaintToolButton(state, brushSys, utilityTools[i].type, utilityTools[i].label, btnW);
+                responsiveSameLine(i, cols);
             }
         }
 
         if (ImGui::CollapsingHeader("Text")) {
             for (int i = 0; i < IM_ARRAYSIZE(textTools); ++i) {
-                renderPaintToolButton(state, brushSys, textTools[i].type, textTools[i].label);
-                sameLineEvery(i, 3);
+                renderPaintToolButton(state, brushSys, textTools[i].type, textTools[i].label, btnW);
+                responsiveSameLine(i, cols);
             }
         }
 
         ImGui::Separator();
-        ImGui::TextUnformatted("Paint Inspector");
+        ImGui::TextColored(ImVec4(0.95f, 0.85f, 0.55f, 1.0f), "Paint & Brush Inspector");
 
-        if (ImGui::ColorEdit3("Color", &state.createColor.x, ImGuiColorEditFlags_NoInputs)) {
+        if (ImGui::ColorEdit3("Color", &state.createColor.x)) {
             if (auto* channel = Singularity::Core::CreationChannel::find(*Core::Engine::instance().getLawManager())) {
                 channel->activeColor = state.createColor;
             }
@@ -260,26 +264,28 @@ namespace Rendering {
                 if (ImGui::Combo("Blend Mode", &blendMode, blendModes, IM_ARRAYSIZE(blendModes))) {
                     brushSys->setBlendMode(static_cast<BrushSystem::BlendMode>(blendMode));
                 }
-                if (ImGui::Button("Add Layer")) {
+                float halfBtnW = responsiveItemWidth(2, 60.0f);
+                if (ImGui::Button("Add Layer", ImVec2(halfBtnW, 0))) {
                     brushSys->addLayer();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Delete Layer")) {
+                if (ImGui::Button("Delete Layer", ImVec2(halfBtnW, 0))) {
                     brushSys->deleteLayer(brushSys->getActiveLayer());
                 }
             }
         }
 
         ImGui::Separator();
-        if (ImGui::Button("Undo")) {
+        float thirdBtnW = responsiveItemWidth(3, 50.0f);
+        if (ImGui::Button("Undo", ImVec2(thirdBtnW, 0))) {
             if (brushSys) brushSys->undo();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Redo")) {
+        if (ImGui::Button("Redo", ImVec2(thirdBtnW, 0))) {
             if (brushSys) brushSys->redo();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Clear History")) {
+        if (ImGui::Button("Clear", ImVec2(thirdBtnW, 0))) {
             if (brushSys) brushSys->clearHistory();
         }
     }

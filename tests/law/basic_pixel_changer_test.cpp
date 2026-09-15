@@ -237,6 +237,60 @@ int main() {
     check(near(texel(texture, 15, 48), glm::vec3(1.0f)),
           "neighboring texel remains unchanged");
 
+    // Drag red slider from u=0.25 (785px) to u=0.75 (935px) at y=501px
+    frame(785.0f, 501.0f, false);
+    frame(785.0f, 501.0f, true);
+    frame(935.0f, 501.0f, true);
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              std::abs(std::get<glm::vec3>(selectedColorProperty->value()).r - 0.75f) < 1e-3f,
+          "dragging a slider continuously updates the selected color channel");
+    frame(935.0f, 501.0f, false);
+
+    // Verify tool buttons do not overwrite selected color
+    Property* brushRadProp = canvas->findProperty("brushRadius");
+    // Click BRUSH [2px] at (78, 101)
+    frame(78.0f, 101.0f, false);
+    frame(78.0f, 101.0f, true);
+    frame(78.0f, 101.0f, false);
+    check(brushRadProp != nullptr &&
+              std::holds_alternative<double>(brushRadProp->value()) &&
+              std::abs(std::get<double>(brushRadProp->value()) - 2.0) < 1e-4,
+          "clicking brush tool sets canvas brushRadius to 2px");
+    check(selectedColorProperty != nullptr &&
+              std::holds_alternative<glm::vec3>(selectedColorProperty->value()) &&
+              std::abs(std::get<glm::vec3>(selectedColorProperty->value()).r - 0.75f) < 1e-3f,
+          "clicking brush tool preserves active selectedColor");
+
+    // Click PEN [1px] at (78, 71)
+    frame(78.0f, 71.0f, false);
+    frame(78.0f, 71.0f, true);
+    frame(78.0f, 71.0f, false);
+    check(brushRadProp != nullptr &&
+              std::holds_alternative<double>(brushRadProp->value()) &&
+              std::abs(std::get<double>(brushRadProp->value()) - 1.0) < 1e-4,
+          "clicking pen tool sets canvas brushRadius to 1px");
+
+    // Click FILL INK at (78, 161)
+    frame(78.0f, 161.0f, false);
+    frame(78.0f, 161.0f, true);
+    frame(78.0f, 161.0f, false);
+    std::cout << "DEBUG fill color expected: (" << std::get<glm::vec3>(selectedColorProperty->value()).r << ", "
+              << std::get<glm::vec3>(selectedColorProperty->value()).g << ", "
+              << std::get<glm::vec3>(selectedColorProperty->value()).b << ") actual (0,0): ("
+              << texel(texture, 0, 0).r << ", " << texel(texture, 0, 0).g << ", " << texel(texture, 0, 0).b << ")" << std::endl;
+    check(near(texel(texture, 0, 0), std::get<glm::vec3>(selectedColorProperty->value())) &&
+          near(texel(texture, 63, 63), std::get<glm::vec3>(selectedColorProperty->value())),
+          "clicking fill tool flood fills canvas with active selectedColor");
+
+    // Click CLEAR [WHT] at (78, 191)
+    frame(78.0f, 191.0f, false);
+    frame(78.0f, 191.0f, true);
+    frame(78.0f, 191.0f, false);
+    check(near(texel(texture, 0, 0), glm::vec3(1.0f)) &&
+          near(texel(texture, 63, 63), glm::vec3(1.0f)),
+          "clicking clear tool resets canvas to white");
+
     // A single sample becomes an ordinary, enumerable, writable Property only
     // when authored into the being.  No 4096-property explosion is required.
     ActionNode elevateOne = ActionNode::addProperty(

@@ -62,6 +62,43 @@
         },
         {
           "kind": 8,
+          "path": "@basic-pixel-canvas.authored.full-canvas",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@event.subject.clearCanvasColor"
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@basic-pixel-canvas.authored.full-canvas",
+          "function": {
+            "input": "c",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 1,
+                  "var": "c"
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "c": "@material-color-picker.selectedColor",
+            "t": "@event.subject.fillCanvasTrigger"
+          }
+        },
+        {
+          "kind": 8,
           "path": "@basic-pixel-canvas.paintColor",
           "function": {
             "input": "c",

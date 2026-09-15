@@ -75,7 +75,12 @@ Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
 void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
     _typeLexeme = lexeme;
     if (_typeLexeme) {
+        const std::string previous = type;
         type = _typeLexeme->getIdentifier();
+        // Announced like any write to the `type` property: a Relation's kind
+        // changing in place moves its endpoints' edge facts in the Rete
+        // (LawManager::_relationStateToRevalidate). Silent before 2026-09-14.
+        if (type != previous) Singular::notifyPropertyChanged(this, "type");
     }
 }
 

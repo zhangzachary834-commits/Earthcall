@@ -1,15 +1,21 @@
 #include "CreatorConsoleState.hpp"
 #include "CreatorConsoleWindow.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Screen/Camera.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 #include <cstring>
 #include <filesystem>
 #include <vector>
+#include <string>
 #include <imgui.h>
 
 extern ZoneManager mgr;
@@ -36,8 +42,6 @@ namespace Rendering {
             if (!engine || path.empty()) return;
             SaveContext ctx = makeSaveContext(engine);
             mgr.loadState(path, ctx);
-            // Session pose changed; identity-stable Zones (Home, …) were
-            // kept. Drop Object* only if that being is no longer live.
             forgetStaleObjectHandles(mgr, engine->getPerson());
         }
     }
@@ -182,14 +186,100 @@ namespace Rendering {
     }
 
     void renderAssetsConsole(Core::Engine* engine) {
-        ImGui::TextUnformatted("Assets & Legacy Session Tools");
+        auto& state = getCreatorConsoleState();
+        ImGui::TextColored(ImVec4(0.85f, 0.90f, 0.95f, 1.0f), "Creator Asset Browser");
         ImGui::Separator();
-        ImGui::TextWrapped(
-            "Ordinary save/movement is Zone-native. Use Creator Console -> Zones -> Move to Zone / Save Zone. The controls below retain saves/worlds compatibility for migration and recovery.");
 
-        if (ImGui::TreeNode("Legacy session import/export / recovery")) {
+        // 1. Materials Library
+        if (ImGui::CollapsingHeader("Materials & Shaders", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const auto& mats = materials.getAll();
+            if (mats.empty()) {
+                ImGui::TextDisabled("No materials registered.");
+            } else {
+                for (const auto& m : mats) {
+                    if (!m) continue;
+                    ImGui::PushID(m.get());
+                    ImVec4 col(m->baseColor.r, m->baseColor.g, m->baseColor.b, 1.0f);
+                    ImGui::ColorButton("##swatch", col, ImGuiColorEditFlags_NoTooltip, ImVec2(18, 18));
+                    ImGui::SameLine();
+                    ImGui::Text("%s", m->name().c_str());
+
+                    if (state.selectedObject3D) {
+                        ImGui::SameLine(180.0f);
+                        if (ImGui::SmallButton("Apply to Selection")) {
+                            if (auto objMat = state.selectedObject3D->ownMaterial()) {
+                                objMat->baseColor = m->baseColor;
+                                objMat->opacity = m->opacity;
+                                objMat->shininess = m->shininess;
+                                objMat->specular = m->specular;
+                                objMat->ambient = m->ambient;
+                                objMat->diffuse = m->diffuse;
+                                objMat->setName(m->name());
+                            }
+                        }
+                    }
+                    ImGui::PopID();
+                }
+            }
+        }
+
+        ImGui::Spacing();
+
+        // 2. Prefabs & Concepts Library
+        if (ImGui::CollapsingHeader("Captured Concepts & Prefabs", ImGuiTreeNodeFlags_DefaultOpen)) {
+            const auto& concepts = ConceptRegistry::instance().getAll();
+            if (concepts.empty()) {
+                ImGui::TextDisabled("No concepts captured yet. Capture concepts via Set-to-Set Creation [F9].");
+            } else {
+                for (const auto& c : concepts) {
+                    if (!c) continue;
+                    ImGui::PushID(c->getIdentifier().c_str());
+                    ImGui::BulletText("%s", c->name().c_str());
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("(%zu members, %zu relations)", c->members().size(), c->relationTemplates().size());
+                    ImGui::SameLine();
+                    if (ImGui::SmallButton("Instantiate in Zone")) {
+                        glm::vec3 spawnPos(0.0f, 1.0f, -2.5f);
+                        if (engine && engine->getCamera()) {
+                            spawnPos = engine->getCamera()->getPos() + engine->getCamera()->getFront() * 3.0f;
+                        }
+                        glm::mat4 placement = glm::translate(glm::mat4(1.0f), spawnPos);
+                        auto newborns = c->instantiate(placement);
+                        for (auto& newborn : newborns) {
+                            mgr.active().addObject(std::move(newborn));
+                        }
+                    }
+                    ImGui::PopID();
+                }
+            }
+        }
+
+        ImGui::Spacing();
+
+        // 3. Registered Laws Inspector
+        if (ImGui::CollapsingHeader("Registered Laws")) {
+            LawManager* laws = engine ? engine->getLawManager() : nullptr;
+            if (!laws || laws->getAll().empty()) {
+                ImGui::TextDisabled("No laws registered.");
+            } else {
+                for (const auto& law : laws->getAll()) {
+                    if (!law) continue;
+                    ImGui::PushID(law.get());
+                    bool enabled = law->isEnabled();
+                    if (ImGui::Checkbox(law->getIdentifier().c_str(), &enabled)) {
+                        law->setEnabled(enabled);
+                    }
+                    ImGui::PopID();
+                }
+            }
+        }
+
+        ImGui::Spacing();
+
+        // 4. Legacy Session Management (Recovery & Export)
+        if (ImGui::CollapsingHeader("Legacy Session Management (Migration & Recovery)")) {
             static char saveName[128] = "legacy_session";
-            ImGui::InputText("Legacy Session Name", saveName, IM_ARRAYSIZE(saveName));
+            ImGui::InputText("Session Name", saveName, IM_ARRAYSIZE(saveName));
 
             if (ImGui::Button("Export Legacy Session") && engine) {
                 SaveContext ctx = makeSaveContext(engine);
@@ -207,11 +297,11 @@ namespace Rendering {
             }
 
             ImGui::Separator();
-            ImGui::TextUnformatted("Import a legacy session");
+            ImGui::TextUnformatted("Import Legacy Session:");
             {
                 auto worlds = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
                 if (worlds.empty()) {
-                    ImGui::TextDisabled("No legacy session files in saves/worlds/ yet.");
+                    ImGui::TextDisabled("No legacy session files in saves/worlds/.");
                 }
                 const std::string& current = mgr.getSaveLoadState().loadedSaveName;
                 for (const auto& w : worlds) {
@@ -229,49 +319,11 @@ namespace Rendering {
                     ImGui::PopID();
                 }
             }
-            if (ImGui::Button("Legacy Session Manager")) {
+            if (ImGui::Button("Open Legacy Session Manager Window")) {
                 mgr.updateSaveFiles();
                 mgr.getSaveLoadState().showManager = true;
                 if (engine) engine->ensureCursorUnlocked();
             }
-
-            {
-                auto& sl = mgr.getSaveLoadState();
-                if (!sl.lastSaveReport.empty()) {
-                    ImGui::TextWrapped("%s", sl.lastSaveReport.c_str());
-                }
-                if (!sl.lastLoadReport.empty()) {
-                    ImGui::TextWrapped("%s", sl.lastLoadReport.c_str());
-                }
-                ImGui::Checkbox("Unpack legacy session for authoring", &sl.unpackForAuthoring);
-            }
-            ImGui::TreePop();
-        }
-
-        ImGui::Separator();
-        if (ImGui::TreeNodeEx("Materials", ImGuiTreeNodeFlags_DefaultOpen)) {
-            const auto& mats = materials.getAll();
-            if (mats.empty()) {
-                ImGui::TextDisabled("No materials registered.");
-            } else {
-                for (const auto& m : mats) {
-                    if (m) ImGui::TextUnformatted(m->getIdentifier().c_str());
-                }
-            }
-            ImGui::TreePop();
-        }
-        if (ImGui::TreeNodeEx("Laws", ImGuiTreeNodeFlags_DefaultOpen)) {
-            LawManager* laws = engine ? engine->getLawManager() : nullptr;
-            if (!laws || laws->getAll().empty()) {
-                ImGui::TextDisabled("No laws registered.");
-            } else {
-                for (const auto& law : laws->getAll()) {
-                    if (!law) continue;
-                    ImGui::Text("%s%s", law->getIdentifier().c_str(),
-                                law->isEnabled() ? "" : " (down)");
-                }
-            }
-            ImGui::TreePop();
         }
     }
 

@@ -133,7 +133,13 @@ struct LawFacts {
     // segments — because a path resolves through nested Singulars and the
     // dirty callback names the LEAF owner's property, not the whole path.
     std::unordered_set<std::string> readNames;
-    bool opaqueWrites = false;     // structural action: the write set is not enumerable
+    // Property names this law hears by their ROOT segment alone: a write to
+    // "<root>" or to any "<root>.<anything>" may matter. Needed where the Rete
+    // node itself filters by root and the full names cannot be listed — a typed
+    // `Related` node wakes on any state fact whose attribute root is the
+    // relation type (ConditionNode::compileToRete, `rootOf`).
+    std::unordered_set<std::string> readRoots;
+    bool opaqueWrites = false;    // structural action: the write set is not enumerable
     bool opaqueReads = false;      // structural condition: the read set is not enumerable
     std::vector<std::string> notes;   // why, in tree order — this is the audit trail
 };
@@ -222,6 +228,7 @@ public:
 private:
     std::vector<LawFacts> _facts;
     std::unordered_set<std::string> _readNames;
+    std::unordered_set<std::string> _readRoots;
     std::unordered_map<std::string, Range> _writeRanges;
     std::vector<Unreachable> _unreachable;
     bool _complete = true;
