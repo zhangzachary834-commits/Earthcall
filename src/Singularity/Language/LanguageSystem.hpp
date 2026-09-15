@@ -20,18 +20,29 @@ class LanguageSystem {
 public:
     static LanguageSystem& instance();
 
-    // Instantiate or retrieve a Lexeme for a given string
+    // Instantiate or retrieve a Lexeme for a given string. If the input is the
+    // exact identifier of an already-live Lexeme, return that being instead of
+    // minting a new Lexeme whose visible symbol happens to equal the identifier.
     std::shared_ptr<Lexeme> resolve(const std::string& symbol);
 
     // First-mover / save intern: a Lexeme with a stable identifier law-text
-    // can name (`lexeme.the`). Does not mint a second being if the id or
-    // symbol is already live.
+    // can name (`lexeme.the`). Stable identity wins over spelling: a different
+    // stableId may intentionally intern a second same-spelled Lexeme. The
+    // single-symbol index remains the legacy/default binding; exact identity is
+    // always available through findById, and findAllBySymbol exposes ambiguity.
     std::shared_ptr<Lexeme> intern(const std::string& symbol, const std::string& stableId);
 
+    // Legacy/default spelling lookup. When multiple live Lexemes share the same
+    // spelling, this preserves the existing last-bound behavior but reports the
+    // ambiguity loudly so a human-facing channel cannot mistake spelling for
+    // durable identity. Use findById when the caller means one exact being.
     std::shared_ptr<Lexeme> findBySymbol(const std::string& symbol) const;
 
+    // Return every live Lexeme with this exact spelling. Human-facing channels
+    // use this to present duplicate words without collapsing their identities.
+    std::vector<std::shared_ptr<Lexeme>> findAllBySymbol(const std::string& symbol) const;
+
     // The first-mover foundation Lexeme (`lexeme.christ`). Created once.
-    // God shows up as the root of the seed hierarchy, not as a skinned Object.
     std::shared_ptr<Lexeme> foundation();
 
     static constexpr const char* kFoundationId     = "lexeme.christ";
