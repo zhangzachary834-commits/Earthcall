@@ -169,9 +169,13 @@ void LanguageSystem::remove(const std::string& symbol) {
     auto lexeme = findBySymbol(symbol);
     if (!lexeme) return;
 
+    // `symbol` may itself be an exact id or @<id>. The spelling index is keyed
+    // by the Lexeme's visible symbol, so always update it by the actual being we
+    // resolved rather than by the caller's reference token.
+    const std::string spelling = lexeme->getSymbol();
     detachFromAllZones(lexeme.get());
 
-    auto sit = _symbolIndex.find(symbol);
+    auto sit = _symbolIndex.find(spelling);
     if (sit != _symbolIndex.end() && sit->second == lexeme) {
         _symbolIndex.erase(sit);
     }
@@ -181,7 +185,7 @@ void LanguageSystem::remove(const std::string& symbol) {
     if (vecIt != _lexemes.end()) {
         _lexemes.erase(vecIt);
     }
-    rebindSymbolIndex(symbol);
+    rebindSymbolIndex(spelling);
 }
 
 void LanguageSystem::tick(float) {
