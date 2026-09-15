@@ -1,0 +1,84 @@
+name: Post-Formation dirty Rete breakdown
+
+on:
+  push:
+    branches:
+      - sol/post-formation-rete-living-profile-20260915
+    paths:
+      - .github/workflows/post-formation-dirty-breakdown.yml
+  workflow_dispatch:
+
+jobs:
+  profile:
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instrument evaluateDirty internals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def once(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected one match, found {n}: {old!r}')
+              p.write_text(s.replace(old, new, 1))
+
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
+               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    void evaluateDirty();\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''',
+               '''    bool markFactDirty(const std::string& subjectId, const std::string& attribute);\n    struct DirtyTiming {\n        float totalMs{0.0f};\n        float readCompareMs{0.0f};\n        float retractMs{0.0f};\n        float assertMs{0.0f};\n        std::size_t dequeued{0};\n        std::size_t changed{0};\n        std::size_t unchanged{0};\n        std::size_t missing{0};\n    };\n    void evaluateDirty();\n    const DirtyTiming& lastDirtyTiming() const { return _lastDirtyTiming; }\n    bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }''')
+
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp',
+               '''    std::vector<FactPtr> _dirtyFacts;\n    std::vector<AlphaNode> _alphaNodes;''',
+               '''    std::vector<FactPtr> _dirtyFacts;\n    DirtyTiming _lastDirtyTiming{};\n    std::vector<AlphaNode> _alphaNodes;''')
+
+          old_eval = '''void ReteNetwork::evaluateDirty() {\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    \n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n        \n        if (!fact->subject) continue;\n        \n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (prop) {\n            nlohmann::json newValue = propertyValueToJson(prop->value());\n            if (fact->value == newValue) continue; // no change\n            \n            // Retract the old fact\n            retractFact(fact->id);\n            \n            // Update value and re-assert\n            fact->value = newValue;\n            assertFact(fact);\n        }\n    }\n}\n'''
+          new_eval = '''void ReteNetwork::evaluateDirty() {\n    _lastDirtyTiming = {};\n    const double tAll0 = glfwGetTime();\n    std::vector<FactPtr> dirty = std::move(_dirtyFacts);\n    _dirtyFacts.clear();\n    _lastDirtyTiming.dequeued = dirty.size();\n    \n    for (auto& fact : dirty) {\n        if (!fact->dirty) continue;\n        fact->dirty = false;\n        \n        if (!fact->subject) { ++_lastDirtyTiming.missing; continue; }\n        \n        const double tRead0 = glfwGetTime();\n        auto* prop = fact->subject->findProperty(fact->attribute);\n        if (!prop) {\n            _lastDirtyTiming.readCompareMs += static_cast<float>((glfwGetTime() - tRead0) * 1000.0);\n            ++_lastDirtyTiming.missing;\n            continue;\n        }\n        nlohmann::json newValue = propertyValueToJson(prop->value());\n        const bool same = (fact->value == newValue);\n        _lastDirtyTiming.readCompareMs += static_cast<float>((glfwGetTime() - tRead0) * 1000.0);\n        if (same) { ++_lastDirtyTiming.unchanged; continue; }\n        ++_lastDirtyTiming.changed;\n        \n        const double tRetract0 = glfwGetTime();\n        retractFact(fact->id);\n        _lastDirtyTiming.retractMs += static_cast<float>((glfwGetTime() - tRetract0) * 1000.0);\n        \n        fact->value = newValue;\n        const double tAssert0 = glfwGetTime();\n        assertFact(fact);\n        _lastDirtyTiming.assertMs += static_cast<float>((glfwGetTime() - tAssert0) * 1000.0);\n    }\n    _lastDirtyTiming.totalMs = static_cast<float>((glfwGetTime() - tAll0) * 1000.0);\n}\n'''
+          once('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp', old_eval, new_eval)
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    double physicsMs = 0.0;\n};''',
+               '''    double physicsMs = 0.0;\n\n    double dirtyTotalMs = 0.0;\n    double dirtyReadMs = 0.0;\n    double dirtyRetractMs = 0.0;\n    double dirtyAssertMs = 0.0;\n    double dirtyDequeued = 0.0;\n    double dirtyChanged = 0.0;\n    double dirtyUnchanged = 0.0;\n    double dirtyMissing = 0.0;\n};''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    r.firings = lawManager.tick().size();\n    const auto t3 = Clock::now();''',
+               '''    r.firings = lawManager.tick().size();\n    const auto dirtyTiming = lawManager.rete().lastDirtyTiming();\n    const auto t3 = Clock::now();''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    r.physicsMs    = zoneTiming.physicsMs;\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''',
+               '''    r.physicsMs    = zoneTiming.physicsMs;\n    r.dirtyTotalMs   = dirtyTiming.totalMs;\n    r.dirtyReadMs    = dirtyTiming.readCompareMs;\n    r.dirtyRetractMs = dirtyTiming.retractMs;\n    r.dirtyAssertMs  = dirtyTiming.assertMs;\n    r.dirtyDequeued  = static_cast<double>(dirtyTiming.dequeued);\n    r.dirtyChanged   = static_cast<double>(dirtyTiming.changed);\n    r.dirtyUnchanged = static_cast<double>(dirtyTiming.unchanged);\n    r.dirtyMissing   = static_cast<double>(dirtyTiming.missing);\n    \n    r.relationsMs = std::chrono::duration<double, std::milli>(t2 - t1).count();''')
+
+          once('tests/singularity/frame_lag_test.cpp',
+               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));''',
+               '''    std::printf("  %-28s zone %8.3f ms   relations %7.3f ms   law %8.3f ms  (medians)\\n",\n                "by phase", samples.medianOf(&FrameResult::zoneMs),\n                samples.medianOf(&FrameResult::relationsMs),\n                samples.medianOf(&FrameResult::lawMs));\n    std::printf("  DIRTY-INTERNAL medians: total %.3f ms | read+json+compare %.3f | retract %.3f | assert %.3f | dequeued %.0f | changed %.0f | unchanged %.0f | missing %.0f\\n",\n                samples.medianOf(&FrameResult::dirtyTotalMs),\n                samples.medianOf(&FrameResult::dirtyReadMs),\n                samples.medianOf(&FrameResult::dirtyRetractMs),\n                samples.medianOf(&FrameResult::dirtyAssertMs),\n                samples.medianOf(&FrameResult::dirtyDequeued),\n                samples.medianOf(&FrameResult::dirtyChanged),\n                samples.medianOf(&FrameResult::dirtyUnchanged),\n                samples.medianOf(&FrameResult::dirtyMissing));''')
+          PY
+
+      - name: Configure and build diagnostic benchmark
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target frame_lag_test -j3
+
+      - name: Profile dirty-state internals
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee dirty-breakdown.txt
+          exit 0
+
+      - name: Print diagnostic headline
+        run: |
+          grep -E 'Tick [0-9]+:|median simulation frame|of that, LawManager::tick|DIRTY-INTERNAL|machine steadiness' dirty-breakdown.txt || true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-formation-dirty-breakdown-${{ github.run_id }}
+          path: dirty-breakdown.txt
