@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <mutex>
 #include <queue>
@@ -43,6 +44,7 @@ public:
     std::vector<std::shared_ptr<Lexeme>> findAllBySymbol(const std::string& symbol) const;
 
     // The first-mover foundation Lexeme (`lexeme.christ`). Created once.
+    // God shows up as the root of the seed hierarchy, not as a skinned Object.
     std::shared_ptr<Lexeme> foundation();
 
     static constexpr const char* kFoundationId     = "lexeme.christ";
@@ -78,9 +80,16 @@ private:
     // duplicate if one remains instead of making the remaining beings unreachable.
     void rebindSymbolIndex(const std::string& symbol);
 
+    // Multiplicity keeps ordinary symbol lookup O(1). We only walk the complete
+    // Lexeme vector to enumerate candidates when a collision actually exists.
+    void noteSymbolAdded(const std::string& symbol);
+    void noteSymbolRemoved(const std::string& symbol);
+
     std::vector<std::shared_ptr<Lexeme>> _lexemes;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _symbolIndex;
     std::unordered_map<std::string, std::shared_ptr<Lexeme>> _idIndex;
+    std::unordered_map<std::string, size_t> _symbolCounts;
+    mutable std::unordered_set<std::string> _reportedAmbiguities;
 
     struct PendingUtterance {
         std::string payload;
