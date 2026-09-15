@@ -59,11 +59,6 @@ static void testSaveAndLoadPerson() {
 
     db.savePerson(original);
 
-    // Write JSON file for loadPerson (which reads <name>.json from PERSON save folder)
-    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
-    std::ofstream file(folder + "/Alice.json");
-    file << original.serialize().dump();
-    file.close();
 
     Person loaded = createDummyPerson("Temp");
     bool success = db.loadPerson("Alice", loaded);
@@ -77,7 +72,7 @@ static void testSavePersonEmptyName() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
 
-    // Soul with empty string doesn't set a valid display name
+    // Soul with empty string doesn't set a valid display name, Person::Person forces it to "Person"
     Soul soul("");
     Body body("Humanoid", "Voxel");
     Person person(soul, std::move(body), "");
@@ -89,6 +84,17 @@ static void testSavePersonEmptyName() {
     assert(persons.size() == 1); // Saved default/fallback profile or bin
 
     std::cout << "  savePerson with displayName OK\n";
+}
+
+static void testLoadPersonEmptyName() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson with empty name returns false OK\n";
 }
 
 static void testLoadNonExistentPerson() {
@@ -143,7 +149,7 @@ static void testLoadPersonMalformedJson() {
 
     // Write a malformed JSON file directly to the save folder
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
-    std::ofstream file(folder + "/Malformed.json");
+    std::ofstream file(folder + "/Malformed.ecform");
     file << "{ this is not valid json }";
     file.close();
 
@@ -159,6 +165,7 @@ int main() {
     testGetInstanceSingleton();
     testSaveAndLoadPerson();
     testSavePersonEmptyName();
+    testLoadPersonEmptyName();
     testLoadNonExistentPerson();
     testGetAllRegisteredPersons();
     testLoadPersonPathTraversalSanitization();
