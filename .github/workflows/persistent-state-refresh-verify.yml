@@ -1,5 +1,6 @@
 name: Verify persistent state refresh
 
+# Read-only verifier. Candidate source is patched only inside the Actions checkout.
 on:
   push:
     branches:
