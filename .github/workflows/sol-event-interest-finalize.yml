@@ -1,0 +1,179 @@
+name: Sol event-interest finalizer
+
+on:
+  push:
+    branches:
+      - sol/event-interest-fastpath-latest-v4-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: macos-14
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure baseline
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build baseline lag probe
+        run: cmake --build build --target frame_lag_test -j8
+
+      - name: Baseline Living Instrument
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
+          echo "baseline_exit=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Apply production fix and permanent witness
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          s = p.read_text()
+          old = 'return _rete.hearsType(type) || _rete.hasOpaqueBoundAlpha();'
+          new = 'return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();'
+          if old not in s:
+              raise SystemExit('expected event-interest callback not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          cat > tests/law/event_interest_filter_test.cpp <<'CPP'
+          // Regression witness: authored state alphas are not arbitrary Event listeners.
+
+          #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+          #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+          #include "ConstructedBeing/Singular/Object/Object.hpp"
+
+          #include <cassert>
+          #include <cstdio>
+          #include <memory>
+
+          int main() {
+              Object author;
+              author.setObjectID("event-interest.author");
+
+              LawManager mgr;
+              mgr.connectToEventBus();
+
+              auto listenerLaw = std::make_shared<Law>(
+                  "event-interest-listener", std::vector<Singular*>{&author});
+              mgr.add(listenerLaw);
+
+              const std::size_t authored = mgr.rete().internAuthoredAlpha(
+                  "event-interest-authored-key", "authored state predicate",
+                  [](const FactPtr& fact) { return fact && fact->isState; });
+              mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), authored);
+
+              assert(mgr.rete().hasOpaqueBoundAlpha());
+              assert(!mgr.rete().hasForeignBoundAlpha());
+              assert(!Universe::instance().anyoneHears("law-applied"));
+              assert(!Universe::instance().anyoneHears("some-unrelated-event"));
+
+              const std::size_t typed = mgr.rete().internTypeAlpha("law-applied");
+              mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), typed);
+              assert(Universe::instance().anyoneHears("law-applied"));
+              mgr.rete().unbindLawFromAlpha(listenerLaw->getIdentifier(), typed);
+              assert(!Universe::instance().anyoneHears("law-applied"));
+
+              const std::size_t foreign = mgr.rete().addAlphaNode(
+                  "foreign / unknowable", [](const FactPtr&) { return true; });
+              mgr.rete().bindLawToAlpha(listenerLaw->getIdentifier(), foreign);
+              assert(mgr.rete().hasForeignBoundAlpha());
+              assert(Universe::instance().anyoneHears("some-unrelated-event"));
+              mgr.rete().unbindLawFromAlpha(listenerLaw->getIdentifier(), foreign);
+              assert(!mgr.rete().hasForeignBoundAlpha());
+              assert(!Universe::instance().anyoneHears("some-unrelated-event"));
+
+              std::puts("event_interest_filter_test: ALL OK");
+              return 0;
+          }
+          CPP
+
+      - name: Reconfigure and build semantic gates
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target event_test event_interest_filter_test prophetic_rete_test frame_lag_test -j8
+
+      - name: Event ontology gate
+        run: ./build/event_test | tee event-test.txt
+
+      - name: Event-interest semantic gate
+        run: ./build/event_interest_filter_test | tee event-interest-test.txt
+
+      - name: Prophetic Rete gate or documented headless skip
+        run: |
+          set +e
+          ./build/prophetic_rete_test > prophetic-rete.txt 2>&1
+          rc=$?
+          set -e
+          cat prophetic-rete.txt
+          if [ "$rc" -ne 0 ]; then
+            if grep -q "no GL context" prophetic-rete.txt; then
+              echo "ENV-SKIP: prophetic_rete_test requires a GL context on this runner"
+            else
+              exit "$rc"
+            fi
+          fi
+
+      - name: Patched Living Instrument
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee patched.txt
+          echo "patched_exit=${PIPESTATUS[0]}" >> "$GITHUB_ENV"
+          exit 0
+
+      - name: Require measured improvement
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          def metric(path, label):
+              text = Path(path).read_text()
+              m = re.search(r'median simulation frame =\s*([0-9.]+) ms', text)
+              if not m:
+                  raise SystemExit(f'missing median metric in {path}')
+              v = float(m.group(1))
+              print(f'{label} normalized median: {v:.3f} ms')
+              return v
+          a = metric('baseline.txt', 'baseline')
+          b = metric('patched.txt', 'patched')
+          reduction = 100.0 * (a - b) / a
+          print(f'reduction: {reduction:.1f}%')
+          if not b < a * 0.95:
+              raise SystemExit('event-interest patch did not improve median by at least 5% on same runner')
+          PY
+
+      - name: Commit proven production fix
+        run: |
+          git config user.name "GPT-5.6 Sol"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/ZonesOfEarth/AuthorsOfLaw/Law.cpp tests/law/event_interest_filter_test.cpp
+          git commit -m "Fix phantom event interest from authored state alphas"
+          git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Upload diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sol-event-interest-final-${{ github.run_id }}
+          path: |
+            baseline.txt
+            patched.txt
+            event-test.txt
+            event-interest-test.txt
+            prophetic-rete.txt
