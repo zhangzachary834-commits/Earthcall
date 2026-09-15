@@ -1,6 +1,7 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -120,17 +121,27 @@ int main() {
     );
     assert(api.hasPermission("world_access"));
 
-    // createZone returns false when _zoneManager is null
-    assert(!api.createZone("zone1", 0, 0, 100, 100));
+    // Attach ZoneManager instance to API
+    ZoneManager zm;
+    auto testZone = std::make_shared<Zone>("TestZone", "default");
+    zm.addZone(testZone);
+    api.setZoneManager(&zm);
+
+    // createZone returns true when world_access permission is granted and _zoneManager is attached
+    assert(api.createZone("zone1", 0, 0, 100, 100));
     assert(api.addZoneObject("zone1", "tree", 10, 10));
     assert(api.setZoneTheme("zone1", "forest"));
     assert(api.getZones().empty()); // Hardcoded to empty right now
-    // createObject returns false when _zoneManager is null
-    assert(!api.createObject("rock", glm::vec3(0.0f)));
-    // modifyObject returns false when _zoneManager is null
-    assert(!api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
-    // deleteObject returns false when _zoneManager is null
-    assert(!api.deleteObject("rock1"));
+
+    // With _zoneManager attached and world_access permission granted, object operations succeed
+    assert(api.createObject("rock", glm::vec3(0.0f)));
+    assert(zm.active().getOwnedObjects().size() == 1);
+    std::string rockId = zm.active().getOwnedObjects()[0]->getIdentifier();
+
+    assert(api.modifyObject(rockId, glm::vec3(1.0f), glm::vec3(1.0f)));
+    assert(api.deleteObject(rockId));
+    assert(!api.modifyObject("non_existent_rock", glm::vec3(1.0f), glm::vec3(1.0f)));
+    assert(!api.deleteObject("non_existent_rock"));
     assert(api.setCameraPosition(glm::vec3(10.0f)));
 
     // --- DATA/SAVE ACCESS TESTS ---
