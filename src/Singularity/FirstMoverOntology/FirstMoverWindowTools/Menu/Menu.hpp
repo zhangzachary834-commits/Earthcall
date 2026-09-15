@@ -36,6 +36,7 @@ private:
     // keyboard selection can never walk into rows the Person cannot see.
     int _selectedIndex = 0;
     size_t _firstVisibleIndex = 0;
+    bool _needsInputPriming = true;        // opening must not turn held input into a command
     bool _upPressedLast = false;
     bool _downPressedLast = false;
     bool _homePressedLast = false;
@@ -44,5 +45,5 @@ private:
     bool _pageDownPressedLast = false;
     bool _enterPressedLast = false;
     bool _mouseLeftPressedLast = false;
-    std::map<int, bool> _keyPressedLast; // edge detection for option hotkeys
+    std::map<int, bool> _keyPressedLast;  // edge detection for option hotkeys
 };
