@@ -748,6 +748,59 @@ It is also the cleanest vindication of §2b's claim available: a nominal mismatc
 careful, well-documented work in one subsystem, invisible to every test in another, and silent in
 exactly the way §3 says the suite cannot see.
 
+### 12d. Two more, both found by the thesis turned on this work's own code
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`, 2026-09-14.*
+
+**An edge that became a level — for the second time.** `698059e0 Rete performance sweep hunt`
+(2026-09-13) widened the reactive path in `LawManager::tick` from `WhileTrue` to
+`WhileTrue || OnBecomeTrue`. It correctly computed `newlyTrue` — the subjects that had just gone
+false→true — and then applied the law to `subjects`, every matching subject, every tick.
+`newlyTrue` was built and never read. Measured: an `OnBecomeTrue` law held true for ten ticks fired
+**once** on a disconnected manager and **ten times** on a connected one. `EngineInit` always
+connects, so every edge law in the running app repeated at frame rate.
+
+Two things make this worth more than a bug entry. First, **the same check was lost once before,
+inside another performance commit (`04c52ed4`)**, and the function carried a comment calling it
+"LOAD-BEARING and reads as redundant". The comment went, and the bug came back. §2b said a comment
+describing a fixed bug marks where its twin is. This is the other half: **a comment protecting a
+fix is only as durable as the next edit that deletes it.** Second, **the guard that existed could
+not reach the code it guarded.** `rete_compile_test` §C asserts "an edge fires once, not once per
+tick" and stayed green throughout, because its law is created disabled and enabled late, never
+compiles terminals, and so only ever exercises the sweep path, which was never broken. A test like
+that can't fail when the bug is present. It measures nothing. The fix narrows the application list to `newlyTrue` for edges and keeps
+`subjects` for levels; `tests/law/edge_reactive_path_test.cpp` builds its law connected and enabled
+so it reaches the branch, and was confirmed red before the fix.
+
+**§7, applied to rung 2's own index.** `ZoneManager::switchTo` replaces every being in front of the
+Person by assigning `_currentIndex`, because `EngineInit`'s providers read `active()` on every call.
+It then rebuilds the active Zone's object list by writing it directly — bypassing `addObject` and
+`removeObject` — and moved no revision at all. The vocabulary index this document's rung 2 built
+keys on `structuralRevision` and the required-name set; switching between Zones that share
+vocabulary moves neither. Measured through the real `switchTo`: the law reached the first Zone and
+**did not reach the second**. That is exactly the failure §7 describes — a derived structure with
+undeclared invalidation — and I built it. `switchTo` now bumps the existing counter. Guarded by
+`tests/law/zone_switch_invalidation_test.cpp`, confirmed red on the law-reach assertion alone with
+the counter check disabled, so the guard does not pass merely by observing its own fix.
+
+**On building a second change system, which Zach stopped.** While building the signal rungs 4 and 5
+need, I started a new `Universe::relationRevision()` counter. Zach asked whether an existing change
+framework could be used instead, and there was one: relation edits already publish
+`relation-formed`/`relation-destroyed` on the EventBus, which `LawManager` already consumes, and
+`structuralRevision` already means "the shape of the world changed". The new counter was reverted.
+What remains is completing the existing signals rather than building a parallel one:
+`RelationManager::loadFromJson`, `forgetBeingEverywhere`, copy and move assignment, and
+`Relation::setTypeLexeme` mutate the graph and announce nothing. Those four are now the entire
+precondition for rung 4. This is Refusal 6's spirit applied to mechanism — the project already
+deleted one duplicate permission system — and it is worth recording that the Person caught it
+before the agent did.
+
+**Methodological footnote.** A suite run midway through reported both fixes failing. The binaries
+were stale: `HEAD` moved during the build and some targets linked against a mismatched core. The
+failure signatures matched pre-fix behaviour exactly, which is what made them convincing. Rebuilding
+from current source cleared all three. When a verified fix appears to regress while other sessions
+are committing, rebuild before believing it.
+
 ---
 
 **Signed:** Claude Opus 5 · session `session_01F9nK3FZ7VR4PFPTUWfYyvm` · 2026-09-10

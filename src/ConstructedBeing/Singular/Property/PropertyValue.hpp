@@ -65,7 +65,9 @@ inline bool isValueComparable(const PropertyValue& v) {
            std::holds_alternative<double>(v) || std::holds_alternative<bool>(v) ||
            std::holds_alternative<char>(v) || std::holds_alternative<long>(v) ||
            std::holds_alternative<std::string>(v) || std::holds_alternative<glm::vec3>(v) ||
-           std::holds_alternative<glm::mat4>(v);
+           std::holds_alternative<glm::mat4>(v) ||
+           std::holds_alternative<std::shared_ptr<PropertyDict>>(v) ||
+           std::holds_alternative<std::shared_ptr<PropertyList>>(v);
 }
 
 // "This write changed nothing" — the question every change feed should ask
@@ -79,11 +81,7 @@ inline bool isValueComparable(const PropertyValue& v) {
 // grows as a Person draws, that is a per-frame cost rising with the size of
 // the world for writes that changed nothing at all. It is the reason the
 // Synthesis Studio's controls went dead after a few seconds of drawing.
-inline bool propertyValueUnchanged(const PropertyValue& a, const PropertyValue& b) {
-    if (a.index() != b.index()) return false;
-    if (!isValueComparable(a)) return false;
-    return a == b;
-}
+
 
 struct PropertyList {
     std::vector<PropertyValue> elements;
@@ -92,6 +90,39 @@ struct PropertyList {
 struct PropertyDict {
     std::map<std::string, PropertyValue> elements;
 };
+
+inline bool propertyValueUnchanged(const PropertyValue& a, const PropertyValue& b) {
+    if (a.index() != b.index()) return false;
+    
+    if (std::holds_alternative<std::shared_ptr<PropertyDict>>(a)) {
+        auto pA = std::get<std::shared_ptr<PropertyDict>>(a);
+        auto pB = std::get<std::shared_ptr<PropertyDict>>(b);
+        if (pA == pB) return true;
+        if (!pA || !pB) return false;
+        if (pA->elements.size() != pB->elements.size()) return false;
+        for (const auto& [k, vA] : pA->elements) {
+            auto it = pB->elements.find(k);
+            if (it == pB->elements.end()) return false;
+            if (!propertyValueUnchanged(vA, it->second)) return false;
+        }
+        return true;
+    }
+    
+    if (std::holds_alternative<std::shared_ptr<PropertyList>>(a)) {
+        auto pA = std::get<std::shared_ptr<PropertyList>>(a);
+        auto pB = std::get<std::shared_ptr<PropertyList>>(b);
+        if (pA == pB) return true;
+        if (!pA || !pB) return false;
+        if (pA->elements.size() != pB->elements.size()) return false;
+        for (size_t i = 0; i < pA->elements.size(); ++i) {
+            if (!propertyValueUnchanged(pA->elements[i], pB->elements[i])) return false;
+        }
+        return true;
+    }
+    
+    if (!isValueComparable(a)) return false;
+    return a == b;
+}
 
 // True when T is one of PropertyValue's alternatives. PropertyRef and
 // ComputedProperty use this to decide legibility at compile time.
@@ -127,5 +158,5 @@ inline bool propertyValuesEquivalent(const PropertyValue& a, const PropertyValue
         const double scale = std::max(1.0, std::max(std::fabs(na), std::fabs(nb)));
         return std::fabs(na - nb) <= 1e-6 * scale;
     }
-    return a.index() == b.index() && a == b;
+    return propertyValueUnchanged(a, b);
 }

@@ -328,11 +328,11 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 }
 
 bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const {
+    if (recognizesAuthoredPropertyProjection(id)) {
+        return readAuthoredPropertyProjection(id, out);
+    }
     auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
-        if (recognizesAuthoredPropertyProjection(id)) {
-            return readAuthoredPropertyProjection(id, out);
-        }
         out = it->second;
         return true;
     }
@@ -345,9 +345,7 @@ bool Singular::setDynamicProperty(const std::string& name, const PropertyValue& 
 
 bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
     const bool projected = recognizesAuthoredPropertyProjection(id);
-    if (projected) {
-        return writeAuthoredPropertyProjection(id, v);
-    }
+    if (projected && !writeAuthoredPropertyProjection(id, v)) return false;
     PropertyValue stored = v;
     auto existing = _dynamicProperties.find(id);
     if (existing == _dynamicProperties.end()) {

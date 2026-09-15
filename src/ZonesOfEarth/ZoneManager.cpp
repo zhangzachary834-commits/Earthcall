@@ -219,6 +219,18 @@ bool ZoneManager::switchTo(size_t index)
         _activeZoneLawIds = std::move(requestedLawIds);
 
         _currentIndex = index;
+        // THE WORLD IN FRONT OF THE PERSON WAS JUST REPLACED, and nothing else
+        // says so. EngineInit's Universe providers read `active()` on every
+        // call, so this one assignment swaps every being and every relation the
+        // law engine can see — without a setter, an addObject, or a removeObject.
+        // Anything that caches a view of the world keys on this counter; the
+        // vocabulary index (FORMATION_RETE.md §8 rung 2) did, and after a switch
+        // between Zones sharing vocabulary it kept offering the previous Zone's
+        // beings, so a sweep-path law reached nobody in the room the Person had
+        // walked into. Silent. This reuses the existing "shape of the world
+        // changed" counter rather than adding a second change system.
+        // Guarded by tests/law/zone_switch_invalidation_test.cpp.
+        Universe::instance().bumpStructuralRevision();
         std::cout << "🔀 Switching to zone [" << index << "]..." << std::endl;
 
         // Repopulate active zone's world with global objects that belong to it or its parents

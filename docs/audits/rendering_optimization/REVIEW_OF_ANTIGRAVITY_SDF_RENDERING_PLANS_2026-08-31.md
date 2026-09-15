@@ -6,9 +6,9 @@
 **Asked for by**: Zach — *"Give feedback on gemini/antigravity's two major rendering plans"*
 
 **Reviewed**:
-1. [`docs/plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md`](../plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md) — 22:45 PDT, the one that got built
-2. [`docs/plans/FRONTIER_MULTI_HUNDRED_FPS_SDF_ENGINE_EXPANSION_PLAN.md`](../plans/FRONTIER_MULTI_HUNDRED_FPS_SDF_ENGINE_EXPANSION_PLAN.md) — 23:25 PDT, the roadmap
-3. Also read, same session, same author: [`MULTI_HUNDRED_FPS_SDF_ENGINE_PLAN_2026-08-28.md`](../plans/MULTI_HUNDRED_FPS_SDF_ENGINE_PLAN_2026-08-28.md) and [`FRONTIER_200FPS_SDF_ENGINEERING_TREATISE.md`](../architecture/mathematics/FRONTIER_200FPS_SDF_ENGINEERING_TREATISE.md)
+1. [`docs/plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md`](../../plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md) — 22:45 PDT, the one that got built
+2. [`docs/plans/FRONTIER_MULTI_HUNDRED_FPS_SDF_ENGINE_EXPANSION_PLAN.md`](../../plans/FRONTIER_MULTI_HUNDRED_FPS_SDF_ENGINE_EXPANSION_PLAN.md) — 23:25 PDT, the roadmap
+3. Also read, same session, same author: [`MULTI_HUNDRED_FPS_SDF_ENGINE_PLAN_2026-08-28.md`](../../plans/MULTI_HUNDRED_FPS_SDF_ENGINE_PLAN_2026-08-28.md) and [`FRONTIER_200FPS_SDF_ENGINEERING_TREATISE.md`](../../architecture/mathematics/FRONTIER_200FPS_SDF_ENGINEERING_TREATISE.md)
 
 I am not a neutral reader. I spent the preceding session reverting what these plans produced
 ([RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md](RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md))

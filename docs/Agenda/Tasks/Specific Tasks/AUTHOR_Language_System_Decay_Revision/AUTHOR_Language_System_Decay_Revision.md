@@ -17,4 +17,4 @@ independently found the same soft spot. Worth deciding, alongside the decay-loop
 above: should identity-defining Relations (`instance-of`, `subcategory-of`, `authored-by`, …)
 get one structural protection at a single choke point (`RelationManager`/`Formation`) instead
 of relying on each future Relation-touching subsystem to independently avoid repeating this?
-Full reasoning in [Two_Times_The_Relations_Vanished.md](../../../Reflections%20on%20Earthcall%27s%20Progression/Earthcall%20Development%20War%20Stories/Two_Times_The_Relations_Vanished.md).
+Full reasoning in [Two_Times_The_Relations_Vanished.md](../../../../Reflections%20on%20Earthcall%27s%20Progression/Earthcall%20Development%20War%20Stories/Two_Times_The_Relations_Vanished.md).

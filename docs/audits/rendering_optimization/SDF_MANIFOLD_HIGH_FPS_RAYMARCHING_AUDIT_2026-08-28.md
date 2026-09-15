@@ -16,7 +16,7 @@ Earthcall is currently achieving **20–30 FPS** on the Perlin green hills zone 
 
 Engines that achieve **hundreds of FPS** on complex manifold SDFs and implicit landscapes without polygonal tessellation do not brute-force analytic formulas per fragment. They combine **hierarchical spatial acceleration (coarse distance brickmaps/clipmaps)**, **over-relaxation (Enhanced Sphere Tracing)**, **symbolic gradient compilation (0-tap normals)**, **tight proxy hull bounds**, and **tile-binned compute marching**.
 
-This audit details the exact bottlenecks in Earthcall today and the exact architectural additions required to reach hundreds of FPS on pure implicit manifolds while strictly upholding the [Six Refusals](../../GEMINI.md).
+This audit details the exact bottlenecks in Earthcall today and the exact architectural additions required to reach hundreds of FPS on pure implicit manifolds while strictly upholding the [Six Refusals](../../../GEMINI.md).
 
 ---
 

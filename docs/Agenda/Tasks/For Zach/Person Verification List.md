@@ -330,3 +330,18 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
        - Drag the divider between stacked panes to resize them vertically.
        - In Bottom Bar (with multiple tools docked), toggle `[☷ Stack]`: verify tools arrange as side-by-side columns with draggable vertical splitters!
        - Click `[▤ Tabs]` at any time to return to single-active tabbed mode.
+
+## `OnBecomeTrue` laws fire once again — this one you will SEE
+
+*Raised 2026-09-14, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+From `698059e0 Rete performance sweep hunt` (2026-09-13) until this fix, **every `OnBecomeTrue` law in the running app fired every frame for as long as its condition held**, instead of once when it became true. The test harness hid it because tests often run the law engine disconnected; the app never does.
+
+- [ ] **Anything that should happen ONCE now happens once.** In `earthcall_webgpu`, find laws that react to something becoming true — a button pressed, a piece reaching a square, a threshold crossed — and confirm the reaction happens a single time, not continuously. Between 09-13 and this fix you would have seen accumulating values (anything with `add`), repeated spawns, repeated sounds, and repeated events while the condition stayed true. If you noticed something "firing like crazy" in that window, this is probably why.
+- [ ] **Holding something true must not keep re-triggering, but letting go and re-doing it must.** Press-and-hold a control that drives an `OnBecomeTrue` law: one reaction. Release and press again: exactly one more.
+- [ ] **`WhileTrue` laws must still run continuously.** The fix separates the two; confirm continuous behaviours (a glow while hovered, a meter while a note plays) still update every frame.
+
+## Laws keep working after you switch Zones
+
+- [ ] **Walk from one Zone into another, and back.** Laws that apply to beings by their properties should act on the beings in the Zone you are standing in — not on the Zone you just left, and not on nobody. Before this fix, switching between two Zones whose laws used the same property names left those laws silently aimed at the previous Zone.
