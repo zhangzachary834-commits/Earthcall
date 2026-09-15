@@ -171,16 +171,25 @@ void InteractionChannel::observe(const Sense& sense,
     if (!blind) {
         Object* hit2D = nullptr;
         double best2D = 0.0;
-        for (Object* obj : reachable) {
-            if (!obj || !obj->is2D()) continue;
-            const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
-            if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
-                sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
-                const double priority = obj->pickPriority();
-                if (priority < 0.0) continue;
-                if (!hit2D || priority > best2D) {
-                    best2D = priority;
-                    hit2D = obj;
+        Object* pressedObj = findReachable(reachable, pressedId);
+        if (leftDown && dragging && pressedObj && pressedObj->is2D()) {
+            // While dragging an active 2D control (slider, canvas, chromatic picker),
+            // maintain pointer capture so rapid movement or minor cursor drift
+            // does not drop the control or jump coordinates to background elements.
+            hit2D = pressedObj;
+            best2D = 1000.0;
+        } else {
+            for (Object* obj : reachable) {
+                if (!obj || !obj->is2D()) continue;
+                const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
+                if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
+                    sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
+                    const double priority = obj->pickPriority();
+                    if (priority < 0.0) continue;
+                    if (!hit2D || priority > best2D) {
+                        best2D = priority;
+                        hit2D = obj;
+                    }
                 }
             }
         }

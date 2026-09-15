@@ -206,6 +206,50 @@ every relation in the world every evaluation, and a relation may outlive its end
 **Guarded by** `continuous_law_test` §8, `add_relation_action_test`, `rete_relation_state_test`;
 measured by `tests/law/category_membership_scaling_test.cpp`.
 
+## 2026-09-14 — the precondition for rungs 4 and 5, and two fixes on the way
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.*
+
+**The goal was the signal rungs 4 and 5 are blocked on.** Both need to know when the relation
+graph changes. **No new system is needed** — one was started and reverted after Zach asked whether
+an existing change framework could be used, and there was one:
+
+| Change | Already announced by |
+|---|---|
+| relation added | `relation-formed` (EventBus, consumed by `LawManager`) |
+| relation removed (`remove`, both `removeBetween`, `removeInvolving`) | `relation-destroyed` |
+| Zone switched | `zone-entered` event, **and now** `structuralRevision()` |
+| being freed | `structuralRevision()` via `reapUnmadeBeings` |
+| `RelationManager::loadFromJson` | **nothing** |
+| `RelationManager::forgetBeingEverywhere` | **nothing** |
+| `RelationManager` copy / move assignment | **nothing** |
+| `Relation::setTypeLexeme` (kind changed in place) | **nothing** |
+
+**Next pass, concretely:** make those four bottom rows announce (publish the existing events, or bump
+the existing counter), then build rung 4's category-membership index to invalidate on exactly the
+signals in this table. Rung 5 follows on the same signals. Do **not** add a parallel revision counter.
+
+**Fix 1 — `OnBecomeTrue` fired every frame (live regression).** `698059e0` routed `OnBecomeTrue`
+through the reactive path but applied `subjects` instead of `newlyTrue`. Held true for 10 ticks: 1
+firing disconnected, **10 connected** — and the engine always connects. The second time this edge
+check was lost in a performance commit. Guarded by `tests/law/edge_reactive_path_test.cpp`;
+`rete_compile_test` §C could not catch it because its law never compiles terminals.
+
+**Fix 2 — Zone switches left the rung 2 index stale.** `switchTo` replaced the beings in front of
+the Person without moving `structuralRevision`, so a sweep-path law kept looking at the previous
+Zone. Now bumps the existing counter. Guarded by `tests/law/zone_switch_invalidation_test.cpp`.
+
+**For Jules and any agent touching this:**
+- The continuous pass in `LawManager::tick` must keep `WhileTrue` → every holding subject and
+  `OnBecomeTrue` → only newly-true subjects. Don't merge those into one loop.
+- Any new way of replacing the beings or relations in front of the Person (a new activation path,
+  streamed chunks, merges, hot reload) must bump `structuralRevision` or publish the existing
+  events. Add a section to `zone_switch_invalidation_test` that goes through it.
+- A test whose law is created disabled may never compile terminals, and will then silently cover
+  only the sweep path. Build laws enabled and connected when you mean to test the reactive path.
+- If a verified fix appears to regress while other sessions are committing, rebuild before believing
+  it. Stale binaries produced three convincing false failures in this pass.
+
 ## Next rungs
 
 2. ~~**Categories as authored Formations**~~ — index half done 2026-09-09 (above). The Formation

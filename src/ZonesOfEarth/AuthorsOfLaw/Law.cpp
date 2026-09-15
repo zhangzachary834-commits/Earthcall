@@ -2093,7 +2093,32 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 law->forgetOnset(subject);
             }
 
-            for (Singular* subject : subjects) {
+            // WHICH SUBJECTS FIRE — and this line is LOAD-BEARING. It reads as if
+            // `subjects` would do. It would not.
+            //
+            //   WhileTrue    is a LEVEL: it applies to every subject that holds,
+            //                every tick. `subjects`.
+            //   OnBecomeTrue is an EDGE: it applies only to subjects that JUST
+            //                started holding. `newlyTrue`, computed above.
+            //
+            // This branch was widened to take OnBecomeTrue on 2026-09-13
+            // (698059e0, "Rete performance sweep hunt") and applied `subjects` to
+            // both — so every OnBecomeTrue law in the running engine fired every
+            // frame for as long as its condition held. `newlyTrue` was built and
+            // never read. EngineInit always connects the LawManager, so this path
+            // is the live one: `add` accumulated, spawn and publish and sound
+            // repeated at frame rate.
+            //
+            // It is the SECOND time this edge check has been lost inside a
+            // performance commit — the first was 04c52ed4. CLAUDE.md: "Event-
+            // transitions must be edges, not levels." Guarded by
+            // tests/law/edge_reactive_path_test.cpp, which builds its law connected
+            // and enabled so it actually reaches this branch (rete_compile_test §C
+            // does not — its law is enabled late and never compiles terminals, so it
+            // stayed green through the regression). Do not merge these two lists.
+            const std::vector<Singular*>& firing =
+                law->activation() == Law::Activation::WhileTrue ? subjects : newlyTrue;
+            for (Singular* subject : firing) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
                 const std::string subjectId = subject->getIdentifier();
                 if (law->drives() &&
