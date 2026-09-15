@@ -1,0 +1,94 @@
+name: Promote verified persistent state refresh
+
+on:
+  push:
+    branches:
+      - sol/persistent-state-refresh-production-20260915
+    paths:
+      - '.github/workflows/sol-persistent-state-refresh-production.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-promote:
+    if: github.event.head_commit.message == 'ci: run persistent state refresh production verifier'
+    runs-on: macos-14
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure baseline
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target frame_lag_test -j3
+
+      - name: Baseline Living Instrument
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
+          exit 0
+
+      - name: Apply production candidate
+        run: |
+          git apply --check scratch/probes/persistent_state_refresh_production.patch
+          git apply scratch/probes/persistent_state_refresh_production.patch
+          git diff --check
+
+      - name: Build focused semantic witnesses
+        run: |
+          cmake --build build --target \
+            rete_state_refresh_test \
+            event_interest_filter_test \
+            prophetic_rete_test \
+            rete_relation_state_test \
+            continuous_law_test \
+            law_loop_test \
+            frame_lag_test -j3
+
+      - name: Run focused semantic witnesses
+        run: |
+          set -o pipefail
+          ./build/rete_state_refresh_test | tee witness.txt
+          ./build/event_interest_filter_test | tee event-interest.txt
+          ./build/prophetic_rete_test | tee prophetic-rete.txt
+          ./build/rete_relation_state_test | tee relation-state.txt
+          ./build/continuous_law_test | tee continuous-law.txt
+          ./build/law_loop_test | tee law-loop.txt
+
+      - name: Candidate Living Instrument
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
+          exit 0
+
+      - name: Upload verifier evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistent-state-refresh-production-${{ github.run_id }}
+          path: |
+            baseline.txt
+            candidate.txt
+            witness.txt
+            event-interest.txt
+            prophetic-rete.txt
+            relation-state.txt
+            continuous-law.txt
+            law-loop.txt
+            scratch/probes/persistent_state_refresh_production.patch
+
+      - name: Commit only production source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/ZonesOfEarth/AuthorsOfLaw/Law.cpp src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+          git diff --cached --check
+          git commit -m "Keep persistent state facts resident during refresh"
+          git push origin HEAD:${GITHUB_REF_NAME}
