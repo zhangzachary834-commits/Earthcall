@@ -263,7 +263,10 @@ void InteractionChannel::observe(const Sense& sense,
         dragTotalX = 0.0f;
         dragTotalY = 0.0f;
         dragging = false;
-        if (hit) publishEdge("object-pressed", hit);
+        if (hit) {
+            hit->endSurfaceStroke();
+            publishEdge("object-pressed", hit);
+        }
 
         // Focus follows the press, and BOTH sides are edges: a press on
         // nothing unfocuses whoever held it. A focus that can only be gained
@@ -287,6 +290,8 @@ void InteractionChannel::observe(const Sense& sense,
         if (!dragging && travelled > clickSlopPixels) {
             dragging = true;
             publishEdge("object-drag-started", findReachable(reachable, pressedId));
+        } else if (dragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-dragged", findReachable(reachable, pressedId));
         }
     }
 
@@ -301,6 +306,12 @@ void InteractionChannel::observe(const Sense& sense,
             // A click is press and release on the SAME being, without travel.
             // Releasing somewhere else is a cancelled click or completed drag.
             publishEdge("object-clicked", pressed);
+        }
+        if (pressed) {
+            pressed->endSurfaceStroke();
+        }
+        if (hit && hit != pressed) {
+            hit->endSurfaceStroke();
         }
         pressedId.clear();
         dragging = false;
@@ -330,12 +341,17 @@ void InteractionChannel::observe(const Sense& sense,
         if (!rightDragging && travelled > clickSlopPixels) {
             rightDragging = true;
             publishEdge("object-right-drag-started", findReachable(reachable, rightPressedId));
+        } else if (rightDragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-right-dragged", findReachable(reachable, rightPressedId));
         }
     }
 
     if (rightReleasedNow) {
         Object* pressed = findReachable(reachable, rightPressedId);
-        if (pressed) publishEdge("object-right-released", pressed);
+        if (pressed) {
+            publishEdge("object-right-released", pressed);
+            pressed->endSurfaceStroke();
+        }
         if (rightDragging) {
             publishEdge("object-right-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
@@ -369,7 +385,26 @@ void InteractionChannel::observe(const Sense& sense,
         if (!middleDragging && travelled > clickSlopPixels) {
             middleDragging = true;
             publishEdge("object-middle-drag-started", findReachable(reachable, middlePressedId));
+        } else if (middleDragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-middle-dragged", findReachable(reachable, middlePressedId));
         }
+    }
+
+    if (middleReleasedNow) {
+        Object* pressed = findReachable(reachable, middlePressedId);
+        if (pressed) {
+            publishEdge("object-middle-released", pressed);
+            pressed->endSurfaceStroke();
+        }
+        if (middleDragging) {
+            publishEdge("object-middle-drag-ended", pressed);
+        } else if (pressed && pressed == hit) {
+            publishEdge("object-middle-clicked", pressed);
+        }
+        middlePressedId.clear();
+        middleDragging = false;
+        middleDragTotalX = 0.0f;
+        middleDragTotalY = 0.0f;
     }
 
     if (middleReleasedNow) {
@@ -587,6 +622,11 @@ void InteractionChannel::onWindowFocus(bool focused) {
         dragTotalX = 0.0f;
         dragTotalY = 0.0f;
         hoveredId.clear();
+        for (Singular* being : Universe::instance().beings()) {
+            if (auto* obj = dynamic_cast<Object*>(being)) {
+                obj->endSurfaceStroke();
+            }
+        }
     }
 }
 

@@ -240,6 +240,9 @@ public:
     // to keep", not as failure.
     virtual TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                         uint32_t width, uint32_t height) = 0;
+    virtual TextureHandle uploadTextureRegion(TextureHandle handle, const uint8_t* rgba,
+                                        uint32_t texWidth, uint32_t texHeight,
+                                        uint32_t x, uint32_t y, uint32_t width, uint32_t height) { return handle; }
     virtual void releaseTexture(TextureHandle handle) = 0;
 
     // Readback the rendered framebuffer pixels as RGBA8.

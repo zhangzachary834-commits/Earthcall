@@ -1530,6 +1530,35 @@ TextureHandle WebGpuRenderer::uploadTexture(TextureHandle handle, const uint8_t*
     return handle;
 }
 
+
+TextureHandle WebGpuRenderer::uploadTextureRegion(TextureHandle handle, const uint8_t* rgba,
+                                                  uint32_t texWidth, uint32_t texHeight,
+                                                  uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (!_device || !rgba || handle == 0 || width == 0 || height == 0) return handle;
+
+    auto it = _textures.find(handle);
+    if (it == _textures.end()) return handle;
+
+    WGPUTexelCopyTextureInfo dst = {};
+    dst.texture = it->second.tex; dst.aspect = WGPUTextureAspect_All; 
+    dst.origin = { x, y, 0 };
+    
+    WGPUTexelCopyBufferLayout lay = {};
+    lay.bytesPerRow = texWidth * 4; lay.rowsPerImage = texHeight; lay.offset = (y * texWidth + x) * 4;
+    
+    WGPUExtent3D ext = { width, height, 1 };
+    
+    // Some WebGPU implementations require buffer copies rather than queueWriteTexture with offset
+    // wgpuQueueWriteTexture is allowed to specify data layout offset, but we just pass the shifted pointer
+    lay.offset = 0;
+    const uint8_t* subdata = rgba + (y * texWidth + x) * 4;
+    // Wait, wgpuQueueWriteTexture expects the pointer to point to the start of the data being written, 
+    // AND lay.bytesPerRow must be the full row pitch. 
+    wgpuQueueWriteTexture(_queue, &dst, subdata, ((height - 1) * texWidth + width) * 4, &lay, &ext);
+    
+    return handle;
+}
+
 void WebGpuRenderer::releaseTexture(TextureHandle handle) {
     auto it = _textures.find(handle);
     if (it == _textures.end()) return;

@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     auto boardMat = materials.get("material.chess.board");
     assert(boardMat && boardMat->faceTextures.size() >= 3);
     const auto& top = boardMat->faceTextures[2];
-    assert(top.size == 64);
+    assert(top.width == 64 && top.height == 64);
 
     auto samplePixel = [&](int file, int rank) {
         int px = rank * 8 + 4;

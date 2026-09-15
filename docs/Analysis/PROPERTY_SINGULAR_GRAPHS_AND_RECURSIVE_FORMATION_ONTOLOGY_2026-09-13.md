@@ -13,8 +13,8 @@
 - **Companion Analysis 3:** [`docs/Analysis/GRANULAR_PIXEL_MASTERY_SUBSTRATE_EXECUTION_AND_COW_MATERIALS_2026-09-13.md`](GRANULAR_PIXEL_MASTERY_SUBSTRATE_EXECUTION_AND_COW_MATERIALS_2026-09-13.md)
 - **Rete & Property Interning:** [`docs/Analysis/Law_Property_Interning_and_Rete_Updates.md`](Law_Property_Interning_and_Rete_Updates.md)
 - **Property Lookup Complexity:** [`docs/Analysis/PROPERTY_LOOKUP_COMPLEXITY_ANALYSIS.md`](PROPERTY_LOOKUP_COMPLEXITY_ANALYSIS.md)
-- **Formation Definition:** [`src/Relation/Formation/Formation.hpp`](../../../src/Relation/Formation/Formation.hpp)
-- **Property Variant Definition:** [`src/ConstructedBeing/Singular/Property/PropertyValue.hpp`](../../../src/ConstructedBeing/Singular/Property/PropertyValue.hpp)
+- **Formation Definition:** [`src/Relation/Formation/Formation.hpp`](../../src/Relation/Formation/Formation.hpp)
+- **Property Variant Definition:** [`src/ConstructedBeing/Singular/Property/PropertyValue.hpp`](../../src/ConstructedBeing/Singular/Property/PropertyValue.hpp)
 
 ---
 

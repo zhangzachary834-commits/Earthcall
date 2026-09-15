@@ -49,6 +49,9 @@ struct FaceTexture {
     // This is the indivisible storage operation beneath the Screen channel;
     // brush radius, interpolation and gesture meaning remain authored above.
     bool writePixel(const glm::vec2& uv, const glm::vec3& color);
+    bool writePixelWithRadius(const glm::vec2& uv, const glm::vec3& color, int radius = 1);
+    bool writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
+                   const glm::vec3& color, int radius = 1);
     bool writeRegion(int x0, int y0, int x1, int y1,
                      const std::vector<glm::vec3>& colors);
     bool writeSamples(const std::vector<glm::ivec2>& coordinates,

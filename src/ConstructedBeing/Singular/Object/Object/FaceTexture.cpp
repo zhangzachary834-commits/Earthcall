@@ -148,6 +148,98 @@ bool FaceTexture::writePixel(const glm::vec2& uv, const glm::vec3& color) {
     return writeRegion(x, y, x + 1, y + 1, std::vector<glm::vec3>{color});
 }
 
+bool FaceTexture::writePixelWithRadius(const glm::vec2& uv, const glm::vec3& color, int radius) {
+    if (radius <= 1) {
+        return writePixel(uv, color);
+    }
+    if (width <= 0 || height <= 0 || !std::isfinite(uv.x) || !std::isfinite(uv.y) ||
+        uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f || uv.y > 1.0f) {
+        return false;
+    }
+    const int cx = std::min(width - 1, static_cast<int>(std::floor(uv.x * width)));
+    const int cy = std::min(height - 1, static_cast<int>(std::floor(uv.y * height)));
+    const int r = radius - 1;
+    const int x0 = std::max(0, cx - r);
+    const int x1 = std::min(width - 1, cx + r);
+    const int y0 = std::max(0, cy - r);
+    const int y1 = std::min(height - 1, cy + r);
+    std::vector<glm::ivec2> coordinates;
+    for (int y = y0; y <= y1; ++y) {
+        for (int x = x0; x <= x1; ++x) {
+            coordinates.push_back({x, y});
+        }
+    }
+    std::vector<glm::vec3> colors(coordinates.size(), color);
+    return writeSamples(coordinates, colors);
+}
+
+bool FaceTexture::writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
+                            const glm::vec3& color, int radius) {
+    if (width <= 0 || height <= 0 || !std::isfinite(uv0.x) || !std::isfinite(uv0.y) ||
+        !std::isfinite(uv1.x) || !std::isfinite(uv1.y)) {
+        return false;
+    }
+    const glm::vec2 c0 = glm::clamp(uv0, glm::vec2(0.0f), glm::vec2(1.0f));
+    const glm::vec2 c1 = glm::clamp(uv1, glm::vec2(0.0f), glm::vec2(1.0f));
+    const int x0 = std::min(width - 1, static_cast<int>(std::floor(c0.x * width)));
+    const int y0 = std::min(height - 1, static_cast<int>(std::floor(c0.y * height)));
+    const int x1 = std::min(width - 1, static_cast<int>(std::floor(c1.x * width)));
+    const int y1 = std::min(height - 1, static_cast<int>(std::floor(c1.y * height)));
+
+    if (x0 == x1 && y0 == y1) {
+        return writePixelWithRadius(c1, color, radius);
+    }
+
+    std::vector<glm::ivec2> linePoints;
+    const int dx = std::abs(x1 - x0);
+    const int dy = std::abs(y1 - y0);
+    const int sx = x0 < x1 ? 1 : -1;
+    const int sy = y0 < y1 ? 1 : -1;
+    int err = dx - dy;
+
+    int curX = x0;
+    int curY = y0;
+    while (true) {
+        linePoints.push_back({curX, curY});
+        if (curX == x1 && curY == y1) break;
+        const int e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            curX += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            curY += sy;
+        }
+    }
+
+    std::vector<glm::ivec2> coordinates;
+    if (radius <= 1) {
+        coordinates = std::move(linePoints);
+    } else {
+        std::vector<bool> visited(static_cast<std::size_t>(width * height), false);
+        const int r = radius - 1;
+        for (const auto& pt : linePoints) {
+            const int min_x = std::max(0, pt.x - r);
+            const int max_x = std::min(width - 1, pt.x + r);
+            const int min_y = std::max(0, pt.y - r);
+            const int max_y = std::min(height - 1, pt.y + r);
+            for (int y = min_y; y <= max_y; ++y) {
+                for (int x = min_x; x <= max_x; ++x) {
+                    const std::size_t idx = static_cast<std::size_t>(y * width + x);
+                    if (!visited[idx]) {
+                        visited[idx] = true;
+                        coordinates.push_back({x, y});
+                    }
+                }
+            }
+        }
+    }
+
+    std::vector<glm::vec3> colors(coordinates.size(), color);
+    return writeSamples(coordinates, colors);
+}
+
 bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
                               const std::vector<glm::vec3>& colors) {
     if (width <= 0 || height <= 0 || x0 < 0 || y0 < 0 || x1 <= x0 || y1 <= y0 ||
@@ -162,12 +254,23 @@ bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
     return writeSamples(coordinates, colors);
 }
 
+
 bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
                                const std::vector<glm::vec3>& colors) {
     if (width <= 0 || height <= 0 || coordinates.size() != colors.size()) return false;
+    
+    int minX = width, minY = height, maxX = -1, maxY = -1;
+    
     for (const glm::ivec2& xy : coordinates) {
         if (xy.x < 0 || xy.y < 0 || xy.x >= width || xy.y >= height) return false;
+        if (xy.x < minX) minX = xy.x;
+        if (xy.y < minY) minY = xy.y;
+        if (xy.x > maxX) maxX = xy.x;
+        if (xy.y > maxY) maxY = xy.y;
     }
+    
+    if (minX > maxX || minY > maxY) return false;
+    
     for (const glm::vec3& color : colors) {
         if (!std::isfinite(color.r) || !std::isfinite(color.g) ||
             !std::isfinite(color.b)) {
@@ -200,11 +303,18 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
             !write(layers[activeLayer])) {
             return false;
         }
-        compositeLayers();
+        compositeLayers(); // Wait, compositeLayers updates the whole thing! 
     } else if (!write(pixels)) {
         return false;
     }
-    uploadToGPU();
+    
+    if (id == 0 || useLayers) {
+        uploadToGPU();
+    } else {
+        uint32_t regionW = maxX - minX + 1;
+        uint32_t regionH = maxY - minY + 1;
+        currentRenderer().uploadTextureRegion(id, pixels.data(), width, height, minX, minY, regionW, regionH);
+    }
     return true;
 }
 

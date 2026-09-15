@@ -35,6 +35,33 @@
         },
         {
           "kind": 8,
+          "path": "@basic-pixel-canvas.brushRadius",
+          "function": {
+            "input": "r",
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {
+                          "r": 1.0
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "r": "@event.subject.swatchBrushRadius"
+          }
+        },
+        {
+          "kind": 8,
           "path": "@basic-pixel-canvas.paintColor",
           "function": {
             "input": "c",
@@ -161,6 +188,7 @@
     "object-clicked",
     "object-pressed",
     "object-drag-started",
+    "object-dragged",
     "object-drag-ended"
   ]
 }

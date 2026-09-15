@@ -229,6 +229,7 @@ private:
     // materials stay shared and the reference survives save/load. Resolved against
     // the global MaterialManager at draw time. Defaults to the always-present
     // material.default, so an object with no material assigned still renders.
+    mutable std::unordered_map<std::string, std::vector<glm::ivec2>> _regionCache;
     std::string _materialId = "material.default";
 
     // Cached local-space surface vertices for GJK support queries on the new
@@ -584,6 +585,10 @@ public:
     // that happened to share the same Material being.
     bool writeSurfacePixel(int faceIndex, const glm::vec2& uv,
                            const glm::vec3& color);
+    void endSurfaceStroke() {
+        _lastStrokeFace = -1;
+        _lastStrokeUV = glm::vec2(-1.0f, -1.0f);
+    }
     bool elevateSurfaceRegionProperty(const std::string& propertyName,
                                       int faceIndex,
                                       const OntoMath::Piecewise& selector,
@@ -785,6 +790,10 @@ private:
     mutable bool _isHovered = false;
     mutable glm::vec3 _hoverPoint{0.0f, 0.0f, 0.0f};
     mutable bool _wasHoveredLastFrame = false;
+
+    // Stroke state tracking for continuous raster painting
+    int _lastStrokeFace = -1;
+    glm::vec2 _lastStrokeUV{-1.0f, -1.0f};
 
     glm::vec3 center{0.0f, 0.0f, 0.0f};
     glm::vec3 authoritativeAxis{0.0f, 1.0f, 0.0f};
