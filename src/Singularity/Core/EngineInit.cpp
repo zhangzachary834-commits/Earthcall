@@ -241,6 +241,16 @@ void Engine::initLogic() {
     Universe::instance().setRelationRegistrar([](std::shared_ptr<Relation> relation) {
         mgr.active().formation().relations().add(std::move(relation));
     });
+    // ...and an index over that same graph, so a `Related` condition finds a
+    // being's edges in O(degree) instead of walking every relation per candidate
+    // per tick (FORMATION_RETE.md §8 rung 4). Installed AFTER setRelationProvider,
+    // which clears it. Like the provider above it reads `mgr.active()` live, so a
+    // Zone switch needs no separate invalidation — each RelationManager keeps its
+    // own index current.
+    Universe::instance().setRelationsInvolvingProvider(
+        [](const Singular& being, std::vector<Relation*>& out) {
+            mgr.active().formation().relations().relationsInvolving(being, out);
+        });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();

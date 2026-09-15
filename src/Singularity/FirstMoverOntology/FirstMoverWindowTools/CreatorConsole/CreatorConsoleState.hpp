@@ -71,7 +71,12 @@ namespace Rendering {
 
         void generateCustom() {
             customVertices.clear();
-            // Stub for custom generation
+            if (customVertexCount < 3) customVertexCount = 3;
+            for (int i = 0; i < customVertexCount; ++i) {
+                float theta = 2.0f * 3.14159265f * static_cast<float>(i) / static_cast<float>(customVertexCount);
+                float y = (i % 2 == 0) ? 0.5f : -0.5f;
+                customVertices.push_back(glm::vec3(std::cos(theta) * 0.5f, y, std::sin(theta) * 0.5f));
+            }
         }
     };
 
@@ -173,5 +178,9 @@ namespace Rendering {
     void pushActiveButtonStyle(bool active, const ImVec4& color, const ImVec4& hoverColor);
     void popActiveButtonStyle(bool active);
     void sameLineEvery(int index, int perRow);
+
+    // Responsive grid helpers for resizable dockable sidebars
+    float responsiveItemWidth(int columns, float minWidth = 60.0f);
+    void responsiveSameLine(int index, int columns);
 
 } // namespace Rendering

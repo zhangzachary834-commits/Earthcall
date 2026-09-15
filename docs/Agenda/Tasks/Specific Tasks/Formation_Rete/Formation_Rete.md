@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0–3 of 7 done (2026-09-08, 2026-09-09); rung 4 measured and deferred with a named precondition (2026-09-10). Rung 2's Formation half and rungs 5–7 specified.
+**Status:** rungs 0–4 of 7 done (2026-09-08, 09-09, 09-14; rung 4 was first deferred 2026-09-10, then built when its real cause turned out to be an opaque Prophetic read). Rung 2's Formation half and rungs 5–7 specified.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -44,6 +44,9 @@ passing beside them.
   the predicate re-reads the live graph, so it widens and never fires falsely. Exact retraction
   would be a *narrowing* until edge facts carry a relation identifier, because two edges of one
   type from one being share a fact shape.
+  **Superseded 2026-09-14** (Rung 4 below): the stale fact was *not* harmless for `OnBecomeTrue`,
+  which never re-fired on a re-formed edge. Retraction is now exact without a relation identifier:
+  it happens a tick later, and only when the graph holds no edge of that type involving the being.
 - `assertFact` does not deduplicate. Rung 0 added `ReteNetwork::hasRelationStateFact` so three
   assert paths cannot stack duplicates into every matching alpha memory.
 
@@ -225,7 +228,7 @@ an existing change framework could be used, and there was one:
 | `RelationManager` copy / move assignment | **nothing** |
 | `Relation::setTypeLexeme` (kind changed in place) | **nothing** |
 
-**Next pass, concretely:** make those four bottom rows announce (publish the existing events, or bump
+**Superseded the same day** — see *Rung 4 — ✅ 2026-09-14* below: the index lives inside `RelationManager` and invalidates on its own generation stamp, so the bottom rows needed no world signal. Original note: make those four bottom rows announce (publish the existing events, or bump
 the existing counter), then build rung 4's category-membership index to invalidate on exactly the
 signals in this table. Rung 5 follows on the same signals. Do **not** add a parallel revision counter.
 
@@ -249,6 +252,67 @@ Zone. Now bumps the existing counter. Guarded by `tests/law/zone_switch_invalida
   only the sweep path. Build laws enabled and connected when you mean to test the reactive path.
 - If a verified fix appears to regress while other sessions are committing, rebuild before believing
   it. Stale binaries produced three convincing false failures in this pass.
+
+## Rung 4 — ✅ 2026-09-14, and the cost was not where either measurement said
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`. Zach chose this rung when asked what
+was next.* The 2026-09-10 entry above attributed the category-membership gap to the O(relations)
+walk per evaluation. Built, that turned out to be wrong, and so was the precondition table in the
+section above.
+
+**What was built.**
+1. **An endpoint index inside `RelationManager`** (`relationsInvolving`), keyed by endpoint pointer
+   *and* by kept identifier, rebuilt lazily from a generation stamp that every write to `relations`
+   bumps (`touch()`). Because it lives inside the owner of the vector, the four "announces nothing"
+   rows above needed no world-wide signal: `loadFromJson`, copy/move and `forgetBeingEverywhere`
+   now touch the stamp. `EngineInit` installs it on `Universe`; `Related` uses it when present.
+   Oracle: `relation_endpoint_index_test` evaluates ten cases through the index and a full scan and
+   requires both to match. Two mutations (pointer-only keys, `add` without `touch`) confirmed red.
+2. **A regression of my own, fixed.** The 2026-09-10 "kept for safety" pointer-only `Related`
+   stopped matching edges whose endpoint is unbound or forgotten, even when the kept identifier names
+   the subject (a save loaded without a resolver, or a being reborn under its stable name). Guarded by
+   `related_identity_endpoint_test`.
+3. **The real cost.** With the index built, a category-scoped law was *still* ~17x the property
+   control at 400 beings. Profiling showed 98% of the tick in `evaluateDirty → retractFact`, a linear
+   walk of ~49k facts. The cause was in `PropheticRete`: every `Related` read was marked **opaque**,
+   which made the index incomplete, which switched `propheticHears` off for **every property write
+   in the world**. The law's own `add position.z` then re-asserted a fact every tick. A typed
+   `Related` now declares what its Rete node can wake on (its relation type by root, plus `type`,
+   `directed`, `entityA`, `entityB`); an untyped one stays opaque.
+   **Result at 400 beings: index 1.0x the control, scan 1.2x (was ~17x).**
+4. **Proof the narrowing is safe:** `related_prophetic_legibility_test` plays a relation-graph
+   scenario twice, once with the filter live and once forced open by an opaque `Overlaps` law, and
+   requires identical observables at every step. `category_membership_scaling_test` now asserts the
+   index arm stays within 4x of the control; making `Related` opaque again trips it (16.9x).
+5. **Two pre-existing deafnesses the differential test exposed** (identical in both arms, so not
+   caused by the filter):
+   - **`OnBecomeTrue` never re-fired when a removed edge re-formed.** Rung 0 left the edge fact
+     behind on `relation-destroyed` and called it a harmless widening. For `WhileTrue` it is. For
+     `OnBecomeTrue` the stale fact kept the subject "holding" forever. Now `relation-destroyed`
+     queues both endpoints, and `tick()` retracts the fact only if no edge of that type still
+     involves the being (by pointer or kept identifier). It can't decide on the spot because
+     `removeBetween` publishes synchronously from inside its `remove_if`.
+     Confirmed red with the re-validation call removed.
+   - **Retyping an edge never reached `Related` laws**, whether through the `type` property or
+     `Relation::setTypeLexeme`, which assigned `type` silently. Both now go through the same
+     re-validation.
+
+**Still open, recorded rather than fixed:**
+- `ReteNetwork::retractFact` does a linear `find_if` over `_facts`. Every world that holds a
+  genuinely opaque law (`Overlaps`, closures, untyped `Related`) still pays O(facts) per dirty
+  write. `_facts` is order-sensitive (`retractFirst(consumed)` removes a prefix), so an
+  id→position index needs care.
+- `retractStateFactsBySubject` clears the *entire* `_relationStateIndex`, so the idempotence guard in
+  `assertRelationStateFact` forgets every being's edge facts whenever any being's state is retracted.
+
+**For Jules and any agent touching this:**
+- Never mark a condition kind opaque to be safe without measuring. Opacity is not local: one opaque
+  law turns the write filter off for the whole world.
+- If you change what a `Related` Rete node wakes on (`ConditionNode::compileToRete`'s attribute
+  filter), update `case Kind::Related` in `PropheticRete.cpp` and add a step to
+  `related_prophetic_legibility_test`.
+- Any new write to `RelationManager::relations` must call `touch()` and get a case in
+  `relation_endpoint_index_test`.
 
 ## Next rungs
 

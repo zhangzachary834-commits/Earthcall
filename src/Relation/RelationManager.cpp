@@ -69,9 +69,30 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
     if (!being) return;
     for (RelationManager* manager : liveManagers()) {
         if (!manager) continue;
+        bool changed = false;
         for (const auto& relation : manager->relations) {
-            if (relation) relation->forgetEndpoint(being);
+            if (!relation) continue;
+            // POINTER compare only: `being` is mid-destruction and may not be
+            // dereferenced (see Singular::notifyBeingReleased).
+            if (relation->a() == being || relation->b() == being) {
+                relation->forgetEndpoint(being);
+                changed = true;
+            }
         }
+        // Touch ONLY if an endpoint actually moved. This callback fires for
+        // EVERY Singular destructor — and every transient ECA::Event is a
+        // Moment is a Singular, one per alpha predicate per fact. Touching
+        // unconditionally invalidated the endpoint index on every one of them,
+        // forcing an O(relations) rebuild on the next query: measured, an
+        // indexed category-scoped law ran ~25% SLOWER than scanning every
+        // relation. The same trap as the transient-Moment fact scan
+        // (DERIVED_STATE_AND_THE_SILENCE_OF_LAWS §4), set again by the code
+        // meant to make things faster.
+        //
+        // When it did move: the identifier key would still find the edge, but
+        // the pointer key names a being that is being destroyed, and could
+        // match a new being allocated at the same address. Rebuild.
+        if (changed) manager->touch();
     }
 }
 
@@ -80,24 +101,69 @@ RelationManager::RelationManager() { liveManagers().insert(this); }
 RelationManager::RelationManager(const RelationManager& other)
     : relations(other.relations) {
     liveManagers().insert(this);
+    touch();   // index members are not copied; build our own on first query
 }
 
 RelationManager::RelationManager(RelationManager&& other) noexcept
     : relations(std::move(other.relations)) {
     liveManagers().insert(this);
+    touch();
+    other.touch();   // `other` just lost its relations
 }
 
 RelationManager& RelationManager::operator=(const RelationManager& other) {
-    if (this != &other) relations = other.relations;
+    if (this != &other) { relations = other.relations; touch(); }
     return *this;
 }
 
 RelationManager& RelationManager::operator=(RelationManager&& other) noexcept {
-    if (this != &other) relations = std::move(other.relations);
+    if (this != &other) { relations = std::move(other.relations); touch(); other.touch(); }
     return *this;
 }
 
 RelationManager::~RelationManager() { liveManagers().erase(this); }
+
+// ---------------------------------------------------------------------------
+// The endpoint index (FORMATION_RETE.md §8 rung 4). See the header for why it
+// is keyed two ways and why it only ever proposes.
+// ---------------------------------------------------------------------------
+void RelationManager::rebuildEndpointIndex() const {
+    _byEndpoint.clear();
+    _byIdentifier.clear();
+    for (const auto& owned : relations) {
+        Relation* r = owned.get();
+        if (!r) continue;
+        if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
+        if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
+        // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
+        // Reading it here also fills the endpoint's cached id, which is what
+        // lets Relation::Endpoint::forget() keep the name when the being dies.
+        // Bound pointers are live here: forgetBeingEverywhere nulls every
+        // pointer to a dying being before it is freed — the same guarantee the
+        // unindexed scan in the Related condition already relies on.
+        const std::string aId = r->aId();
+        const std::string bId = r->bId();
+        if (!aId.empty()) _byIdentifier[aId].push_back(r);
+        if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
+    }
+    _indexedGeneration = _generation;
+}
+
+void RelationManager::relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
+    out.clear();
+    if (_indexedGeneration != _generation) rebuildEndpointIndex();
+    if (auto it = _byEndpoint.find(&being); it != _byEndpoint.end()) out = it->second;
+    const std::string id = being.getIdentifier();
+    if (id.empty()) return;
+    if (auto it = _byIdentifier.find(id); it != _byIdentifier.end()) {
+        for (Relation* r : it->second) {
+            // Degrees are small; a linear check keeps the list duplicate-free
+            // when an edge is known both by pointer and by name.
+            if (std::find(out.begin(), out.end(), r) == out.end()) out.push_back(r);
+        }
+    }
+}
+
 
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
@@ -178,6 +244,7 @@ void RelationManager::add(const std::shared_ptr<Relation>& r) {
         RelationEvent ev{std::time(nullptr), input.type, input.getWeight()};
         r->events.push_back(ev);
         relations.push_back(r);
+        touch();
 
         // Trigger event for new relation creation
         RelationCreatedEvent event(r);
@@ -219,6 +286,7 @@ bool RelationManager::remove(const std::shared_ptr<Relation>& r) {
     if (it != relations.end()) {
         auto removed = *it;
         relations.erase(it);
+        touch();
 
         ECA::Event echo("relation-destroyed", removed.get(), nullptr, std::time(nullptr));
         Core::EventBus::instance().publish(echo);
@@ -240,6 +308,7 @@ bool RelationManager::removeBetween(const Singular& a, const Singular& b, const 
         }
         return false;
     }), relations.end());
+    touch();
     return relations.size() != oldSize;
 }
 
@@ -256,6 +325,7 @@ bool RelationManager::removeBetween(const std::string& a, const std::string& b, 
         }
         return false;
     }), relations.end());
+    touch();
     return relations.size() != oldSize;
 }
 
@@ -268,6 +338,7 @@ bool RelationManager::removeInvolving(const Singular* being) {
         Core::EventBus::instance().publish(echo);
         return true;
     }), relations.end());
+    touch();
     return relations.size() != oldSize;
 }
 
@@ -338,12 +409,14 @@ nlohmann::json RelationManager::toJson() const {
 
 void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpointResolver& resolve) {
     relations.clear();
+    touch();   // before the early return: an empty or malformed load still replaced the graph
     if (!j.is_array()) return;
     for (const auto& item : j) {
         // Provenance may name a being that is not in this world yet. Keep the
         // identifier property; live graphs still refuse unbound edges in add().
         relations.push_back(std::make_shared<Relation>(Relation::fromJson(item, resolve)));
     }
+    touch();
 } 
 
 

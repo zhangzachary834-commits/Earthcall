@@ -900,6 +900,9 @@ ECA::ActionExecutor ActionNode::compile() const {
             return [target, f, binds](const ECA::Event&, Singular& subject) {
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) {
+                    if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
+                        std::cout << "[MAP DEBUG] vars is nullopt!" << std::endl;
+                    }
                     emitEffect("Map", false, "a bound variable does not read on this subject");
                     return;
                 }
@@ -909,6 +912,9 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
                 auto res = lawSetValue(subject, target, *valProp);
+                if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
+                    std::cout << "[MAP DEBUG] target=" << target.toString() << " res=" << static_cast<int>(res) << std::endl;
+                }
                 emitResult(subject, "Map", res, target);
             };
         }

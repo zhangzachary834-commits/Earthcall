@@ -55,6 +55,8 @@ class Relation : public Singular {
 public:
     struct AttachmentData {
         bool enabled = false;
+
+        // WHAT IS THISSSSSSS?!?!?!??! - Zach
         glm::mat4 localOffset = glm::mat4(1.0f); // child relative to parent
         glm::vec3 parentAnchor = glm::vec3(0.0f);
         glm::vec3 childAnchor = glm::vec3(0.0f);

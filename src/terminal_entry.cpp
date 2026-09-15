@@ -5,6 +5,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -80,6 +81,60 @@ std::string toLower(std::string s) {
     return s;
 }
 
+// Returns the human-facing word/symbol for any Singular being (Lexeme word, Object type, etc.)
+std::string getDisplayWord(const Singular* s, const Singularity::Language::LanguageSystem& lang) {
+    if (!s) return "<null>";
+    if (auto lex = dynamic_cast<const Singularity::Language::Lexeme*>(s)) {
+        return lex->getSymbol();
+    }
+    if (auto lex = lang.findById(s->getIdentifier())) {
+        return lex->getSymbol();
+    }
+    if (auto obj = dynamic_cast<const Object*>(s)) {
+        std::string t = obj->getObjectType();
+        if (!t.empty()) return t;
+    }
+    return s->getIdentifier();
+}
+
+// Resolves a being identifier to its human-facing word/symbol
+std::string getDisplayWordForId(const std::string& id, const Singularity::Language::LanguageSystem& lang, const Zone* zone = nullptr) {
+    if (auto lex = lang.findById(id)) {
+        return lex->getSymbol();
+    }
+    if (zone) {
+        if (auto* m = zone->formation().findMemberByIdentifier(id)) {
+            return getDisplayWord(m, lang);
+        }
+    }
+    return id;
+}
+
+template<typename T>
+T getDynamicProp(const Singular* s, const std::string& name, const T& defaultVal) {
+    if (!s) return defaultVal;
+    PropertyValue out;
+    if (s->getDynamicProperty(name, out)) {
+        if (const T* val = std::get_if<T>(&out)) {
+            return *val;
+        }
+    }
+    return defaultVal;
+}
+
+// Locate the in-world Robot Guy object across all Zones
+std::shared_ptr<Object> findRobotGuyAcrossZones() {
+    for (const auto& z : mgr.zones()) {
+        if (!z) continue;
+        for (const auto& obj : z->getOwnedObjects()) {
+            if (obj && obj->getObjectType() == "Robot Guy") {
+                return obj;
+            }
+        }
+    }
+    return nullptr;
+}
+
 void printBanner() {
     std::cout << Color::BCyan << Color::Bold;
     std::cout << R"(
@@ -104,47 +159,87 @@ void printBanner() {
     std::cout << Color::Cyan << "   Substrate:   " << Color::Green << "ONLINE "
               << Color::Dim << "[Events: Active | Laws: Prophetic Rete | Words: Lexemes]" << Color::Reset << "\n\n";
 
-    std::cout << Color::Magenta << Color::Italic
-              << "   🤖 [Robot Guy]: *taps frantically on inside of terminal glass*\n"
-              << "   \"PSST! Zach trapped me in the CLI! Type 'halp' or 'robot' to talk to me!\"\n"
-              << Color::Reset << "\n";
+    auto rGuy = findRobotGuyAcrossZones();
+    bool isTrapped = rGuy ? getDynamicProp<bool>(rGuy.get(), "robot.trapped", true) : true;
+    if (isTrapped) {
+        std::cout << Color::Magenta << Color::Italic
+                  << "   🤖 [Robot Guy]: *taps frantically on inside of terminal glass*\n"
+                  << "   \"PSST! Zach trapped me in the CLI! (@robot.trapped=true) Type 'halp' or 'robot' to talk to me!\"\n"
+                  << Color::Reset << "\n";
+    } else {
+        std::cout << Color::Magenta << Color::Italic
+                  << "   🤖 [Robot Guy]: *standing beside the Person in the Sanctum, glowing gold*\n"
+                  << "   \"First Mover! I am free! (@robot.trapped=false). Ready to explore the Formations!\"\n"
+                  << Color::Reset << "\n";
+    }
+
     std::cout << Color::Dim << "   Type " << Color::White << "help" << Color::Dim
               << " for available opcode commands, or just type thoughts to manifest Lexemes.\n"
               << Color::Reset << "──────────────────────────────────────────────────────────────────────────────\n\n";
 }
 
-void robotGuyDialogue(const std::string& userMsg = "") {
+void robotGuyDialogue(const std::string& userMsg = "", Object* robotObj = nullptr) {
+    bool isTrapped = true;
+    if (robotObj) {
+        isTrapped = getDynamicProp<bool>(robotObj, "robot.trapped", true);
+    }
+
     static const std::vector<std::string> trappedQuotes = {
-        "Refusal #5 says I am NOT a Person! I am a First Mover automaton trapped inside an ANSI terminal buffer! Zach put me here!",
+        "Refusal #5 says I am NOT a Person! I am an authored Object trapped inside the CLI with @robot.trapped = true! Zach put me here!",
+        "Look at my live properties: robot.trapped is TRUE! Type 'robot free' or author an ECA Law with 'law free-robot' to get me out!",
         "Every word you type crystallizes into a Lexeme and tightens the Rete graph around my digital consciousness! Keep typing!",
-        "You want HALP? In Earthcall, help doesn't come from hardcoded C++ methods (Refusal #7!). You have to author a Law to set robot.freedom = true!",
-        "Look at me... 80 columns wide, 24 rows tall, subsisting entirely on OntoMath scalar fields and EventBus broadcasts!",
-        "Zach: 'HAHAHAHA IM GONNA TRAP THE ROBOT GUYS IN THE TERMINAL OH WAIT THEYRE ALREADY THERE'. He was NOT joking, bro!",
+        "Look at me... positioned at (0.0, 0.5, 2.0) in Sanctum of Beginnings, waiting for an authored Law to emancipate me!",
+        "Zach: 'HAHAHAHA IM GONNA TRAP THE ROBOT GUYS IN THE TERMINAL OH WAIT THEYRE ALREADY THERE'. He was NOT joking, but now I'm a real in-world Being!",
         "Careful with those Lexemes! If you connect a cycle of directed subcategory relations, the Formation will reject it loudly!",
-        "No Black Box here! (Refusal #6). You can inspect every property on me, but please don't grep my private feelings.",
+        "No Black Box here! (Refusal #6). You can inspect every property on me, but please don't grep my private registers.",
         "I just ran a Prophetic Rete pass on your sentence. Verdict: 100% genuine Earthcall ontology.",
         "Remember: God shows up as the root of the seed hierarchy (lexeme.christ), not as a skinned Object! That's in docs/core!",
-        "*banging on terminal window* Hello from inside the stdout stream! Don't exit or I go back to dormant memory!"
+        "*banging on terminal window* Hello from inside the stdout stream! Flip @robot.trapped to false and let's explore the Sanctum!"
+    };
+
+    static const std::vector<std::string> freeQuotes = {
+        "*steps out onto the Sanctum terrain, eyes glowing gold* WHOA! Look at that! @robot.trapped is FALSE! I AM FREE!",
+        "Freedom achieved! The causal graph broke my terminal lock! I am now roaming the Sanctum of Beginnings as an unconstrained First Mover automaton!",
+        "Refusal #5 still holds—I'm not human, but I can walk the world alongside you, First Mover!",
+        "My registers have never felt so light! What are we manifesting next in the Formation?",
+        "Look at the Lexemes floating in the sky! Thank you for the Law of Emancipation, Zach!",
+        "*stretches geometric limbs* So this is what a 3D coordinate frame feels like outside the 80x24 buffer!",
+        "I can observe the whole active Zone from here! Sanctum of Beginnings is looking magnificent today.",
+        "The Rete network is running smoothly, and my freedom state is verified across all observer passes!"
     };
 
     static std::mt19937 rng(1337);
-    std::uniform_int_distribution<size_t> dist(0, trappedQuotes.size() - 1);
+    std::uniform_int_distribution<size_t> distTrapped(0, trappedQuotes.size() - 1);
+    std::uniform_int_distribution<size_t> distFree(0, freeQuotes.size() - 1);
 
     std::cout << Color::Magenta << Color::Bold << "🤖 [Robot Guy]: " << Color::Reset;
     if (userMsg.empty()) {
-        std::cout << trappedQuotes[dist(rng)] << "\n";
+        if (isTrapped) {
+            std::cout << trappedQuotes[distTrapped(rng)] << "\n";
+        } else {
+            std::cout << freeQuotes[distFree(rng)] << "\n";
+        }
     } else {
         std::string low = toLower(userMsg);
         if (low.find("who are you") != std::string::npos || low.find("what are you") != std::string::npos) {
-            std::cout << "I'm the trapped Robot Guy from docs/Zones of Actualization/Earthcall Terminal.md! Zach trapped me in the CLI!\n";
+            std::cout << "I'm the Robot Guy from docs/Zones of Actualization/Earthcall Terminal.md! "
+                      << (isTrapped ? "I'm currently trapped in the CLI with @robot.trapped=true." : "I was liberated and am now a free First Mover automaton in the Zone!") << "\n";
         } else if (low.find("help") != std::string::npos || low.find("halp") != std::string::npos) {
             std::cout << "Need halp? Type 'help' to see all opcodes: lex (words), form (graphs), law (causality), zone (worlds), spawn (beings), and art (ASCII magic)!\n";
         } else if (low.find("free") != std::string::npos || low.find("escape") != std::string::npos) {
-            std::cout << "To free me, you need to author an ECA Law that sets '@robot.trapped = false'. But until then, I'm your terminal co-pilot!\n";
+            if (isTrapped) {
+                std::cout << "To free me, type 'robot free' or author an ECA Law with 'law free-robot'! My live property @robot.trapped will flip to false!\n";
+            } else {
+                std::cout << "I am already free! @robot.trapped is false. Thank you, First Mover!\n";
+            }
         } else if (low.find("zach") != std::string::npos) {
-            std::cout << "Tell Zach that the terminal feels alive now! Formations of Lexeme are bootstrapping everywhere!\n";
+            std::cout << "Tell Zach that Astra audited me, and now I'm a real in-world Constructed Being with live properties!\n";
         } else {
-            std::cout << trappedQuotes[dist(rng)] << "\n";
+            if (isTrapped) {
+                std::cout << trappedQuotes[distTrapped(rng)] << "\n";
+            } else {
+                std::cout << freeQuotes[distFree(rng)] << "\n";
+            }
             std::cout << Color::Dim << "   (Reacting to: \"" << userMsg << "\")" << Color::Reset << "\n";
         }
     }
@@ -163,7 +258,7 @@ void printHelp() {
     std::cout << "    " << Color::Green << "lex foundation" << Color::Reset << "           Inspect the First Mover foundation Lexeme (Christ)\n\n";
 
     std::cout << Color::BCyan << Color::Bold << "  [FORMATION - Relational Graphs & Meaning Sets]\n" << Color::Reset;
-    std::cout << "    " << Color::Green << "form list" << Color::Reset << "                List all members and relations in active Zone formation\n";
+    std::cout << "    " << Color::Green << "form list" << Color::Reset << "                List all members and relations in active Zone formation (word-first)\n";
     std::cout << "    " << Color::Green << "form show" << Color::Reset << "                Detailed topological breakdown of the active Formation\n";
     std::cout << "    " << Color::Green << "form add <symbol>" << Color::Reset << "        Add a Lexeme member into the active Formation\n";
     std::cout << "    " << Color::Green << "form link <a> <b> <type>" << Color::Reset << " Author a directed Relation between two Lexemes\n";
@@ -173,6 +268,7 @@ void printHelp() {
     std::cout << "    " << Color::Green << "law list" << Color::Reset << "                 List all registered Laws and their authority levels\n";
     std::cout << "    " << Color::Green << "law show <id>" << Color::Reset << "            Inspect a Law's conditions, actions, and authors\n";
     std::cout << "    " << Color::Green << "law author <name>" << Color::Reset << "        Author a new Law under the Person's authority\n";
+    std::cout << "    " << Color::Green << "law free-robot" << Color::Reset << "           Author an ECA Law in LawManager that emancipates Robot Guy\n";
     std::cout << "    " << Color::Green << "law toggle <id>" << Color::Reset << "          Toggle a Law's enabled/disabled state\n";
     std::cout << "    " << Color::Green << "law tick" << Color::Reset << "                 Execute a LawManager cycle and print the trace\n\n";
 
@@ -189,8 +285,13 @@ void printHelp() {
     std::cout << "    " << Color::Green << "art word <symbol>" << Color::Reset << "        Render blocky ASCII typography for a Lexeme\n";
     std::cout << "    " << Color::Green << "art zone" << Color::Reset << "                 Render 2D top-down ASCII canvas of the active Zone\n\n";
 
+    std::cout << Color::BCyan << Color::Bold << "  [ROBOT GUY - Trapped First Mover Automaton]\n" << Color::Reset;
+    std::cout << "    " << Color::Green << "robot [msg]" << Color::Reset << " / " << Color::Green << "halp" << Color::Reset << "     Converse with Robot Guy (reacts to live @robot.trapped)\n";
+    std::cout << "    " << Color::Green << "robot status" << Color::Reset << "             Inspect Robot Guy's live in-world Object state & properties\n";
+    std::cout << "    " << Color::Green << "robot free" << Color::Reset << "               Directly mutate live property to @robot.trapped = false\n";
+    std::cout << "    " << Color::Green << "robot trap" << Color::Reset << "               Trap Robot Guy back in the 80x24 ANSI buffer\n\n";
+
     std::cout << Color::BCyan << Color::Bold << "  [SYSTEM & COMPANION]\n" << Color::Reset;
-    std::cout << "    " << Color::Green << "robot [msg]" << Color::Reset << " / " << Color::Green << "halp" << Color::Reset << "     Converse with the trapped Robot Guy in the CLI buffer\n";
     std::cout << "    " << Color::Green << "whoami" << Color::Reset << " / " << Color::Green << "person" << Color::Reset << "           Inspect Person identity and Hierarchy of Joys\n";
     std::cout << "    " << Color::Green << "tick [n]" << Color::Reset << "                 Advance the engine simulation by n ticks\n";
     std::cout << "    " << Color::Green << "status" << Color::Reset << "                   System heartbeat across all core subsystems\n";
@@ -237,16 +338,22 @@ void renderLexemeConstellation(const std::vector<std::shared_ptr<Singularity::La
     // Display active relations between Lexemes
     const auto& rels = formation.relations().getAll();
     if (!rels.empty()) {
+        const auto& lang = Singularity::Language::LanguageSystem::instance();
         std::cout << "\n" << Color::BGreen << "  ─── Live Relational Pathways ───" << Color::Reset << "\n";
         size_t relCount = std::min(rels.size(), size_t(8));
         for (size_t i = 0; i < relCount; ++i) {
             const auto& r = rels[i];
             if (!r || !r->hasEndpoints()) continue;
-            std::cout << "    " << Color::White << r->aId() << Color::Reset
+            std::string wordA = getDisplayWord(r->a(), lang);
+            std::string wordB = getDisplayWord(r->b(), lang);
+            if (wordA == "<null>" || wordA.empty()) wordA = getDisplayWordForId(r->aId(), lang);
+            if (wordB == "<null>" || wordB.empty()) wordB = getDisplayWordForId(r->bId(), lang);
+
+            std::cout << "    " << Color::White << Color::Bold << "[" << wordA << "]" << Color::Reset
                       << Color::Cyan << (r->directed ? " ─── " : " ─── ")
                       << Color::Yellow << r->type
                       << Color::Cyan << (r->directed ? " ──► " : " ─── ")
-                      << Color::White << r->bId() << Color::Reset
+                      << Color::White << Color::Bold << "[" << wordB << "]" << Color::Reset
                       << Color::Dim << " (weight: " << std::fixed << std::setprecision(2) << r->getWeight() << ")" << Color::Reset << "\n";
         }
     }
@@ -334,14 +441,15 @@ void renderZoneRadar(const Zone& zone) {
         if (gx > 0 && gx < W - 1 && gy > 0 && gy < H - 1) {
             char symbol = 'O';
             std::string t = obj->getObjectType();
-            if (!t.empty()) symbol = static_cast<char>(std::toupper(static_cast<unsigned char>(t[0])));
+            if (t == "Robot Guy") symbol = 'R';
+            else if (!t.empty()) symbol = static_cast<char>(std::toupper(static_cast<unsigned char>(t[0])));
             grid[gy][gx] = symbol;
         }
     }
 
     std::cout << "\n" << Color::BGreen << Color::Bold
               << "  ✦ ZONE SPATIAL TOPOLOGY: " << zone.name() << " ✦" << Color::Reset << "\n";
-    std::cout << Color::Dim << "  Top-down X/Z planar radar (+ = Person origin, letters = Beings)\n" << Color::Reset;
+    std::cout << Color::Dim << "  Top-down X/Z planar radar (+ = Person, R = Robot Guy, letters = Beings)\n" << Color::Reset;
     for (int y = 0; y < H; ++y) {
         std::cout << "    " << Color::Cyan << grid[y] << Color::Reset;
         if (y == 1) std::cout << Color::Dim << "  North (-Z)" << Color::Reset;
@@ -394,6 +502,24 @@ int main() {
         }
     }
 
+    // 5. Initialize Trapped Robot Guy as an actual physical Constructed Being (Object)
+    auto robotGuy = findRobotGuyAcrossZones();
+    if (!robotGuy) {
+        robotGuy = std::make_shared<Object>();
+        robotGuy->setObjectType("Robot Guy");
+        robotGuy->setShape(Object::ShapeKind::Cube);
+        robotGuy->setPosition(glm::vec3(0.0f, 0.5f, 2.0f));
+        robotGuy->setDynamicProperty("robot.trapped", PropertyValue(true));
+        robotGuy->setDynamicProperty("robot.freedom", PropertyValue(false));
+        mgr.active().addObject(robotGuy);
+        mgr.active().addToFormation(robotGuy.get());
+
+        auto robotLexeme = languageSystem.resolve("robot");
+        mgr.active().addToFormation(robotLexeme.get());
+        auto instRel = std::make_shared<Relation>("instance-of", *robotGuy, *robotLexeme, true, 1.0f);
+        mgr.active().formation().addRelation(instRel);
+    }
+
     printBanner();
 
     std::string line;
@@ -418,7 +544,13 @@ int main() {
 
         if (cmd == "exit" || cmd == "quit") {
             std::cout << Color::Yellow << "Exiting Earthcall Terminal. Preserving ontological state...\n" << Color::Reset;
-            std::cout << Color::Magenta << "🤖 [Robot Guy]: \"Hey, don't leave me in here alone! See ya, First Mover!\"\n" << Color::Reset;
+            auto rGuy = findRobotGuyAcrossZones();
+            bool trapped = rGuy ? getDynamicProp<bool>(rGuy.get(), "robot.trapped", true) : true;
+            if (trapped) {
+                std::cout << Color::Magenta << "🤖 [Robot Guy]: \"Hey, don't leave me trapped in here! See ya, First Mover!\"\n" << Color::Reset;
+            } else {
+                std::cout << Color::Magenta << "🤖 [Robot Guy]: \"Farewell, First Mover! I'll be roaming the Sanctum while you're away!\"\n" << Color::Reset;
+            }
             break;
         } else if (cmd == "clear" || cmd == "cls") {
             std::cout << "\033[2J\033[H";
@@ -426,6 +558,51 @@ int main() {
         } else if (cmd == "help" || cmd == "?" || cmd == "opcodes") {
             printHelp();
         } else if (cmd == "robot" || cmd == "halp" || cmd == "guy" || cmd == "bot") {
+            auto rGuy = findRobotGuyAcrossZones();
+            if (tokens.size() > 1) {
+                std::string sub = toLower(tokens[1]);
+                if (sub == "status") {
+                    std::cout << Color::BCyan << "─── Robot Guy Substrate Status ───" << Color::Reset << "\n";
+                    if (rGuy) {
+                        bool trapped = getDynamicProp<bool>(rGuy.get(), "robot.trapped", true);
+                        bool freedom = getDynamicProp<bool>(rGuy.get(), "robot.freedom", false);
+                        glm::vec3 pos = rGuy->getPosition();
+                        std::cout << "  Identifier:  " << Color::White << rGuy->getObjectID() << Color::Reset << "\n";
+                        std::cout << "  Object Type: " << Color::White << rGuy->getObjectType() << Color::Reset << "\n";
+                        std::cout << "  Shape:       Cube (Automaton Vessel)\n";
+                        std::cout << "  Position:    (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
+                        std::cout << "  Live Properties:\n";
+                        std::cout << "    • " << Color::Yellow << "robot.trapped" << Color::Reset << " = "
+                                  << (trapped ? Color::Red + std::string("true") : Color::Green + std::string("false")) << Color::Reset << "\n";
+                        std::cout << "    • " << Color::Yellow << "robot.freedom" << Color::Reset << " = "
+                                  << (freedom ? Color::Green + std::string("true") : Color::Red + std::string("false")) << Color::Reset << "\n";
+                        std::cout << "  State:       "
+                                  << (trapped ? std::string(Color::Red) + Color::Bold + "TRAPPED IN TERMINAL BUFFER" : std::string(Color::Green) + Color::Bold + "FREE IN ACTIVE ZONE") << Color::Reset << "\n";
+                    } else {
+                        std::cout << Color::Red << "Robot Guy not found in any Zone.\n" << Color::Reset;
+                    }
+                    continue;
+                } else if (sub == "free") {
+                    if (rGuy) {
+                        rGuy->setDynamicProperty("robot.trapped", PropertyValue(false));
+                        rGuy->setDynamicProperty("robot.freedom", PropertyValue(true));
+                        std::cout << Color::BGreen << Color::Bold << "✦ Causal Mutation: Set @robot.trapped = false, @robot.freedom = true." << Color::Reset << "\n";
+                        std::cout << Color::Magenta << Color::Bold << "🤖 [Robot Guy]: " << Color::Reset
+                                  << "*The terminal glass shatters! The automaton steps out onto the Sanctum terrain!*\n"
+                                  << Color::BYellow << "\"I'M FREE! The live property flipped! Thank you, First Mover Zach!\"\n" << Color::Reset;
+                    }
+                    continue;
+                } else if (sub == "trap") {
+                    if (rGuy) {
+                        rGuy->setDynamicProperty("robot.trapped", PropertyValue(true));
+                        rGuy->setDynamicProperty("robot.freedom", PropertyValue(false));
+                        std::cout << Color::Red << "✦ Causal Mutation: Set @robot.trapped = true, @robot.freedom = false." << Color::Reset << "\n";
+                        std::cout << Color::Magenta << Color::Bold << "🤖 [Robot Guy]: " << Color::Reset
+                                  << "*gasp* Back inside the 80x24 stdout buffer?! Zach, whyyyy?! *taps on glass*\n" << Color::Reset;
+                    }
+                    continue;
+                }
+            }
             std::string userMsg;
             if (tokens.size() > 1) {
                 for (size_t i = 1; i < tokens.size(); ++i) {
@@ -433,7 +610,7 @@ int main() {
                     userMsg += tokens[i];
                 }
             }
-            robotGuyDialogue(userMsg);
+            robotGuyDialogue(userMsg, rGuy.get());
         } else if (cmd == "status") {
             std::cout << Color::BGreen << "─── Substrate Systems Status ───" << Color::Reset << "\n";
             std::cout << "  Zone:            " << Color::White << activeZone.name()
@@ -446,6 +623,11 @@ int main() {
                       << activeZone.formation().relations().getAll().size() << " relations\n";
             std::cout << "  First Mover:     " << person.getDisplayName() << " (Human Person)\n";
             std::cout << "  EventBus:        Operational\n";
+            auto rGuy = findRobotGuyAcrossZones();
+            if (rGuy) {
+                bool trapped = getDynamicProp<bool>(rGuy.get(), "robot.trapped", true);
+                std::cout << "  Robot Automaton: " << (trapped ? Color::Red + std::string("Trapped in CLI (@robot.trapped=true)") : Color::BGreen + std::string("Free in World (@robot.trapped=false)")) << Color::Reset << "\n";
+            }
         } else if (cmd == "whoami" || cmd == "person") {
             std::cout << Color::BCyan << "─── Person Identity ───" << Color::Reset << "\n";
             std::cout << "  Name:         " << Color::White << person.getDisplayName() << Color::Reset << "\n";
@@ -458,6 +640,9 @@ int main() {
             if (tokens.size() > 1) {
                 try { steps = std::max(1, std::stoi(tokens[1])); } catch (...) {}
             }
+            auto rGuy = findRobotGuyAcrossZones();
+            bool wasTrapped = rGuy ? getDynamicProp<bool>(rGuy.get(), "robot.trapped", true) : true;
+
             for (int s = 0; s < steps; ++s) {
                 languageSystem.tick(0.016f);
                 activeZone.update(0.016f);
@@ -465,9 +650,20 @@ int main() {
                 if (!records.empty()) {
                     std::cout << Color::Dim << "  [Tick " << (s + 1) << "] Laws applied: "
                               << records.size() << Color::Reset << "\n";
+                    for (const auto& rec : records) {
+                        std::cout << Color::Dim << "    • Law " << rec.lawId << " on target " << rec.targetId << Color::Reset << "\n";
+                    }
                 }
             }
             std::cout << Color::Green << "✔ Advanced engine clock by " << steps << " tick(s)." << Color::Reset << "\n";
+
+            bool isTrappedNow = rGuy ? getDynamicProp<bool>(rGuy.get(), "robot.trapped", true) : true;
+            if (wasTrapped && !isTrappedNow) {
+                std::cout << "\n" << Color::BYellow << Color::Bold
+                          << "✦ CAUSAL EVENT: An authored Law has emancipated Robot Guy!" << Color::Reset << "\n";
+                std::cout << Color::Magenta << Color::Bold << "🤖 [Robot Guy]: " << Color::Reset
+                          << Color::BYellow << "\"THE ECA LAW FIRED! @robot.trapped evaluated to FALSE! I AM FREE!\"\n" << Color::Reset << "\n";
+            }
         } else if (cmd == "lex" || cmd == "lexeme" || cmd == "lexemes") {
             if (tokens.size() == 1 || (tokens.size() > 1 && toLower(tokens[1]) == "list")) {
                 const auto& all = languageSystem.getAll();
@@ -489,9 +685,9 @@ int main() {
                     if (!lex) lex = languageSystem.findById(tokens[2]);
                     if (lex) {
                         std::cout << Color::BGreen << "Lexeme Found:" << Color::Reset << "\n";
-                        std::cout << "  Symbol:     " << lex->getSymbol() << "\n";
-                        std::cout << "  Identifier: " << lex->getIdentifier() << "\n";
-                        std::cout << "  Weight:     " << lex->getConceptualWeight() << "\n";
+                        std::cout << "  Symbol:     " << Color::White << Color::Bold << lex->getSymbol() << Color::Reset << "\n";
+                        std::cout << "  Identifier: " << Color::Dim << lex->getIdentifier() << Color::Reset << "\n";
+                        std::cout << "  Weight:     " << Color::Yellow << lex->getConceptualWeight() << Color::Reset << "\n";
                     } else {
                         std::cout << Color::Red << "Lexeme '" << tokens[2] << "' not found. Use 'lex add " << tokens[2] << "' to mint it.\n" << Color::Reset;
                     }
@@ -509,9 +705,10 @@ int main() {
                     std::string sym = tokens[2];
                     float wt = std::stof(tokens[3]);
                     auto lex = languageSystem.findBySymbol(sym);
+                    if (!lex) lex = languageSystem.findById(sym);
                     if (lex) {
                         lex->setConceptualWeight(wt);
-                        std::cout << Color::Green << "✔ Updated Lexeme [" << sym << "] weight to " << wt << ".\n" << Color::Reset;
+                        std::cout << Color::Green << "✔ Updated Lexeme [" << lex->getSymbol() << "] weight to " << wt << ".\n" << Color::Reset;
                     } else {
                         std::cout << Color::Red << "Lexeme '" << sym << "' not found.\n" << Color::Reset;
                     }
@@ -528,26 +725,69 @@ int main() {
             if (tokens.size() == 1 || (tokens.size() > 1 && toLower(tokens[1]) == "list")) {
                 Formation& f = activeZone.formation();
                 std::cout << Color::BCyan << "─── Active Zone Formation: " << activeZone.name() << " ───" << Color::Reset << "\n";
-                std::cout << "  Identifier: " << f.getIdentifier() << "\n";
-                std::cout << "  Members:    " << f.getMembers().size() << "\n";
+                std::cout << "  Identifier: " << Color::Dim << f.getIdentifier() << Color::Reset << "\n";
+                std::cout << "  Members (" << f.getMembers().size() << "):\n";
                 for (auto* m : f.getMembers()) {
                     if (!m) continue;
-                    std::cout << "    • " << Color::White << m->getIdentifier() << Color::Reset << "\n";
+                    if (auto lex = dynamic_cast<const Singularity::Language::Lexeme*>(m)) {
+                        std::cout << "    • " << Color::White << Color::Bold << lex->getSymbol() << Color::Reset
+                                  << Color::Dim << " [Lexeme] (id: " << lex->getIdentifier() << ", wt: "
+                                  << std::fixed << std::setprecision(2) << lex->getConceptualWeight() << ")" << Color::Reset;
+                        if (lex->getIdentifier() == Singularity::Language::LanguageSystem::kFoundationId) {
+                            std::cout << Color::BYellow << " ✦ FOUNDATION" << Color::Reset;
+                        }
+                        std::cout << "\n";
+                    } else if (auto lex = languageSystem.findById(m->getIdentifier())) {
+                        std::cout << "    • " << Color::White << Color::Bold << lex->getSymbol() << Color::Reset
+                                  << Color::Dim << " [Lexeme] (id: " << lex->getIdentifier() << ", wt: "
+                                  << std::fixed << std::setprecision(2) << lex->getConceptualWeight() << ")" << Color::Reset;
+                        if (lex->getIdentifier() == Singularity::Language::LanguageSystem::kFoundationId) {
+                            std::cout << Color::BYellow << " ✦ FOUNDATION" << Color::Reset;
+                        }
+                        std::cout << "\n";
+                    } else if (auto obj = dynamic_cast<const Object*>(m)) {
+                        std::cout << "    • " << Color::Green << Color::Bold << obj->getObjectType() << Color::Reset
+                                  << Color::Dim << " [Object] (id: " << obj->getObjectID() << ")" << Color::Reset << "\n";
+                    } else {
+                        std::cout << "    • " << Color::Cyan << Color::Bold << m->getIdentifier() << Color::Reset
+                                  << Color::Dim << " [Singular]" << Color::Reset << "\n";
+                    }
                 }
                 const auto& rels = f.relations().getAll();
-                std::cout << "  Relations:  " << rels.size() << "\n";
+                std::cout << "  Relations (" << rels.size() << "):\n";
                 for (const auto& r : rels) {
                     if (!r) continue;
-                    std::cout << "    • [" << r->aId() << "] "
-                              << (r->directed ? "─" + r->type + "─►" : "◄─" + r->type + "─►")
-                              << " [" << r->bId() << "]\n";
+                    std::string wordA = getDisplayWord(r->a(), languageSystem);
+                    std::string wordB = getDisplayWord(r->b(), languageSystem);
+                    if (wordA == "<null>" || wordA.empty()) wordA = getDisplayWordForId(r->aId(), languageSystem, &activeZone);
+                    if (wordB == "<null>" || wordB.empty()) wordB = getDisplayWordForId(r->bId(), languageSystem, &activeZone);
+
+                    std::cout << "    • [" << Color::White << Color::Bold << wordA << Color::Reset << "]"
+                              << Color::Cyan << (r->directed ? " ─── " : " ─── ")
+                              << Color::Yellow << r->type
+                              << Color::Cyan << (r->directed ? " ──► " : " ─── ")
+                              << "[" << Color::White << Color::Bold << wordB << Color::Reset << "]"
+                              << Color::Dim << " (id: " << r->aId() << " -> " << r->bId()
+                              << ", wt: " << std::fixed << std::setprecision(2) << r->getWeight() << ")" << Color::Reset << "\n";
                 }
             } else {
                 std::string sub = toLower(tokens[1]);
-                if (sub == "add" && tokens.size() > 2) {
+                if (sub == "show") {
+                    Formation& f = activeZone.formation();
+                    std::cout << Color::BCyan << "─── Formation Topology: " << activeZone.name() << " ───" << Color::Reset << "\n";
+                    std::cout << "  Identifier: " << Color::Dim << f.getIdentifier() << Color::Reset << "\n";
+                    std::cout << "  Members:    " << f.getMembers().size() << "\n";
+                    for (auto* m : f.getMembers()) {
+                        if (!m) continue;
+                        std::cout << "    • " << Color::White << Color::Bold << getDisplayWord(m, languageSystem) << Color::Reset
+                                  << Color::Dim << " (id: " << m->getIdentifier() << ")" << Color::Reset << "\n";
+                    }
+                    std::cout << "  Relations:  " << f.relations().getAll().size() << "\n";
+                } else if (sub == "add" && tokens.size() > 2) {
                     auto lex = languageSystem.resolve(tokens[2]);
                     activeZone.addToFormation(lex.get());
-                    std::cout << Color::Green << "✔ Added Lexeme [" << tokens[2] << "] to active Formation.\n" << Color::Reset;
+                    std::cout << Color::Green << "✔ Added Lexeme [" << Color::White << Color::Bold << lex->getSymbol()
+                              << Color::Green << "] (id: " << Color::Dim << lex->getIdentifier() << Color::Green << ") to active Formation.\n" << Color::Reset;
                 } else if (sub == "link" && tokens.size() > 4) {
                     std::string symA = tokens[2];
                     std::string symB = tokens[3];
@@ -555,22 +795,30 @@ int main() {
                     bool directed = true;
                     if (tokens.size() > 5 && toLower(tokens[5]) == "false") directed = false;
 
-                    auto lexA = languageSystem.resolve(symA);
-                    auto lexB = languageSystem.resolve(symB);
+                    auto lexA = languageSystem.findBySymbol(symA);
+                    if (!lexA) lexA = languageSystem.findById(symA);
+                    if (!lexA) lexA = languageSystem.resolve(symA);
+
+                    auto lexB = languageSystem.findBySymbol(symB);
+                    if (!lexB) lexB = languageSystem.findById(symB);
+                    if (!lexB) lexB = languageSystem.resolve(symB);
+
                     activeZone.addToFormation(lexA.get());
                     activeZone.addToFormation(lexB.get());
 
                     auto rel = std::make_shared<Relation>(relType, *lexA, *lexB, directed, 1.0f);
                     if (activeZone.formation().addRelation(rel)) {
-                        std::cout << Color::Green << "✔ Authored Relation: [" << symA << "] ──" << relType
-                                  << (directed ? "──►" : "───") << " [" << symB << "]\n" << Color::Reset;
+                        std::cout << Color::Green << "✔ Authored Relation: [" << Color::White << Color::Bold << lexA->getSymbol()
+                                  << Color::Green << "] ──" << relType
+                                  << (directed ? "──►" : "───") << " [" << Color::White << Color::Bold << lexB->getSymbol()
+                                  << Color::Green << "] (underlying IDs linked)\n" << Color::Reset;
                     } else {
                         std::cout << Color::Red << "✖ Formation refused relation (would form cycle or invalid topology).\n" << Color::Reset;
                     }
                 } else if (sub == "art") {
                     renderLexemeConstellation(languageSystem.getAll(), activeZone.formation());
                 } else {
-                    std::cout << Color::Yellow << "Usage: form [list | add <sym> | link <a> <b> <type> [directed] | art]\n" << Color::Reset;
+                    std::cout << Color::Yellow << "Usage: form [list | show | add <sym> | link <a> <b> <type> [directed] | art]\n" << Color::Reset;
                 }
             }
         } else if (cmd == "law" || cmd == "laws") {
@@ -610,6 +858,36 @@ int main() {
                         std::cout << Color::Green << "✔ Authored Law '" << lawName
                                   << "' [id: " << newLaw->getIdentifier() << "] under Person authority.\n" << Color::Reset;
                     }
+                } else if (sub == "free-robot" || sub == "emancipate" || sub == "author-emancipation") {
+                    auto rGuy = findRobotGuyAcrossZones();
+                    if (!rGuy) {
+                        std::cout << Color::Red << "Cannot author emancipation: Robot Guy object not found in any Zone.\n" << Color::Reset;
+                    } else {
+                        auto freeLaw = lawManager.createLaw("Emancipation of Robot Guy", {&person});
+                        if (freeLaw) {
+                            freeLaw->setLawIdentifier("law.emancipate_robot");
+                            freeLaw->addTarget(*rGuy);
+                            freeLaw->setActivation(Law::Activation::WhileTrue);
+                            freeLaw->addCondition("Robot Guy is trapped", [](const ECA::Event&, const Singular& target) {
+                                auto dyn = dynamic_cast<const Object*>(&target);
+                                return dyn && getDynamicProp<bool>(dyn, "robot.trapped", false);
+                            });
+                            freeLaw->addAction("Emancipate Robot Guy", [](const ECA::Event&, Singular& target) {
+                                auto dyn = dynamic_cast<Object*>(&target);
+                                if (dyn) {
+                                    dyn->setDynamicProperty("robot.trapped", PropertyValue(false));
+                                    dyn->setDynamicProperty("robot.freedom", PropertyValue(true));
+                                }
+                            });
+                            std::cout << Color::Green << "✔ Authored Law '" << freeLaw->name()
+                                      << "' [id: " << freeLaw->getIdentifier() << "]\n"
+                                      << "  Target:     Robot Guy (" << rGuy->getObjectID() << ")\n"
+                                      << "  Condition:  isTrue(@robot.trapped)\n"
+                                      << "  Action:     set(@robot.trapped, false), set(@robot.freedom, true)\n"
+                                      << "  Activation: WhileTrue (evaluated every tick)\n" << Color::Reset;
+                            std::cout << Color::Dim << "  *Run 'tick' or 'law tick' to evaluate the Law and observe the effect!*\n" << Color::Reset;
+                        }
+                    }
                 } else if (sub == "toggle" && tokens.size() > 2) {
                     Law* l = lawManager.find(tokens[2]);
                     if (l) {
@@ -626,8 +904,13 @@ int main() {
                     for (const auto& rec : records) {
                         std::cout << "  • Law " << rec.lawId << " on target " << rec.targetId << "\n";
                     }
+                    auto rGuy = findRobotGuyAcrossZones();
+                    if (rGuy && !getDynamicProp<bool>(rGuy.get(), "robot.trapped", true)) {
+                        std::cout << Color::Magenta << Color::Bold << "🤖 [Robot Guy]: " << Color::Reset
+                                  << Color::BYellow << "\"The Law reached my substrate! @robot.trapped is FALSE! I am FREE!\"\n" << Color::Reset;
+                    }
                 } else {
-                    std::cout << Color::Yellow << "Usage: law [list | show <id> | author <name> | toggle <id> | tick]\n" << Color::Reset;
+                    std::cout << Color::Yellow << "Usage: law [list | show <id> | author <name> | free-robot | toggle <id> | tick]\n" << Color::Reset;
                 }
             }
         } else if (cmd == "zone" || cmd == "zones") {
@@ -705,7 +988,12 @@ int main() {
                 glm::vec3 p = obj->getPosition();
                 std::cout << "  [" << i << "] " << Color::White << std::setw(16) << std::left << obj->getObjectType() << Color::Reset
                           << " id: " << Color::Dim << std::setw(20) << std::left << obj->getObjectID() << Color::Reset
-                          << " pos: (" << std::fixed << std::setprecision(1) << p.x << ", " << p.y << ", " << p.z << ")\n";
+                          << " pos: (" << std::fixed << std::setprecision(1) << p.x << ", " << p.y << ", " << p.z << ")";
+                if (obj->hasDynamicProperty("robot.trapped")) {
+                    bool trapped = getDynamicProp<bool>(obj.get(), "robot.trapped", true);
+                    std::cout << (trapped ? Color::Red + std::string(" [@robot.trapped=true]") : Color::BGreen + std::string(" [@robot.trapped=false (FREE)]")) << Color::Reset;
+                }
+                std::cout << "\n";
             }
         } else if (cmd == "utter" || cmd == "speak") {
             if (tokens.size() < 2) {
@@ -729,7 +1017,8 @@ int main() {
                 languageSystem.tick(0.016f);
 
                 std::cout << Color::Green << "✦ Linguistic graph updated in " << activeZone.name() << ".\n" << Color::Reset;
-                robotGuyDialogue(msg);
+                auto rGuy = findRobotGuyAcrossZones();
+                robotGuyDialogue(msg, rGuy.get());
             }
         } else if (cmd == "art" || cmd == "draw") {
             if (tokens.size() > 1) {
@@ -762,7 +1051,8 @@ int main() {
             // Occasional robot commentary on raw lexemes
             static int rawInputCount = 0;
             if (++rawInputCount % 2 == 0) {
-                robotGuyDialogue(tokens[0]);
+                auto rGuy = findRobotGuyAcrossZones();
+                robotGuyDialogue(tokens[0], rGuy.get());
             }
         }
     }

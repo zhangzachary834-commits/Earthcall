@@ -308,8 +308,9 @@ int main() {
             for (const auto& r : f.reads) assert(r.satisfying.isTop());
         }
 
-        // Overlaps and Related consult machinery this walk cannot name, so
-        // the whole law's reads go opaque rather than half-enumerated.
+        // Overlaps consults machinery this walk cannot name, so the whole
+        // law's reads go opaque rather than half-enumerated. So does an
+        // UNTYPED Related, whose Rete node wakes on every state fact.
         {
             Prophetic::LawFacts f;
             f.lawId = "toucher";
@@ -319,8 +320,19 @@ int main() {
         {
             Prophetic::LawFacts f;
             f.lawId = "related";
-            Prophetic::analyzeCondition(ConditionNode::related("holds", ""), f);
+            Prophetic::analyzeCondition(ConditionNode::related("", ""), f);
             assert(f.opaqueReads);
+        }
+        // A TYPED Related is legible (2026-09-14, FORMATION_RETE.md §8 rung 4):
+        // it hears its relation type by root and the Relation's own fields by
+        // name. Behaviour guarded by related_prophetic_legibility_test.
+        {
+            Prophetic::LawFacts f;
+            f.lawId = "related-typed";
+            Prophetic::analyzeCondition(ConditionNode::related("holds", ""), f);
+            assert(!f.opaqueReads);
+            assert(f.readRoots.count("holds"));
+            assert(f.readNames.count("type") && f.readNames.count("directed"));
         }
 
         // A quantifier's inner reads are about the INSTANCES, and are filed as

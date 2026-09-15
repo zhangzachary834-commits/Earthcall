@@ -348,20 +348,60 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 // relation may outlive its endpoints (rung 0), and the old
                 // path touched every far end in the world on every evaluation.
                 const Singular* self = &subject;
-                for (const Relation* rel : Universe::instance().relations()) {
+                // The subject's stable identifier, computed only if some edge
+                // actually needs it — most edges are bound, and for those the
+                // pointer answers without building a string.
+                std::string selfId;
+                bool haveSelfId = false;
+                const auto isSelf = [&](const Singular* endpoint, const std::string& keptId) {
+                    // BOUND: the pointer is exact and free.
+                    if (endpoint) return endpoint == self;
+                    // UNBOUND OR FORGOTTEN: the endpoint has no pointer but
+                    // KEEPS its identifier (Relation::Endpoint::id() returns
+                    // savedId; forget() keeps it; loadFromJson keeps unbound
+                    // edges "for a later bind"). Stable Identifiers is a
+                    // non-negotiable: that name IS the being.
+                    //
+                    // Comparing pointers alone was a regression (Formation Rete
+                    // rung 4, 2026-09-10): a null pointer never equals a live
+                    // subject, so every edge whose endpoint was unbound — or
+                    // forgotten when a being was freed and then recreated under
+                    // the same name by a Zone reload — silently stopped
+                    // matching. Guarded by related_identity_endpoint_test.
+                    if (keptId.empty()) return false;
+                    if (!haveSelfId) { selfId = subject.getIdentifier(); haveSelfId = true; }
+                    return !selfId.empty() && keptId == selfId;
+                };
+
+                // CANDIDATES: from the endpoint index when the world has one
+                // (EngineInit installs it), otherwise every relation. The loop
+                // below re-checks which end the subject is, the type, direction
+                // and far end for each — so the index only narrows how many
+                // edges are examined, never which ones can match.
+                // Formation Rete rung 4. Oracle: relation_endpoint_index_test.
+                std::vector<Relation*> edges;
+                if (!Universe::instance().relationsInvolving(subject, edges)) {
+                    edges = Universe::instance().relations();
+                }
+                for (const Relation* rel : edges) {
                     if (!rel) continue;
                     if (!type.empty() && rel->type != type) continue;
 
-                    const bool isSource = rel->a() == self;
-                    const bool isTarget = rel->b() == self;
+                    // aId()/bId() are only built when the pointer is absent,
+                    // which is when they are needed; a bound endpoint never pays
+                    // for a string here.
+                    const bool isSource = isSelf(rel->a(), rel->a() ? std::string() : rel->aId());
+                    const bool isTarget = isSelf(rel->b(), rel->b() ? std::string() : rel->bId());
                     // Direction is honored exactly as before: a directed
                     // relation holds only OF its source.
                     if (rel->directed ? !isSource : (!isSource && !isTarget)) continue;
 
                     if (other.empty()) return true;
 
-                    const Singular* far = isSource ? rel->b() : rel->a();
-                    if (far && far->getIdentifier() == other) return true;
+                    // The far end, by the same rule: bound -> its identifier;
+                    // unbound -> the identifier it kept.
+                    const std::string farId = isSource ? rel->bId() : rel->aId();
+                    if (!farId.empty() && farId == other) return true;
                 }
                 return false;
             };

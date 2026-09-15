@@ -81,6 +81,27 @@ public:
 
     void setRelationProvider(RelationProvider provider) {
         _relationProvider = std::move(provider);
+        // A new graph invalidates any index built over the old one. Clearing it
+        // makes the safe path the default: callers fall back to scanning
+        // relations(), which is correct for any provider. Whoever installs a
+        // graph must install its matching index AFTER this, as EngineInit does.
+        _relationsInvolvingProvider = nullptr;
+    }
+
+    // An index over the same graph relations() walks: every relation that
+    // could involve `being`, as CANDIDATES the caller must still check.
+    // Formation Rete rung 4 — see RelationManager::relationsInvolving.
+    using RelationsInvolvingProvider =
+        std::function<void(const Singular& being, std::vector<Relation*>& out)>;
+    void setRelationsInvolvingProvider(RelationsInvolvingProvider provider) {
+        _relationsInvolvingProvider = std::move(provider);
+    }
+    // False when no index is installed — then scan relations() instead.
+    bool relationsInvolving(const Singular& being, std::vector<Relation*>& out) const {
+        if (!_relationsInvolvingProvider) return false;
+        out.clear();
+        _relationsInvolvingProvider(being, out);
+        return true;
     }
     std::vector<Relation*> relations() const {
         std::vector<Relation*> out;
@@ -249,6 +270,7 @@ private:
 
     Provider _provider;
     RelationProvider _relationProvider;
+    RelationsInvolvingProvider _relationsInvolvingProvider;
     RelationRegistrar _relationRegistrar;
     EventInterest _eventInterest;
 

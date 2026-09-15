@@ -566,6 +566,9 @@ public:
     // Compares the SUBJECT POINTER, never dereferencing it: this is called on
     // paths where a relation's far endpoint may already be destroyed.
     bool hasRelationStateFact(const Singular* subject, const std::string& relationType) const;
+    // Retract the one relation-state fact keyed on (subject, relationType), if
+    // present. Pointer-compared, never dereferenced. Returns whether one went.
+    bool retractRelationStateFact(const Singular* subject, const std::string& relationType);
 
     // `source` defaults to Foreign deliberately: a caller that has not said
     // where its predicate came from has not earned the assumption that it can
@@ -1068,6 +1071,28 @@ private:
     // Catch up the edges that already existed when a relation type first
     // enters the seeding vocabulary — the second shape of the same defect.
     void backSeedRelationStateFacts(const std::unordered_set<std::string>& types);
+    // THE RETRACTION HALF of the edge-fact stream (2026-09-14, Claude Opus 5).
+    //
+    // Rung 0 asserted edge facts on relation-formed and left them behind on
+    // relation-destroyed, calling the stale fact a harmless widening: the live
+    // predicate answers false, so nothing false-fires. True for WhileTrue. NOT
+    // true for OnBecomeTrue: the stale fact keeps the subject in the terminal
+    // memory, the law's condition memory never releases it, and when the edge
+    // forms again there is no false->true edge — the law is silent on every
+    // re-formation. Found by related_prophetic_legibility_test.
+    //
+    // relation-destroyed (and a write to a Relation's `type`) queues both
+    // endpoints here. It cannot decide on the spot: EventBus::publish is
+    // synchronous and removeBetween publishes from INSIDE its remove_if, so the
+    // graph is mid-mutation. revalidateRelationStateFacts runs at the top of
+    // tick(), when the graph is whole, and retracts a fact only if NO edge of
+    // that type still involves the being — by pointer or kept identifier, in
+    // either direction, a superset of what any Related could match. So it
+    // narrows only where the predicate is proved false (PROPHETIC_RETE.md §2).
+    // The being-released callback erases a dying being from the queue.
+    std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateToRevalidate;
+    void queueRelationStateRevalidation(const Relation& relation, const std::string& relationType);
+    void revalidateRelationStateFacts();
     std::unordered_set<std::string> _seededSubjects;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is

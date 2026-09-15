@@ -345,3 +345,14 @@ From `698059e0 Rete performance sweep hunt` (2026-09-13) until this fix, **every
 ## Laws keep working after you switch Zones
 
 - [ ] **Walk from one Zone into another, and back.** Laws that apply to beings by their properties should act on the beings in the Zone you are standing in — not on the Zone you just left, and not on nobody. Before this fix, switching between two Zones whose laws used the same property names left those laws silently aimed at the previous Zone.
+
+## Category-scoped laws: faster, and they hear relations come and go
+
+*Raised 2026-09-14, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+Laws scoped as "every instance of category X" (`Related(instance-of, category.X)`, the idiom 132 chess laws use) cost ~17x an ordinary law at 400 beings. They now cost the same. The fix also closed two ways such a law could stay silent.
+
+- [ ] **Chess and Go feel no slower, and ideally smoother.** Load a chess world in `earthcall_webgpu` and play a few moves. Nothing should respond more slowly than before. Measured headless, the category-scoped law itself got ~17x cheaper.
+- [ ] **A relation removed and re-made fires its "became true" law again.** In a world with a law that reacts once when a being becomes related to something (`OnBecomeTrue` + `Related`), use the Relations console to **Break** that relation and then **Create Relation in Zone** again with the same endpoints and kind. The reaction should happen again. Before the fix it happened the first time only.
+- [ ] **Changing a relation's type reaches laws.** The console cannot retype a relation; write its `type` property instead, with a law or the `earthcall_write_property` tool, to a kind a law is watching. That law should start acting on the endpoint. Before the fix it never did.
