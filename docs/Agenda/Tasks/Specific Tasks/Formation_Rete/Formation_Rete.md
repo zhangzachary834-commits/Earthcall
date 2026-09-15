@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0–4 of 7 done (2026-09-08, 09-09, 09-14; rung 4 was first deferred 2026-09-10, then built when its real cause turned out to be an opaque Prophetic read). Rung 5 measured 2026-09-15: the adapter itself is deferred (no consumer, ⚑ AUTHOR metric), and the cost it was meant to cut was fixed at its real source. Rung 2's Formation half and rungs 6–7 specified.
+**Status:** rungs 0–4 and 7 done (rung 7's departure half, 2026-09-15). Rung 5 measured and deferred (its cost fixed at the source). Rung 6 measured and deferred: no measurable payoff in real worlds. Rung 2's Formation half remains. §9.1 answered by Zach 2026-09-15.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -373,6 +373,79 @@ removed). Both mutations were confirmed red, the timing one and a copy that does
   O(1) for a being it has never seen. That has now cost the engine twice (rung 1 and rung 5).
 - Never write `Relation::Endpoint::ptr` directly; use `bind`/`forget`, or the register goes stale and
   a freed being keeps its relations pointing at it.
+
+## Rung 6 — ⚠️ measured 2026-09-15, not built
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`. Zach: "NOW DO THE NEXT PHASE".* The
+rung is **reified path Relations and the Law traversing to its own subjects**, with magic-set
+restriction (§3.2, §3.3, §4C). The measured target was the ~260 µs that a chess candidate
+passing the cheap conjuncts costs, which comes from `Not ForAny(…)` conjuncts whose inner
+condition names `Related(instance-of, …)`. That is exactly where restricting a quantifier to one
+category's members, by traversal instead of the world, would apply.
+
+**Measured in `chess_app_test`:** **41 quantifier evaluations in the whole test, 7 ms in total.**
+Each one rebuilds `Universe::beings()` (917, 22 µs) and runs the inner condition on 52
+kind-matching Objects (152 µs), true 24% of the time. Traversal would cut the 152 µs toward the
+32 pieces. In absolute terms that saves a few milliseconds per game, against 111 ms spent on
+event-sweep misses and seconds of world loading. **Not built:** a data structure with its own
+invalidation and soundness burden, for a cost that doesn't show up.
+
+What would change that: a world where a quantifier or `Scope::Everyone` law ranges over a
+category that is a small fraction of a large population. When one exists, the design is already
+constrained by Zach's §9.1 answer: traversal begins from the condition's named category Singulars,
+possibly from both ends, and `ForAny ∃b: Related(T, X) ∧ φ(b)` may be restricted to the neighbours
+of `X` exactly. Only the existential form qualifies (`ForAll` cannot be restricted this way), and
+only when every neighbour of `X` is a bound, in-world being. Otherwise it must fall back to the
+world.
+
+## Rung 7 — ✅ departure on the reactive path, 2026-09-15
+
+*Claude Opus 5, same session.* §8 names this as the prerequisite for making sweeps rarer (and so
+for rung 5). Probed first, and it was a **live correctness bug**, not only a prerequisite.
+
+**The defect.** A connected LawManager takes a `WhileTrue`/`OnBecomeTrue` law's holding subjects
+from its Rete terminal memory. An alpha keeps a subject for as long as *any* fact about it once
+passed, but its predicate reads the whole subject while its attribute filter names one
+attribute. So a condition made false through an attribute the filter doesn't name never releases
+the subject. **Measured red, each independently:**
+
+| Condition | Made false by | Before |
+|---|---|---|
+| `Compare(x > y)` | `y` | never released |
+| `InRegion(sphere)` | leaving the region | never released |
+| `Zone(a − b ≥ 0)` | `b` | never released |
+| `Related(instance-of, category.target)` | the target edge removed while another `instance-of` edge remains | never released |
+| `All(hp > 0, gate > 0)` (control) | `gate` | released correctly (the join token is retracted) |
+
+**Consequences:** an `OnBecomeTrue` law fired **once in its lifetime** however often its condition
+went false and true again (leaving and re-entering a region, for instance). A `WhileTrue` law's
+onset (`time.sinceApplied`) never reset. Nothing reported either.
+
+**The fix (`LawManager::tick`, reactive branch).** Terminal membership now only proposes; each
+candidate's condition is decided against the live world, **exactly once**. A subject about to be
+applied is verified by the application itself: `Applied` means it held, `ConditionsFailed` means
+it didn't. `conditionsSatisfied()` runs separately only where nothing is applied (an
+`OnBecomeTrue` subject already holding, an absorbed drive) or where `applyTo` refused before
+reaching the condition. `applyAndMaybeDrive` now returns the result. Also fixed on the way: an
+`OnBecomeTrue` candidate whose application failed its condition used to stay remembered as holding.
+
+**Cost:** the first version checked every candidate *and then* applied it, which doubled a
+quantifier law (`quantifier_scaling_test`: 118 → 218 ms at 320 beings; gap 0.684 over its 0.65
+guard). That's why it was restructured. After: **118 ms, gap 0.570, back to the pre-change
+baseline.** `category_membership_scaling_test`: index 1.0x the control.
+
+**Guarded by** `tests/law/reactive_departure_test.cpp`. All four red cases were confirmed red with
+the verification removed, with the control green, and red again under the restructured loop.
+
+**For Jules and any agent touching this:**
+- Terminal membership is a candidate set. Never treat "in the alpha memory" as "the condition
+  holds".
+- Don't make the verification conditional on a law being "exact" unless exactness is *proved*
+  per condition kind. The four rows above are four kinds that looked exact and weren't.
+- Keep one evaluation per candidate. Verifying and then applying looks harmless and doubles every
+  expensive law.
+- The edge/level split survives in a new shape (an `OnBecomeTrue` subject already holding is
+  checked, not applied). It has been lost twice before; both guard tests must stay green.
 
 ## Next rungs
 

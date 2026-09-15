@@ -2106,19 +2106,83 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                subjects.end());
             }
 
+            // DEPARTURE (FORMATION_RETE.md §8 rung 7, 2026-09-15). Terminal
+            // membership is a CANDIDATE set, not the truth. An alpha keeps a
+            // subject for as long as ANY fact about it once passed, but its
+            // predicate reads the whole subject: `Compare(x > y)` filters on `x`,
+            // so when `y` makes it false no fact re-evaluates and the subject
+            // stays. The same holds for InRegion, Zone, and a typed Related whose
+            // far end changed. Such a subject was never released: an OnBecomeTrue
+            // law never re-armed (it fired once in its lifetime), and a WhileTrue
+            // law's onset (`time.sinceApplied`) never reset. So every candidate's
+            // condition is decided against the live world here — membership
+            // proposes, the condition decides (PROPHETIC_RETE.md §2).
+            //
+            // EXACTLY ONE evaluation per candidate, and that is load-bearing for
+            // cost. Law::applyTo already evaluates the condition, so a subject
+            // about to be applied is verified BY the application: `Applied` means
+            // it held, `ConditionsFailed` means it did not. A separate
+            // conditionsSatisfied() runs only where nothing is applied (an
+            // OnBecomeTrue subject already holding, an absorbed drive) or where
+            // applyTo refused before reaching the condition (authority,
+            // jurisdiction). Verifying first AND applying doubled a quantifier
+            // law's tick (118 -> 218 ms at 320 beings, quantifier_scaling_test).
+            //
+            // WHICH SUBJECTS FIRE — still LOAD-BEARING, and lost twice before
+            // (04c52ed4, 698059e0):
+            //   WhileTrue    is a LEVEL: applied to every candidate, every tick;
+            //                the ones whose application fails the condition
+            //                are released.
+            //   OnBecomeTrue is an EDGE: applied only to a candidate that was
+            //                NOT holding; one already holding is checked, not
+            //                applied. CLAUDE.md: "Event-transitions must be
+            //                edges, not levels." Guarded by
+            //                tests/law/edge_reactive_path_test.cpp (edges) and
+            //                tests/law/reactive_departure_test.cpp (departure).
+            //
+            // Onset is recorded BEFORE applying, as it always was, so an action
+            // reading time.sinceApplied on its first tick sees 0; it is withdrawn
+            // if the application shows the condition did not hold.
             std::unordered_set<const Singular*> matching;
-            std::vector<Singular*> newlyTrue;
             matching.reserve(subjects.size());
+            const bool level = law->activation() == Law::Activation::WhileTrue;
             for (Singular* subject : subjects) {
                 if (!subject || Universe::instance().isUnmade(subject)) continue;
-                matching.insert(subject);
                 const bool wasHolding = law->lastConditionState(subject);
-                law->rememberConditionState(subject, true);
+
+                if (!level && wasHolding) {
+                    if (law->conditionsSatisfied(*subject)) matching.insert(subject);
+                    continue;   // released below if it no longer holds
+                }
+
                 if (!wasHolding) {
-                    newlyTrue.push_back(subject);
+                    law->rememberConditionState(subject, true);
                     if (Universe::instance().hasClock()) {
                         law->rememberOnset(subject, Universe::instance().now());
                     }
+                }
+
+                bool holds = false;
+                const std::string subjectId = subject->getIdentifier();
+                if (law->drives() && hasDriveSession(lawId, subjectId) &&
+                    law->retrigger() == Law::Retrigger::Absorb) {
+                    holds = law->conditionsSatisfied(*subject);
+                } else {
+                    if (law->drives() && hasDriveSession(lawId, subjectId)) {
+                        restartDriveSession(*law, subjectId);
+                    }
+                    const Law::ApplicationResult result =
+                        applyAndMaybeDrive(*law, *subject, records);
+                    holds = result == Law::ApplicationResult::Applied ||
+                            (result != Law::ApplicationResult::ConditionsFailed &&
+                             law->conditionsSatisfied(*subject));
+                }
+
+                if (holds) {
+                    matching.insert(subject);
+                } else if (!wasHolding) {
+                    law->rememberConditionState(subject, false);
+                    law->forgetOnset(subject);
                 }
             }
 
@@ -2129,42 +2193,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             for (const auto* subject : released) {
                 law->rememberConditionState(subject, false);
                 law->forgetOnset(subject);
-            }
-
-            // WHICH SUBJECTS FIRE — and this line is LOAD-BEARING. It reads as if
-            // `subjects` would do. It would not.
-            //
-            //   WhileTrue    is a LEVEL: it applies to every subject that holds,
-            //                every tick. `subjects`.
-            //   OnBecomeTrue is an EDGE: it applies only to subjects that JUST
-            //                started holding. `newlyTrue`, computed above.
-            //
-            // This branch was widened to take OnBecomeTrue on 2026-09-13
-            // (698059e0, "Rete performance sweep hunt") and applied `subjects` to
-            // both — so every OnBecomeTrue law in the running engine fired every
-            // frame for as long as its condition held. `newlyTrue` was built and
-            // never read. EngineInit always connects the LawManager, so this path
-            // is the live one: `add` accumulated, spawn and publish and sound
-            // repeated at frame rate.
-            //
-            // It is the SECOND time this edge check has been lost inside a
-            // performance commit — the first was 04c52ed4. CLAUDE.md: "Event-
-            // transitions must be edges, not levels." Guarded by
-            // tests/law/edge_reactive_path_test.cpp, which builds its law connected
-            // and enabled so it actually reaches this branch (rete_compile_test §C
-            // does not — its law is enabled late and never compiles terminals, so it
-            // stayed green through the regression). Do not merge these two lists.
-            const std::vector<Singular*>& firing =
-                law->activation() == Law::Activation::WhileTrue ? subjects : newlyTrue;
-            for (Singular* subject : firing) {
-                if (!subject || Universe::instance().isUnmade(subject)) continue;
-                const std::string subjectId = subject->getIdentifier();
-                if (law->drives() &&
-                    hasDriveSession(lawId, subjectId)) {
-                    if (law->retrigger() == Law::Retrigger::Absorb) continue;
-                    restartDriveSession(*law, subjectId);
-                }
-                applyAndMaybeDrive(*law, *subject, records);
             }
             continue;
         }
@@ -2214,15 +2242,16 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     return records;
 }
 
-void LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
+Law::ApplicationResult LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
                                     std::vector<Law::ApplicationRecord>& records) {
     const Law::ApplicationResult result = law.applyTo(subject);
-    if (law.applicationLog().empty()) return;
+    if (law.applicationLog().empty()) return result;
     const Law::ApplicationRecord& record = law.applicationLog().back();
     records.push_back(record);
 
-    if (result != Law::ApplicationResult::Applied) return;
+    if (result != Law::ApplicationResult::Applied) return result;
     maybeStartDriveSession(law, subject);
+    return result;
 }
 
 bool LawManager::gatesHold(const Law& law) const {

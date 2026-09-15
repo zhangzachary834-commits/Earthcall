@@ -366,3 +366,14 @@ Every click in chess runs ~30 "every piece" move laws, each checking every candi
 
 - [ ] **Select and move pieces quickly in a chess world in `earthcall_webgpu`.** The response to a click should feel at least as immediate as before, ideally snappier. Nothing about which moves are legal should have changed.
 - [ ] **Delete a piece or relation while playing, then keep playing.** Relations still have to let go of beings that are removed. A crash or strange behaviour right after deleting something would point at this change.
+
+## "Became true" laws fire again every time, not just the first time
+
+*Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+Before this fix, an `OnBecomeTrue` law in the running app could fire **once in its lifetime** if its condition went false through something other than the property it was first woken by. Examples: a being entering a region, a comparison between two properties, an OntoMath zone, or losing a relation to one specific category. Leaving and coming back did nothing.
+
+- [ ] **Enter, leave, and re-enter.** In any world with a law that reacts once when a being enters a region or zone, move the being in, out, and back in. The reaction should happen on each entry, not only the first.
+- [ ] **Timers restart.** A continuous law that uses how long its condition has held (`time.sinceApplied`) should restart its timing after the condition stops and starts again, rather than continuing from the first time.
+- [ ] **Nothing fires more than before while a condition simply holds.** Held conditions should still react once (`OnBecomeTrue`) or every frame (`WhileTrue`), as before.

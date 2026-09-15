@@ -2,7 +2,7 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is done** (2026-09-14) — overlap still has no users; membership, the real idiom, now costs what a property read costs, and the cause turned out to be an opaque Prophetic read rather than the relation walk (see §8 item 4). Rung 0 closed §1.2(a):
+**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is done** (2026-09-14), **rung 7's departure half is done and rungs 5–6 are measured and deferred** (2026-09-15) — overlap still has no users; membership, the real idiom, now costs what a property read costs, and the cause turned out to be an opaque Prophetic read rather than the relation walk (see §8 item 4). Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
@@ -657,12 +657,20 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    indices plus a reified relevance graph, not one metric. The adapter still waits on §9.1's new
    sub-questions (a)–(d), on §9.2, and on rung 7, which §6 makes its prerequisite. Record:
    `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 5.
-6. **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
-   restriction.
-7. **Departure reporting on the reactive path.** The sweep currently owns edge detection
-   ("Edge detection requires knowing when a being LEAVES the match set", `Law.cpp:1844`);
-   the WhileTrue path already diffs `conditionMemory` for releases, so this is reachable —
-   but it is a prerequisite for reducing sweep frequency, and no earlier plan listed it.
+6. ⚠️ **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
+   restriction. *Measured 2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), not
+   built:* the heaviest real world (chess) evaluates 41 quantifiers in a whole game test, 7 ms
+   total, so restricting them by traversal has no measurable payoff yet. When it does, only
+   `ForAny ∃b: Related(T, X) ∧ φ(b)` may be restricted to `X`'s neighbours, and never `ForAll`.
+7. ✅ **Departure reporting on the reactive path.** *Done 2026-09-15 (Opus 5, same session).*
+   The reactive path released a subject only when its terminal memory lost it. An alpha keeps a
+   subject while any fact once passed, so `Compare(x > y)` made false by `y`, `InRegion`,
+   `Zone`, and `Related` losing its named far end were **never released**: `OnBecomeTrue` laws
+   fired once in their lifetime and `WhileTrue` onsets never reset. Membership now proposes and
+   each candidate's condition decides, with exactly one evaluation per candidate (the application
+   itself verifies whatever is applied). Guarded by `tests/law/reactive_departure_test.cpp`; cost
+   neutral on `quantifier_scaling_test`. Record:
+   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 7.
 
 Steps 0 and 3 alone remove most of what motivated the original audit. Step 6 may well
 conclude that Beta nodes are never worth reifying, since the language cannot express the

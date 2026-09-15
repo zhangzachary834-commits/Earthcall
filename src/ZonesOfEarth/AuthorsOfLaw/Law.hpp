@@ -951,7 +951,7 @@ private:
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
     // Apply, record, and start a drive session only if the law CHANGED
     // something (not merely if the action branch was reached).
-    void applyAndMaybeDrive(Law& law, Singular& subject,
+    Law::ApplicationResult applyAndMaybeDrive(Law& law, Singular& subject,
                             std::vector<Law::ApplicationRecord>& records);
     // Whom an untargeted law sweeps: the beings carrying its vocabulary.
     std::vector<Singular*> sweepSubjects(const Law& law) const;
