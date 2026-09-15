@@ -1,5 +1,6 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include <cassert>
@@ -22,6 +23,9 @@ int main() {
     // Test modifying state
     state.currentSection = CreatorSection::Paint;
     assert(getCreatorConsoleState().currentSection == CreatorSection::Paint);
+
+    state.currentSection = CreatorSection::Concepts;
+    assert(getCreatorConsoleState().currentSection == CreatorSection::Concepts);
 
     state.polyhedron.shapeKind = ObjectTypes::ShapeKind::Sphere;
     assert(getCreatorConsoleState().polyhedron.shapeKind == ObjectTypes::ShapeKind::Sphere);
@@ -46,6 +50,40 @@ int main() {
 
     delete dummyObj;
     delete dummyObj2;
+
+    // Test Undo / Redo for Spawn & Delete
+    auto testZone = std::make_shared<Zone>("TestZone", "default");
+    zoneMgr.addZone(testZone);
+    zoneMgr.switchTo(0);
+
+    auto testObj = std::make_shared<Object>();
+    zoneMgr.active().addObject(testObj);
+    state.recordSpawn(testObj, "Spawn test object");
+
+    assert(state.canUndo());
+    assert(!state.canRedo());
+    assert(zoneMgr.active().getOwnedObjects().size() == 1);
+
+    state.performUndo(zoneMgr);
+    assert(!state.canUndo());
+    assert(state.canRedo());
+    assert(zoneMgr.active().getOwnedObjects().empty());
+
+    state.performRedo(zoneMgr);
+    assert(state.canUndo());
+    assert(!state.canRedo());
+    assert(zoneMgr.active().getOwnedObjects().size() == 1);
+
+    // Test Delete Undo/Redo
+    state.recordDelete(testObj, "Delete test object");
+    zoneMgr.active().removeObject(testObj.get());
+    assert(zoneMgr.active().getOwnedObjects().empty());
+
+    state.performUndo(zoneMgr);
+    assert(zoneMgr.active().getOwnedObjects().size() == 1);
+
+    state.performRedo(zoneMgr);
+    assert(zoneMgr.active().getOwnedObjects().empty());
 
     std::cout << "All CreatorConsoleState tests PASSED!" << std::endl;
     return 0;

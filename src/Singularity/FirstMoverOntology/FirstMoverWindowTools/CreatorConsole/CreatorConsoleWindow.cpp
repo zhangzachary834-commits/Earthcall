@@ -1,9 +1,14 @@
 #include "CreatorConsoleWindow.hpp"
 #include <imgui.h>
+#include <GLFW/glfw3.h>
 #include "Singularity/Core/Engine.hpp"
+#include "Person/Person.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Singularity/Screen/CreationWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 
 // Include the individual console tabs
 namespace Rendering {
@@ -23,11 +28,24 @@ namespace Rendering {
         if (!window && engine) window = engine->window();
 
         auto& state = getCreatorConsoleState();
+        auto* channel = (engine && engine->getLawManager())
+            ? Singularity::Core::CreationChannel::find(*engine->getLawManager())
+            : nullptr;
 
-        // 1. Top Status Banner (Active Zone & Target Object)
+        // Ergonomic Keyboard Shortcuts when Console has focus
+        if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)) {
+            if (ImGui::GetIO().KeyCtrl && !ImGui::GetIO().KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+                state.performUndo(zoneMgr);
+            } else if ((ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y)) ||
+                       (ImGui::GetIO().KeyCtrl && ImGui::GetIO().KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z))) {
+                state.performRedo(zoneMgr);
+            }
+        }
+
+        // 1. Top Status & Ergonomics Bar
         {
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.09f, 0.11f, 0.85f));
-            if (ImGui::BeginChild("##CreatorConsoleHeaderBar", ImVec2(0, 24.0f), false, ImGuiWindowFlags_NoScrollbar)) {
+            if (ImGui::BeginChild("##CreatorConsoleHeaderBar", ImVec2(0, 26.0f), false, ImGuiWindowFlags_NoScrollbar)) {
                 ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f), "Zone: %s", zoneMgr.active().name().c_str());
                 ImGui::SameLine();
                 ImGui::TextDisabled("|");
@@ -38,6 +56,36 @@ namespace Rendering {
                 } else {
                     ImGui::TextDisabled("Target: (None)");
                 }
+
+                // Undo / Redo Actions in Top Header
+                float availW = ImGui::GetContentRegionAvail().x;
+                float undoPos = ImGui::GetCursorPosX() + availW - 130.0f;
+                if (undoPos > ImGui::GetCursorPosX()) {
+                    ImGui::SameLine(undoPos);
+                } else {
+                    ImGui::SameLine();
+                }
+
+                bool canU = state.canUndo();
+                if (!canU) ImGui::BeginDisabled();
+                if (ImGui::SmallButton("↶ Undo")) {
+                    state.performUndo(zoneMgr);
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Undo (Ctrl+Z): %s", state.canUndo() ? state.nextUndoDesc().c_str() : "Nothing to undo");
+                }
+                if (!canU) ImGui::EndDisabled();
+
+                ImGui::SameLine();
+                bool canR = state.canRedo();
+                if (!canR) ImGui::BeginDisabled();
+                if (ImGui::SmallButton("↷ Redo")) {
+                    state.performRedo(zoneMgr);
+                }
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Redo (Ctrl+Y): %s", state.canRedo() ? state.nextRedoDesc().c_str() : "Nothing to redo");
+                }
+                if (!canR) ImGui::EndDisabled();
             }
             ImGui::EndChild();
             ImGui::PopStyleColor();
@@ -52,7 +100,7 @@ namespace Rendering {
             s_lastActiveSection = state.currentSection;
         }
 
-        // Menu Bar or Tab Bar for Tabs
+        // Menu Bar or Tab Bar for Tabs (including unified Concepts tab)
         if (ImGui::BeginMenuBar()) {
             auto renderMenuItem = [&](const char* label, CreatorSection sec) {
                 if (ImGui::MenuItem(label, nullptr, state.currentSection == sec)) {
@@ -63,6 +111,7 @@ namespace Rendering {
             };
             renderMenuItem("Paint", CreatorSection::Paint);
             renderMenuItem("3D Tools", CreatorSection::Create3D);
+            renderMenuItem("Concepts", CreatorSection::Concepts);
             renderMenuItem("Character", CreatorSection::Character);
             renderMenuItem("World", CreatorSection::World);
             renderMenuItem("Assets", CreatorSection::Assets);
@@ -86,6 +135,7 @@ namespace Rendering {
 
                 renderTab("Paint", CreatorSection::Paint);
                 renderTab("3D Tools", CreatorSection::Create3D);
+                renderTab("Concepts [F9]", CreatorSection::Concepts);
                 renderTab("Character", CreatorSection::Character);
                 renderTab("World", CreatorSection::World);
                 renderTab("Assets", CreatorSection::Assets);
@@ -104,6 +154,13 @@ namespace Rendering {
                 break;
             case CreatorSection::Create3D:
                 render3DConsole(player, selected, zoneMgr, window, engine);
+                break;
+            case CreatorSection::Concepts:
+                if (player) {
+                    renderCreationContent(*player, selected ? selected : state.selectedObject3D, zoneMgr.active());
+                } else {
+                    ImGui::TextDisabled("No Person present to author concepts.");
+                }
                 break;
             case CreatorSection::Character:
                 renderCharacterConsole(player);
@@ -129,7 +186,7 @@ namespace Rendering {
         if (!engine) engine = &Core::Engine::instance();
         if (!window && engine) window = engine->window();
 
-        ImGui::SetNextWindowSize(ImVec2(420, 640), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(440, 660), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
             renderCreatorConsoleContent(player, selected, zoneMgr, window, engine);
         }
@@ -141,7 +198,6 @@ namespace Rendering {
         (void)selected;
         auto& state = getCreatorConsoleState();
         if (state.currentSection == CreatorSection::Create3D && state.current3DMode == Mode3D::BrushCreate) {
-            // Renders in-console visual parameter badge
             const char* kindStr = "Cube";
             switch (state.polyhedron.shapeKind) {
                 case ObjectTypes::ShapeKind::Cube: kindStr = "Cube"; break;

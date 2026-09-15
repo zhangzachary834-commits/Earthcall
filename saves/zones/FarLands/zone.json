@@ -1,286 +1,60 @@
 {
-  "deletable": {
-    "Player": true,
-    "Zach": true
-  },
-  "formationRelations": [
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.control.button",
-      "entityB": "category.control",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "subcategory-of",
-          "timestamp": 1789195532
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 1.0
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "parentAnchor": [
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "directed": true,
-      "entityA": "object.farlands.resonance_crystal",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1787395000
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1.0,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1.0
-    }
+  "injected_by": "Gemini Spark (authored)",
+  "authors": [
+    "Zach"
   ],
-  "identifier": "FarLands",
-  "lexemes": [],
   "name": "FarLands",
-  "owner": "Zach",
+  "identifier": "FarLands",
+  "owner": "Player",
   "parentZone": "",
-  "qualities": {
-    "kind": "farlands",
-    "ownerKind": "person"
-  },
   "scope": "Local",
-  "spatialRoot": {
-    "field": {
-      "amplitude": 1.0,
-      "baseDensity": 1.0,
-      "frequency": 1.0,
-      "mode": "Procedural"
-    },
-    "id": "FarLands_spatialRoot",
-    "origin": [
-      0.0,
-      0.0,
-      0.0
-    ],
-    "scale": [
-      1.0,
-      1.0,
-      1.0
-    ],
-    "vectorField": {
-      "amplitude": 1.0,
-      "baseFlowX": 0.0,
-      "baseFlowY": 0.0,
-      "baseFlowZ": 0.0,
-      "frequency": 1.0,
-      "mode": "Procedural"
-    }
+  "qualities": {
+    "kind": "farlands"
   },
   "world": {
     "objects": [
       {
+        "objectID": "object.farlands.terrain",
+        "shapeKind": 10,
+        "geometryType": 10,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "materialId": "material.farlands.terrain",
+        "baseline": "ground",
         "attributes": {
           "baseline": "ground"
         },
@@ -290,261 +64,960 @@
             "v": "The Far Lands Mathematical Field"
           }
         },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+        "fieldExtent": [
+          2000.0,
+          240.0,
+          2000.0
         ],
-        "baseline": "ground",
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
+        "field": {
+          "op": 0,
+          "prim": 7,
+          "dims": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "offset": [
+            0.0,
             0.0,
             0.0
           ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 10,
-        "materialId": "material.farlands.terrain",
-        "objectID": "object.farlands.terrain",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 10,
-        "shapeParams": [
-          0.5,
-          0.3199999928474426,
-          0.5,
-          0.5,
-          0.3499999940395355,
-          0.15000000596046448,
-          2.0,
-          0.25,
-          0.11999999731779099,
-          100.0,
-          100.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5,
+          "mathNode": {
+            "op": 5,
+            "children": [
+              {
+                "op": 1,
+                "var": "y"
+              },
+              {
+                "op": 4,
+                "children": [
+                  {
+                    "op": 4,
+                    "children": [
+                      {
+                        "op": 6,
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 18.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 29,
+                            "children": [
+                              {
+                                "op": 2,
+                                "children": [
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0018,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "x",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0018,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "z",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": 6,
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 14.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 29,
+                            "children": [
+                              {
+                                "op": 2,
+                                "children": [
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0055,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "x",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 6,
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0055,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 3,
+                                        "arg": "z",
+                                        "children": [
+                                          {
+                                            "op": 1,
+                                            "var": "p"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": 4,
+                    "children": [
+                      {
+                        "op": 4,
+                        "children": [
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 65.0,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 29,
+                                "children": [
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0025,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "x",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.038,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "z",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": 6,
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 30.0,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 29,
+                                "children": [
+                                  {
+                                    "op": 2,
+                                    "children": [
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0012,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "x",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 6,
+                                        "children": [
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.076,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 3,
+                                            "arg": "z",
+                                            "children": [
+                                              {
+                                                "op": 1,
+                                                "var": "p"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": 4,
+                        "children": [
+                          {
+                            "op": 4,
+                            "children": [
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 65.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.038,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.0025,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 30.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.076,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.0012,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": 4,
+                            "children": [
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 24.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.045,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.045,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": 6,
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 7.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 29,
+                                    "children": [
+                                      {
+                                        "op": 2,
+                                        "children": [
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.12,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "x",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": 0,
+                                            "scalarForm": {
+                                              "terms": [
+                                                {
+                                                  "c": 0.0,
+                                                  "factors": {}
+                                                }
+                                              ]
+                                            }
+                                          },
+                                          {
+                                            "op": 6,
+                                            "children": [
+                                              {
+                                                "op": 0,
+                                                "scalarForm": {
+                                                  "terms": [
+                                                    {
+                                                      "c": 0.12,
+                                                      "factors": {}
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              {
+                                                "op": 3,
+                                                "arg": "z",
+                                                "children": [
+                                                  {
+                                                    "op": 1,
+                                                    "var": "p"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
       },
       {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Spawn Observation Dais"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 3,
-        "materialId": "material.farlands.safezone",
-        "objectID": "object.farlands.dais",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        "objectID": "object.farlands.dais_outer",
         "shapeKind": 3,
+        "geometryType": 3,
         "shapeParams": [
-          6.0,
+          16.0,
           0.0,
           0.0,
-          0.20000000298023224,
-          0.0,
-          0.0,
-          0.0,
+          0.25,
           0.0,
           0.0,
           0.0,
-          0.0
-        ],
-        "targetRotation": [
           0.0,
-          -0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "transform": [
-          1.0,
+          32.0,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          0.5,
           0.0,
           0.0,
           0.0,
           0.0,
-          1.0,
+          32.0,
           0.0,
           0.0,
-          0.0,
+          -0.3,
           0.0,
           1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Far Lands Horizon Beacon"
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
         ],
         "center": [
           0.0,
-          0.0,
+          -0.3,
           0.0
         ],
+        "materialId": "material.farlands.obsidian",
         "faceColors": [
           [
-            1.0,
-            0.0,
-            0.0
+            0.08,
+            0.09,
+            0.12
           ],
           [
-            1.0,
-            0.0,
-            0.0
+            0.08,
+            0.09,
+            0.12
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.08,
+            0.09,
+            0.12
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.08,
+            0.09,
+            0.12
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.08,
+            0.09,
+            0.12
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.08,
+            0.09,
+            0.12
           ]
         ],
-        "geometryType": 9,
-        "materialId": "material.farlands.rock",
-        "objectID": "object.farlands.beacon",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 9,
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Outer Sanctuary Plinth"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.dais_inner",
+        "shapeKind": 3,
+        "geometryType": 3,
         "shapeParams": [
-          0.4000000059604645,
-          0.4000000059604645,
-          0.4000000059604645,
-          1.2000000476837158,
+          9.5,
+          0.0,
+          0.0,
+          0.2,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.10000000149011612,
+          0.0,
           0.0,
           0.0
         ],
-        "targetRotation": [
+        "transform": [
+          19.0,
           0.0,
-          -0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          19.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.1,
+          0.0
+        ],
+        "materialId": "material.farlands.platform",
+        "faceColors": [
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Inner Sanctuary Arena"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.sanctuary_ring",
+        "shapeKind": 8,
+        "geometryType": 8,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.0,
+          0.16,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.0
         ],
         "transform": [
@@ -561,133 +1034,950 @@
           1.0,
           0.0,
           0.0,
-          0.0,
+          0.32,
           0.0,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+        "center": [
+          0.0,
+          0.32,
+          0.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.25,
+            0.9,
+            1.0
+          ],
+          [
+            0.25,
+            0.9,
+            1.0
+          ],
+          [
+            0.25,
+            0.9,
+            1.0
+          ],
+          [
+            0.25,
+            0.9,
+            1.0
+          ],
+          [
+            0.25,
+            0.9,
+            1.0
+          ],
+          [
+            0.25,
+            0.9,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Sanctuary Runic Torus"
+          }
+        }
       },
       {
+        "objectID": "object.farlands.monolith.north",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.6,
+          0.6,
+          0.6,
+          4.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.15,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          0.0,
+          4.5,
+          -14.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          4.5,
+          -14.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
         "authoredProperties": {
-          "acoustic.amplitude": {
-            "t": "double",
-            "v": 0.6
+          "displayName": {
+            "t": "string",
+            "v": "North Chrono-Curtain Obelisk"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.crystal.north",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.55,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          9.8,
+          -14.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          9.8,
+          -14.0
+        ],
+        "materialId": "material.farlands.amethyst",
+        "faceColors": [
+          [
+            0.8,
+            0.35,
+            1.0
+          ],
+          [
+            0.8,
+            0.35,
+            1.0
+          ],
+          [
+            0.8,
+            0.35,
+            1.0
+          ],
+          [
+            0.8,
+            0.35,
+            1.0
+          ],
+          [
+            0.8,
+            0.35,
+            1.0
+          ],
+          [
+            0.8,
+            0.35,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chrono-Curtain Harmonic (528 Hz)"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-north"
           },
           "acoustic.frequency": {
             "t": "double",
             "v": 528.0
           },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.65
+          },
           "acoustic.waveType": {
             "t": "string",
             "v": "crystal"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.monolith.south",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.6,
+          0.6,
+          0.6,
+          4.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.15,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          0.0,
+          4.5,
+          14.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          4.5,
+          14.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "South Abyssal Rift Obelisk"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.crystal.south",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.55,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          9.8,
+          14.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          9.8,
+          14.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.25,
+            0.75,
+            1.0
+          ],
+          [
+            0.25,
+            0.75,
+            1.0
+          ],
+          [
+            0.25,
+            0.75,
+            1.0
+          ],
+          [
+            0.25,
+            0.75,
+            1.0
+          ],
+          [
+            0.25,
+            0.75,
+            1.0
+          ],
+          [
+            0.25,
+            0.75,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Abyssal Grounding Harmonic (396 Hz)"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-south"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 396.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.7
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "sine"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.monolith.east",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.6,
+          0.6,
+          0.6,
+          4.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.15,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          14.0,
+          4.5,
+          0.0,
+          1.0
+        ],
+        "center": [
+          14.0,
+          4.5,
+          0.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "East Lattice Frontier Obelisk"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.crystal.east",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.55,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          14.0,
+          9.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          14.0,
+          9.8,
+          0.0
+        ],
+        "materialId": "material.farlands.emerald",
+        "faceColors": [
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Lattice Connection Harmonic (639 Hz)"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-east"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 639.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.6
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "triangle"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.monolith.west",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.6,
+          0.6,
+          0.6,
+          4.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.15,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          9.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          -14.0,
+          4.5,
+          0.0,
+          1.0
+        ],
+        "center": [
+          -14.0,
+          4.5,
+          0.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "West Solar Horizon Obelisk"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.crystal.west",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.55,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.1,
+          0.0,
+          -14.0,
+          9.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          -14.0,
+          9.8,
+          0.0
+        ],
+        "materialId": "material.farlands.amber",
+        "faceColors": [
+          [
+            1.0,
+            0.65,
+            0.2
+          ],
+          [
+            1.0,
+            0.65,
+            0.2
+          ],
+          [
+            1.0,
+            0.65,
+            0.2
+          ],
+          [
+            1.0,
+            0.65,
+            0.2
+          ],
+          [
+            1.0,
+            0.65,
+            0.2
+          ],
+          [
+            1.0,
+            0.65,
+            0.2
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Solar Horizon Awakening (741 Hz)"
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-west"
+          },
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 741.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.6
+          },
+          "acoustic.waveType": {
+            "t": "string",
+            "v": "saw"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.altar_pedestal",
+        "shapeKind": 3,
+        "geometryType": 3,
+        "shapeParams": [
+          1.8,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          3.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.6,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.6,
+          0.0
+        ],
+        "materialId": "material.farlands.gold",
+        "faceColors": [
+          [
+            0.95,
+            0.78,
+            0.32
+          ],
+          [
+            0.95,
+            0.78,
+            0.32
+          ],
+          [
+            0.95,
+            0.78,
+            0.32
+          ],
+          [
+            0.95,
+            0.78,
+            0.32
+          ],
+          [
+            0.95,
+            0.78,
+            0.32
+          ],
+          [
+            0.95,
+            0.78,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Altar of the Singularity"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.singularity_core",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.75,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.5,
+          0.0,
+          0.0,
+          3.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          3.8,
+          0.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.35,
+            0.95,
+            1.0
+          ],
+          [
+            0.35,
+            0.95,
+            1.0
+          ],
+          [
+            0.35,
+            0.95,
+            1.0
+          ],
+          [
+            0.35,
+            0.95,
+            1.0
+          ],
+          [
+            0.35,
+            0.95,
+            1.0
+          ],
+          [
+            0.35,
+            0.95,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Hyper-Resonance Singularity Core"
           },
           "buttonRole": {
             "t": "string",
             "v": "farlands-pulse"
           },
-          "displayName": {
+          "acoustic.frequency": {
+            "t": "double",
+            "v": 432.0
+          },
+          "acoustic.amplitude": {
+            "t": "double",
+            "v": 0.75
+          },
+          "acoustic.waveType": {
             "t": "string",
-            "v": "Harmonic Resonance Core"
+            "v": "crystal"
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 2,
-        "materialId": "material.farlands.beacon",
-        "objectID": "object.farlands.resonance_crystal",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 2,
+        }
+      },
+      {
+        "objectID": "object.farlands.singularity_ring",
+        "shapeKind": 8,
+        "geometryType": 8,
         "shapeParams": [
-          0.4000000059604645,
           0.0,
           0.0,
           0.0,
           0.0,
+          1.7,
+          0.09,
           0.0,
           0.0,
           0.0,
           0.0,
-          0.0,
-          0.0
-        ],
-        "stakeholders": [
-          {
-            "authorId": "author.gemini-spark",
-            "lawId": "law-farlands-pulse",
-            "propertyPath": "@state.farlands.pulseCount",
-            "timestamp": 1788744967
-          },
-          {
-            "authorId": "author.gemini-spark",
-            "lawId": "law-farlands-pulse",
-            "propertyPath": "@state.farlands.pulseCount",
-            "timestamp": 1788744967
-          },
-          {
-            "authorId": "author.gemini-spark",
-            "lawId": "law-farlands-pulse",
-            "propertyPath": "@state.farlands.pulseCount",
-            "timestamp": 1788744967
-          },
-          {
-            "authorId": "author.gemini-spark",
-            "lawId": "law-farlands-pulse",
-            "propertyPath": "@state.farlands.pulseCount",
-            "timestamp": 1788744972
-          },
-          {
-            "authorId": "author.gemini-spark",
-            "lawId": "law-farlands-pulse",
-            "propertyPath": "@state.farlands.pulseCount",
-            "timestamp": 1788744975
-          }
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
           0.0
         ],
         "transform": [
@@ -704,15 +1994,1168 @@
           1.0,
           0.0,
           0.0,
+          3.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          3.8,
+          0.0
+        ],
+        "materialId": "material.farlands.gold",
+        "faceColors": [
+          [
+            0.95,
+            0.82,
+            0.38
+          ],
+          [
+            0.95,
+            0.82,
+            0.38
+          ],
+          [
+            0.95,
+            0.82,
+            0.38
+          ],
+          [
+            0.95,
+            0.82,
+            0.38
+          ],
+          [
+            0.95,
+            0.82,
+            0.38
+          ],
+          [
+            0.95,
+            0.82,
+            0.38
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Singularity Orbital Gyroscope"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.mote_n",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.18,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          3.8,
+          -2.4,
+          1.0
+        ],
+        "center": [
+          0.0,
+          3.8,
+          -2.4
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.75,
+            0.35,
+            1.0
+          ],
+          [
+            0.75,
+            0.35,
+            1.0
+          ],
+          [
+            0.75,
+            0.35,
+            1.0
+          ],
+          [
+            0.75,
+            0.35,
+            1.0
+          ],
+          [
+            0.75,
+            0.35,
+            1.0
+          ],
+          [
+            0.75,
+            0.35,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Satellite (mote_n)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.mote_s",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.18,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          3.8,
+          2.4,
+          1.0
+        ],
+        "center": [
+          0.0,
+          3.8,
+          2.4
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.25,
+            0.85,
+            1.0
+          ],
+          [
+            0.25,
+            0.85,
+            1.0
+          ],
+          [
+            0.25,
+            0.85,
+            1.0
+          ],
+          [
+            0.25,
+            0.85,
+            1.0
+          ],
+          [
+            0.25,
+            0.85,
+            1.0
+          ],
+          [
+            0.25,
+            0.85,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Satellite (mote_s)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.mote_e",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.18,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          2.4,
+          3.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          2.4,
+          3.8,
+          0.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ],
+          [
+            0.2,
+            0.95,
+            0.55
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Satellite (mote_e)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.mote_w",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.18,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.36,
+          0.0,
+          -2.4,
+          3.8,
+          0.0,
+          1.0
+        ],
+        "center": [
+          -2.4,
+          3.8,
+          0.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            1.0,
+            0.7,
+            0.25
+          ],
+          [
+            1.0,
+            0.7,
+            0.25
+          ],
+          [
+            1.0,
+            0.7,
+            0.25
+          ],
+          [
+            1.0,
+            0.7,
+            0.25
+          ],
+          [
+            1.0,
+            0.7,
+            0.25
+          ],
+          [
+            1.0,
+            0.7,
+            0.25
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Harmonic Satellite (mote_w)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.overlook_n.walkway",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          1.6,
+          0.2,
+          7.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          3.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          14.0,
+          0.0,
+          0.0,
+          0.0,
+          -21.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          -21.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "North Edge Vista Catwalk"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.overlook_n.deck",
+        "shapeKind": 3,
+        "geometryType": 3,
+        "shapeParams": [
+          3.6,
+          0.0,
+          0.0,
+          0.25,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          7.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          7.2,
+          0.0,
+          0.0,
+          0.0,
+          -28.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          -28.0
+        ],
+        "materialId": "material.farlands.platform",
+        "faceColors": [
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "North Edge Vista Overlook Deck"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.overlook_n.lantern_left",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.25,
+          0.25,
+          0.25,
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          -3.2,
+          1.2,
+          -28.0,
+          1.0
+        ],
+        "center": [
+          -3.2,
+          1.2,
+          -28.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Vista Beacon Lantern (left)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.overlook_n.lantern_right",
+        "shapeKind": 9,
+        "geometryType": 9,
+        "shapeParams": [
+          0.25,
+          0.25,
+          0.25,
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.08,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          3.2,
+          1.2,
+          -28.0,
+          1.0
+        ],
+        "center": [
+          3.2,
+          1.2,
+          -28.0
+        ],
+        "materialId": "material.farlands.beacon",
+        "faceColors": [
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ],
+          [
+            0.3,
+            0.9,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Vista Beacon Lantern (right)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.overlook_e.walkway",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          6.0,
+          0.2,
+          1.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          12.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.2,
+          0.0,
+          20.0,
           0.0,
           0.0,
           1.0
         ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
+        "center": [
+          20.0,
+          0.0,
+          0.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ],
+          [
+            0.1,
+            0.11,
+            0.15
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "East Lattice Vista Catwalk"
+          }
+        }
       },
       {
+        "objectID": "object.farlands.overlook_e.deck",
+        "shapeKind": 3,
+        "geometryType": 3,
+        "shapeParams": [
+          3.6,
+          0.0,
+          0.0,
+          0.25,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          7.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          7.2,
+          0.0,
+          26.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          26.0,
+          0.0,
+          0.0
+        ],
+        "materialId": "material.farlands.platform",
+        "faceColors": [
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ],
+          [
+            0.16,
+            0.18,
+            0.24
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "East Corner Vista Deck"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.sky_alpha",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          6.0,
+          13.0,
+          6.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          12.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          26.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0,
+          0.0,
+          0.0,
+          52.0,
+          -75.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          -75.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.12,
+            0.14,
+            0.18
+          ],
+          [
+            0.12,
+            0.14,
+            0.18
+          ],
+          [
+            0.12,
+            0.14,
+            0.18
+          ],
+          [
+            0.12,
+            0.14,
+            0.18
+          ],
+          [
+            0.12,
+            0.14,
+            0.18
+          ],
+          [
+            0.12,
+            0.14,
+            0.18
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Floating Sky Megalith (sky_alpha)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.sky_beta",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          9.0,
+          9.0,
+          15.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          18.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          18.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          30.0,
+          0.0,
+          75.0,
+          60.0,
+          65.0,
+          1.0
+        ],
+        "center": [
+          75.0,
+          60.0,
+          65.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.14,
+            0.15,
+            0.2
+          ],
+          [
+            0.14,
+            0.15,
+            0.2
+          ],
+          [
+            0.14,
+            0.15,
+            0.2
+          ],
+          [
+            0.14,
+            0.15,
+            0.2
+          ],
+          [
+            0.14,
+            0.15,
+            0.2
+          ],
+          [
+            0.14,
+            0.15,
+            0.2
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Floating Sky Megalith (sky_beta)"
+          }
+        }
+      },
+      {
+        "objectID": "object.farlands.sky_gamma",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          6.0,
+          12.0,
+          6.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          12.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          24.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0,
+          0.0,
+          -70.0,
+          48.0,
+          -55.0,
+          1.0
+        ],
+        "center": [
+          -70.0,
+          48.0,
+          -55.0
+        ],
+        "materialId": "material.farlands.obsidian",
+        "faceColors": [
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ],
+          [
+            0.1,
+            0.12,
+            0.16
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Floating Sky Megalith (sky_gamma)"
+          }
+        }
+      },
+      {
+        "objectID": "state.farlands",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          -20.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          -20.0,
+          0.0
+        ],
+        "materialId": "material.farlands.safezone",
+        "faceColors": [
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ],
+          [
+            0.1,
+            0.1,
+            0.1
+          ]
+        ],
         "authoredProperties": {
           "displayName": {
             "t": "string",
@@ -720,168 +3163,22 @@
           },
           "pulseCount": {
             "t": "double",
-            "v": 5.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 0,
-        "materialId": "material.farlands.dark",
-        "objectID": "state.farlands",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
-        "shapeKind": 0,
-        "shapeParams": [
-          0.5,
-          0.5,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
-        ],
-        "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        ],
-        "x2D": 100.0,
-        "y2D": 100.0,
-        "zOrder2D": 0
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "EARTHCALL FAR LANDS"
+            "v": 0.0
           },
-          "label2D": {
-            "t": "string",
-            "v": "EARTHCALL FAR LANDS"
-          },
-          "pickPriority": {
-            "t": "double",
-            "v": -1.0
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 26.0
-          },
-          "shape.width2D": {
+          "themeMode": {
             "t": "double",
             "v": 0.0
+          },
+          "activePillar": {
+            "t": "string",
+            "v": "SANCTUARY"
           }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
-        "center": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "faceColors": [
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            1.0,
-            0.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            1.0,
-            0.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ],
-          [
-            0.0,
-            0.0,
-            1.0
-          ]
-        ],
-        "geometryType": 13,
-        "materialId": "",
+        }
+      },
+      {
         "objectID": "hud.title",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
         "shapeKind": 13,
+        "geometryType": 13,
         "shapeParams": [
           0.0,
           0.0,
@@ -893,12 +3190,7 @@
           0.0,
           0.0,
           0.0,
-          26.0
-        ],
-        "targetRotation": [
-          0.0,
-          -0.0,
-          0.0
+          24.0
         ],
         "transform": [
           1.0,
@@ -918,81 +3210,74 @@
           0.0,
           1.0
         ],
-        "x2D": 30.0,
-        "y2D": 30.0,
-        "zOrder2D": 30
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Generative OntoMath Landscape — Traverse the mathematical horizon."
-          },
-          "label2D": {
-            "t": "string",
-            "v": "Generative OntoMath Landscape — Traverse the mathematical horizon."
-          },
-          "pickPriority": {
-            "t": "double",
-            "v": -1.0
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 13.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 0.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
         "center": [
           0.0,
           0.0,
           0.0
         ],
+        "x2D": 32.0,
+        "y2D": 28.0,
+        "zOrder2D": 30,
+        "materialId": "",
         "faceColors": [
           [
-            1.0,
-            0.0,
-            0.0
+            0.35,
+            0.95,
+            0.75
           ],
           [
-            1.0,
-            0.0,
-            0.0
+            0.35,
+            0.95,
+            0.75
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.35,
+            0.95,
+            0.75
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.35,
+            0.95,
+            0.75
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.35,
+            0.95,
+            0.75
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.35,
+            0.95,
+            0.75
           ]
         ],
-        "geometryType": 13,
-        "materialId": "",
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "EARTHCALL // THE FAR LANDS FRACTAL FRONTIER"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "EARTHCALL // THE FAR LANDS FRACTAL FRONTIER"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 24.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
         "objectID": "hud.subtitle",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
         "shapeKind": 13,
+        "geometryType": 13,
         "shapeParams": [
           0.0,
           0.0,
@@ -1006,10 +3291,104 @@
           0.0,
           13.0
         ],
-        "targetRotation": [
+        "transform": [
+          1.0,
           0.0,
-          -0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
           0.0
+        ],
+        "x2D": 34.0,
+        "y2D": 58.0,
+        "zOrder2D": 30,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.92,
+            0.78,
+            0.45
+          ],
+          [
+            0.92,
+            0.78,
+            0.45
+          ],
+          [
+            0.92,
+            0.78,
+            0.45
+          ],
+          [
+            0.92,
+            0.78,
+            0.45
+          ],
+          [
+            0.92,
+            0.78,
+            0.45
+          ],
+          [
+            0.92,
+            0.78,
+            0.45
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "OntoMath Generative Horizon \u2014 Exact Mathematical Degeneration at Scale"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "OntoMath Generative Horizon \u2014 Exact Mathematical Degeneration at Scale"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 13.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.author",
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          11.0
         ],
         "transform": [
           1.0,
@@ -1029,81 +3408,74 @@
           0.0,
           1.0
         ],
-        "x2D": 30.0,
-        "y2D": 60.0,
-        "zOrder2D": 30
-      },
-      {
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Click the Resonance Core to sound the harmonic pulse."
-          },
-          "label2D": {
-            "t": "string",
-            "v": "Click the Resonance Core to sound the harmonic pulse."
-          },
-          "pickPriority": {
-            "t": "double",
-            "v": -1.0
-          },
-          "shape.height2D": {
-            "t": "double",
-            "v": 12.0
-          },
-          "shape.width2D": {
-            "t": "double",
-            "v": 0.0
-          }
-        },
-        "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
-        ],
         "center": [
           0.0,
           0.0,
           0.0
         ],
+        "x2D": 34.0,
+        "y2D": 78.0,
+        "zOrder2D": 30,
+        "materialId": "",
         "faceColors": [
           [
-            1.0,
-            0.0,
-            0.0
+            0.55,
+            0.65,
+            0.75
           ],
           [
-            1.0,
-            0.0,
-            0.0
+            0.55,
+            0.65,
+            0.75
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.55,
+            0.65,
+            0.75
           ],
           [
-            0.0,
-            1.0,
-            0.0
+            0.55,
+            0.65,
+            0.75
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.55,
+            0.65,
+            0.75
           ],
           [
-            0.0,
-            0.0,
-            1.0
+            0.55,
+            0.65,
+            0.75
           ]
         ],
-        "geometryType": 13,
-        "materialId": "",
-        "objectID": "hud.hint",
-        "renderMode": 0,
-        "rotationResponsiveness": 10.0,
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Authored by Gemini Spark // Commissioned by Zach"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "Authored by Gemini Spark // Commissioned by Zach"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 11.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.telemetry.sector",
         "shapeKind": 13,
+        "geometryType": 13,
         "shapeParams": [
           0.0,
           0.0,
@@ -1117,10 +3489,104 @@
           0.0,
           12.0
         ],
-        "targetRotation": [
+        "transform": [
+          1.0,
           0.0,
-          -0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
           0.0
+        ],
+        "x2D": 34.0,
+        "y2D": 106.0,
+        "zOrder2D": 30,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.8,
+            0.85,
+            0.92
+          ],
+          [
+            0.8,
+            0.85,
+            0.92
+          ],
+          [
+            0.8,
+            0.85,
+            0.92
+          ],
+          [
+            0.8,
+            0.85,
+            0.92
+          ],
+          [
+            0.8,
+            0.85,
+            0.92
+          ],
+          [
+            0.8,
+            0.85,
+            0.92
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "SECTOR: ORIGIN OBSERVATORY SANCTUARY [0.0, 0.0]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "SECTOR: ORIGIN OBSERVATORY SANCTUARY [0.0, 0.0]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 12.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.telemetry.field",
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0
         ],
         "transform": [
           1.0,
@@ -1140,10 +3606,1520 @@
           0.0,
           1.0
         ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 34.0,
+        "y2D": 124.0,
+        "zOrder2D": 30,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.45,
+            0.75,
+            0.85
+          ],
+          [
+            0.45,
+            0.75,
+            0.85
+          ],
+          [
+            0.45,
+            0.75,
+            0.85
+          ],
+          [
+            0.45,
+            0.75,
+            0.85
+          ],
+          [
+            0.45,
+            0.75,
+            0.85
+          ],
+          [
+            0.45,
+            0.75,
+            0.85
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "FIELD: 8-OCTAVE ANISOTROPIC LATTICE // GPU DDA ACCELERATED"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "FIELD: 8-OCTAVE ANISOTROPIC LATTICE // GPU DDA ACCELERATED"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 12.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.telemetry.resonance",
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 34.0,
+        "y2D": 142.0,
+        "zOrder2D": 30,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.3,
+            0.9,
+            0.95
+          ],
+          [
+            0.3,
+            0.9,
+            0.95
+          ],
+          [
+            0.3,
+            0.9,
+            0.95
+          ],
+          [
+            0.3,
+            0.9,
+            0.95
+          ],
+          [
+            0.3,
+            0.9,
+            0.95
+          ],
+          [
+            0.3,
+            0.9,
+            0.95
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "RESONANCE: HARMONIC ACTIVE // 528 Hz SOLFEGGIO"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "RESONANCE: HARMONIC ACTIVE // 528 Hz SOLFEGGIO"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 12.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.telemetry.pulses",
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          12.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 34.0,
+        "y2D": 160.0,
+        "zOrder2D": 30,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.95,
+            0.75,
+            0.35
+          ],
+          [
+            0.95,
+            0.75,
+            0.35
+          ],
+          [
+            0.95,
+            0.75,
+            0.35
+          ],
+          [
+            0.95,
+            0.75,
+            0.35
+          ],
+          [
+            0.95,
+            0.75,
+            0.35
+          ],
+          [
+            0.95,
+            0.75,
+            0.35
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "COSMIC PULSES SOUNDED: 0"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "COSMIC PULSES SOUNDED: 0"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 0.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 12.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.dock.bg",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1220.0,
+          56.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
         "x2D": 30.0,
-        "y2D": 82.0,
-        "zOrder2D": 30
+        "y2D": 640.0,
+        "zOrder2D": 20,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.05,
+            0.07,
+            0.1
+          ],
+          [
+            0.05,
+            0.07,
+            0.1
+          ],
+          [
+            0.05,
+            0.07,
+            0.1
+          ],
+          [
+            0.05,
+            0.07,
+            0.1
+          ],
+          [
+            0.05,
+            0.07,
+            0.1
+          ],
+          [
+            0.05,
+            0.07,
+            0.1
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "HUD Dock Background"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 1220.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 56.0
+          },
+          "pickPriority": {
+            "t": "double",
+            "v": -1.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.pulse",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          150.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 45.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.16,
+            0.48,
+            0.55
+          ],
+          [
+            0.16,
+            0.48,
+            0.55
+          ],
+          [
+            0.16,
+            0.48,
+            0.55
+          ],
+          [
+            0.16,
+            0.48,
+            0.55
+          ],
+          [
+            0.16,
+            0.48,
+            0.55
+          ],
+          [
+            0.16,
+            0.48,
+            0.55
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ PULSE CORE ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ PULSE CORE ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 150.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pulse"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 13.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.chord",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          165.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 205.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.42,
+            0.24,
+            0.56
+          ],
+          [
+            0.42,
+            0.24,
+            0.56
+          ],
+          [
+            0.42,
+            0.24,
+            0.56
+          ],
+          [
+            0.42,
+            0.24,
+            0.56
+          ],
+          [
+            0.42,
+            0.24,
+            0.56
+          ],
+          [
+            0.42,
+            0.24,
+            0.56
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ HARMONIC CHORD ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ HARMONIC CHORD ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 165.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-chord"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 13.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.north",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          140.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 380.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.35,
+            0.2,
+            0.5
+          ],
+          [
+            0.35,
+            0.2,
+            0.5
+          ],
+          [
+            0.35,
+            0.2,
+            0.5
+          ],
+          [
+            0.35,
+            0.2,
+            0.5
+          ],
+          [
+            0.35,
+            0.2,
+            0.5
+          ],
+          [
+            0.35,
+            0.2,
+            0.5
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ NORTH: 528Hz ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ NORTH: 528Hz ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 140.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-north"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 12.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.south",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          140.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 530.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.18,
+            0.32,
+            0.52
+          ],
+          [
+            0.18,
+            0.32,
+            0.52
+          ],
+          [
+            0.18,
+            0.32,
+            0.52
+          ],
+          [
+            0.18,
+            0.32,
+            0.52
+          ],
+          [
+            0.18,
+            0.32,
+            0.52
+          ],
+          [
+            0.18,
+            0.32,
+            0.52
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ SOUTH: 396Hz ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ SOUTH: 396Hz ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 140.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-south"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 12.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.east",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          140.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 680.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.18,
+            0.45,
+            0.32
+          ],
+          [
+            0.18,
+            0.45,
+            0.32
+          ],
+          [
+            0.18,
+            0.45,
+            0.32
+          ],
+          [
+            0.18,
+            0.45,
+            0.32
+          ],
+          [
+            0.18,
+            0.45,
+            0.32
+          ],
+          [
+            0.18,
+            0.45,
+            0.32
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ EAST: 639Hz ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ EAST: 639Hz ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 140.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-east"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 12.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.west",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          140.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 830.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.52,
+            0.35,
+            0.18
+          ],
+          [
+            0.52,
+            0.35,
+            0.18
+          ],
+          [
+            0.52,
+            0.35,
+            0.18
+          ],
+          [
+            0.52,
+            0.35,
+            0.18
+          ],
+          [
+            0.52,
+            0.35,
+            0.18
+          ],
+          [
+            0.52,
+            0.35,
+            0.18
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ WEST: 741Hz ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ WEST: 741Hz ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 140.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-pillar-west"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 12.0
+          }
+        }
+      },
+      {
+        "objectID": "hud.btn.theme",
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          240.0,
+          36.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "x2D": 980.0,
+        "y2D": 650.0,
+        "zOrder2D": 35,
+        "materialId": "",
+        "faceColors": [
+          [
+            0.45,
+            0.38,
+            0.2
+          ],
+          [
+            0.45,
+            0.38,
+            0.2
+          ],
+          [
+            0.45,
+            0.38,
+            0.2
+          ],
+          [
+            0.45,
+            0.38,
+            0.2
+          ],
+          [
+            0.45,
+            0.38,
+            0.2
+          ],
+          [
+            0.45,
+            0.38,
+            0.2
+          ]
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "[ ATMOSPHERE: AURORA / VOID ]"
+          },
+          "label2D": {
+            "t": "string",
+            "v": "[ ATMOSPHERE: AURORA / VOID ]"
+          },
+          "shape.width2D": {
+            "t": "double",
+            "v": 240.0
+          },
+          "shape.height2D": {
+            "t": "double",
+            "v": 36.0
+          },
+          "buttonRole": {
+            "t": "string",
+            "v": "farlands-theme-toggle"
+          },
+          "label.size2D": {
+            "t": "double",
+            "v": 12.0
+          }
+        }
       }
     ]
-  }
+  },
+  "formationRelations": [
+    {
+      "type": "subcategory-of",
+      "entityA": "category.farlands.field",
+      "entityB": "category.farlands",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.farlands.monolith",
+      "entityB": "category.farlands",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.farlands.sanctuary",
+      "entityB": "category.farlands",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.farlands.overlook",
+      "entityB": "category.farlands",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "subcategory-of",
+      "entityA": "category.control.button",
+      "entityB": "category.control",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "subcategory-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "authored-by",
+      "entityA": "category.farlands",
+      "entityB": "author.gemini-spark",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "authored-by",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.terrain",
+      "entityB": "category.farlands.field",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.dais_outer",
+      "entityB": "category.farlands.sanctuary",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.dais_inner",
+      "entityB": "category.farlands.sanctuary",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.sanctuary_ring",
+      "entityB": "category.farlands.sanctuary",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.monolith.north",
+      "entityB": "category.farlands.monolith",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.crystal.north",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.monolith.south",
+      "entityB": "category.farlands.monolith",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.crystal.south",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.monolith.east",
+      "entityB": "category.farlands.monolith",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.crystal.east",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.monolith.west",
+      "entityB": "category.farlands.monolith",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.crystal.west",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.altar_pedestal",
+      "entityB": "category.farlands.sanctuary",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.singularity_core",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.overlook_n.walkway",
+      "entityB": "category.farlands.overlook",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.overlook_n.deck",
+      "entityB": "category.farlands.overlook",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.overlook_e.walkway",
+      "entityB": "category.farlands.overlook",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "object.farlands.overlook_e.deck",
+      "entityB": "category.farlands.overlook",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.pulse",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.chord",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.north",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.south",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.east",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.west",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    },
+    {
+      "type": "instance-of",
+      "entityA": "hud.btn.theme",
+      "entityB": "category.control.button",
+      "directed": true,
+      "weight": 1.0,
+      "events": [
+        {
+          "description": "instance-of",
+          "deltaWeight": 1.0,
+          "timestamp": 1787395000
+        }
+      ]
+    }
+  ]
 }

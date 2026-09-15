@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
+#include <memory>
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 class BodyPart;
@@ -16,6 +18,7 @@ namespace Rendering {
     enum class CreatorSection {
         Paint,
         Create3D,
+        Concepts,
         Character,
         World,
         Assets,
@@ -41,6 +44,17 @@ namespace Rendering {
     enum class ToolTarget3D {
         WorldObjects,
         SelectionOnly
+    };
+
+    enum class HistoryActionType {
+        Spawn,
+        Delete
+    };
+
+    struct HistoryRecord {
+        HistoryActionType type;
+        std::shared_ptr<Object> object;
+        std::string description;
     };
 
     struct BrushParams {
@@ -84,11 +98,6 @@ namespace Rendering {
         CreatorSection currentSection = CreatorSection::Create3D;
         
         // 3D Create State
-        // None until a Person arms a tool (console 3D tab, F4/F5, or a
-        // mode button). Defaulting to BrushCreate made the developer
-        // bypass fire on every click from boot, even with the console
-        // never opened — the opposite of "tools run because they were
-        // selected", which is the reason dispatch left render.
         Mode3D current3DMode = Mode3D::None;
         ToolTarget3D current3DTarget = ToolTarget3D::WorldObjects;
         ObjectTypes::ShapeKind currentShapeKind = ObjectTypes::ShapeKind::Cube;
@@ -101,12 +110,6 @@ namespace Rendering {
         // Combine / Clay State
         int combineOp = 0;
         float combineBlend = 0.0f;
-        // BENEATH THE KERNEL: per-gesture pick operands. They name Objects
-        // the Person already holds; the next click recomputes them. Not a
-        // being's standing state — the live tool is @creation-channel.activeTool.
-        // Stale after ZoneManager::loadState (those Objects die). Callers of
-        // forgetStaleObjectHandles: AssetsConsole::loadWorld,
-        // DeveloperToolsWindow observation load.
         Object* combineOperandA = nullptr;
         Object* clayGrabbed = nullptr;
         Object* clayTarget = nullptr;
@@ -117,14 +120,10 @@ namespace Rendering {
         bool fieldHandleDragging = false;
         bool blendHandleDragging = false;
 
-        // Live 3D selection (Select mode). Not a being's standing state —
-        // HighlightSystem mirrors it for the renderer. Same stale-on-load
-        // latch as combineOperandA — forgetStaleObjectHandles.
+        // Live 3D selection (Select mode)
         Object* selectedObject3D = nullptr;
 
-        // Pottery / Rotate / Face Brush — the tools already read these
-        // through Engine getters. Chrome lives here so collapsing the
-        // console does not invent a second copy on Engine.
+        // Pottery / Rotate / Face Brush
         int potteryTool = 1; // 0 Chisel, 1 Expand
         float potteryStrength = 0.2f;
         int rotationAxisMode = 0; // Free XY, X, Y, Z, Authoritative
@@ -146,8 +145,7 @@ namespace Rendering {
         int lastBrushFace = -1;
         Object* lastBrushObject = nullptr;
 
-        // Rotate drag latch (used to live as dummy Engine getters that
-        // always returned false, so Rotate never started).
+        // Rotate drag latch
         bool rotateDragging = false;
         double rotateLastCursorX = 0.0;
         double rotateLastCursorY = 0.0;
@@ -165,13 +163,38 @@ namespace Rendering {
         // World State
         bool cursorToolsOpen = false;
         bool showLawAuthor = false;
+
+        // 3D History Stack (Undo / Redo)
+        std::vector<HistoryRecord> undoStack;
+        std::vector<HistoryRecord> redoStack;
+
+        void recordSpawn(std::shared_ptr<Object> obj, const std::string& desc = "Spawn Object") {
+            if (!obj) return;
+            undoStack.push_back({HistoryActionType::Spawn, std::move(obj), desc});
+            redoStack.clear();
+        }
+
+        void recordDelete(std::shared_ptr<Object> obj, const std::string& desc = "Delete Object") {
+            if (!obj) return;
+            undoStack.push_back({HistoryActionType::Delete, std::move(obj), desc});
+            redoStack.clear();
+        }
+
+        bool canUndo() const { return !undoStack.empty(); }
+        bool canRedo() const { return !redoStack.empty(); }
+
+        std::string nextUndoDesc() const {
+            return undoStack.empty() ? "" : undoStack.back().description;
+        }
+        std::string nextRedoDesc() const {
+            return redoStack.empty() ? "" : redoStack.back().description;
+        }
+
+        void performUndo(ZoneManager& zoneMgr);
+        void performRedo(ZoneManager& zoneMgr);
     };
 
     CreatorConsoleState& getCreatorConsoleState();
-    // Drop Object* the tools hold if those beings are no longer in any Zone.
-    // loadState replaces every Zone; observation replaces one. Without this,
-    // Select/Morph/Combine/Clay keep a pointer into freed memory and switching
-    // worlds goes funky. Safe to call after a refused load (live objects stay).
     void forgetStaleObjectHandles(ZoneManager& mgr, Person* player = nullptr);
     
     // Shared styling helpers

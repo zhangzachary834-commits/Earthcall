@@ -42,15 +42,27 @@
 <a id="near-term-priorities"></a>
 ## Near-term priorities (2026-08-14 — from architecture review):
 - **⚑ AUTHOR: Architectural Revision of the Language System (2026-09-04)** — Review the data-driven refactor of the Synaptic Plasticity loop and confirm it aligns with semantic decay telos. → [full task](Specific%20Tasks/AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md)
-- CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach 
-- CRITICAL: Ensure Singular set-to-set Creation is working, that we have a window where I can easil and intuitively perform set-to-set Creation, and that Law creation uses Set to Set. 
+
+- CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
+
+- CRITICAL: Ensure Singular set-to-set Creation is working, that we have a window where I can easil and intuitively perform set-to-set Creation, and that Law creation uses Set to Set.
+
+- There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach
+
 - ✅ **Basic 2D Button** — done and verified (2026-09-04): Authored a 2D shape with Laws to act as a button that moves when clicked without UI C++ code. → [full task](Specific%20Tasks/Basic_2D_Button/Basic_2D_Button.md)
+
 - **Authorable Material Color Picker** — direct RGB sliders plus a full 2D hue-saturation field and value slider are authored and automated; Person visual verification and target selection remain. → [full task](Specific%20Tasks/Authorable_Material_Color_Picker/Authorable_Material_Color_Picker.md)
-CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
-CRITICAL: Ensure Earthcall is fully runnable as a pure terminal program--i.e., Earthcall with Terminal as the substrate. This is one of the simplest and most accessible ways we can try to model the entire ontology at once once the foundational models are complete, and one of the best ways to ensure my prototype is a truly universal substrate, to refine away all the edges that lock it to only one Singularity form. - Zach
+
+- **CRITICAL**: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
+
+- **CRITICAL**: Ensure Earthcall is fully runnable as a pure terminal program--i.e., Earthcall with Terminal as the substrate. This is one of the simplest and most accessible ways we can try to model the entire ontology at once once the foundational models are complete, and one of the best ways to ensure my prototype is a truly universal substrate, to refine away all the edges that lock it to only one Singularity form. - Zach
 That would require a robust Lexeme foundation. - Zach
+
 - **Terminal continuity follow-up** — reconcile the new CLI's reported behavior with its logical boot, clock, word/identity selection, Law authoring, persistence, and truthful outcomes (Astra source review, 2026-09-14). → [findings and acceptance stories](Specific%20Tasks/Terminal_Language_Formation_Continuity/Terminal_Language_Formation_Continuity.md)
-CRITICAL: WHY IS TTHERE AN "Object" CALLED "Zach"?!?!?!? 😡😡😡😡😡😡😡 I SEE THIS IN THE SINGULAR WINDOW IN LAW LIBRARY ?!?!?!? PERSON IS NOT OBJECTTTTTTTTTT - Zach
+
+- **CRITICAL**: WHY IS TTHERE AN "Object" CALLED "Zach"?!?!?!? 😡😡😡😡😡😡😡 I SEE THIS IN THE SINGULAR WINDOW IN LAW LIBRARY ?!?!?!? PERSON IS NOT OBJECTTTTTTTTTT - Zach
+
+- **CRITICAL**: WHY DOES IT SAY IT REFUSED TO TRANSFER HOME "Person" TO "Zach" AND CREATED A DUPLICATE "Home_of_Zach"?!?!?!?!? THATS MY HOME IT WAS ON MY DISK WHAATTTTTTT Y MY CREATION KICKING ME OUT O FMY OWN HOUSE?!?!?!?!? 😡😡😡😡😡😡😡😡😡😡😡😡 - Zach
 
 - ✅ **Split Substrate Serialization (`.ecform` + `.ecmatter`) & Zero-Copy FlatBuffers (2026-09-01)** — done and verified (2026-09-01): Implemented split substrate serialization decoupling semantic text laws/identities/attributes (`.ecform` / lean `.json`) … → [full task](Specific%20Tasks/Split_Substrate_Serialization_ecform_ecmatter_Zero_Copy/Split_Substrate_Serialization_ecform_ecmatter_Zero_Copy.md)
 - ✅ **Dynamic Relation Creation (`ActionNode::Kind::AddRelation`) & UI/Stroke Patterns (2026-08-31)** — done (2026-08-31): Implemented `ActionNode::Kind::AddRelation` (Kind 20) in `ActionModel.hpp`/`.cpp`, enabling runtime Laws (including inside `Create` … → [full task](Specific%20Tasks/Dynamic_Relation_Creation_ActionNode_Kind_AddRelation_UI/Dynamic_Relation_Creation_ActionNode_Kind_AddRelation_UI.md)
