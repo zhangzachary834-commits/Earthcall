@@ -719,6 +719,9 @@ public:
 private:
     const AlphaNode* findAlpha(std::size_t id) const;
     AlphaNode* findAlpha(std::size_t id);
+    void propagateFact(const FactPtr& fact);
+    void detachFactConsequences(const FactPtr& fact);
+    void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
 
     // ------------------------------------------------------------------
     // Backfill. Propagation is incremental — assertFact maintains the
