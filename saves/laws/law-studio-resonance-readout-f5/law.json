@@ -1,0 +1,77 @@
+{
+  "authors": [
+    "studio.author.codex"
+  ],
+  "identifier": "law-studio-resonance-readout-f5",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@hud.resonance.note.label2D",
+          "operand": {
+            "t": "string",
+            "v": "F / RESONATING"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.resonance.note.color",
+          "operand": {
+            "t": "vec3",
+            "x": 0.52,
+            "y": 0.82,
+            "z": 0.42
+          }
+        }
+      ]
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "studio.author.codex"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 0,
+      "op": 0,
+      "operand": {
+        "t": "string",
+        "v": "F5"
+      },
+      "path": "noteName"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-studio-resonance-readout-f5",
+    "name": "Studio: Show the last note F5",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-studio-resonance-readout-f5",
+        "entityB": "studio.author.codex",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "type": "revised-by",
+        "entityA": "law-studio-resonance-readout-f5",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "note-played"
+  ]
+}
