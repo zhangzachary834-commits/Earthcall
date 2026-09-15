@@ -328,11 +328,11 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 }
 
 bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const {
+    if (recognizesAuthoredPropertyProjection(id)) {
+        return readAuthoredPropertyProjection(id, out);
+    }
     auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
-        if (recognizesAuthoredPropertyProjection(id)) {
-            return readAuthoredPropertyProjection(id, out);
-        }
         out = it->second;
         return true;
     }

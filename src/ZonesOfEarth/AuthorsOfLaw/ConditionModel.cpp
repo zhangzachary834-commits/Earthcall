@@ -264,8 +264,8 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                 
                 bool res = false;
                 switch (o) {
-                    case Op::Eq: res = (numeric ? a == b : lhs == rhs); break;
-                    case Op::Ne: res = (numeric ? a != b : !(lhs == rhs)); break;
+                    case Op::Eq: res = (numeric ? a == b : propertyValueUnchanged(lhs, rhs)); break;
+                    case Op::Ne: res = (numeric ? a != b : !(propertyValueUnchanged(lhs, rhs))); break;
                     case Op::Lt: res = (numeric && a < b); break;
                     case Op::Le: res = (numeric && a <= b); break;
                     case Op::Gt: res = (numeric && a > b); break;

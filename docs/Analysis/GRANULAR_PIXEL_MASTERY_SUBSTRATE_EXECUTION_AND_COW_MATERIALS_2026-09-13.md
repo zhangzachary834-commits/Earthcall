@@ -11,8 +11,8 @@
 - **Primary Architecture:** [`docs/architecture/Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](../architecture/Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)
 - **Companion Analysis 1:** [`docs/Analysis/ONTOMATH_IMAGE_DECOMPOSITION_AND_CONTINUOUS_FIELD_THEORY_2026-09-13.md`](ONTOMATH_IMAGE_DECOMPOSITION_AND_CONTINUOUS_FIELD_THEORY_2026-09-13.md)
 - **Companion Analysis 2:** [`docs/Analysis/PROPERTY_SINGULAR_GRAPHS_AND_RECURSIVE_FORMATION_ONTOLOGY_2026-09-13.md`](PROPERTY_SINGULAR_GRAPHS_AND_RECURSIVE_FORMATION_ONTOLOGY_2026-09-13.md)
-- **Verified Test Fixture:** [`tests/law/basic_pixel_changer_test.cpp`](../../../tests/law/basic_pixel_changer_test.cpp)
-- **Material Substrate:** [`src/ConstructedBeing/Material/Material.hpp`](../../../src/ConstructedBeing/Material/Material.hpp)
+- **Verified Test Fixture:** [`tests/law/basic_pixel_changer_test.cpp`](../../tests/law/basic_pixel_changer_test.cpp)
+- **Material Substrate:** [`src/ConstructedBeing/Material/Material.hpp`](../../src/ConstructedBeing/Material/Material.hpp)
 - **Interaction Channel:** [`docs/architecture/law/INTERACTION_AS_LAW.md`](../architecture/law/INTERACTION_AS_LAW.md)
 
 ---

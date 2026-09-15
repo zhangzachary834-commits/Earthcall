@@ -104,7 +104,8 @@ void testResolveUsesPreCalculatedIds() {
     PropertyPath path = PropertyPath::parse("value1");
 
     // Resolve should find the property
-    Property* prop = path.resolve(obj);
+    auto slot = path.resolve(obj);
+    Property* prop = slot.prop;
     assert(prop != nullptr);
     assert(prop->name() == "value1");
 
@@ -125,7 +126,9 @@ void testComplexPath() {
 
     // Resolve to the vec3 component
     std::string component;
-    Property* prop = path.resolve(obj, &component);
+    auto slot = path.resolve(obj);
+    Property* prop = slot.prop;
+    component = slot.trailingComponent;
 
     assert(prop != nullptr);
     assert(prop->name() == "position");
@@ -218,7 +221,8 @@ void testEmptyPath() {
     assert(path.toString() == "");
 
     TestRoot obj;
-    Property* prop = path.resolve(obj);
+    auto slot = path.resolve(obj);
+    Property* prop = slot.prop;
     assert(prop == nullptr);
 
     std::cout << "  ✓ Empty paths handled correctly\n";

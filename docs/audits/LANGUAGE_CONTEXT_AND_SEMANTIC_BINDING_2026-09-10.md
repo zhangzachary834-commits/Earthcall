@@ -115,6 +115,8 @@ Represent a candidate proposition as authored structure, for example an extra-vi
 
 Crucially, representing the candidate `Arthur owns sword` need not add the operational `owns(Arthur,sword)` edge. An authored Law can give an identified occurrence or claim operational force. Another can leave it as a quotation, testimony, a question, or a hypothetical. Competing claims can coexist without inventing a global machine verdict about truth.
 
+{ Zach: This is the distinction between locutionary vs illocutionary speech-act. Also, if *owns* uttered with the intent to actualize the scenario of Arthur *owning* the sword, it should be a Relation. }
+
 This also distinguishes the first and second occurrence of a repeated word. A span/occurrence has its own identity; its link to a Lexeme type may be shared. Counting evidence, trusting a source, remembering repetition, and accepting a claim then become separate authored operations rather than the same `+0.2` weight write.
 
 **Why it is large:** language gains the structure required for discussion, annotation, planning, narrative, and commands within one substrate. Persons can talk *about* an action without accidentally representing the talk as that action's ordinary world relation.

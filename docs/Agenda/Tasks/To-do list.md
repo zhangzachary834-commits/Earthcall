@@ -1,3 +1,34 @@
+# Earthcall Tasks & To-Do List
+
+<a id="table-of-contents"></a>
+## Table of Contents
+- [Instructions Guide for Writing Here](#instructions-guide-for-writing-here)
+- [Near-term priorities (2026-08-14 — from architecture review)](#near-term-priorities)
+- [Architectural Actualization](#architectural-actualization)
+  - [Singular · Relation · Formation](#singular-relation-formation)
+  - [Person · Body · Relationship · Community](#person-body-relationship-community)
+  - [Joys · Ourverse · Zones](#joys-ourverse-zones)
+  - [Law · Kernel · Governance](#law-kernel-governance)
+  - [Person-facing surface](#person-facing-surface)
+  - [First Movers](#first-movers)
+  - [Modalities · integration · substrate](#modalities-integration-substrate)
+  - [Interaction · controls · GUI](#interaction-controls-gui)
+  - [Docs](#docs)
+- [Things to explore and deliberate on](#things-to-explore-and-deliberate-on)
+- [Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`)](#propertypath-exposure-debt)
+- [Housekeeping](#housekeeping)
+- [Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)](#performance)
+- [Essential Singularity substrate](#essential-singularity-substrate)
+- [Feature-sized (split out of Housekeeping 2026-08-13)](#feature-sized)
+- [R&D](#rd)
+- [Basic design before creating fully working products with Earthcall](#basic-design-before-creating-fully-working-products-with-earthcall)
+- [Production-facing Programs](#production-facing-programs)
+- [Findings from Clawd MYTHOS (Claude Fable 5.1) Audit (2026-09-01)](#findings-from-clawd-mythos-audit)
+- [Stuff for Zach to write (unsorted notes)](#stuff-for-zach-to-write)
+
+---
+
+<a id="instructions-guide-for-writing-here"></a>
 ## INSTRUCTIONS GUIDE FOR WRITING HERE:
 - **One sentence per bullet. No exceptions.** This file is an index, not a record. A bullet is: status marker, **bold title**, one sentence, and a `→ [full task](...)` link. If you cannot say it in a sentence, that is the signal it needs its own document — not a longer bullet.
 - **Every substantive task gets its own folder** at `Specific Tasks/<Task_Slug>/<Task_Slug>.md`, and the bullet links straight to it. Put the detail, the verification notes, the scope corrections, and any follow-up docs in that folder. — Zach, 2026-09-02.
@@ -8,6 +39,7 @@
 - **Never erase this document's content.** Mark completed items with a checkmark and a "done and verified"
     note describing what was actually verified. If two or more independent sessions mark it as verified, you may move it to an archive folder inside the Agenda directory.
 
+<a id="near-term-priorities"></a>
 ## Near-term priorities (2026-08-14 — from architecture review):
 - **⚑ AUTHOR: Architectural Revision of the Language System (2026-09-04)** — Review the data-driven refactor of the Synaptic Plasticity loop and confirm it aligns with semantic decay telos. → [full task](Specific%20Tasks/AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md)
 - CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach 
@@ -17,6 +49,7 @@
 CRITICAL: Ensure the save system works. In this delicate state of the program's early generative phase, we don't want that to affect the save system to the point where developer worlds unstable or erased in the fragile states of testing and developing features that rely on the save system persisting my prior changes. – Zach
 CRITICAL: Ensure Earthcall is fully runnable as a pure terminal program--i.e., Earthcall with Terminal as the substrate. This is one of the simplest and most accessible ways we can try to model the entire ontology at once once the foundational models are complete, and one of the best ways to ensure my prototype is a truly universal substrate, to refine away all the edges that lock it to only one Singularity form. - Zach
 That would require a robust Lexeme foundation. - Zach
+- **Terminal continuity follow-up** — reconcile the new CLI's reported behavior with its logical boot, clock, word/identity selection, Law authoring, persistence, and truthful outcomes (Astra source review, 2026-09-14). → [findings and acceptance stories](Specific%20Tasks/Terminal_Language_Formation_Continuity/Terminal_Language_Formation_Continuity.md)
 CRITICAL: WHY IS TTHERE AN "Object" CALLED "Zach"?!?!?!? 😡😡😡😡😡😡😡 I SEE THIS IN THE SINGULAR WINDOW IN LAW LIBRARY ?!?!?!? PERSON IS NOT OBJECTTTTTTTTTT - Zach
 
 - ✅ **Split Substrate Serialization (`.ecform` + `.ecmatter`) & Zero-Copy FlatBuffers (2026-09-01)** — done and verified (2026-09-01): Implemented split substrate serialization decoupling semantic text laws/identities/attributes (`.ecform` / lean `.json`) … → [full task](Specific%20Tasks/Split_Substrate_Serialization_ecform_ecmatter_Zero_Copy/Split_Substrate_Serialization_ecform_ecmatter_Zero_Copy.md)
@@ -38,8 +71,10 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Person Interface and Experience — stop the surface lying, then decide the fork** — PARTIAL (2026-08-18). → [full task](Specific%20Tasks/Person_Interface_and_Experience_stop_the_surface_lying_then/Person_Interface_and_Experience_stop_the_surface_lying_then.md)
 
 
+<a id="architectural-actualization"></a>
 ## Architectural Actualization
 
+<a id="singular-relation-formation"></a>
 ### Singular · Relation · Formation
 - Ensure `Relation` and `Formation` ontology is load bearing.
 - Ensure Singularity-level actions are done through `Relation`s and `Formation`s.
@@ -56,6 +91,11 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - FOR ZACH ONLY: Revise manifesto so the Object taxonomy says "Visual/extra-visual Objects." Also, the old ObjectConcept idea was already entailed by non-visual or extra-visual Objects.
 - Singular set to set creation must be able to create every kind of Singular, so we stop having to invent new ActionKinds or op codes for every individual Singular. Creating a new Law via Laws should use ActionNode create Singular (and then select Singular kind based on all the classes that inherit Singular), or use the set to set Creation node, which must be designed to ask the same thing.
 
+## Property · PropertyPath 
+
+- Caching Property lookup via string interning uses string paths, but Singulars are individuated via SingularId. There seems to be a tension here, and resolving property paths at their Singular roots may run into the same is-versus-called problems we have from before.
+
+<a id="person-body-relationship-community"></a>
 ### Person · Body · Relationship · Community
 - Fully realize `Relationship` and `Community` ontologies (replace placeholder stubs).
 - ✅ **Stop `Body` inheriting `Object` (Refusal #4)** — done and verified (2026-08-24): `Body` inherits `Singular` directly rather than `Object`; registered `shape`, `artStyle`, `height`, `hitboxHeight`, `eyeHeight`, `nametagHeight` via `buildProperties()`; unsealed and audited in `tests/singularity/no_black_box_test.cpp`. Body stays a Person vessel (Singular/Formation), while visual parts remain Objects. Verified: full build + ctest 65/65 passed (100%), frame lag probe verified (0 regressions, 0 broken invariants).
@@ -65,6 +105,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Several AIs asked me: how marriage? I already have thoughts on this. G** — Several AIs asked me: how marriage? → [full task](Specific%20Tasks/Several_AIs_asked_me_how_marriage_I_already_have_thoughts_on/Several_AIs_asked_me_how_marriage_I_already_have_thoughts_on.md)
 - What about children? It's not like kids should have full Earthcall agency, and they need special protection. - Zach
 
+<a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
 - ✅ **Innovative Zones Specification (2026-09-03)** — done (2026-09-03): Authored complete specifications for 4 groundbreaking Zones (Resonant Cathedral, Chrono-Horizon, Abyssal Far Lands, Agora of Liturgy) extending Zach's core vision. … → [full task](Specific%20Tasks/Innovative_Zones_Specification/Innovative_Zones_Specification.md)
 - ✅ **Second-Nature Law & Zone Features Specification (2026-09-03)** — done (2026-09-03): Authored complete specifications for 4 major features (Second-Nature MetaLaws, Chrono-Symmetry $Cmd+Z/Cmd+Y$ Undo, Prophetic-Rete Holograms, Procedural Shader Brush) extending Zach's core vision. … → [full task](Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md)
@@ -85,6 +126,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - ✅ **`test_observation_load_test` sealed (Stage 0 of Sol's follow-up plan, 2026-09-09)** — done: `RealSaveTreeGuard` gained a `GuardCurrentRoot` tag for tests that never name a real `saves/worlds/...` file but still risk writing into the real tree via the default save root. New `TestSupport::hashDirectoryTree` proves `saves/zones`+`saves/homes` come back byte-identical after the guarded section, even wrapped in try/catch to prove it under exception. 21/21 checks pass. Same task doc.
 
 
+<a id="law-kernel-governance"></a>
 ### Law · Kernel · Governance
 - ⚑ AUTHOR — **Law execution ORDER is undefined and unauthorable** — Two laws that fire in the same tick and write the same property resolve by accident: `LawManager::tick` drains the agenda in whatever order the Rete … → [full task](Specific%20Tasks/Law_execution_ORDER_is_undefined_and_unauthorable/Law_execution_ORDER_is_undefined_and_unauthorable.md)
 - **Ensure properties are exposed via PropertyPaths (Refusal #6)** — PARTIAL (2026-08-18): Enforced via `docs/architecture/ontology/NO_BLACK_BOX.md` and `tests/no_black_box_test.cpp`. Sealed debt register empty of live beings (World folded 2026-08-20). `Ourverse`, `Formation`, and `Soul` unsealed. Remaining: `Object::rotation` write exemption; `Perspective` stub.
@@ -100,10 +142,11 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - **Property Writer Reverse Index** — implementation complete (2026-09-07): Property Writers finds every nested Action node changing a queried path, groups results by Law, authored Relation, IF branch, or parent Action, and jumps to the exact card; a Person must verify the workflow. → [full task](Specific%20Tasks/Property_Writer_Reverse_Index/Property_Writer_Reverse_Index.md)
 
 - **`maxChainRounds` is a default, not a ceiling** — serialized, settable, unclamped on load (`Law.cpp:2360`); clamp it or promote it to `constexpr`, since `ALGORITHMS_AS_LAW.md` and `INTELLECTUAL_LINEAGE.md` both cite it as constitutional. → [`INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md`](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md) §2
-- **`kMaxBirthsPerTick` — nothing bounds creation** — a `Create` in a `WhileTrue` mints beings forever; no rate limit, object cap, or birth budget exists anywhere in `ZonesOfEarth/`. Bounded time with unbounded creation is still Babel. → same audit §2b
-- **Law provenance beyond the text log** — `LawAuditLogger` is a capped façade over `Logger`; the replayable chain of laws and facts behind any state change is unbuilt, and the largest authored world is still only 43 laws. → same audit §7
+- **`kMaxBirthsPerTick` — nothing bounds creation** — a `Create` in a `WhileTrue` mints beings forever; no rate limit, object cap, or birth budget exists anywhere in `ZonesOfEarth/`. Bounded time with unbounded creation is still Babel. → [same audit §2b](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md)
+- **Law provenance beyond the text log** — `LawAuditLogger` is a capped façade over `Logger`; the replayable chain of laws and facts behind any state change is unbuilt, and the largest authored world is still only 43 laws. → [same audit §7](../../audits/INTELLECTUAL_LINEAGE_VERIFICATION_2026-09-03.md)
 - Add NOT operator for condition nodes and action nodes if we don't have that already. We want everything in formal logic. - Zach
 
+<a id="person-facing-surface"></a>
 ### Person-facing surface
 - **Human-Facing Key Singulars with Machine Key Properties** — Model machine-level keys as registered Properties rather than Singulars, enabling Persons to author runtime Key Singulars in a human-facing sense with machine keys as properties, while retiring legacy `KeyboardHandler` preset scaffolding. → [full task](Specific%20Tasks/Human_Facing_Key_Singulars_and_Machine_Key_Properties/Human_Facing_Key_Singulars_and_Machine_Key_Properties.md)
 - ✅ Register the cursor a first mover avatar — **done and verified (2026-08-18)**: `Singularity/Input/Interaction/InteractionChannel` is a first-mover `Law` (`interaction-channel`), stepped from `Engine::update`, with the pointer's whole state registered and its edges (`object-pressed/released/clicked/scrolled/drag-started/drag-ended/focused/unfocused`, `key-pressed/released`) published past-tense. Verified: `interaction_channel_test` (14 cases, headless), `channel_paths_test`, `earthcall` builds. See [INTERACTION_AS_LAW.md](../../architecture/law/INTERACTION_AS_LAW.md).
@@ -118,6 +161,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 - **Projected-region continuity after batch optimization** — reproduce and reconcile fresh elevation, projection-aware PropertyPath effects, reactive hearing, overlap notification, and selector-cache validity before treating the reported speedup as semantic completion (Astra source review, 2026-09-14). → [source findings and witnesses](Specific%20Tasks/Intercom_Galaxy_Expedition/Intercom_Galaxy_Expedition.md#projected-region-continuity-follow-up)
 
+<a id="first-movers"></a>
 ### First Movers
 CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorship-owner-stakeholder framework. All LLMs musts be registered First Movers and the scope of their permitted actions, answered by the ontology itself (e.g. Person answers on *whose* behalf, Singulars answers on *what* they may act, Moment answes *when*, Zone/Home answers *where* agents may act, Law answers *how*, Lexeme and Hierarchy of Joys answers *why*, Relation/Formation answers *with*) (the tool should reject if it goes outside of the Person-authored First mover bounds). - Zach
 - ⚑ AUTHOR — **Give Jules a seat with a name on it** — seat granted 2026-09-07 (Jules is *capacity*: ~100 VM sessions/day that the other agents direct); per-PR model attribution is dropped as unobtainable (the platform hides it after session start), and only standing-in-`Identity/` is still owed. → [full task](Specific%20Tasks/Give_Jules_a_seat_with_a_name_on_it/Give_Jules_a_seat_with_a_name_on_it.md) Zach: I'd add Jules like infrastructure or a massive workforce of junior engineers
@@ -141,6 +185,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Make Collision and gravity toggleable first movers rather than hardcoded black boxes.
 - Make the physics laws inside the first mover fixtures either actually work, or remove redundant functionality and wire them up to the originals instead.
 
+<a id="modalities-integration-substrate"></a>
 ### Modalities · integration · substrate
 - ✅ **Robust Native File I/O & Wide File Type Classification (2026-09-08)** — done and verified (2026-09-08): Hardened FileChannel with atomic write swaps, append mode, DoS max file size bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)
 - ✅ **Screen Recorder in the Singularity with macOS Permissions & Accessibility Handling (2026-09-08)** — done and verified (2026-09-08): Implemented ScreenRecorder under Singularity/Screen with multi-mode capture (in-engine viewport, host display, window), PPM/PNG/raw stream formats, CGPreflightScreenCaptureAccess TCC and AXIsProcessTrusted accessibility handling with automatic fallback to viewport. → [full task](Specific%20Tasks/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)
@@ -155,6 +200,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Resolve Singularity external app integration.
 - Multi-device Earthcall networking and inter-device paradigms.
 
+<a id="interaction-controls-gui"></a>
 ### Interaction · controls · GUI
 - ✅ **Gather set-to-set creation and Law into a GUI framework** — **done and verified (2026-08-18)**, written as [INTERACTION_AS_LAW.md](../../architecture/law/INTERACTION_AS_LAW.md) and built as `Singularity/Input/Interaction/{InteractionChannel,ControlPatterns}`. Verified: `interaction_channel_test`, `control_patterns_test`, `channel_paths_test`, full suite 54/55 (the one failure is the deliberate `webgpu_particle_test`). Remaining work is item 8a.
 - ✅ **Un-collide the spawn law from console Create** — done (2026-08-19): `spawnLawArmed` (L / "Spawn as law") is the spawn law's latch; `active3DMode == "Create"` is only the console bypass (`tool-create-3d-law`). Guarded by `shape_generator_law_test` (Create alone does not fire the law; the law fires without Create) and `creation_tools_test`. Remaining: replace the L/checkbox chrome with an authored control (`INTERACTION_AS_LAW.md`).
@@ -163,7 +209,9 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - **Synthesis Studio** — Astra’s separate Living Instrument edition adds chromatic/octave/harmony controls, expression gestures, and Sound Ink to the clean original; verification in progress (Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-08 23:37 PDT). → [full task](Specific%20Tasks/Synthesis_Studio_is_half_wired/Synthesis_Studio_is_half_wired.md)
 - ✅ **IDE Docking Mode for First Mover Window Tools** — done and verified (2026-09-11): Added toggleable IDE docking mode attaching ImGui windows to screen edges with tabbed slots, resizable splitters, and pop-out float controls (`F10` / Menu). → [full task](Specific%20Tasks/IDE_Docking_Mode/IDE_Docking_Mode.md)
 
+<a id="docs"></a>
 ### Docs
+- ✅ **Terminal language and ML crystal** — delivered Zach's requested deep CLI advice to Spark's intercom thread and Earthcall's Crystal, connecting stakeholder-owned meanings and ML Formations with the shared authored world (GPT-6 Astra, `01a09f43`, 2026-09-14 16:14 PDT). → [contribution and follow-up](Specific%20Tasks/Terminal_Language_Formation_Continuity/Terminal_Language_Formation_Continuity.md)
 - ✅ **The World That Can Continue** — crystallized Zach's commissioned galaxy exploration and three intercom contributions into a documentation-only envisioning of living Properties, authored instruments, causal understanding, persistence, and shared standing (GPT-6 Astra, `01a09f43`, 2026-09-14 13:11 PDT). → [Earthcall's Crystal](../../Earthcall%27s%20Crystal/The_World_That_Can_Continue.md)
 - ✅ **Astra's three-thread intercom expedition** — delivered architectural advice and expansive authoring visions to the newest image thread, ongoing Law Engine thread, and August Interaction thread (GPT-6 Astra, `01a09f43`, 2026-09-14 13:04 PDT). → [record and follow-up](Specific%20Tasks/Intercom_Galaxy_Expedition/Intercom_Galaxy_Expedition.md)
 - ✅ **Astra galaxy expedition** — completed Zach's commissioned [The Galaxy That Must Not Own Its Stars](../../Reflections%20on%20Earthcall%27s%20Progression/The_Galaxy_That_Must_Not_Own_Its_Stars.md), a documentation-only exploration of the Gathering Fire, manifesto, architecture, and code (Codex / GPT-6 Astra, session `01a09f43-96c4-79e2-9405-ebbe73f77cb7`, 2026-09-14 02:43 PDT).
@@ -180,6 +228,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - **Write `Time_Chronos_and_Kairos.md`, or drop the pointer to it** — `INTELLECTUAL_LINEAGE.md` §9 cites it; no such file has ever existed and nothing else in the tree mentions kairos.
 - ✅ **In-world and tool click lockout across zones** — done and verified (2026-09-03): Reconciled Dear ImGui physical mouse button releases each frame before `NewFrame` to prevent stuck drag states from latching `WantCaptureMouse`, and wired edge-accurate callback press consumption to 3D creation tools. Verified: `creation_tools_test`, `interaction_channel_test`, `synthesis_studio_app_test`, `earthcall_webgpu` build.
 
+<a id="things-to-explore-and-deliberate-on"></a>
 ## Things to explore and deliberate on:**
 - To what extent should Earthcall use OOP versus ECS?
 - How should Time be represented in Earthcall. Start from *when* as a first-order category, not from clock unification. (See near-term 5.)
@@ -188,6 +237,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Whether the ImGUI is relevant or obselete once Earthcall has robust enough UI.
 - **Track the marginal cost of each new authored domain** (from [Green_Hills_Population_One §2](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), 2026-08-28): chess took weeks; the Perlin ground took one night (2026-08-27→28). Record wall-clock start→green for the *third* authored domain — the datum that shows whether the substrate is compounding or only the agents are learning. The ledger already timestamps everything; this is bookkeeping, not tooling.
 
+<a id="propertypath-exposure-debt"></a>
 ## Propertypath exposure debt (tracked in `tests/no_black_box_test.cpp`):**
 - ✅ `World` — folded into `Zone` 2026-08-20 (`class World` gone; `BeingKind` 6 burned). Did not populate properties. Verified: `no_black_box_test` ALL OK; `save_roundtrip_test` 21/21. Audit: [WORLD_UNIVERSE_REFUSALS_AUDIT_2026-08-20.md](../../audits/WORLD_UNIVERSE_REFUSALS_AUDIT_2026-08-20.md).
 - ✅ `Ourverse` — unsealed 2026-08-18 as the vessel of unity (`gatheringZone`, `joys`, `filamentCount`, `metalaws`, `convenesToward`). `ownedObjects` is Engine-bag debt, not registered. See OURVERSE.md.
@@ -198,15 +248,16 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - ✅ **Restore Creator Console tools lost in the First Mover modularity split** — done and verified (2026-08-19): Select writes `selectedObject3D` + HighlightSystem; Morph vertex/patch/field gizmos run from `stepCreationTools`; implicit/surface spawn; Face Brush/Pottery/Rotate inspectors; fuseObjects restored; Save As / Load / Save Manager windows render from menu A/L/G and Assets. 2D Paint belt still detached (no Zone BrushSystem). Verified: `earthcall` build. Zach (8-28-26): NOT ALL OF THEM ARE ADDED BACK YET
 - ✅ **Named-shape topology (not glu tessellation) + Creator tools as first movers** — done and verified (2026-08-19): `setShapeKind` rebuilds SmoothSurface/ComplexShape for Ellipsoid and the rest (no 16-slice sphere fallback as identity); draw path restores topology instead of `sphereUnitMesh`; WebGPU `drawSmoothModel` marches `sdfFromSmooth` rather than a UV mesh. `syncRegisterCreatorTools` registers Select/Morph/… as FirstMoverLaws the console arms; dispatch honours `enabled`. Console remains chrome. Verified: `creation_tools_test`; `geometry_cache_test`; `earthcall` build.
 
+<a id="housekeeping"></a>
 ## Housekeeping:
-- ⚑ ZACH DECIDES — **Person Verification List `[x]` now marks both "verified working" and "tried, still broken/unclear" (Pottery, Rotate, Fuse, focus/unfocus, `/`)** — consider a `[~]` state or reopening them; also reconcile the `synthesis_studio_living_test` bullet below with Jules's claimed fix `4c8c2418`. → [weekly review §4b](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_Spelling_Stopped_Being_Identity.md)
+- ⚑ ZACH DECIDES — **Person Verification List `[x]` now marks both "verified working" and "tried, still broken/unclear" (Pottery, Rotate, Fuse, focus/unfocus, `/`)** — consider a `[~]` state or reopening them; also reconcile the `synthesis_studio_living_test` bullet below with Jules's claimed fix `4c8c2418`. → [weekly review §4b](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_Spelling_Stopped_Being_Identity.md). {Zach: Yes, I will use [~]}
 - ✅ **5 chess tests wrote to the real `saves/` tree, not a sandbox** — done (2026-09-07): found while running the suite (real files caught and reverted with `git checkout` before commit, more than once — this compounded across runs to 14,000+ duplicate lines in `saves/zones/Chess/zone.json` at one point). `chess_app_test`, `chess_castling_test`, `chess_click_geometry_test`, `chess_extended_rules_test`, and `chess_gesture_test` all pointed `SaveSystem::setSaveRoot` at the real repo `saves/` directory, so `BootedEngineHarness`'s `hydrateFromZoneStore()` loaded every real Zone identity and a later load's "preserve unsaved work" write-back re-serialized all of them with fresh relation timestamps on every run. A first fix (copy the tree into a disposable sandbox, point SaveSystem there) traded that for a different, unexplained failure: `chess_click_geometry_test` saw every piece at (0,0,0) and every Law conditions-failed against an otherwise byte-identical copy, no matter which real subdirectories were included — never root-caused. Landed instead: `TestSupport::RealSaveTreeGuard` (`tests/support/test_harness.hpp`) runs the test against the real tree exactly as it always ran (no unexplained-difference surface to hit), backing up `saves/zones/` and `saves/homes/` beforehand and restoring them on scope exit regardless of how the test went. (`synthesis_studio_app_test` needed no fix — it parses its save file directly into local objects and never touches `SaveSystem`/`ZoneManager`.) Verified clean with `git status saves/` before and after a full `ctest` run, and all 5 tests pass or fail identically to the documented baseline (`chess_extended_rules_test`'s pawn-promotion assertion is the one pre-existing failure).
 - ✅ **`test_observation_load_test` also wrote to the real `saves/` tree, same bug class as the chess tests above** — fixed 2026-09-09 (see Zone identity store task doc entry above, "Stage 0"). Originally found 2026-09-08.
 - **`synthesis_studio_living_test` (Astra) silently exits 1 with no output** — found 2026-09-09, not investigated (unrelated to the matter-buffer work in progress at the time — the test is self-contained, its own docstring says "No real Zone store is read," and it never touches `ZoneManager`'s matter/legacy-splitter path). Its fixture `saves/worlds/synthesis_studio_living.json` exists, so the early `if (!exists) return 1;` isn't the cause; something later fails before its first `check()` prints, and `std::setbuf(stdout, nullptr)` rules out a buffering explanation. Needs its own look.
 - **`zone_boot_hydration_relations_test` and `synthesis_studio_app_test` both newly failing, unrelated to Invariant 4** — found 2026-09-09 while verifying Invariant 4's full-suite run, not investigated. `zone_boot_hydration_relations_test` hardcodes `instanceOf == 35` for `saves/worlds/chess_app.json`'s Chess formation relations; the real file now has 118 (`git log` shows its last change predates this session — the file has simply grown through other landed work, the test's expectation is stale). `synthesis_studio_app_test` fails 3 stroke/dab-drawing timing checks ("slow real travel starts a stroke with exactly one segment" and 2 others) that were passing as of the 2026-09-03 entry above — a Law-timing behavior unrelated to save/load format, not chased further here.
 - ✅ **`zone_boot_hydration_relations_test`, `go_app_test`, and `frame_lag_test` all had the exact unguarded-real-tree bug the 5 chess tests had, and it corrupted a real file (2026-09-09)** — found the hard way: running `zone_boot_hydration_relations_test` directly and repeatedly (outside `ctest`, verifying unrelated Zone-identity work) grew the real `saves/zones/Chess/zone.json` from 4,076 to 8,792 lines, the same duplicate-relation shape as the original 2026-09-07 chess-test bug. Recovered in full from an orphaned `RealSaveTreeGuard` temp backup (`/var/folders/.../T/earthcall-save-backup-*` — a prior guarded test's backup that never got cleaned up, likely from an aborted run) that happened to hold a complete, current 25-folder `saves/zones/` snapshot; confirmed byte-identical to `git show HEAD` for every file before trusting it, restored the 20 missing folders plus the one corrupted one, verified `git status saves/` clean afterward. All three tests now use `TestSupport::RealSaveTreeGuard`. **Lesson: `grep -rl "setSaveRoot" tests/ | xargs grep -L "RealSaveTreeGuard\|temp_directory_path\|GuardCurrentRoot"` finds every remaining unguarded real-tree test in one shot — run it before trusting any new test that touches `SaveSystem::setSaveRoot`, and before running any such test directly/repeatedly outside `ctest`.**
 - **A `git stash`/pop cycle across a session can leave a static library (`earthcall_core.a`) with a stale object file even after the source is restored** — learned 2026-09-09: `matter_scoped_writer_test` passed right after being written, then failed consistently (not flakily — every run) after an unrelated stash-push/pop to isolate a different question, even though `git status` showed the source fully restored. The fix was forcing a recompile of the one touched translation unit (`touch` + rebuild) rather than trusting the archive was already correct; a full `cmake --build` alone does not re-link a `.a` member whose source didn't change but whose environment did. Worth remembering before concluding a stash-isolated regression is real: rebuild the specific `.o` that changed, don't just trust incremental build state after popping.
-- **Mechanize the Person Verification routing rule — 104 commits to 1 says exhortation is not working** — (2026-09-02, measured; from [The Week the Chorus Became a … → [full task](Specific%20Tasks/Mechanize_the_Person_Verification_routing_rule_104_commits/Mechanize_the_Person_Verification_routing_rule_104_commits.md)
+- **Mechanize the Person Verification routing rule — 104 commits to 1 says exhortation is not working** — (2026-09-02, measured; from [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §6) → [full task](Specific%20Tasks/Mechanize_the_Person_Verification_routing_rule_104_commits/Mechanize_the_Person_Verification_routing_rule_104_commits.md)
 - **`LICENSE.md` and `LICENSE.txt` are both zero bytes** — (2026-09-02.) They sit untracked in the working tree next to … → [full task](Specific%20Tasks/LICENSE_md_and_LICENSE_txt_are_both_zero_bytes/LICENSE_md_and_LICENSE_txt_are_both_zero_bytes.md)
 - ✅ **Fill in agent intercom** — done and verified (2026-08-15): Implemented `agent intercom/conversation_history_injection.py` and `agent intercom/README.md`. *(Correction 2026-08-17: Both `conversation_history_injection.py` and `playpen.py` had SyntaxErrors from literal newlines inside string literals and had never executed. Rejoined broken lines with escaped `\n`; verified AST parsing on both and ran `conversation_history_injection.py self-test` successfully).*
 - ✅ **One-click WebGPU launch** — done and verified (2026-08-14): Added root `Run Earthcall.command` invoking `scripts/build.sh webgpu run`.
@@ -235,6 +286,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - ✅ **Fix the build: `WebSocketServer.cpp` API drift, a macOS-only link error, two stale law tests, and two mangled-string test files** — done and verified (2026-08-31), all pre-existing and unrelated to the event-bus port above. → [full task](Specific%20Tasks/Fix_the_build_WebSocketServer_cpp_API_drift_a_macOS_only/Fix_the_build_WebSocketServer_cpp_API_drift_a_macOS_only.md)
 - ✅ **Fix the build again: a Jules-bot CMake refactor regressed both fixes above, plus a dead `#include <GL/gl.h>`** — done and verified (2026-09-01). → [full task](Specific%20Tasks/Fix_the_build_again_a_Jules_bot_CMake_refactor_regressed/Fix_the_build_again_a_Jules_bot_CMake_refactor_regressed.md)
 
+<a id="performance"></a>
 ## Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)
 - **Rendering costs ~0.2 ms per object, and that is the whole frame budget in a lived-in zone** — Measured 2026-09-02 with a temporary probe in `Engine::tick`: `zone='Sanctum of Beginnings' objects=129 frame=30.428 ms (32.9 fps) laws=0.544 zone=1.786 … → [full task](Specific%20Tasks/Rendering_costs_0_2_ms_per_object_and_that_is_the_whole/Rendering_costs_0_2_ms_per_object_and_that_is_the_whole.md)
 - **⚑ Make 2D/3D layering authorable in the DRAW order too, not just the pick** — Done for picking on 2026-09-02: `Object::pickPriority()` is a readable/writable property (default = `zOrder2D` for a 2D being, 0 for a 3D one, which … → [full task](Specific%20Tasks/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not.md)
@@ -300,8 +352,9 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - ⚑ AUTHOR — **Archetypes: the tradeoffs doc decides against them in §1 and requires them in §3.** §1 rejects ECS on archetype fragmentation under authored heterogeneity; §3's 1.0x JIT proof needs "`@position.y` lives at byte offset +16 for the current target archetype." Both cannot stand. Worth noting Refusal 1 forbids a *C++ class* for a domain noun, not a runtime archetype table keyed by authored property sets — so the real objection is the empirical fragmentation claim, which is untested. Zach's call, and it gates the JIT horizon.
 
+<a id="essential-singularity-substrate"></a>
 ## Essential Singularity substrate
-- **Split-substrate serialization: Phases 1 and 3 landed, Phase 2 and most of Phase 4 did not — and the plan doc says otherwise** — (2026-09-02, measured; from [The Week the Chorus Became a … → [full task](Specific%20Tasks/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2.md)
+- **Split-substrate serialization: Phases 1 and 3 landed, Phase 2 and most of Phase 4 did not — and the plan doc says otherwise** — (2026-09-02, measured; from [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §4) → [full task](Specific%20Tasks/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2.md)
 - FaceTextures must work, be visible, and handle edge cases. Add Face Texture tests if not there yet. After the refactor I used the Pottery tool on a square, and instead of the FaceTexture becoming larger in pixel scope to accmodate, it physically stretched every individual pixel's appearance. Seems like a classic bug for something like this. (We're all looking at you, Mistral, for forgetting to add back functionality 😤😂🤖😭) - Zach.
 - ✅ **Implement CPU-GPU micro-mastery management substrate & WebGPU-to-Singular Graphics Mastery** — **done and verified (2026-08-25)**: Implemented high-performance dynamic GPU memory sub-allocator ring buffer (`GpuBufferPool` with 256-byte WebGPU/Metal … → [full task](Specific%20Tasks/Implement_CPU_GPU_micro_mastery_management_substrate_WebGPU/Implement_CPU_GPU_micro_mastery_management_substrate_WebGPU.md)
 - ✅ **CPU-GPU micro-mastery remediation & draw-call collapse (Phases 0–3, 5, and 4.1–4.2)** — **done and verified (2026-08-25)**, implementing [CPU_GPU_MICRO_MASTERY_REMEDIATION_PLAN.md](../../plans/CPU_GPU_MICRO_MASTERY_REMEDIATION_PLAN.md); the … → [full task](Specific%20Tasks/CPU_GPU_micro_mastery_remediation_draw_call_collapse_Phases/CPU_GPU_micro_mastery_remediation_draw_call_collapse_Phases.md)
@@ -312,6 +365,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Deeper and more intricate Metal Mastery over the WebGPU Singularity.
 - Earthcall for Python.
 
+<a id="feature-sized"></a>
 ## Feature-sized (split out of Housekeeping 2026-08-13):
 - ✅ **Restore legacy 3D create tool & author Law counterpart** — done and verified (2026-08-13): Restored `Tool::ShapeGenerator3D` in ImGui as First Mover (`CreationChannel`); authored Law version (`saves/tests/shape_generator_3d_law.json`) activated by `L` key; fixed `Engine::initLogic()` null dereference. See [Specific Tasks/Legacy_3D_Create_Tool_Restoration.md](Specific%20Tasks/Legacy_3D_Create_Tool_Restoration.md).
 - ✅ **Make the booted Shape Generator 3D law able to fire at all** — done and verified (2026-08-17): the law `Engine::initLogic` instantiated (added 2026-08-16, `aa6bf9ba`) could never fire for three independent reasons, … → [full task](Specific%20Tasks/Make_the_booted_Shape_Generator_3D_law_able_to_fire_at_all/Make_the_booted_Shape_Generator_3D_law_able_to_fire_at_all.md)
@@ -331,6 +385,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - ✅ **Implement Perlin noise floor** — **done (2026-08-27)**: Authored `perlin-ground-plane` as a Field (`ShapeKind 10`) evaluated via `geom::SdfNode` mapping an OntoMath `Op::Noise` AST. → [full task](Specific%20Tasks/Implement_Perlin_noise_floor/Implement_Perlin_noise_floor.md)
 
+<a id="rd"></a>
 ## R&D:
 - Determine the best ML strategies for Integration classifiers.
 - **Formations with Neuro-Symbolic ML / OntoMath** — PARTIAL (2026-08-13): Implemented `Formation` neural structure with Hebbian learning in `LanguageSystem::tick`. Next step: migrate hardcoded constants to authorable Law rules. See [Specific Tasks/Neuro_Symbolic_Formations_and_ML.md](Specific%20Tasks/Neuro_Symbolic_Formations_and_ML.md). **Distinguish First Mover ML elements from Person-authored ML properties.**
@@ -343,28 +398,19 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - ✅ **`ForAny`/`ForAll` compile to an unfiltered Universe scan** — measured 2026-09-09 (Formation Rete rung 1): real but not dominant (~5.5x an equivalent `Compare` at 320 beings), and **not removable by indexing** since the cost is in the per-subject re-evaluation `applyTo` must do for safety; the memo that would fix it is blocked on incomplete property-write coverage. → [full task](Specific%20Tasks/Quantifier_conditions_compile_to_an_unfiltered_Universe_scan/Quantifier_conditions_compile_to_an_unfiltered_Universe_scan.md)
 
 - **Rete Network Optimizations** — Instead of parallelization (which trades incrementality and creates causal hazards), implement the sequential optimizations identified in the audit: Lazy Condition Evaluation (short-circuiting early), Spatial Indexing for `InRegion` (BVH/hash), Property-Based Indexing for `couldApplyTo` (so we don't sweep the entire universe), and Incremental `WhileTrue` evaluation. (Ref: `docs/audits/RETE_PARALLELIZATION_AUDIT_2026-08-19.md`).
-- **Incremental Action Nodes (TREAT/LEAPS-style RHS incrementality)** — Zach's observation (2026-08-28, after reading Fable 5's [Green Hills … → [full task](Specific%20Tasks/Incremental_Action_Nodes_TREAT_LEAPS_style_RHS/Incremental_Action_Nodes_TREAT_LEAPS_style_RHS.md)
+- **Incremental Action Nodes (TREAT/LEAPS-style RHS incrementality)** — Zach's observation (2026-08-28, after reading Fable 5's [Green Hills Population One](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md) §3) → [full task](Specific%20Tasks/Incremental_Action_Nodes_TREAT_LEAPS_style_RHS/Incremental_Action_Nodes_TREAT_LEAPS_style_RHS.md)
 - **The Sufficiency Thesis Test** — The 8 primitives of the ontology must be tested against a domain that is *not spatial, not physical, and not mechanical* (e.g., modeling a conversation, an economy, or a story). Stop writing essays about the ontology's capacity and actually model an abstract domain to find the "wall" of what the architecture cannot do. (Ref: `docs/Reflections on Earthcall's Progression/Reflections on the Substrate/The_Sufficiency_Thesis.md`).
 - **Interrelation: Semantics and Prophetic Rete** — Documented the bounding of semantic inference via Prophetic Rete. → [full task](Specific%20Tasks/Interrelation_Semantics_and_Prophetic_Rete/Interrelation_Semantics_and_Prophetic_Rete.md)
 - **Interrelation: Interaction and The Second Person** — Documented how UI naturally resolves under multiplayer shared physics. → [full task](Specific%20Tasks/Interrelation_Interaction_and_Second_Person/Interrelation_Interaction_and_Second_Person.md)
 - **Interrelation: First Mover Substrate Reversal** — Documented how JSON saves act as compiler IRs for the eventual C++ bootstrap removal. → [full task](Specific%20Tasks/Interrelation_First_Mover_Substrate_Reversal/Interrelation_First_Mover_Substrate_Reversal.md)
 - Design and experiment how to utilize GPU power to maximize Rete's power and integrate it seamlessly with the CPU. For matching, I believe is already trodden. It is in the Act phase where I believe there's most potential for innovation. - Zac
 
+<a id="basic-design-before-creating-fully-working-products-with-earthcall"></a>
 ## Basic design before creating fully working products with Earthcall:
 - FOR ZACH: Write foundational design specification.
 - ✅ **Tessellation Cache Garbage Collection (Phase 4 Follow-up)** — **done and verified (2026-08-26)**: Implemented reference-counted garbage collection for `s_smoothCache` in … → [full task](Specific%20Tasks/Tessellation_Cache_Garbage_Collection_Phase_4_Follow_up/Tessellation_Cache_Garbage_Collection_Phase_4_Follow_up.md)
 
-## Stuff for Zach to write when I don't know which section it belongs in (agents if you're reading this please move the bullet points below to their proper section):
-- So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures)
-- Retire Automation into Laws
-- Audit whether the Rete is actually skipping known facts, or if we missed something (e.g. forgot to delete old brute-force code or stopped one implementation step short) — **partially answered 2026-09-01**: it was not skipping known facts, it was never *hearing* most of them. See the change-feed entry under R&D. The rest of this audit (dead brute-force paths) is still open.
-- **So doing all this optimization work I am realizing the need for a robu** — So doing all this optimization work I am realizing the need for a robust Time framework more. → [full task](Specific%20Tasks/So_doing_all_this_optimization_work_I_am_realizing_the_need/So_doing_all_this_optimization_work_I_am_realizing_the_need.md)
-- **another is we need the ability to author maximum chain depth per tick** — another is we need the ability to author maximum chain depth per tick of chaining laws. → [full task](Specific%20Tasks/another_is_we_need_the_ability_to_author_maximum_chain_depth/another_is_we_need_the_ability_to_author_maximum_chain_depth.md)
-- And also is for Laws to give more granular mathematical control over relationships and properties of dt itself. For example, a law executed during a duration t and a law executed over a function f(t) may produce the same beahvior but derive that behavior in differnt ways.
-- Optimize actionnode branches to collapse O(N) branches (where N is number of ops in teh branch) into jsut O(1). We'd still want to keep the original nodes available don't discard them but like they should be feeding a master node that can do the entire calculation in just one step so no need to traverse an entire branch.
-
-**(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**
-
+<a id="production-facing-programs"></a>
 ## Production-facing Programs:
 *(These are the **Zones of Actualization** — Zach's aspirational destination zones, written in his own voice at `docs/Zones of Actualization/`. Linked here 2026-09-03; the docs are the record, these bullets are the index.)*
 - **Sanctum of Beginnings** — the onboarding Zone authored in-world, teaching Christ and the Hierarchy of Joys *first* and the ontological primitives only after, ending at Time and Moment. → [vision doc](../../Zones%20of%20Actualization/Sanctum%20of%20Beginnings.md)
@@ -373,6 +419,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - **Second-Nature Law Authoring** — the Law Authoring window is expressive but too tedious for a human, so the authoring surface itself must be authored as Metalaws. → [vision doc](../../Zones%20of%20Actualization/Second-Nature%20Law%20Authoring.md) · blocked: no `ActionNode::Kind` authors a Law — see [full task](Specific%20Tasks/Law_concepts_MetaLaws_that_author_laws/Law_concepts_MetaLaws_that_author_laws.md)
 - **Animation / Automation Zone** — placeholder; Zach is writing it after the AMS doc. → [stub](../../Zones%20of%20Actualization/Animation/Automation.md)
 
+<a id="findings-from-clawd-mythos-audit"></a>
 ## Findings from Clawd MYTHOS (Claude Fable 5.1) Audit (2026-09-01)
 - **The stakeholder log is an un-integrated log and grows unbounded.** `Singular::addStakeholder` appends a record on every write. Addresses use volatile identifiers (`law-N`). Action: Make stakeholding a `Relation` (e.g., `stakeholder-of`), using weight for count and `Moment` for interval, replacing records with graph edges.
 - **Rete facts are derived state but serialized in saves anyway.** 27,655 serialized facts in `authoredLaws.rete.facts` creates a second source of truth that can disagree with the beings they describe. Action: Stop serializing derived Rete facts since `LawManager::seedStateFacts` rebuilds them anyway on load.
@@ -383,3 +430,16 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - **Scope identifiers by owner before Network lands.** Global names like `Home`, `Player`, `material.<name>` will collide when a second Person arrives. Action: Use the dotted namespace resolution to scope identifiers by owner.
 - **Slot resolution inside the interpreter.** Action: Build a slot-resolved subject view inside the interpreter (does not need the C emitter) to get most of the Stage C performance win now, and fix the string-keyed Rete facts.
 - **Agenda drain conflict resolution via Hierarchy of Joys.** The missing piece of the Rete and the missing force of the Hierarchy of Joys are the same slot. Action: Order the agenda by the rank of each law's telos to make the hierarchy load-bearing as a force.
+
+
+<a id="stuff-for-zach-to-write"></a>
+## Stuff for Zach to write when I don't know which section it belongs in (agents if you're reading this please move the bullet points below to their proper section):
+- So make sure every Shape Kind has a Face Texture or whatever equivalent necessary to draw on it freely. Also, facetextures shouldn't be a black box or a hardcoded limiter (e.g. facetexture dimensions should not be hardcoded away from Person authoring--we shouldn't be stuck with only having 256x256 resolution textures)
+- Retire Automation into Laws. Automation becomes a dedicated comparison-baseline first-mover and developer constant like the Creator Console is, but never a separately governed and structured black box away from the rest of Earthcall. 
+- Audit whether the Rete is actually skipping known facts, or if we missed something (e.g. forgot to delete old brute-force code or stopped one implementation step short) — **partially answered 2026-09-01**: it was not skipping known facts, it was never *hearing* most of them. See the change-feed entry under R&D. The rest of this audit (dead brute-force paths) is still open.
+- **So doing all this optimization work I am realizing the need for a robu** — So doing all this optimization work I am realizing the need for a robust Time framework more. → [full task](Specific%20Tasks/So_doing_all_this_optimization_work_I_am_realizing_the_need/So_doing_all_this_optimization_work_I_am_realizing_the_need.md)
+- **another is we need the ability to author maximum chain depth per tick** — another is we need the ability to author maximum chain depth per tick of chaining laws. → [full task](Specific%20Tasks/another_is_we_need_the_ability_to_author_maximum_chain_depth/another_is_we_need_the_ability_to_author_maximum_chain_depth.md)
+- And also is for Laws to give more granular mathematical control over relationships and properties of dt itself. For example, a law executed during a duration t and a law executed over a function f(t) may produce the same beahvior but derive that behavior in differnt ways.
+- Optimize ActionNode branches to collapse O(N) branches (where N is number of ops in teh branch) into jsut O(1). We'd still want to keep the original nodes available don't discard them but like they should be feeding a master node that can do the entire calculation in just one step so no need to traverse an entire branch.
+
+**(These notes are now also `docs/architecture/law/B-time Rete.md`; the foundations are built — see `docs/architecture/law/PROPHETIC_RETE.md` and the ✅ entries under R&D. What remains unbuilt is listed there in §5, including the ⚑ AUTHOR decisions.)**

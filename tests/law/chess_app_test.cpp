@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
     auto boardMat = materials.get("material.chess.board");
     assert(boardMat && boardMat->faceTextures.size() >= 3);
     const auto& top = boardMat->faceTextures[2];
-    assert(top.size == 64 && top.pixels.size() == 64u * 64u * 4u);
+    assert(top.width == 64 && top.height == 64 && top.pixels.size() == 64u * 64u * 4u);
     // a1 (file 0, rank 0) is dark: pixel x=0 (rank), y=0 (file).
     assert(top.pixels[0] == 117 && top.pixels[1] == 69 && top.pixels[2] == 33);
     // d1 (file 3, rank 0) is light: x=0, y = 3*8 = 24.
