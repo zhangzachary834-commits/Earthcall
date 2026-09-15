@@ -1,0 +1,228 @@
+name: Verify persistent state refresh
+
+on:
+  push:
+    branches:
+      - sol/post-formation-rete-living-profile-20260915
+    paths:
+      - .github/workflows/persistent-state-refresh-verify.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Check out tested branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure baseline
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+          cmake --build build --target rete_state_refresh_test event_interest_filter_test frame_lag_test -j3
+
+      - name: Prove the new witness catches current destroy-and-reassert
+        shell: bash
+        run: |
+          set +e
+          ./build/rete_state_refresh_test > witness-before.txt 2>&1
+          status=$?
+          set -e
+          cat witness-before.txt
+          if [ "$status" -eq 0 ]; then
+            echo "ERROR: rete_state_refresh_test unexpectedly passed before implementation."
+            exit 1
+          fi
+          echo "Expected baseline failure observed (exit $status)."
+
+      - name: Baseline Living Instrument
+        shell: bash
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee baseline.txt
+          exit 0
+
+      - name: Apply candidate locally
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          cpp_path = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.cpp')
+          hpp_path = Path('src/ZonesOfEarth/AuthorsOfLaw/Law.hpp')
+          cpp = cpp_path.read_text()
+          hpp = hpp_path.read_text()
+
+          if 'void ReteNetwork::refreshStateFact(' in cpp:
+              raise SystemExit('refreshStateFact already exists; refusing to double-patch')
+
+          # Split assertion into storage admission and the existing incremental
+          # discrimination path.  The latter is reused verbatim by refresh.
+          assert_start = cpp.index('std::string ReteNetwork::assertFact(FactPtr fact) {')
+          assert_end = cpp.index('\nvoid ReteNetwork::retractFirst', assert_start)
+          assert_func = cpp[assert_start:assert_end]
+          propagation_marker = '    std::vector<std::size_t> activatedAlphas;'
+          propagation_start = assert_func.index(propagation_marker)
+          assert_tail = '\n    return f->id;\n}'
+          if not assert_func.endswith(assert_tail):
+              raise SystemExit('assertFact tail changed; inspect before patching')
+          propagation_body = assert_func[propagation_start:-len(assert_tail)]
+          new_assert = (
+              assert_func[:propagation_start]
+              + '    propagateFact(f);\n'
+              + '    return f->id;\n'
+              + '}'
+          )
+          propagate = (
+              '\n\nvoid ReteNetwork::propagateFact(const FactPtr& f) {\n'
+              + propagation_body
+              + '\n}'
+          )
+          cpp = cpp[:assert_start] + new_assert + propagate + cpp[assert_end:]
+
+          # Split structural storage deletion from invalidating the old Rete
+          # consequences.  The extracted block is byte-for-byte the existing
+          # Alpha/Beta/agenda cleanup.
+          retract_start = cpp.index('bool ReteNetwork::retractFact(const std::string& factId) {')
+          retract_end = cpp.index('\nbool ReteNetwork::hasRelationStateFact', retract_start)
+          retract_func = cpp[retract_start:retract_end]
+          consequence_marker = '    auto aIt = _factAlphaNodes.find(factId);'
+          consequence_start = retract_func.index(consequence_marker)
+          retract_tail = '\n    return true;\n}'
+          if not retract_func.endswith(retract_tail):
+              raise SystemExit('retractFact tail changed; inspect before patching')
+          consequence_body = retract_func[consequence_start:-len(retract_tail)]
+          new_retract = (
+              retract_func[:consequence_start]
+              + '    detachFactConsequences(fact);\n'
+              + '\n    return true;\n'
+              + '}'
+          )
+          detach = (
+              'void ReteNetwork::detachFactConsequences(const FactPtr& fact) {\n'
+              '    if (!fact) return;\n'
+              '    const std::string& factId = fact->id;\n'
+              + consequence_body
+              + '\n}\n\n'
+          )
+          cpp = cpp[:retract_start] + detach + new_retract + cpp[retract_end:]
+
+          # Refresh is deliberately ordered: detach while OLD value is still in
+          # the shared FactPtr, mutate, then run the normal discriminator.
+          eval_marker = 'void ReteNetwork::evaluateDirty() {'
+          eval_pos = cpp.index(eval_marker)
+          refresh = '''void ReteNetwork::refreshStateFact(const FactPtr& fact, nlohmann::json newValue) {
+              if (!fact) return;
+
+              // A persistent property changing value is not structural deletion.
+              // Detach every consequence of the OLD value before mutating the
+              // shared FactPtr: Alpha/Beta memories and agenda tokens retain
+              // FactPtr identity, so mutating first would rewrite history under
+              // the old memberships. Fact-store residency and ordering remain
+              // unchanged; only genuine retractFact() removes from _facts.
+              detachFactConsequences(fact);
+              fact->value = std::move(newValue);
+              propagateFact(fact);
+          }
+
+          '''
+          import textwrap
+          cpp = cpp[:eval_pos] + textwrap.dedent(refresh) + cpp[eval_pos:]
+
+          old_dirty = '''            // Retract the old fact
+            retractFact(fact->id);
+            
+            // Update value and re-assert
+            fact->value = newValue;
+            assertFact(fact);'''
+          if old_dirty not in cpp:
+              raise SystemExit('evaluateDirty refresh block changed; inspect before patching')
+          new_dirty = '''            // The state fact persists. Invalidate consequences of its old
+            // value, mutate the same identity in place, then discriminate the
+            // new value. Do not erase/reappend _facts: its order is consumed
+            // by retractFirst(), and a value change is not fact death.
+            refreshStateFact(fact, std::move(newValue));'''
+          cpp = cpp.replace(old_dirty, new_dirty, 1)
+
+          private_anchor = '''    const AlphaNode* findAlpha(std::size_t id) const;
+    AlphaNode* findAlpha(std::size_t id);'''
+          if private_anchor not in hpp:
+              raise SystemExit('ReteNetwork private helper anchor changed')
+          private_replacement = private_anchor + '''
+    void propagateFact(const FactPtr& fact);
+    void detachFactConsequences(const FactPtr& fact);
+    void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);'''
+          hpp = hpp.replace(private_anchor, private_replacement, 1)
+
+          cpp_path.write_text(cpp)
+          hpp_path.write_text(hpp)
+          PY
+
+          git diff --check
+          git diff -- src/ZonesOfEarth/AuthorsOfLaw/Law.cpp src/ZonesOfEarth/AuthorsOfLaw/Law.hpp | tee candidate.patch
+
+      - name: Build candidate and related witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --target \
+            rete_state_refresh_test \
+            event_interest_filter_test \
+            prophetic_rete_test \
+            rete_compile_test \
+            rete_relation_state_test \
+            edge_reactive_path_test \
+            reactive_departure_test \
+            vocabulary_index_test \
+            frame_lag_test \
+            -j3
+
+      - name: Run headless semantic witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/rete_state_refresh_test | tee witness-after.txt
+          ./build/event_interest_filter_test | tee event-interest.txt
+
+      - name: Candidate Living Instrument
+        shell: bash
+        run: |
+          set +e
+          ./build/frame_lag_test saves/worlds/synthesis_studio_living.json 2>&1 | tee candidate.txt
+          exit 0
+
+      - name: Print same-runner A/B headlines
+        shell: bash
+        run: |
+          echo '=== BASELINE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' baseline.txt || true
+          echo '=== CANDIDATE ==='
+          grep -E 'Tick [0-9]+:|simulation frame|by phase|of that, LawManager::tick|machine calibration|machine steadiness' candidate.txt || true
+
+      - name: Upload exact verified source and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistent-state-refresh-verified-${{ github.run_id }}
+          path: |
+            src/ZonesOfEarth/AuthorsOfLaw/Law.cpp
+            src/ZonesOfEarth/AuthorsOfLaw/Law.hpp
+            candidate.patch
+            witness-before.txt
+            witness-after.txt
+            event-interest.txt
+            baseline.txt
+            candidate.txt
+          if-no-files-found: ignore
