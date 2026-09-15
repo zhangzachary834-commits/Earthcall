@@ -1,0 +1,75 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-harmony-solo",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-harmony-solo",
+    "name": "Studio: Choose solo",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "harmonyChoice",
+      "op": 0,
+      "operand": {
+        "t": "string",
+        "v": "solo"
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@state.studio.harmony",
+          "operand": {
+            "t": "string",
+            "v": "solo"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.studio.thirdRatio",
+          "operand": {
+            "t": "double",
+            "v": 1.2599210498948732
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.living.harmony-caption.label2D",
+          "operand": {
+            "t": "string",
+            "v": "HARMONY / SOLO"
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-harmony-solo",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "control-activated"
+  ]
+}

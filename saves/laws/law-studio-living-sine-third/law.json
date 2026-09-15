@@ -1,0 +1,89 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-sine-third",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-sine-third",
+    "name": "Studio: Sound the sine third",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "isChordPad",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.studio.voice",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "sine"
+          }
+        },
+        {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@state.studio.harmony",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "major"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.studio.harmony",
+              "op": 0,
+              "operand": {
+                "t": "string",
+                "v": "minor"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 18,
+      "path": "harmony.thirdHz",
+      "input": "harmony.amplitude",
+      "propertyName": "sine"
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-sine-third",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "note-played"
+  ]
+}

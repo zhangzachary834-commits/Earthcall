@@ -1,0 +1,81 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-sound-ink-label-true",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-sound-ink-label-true",
+    "name": "Studio: Show sound ink state",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "soundInkToggle",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.studio.soundInk",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "controlLabel",
+          "operand": {
+            "t": "string",
+            "v": "SOUND INK: ON"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "color",
+          "operand": {
+            "t": "vec3",
+            "x": 0.92,
+            "y": 0.76,
+            "z": 0.45
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-sound-ink-label-true",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": []
+}

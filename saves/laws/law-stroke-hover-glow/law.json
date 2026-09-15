@@ -1,0 +1,70 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-stroke-hover-glow",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "kind": 0,
+      "operand": {
+        "t": "vec3",
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "path": "color"
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.art.stroke",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@world.pointerOver"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-stroke-hover-glow",
+    "name": "Art Stroke: Illuminate on Pointer Hover",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-stroke-hover-glow",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}

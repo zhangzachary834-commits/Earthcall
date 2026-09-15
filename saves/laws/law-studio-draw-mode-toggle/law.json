@@ -1,0 +1,96 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-studio-draw-mode-toggle",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "bindings": {
+            "d": "@state.studio.drawMode"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "d": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.studio.drawMode"
+        },
+        {
+          "input": "acoustic.amplitude",
+          "kind": 18,
+          "path": "acoustic.frequency",
+          "propertyName": "triangle"
+        },
+        {
+          "eventType": "draw-mode-toggled",
+          "kind": 10,
+          "publishObject": "",
+          "publishSubject": "state.studio"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 0,
+      "op": 0,
+      "operand": {
+        "t": "string",
+        "v": "draw-mode"
+      },
+      "path": "buttonRole"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-studio-draw-mode-toggle",
+    "name": "Studio: Toggle Canvas Drawing Mode",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-studio-draw-mode-toggle",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "control-activated"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-unselected-harmony",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-unselected-harmony",
+    "name": "Studio: Rest the other harmony choices",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "harmonyChoice",
+          "op": 1,
+          "operandPath": "@state.studio.harmony"
+        },
+        {
+          "kind": 0,
+          "path": "harmonyChoice",
+          "op": 1,
+          "operand": {
+            "t": "string",
+            "v": ""
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 0,
+      "path": "color",
+      "operand": {
+        "t": "vec3",
+        "x": 0.17,
+        "y": 0.24,
+        "z": 0.29
+      }
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-unselected-harmony",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": []
+}
