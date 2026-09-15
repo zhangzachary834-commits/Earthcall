@@ -31,8 +31,19 @@ struct Scratch {
 
 int main() {
     std::setbuf(stdout, nullptr);
-    const auto source = std::filesystem::absolute("saves/worlds/synthesis_studio_living.json");
-    if (!std::filesystem::exists(source)) return 1;
+    // ctest launches tests from the build tree unless a target overrides its
+    // working directory. Keep this witness runnable both through ctest and
+    // directly from the repository root instead of silently depending on CWD.
+    std::filesystem::path source = "saves/worlds/synthesis_studio_living.json";
+    if (!std::filesystem::exists(source)) {
+        const auto fromBuildTree = std::filesystem::path("..") / source;
+        if (std::filesystem::exists(fromBuildTree)) source = fromBuildTree;
+    }
+    source = std::filesystem::absolute(source);
+    if (!std::filesystem::exists(source)) {
+        std::printf("FAILED: authored Living Studio fixture not found at %s\n", source.string().c_str());
+        return 1;
+    }
     Scratch scratch{std::filesystem::temp_directory_path() /
         ("earthcall-living-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
     std::filesystem::create_directories(scratch.path / "worlds");
