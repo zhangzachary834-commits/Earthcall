@@ -23,6 +23,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace {
 int checks = 0;
@@ -221,9 +222,10 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    // 7. ObjectConcept members are another persistence boundary. The member
-    //    codec historically stopped at the first nine ShapeParams slots, so
-    //    Shape2D/Text2D width and height vanished when a concept was saved.
+    // 7. ObjectConcept has its own shape persistence boundary. Its historical
+    //    `params` reader required EXACTLY nine slots, so appending two entries
+    //    would break old readers. Keep that array nine-wide and carry the two
+    //    later 2D dimensions as additive named fields instead.
     // ------------------------------------------------------------------
     {
         ObjectConcept::MemberTemplate member;
@@ -234,24 +236,41 @@ int main() {
         member.params.height2D = 123.0f;
 
         const nlohmann::json j = member.toJson();
-        check(j.contains("params") && j["params"].is_array() && j["params"].size() == 11,
-              "ObjectConcept writes all eleven current ShapeParams slots");
+        check(j.contains("params") && j["params"].is_array() && j["params"].size() == 9,
+              "ObjectConcept keeps the historical nine-slot params arm stable");
+        check(j.contains("width2D") && j.contains("height2D") &&
+                  near(j["width2D"].get<float>(), 321.0f) &&
+                  near(j["height2D"].get<float>(), 123.0f),
+              "ObjectConcept adds 2D dimensions without changing the legacy array width");
         const auto back = ObjectConcept::MemberTemplate::fromJson(j);
         check(back.kind == Object::ShapeKind::Shape2D &&
                   near(back.params.width2D, 321.0f) && near(back.params.height2D, 123.0f),
               "ObjectConcept preserves Shape2D width and height");
 
         nlohmann::json legacy = j;
-        legacy["params"].erase(legacy["params"].begin() + 9, legacy["params"].end());
+        legacy.erase("width2D");
+        legacy.erase("height2D");
         const auto legacyBack = ObjectConcept::MemberTemplate::fromJson(legacy);
         check(near(legacyBack.params.r, 0.41f) && near(legacyBack.params.fillet, 0.13f),
               "historical nine-slot ObjectConcept members remain readable");
+
+        nlohmann::json transitional = legacy;
+        transitional["params"].push_back(321.0f);
+        transitional["params"].push_back(123.0f);
+        const auto transitionalBack = ObjectConcept::MemberTemplate::fromJson(transitional);
+        check(near(transitionalBack.params.width2D, 321.0f) &&
+                  near(transitionalBack.params.height2D, 123.0f),
+              "brief eleven-slot development ObjectConcept records remain readable");
 
         nlohmann::json corrupt = j;
         corrupt["kind"] = 99999;
         const auto corruptBack = ObjectConcept::MemberTemplate::fromJson(corrupt);
         check(corruptBack.kind == Object::ShapeKind::Cube,
               "ObjectConcept refuses an invalid persisted ShapeKind ordinal");
+        corrupt["kind"] = "not-an-integer";
+        const auto wrongTypeBack = ObjectConcept::MemberTemplate::fromJson(corrupt);
+        check(wrongTypeBack.kind == Object::ShapeKind::Cube,
+              "ObjectConcept refuses a non-integer persisted ShapeKind without throwing");
     }
 
     // ------------------------------------------------------------------
