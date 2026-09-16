@@ -15,6 +15,7 @@
 #include <atomic>
 #include <cmath>
 #include <ctime>
+#include <iostream>
 #include <limits>
 
 namespace {
@@ -34,6 +35,17 @@ glm::mat4 mat4FromJson(const nlohmann::json& j) {
             for (int r = 0; r < 4; ++r) m[c][r] = j[i++].get<float>();
     }
     return m;
+}
+
+Object::ShapeKind checkedMemberShapeKind(int raw) {
+    constexpr int first = static_cast<int>(Object::ShapeKind::Cube);
+    constexpr int last = static_cast<int>(Object::ShapeKind::Text2D);
+    if (raw >= first && raw <= last) {
+        return static_cast<Object::ShapeKind>(raw);
+    }
+    std::cerr << "[ObjectConcept] invalid member ShapeKind ordinal " << raw
+              << " — refusing it and hydrating the member as Cube instead.\n";
+    return Object::ShapeKind::Cube;
 }
 
 } // namespace
@@ -78,7 +90,8 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
         {"beingKind", static_cast<int>(beingKind)},
         {"hasGeometry", hasGeometry},
         {"params", {params.r, params.ry, params.rz, params.halfH, params.majorR,
-                    params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet}},
+                    params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet,
+                    params.width2D, params.height2D}},
         {"relativeTransform", mat4ToJson(relativeTransform)}
     };
     if (hasField) {
@@ -108,7 +121,7 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
 
 ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nlohmann::json& j) {
     MemberTemplate m;
-    m.kind = static_cast<Object::ShapeKind>(j.value("kind", 0));
+    m.kind = checkedMemberShapeKind(j.value("kind", static_cast<int>(Object::ShapeKind::Cube)));
     // Concepts written before members carried a kind were all Objects with
     // bodies — the old default, stated rather than assumed.
     m.beingKind = static_cast<ConditionNode::BeingKind>(
@@ -119,7 +132,11 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
             m.captured[it.key()] = propertyValueFromJson(it.value());
         }
     }
-    if (j.contains("params") && j["params"].is_array() && j["params"].size() == 9) {
+    // Nine slots are the historical member format. Shape2D/Text2D later added
+    // width2D/height2D as append-only slots 9 and 10. Accept both, write all
+    // eleven, and never make an old concept unreadable merely because the
+    // current ShapeParams grew.
+    if (j.contains("params") && j["params"].is_array() && j["params"].size() >= 9) {
         const auto& p = j["params"];
         m.params.r = p[0].get<float>();
         m.params.ry = p[1].get<float>();
@@ -130,6 +147,10 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
         m.params.paraboloidA = p[6].get<float>();
         m.params.ovoidAsym = p[7].get<float>();
         m.params.fillet = p[8].get<float>();
+        if (p.size() >= 11) {
+            m.params.width2D = p[9].get<float>();
+            m.params.height2D = p[10].get<float>();
+        }
     }
     if (j.contains("field")) {
         m.hasField = true;
