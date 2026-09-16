@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -80,10 +81,34 @@ bool ZoneManager::persistZone(size_t index) const {
 
     nlohmann::json doc = zoneToJson(*zone);
 
-    // lawRefs are authored Zone membership. They are deliberately not inferred
+    // lawRefs are authored Zone membership. They are deliberately NOT inferred
     // from whichever Laws happen to be globally registered this frame.
+    //
+    // There is one additional authored source for the ACTIVE Zone: Laws born
+    // through universal Singular creation are explicitly adopted into
+    // `_activeZoneLawIds`. That set is the same closure switchTo loaded from
+    // lawRefs; appending its new members is therefore recording an authored
+    // membership mutation, not projecting the global register back to disk.
     if (priorIdentity.is_object() && priorIdentity.contains("lawRefs")) {
         doc["lawRefs"] = priorIdentity["lawRefs"];
+    }
+    if (index == _currentIndex && !_activeZoneLawIds.empty()) {
+        if (!doc.contains("lawRefs")) doc["lawRefs"] = nlohmann::json::array();
+        if (!doc["lawRefs"].is_array()) {
+            std::cerr << "[zones] REFUSED Save Zone for '" << id
+                      << "': lawRefs is not an array. Nothing written.\n";
+            return false;
+        }
+
+        std::unordered_set<std::string> alreadyNamed;
+        for (const auto& ref : doc["lawRefs"]) {
+            if (ref.is_string()) alreadyNamed.insert(ref.get<std::string>());
+        }
+        for (const auto& activeLawId : _activeZoneLawIds) {
+            if (!activeLawId.empty() && alreadyNamed.insert(activeLawId).second) {
+                doc["lawRefs"].push_back(activeLawId);
+            }
+        }
     }
 
     // Relation/lexeme loss has happened before. Refuse rather than turning a
