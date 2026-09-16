@@ -10,6 +10,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <memory>
 #include <string>
@@ -169,6 +170,17 @@ Result deriveLaw(const Request& request) {
     for (const std::string& trigger : triggers) laws->bindTrigger(id, trigger);
     if (triggers.empty() && !prototype->ecaLoop().eventType.empty()) {
         laws->bindTrigger(id, prototype->ecaLoop().eventType);
+    }
+
+    // "Keep the resulting instrument" means Zone membership, not merely a
+    // pointer in the process-wide Law register. The live ZoneManager owns the
+    // active authored closure loaded from lawRefs. Adopt the newborn into that
+    // SAME closure so departure releases it and Save Zone persists its root.
+    if (ZoneManager* zones = ZoneManager::live()) {
+        if (!zones->adoptLawIntoActiveZone(id)) {
+            laws->remove(id);
+            return {nullptr, "newborn Law could not enter the active Zone's authored closure"};
+        }
     }
 
     return {newborn.get(), {}};
