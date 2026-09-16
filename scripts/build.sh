@@ -5,6 +5,7 @@
 #   ./scripts/build.sh run          # configure + build + run
 #   ./scripts/build.sh webgpu run   # configure + build the WebGPU app + run
 #   ./scripts/build.sh terminal run # configure + build the Terminal CLI app + run
+#   ./scripts/build.sh terminal quick run # rebuild Terminal CLI only + run (skip configure)
 #   ./scripts/build.sh test         # configure + build + test
 #   ./scripts/build.sh quick        # build only (skip configure)
 #   ./scripts/build.sh quick run    # build only + run
@@ -81,7 +82,11 @@ case "$ACTION" in
     if [[ "${1:-}" == "run" ]]; then shift; run_webgpu "$@"; fi
     ;;
   terminal)
-    configure
+    if [[ "${1:-}" == "quick" ]]; then
+      shift
+    else
+      configure
+    fi
     build_terminal
     if [[ "${1:-}" == "run" ]]; then shift; run_terminal "$@"; fi
     ;;
@@ -96,7 +101,7 @@ case "$ACTION" in
     ;;
   *)
     echo "Unknown action: $ACTION"
-    echo "Usage: $0 [run|webgpu [run]|terminal [run]|test|quick|clean]"
+    echo "Usage: $0 [run|webgpu [run]|terminal [quick] [run]|test|quick|clean]"
     exit 1
     ;;
 esac

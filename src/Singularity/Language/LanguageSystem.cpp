@@ -5,6 +5,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/Language/SyntacticParser.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include <algorithm>
 #include <iostream>
 #include <cstddef>
 
@@ -30,6 +31,38 @@ void LanguageSystem::detachFromAllZones(Lexeme* lexeme) {
     }
 }
 
+void LanguageSystem::rebindSymbolIndex(const std::string& symbol) {
+    // The newest surviving same-spelled Lexeme remains the convenience/default
+    // binding, matching intern()/resolve() behavior. Semantic identity remains
+    // in _idIndex; this index is only a spelling shortcut.
+    for (auto it = _lexemes.rbegin(); it != _lexemes.rend(); ++it) {
+        if (*it && (*it)->getSymbol() == symbol) {
+            _symbolIndex[symbol] = *it;
+            return;
+        }
+    }
+    _symbolIndex.erase(symbol);
+}
+
+void LanguageSystem::noteSymbolAdded(const std::string& symbol) {
+    ++_symbolCounts[symbol];
+    // The candidate set changed, so the next ambiguous human-facing lookup
+    // deserves a fresh diagnostic listing the identities now in play.
+    _reportedAmbiguities.erase(symbol);
+}
+
+void LanguageSystem::noteSymbolRemoved(const std::string& symbol) {
+    auto it = _symbolCounts.find(symbol);
+    if (it != _symbolCounts.end()) {
+        if (it->second <= 1) {
+            _symbolCounts.erase(it);
+        } else {
+            --it->second;
+        }
+    }
+    _reportedAmbiguities.erase(symbol);
+}
+
 LanguageSystem::LanguageSystem() {
     // Subscribe to Utterance events globally.
     Core::EventBus::instance().subscribe<Core::Event::Utterance>([this](const Core::Event::Utterance& evt) {
@@ -38,9 +71,18 @@ LanguageSystem::LanguageSystem() {
 }
 
 std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
-    auto it = _symbolIndex.find(symbol);
-    if (it != _symbolIndex.end()) {
-        return it->second;
+    // Terminal and other human-facing channels frequently pass around the
+    // stable identifier they just displayed. Treat that as a reference to the
+    // existing being, not as a request to mint a new word whose spelling is an
+    // identifier. @<exact-id> is accepted as a lightweight explicit-reference
+    // spelling for terminal use.
+    if (auto exact = findById(symbol)) return exact;
+    if (symbol.size() > 1 && symbol.front() == '@') {
+        if (auto exact = findById(symbol.substr(1))) return exact;
+    }
+
+    if (auto existing = findBySymbol(symbol)) {
+        return existing;
     }
     if (symbol == kFoundationSymbol) return foundation();
 
@@ -51,15 +93,20 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
         }
         if (evict < _lexemes.size()) {
             auto oldest = _lexemes[evict];
+            const std::string oldestSymbol = oldest ? oldest->getSymbol() : std::string{};
             detachFromAllZones(oldest.get());
-            _idIndex.erase(oldest->getIdentifier());
-            for (auto sit = _symbolIndex.begin(); sit != _symbolIndex.end(); ++sit) {
-                if (sit->second == oldest) {
+            if (oldest) {
+                _idIndex.erase(oldest->getIdentifier());
+            }
+            if (!oldestSymbol.empty()) {
+                auto sit = _symbolIndex.find(oldestSymbol);
+                if (sit != _symbolIndex.end() && sit->second == oldest) {
                     _symbolIndex.erase(sit);
-                    break;
                 }
+                noteSymbolRemoved(oldestSymbol);
             }
             _lexemes.erase(_lexemes.begin() + static_cast<std::ptrdiff_t>(evict));
+            if (!oldestSymbol.empty()) rebindSymbolIndex(oldestSymbol);
         }
     }
 
@@ -68,6 +115,7 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
     _lexemes.push_back(lexeme);
     _symbolIndex[symbol] = lexeme;
     _idIndex[lexeme->getIdentifier()] = lexeme;
+    noteSymbolAdded(symbol);
 
     return lexeme;
 }
@@ -81,6 +129,7 @@ std::shared_ptr<Lexeme> LanguageSystem::foundation() {
     _lexemes.push_back(lexeme);
     _symbolIndex[kFoundationSymbol] = lexeme;
     _idIndex[kFoundationId] = lexeme;
+    noteSymbolAdded(kFoundationSymbol);
     return lexeme;
 }
 
@@ -92,13 +141,50 @@ std::shared_ptr<Lexeme> LanguageSystem::intern(const std::string& symbol, const 
     _lexemes.push_back(lexeme);
     _symbolIndex[symbol] = lexeme;
     _idIndex[stableId] = lexeme;
+    noteSymbolAdded(symbol);
     return lexeme;
 }
 
+std::vector<std::shared_ptr<Lexeme>> LanguageSystem::findAllBySymbol(const std::string& symbol) const {
+    std::vector<std::shared_ptr<Lexeme>> matches;
+    auto countIt = _symbolCounts.find(symbol);
+    if (countIt == _symbolCounts.end()) return matches;
+    matches.reserve(countIt->second);
+    for (const auto& lexeme : _lexemes) {
+        if (lexeme && lexeme->getSymbol() == symbol) {
+            matches.push_back(lexeme);
+        }
+    }
+    return matches;
+}
+
 std::shared_ptr<Lexeme> LanguageSystem::findBySymbol(const std::string& symbol) const {
+    // Exact references are intentionally accepted here because existing CLI
+    // command roots already call findBySymbol first. This makes the exact path
+    // consistent without teaching every command its own identity parser.
+    if (auto exact = findById(symbol)) return exact;
+    if (symbol.size() > 1 && symbol.front() == '@') {
+        if (auto exact = findById(symbol.substr(1))) return exact;
+    }
+
     auto it = _symbolIndex.find(symbol);
-    if (it != _symbolIndex.end()) return it->second;
-    return nullptr;
+    if (it == _symbolIndex.end()) return nullptr;
+
+    // Keep the ordinary unique-word path O(1). Only enumerate identities when
+    // multiplicity proves there is something a Person actually needs to choose.
+    auto countIt = _symbolCounts.find(symbol);
+    if (countIt != _symbolCounts.end() && countIt->second > 1 &&
+        _reportedAmbiguities.insert(symbol).second) {
+        const auto matches = findAllBySymbol(symbol);
+        std::cerr << "[LanguageSystem] Ambiguous Lexeme spelling '" << symbol << "': "
+                  << matches.size() << " live beings share this word. Default binding is "
+                  << it->second->getIdentifier() << ". Exact identifiers:";
+        for (const auto& match : matches) {
+            std::cerr << " " << match->getIdentifier();
+        }
+        std::cerr << ". Use the exact identifier (or @<exact-id>) when identity matters.\n";
+    }
+    return it->second;
 }
 
 std::shared_ptr<Lexeme> LanguageSystem::findById(const std::string& id) const {
@@ -110,19 +196,27 @@ std::shared_ptr<Lexeme> LanguageSystem::findById(const std::string& id) const {
 }
 
 void LanguageSystem::remove(const std::string& symbol) {
-    auto it = _symbolIndex.find(symbol);
-    if (it == _symbolIndex.end()) return;
+    auto lexeme = findBySymbol(symbol);
+    if (!lexeme) return;
 
-    std::shared_ptr<Lexeme> lexeme = it->second;
+    // `symbol` may itself be an exact id or @<id>. The spelling index is keyed
+    // by the Lexeme's visible symbol, so always update it by the actual being we
+    // resolved rather than by the caller's reference token.
+    const std::string spelling = lexeme->getSymbol();
     detachFromAllZones(lexeme.get());
 
-    _symbolIndex.erase(it);
+    auto sit = _symbolIndex.find(spelling);
+    if (sit != _symbolIndex.end() && sit->second == lexeme) {
+        _symbolIndex.erase(sit);
+    }
     _idIndex.erase(lexeme->getIdentifier());
 
     auto vecIt = std::find(_lexemes.begin(), _lexemes.end(), lexeme);
     if (vecIt != _lexemes.end()) {
         _lexemes.erase(vecIt);
     }
+    noteSymbolRemoved(spelling);
+    rebindSymbolIndex(spelling);
 }
 
 void LanguageSystem::tick(float) {
@@ -215,6 +309,8 @@ void LanguageSystem::clear() {
     _lexemes.clear();
     _symbolIndex.clear();
     _idIndex.clear();
+    _symbolCounts.clear();
+    _reportedAmbiguities.clear();
 }
 
 } // namespace Language
