@@ -2,6 +2,8 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
+#include <utility>
+
 namespace Rendering {
 
 std::shared_ptr<Law> createCreatorConsoleFixtureLaw(Singular& author,
