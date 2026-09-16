@@ -13,7 +13,9 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
+#include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
@@ -250,6 +252,33 @@ int main() {
         const auto corruptBack = ObjectConcept::MemberTemplate::fromJson(corrupt);
         check(corruptBack.kind == Object::ShapeKind::Cube,
               "ObjectConcept refuses an invalid persisted ShapeKind ordinal");
+    }
+
+    // ------------------------------------------------------------------
+    // 8. BodyParts are a second persisted ShapeKind reader. They used to
+    //    direct-cast arbitrary integers for both the primary shape and nested
+    //    sub-objects; a corrupt/future ordinal must not enter the enum.
+    // ------------------------------------------------------------------
+    {
+        BodyPart part("body-shape-validation", BodyPart::Type::Arm,
+                      ObjectTypes::ShapeKind::Sphere, glm::vec3(1.0f));
+        nlohmann::json bodyJson = bodyPartToJson(part);
+        bodyJson["geometryType"] = 99999;
+        bodyPartFromJson(bodyJson, part);
+        check(part.getPrimaryShape() == ObjectTypes::ShapeKind::Cube,
+              "BodyPart refuses an invalid primary ShapeKind ordinal");
+
+        nlohmann::json sub = nlohmann::json::object();
+        sub["shapeKind"] = 99999;
+        sub["geometryType"] = 99999;
+        sub["transform"] = std::vector<float>{
+            1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+        };
+        bodyJson["subObjects"] = nlohmann::json::array({sub});
+        bodyPartFromJson(bodyJson, part);
+        check(part.getSubObjectCount() == 1 && part.getSubObject(0) &&
+                  part.getSubObject(0)->getShapeKind() == Object::ShapeKind::Cube,
+              "BodyPart refuses an invalid sub-object ShapeKind ordinal");
     }
 
     std::cout << checks - failures << "/" << checks << " shape hydration integrity checks passed\n";
