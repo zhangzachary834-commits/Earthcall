@@ -10,85 +10,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect legacy sessions, Zone identities, and shared Law roots
+      - name: Classify exact legacy closure
         shell: bash
         run: |
           python3 - <<'PY'
-          import json, pathlib, collections
+          import json, pathlib, collections, re
+          def load(p):
+              with open(p) as f: return json.load(f)
 
-          def load(path):
-              with pathlib.Path(path).open() as f: return json.load(f)
+          w=load('saves/worlds/chess_app.json')
+          z=load('saves/zones/Chess/zone.json')
+          nz=next(x for x in w['zones'] if x.get('identifier')=='Chess')
+          laws=w['authoredLaws']['laws']; lawids={x['id'] for x in laws}
+          zoneids={x.get('objectID') for x in z['world']['objects']} | {'Chess'}
+          cats={x.get('objectID'):x for x in w.get('categories',[]) if x.get('objectID')}
+          support=set(cats)
+          endpoints=set()
+          types=collections.Counter()
+          buckets=collections.Counter()
+          samples=collections.defaultdict(list)
+          for r in nz.get('formationRelations',[]):
+              a,b=r.get('entityA'),r.get('entityB'); endpoints|={a,b}; types[r.get('type')]+=1
+              def kind(x):
+                  if x in zoneids: return 'zone'
+                  if x in support: return 'support'
+                  if x in lawids: return 'law'
+                  if x in {'Zach','Player'}: return 'person'
+                  return 'missing'
+              k=tuple(sorted((kind(a),kind(b))))
+              buckets[k]+=1
+              if len(samples[k])<8: samples[k].append((r.get('type'),a,b))
+          print('Chess current zone objects:', sorted(zoneids))
+          print('Support unique ids:', sorted(support))
+          print('Law ids:', len(lawids))
+          print('Relation types:', dict(types))
+          print('Relation endpoint buckets:')
+          for k,v in sorted(buckets.items()): print(' ',k,v,'samples=',samples[k])
+          missing=sorted(x for x in endpoints if x not in zoneids|support|lawids|{'Zach','Player'})
+          print('Truly missing relation endpoints:',missing)
 
-          def laws_from_world(w):
-              authored = w.get('authoredLaws', {})
-              if isinstance(authored, dict):
-                  return authored.get('laws', []), authored.get('triggers', {})
-              if isinstance(authored, list):
-                  return authored, {}
-              return w.get('laws', []) if isinstance(w.get('laws'), list) else [], {}
+          # Identify ids referenced inside Law JSON string payloads, conservatively.
+          serialized=json.dumps(laws)
+          candidates=sorted(x for x in zoneids|support if x and x in serialized)
+          print('Zone/support ids mentioned somewhere in Law JSON:', candidates)
+          print('Model/support author ids:', sorted({a for l in laws for a in l.get('authors',[])}))
 
-          def nested_zone(w, ident):
-              for z in w.get('zones', []):
-                  if z.get('identifier') == ident: return z
-              return None
-
-          cases = [
-              ('Chess', 'saves/zones/Chess/zone.json', 'saves/worlds/chess_app.json', 'Chess'),
-              ('Basic2DButtonZone', 'saves/zones/Basic2DButtonZone/zone.json', 'saves/worlds/basic_2d_button_zone.json', 'Basic2DButtonZone'),
-              ('Basic 2D Button Zone', 'saves/zones/Basic 2D Button Zone/zone.json', 'saves/worlds/basic_2d_button_zone.json', 'Basic2DButtonZone'),
-          ]
-
-          for label, zp, wp, world_ident in cases:
-              z, w = load(zp), load(wp)
-              laws, triggers = laws_from_world(w)
-              ids=[]; authors=collections.Counter(); targets=collections.Counter()
-              for law in laws:
-                  ident = law.get('id') or law.get('identifier')
-                  ids.append(ident)
-                  for a in law.get('authors', []): authors[str(a)] += 1
-                  for t in law.get('targets', []): targets[str(t)] += 1
-              print(f'=== {label} ===')
-              print('zone identifier/name/owner:', z.get('identifier'), '|', z.get('name'), '|', z.get('owner'))
-              print('zone objects/relations/lawRefs:', len(z.get('world',{}).get('objects',[])), len(z.get('formationRelations',[])), len(z.get('lawRefs',[])))
-              print('legacy law count:', len(laws))
-              print('legacy law ids:', ids)
-              print('legacy authors:', dict(authors))
-              print('legacy explicit targets:', dict(targets))
-              print('legacy trigger keys:', sorted(triggers.keys()))
-              print('missing roots:', [i for i in ids if i and not pathlib.Path('saves/laws', i, 'law.json').exists()])
-              nz = nested_zone(w, world_ident)
-              if nz:
-                  current_objs={o.get('objectID'):o for o in z.get('world',{}).get('objects',[])}
-                  legacy_objs={o.get('objectID'):o for o in nz.get('world',{}).get('objects',[])}
-                  print('legacy nested objects/relations:', len(legacy_objs), len(nz.get('formationRelations',[])))
-                  changed=[]
-                  for oid, old in legacy_objs.items():
-                      cur=current_objs.get(oid)
-                      if not cur:
-                          changed.append((oid,'missing-object'))
-                          continue
-                      oldprops=old.get('authoredProperties',{})
-                      curprops=cur.get('authoredProperties',{})
-                      missing_props=sorted(set(oldprops)-set(curprops))
-                      if missing_props: changed.append((oid,'missing-authoredProperties:'+','.join(missing_props)))
-                  print('legacy properties missing from Zone:', changed[:50])
-              print()
-
-          print('=== duplicate identity scan ===')
-          for p in sorted(pathlib.Path('saves/zones').glob('*/zone.json')):
-              try: z=load(p)
-              except Exception: continue
-              ident,name=str(z.get('identifier','')),str(z.get('name',''))
-              if 'Chess' in ident or 'Chess' in name or 'Button' in ident or 'Button' in name:
-                  print(p, '=>', ident, '|', name, '| objects', len(z.get('world',{}).get('objects',[])), '| lawRefs', len(z.get('lawRefs',[])))
-
-          print('=== model author referents in legacy worlds ===')
-          for wp in ('saves/worlds/chess_app.json','saves/worlds/basic_2d_button_zone.json'):
-              w=load(wp)
-              print(wp, [(o.get('objectID'), o.get('authoredProperties',{}).get('displayName')) for o in w.get('categories',[])])
-
-          print('=== existing shared roots ===')
-          for prefix in ('law-chess','law-basic','law-button','law-move','law-bounce'):
-              vals=sorted(p.parent.name for p in pathlib.Path('saves/laws').glob(prefix+'*/law.json'))
-              print(prefix, len(vals), vals)
+          bw=load('saves/worlds/basic_2d_button_zone.json')
+          bz=load('saves/zones/Basic2DButtonZone/zone.json')
+          blaws=bw['authoredLaws']['laws']
+          print('Basic laws:', [x['id'] for x in blaws])
+          print('Basic authors:', sorted({a for l in blaws for a in l.get('authors',[])}))
+          print('Basic legacy support ids:', [x.get('objectID') for x in bw.get('categories',[])])
+          old=next(x for x in bw['zones'] if x['identifier']=='Basic2DButtonZone')['world']['objects'][0]
+          cur=bz['world']['objects'][0]
+          print('Basic missing properties:', sorted(set(old.get('authoredProperties',{}))-set(cur.get('authoredProperties',{}))))
           PY
