@@ -1,0 +1,158 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-eval-slider-file",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@state.chess.inCheck"
+        },
+        {
+          "bindings": {
+            "n": "@state.chess.checkers"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "n": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.checkers"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "beingKind": 1,
+          "children": [
+            {
+              "children": [
+                {
+                  "kind": 2,
+                  "otherId": "category.chess.piece",
+                  "relationType": "instance-of"
+                },
+                {
+                  "kind": 0,
+                  "op": 0,
+                  "operand": {
+                    "t": "bool",
+                    "v": true
+                  },
+                  "path": "onBoard"
+                },
+                {
+                  "kind": 0,
+                  "op": 0,
+                  "operandPath": "@state.chess.kingX",
+                  "path": "gridX"
+                },
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "kind": 0,
+                          "op": 4,
+                          "operandPath": "@event.subject.gridY",
+                          "path": "gridY"
+                        },
+                        {
+                          "kind": 0,
+                          "op": 2,
+                          "operandPath": "@state.chess.kingY",
+                          "path": "gridY"
+                        }
+                      ],
+                      "kind": 3
+                    },
+                    {
+                      "children": [
+                        {
+                          "kind": 0,
+                          "op": 4,
+                          "operandPath": "@state.chess.kingY",
+                          "path": "gridY"
+                        },
+                        {
+                          "kind": 0,
+                          "op": 2,
+                          "operandPath": "@event.subject.gridY",
+                          "path": "gridY"
+                        }
+                      ],
+                      "kind": 3
+                    }
+                  ],
+                  "kind": 4
+                }
+              ],
+              "kind": 3
+            }
+          ],
+          "kind": 9
+        }
+      ],
+      "kind": 5
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-eval-slider-file",
+    "name": "eval-slider-file",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-eval-slider-file",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "slider-file-eval"
+  ]
+}

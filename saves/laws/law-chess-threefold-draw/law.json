@@ -1,0 +1,107 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-threefold-draw",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "gameOver"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 2
+          },
+          "path": "result"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "isDraw"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "string",
+            "v": "Threefold repetition"
+          },
+          "path": "drawReason"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "int",
+            "v": 6
+          },
+          "path": "repCount"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "gameOver"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-threefold-draw",
+    "name": "draw-on-threefold-repetition",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-threefold-draw",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "turn-changed"
+  ]
+}

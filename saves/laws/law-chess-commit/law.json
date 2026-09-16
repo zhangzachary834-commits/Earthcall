@@ -1,0 +1,225 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-commit",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "bindings": {
+            "t": "turn"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "t": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "turn"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "selectedX"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "selectedY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "castleMove"
+        },
+        {
+          "bindings": {
+            "f": "nextEnPassantFile"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "f": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "enPassantFile"
+        },
+        {
+          "bindings": {
+            "y": "nextEnPassantTargetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "enPassantTargetY"
+        },
+        {
+          "bindings": {
+            "y": "nextEnPassantVictimY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "enPassantVictimY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "nextEnPassantFile"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "nextEnPassantTargetY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "nextEnPassantVictimY"
+        },
+        {
+          "eventType": "turn-changed",
+          "kind": 10,
+          "publishObject": "",
+          "publishSubject": "state.chess"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "inCheck"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.chess.gameOver"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-commit",
+    "name": "commit-turn-if-safe",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-commit",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "check-evaluated"
+  ]
+}

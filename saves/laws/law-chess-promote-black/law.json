@@ -1,0 +1,151 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-promote-black",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 4
+          },
+          "path": "chessRole"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 6
+          },
+          "path": "shape.kind"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.24
+          },
+          "path": "shape.r"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.35
+          },
+          "path": "shape.ovoidAsym"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.42
+          },
+          "path": "restY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.42
+          },
+          "path": "position.y"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@state.chess.promoActive"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.chess.piece",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "onBoard"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "chessRole"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "path": "chessColor"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "gridY"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-promote-black",
+    "name": "promote-black-pawn",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-promote-black",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "turn-changed",
+    "move-committed"
+  ]
+}

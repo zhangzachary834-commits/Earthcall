@@ -1,0 +1,53 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-check-evaluated",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "eventType": "check-evaluated",
+      "kind": 10,
+      "publishObject": "",
+      "publishSubject": "state.chess"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "state.chess"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-check-evaluated",
+    "name": "publish-check-evaluated",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-check-evaluated",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "check-scanned-done"
+  ]
+}

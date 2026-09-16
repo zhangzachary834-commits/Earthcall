@@ -1,0 +1,188 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-check-king",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@state.chess.inCheck"
+        },
+        {
+          "bindings": {
+            "n": "@state.chess.checkers"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "n": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.checkers"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "children": [
+            {
+              "kind": 2,
+              "otherId": "category.chess.piece",
+              "relationType": "instance-of"
+            },
+            {
+              "kind": 0,
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              },
+              "path": "onBoard"
+            },
+            {
+              "kind": 0,
+              "op": 1,
+              "operandPath": "@state.chess.turn",
+              "path": "chessColor"
+            },
+            {
+              "kind": 0,
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 5
+              },
+              "path": "chessRole"
+            }
+          ],
+          "kind": 3
+        },
+        {
+          "bindings": {
+            "dx": "gridX",
+            "dy": "gridY",
+            "kx": "@state.chess.kingX",
+            "ky": "@state.chess.kingY"
+          },
+          "function": {
+            "input": "x",
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "dx": 2.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "kx": 2.0
+                      }
+                    },
+                    {
+                      "c": -2.0,
+                      "factors": {
+                        "dx": 1.0,
+                        "kx": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "dy": 2.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ky": 2.0
+                      }
+                    },
+                    {
+                      "c": -2.0,
+                      "factors": {
+                        "dy": 1.0,
+                        "ky": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "hi": {
+            "t": "double",
+            "v": 2.0
+          },
+          "kind": 6,
+          "lo": {
+            "t": "double",
+            "v": 1.0
+          }
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-check-king",
+    "name": "king-gives-check",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-check-king",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "check-scanned"
+  ]
+}

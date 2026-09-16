@@ -143,69 +143,8 @@
         ],
         "x2D": 100.0,
         "y2D": 100.0,
-        "zOrder2D": 0,
-        "authoredProperties": {
-          "speedDir": {
-            "t": "float",
-            "v": 1.0
-          }
-        }
-      },
-      {
-        "objectID": "Antigravity",
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "center": [
-          0,
-          0,
-          0
-        ],
-        "authoredProperties": {
-          "displayName": {
-            "t": "string",
-            "v": "Antigravity"
-          }
-        },
-        "x2D": -100000.0,
-        "y2D": -100000.0
+        "zOrder2D": 0
       }
     ]
-  },
-  "lawRefs": [
-    "law-move-right",
-    "law-move-left",
-    "law-bounce-right",
-    "law-bounce-left"
-  ]
+  }
 }

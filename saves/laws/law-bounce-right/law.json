@@ -1,0 +1,63 @@
+{
+  "authors": [
+    "Antigravity"
+  ],
+  "identifier": "law-bounce-right",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "id": "law-bounce-right",
+    "name": "Bounce Right",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Antigravity"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "my-2d-button"
+        },
+        {
+          "kind": 0,
+          "path": "x2D",
+          "op": 5,
+          "operand": {
+            "t": "float",
+            "v": 1100.0
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 0,
+      "path": "speedDir",
+      "operand": {
+        "t": "float",
+        "v": -1.0
+      }
+    },
+    "provenance": [
+      {
+        "entityA": "law-bounce-right",
+        "entityB": "Antigravity",
+        "directed": true,
+        "weight": 1.0,
+        "events": [],
+        "type": "authored-by"
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

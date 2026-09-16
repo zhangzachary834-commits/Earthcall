@@ -1,0 +1,106 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-castle-rook-revert-wk",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 7
+          },
+          "path": "gridX"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "gridY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 3.5
+          },
+          "path": "position.x"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": -3.5
+          },
+          "path": "position.z"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "hasMoved"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "piece-white-rook-7-0"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "path": "@state.chess.castleMove"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-castle-rook-revert-wk",
+    "name": "revert-white-kingside-rook",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-castle-rook-revert-wk",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "move-reverted"
+  ]
+}
