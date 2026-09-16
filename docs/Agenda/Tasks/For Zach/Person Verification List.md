@@ -411,3 +411,21 @@ A new Zone of Actualization demonstrating what only Earthcall can do: an archite
   - Click **SOUND CANON**: verify the 432 Hz Pythagorean celestial chord triggers through miniaudio sound synthesis via ActionNode Kind 18 (`PlayAudio`).
   - Click **WEAVE COVENANT**: verify relational filament weight increments and telemetry updates.
   - Click **CYCLE SEASON**: verify liturgical environment cycles to Solar Transfiguration.
+
+## A long play session should not get slower on its own
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+The law engine kept a note of which relation facts it already held, so it would not store the same one twice. Any being being destroyed wiped that note for *every* being, so duplicates accumulated: measured, a being that should have had 1 fact had 5 after four other beings came and went. Laws still behaved correctly — there was simply more and more for the engine to walk through, and it never went back down.
+
+- [ ] **Play one world for a long stretch, with things being made and destroyed.** Chess captures, drawing and erasing marks in the Studio, spawning and deleting objects. The world should feel no slower at the end of a long session than at the start. Before this fix, the engine's fact list grew every time something was destroyed and never shrank.
+
+## Laws that name something by "@name" still find it when it arrives later
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [ledger](../../architecture/law/DERIVED_STATE_LEDGER.md)*
+
+The engine keeps a lookup of every being by name so laws can say things like `@state.studio.voice` or `@late-gate.ceiling`. That lookup rebuilds when the world's shape changes. Nothing tested that it rebuilds — only that it was fast — so if it had stopped, every `@`-rooted law would have gone quiet with no error at all. It is now tested, and the test fails if the rebuild is removed.
+
+- [ ] **Add something to a world mid-session and use a law that names it.** In the Creator Console, make a new being, give it a stable name, then author (or enable) a law whose condition or action names it with `@that-name.someProperty`. The law should act on it immediately, without a restart or a Zone reload.

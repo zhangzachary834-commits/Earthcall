@@ -251,6 +251,13 @@ void Engine::initLogic() {
         [](const Singular& being, std::vector<Relation*>& out) {
             mgr.active().formation().relations().relationsInvolving(being, out);
         });
+    // ...and how many times that graph has changed, so anything derived from it
+    // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
+    // ACTIVE Zone's manager, like the two providers above, so a Zone switch
+    // shows up as a different count.
+    Universe::instance().setRelationGenerationProvider([]() {
+        return mgr.active().formation().relations().generation();
+    });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();
