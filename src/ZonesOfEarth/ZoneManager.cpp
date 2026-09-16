@@ -265,6 +265,19 @@ bool ZoneManager::switchTo(size_t index)
         }
         _activeZoneLawIds = std::move(requestedLawIds);
 
+        // A Zone identity graph can legitimately name its authored Laws as
+        // relation endpoints (for example Law -> instance-of -> category).
+        // Boot hydration runs before those shared Law roots are active, so
+        // such edges remain pending during the first relation pass. Legacy
+        // loadState already retries relation hydration after loading its Law
+        // register; Zone-native Move to Zone must honor the same lifecycle.
+        // applyFormationRelations is idempotent by type + endpoint ids, so
+        // already-bound Object/category edges are retained and only newly
+        // resolvable Law edges are admitted here.
+        if (identity.is_object()) {
+            applyFormationRelations(*targetZone, identity);
+        }
+
         _currentIndex = index;
         // THE WORLD IN FRONT OF THE PERSON WAS JUST REPLACED, and nothing else
         // says so. EngineInit's Universe providers read `active()` on every
