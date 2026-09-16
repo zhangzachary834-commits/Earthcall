@@ -85,13 +85,20 @@ PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
 // ---------------------------------------------------------------------------
 
 nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
+    // Keep the historical nine-slot `params` array exactly nine entries long:
+    // old Earthcall readers used `size() == 9`, so merely appending width/height
+    // would make a new save look parameter-less to them. The two later 2D
+    // dimensions are additive named fields instead. New readers also accept the
+    // brief 11-slot development form for compatibility with saves made while
+    // this repair branch was in flight.
     nlohmann::json j{
         {"kind", static_cast<int>(kind)},
         {"beingKind", static_cast<int>(beingKind)},
         {"hasGeometry", hasGeometry},
         {"params", {params.r, params.ry, params.rz, params.halfH, params.majorR,
-                    params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet,
-                    params.width2D, params.height2D}},
+                    params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet}},
+        {"width2D", params.width2D},
+        {"height2D", params.height2D},
         {"relativeTransform", mat4ToJson(relativeTransform)}
     };
     if (hasField) {
@@ -121,7 +128,11 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
 
 ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nlohmann::json& j) {
     MemberTemplate m;
-    m.kind = checkedMemberShapeKind(j.value("kind", static_cast<int>(Object::ShapeKind::Cube)));
+    int rawKind = static_cast<int>(Object::ShapeKind::Cube);
+    if (j.contains("kind") && j["kind"].is_number_integer()) {
+        rawKind = j["kind"].get<int>();
+    }
+    m.kind = checkedMemberShapeKind(rawKind);
     // Concepts written before members carried a kind were all Objects with
     // bodies — the old default, stated rather than assumed.
     m.beingKind = static_cast<ConditionNode::BeingKind>(
@@ -132,10 +143,9 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
             m.captured[it.key()] = propertyValueFromJson(it.value());
         }
     }
-    // Nine slots are the historical member format. Shape2D/Text2D later added
-    // width2D/height2D as append-only slots 9 and 10. Accept both, write all
-    // eleven, and never make an old concept unreadable merely because the
-    // current ShapeParams grew.
+    // The first nine slots are the stable legacy contract. During this repair
+    // branch an 11-slot development form briefly existed, so accept it too;
+    // additive named width2D/height2D fields then win when present.
     if (j.contains("params") && j["params"].is_array() && j["params"].size() >= 9) {
         const auto& p = j["params"];
         m.params.r = p[0].get<float>();
@@ -151,6 +161,12 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
             m.params.width2D = p[9].get<float>();
             m.params.height2D = p[10].get<float>();
         }
+    }
+    if (j.contains("width2D") && j["width2D"].is_number()) {
+        m.params.width2D = j["width2D"].get<float>();
+    }
+    if (j.contains("height2D") && j["height2D"].is_number()) {
+        m.params.height2D = j["height2D"].get<float>();
     }
     if (j.contains("field")) {
         m.hasField = true;
