@@ -2815,7 +2815,24 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
                 rawForm <= static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Paraboloid) &&
                 rawPkind >= static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Torus) &&
                 rawPkind <= static_cast<int>(geom::SmoothSurfaceData::ParametricKind::ProjectivePlane);
-            bool valid = enumOk && sm->quadric_matrix()->size() == 16;
+            const Object::ShapeKind semanticKind = o->getShapeKind();
+            const bool kindMatches =
+                (semanticKind == Object::ShapeKind::Sphere &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Sphere)) ||
+                (semanticKind == Object::ShapeKind::Ellipsoid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Ellipsoid)) ||
+                (semanticKind == Object::ShapeKind::Paraboloid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Paraboloid)) ||
+                (semanticKind == Object::ShapeKind::Torus &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Parametric) &&
+                 rawPkind == static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Torus)) ||
+                (semanticKind == Object::ShapeKind::Ovoid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Parametric) &&
+                 rawPkind == static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Ovoid));
+            bool valid = enumOk && kindMatches && sm->quadric_matrix()->size() == 16;
 
             geom::SmoothSurfaceData sd;
             sd.closed = sm->closed();
@@ -2879,7 +2896,9 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
             node.t = root->t();
             valid = valid && std::isfinite(node.p0) && std::isfinite(node.p1) && std::isfinite(node.t);
             if (root->expr()) node.expr = root->expr()->str();
-            if (valid && prim == geom::SdfPrim::Expr && node.expr.empty()) valid = false;
+            if (valid && prim == geom::SdfPrim::Expr) {
+                if (node.expr.empty() || geom::compileExpr(node.expr).empty()) valid = false;
+            }
 
             glm::vec3 extent(1.0f);
             if (fbsField->extent()) {

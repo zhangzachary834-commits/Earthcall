@@ -552,6 +552,20 @@ int main() {
         entities.push_back(bareMatterEntity(
             builder, "bad-field-enum", zoneId, 0, 0, badField));
 
+        auto invalidExprText = builder.CreateString("this is not a valid implicit expression");
+        auto badExprNode = Earthcall::Schema::CreateSdfNode(
+            builder,
+            static_cast<int>(geom::SdfPrim::Expr),
+            static_cast<int>(geom::SdfOp::Leaf),
+            0, 0, 0,
+            &dims,
+            &offset,
+            0.0f, 0.0f, 0.5f,
+            invalidExprText);
+        auto badExprField = Earthcall::Schema::CreateFieldData(builder, &extent, badExprNode);
+        entities.push_back(bareMatterEntity(
+            builder, "bad-field-expr", zoneId, 0, 0, badExprField));
+
         std::vector<float> identityQ{
             1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
         };
@@ -571,6 +585,19 @@ int main() {
         entities.push_back(bareMatterEntity(
             builder, "bad-smooth-enum", zoneId, 0, badSmooth));
 
+        auto validButWrongTorus = Earthcall::Schema::CreateSmoothSurfaceData(
+            builder,
+            true, true, false, false,
+            static_cast<int>(geom::SmoothSurfaceData::Model::Parametric),
+            q,
+            static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Sphere),
+            static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Torus),
+            &axes,
+            -0.5f, 0.5f,
+            smoothParams);
+        entities.push_back(bareMatterEntity(
+            builder, "mismatched-smooth-kind", zoneId, 0, validButWrongTorus));
+
         const std::vector<uint8_t> badMatter = finishMatter(builder, entities);
         auto zone = std::make_shared<Zone>(zoneId, "strict");
 
@@ -586,10 +613,19 @@ int main() {
         badFieldTarget->setShape(Object::ShapeKind::Field);
         zone->addObject(badFieldTarget);
 
+        auto badExprTarget = std::make_shared<Object>("bad-field-expr");
+        badExprTarget->setShape(Object::ShapeKind::Field);
+        zone->addObject(badExprTarget);
+
         auto badSmoothTarget = std::make_shared<Object>("bad-smooth-enum");
         badSmoothTarget->setShape(Object::ShapeKind::Sphere);
         badSmoothTarget->clearTopologyModel();
         zone->addObject(badSmoothTarget);
+
+        auto mismatchedSmoothTarget = std::make_shared<Object>("mismatched-smooth-kind");
+        mismatchedSmoothTarget->setShape(Object::ShapeKind::Sphere);
+        mismatchedSmoothTarget->clearTopologyModel();
+        zone->addObject(mismatchedSmoothTarget);
 
         ZoneManager reader;
         reader.addZone(zone);
@@ -604,9 +640,15 @@ int main() {
         check(badFieldTarget->getShapeKind() == Object::ShapeKind::Field &&
                   !badFieldTarget->hasField(),
               "invalid matter SdfPrim/SdfOp ordinals never enter runtime geometry");
+        check(badExprTarget->getShapeKind() == Object::ShapeKind::Field &&
+                  !badExprTarget->hasField(),
+              "unparseable legacy Expr matter is refused instead of hydrating an inert Field");
         check(badSmoothTarget->getShapeKind() == Object::ShapeKind::Sphere &&
                   !badSmoothTarget->hasSmoothSurface(),
               "invalid matter SmoothSurface enum ordinals never enter runtime geometry");
+        check(mismatchedSmoothTarget->getShapeKind() == Object::ShapeKind::Sphere &&
+                  !mismatchedSmoothTarget->hasSmoothSurface(),
+              "valid Torus matter cannot recover into a semantic Sphere shell");
     }
 
     std::cout << checks - failures << "/" << checks << " shape hydration integrity checks passed\n";
