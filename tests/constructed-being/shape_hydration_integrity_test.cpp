@@ -9,6 +9,7 @@
 // The second path matters because the semantic reader can be perfectly correct
 // and then have its complete SDF overwritten by a shallower physical sidecar.
 
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Patch.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -215,6 +216,40 @@ int main() {
                   polyBack.getPolyhedronData().vertices.size() ==
                       polySource.getPolyhedronData().vertices.size(),
               "custom polyhedron survives semantic-only round trip");
+    }
+
+    // ------------------------------------------------------------------
+    // 7. ObjectConcept members are another persistence boundary. The member
+    //    codec historically stopped at the first nine ShapeParams slots, so
+    //    Shape2D/Text2D width and height vanished when a concept was saved.
+    // ------------------------------------------------------------------
+    {
+        ObjectConcept::MemberTemplate member;
+        member.kind = Object::ShapeKind::Shape2D;
+        member.params.r = 0.41f;
+        member.params.fillet = 0.13f;
+        member.params.width2D = 321.0f;
+        member.params.height2D = 123.0f;
+
+        const nlohmann::json j = member.toJson();
+        check(j.contains("params") && j["params"].is_array() && j["params"].size() == 11,
+              "ObjectConcept writes all eleven current ShapeParams slots");
+        const auto back = ObjectConcept::MemberTemplate::fromJson(j);
+        check(back.kind == Object::ShapeKind::Shape2D &&
+                  near(back.params.width2D, 321.0f) && near(back.params.height2D, 123.0f),
+              "ObjectConcept preserves Shape2D width and height");
+
+        nlohmann::json legacy = j;
+        legacy["params"].erase(legacy["params"].begin() + 9, legacy["params"].end());
+        const auto legacyBack = ObjectConcept::MemberTemplate::fromJson(legacy);
+        check(near(legacyBack.params.r, 0.41f) && near(legacyBack.params.fillet, 0.13f),
+              "historical nine-slot ObjectConcept members remain readable");
+
+        nlohmann::json corrupt = j;
+        corrupt["kind"] = 99999;
+        const auto corruptBack = ObjectConcept::MemberTemplate::fromJson(corrupt);
+        check(corruptBack.kind == Object::ShapeKind::Cube,
+              "ObjectConcept refuses an invalid persisted ShapeKind ordinal");
     }
 
     std::cout << checks - failures << "/" << checks << " shape hydration integrity checks passed\n";
