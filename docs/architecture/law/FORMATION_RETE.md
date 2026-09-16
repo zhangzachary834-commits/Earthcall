@@ -648,6 +648,13 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    §8, `add_relation_action_test` and `rete_relation_state_test`.
 
    Measurement: `tests/law/category_membership_scaling_test.cpp`.
+
+   **2026-09-15, rung 2's index measured in a world that actually sweeps:** one rebuild of the
+   vocabulary index cost **132–208 ms** in Synthesis Studio Living (535 beings, 43 indexed names),
+   and it rebuilds whenever `structuralRevision` moves — which granting a dynamic property does,
+   during play. Now ~14 ms: the rebuild walks each being's own property names once instead of
+   asking each being about each name, and the indexed-name set is keyed on `Law::textRevision()`
+   rather than re-collected per law per tick. Guarded by `vocabulary_index_test` §H.
 5. ⚠️ **The instance-side slow adapter** — capped, two-rate clock, candidates only. *Measured
    2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), adapter deferred.* Real
    worlds sweep only in `Scope::Everyone` event laws (chess: 0.3% hit rate), and 92% of each

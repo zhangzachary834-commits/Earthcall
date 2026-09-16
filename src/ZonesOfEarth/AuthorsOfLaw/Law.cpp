@@ -1,4 +1,5 @@
 #include "Law.hpp"
+#include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
@@ -2326,13 +2327,23 @@ bool LawManager::gatesHold(const Law& law) const {
 // omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
 // conservative in the safe direction and rebuilds when unsure.
 void LawManager::refreshVocabularyIndex() const {
+    const uint64_t revision = Universe::instance().structuralRevision();
+    const uint64_t textRevision = Law::textRevision();
+    // Nothing has moved: not the shape of the world, not a word of law text.
+    // Two integer compares, and this is the whole of a steady frame's sweep
+    // preparation. Before, the name set below was rebuilt on every call —
+    // see _vocabularyNamesRevision for what that cost.
+    if (revision == _vocabularyBuiltAt && textRevision == _vocabularyNamesRevision) return;
+
     std::unordered_set<std::string> wanted;
     for (const auto& law : _laws) {
         if (!law) continue;
         for (const std::string& name : law->requiredProperties()) wanted.insert(name);
     }
+    _vocabularyNamesRevision = textRevision;
 
-    const uint64_t revision = Universe::instance().structuralRevision();
+    // Law text moved but the vocabulary it names did not (an action edited, a
+    // law renamed): the index still describes the right names.
     if (revision == _vocabularyBuiltAt && wanted == _indexedNames) return;
 
     _vocabularyIndex.clear();
@@ -2340,12 +2351,53 @@ void LawManager::refreshVocabularyIndex() const {
     _vocabularyBuiltAt = revision;
     if (_indexedNames.empty()) return;
 
+    // Views into _indexedNames, so the walk below tests a property name and each
+    // of its dotted roots without allocating a string per test.
+    std::unordered_set<std::string_view> wantedViews;
+    wantedViews.reserve(_indexedNames.size());
+    for (const std::string& name : _indexedNames) wantedViews.insert(name);
+
+    // ONE PASS PER BEING, not one per (being, name).
+    //
+    // This loop used to call beingCarriesProperty for every indexed name, and
+    // that function walks listProperties() to catch dotted children (`shape`
+    // matching `shape.fillet`). So a rebuild materialised each being's whole
+    // property list once PER NAME. Measured in Synthesis Studio Living (535
+    // beings, 43 names): one rebuild cost 132-208 ms — a visible freeze on any
+    // tick that granted a property or admitted a being, since those are exactly
+    // what move structuralRevision. Now the list is walked ONCE per being, and
+    // each name it finds is tested against the indexed set.
+    //
+    // The membership rule is unchanged, and must stay that way: this index and
+    // Law::couldApplyTo have to agree, or the sweep proposes candidates the
+    // filter rejects (wasted work) or omits ones it would accept (a silently
+    // deaf law). Guarded by tests/law/vocabulary_index_test.cpp §H, which asks
+    // both invariants of every being: nothing reached that couldApplyTo
+    // rejects, and nothing whose condition holds left unreached.
     for (Singular* being : Universe::instance().beings()) {
         if (!being) continue;
-        for (const std::string& name : _indexedNames) {
-            if (beingCarriesProperty(*being, name)) {
-                _vocabularyIndex[name].push_back(being);
+        // Asked the other way round: what does THIS being carry that some law
+        // names? Looking each indexed name up on the being instead costs a
+        // linear scan of its property names per name (findProperty walks a
+        // parallel array) — the 43 scans per being this used to pay.
+        // listProperties() materialises every authored property's bridge, so
+        // this walk sees dynamic properties too, which is what keeps the
+        // membership rule identical to beingCarriesProperty's.
+        std::unordered_set<std::string_view> carried;
+        for (Property* prop : being->listProperties()) {
+            if (!prop) continue;
+            const std::string_view propName = prop->name();
+            auto hit = wantedViews.find(propName);
+            if (hit != wantedViews.end()) carried.insert(*hit);
+            // The dotted-child rule: a being carrying `shape.fillet` carries `shape`.
+            for (std::size_t dot = propName.find('.'); dot != std::string_view::npos;
+                 dot = propName.find('.', dot + 1)) {
+                auto root = wantedViews.find(propName.substr(0, dot));
+                if (root != wantedViews.end()) carried.insert(*root);
             }
+        }
+        for (const std::string_view name : carried) {
+            _vocabularyIndex[std::string(name)].push_back(being);
         }
     }
 }

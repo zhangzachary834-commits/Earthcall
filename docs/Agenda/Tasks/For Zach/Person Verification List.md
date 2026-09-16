@@ -384,3 +384,12 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
 not fully verified though beyond the initial spawnpoint also its super laggy
 - Zach
+## Synthesis Studio should stop hitching when a property is granted
+
+*Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+In Synthesis Studio Living (535 beings, 68 laws), the law engine rebuilt its "which beings carry which property" index whenever a property was granted or a being admitted — and one rebuild took 132–208 ms. That is a visible freeze, and it happens during play, because playing grants properties (a mark remembering its note, for instance). It now takes about 14 ms.
+
+- [ ] **Play the Studio and watch for stalls.** Draw marks, play notes, use sound ink. A brief freeze that used to happen right as a new mark or note appeared should be gone or much shorter.
+- [ ] **The instrument still behaves the same.** Notes sound, marks keep their pigment and pitch, lights respond. This change was to how candidate beings are found, not to what any law does.

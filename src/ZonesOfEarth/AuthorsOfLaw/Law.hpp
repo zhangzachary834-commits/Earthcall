@@ -1017,6 +1017,15 @@ private:
     // Deliberately a sentinel no real revision can equal, so the first tick
     // always builds rather than trusting an empty index.
     mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    // The Law::textRevision() `_indexedNames` was read off the register at.
+    // Collecting that name set is what every sweep used to pay for: a fresh
+    // unordered_set<std::string> built from EVERY law's requiredProperties(),
+    // once per law per tick, only to be compared against the cached one.
+    // Measured in Synthesis Studio Living (535 beings, 68 laws): 1.0 ms per
+    // sweep to choose 3 candidates, 83% of that world's law time. Required
+    // properties are derived in Law::recompile(), and every path that reaches
+    // it bumps the text revision, so this integer is a sound key for the set.
+    mutable uint64_t _vocabularyNamesRevision = std::numeric_limits<uint64_t>::max();
     // End-of-tick unmaking, once no pointer to a victim is still live.
     void reapUnmade();
     void releaseFromLaws(Singular* being);

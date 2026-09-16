@@ -102,6 +102,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 - Retire ObjectConcept into SingularConcept, and SingularConcepts should literally just be Singulars that others branch off of—no new code is needed other than perhaps class headers for organization. 
 - FOR ZACH ONLY: Revise manifesto so the Object taxonomy says "Visual/extra-visual Objects." Also, the old ObjectConcept idea was already entailed by non-visual or extra-visual Objects.
 - Singular set to set creation must be able to create every kind of Singular, so we stop having to invent new ActionKinds or op codes for every individual Singular. Creating a new Law via Laws should use ActionNode create Singular (and then select Singular kind based on all the classes that inherit Singular), or use the set to set Creation node, which must be designed to ask the same thing.
+- **Continuum as Singular: Discrete Definition of Continua and Dynamic Internal Calculations** — Realize the ontology where continua (fluids, atmospheres, fields) are defined as individual Singulars with discrete forms and boundary properties governed by Laws, while internal fluid motion resolves via dynamic continuum calculations on the hardware substrate rather than discrete particle beings. → [full task](Specific%20Tasks/Continuum_As_Singular_Discrete_Definition/Continuum_As_Singular_Discrete_Definition.md)
 
 ## Property · PropertyPath 
 
@@ -185,6 +186,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - ✅ **Formation Rete rung 5 — measured; every transient `ECA::Event` walked the whole relation graph on destruction** — fixed 2026-09-15 with an O(1) endpoint register (chess event sweeps 49 → 8.7 µs per candidate); the adapter itself is deferred on rung 7, §9.2, and the four sub-questions Zach's 2026-09-15 answer to §9.1 raised. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
 - ⚑ AUTHOR-decided, not yet built — **Primary Relations between two Singulars never disappear; only sub-Relations dissolve (when their premise becomes impossible) or deprioritise (when merely less optimal)** — Zach's principle of 2026-09-15; now specified in its own ontology doc with four open ⚑ questions, and every `RelationManager` removal still erases outright. → [ontology doc](../../architecture/ontology/PRIMARY_AND_SUB_RELATIONS.md)
 - ✅ **Formation Rete rung 7 — reactive laws never noticed a being leaving** — fixed and verified 2026-09-15: `OnBecomeTrue` laws over `Compare(x > y)`, `InRegion`, `Zone` or a far-end `Related` fired once in their lifetime and `WhileTrue` onsets never reset; each candidate is now verified with exactly one evaluation. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
+- ✅ **Vocabulary index rebuild froze Synthesis Studio for 132–208 ms** — fixed 2026-09-15: the rebuild asked every being about every indexed name (each walking its whole property list), and the name set was re-collected once per law per tick; now ~14 ms, guarded by `vocabulary_index_test` §H. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
 - **Formation Rete rung 6 — Law-as-traverser measured, not built** — chess evaluates 41 quantifiers per game test (7 ms total), so traversal waits for a world where a category is a small slice of a large population. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
 - **Hoist subject-independent gates in `Scope::Everyone` event sweeps** — chess move laws re-walk the world per candidate through `Not ForAny` conjuncts that rung 3 hoists only on the continuous path. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
 - **`ReteNetwork::retractFact` walks every fact linearly** — any world holding a genuinely opaque law (`Overlaps`, closures, untyped `Related`) pays O(facts) per dirty write, and `retractStateFactsBySubject` wipes the whole relation-state idempotence index. → [full task](Specific%20Tasks/Formation_Rete/Formation_Rete.md)
@@ -218,6 +220,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 - Finish migrating to WebGPU.
 - Human Language-Symbolic processing `Formation`s.
 - Resolve Singularity external app integration.
+- **OntoMath Vector Calculus & Continuum Fluid Solver Substrate** — Formalize field-level spatial differential operators (Divergence, Laplacian, Curl, Convective Advection) and integrate GPU continuum solvers beneath Singularity as First Movers governed by Singular properties rather than overloading pointwise AST nodes. → [full task](Specific%20Tasks/OntoMath_Vector_Calculus_and_Continuum_Solvers/OntoMath_Vector_Calculus_and_Continuum_Solvers.md)
 - Multi-device Earthcall networking and inter-device paradigms.
 
 <a id="interaction-controls-gui"></a>

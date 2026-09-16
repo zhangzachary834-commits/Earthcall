@@ -437,6 +437,20 @@ baseline.** `category_membership_scaling_test`: index 1.0x the control.
 **Guarded by** `tests/law/reactive_departure_test.cpp`. All four red cases were confirmed red with
 the verification removed, with the control green, and red again under the restructured loop.
 
+**Verification, 2026-09-15.** Law/relation suite: 16/16 green (departure, edges, vocabulary,
+category scaling, legibility, endpoint index and register, prophetic, gates, control patterns,
+continuous, compile, relation-state, zone switch, alpha sharing). `frame_lag_test`: 0 broken
+invariants, 0 timing regressions, `LawManager::tick` median 0.120 ms against a 1.653 ms baseline.
+Full suite: the same 9 pre-existing failures as before this work (physics, ground plane, both
+Synthesis Studio tests, pawn promotion, pixel changer, GPU, the OntoMath witness, cloud storage).
+
+**`quantifier_scaling_test` is now close to its guard, and that is worth watching.** Quiet machine:
+gap 0.619 against a 0.65 threshold (0.570 before this pass). Under a concurrent build it exceeds
+it — measured 0.677 and 0.494 with the departure check, 0.719 and 0.524 with it disabled, so the
+overrun is machine load, not this change. Its header already says the fitted exponent is
+load-sensitive. If it fails in CI, A/B it against the same binary with the check stubbed before
+believing it is a regression.
+
 **For Jules and any agent touching this:**
 - Terminal membership is a candidate set. Never treat "in the alpha memory" as "the condition
   holds".
@@ -446,6 +460,59 @@ the verification removed, with the control green, and red again under the restru
   expensive law.
 - The edge/level split survives in a new shape (an `OnBecomeTrue` subject already holding is
   checked, not applied). It has been lost twice before; both guard tests must stay green.
+
+## 2026-09-15 — Zach was right about Synthesis Studio, and it found the real cost
+
+*Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`. Zach, on reading the rung 5 and 6
+measurements: "but synthesis studio has tons of objects and laws".*
+
+**He was right, and two of my measurements were worthless.** Rungs 5 and 6 were measured on chess,
+and I reported "no continuous law takes the sweep path in real worlds". That claim came from a
+probe run against `synthesis_studio_living_test` — which **exits before its first tick** when run
+from the build directory (it returns early when `saves/worlds/...` is not found relative to the
+working directory). Zero sweeps was zero measurement. **Run properly, Synthesis Studio Living
+(137 authored objects, 535 beings in world, 68 laws) sweeps 336 times over 168 ticks.**
+
+**What the sweep cost.** Not the candidates: those laws sweep 3–4 candidates each and their
+conditions cost ~9 µs. **83% of the time was in `sweepSubjects`, and almost all of that in two
+calls**, because `refreshVocabularyIndex` rebuilds the whole index whenever
+`Universe::structuralRevision()` moves — which is exactly what granting a dynamic property or
+admitting a being does, and this world does both while a Person plays.
+
+**One rebuild cost 132–208 ms.** `beingCarriesProperty` walks a being's whole property list to
+honour the dotted-child rule (`shape` matched by `shape.fillet`), and the rebuild called it once
+per (being, name): 535 beings × 43 names, each materialising that being's property list again.
+
+**Fixed, two changes:**
+1. The index rebuild now walks **each being's own property names once** and tests them against
+   the indexed set (with `string_view`, so a dotted root costs no allocation), instead of asking
+   the being about each indexed name. **132–208 ms → ~14 ms per rebuild.**
+2. The name set (`_indexedNames`) is no longer rebuilt on every call. It was collected from every
+   law's `requiredProperties()` once **per law per tick** purely to compare against the cache; it
+   is now keyed on `Law::textRevision()`, which every path that changes a law's required
+   properties bumps.
+
+**Guarded by** `tests/law/vocabulary_index_test.cpp` §H, which asks the invariants directly:
+nothing is reached that `couldApplyTo` rejects, and every being whose condition holds IS reached.
+Its probes compare against a qualified root on purpose, so they have no Rete terminals and take
+the sweep path — the only way a test reaches the index at all. Dropping the dotted-child rule
+from the rebuild turns it red.
+
+**What this corrects in the rung 5 and 6 entries above:** "real worlds don't sweep" is false.
+Chess doesn't; the Studio does, 2 per tick. The rung 5 and 6 conclusions still hold for the reason
+given (the cost was not in candidate *selection* by similarity, and the Studio has no quantifiers
+at all), but they were argued from one world, and that was not enough.
+
+**For Jules and any agent touching this:**
+- **Run app tests from the repo root.** `synthesis_studio_living_test`, and any harness test that
+  loads `saves/worlds/...`, silently return 1 from the build directory. A probe that reports zero
+  is not evidence until you have seen the thing run.
+- Measure the Studio as well as chess. They stress opposite paths: chess is event laws with Rete
+  terminals, the Studio is `WhileTrue` laws reading `@state` roots, which never compile terminals
+  and therefore always sweep.
+- Anything keyed on `structuralRevision` runs when a property is GRANTED, not only when a being is
+  made. In a world that grants properties during play, "rebuild on structural change" means
+  "rebuild during play".
 
 ## Next rungs
 

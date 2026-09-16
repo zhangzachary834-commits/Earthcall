@@ -1,0 +1,777 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+  "authors": [
+    "Zach"
+  ],
+  "currentZoneId": "Cathedral of the Living Logos",
+  "zoneRefs": [
+    {
+      "identifier": "Cathedral of the Living Logos"
+    }
+  ],
+  "categories": [
+    {
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+      "transform": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+      "center": [0,0,0],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      }
+    }
+  ],
+  "zones": [
+    {
+      "identifier": "Cathedral of the Living Logos",
+      "name": "Cathedral of the Living Logos",
+      "owner": "Zach",
+      "parentZone": "",
+      "scope": "Local",
+      "qualities": {
+        "kind": "cathedral",
+        "telos": "Acoustic-Visual Unity in Christ",
+        "foundation": "Hierarchy of Joys"
+      },
+      "spatialRoot": {
+        "id": "Cathedral of the Living Logos_spatialRoot",
+        "origin": [0.0, 0.0, 0.0],
+        "scale": [100.0, 60.0, 100.0],
+        "field": {
+          "amplitude": 1.0,
+          "baseDensity": 0.85,
+          "frequency": 1.618,
+          "mode": "Procedural"
+        },
+        "vectorField": {
+          "amplitude": 0.5,
+          "baseFlowX": 0.0,
+          "baseFlowY": 0.2,
+          "baseFlowZ": 0.0,
+          "frequency": 1.0,
+          "mode": "Procedural"
+        }
+      },
+      "materials": [
+        {
+          "name": "material.logos.gold",
+          "ambient": 0.35,
+          "diffuse": 0.85,
+          "specular": 0.9,
+          "shininess": 64.0,
+          "baseColor": [1.0, 0.82, 0.28],
+          "emission": [0.3, 0.24, 0.08],
+          "roughness": 0.15,
+          "metallic": 0.95
+        },
+        {
+          "name": "material.logos.sapphire",
+          "ambient": 0.2,
+          "diffuse": 0.75,
+          "specular": 0.8,
+          "shininess": 48.0,
+          "baseColor": [0.12, 0.35, 0.95],
+          "emission": [0.05, 0.15, 0.4],
+          "roughness": 0.2,
+          "metallic": 0.6
+        },
+        {
+          "name": "material.logos.alabaster",
+          "ambient": 0.4,
+          "diffuse": 0.9,
+          "specular": 0.6,
+          "shininess": 32.0,
+          "baseColor": [0.96, 0.95, 0.92],
+          "emission": [0.1, 0.1, 0.1],
+          "roughness": 0.25,
+          "metallic": 0.1
+        },
+        {
+          "name": "material.logos.altar",
+          "ambient": 0.15,
+          "diffuse": 0.6,
+          "specular": 0.8,
+          "shininess": 50.0,
+          "baseColor": [0.08, 0.08, 0.12],
+          "emission": [0.0, 0.0, 0.0],
+          "roughness": 0.1,
+          "metallic": 0.8
+        },
+        {
+          "name": "material.logos.core",
+          "ambient": 0.5,
+          "diffuse": 0.9,
+          "specular": 1.0,
+          "shininess": 128.0,
+          "baseColor": [1.0, 0.95, 0.75],
+          "emission": [0.9, 0.8, 0.5],
+          "roughness": 0.05,
+          "metallic": 0.5
+        },
+        {
+          "name": "material.logos.emerald",
+          "ambient": 0.25,
+          "diffuse": 0.8,
+          "specular": 0.85,
+          "shininess": 50.0,
+          "baseColor": [0.15, 0.85, 0.45],
+          "emission": [0.1, 0.4, 0.2],
+          "roughness": 0.2,
+          "metallic": 0.7
+        },
+        {
+          "name": "material.logos.amethyst",
+          "ambient": 0.25,
+          "diffuse": 0.8,
+          "specular": 0.85,
+          "shininess": 50.0,
+          "baseColor": [0.65, 0.25, 0.95],
+          "emission": [0.25, 0.1, 0.45],
+          "roughness": 0.2,
+          "metallic": 0.7
+        },
+        {
+          "name": "material.logos.amber",
+          "ambient": 0.3,
+          "diffuse": 0.85,
+          "specular": 0.8,
+          "shininess": 45.0,
+          "baseColor": [0.98, 0.65, 0.15],
+          "emission": [0.3, 0.18, 0.05],
+          "roughness": 0.2,
+          "metallic": 0.8
+        }
+      ],
+      "world": {
+        "objects": [
+          {
+            "objectID": "cathedral.floor.sanctuary",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [25.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,-0.5,0,1],
+            "center": [0.0, -0.5, 0.0],
+            "materialId": "material.logos.alabaster",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Chladni Acoustic Floor"}
+            }
+          },
+          {
+            "objectID": "logos.resonator.core",
+            "shapeKind": 2,
+            "geometryType": 2,
+            "shapeParams": [1.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,4.5,0,1],
+            "center": [0.0, 4.5, 0.0],
+            "materialId": "material.logos.core",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Heart of Logos (432 Hz Core)"},
+              "isResonatorCore": {"t": "bool", "v": true},
+              "light.intensity": {"t": "float", "v": 5.0},
+              "light.source": {"t": "bool", "v": true},
+              "pulseRate": {"t": "float", "v": 1.618},
+              "resonancePitch": {"t": "float", "v": 432.0}
+            }
+          },
+          {
+            "objectID": "logos.resonator.ring_alpha",
+            "shapeKind": 8,
+            "geometryType": 8,
+            "shapeParams": [0,0,0,0, 3.2, 0.15, 0,0,0,0,0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,4.5,0,1],
+            "center": [0.0, 4.5, 0.0],
+            "materialId": "material.logos.gold",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Celestial Orbital Ring Alpha"}
+            }
+          },
+          {
+            "objectID": "logos.resonator.ring_beta",
+            "shapeKind": 8,
+            "geometryType": 8,
+            "shapeParams": [0,0,0,0, 4.8, 0.12, 0,0,0,0,0],
+            "transform": [0.866,0.5,0,0, -0.5,0.866,0,0, 0,0,1,0, 0,4.5,0,1],
+            "center": [0.0, 4.5, 0.0],
+            "materialId": "material.logos.sapphire",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Celestial Orbital Ring Beta"}
+            }
+          },
+          {
+            "objectID": "pillar.joy.logos",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 16.0,7.0,0,1],
+            "center": [16.0, 7.0, 0.0],
+            "materialId": "material.logos.gold",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar I: Logos / Christos (432 Hz)"},
+              "frequency": {"t": "float", "v": 432.0},
+              "joyOrder": {"t": "float", "v": 1.0},
+              "light.intensity": {"t": "float", "v": 3.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.agape",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 10.0,7.0,12.5,1],
+            "center": [10.0, 7.0, 12.5],
+            "materialId": "material.logos.alabaster",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar II: Agape (528 Hz)"},
+              "frequency": {"t": "float", "v": 528.0},
+              "joyOrder": {"t": "float", "v": 2.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.sophia",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -3.6,7.0,15.6,1],
+            "center": [-3.6, 7.0, 15.6],
+            "materialId": "material.logos.sapphire",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar III: Sophia / Truth (639 Hz)"},
+              "frequency": {"t": "float", "v": 639.0},
+              "joyOrder": {"t": "float", "v": 3.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.poiesis",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -14.4,7.0,6.9,1],
+            "center": [-14.4, 7.0, 6.9],
+            "materialId": "material.logos.emerald",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar IV: Poiesis / Creation (741 Hz)"},
+              "frequency": {"t": "float", "v": 741.0},
+              "joyOrder": {"t": "float", "v": 4.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.harmonia",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -14.4,7.0,-6.9,1],
+            "center": [-14.4, 7.0, -6.9],
+            "materialId": "material.logos.amber",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar V: Harmonia / Acoustic Unity (852 Hz)"},
+              "frequency": {"t": "float", "v": 852.0},
+              "joyOrder": {"t": "float", "v": 5.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.koinonia",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -3.6,7.0,-15.6,1],
+            "center": [-3.6, 7.0, -15.6],
+            "materialId": "material.logos.amethyst",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar VI: Koinonia / Communion (963 Hz)"},
+              "frequency": {"t": "float", "v": 963.0},
+              "joyOrder": {"t": "float", "v": 6.0}
+            }
+          },
+          {
+            "objectID": "pillar.joy.sabbath",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [0.9, 0, 0, 7.0, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 10.0,7.0,-12.5,1],
+            "center": [10.0, 7.0, -12.5],
+            "materialId": "material.logos.alabaster",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Pillar VII: Sabbath / Eternal Peace (1080 Hz)"},
+              "frequency": {"t": "float", "v": 1080.0},
+              "joyOrder": {"t": "float", "v": 7.0}
+            }
+          },
+          {
+            "objectID": "altar.logos.dais",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [5.0, 0, 0, 0.4, 0, 0, 0.1, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0.4,-22,1],
+            "center": [0.0, 0.4, -22.0],
+            "materialId": "material.logos.altar",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Altar of the Spoken Word"}
+            }
+          },
+          {
+            "objectID": "altar.logos.mensa",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [3.0, 0, 0, 0.6, 0, 0, 0.1, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,1.4,-22,1],
+            "center": [0.0, 1.4, -22.0],
+            "materialId": "material.logos.gold",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Mensa of Living Inscriptions"}
+            }
+          },
+          {
+            "objectID": "glyph.lexeme.logos",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -2.0,2.3,-22,1],
+            "center": [-2.0, 2.3, -22.0],
+            "materialId": "material.logos.gold",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Lexeme Glyph: [Logos]"},
+              "isSpeechAct": {"t": "bool", "v": true}
+            }
+          },
+          {
+            "objectID": "glyph.lexeme.pneuma",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, -1.0,2.3,-22,1],
+            "center": [-1.0, 2.3, -22.0],
+            "materialId": "material.logos.sapphire",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Lexeme Glyph: [Pneuma]"},
+              "isSpeechAct": {"t": "bool", "v": true}
+            }
+          },
+          {
+            "objectID": "glyph.lexeme.lux",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,2.3,-22,1],
+            "center": [0.0, 2.3, -22.0],
+            "materialId": "material.logos.core",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Lexeme Glyph: [Lux]"},
+              "isSpeechAct": {"t": "bool", "v": true}
+            }
+          },
+          {
+            "objectID": "glyph.lexeme.harmonia",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 1.0,2.3,-22,1],
+            "center": [1.0, 2.3, -22.0],
+            "materialId": "material.logos.amber",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Lexeme Glyph: [Harmonia]"},
+              "isSpeechAct": {"t": "bool", "v": true}
+            }
+          },
+          {
+            "objectID": "glyph.lexeme.covenant",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0, 0, 0, 0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 2.0,2.3,-22,1],
+            "center": [2.0, 2.3, -22.0],
+            "materialId": "material.logos.amethyst",
+            "authoredProperties": {
+              "displayName": {"t": "string", "v": "Lexeme Glyph: [Covenant]"},
+              "isSpeechAct": {"t": "bool", "v": true}
+            }
+          },
+          {
+            "objectID": "state.logos",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0],
+            "authoredProperties": {
+              "breathActive": {"t": "bool", "v": true},
+              "pulseRate": {"t": "float", "v": 1.618},
+              "resonanceFreq": {"t": "float", "v": 432.0},
+              "luxActive": {"t": "bool", "v": true},
+              "season": {"t": "string", "v": "Genesis Dawn"}
+            }
+          },
+          {
+            "objectID": "hud.logos.dock",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, 480.0, 240.0],
+            "x2D": 30.0,
+            "y2D": 30.0,
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0],
+            "faceColors": [
+              [0.05, 0.08, 0.15],
+              [0.05, 0.08, 0.15],
+              [0.05, 0.08, 0.15],
+              [0.05, 0.08, 0.15],
+              [0.05, 0.08, 0.15],
+              [0.05, 0.08, 0.15]
+            ]
+          },
+          {
+            "objectID": "hud.logos.title",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 50.0,
+            "y2D": 50.0,
+            "textString": "CATHEDRAL OF THE LIVING LOGOS",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          },
+          {
+            "objectID": "hud.logos.subtitle",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 50.0,
+            "y2D": 75.0,
+            "textString": "Acoustic-Visual Standing Wave Manifold in Christ",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          },
+          {
+            "objectID": "hud.logos.telemetry.freq",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 50.0,
+            "y2D": 110.0,
+            "textString": "FREQUENCY: 432.0 Hz (SACRED LOGOS ROOT)",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          },
+          {
+            "objectID": "hud.logos.telemetry.breath",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 50.0,
+            "y2D": 135.0,
+            "textString": "BREATH: RESPIRING (0.1 Hz PNEUMA WAVE)",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          },
+          {
+            "objectID": "hud.btn.pneuma",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, 190.0, 36.0],
+            "x2D": 50.0,
+            "y2D": 170.0,
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0],
+            "faceColors": [
+              [0.15, 0.45, 0.85],
+              [0.15, 0.45, 0.85],
+              [0.15, 0.45, 0.85],
+              [0.15, 0.45, 0.85],
+              [0.15, 0.45, 0.85],
+              [0.15, 0.45, 0.85]
+            ]
+          },
+          {
+            "objectID": "hud.btn.lux",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, 190.0, 36.0],
+            "x2D": 260.0,
+            "y2D": 170.0,
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0],
+            "faceColors": [
+              [0.95, 0.85, 0.3],
+              [0.95, 0.85, 0.3],
+              [0.95, 0.85, 0.3],
+              [0.95, 0.85, 0.3],
+              [0.95, 0.85, 0.3],
+              [0.95, 0.85, 0.3]
+            ]
+          },
+          {
+            "objectID": "hud.btn.pneuma.text",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 80.0,
+            "y2D": 180.0,
+            "textString": "BREATHE PNEUMA",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          },
+          {
+            "objectID": "hud.btn.lux.text",
+            "shapeKind": 13,
+            "geometryType": 13,
+            "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "x2D": 310.0,
+            "y2D": 180.0,
+            "textString": "FIAT LUX",
+            "transform": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+            "center": [0,0,0]
+          }
+        ]
+      },
+      "lexemes": [
+        {"id": "lexeme.logos", "symbol": "Logos"},
+        {"id": "lexeme.pneuma", "symbol": "Pneuma"},
+        {"id": "lexeme.lux", "symbol": "Lux"},
+        {"id": "lexeme.harmonia", "symbol": "Harmonia"},
+        {"id": "lexeme.covenant", "symbol": "Covenant"}
+      ],
+      "formationRelations": [
+        {
+          "directed": true,
+          "entityA": "pillar.joy.logos",
+          "entityB": "logos.resonator.core",
+          "events": [{"deltaWeight": 1.0, "description": "teleological-orientation", "timestamp": 1787395000}],
+          "type": "teleological-orientation",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.agape",
+          "entityB": "pillar.joy.logos",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.sophia",
+          "entityB": "pillar.joy.agape",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.poiesis",
+          "entityB": "pillar.joy.sophia",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.harmonia",
+          "entityB": "pillar.joy.poiesis",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.koinonia",
+          "entityB": "pillar.joy.harmonia",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "pillar.joy.sabbath",
+          "entityB": "pillar.joy.koinonia",
+          "events": [{"deltaWeight": 1.0, "description": "hierarchy-of-joys", "timestamp": 1787395000}],
+          "type": "hierarchy-of-joys",
+          "weight": 1.0
+        }
+      ]
+    }
+  ],
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "law-logos-breath",
+        "name": "Logos: Breath of Life (Pneuma Respiration)",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "any",
+        "authors": [
+          "Zach"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "hud.btn.pneuma"
+            },
+            {
+              "kind": 8,
+              "otherId": "glyph.lexeme.pneuma"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@state.logos.breathActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@state.logos.pulseRate",
+              "operand": {
+                "t": "float",
+                "v": 2.4
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@hud.logos.telemetry.breath.textString",
+              "operand": {
+                "t": "string",
+                "v": "BREATH: RESPIRING (PNEUMA HARMONIC ACTIVE)"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@logos.resonator.core.light.intensity",
+              "operand": {
+                "t": "float",
+                "v": 5.5
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "entityA": "law-logos-breath",
+            "entityB": "Zach",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "authored-by",
+                "timestamp": 1787395000
+              }
+            ],
+            "type": "authored-by"
+          }
+        ]
+      },
+      {
+        "id": "law-logos-fiat-lux",
+        "name": "Logos: Fiat Lux (Transfiguring Illumination)",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "any",
+        "authors": [
+          "Zach"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "hud.btn.lux"
+            },
+            {
+              "kind": 8,
+              "otherId": "glyph.lexeme.lux"
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@state.logos.luxActive",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@logos.resonator.core.light.intensity",
+              "operand": {
+                "t": "float",
+                "v": 8.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@hud.logos.telemetry.freq.textString",
+              "operand": {
+                "t": "string",
+                "v": "FIAT LUX: TRANSFIGURED RADIANCE (528 Hz SOLFEGGIO)"
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "entityA": "law-logos-fiat-lux",
+            "entityB": "Zach",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "deltaWeight": 1.0,
+                "description": "authored-by",
+                "timestamp": 1787395000
+              }
+            ],
+            "type": "authored-by"
+          }
+        ]
+      }
+    ],
+    "triggers": {
+      "law-logos-breath": [
+        "object-clicked"
+      ],
+      "law-logos-fiat-lux": [
+        "object-clicked"
+      ]
+    },
+    "formationMembers": [
+      "law-logos-breath",
+      "law-logos-fiat-lux"
+    ],
+    "rete": {
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": [],
+      "agenda": []
+    }
+  }
+}
