@@ -27,9 +27,9 @@ using MathBindings = std::map<std::string, PropertyPath>;
 // ---------------------------------------------------------------------------
 // Qualified paths: WHOSE property a path names is the author's choice.
 //   position.y                  the law's subject (whoever it applies to)
-//   @being-id.position.y        that NAMED being (Universe lookup), whoever
-//                               the subject is. The id may contain dots
-//                               ("@material.clay.baseColor"): the root is
+//   @being-id.position.y        that addressed being (Universe lookup), whoever
+//                               the subject is. The textual address may contain
+//                               dots ("@material.clay.baseColor"): the root is
 //                               matched LONGEST-FIRST, most specific wins.
 //   @event.subject.position.y   the triggering event's subject
 //   @event.object.position.y    the triggering event's OTHER participant
@@ -40,6 +40,17 @@ using MathBindings = std::map<std::string, PropertyPath>;
 //                               and intercepted in lawGetValue before root
 //                               resolution — there is no being called
 //                               "world" to look up.
+//
+// IMPORTANT IDENTITY BOUNDARY:
+// StringId is only an interned lexical token. It says two authored spellings
+// are equal; it does NOT say two Singulars are the same being. A qualified
+// textual root is therefore accepted only when that spelling designates one
+// live Singular. If two distinct Singulars expose the same getIdentifier(),
+// resolution fails closed instead of letting insertion order decide identity.
+// Person roots already expose their SingularId text once migrated; other
+// Singular kinds may still expose stable slugs, so collision refusal belongs
+// here at the point where a lexical address becomes a referent.
+//
 // The event roots resolve through the application-event context the
 // LawManager arms while laws respond to an event; outside an event response
 // they are undefined — a condition never passes and an action never writes
@@ -73,20 +84,32 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // down: LONGEST dotted-name match first, most specific wins. A being named
     // "material.clay" beats one named "material", and the segments it consumed
     // are not offered to the property lookup.
-    
-    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations
+    //
+    // HOT PATH CACHE: StringId is a fast index over the authored spelling, not
+    // a Singular identity. A nullptr VALUE means that spelling was claimed by
+    // two distinct live Singular pointers and is therefore ambiguous. This is
+    // deliberately different from a missing KEY: both fail to resolve, but an
+    // ambiguous longer prefix must also defeat any shorter prefix discovered
+    // earlier in the longest-first scan.
     static uint64_t s_lastRevision = 0;
     static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
     static bool s_initialized = false;
-    
+
     uint64_t currentRevision = Universe::instance().structuralRevision();
     if (!s_initialized || s_lastRevision != currentRevision) {
         s_beingMap.clear();
         const std::vector<Singular*> beings = Universe::instance().beings();
         for (Singular* being : beings) {
-            if (being) {
-                Earthcall::StringId key = Earthcall::StringInterner::intern("@" + being->getIdentifier());
-                s_beingMap[key] = being;
+            if (!being) continue;
+
+            const Earthcall::StringId key =
+                Earthcall::StringInterner::intern("@" + being->getIdentifier());
+            const auto [it, inserted] = s_beingMap.emplace(key, being);
+            if (!inserted && it->second != being) {
+                // Equal spelling does not establish equal being. Preserve the
+                // ambiguity as nullptr so a third claimant cannot resurrect a
+                // winner and provider iteration order can never choose identity.
+                it->second = nullptr;
             }
         }
         s_lastRevision = currentRevision;
@@ -101,13 +124,17 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         for (std::size_t n = 1; n <= idsFromHere.size(); ++n) {
             auto it = s_beingMap.find(idsFromHere[n - 1]);
             if (it != s_beingMap.end()) {
+                // Assign even when nullptr. If the most-specific matching
+                // textual root is ambiguous, we must NOT silently fall back to
+                // an earlier shorter root and reinterpret the remaining text as
+                // a property path.
                 best = it->second;
                 bestConsumed = n;
             }
         }
     }
-    
-    if (!best) return nullptr;   // the named being is not in the world: no value
+
+    if (!best) return nullptr;   // missing OR ambiguous referent: never guess
     startIndex = bestConsumed;
     return best;
 }
@@ -238,7 +265,7 @@ inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
         if (!lawGetValue(subject, entry.second, value)) {
             return std::nullopt;
         }
-        
+
         double x = 0.0;
         if (propertyValueToNumber(value, x)) {
             vars[entry.first] = PropertyValue(x);
