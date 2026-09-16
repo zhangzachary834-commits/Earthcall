@@ -671,10 +671,11 @@ public:
 
         if (existingComplete &&
             (incomingOperatorShell || incomingExprShell || incomingConvexShell)) {
-            _fieldExtent = extent;
-            rebuildGeometryCaches();
+            // The evaluation extent is part of the authored Field too. A
+            // rejected lossy replacement does not get to clip or expand the
+            // surviving mathematical form as a side effect.
             std::cerr << "[Object] setFieldShape: refused a lossy field shell over an "
-                         "already-complete authored SDF; semantic shape remains authoritative.\n";
+                         "already-complete authored SDF; semantic shape and extent remain authoritative.\n";
             return;
         }
 
