@@ -9,98 +9,100 @@
 
 Zach showed live Zones in which ambitious authored structures manifested as a sparse set of cubes, cylinders, spheres and rings. The audit found several independent persistence boundaries where authored geometric meaning could become a shallower representation.
 
-The governing invariant for this repair is:
+A later reread of the original split-substrate documents caught an important architectural distinction before merge: `.ecmatter` was never intended to be merely a disposable cache. It is Earthcall's binary physical substrate. The repair therefore preserves two authorities instead of collapsing one into the other:
 
-> **Semantic shape truth is authoritative. Physical sidecars and derived caches may accelerate it, but may never demote or overwrite it.**
+> **Form determines what the being is. Matter gives that Form physical density. Matter may hydrate a matching Form; it may never redefine the Form.**
+
+Dense physical arrays must not be copied back into human/agent semantic parchment just to make persistence reliable.
 
 ## Landed in this branch
 
-### 1. Object semantic JSON carries authored form, not only a positional recipe
+### 1. Semantic Object state is self-describing without swallowing dense Matter
 
-`ObjectSerialization.cpp` writes a self-describing `shape` arm with named parameters while retaining the append-only legacy `shapeKind`, `geometryType`, and positional `shapeParams` fields. New reads prefer named semantic parameters.
+`ObjectSerialization.cpp` writes a named `shape` arm while retaining the append-only legacy `shapeKind`, `geometryType`, and positional `shapeParams` fields. New reads prefer named semantic parameters.
 
-Complete Field trees, Bezier Patch control nets, and custom Polyhedron vertices/faces now survive in semantic Object JSON, so those forms no longer depend on `.ecmatter` merely to remember what they are.
+New semantic writes deliberately **do not** embed Bezier Patch control nets or custom Polyhedron vertex/face arrays. Their semantic ShapeKind survives in Form; their dense topology remains in `.ecmatter`, matching the original split-substrate design. The reader still accepts historical/transitional semantic `patch` and `polyhedron` payloads for backward compatibility.
+
+Field is a deliberate transitional special case. Its compact SDF/OntoMath recipe and evaluation extent remain semantic because the current Matter schema stores only one SDF root and cannot losslessly encode recursive boolean/morph children, Convex planes, or the full mathematical recipe. Dense compiled/sampled field representation still belongs in Matter as that substrate matures.
 
 ### 2. Explicit current shape beats stale optional JSON payloads
 
-Zone identity merge-patch can retain an old optional key when a newer overlay simply omits it. The old Object reader let `patch` / `field` payload presence outrank the explicit current kind, so an obsolete Field could resurrect over a newer Sphere.
+Zone identity merge-patch can retain an old optional key when a newer overlay omits it. The old Object reader let `patch` / `field` payload presence outrank the explicit current kind, so an obsolete Field could resurrect over a newer Sphere.
 
 The declared current kind now wins. Payload inference remains only for legacy records that truly have no discriminant.
 
-### 3. `.ecmatter` topology is now compatibility recovery, not semantic authority
+### 3. `.ecmatter` remains physical substrate, constrained by semantic identity
 
-The FlatBuffer is still append-only and still carries Polyhedron, Patch, SmoothSurface and Field payloads for old saves, but `applyMatterFlatBuffer` no longer lets those payloads redefine an already-authored representation:
+`applyMatterFlatBuffer` now follows the intended hydration direction: semantic skeleton first, physical Matter second.
 
-- Polyhedron matter is admitted only when the semantic kind is still Polyhedron **and** semantic vertices/faces are missing.
-- Patch matter is admitted only when the semantic kind is still Patch **and** the semantic control net is missing.
-- SmoothSurface matter is admitted only when the current semantic ShapeKind belongs to the analytic smooth family **and** its smooth topology is missing.
-- Field matter is admitted only when the semantic kind is still Field **and** no semantic Field is present. Because today's matter format stores only one root, legacy recovery refuses non-leaf boolean/morph roots and Convex roots whose required children/planes are absent.
+- Polyhedron Matter injects dense vertices/faces only into a semantic Polyhedron shell that lacks topology.
+- Patch Matter injects dense control points only into a semantic Patch shell that lacks topology.
+- SmoothSurface Matter may hydrate missing topology only when the exact analytic semantic kind agrees with the Matter model/form.
+- Field Matter may hydrate only a semantic Field shell with no semantic Field. Because today's Matter format stores one root, non-leaf operators, Convex roots without planes, and invalid Expr payloads are refused rather than invented.
 
-This closes the previous split-brain paths where stale Patch/Polyhedron matter could change ShapeKind and stale SmoothSurface matter could change runtime topology without changing the reported kind.
+This prevents stale Matter from turning a Sphere into a Patch/Polyhedron or making runtime topology disagree with the semantic kind, while still allowing the normal split-substrate Patch/Polyhedron path to work.
 
-### 4. Field extent is semantic with the Field
+### 4. Field extent remains coherent with the authored Field
 
-A stale sidecar may no longer mutate the evaluation extent of a semantic Field whose tree it was not allowed to replace. `Object::setFieldShape` likewise leaves both tree and extent untouched when refusing a lossy incoming shell.
+A stale Matter record may not mutate the evaluation extent of a semantic Field whose mathematical recipe it was not allowed to replace. `Object::setFieldShape` likewise leaves tree and extent untouched when refusing a lossy incoming shell.
 
 ### 5. Matter topology input is semantically validated
 
-FlatBuffers verification proves buffer structure, not valid geometry. The reader now validates before mutation:
+FlatBuffers verification proves memory structure, not geometry validity. The reader now validates before mutation:
 
 - Polyhedron vertices must be finite.
-- face offsets must form an exact, monotone, in-range partition of `face_data` and every face must contain at least three vertices.
+- face offsets must form an exact monotone in-range partition of `face_data` and each face must contain at least three vertices.
 - every face vertex index must be within the vertex array.
-- SDF primitive/operator ordinals are range-checked before conversion.
-- SmoothSurface model/form/parametric-kind ordinals are range-checked, and its matrix/axes/trims/params must be finite.
-- Field extents must be finite and positive.
+- SDF primitive/operator ordinals are range-checked.
+- SmoothSurface model/form/parametric-kind ordinals are range-checked and the payload's exact analytic kind must agree with semantic ShapeKind.
+- SmoothSurface matrix/axes/trims/params must be finite.
+- Field dimensions/offset/scalars/extents must be finite; extents must be positive.
+- Expr Matter must contain an expression that actually compiles.
 
-Malformed or lossy legacy matter is logged and skipped rather than guessed into a being.
+Malformed Matter is logged and skipped rather than guessed into a being.
 
 ### 6. Historical malformed implicit forms are normalized at the Object boundary
 
-A historical Law spawn path could produce a Sphere leaf carrying an expression string. `Object::setFieldShape` recognizes the expression as the actual form, promotes it to `SdfPrim::Expr`, and compiles executable RPN when necessary. An expression no longer survives merely as decorative text on a Sphere.
+A historical Law spawn path could produce a Sphere leaf carrying an expression string. `Object::setFieldShape` recognizes the expression as the actual form, promotes it to `SdfPrim::Expr`, and compiles executable RPN when possible. The producer itself remains follow-up debt; the boundary is safe.
 
-### 7. ObjectConcept preserves 2D ShapeParams without breaking old readers
+### 7. ObjectConcept and BodyPart persisted shape boundaries are compatibility-safe
 
-`ObjectConcept::MemberTemplate` historically serialized exactly nine ShapeParams slots, so Shape2D/Text2D width and height vanished. Simply expanding the array to eleven would break older readers that require `size() == 9`.
+`ObjectConcept::MemberTemplate` keeps the historical nine-slot ShapeParams array exactly nine-wide for old readers and carries `width2D` / `height2D` as additive named fields. New readers also accept the brief eleven-slot development form. Member ShapeKind ordinals are validated.
 
-The branch therefore keeps the legacy array exactly nine entries wide and adds `width2D` / `height2D` as named additive fields. New readers accept historical nine-slot records, the brief eleven-slot development representation, and the named fields. Persisted member ShapeKind ordinals are validated before admission.
+BodyPart primary and nested sub-object shape ordinals are likewise checked before enum conversion; invalid/future values refuse deterministically to Cube.
 
-### 8. BodyPart persisted ShapeKinds are checked
+### 8. Cathedral generator shape-contract correction
 
-Primary BodyPart and nested sub-object shape ordinals no longer direct-cast arbitrary saved integers. Invalid/future values refuse deterministically to Cube.
-
-### 9. Cathedral generator shape-contract correction
-
-The generator encoded Sphere/Torus size in both analytic ShapeParams and transform scale, multiplying dimensions twice at manifestation time. Analytic Sphere/Torus transforms now carry pose only, and generator output paths are repository-relative.
-
-This does **not** synthesize architecture the generator never authored: its current content remains substantially primitive-composed, and its `spatialRoot` still does not contain the manifesto's exact standing-wave OntoMath AST.
+Sphere/Torus size is no longer encoded both in analytic ShapeParams and transform scale, and generator output paths are repository-relative. This does not synthesize the Cathedral's specified standing-wave OntoMath AST; that remains separate authoring work.
 
 ## Regression witness
 
-`tests/constructed-being/shape_hydration_integrity_test.cpp` now exercises the real writer/reader boundary and adversarial input, including:
+`shape_hydration_integrity_test` now explicitly locks the original split:
 
-- semantic SmoothUnion followed by real `.ecmatter` hydration;
-- authored Field tree **and extent** surviving stale matter;
-- stale Patch, Polyhedron, and SmoothSurface matter refusing to reclassify or split runtime topology from semantic identity;
-- positive legacy recovery for Patch, Polyhedron, leaf Field, and SmoothSurface shells when the semantic kind agrees and topology is genuinely missing;
-- negative/non-monotone face offsets and out-of-range face indices;
-- invalid SDF and SmoothSurface enum ordinals;
-- malformed implicit-expression normalization;
-- stale JSON Field payload vs newer Sphere discriminant;
-- named shape-parameter precedence;
-- semantic-only Patch/Polyhedron round trips;
-- ObjectConcept legacy/additive/transitional compatibility;
-- invalid ObjectConcept and BodyPart shape ordinals.
+- semantic Patch/Polyhedron records retain identity but contain no dense control-net / vertex-face payload;
+- the real Matter writer carries that topology;
+- semantic hydration creates Patch/Polyhedron shells first;
+- real `applyMatterFlatBuffer` then fleshes those matching shells out;
+- stale Patch/Polyhedron/SmoothSurface/Field Matter cannot redefine current semantic identity;
+- Field tree and extent survive stale Matter;
+- hostile Polyhedron offsets/indices, invalid enums, invalid Expr Matter and non-finite data are refused;
+- ObjectConcept and BodyPart compatibility/ordinal cases remain covered.
 
-Focused CI also includes the pre-existing `object_roundtrip_test` and `matter_semantic_precedence_test` alongside this witness so the new topology rule is checked against the older matter/address/paint invariants.
+Focused CI also runs `object_roundtrip_test` and `matter_semantic_precedence_test` alongside this witness.
 
 ## Still open / deliberately outside PR #188
 
-1. `Object::setShape(RoundedBox, p)` still calls `roundedBox(0.5f, p.fillet)`. `ShapeParams` has no explicit rounded-box size/half-extent contract; do not silently repurpose `r`. Add an append-only named size contract first.
-2. Other persisted integer-to-geometry boundaries outside Object/ObjectConcept/BodyPart and the matter reader should be audited by role. UI/live-selection paths that already range-check are not the same bug.
-3. The tracked Cathedral Zone identity was empty at the branch point. The generator path is fixed, but this session intentionally did not overwrite a committed authored save without verification.
-4. The Cathedral specification's exact standing-wave OntoMath zero-set still needs to be authored into the actual Zone form model; that is content/authoring work, not a persistence workaround.
-5. Long-term `.ecmatter` should either stop carrying semantic topology entirely or key derived topology to a canonical semantic-form revision/hash and discard/regenerate it on mismatch. PR #188 establishes the runtime precedence rule while retaining legacy readability.
-6. The historical Law spawn source still constructs `Sphere + expr` before the Object boundary normalizes it. The boundary is safe, but the source should eventually use `geom::makeImplicit` directly so malformed representation is not produced in the first place.
+1. **Pre-existing split debt: dense paint pixels.** `Material::toJson()` still Base64-embeds `FaceTexture` pixels in semantic JSON even though the original architecture assigns dense pixel arrays to `.ecmatter`. Move them without regressing Material identity, copy-on-write paint, or the Basic Pixel Changer precedence fix.
+2. **Per-being Matter coherence.** Generation-level `matterGeneration` already couples a root to its Matter file atomically. Add a per-being Matter handle and/or semantic-form revision/fingerprint so a physical payload can prove which Form it belongs to.
+3. **Placement duplication needs a deliberate end-state.** Transform/center/axis/target rotation currently exist in semantic Object state as an independently-loadable authoring fallback and in Matter as physical state. Resolve this under the newer Property-Variant graph architecture rather than deleting one side ad hoc.
+4. **Field Matter is root-only.** Extend Matter to encode recursive SDF/OntoMath/Convex physical representation losslessly, or store compiled field bytecode/buffers referenced from semantic Form.
+5. **RoundedBox** still lacks an explicit append-only size/half-extent contract.
+6. Remaining persisted integer-to-geometry boundaries outside Object/ObjectConcept/Body/Matter should be classified by role.
+7. The historical Law producer should eventually call `geom::makeImplicit` directly instead of producing `Sphere + expr`.
+8. Cathedral artifact regeneration and exact standing-wave authoring remain separate, deliberate work.
 
-Please preserve the invariant above when touching `.ecmatter`, JSON merge, shape constructors, Zone identity stores, or generation scripts. If cache topology and authored form disagree, the cache does not get the final word.
+Please preserve the domain boundary when touching save code:
+
+**semantic Form / Relations / Laws -> matching physical Matter -> manifestation.**
+
+Matter is not a second ontology. Semantic parchment is not a dumping ground for dense physical arrays.
