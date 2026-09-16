@@ -37,6 +37,10 @@
         "y": 0.95,
         "z": 0.8
       },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.8
+      },
       "light.enabled": {
         "t": "bool",
         "v": true
@@ -48,6 +52,10 @@
       "light.source": {
         "t": "bool",
         "v": true
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 1.0
       }
     },
     "field": {

@@ -2,6 +2,7 @@
 #include "../Screen/Camera.hpp"
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -84,12 +85,11 @@ namespace Core {
 
         // Refusal #6: renderer state is downstream of authored reality.
         //
-        // A Zone's existing FieldNode can become the persistent illumination
-        // source by carrying the ordinary authored bool property
-        // `light.source=true`. Its registered `origin` is then the source's
-        // world-space placement. Nothing new is carved into the C++ ontology:
-        // FieldNode remains the continuous mathematical substrate, and the
-        // marker is Person/Law-authored vocabulary on a Singular.
+        // A Zone's existing FieldNode becomes a persistent illumination source
+        // only when its ordinary authored `light.source` property is true. The
+        // renderer consumes authored placement, color, intensity and channel
+        // coefficients through one shared resolver; there is still no C++ Light
+        // kind and no decorative Sun Object secretly standing in for radiance.
         //
         // If no persistent radiant field has been authored yet, ScreenChannel
         // preserves the previous camera-relative compatibility path. That
@@ -102,27 +102,31 @@ namespace Core {
 
         bool persistentLightPlaced = false;
         if (auto* root = zone.spatialRoot()) {
-            PropertyValue lightSourceValue;
-            if (root->getDynamicProperty("light.source", lightSourceValue)) {
-                if (const bool* isSource = std::get_if<bool>(&lightSourceValue);
-                    isSource && *isSource) {
-                    currentRenderer().setLight(root->origin,
-                                               currentRenderer().lightAmbient(),
-                                               currentRenderer().lightDiffuse(),
-                                               currentRenderer().lightSpecular());
-                    persistentLightPlaced = true;
-                }
+            Rendering::AuthorableLightState light;
+            if (Rendering::readAuthorableLight(*root, light)) {
+                currentRenderer().setLight(light.position,
+                                           Rendering::lightAmbientRadiance(light),
+                                           Rendering::lightDiffuseRadiance(light),
+                                           Rendering::lightSpecularRadiance(light));
+                currentRenderer().setLightingEnabled(light.enabled);
+                persistentLightPlaced = true;
             }
         }
 
-        if (!persistentLightPlaced && screenChannel) {
-            const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
-                ? _camera->pos + screenChannel->lightCameraOffset
-                : screenChannel->lightPosition;
-            currentRenderer().setLight(lightWorldPos,
-                                       currentRenderer().lightAmbient(),
-                                       currentRenderer().lightDiffuse(),
-                                       currentRenderer().lightSpecular());
+        if (!persistentLightPlaced) {
+            // A previously active authored Zone may have disabled illumination.
+            // No-source means the historical compatibility contract, so restore
+            // enabled state even when no ScreenChannel happens to be present.
+            currentRenderer().setLightingEnabled(true);
+            if (screenChannel) {
+                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                    ? _camera->pos + screenChannel->lightCameraOffset
+                    : screenChannel->lightPosition;
+                currentRenderer().setLight(lightWorldPos,
+                                           currentRenderer().lightAmbient(),
+                                           currentRenderer().lightDiffuse(),
+                                           currentRenderer().lightSpecular());
+            }
         }
 
         {
