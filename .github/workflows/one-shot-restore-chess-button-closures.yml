@@ -1,0 +1,180 @@
+name: One-shot restore Chess and Basic Button Zone closures
+on:
+  push:
+    branches:
+      - sol/restore-legacy-chess-button-zones-v2-20260915
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore preserved authored closure into Zone-native roots
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "GPT-5.6 Sol preservation migration"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          import copy, json, pathlib, shutil
+
+          ROOT = pathlib.Path('.')
+          BACKUP = ROOT / 'saves/backups/chess-button-zone-native-restoration-2026-09-15'
+          BACKUP.mkdir(parents=True, exist_ok=True)
+          provenance = 'GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-15'
+
+          def load(path):
+              with pathlib.Path(path).open() as f:
+                  return json.load(f)
+
+          def write(path, value):
+              p = pathlib.Path(path)
+              p.parent.mkdir(parents=True, exist_ok=True)
+              p.write_text(json.dumps(value, indent=2, ensure_ascii=False) + '\n')
+
+          def backup(src, name):
+              shutil.copyfile(src, BACKUP / name)
+
+          def nested_zone(world, identifier):
+              return next(z for z in world['zones'] if z.get('identifier') == identifier)
+
+          def authored_bundle(world):
+              authored = world.get('authoredLaws')
+              assert isinstance(authored, dict), 'authoredLaws must be an object'
+              laws = authored.get('laws')
+              triggers = authored.get('triggers')
+              assert isinstance(laws, list) and isinstance(triggers, dict)
+              return laws, triggers
+
+          def dedupe_support(world):
+              by_id = {}
+              for item in world.get('categories', []):
+                  oid = item.get('objectID')
+                  if not oid:
+                      continue
+                  if oid in by_id:
+                      assert by_id[oid] == item, f'conflicting legacy support records for {oid}'
+                  else:
+                      by_id[oid] = copy.deepcopy(item)
+              return by_id
+
+          def offscreen_support(item):
+              out = copy.deepcopy(item)
+              # Legacy CategoryManager makes this compatibility bag extra-spatial.
+              # Zone-owned compatibility referents cannot serialize that runtime bit,
+              # so preserve their nonvisual intent by keeping the original zero-size
+              # Shape2D and parking the referent far outside authored UI space.
+              out['x2D'] = -100000.0
+              out['y2D'] = -100000.0
+              return out
+
+          # Preserve exact current Zone bytes before changing authored identities.
+          chess_zone_path = ROOT / 'saves/zones/Chess/zone.json'
+          button_zone_path = ROOT / 'saves/zones/Basic2DButtonZone/zone.json'
+          backup(chess_zone_path, 'Chess.zone.before.json')
+          backup(button_zone_path, 'Basic2DButtonZone.zone.before.json')
+
+          # ---------------- Chess ----------------
+          chess_world = load(ROOT / 'saves/worlds/chess_app.json')
+          chess_zone = load(chess_zone_path)
+          chess_legacy_zone = nested_zone(chess_world, 'Chess')
+          chess_laws, chess_triggers = authored_bundle(chess_world)
+          chess_ids = [law.get('id') for law in chess_laws]
+          assert len(chess_ids) == 69 and len(set(chess_ids)) == 69
+          assert all(chess_ids)
+          assert {a for law in chess_laws for a in law.get('authors', [])} == {'grok-4.6'}
+
+          support = dedupe_support(chess_world)
+          assert len(support) == 21
+          assert 'grok-4.6' in support and 'state.chess' in support
+          existing = {o.get('objectID') for o in chess_zone['world']['objects']}
+          assert len(chess_zone['world']['objects']) == 39
+          for oid, item in support.items():
+              if oid not in existing:
+                  chess_zone['world']['objects'].append(offscreen_support(item))
+                  existing.add(oid)
+
+          # The legacy session is the intact authored graph: 39 spatial beings +
+          # 21 extra-spatial support beings + 69 Laws joined by 143 relations.
+          relations = copy.deepcopy(chess_legacy_zone.get('formationRelations', []))
+          assert len(relations) == 143
+          all_relation_ids = {r.get('entityA') for r in relations} | {r.get('entityB') for r in relations}
+          assert all_relation_ids <= (existing | set(chess_ids) | {'Chess'})
+          chess_zone['formationRelations'] = relations
+          chess_zone['lawRefs'] = chess_ids
+          write(chess_zone_path, chess_zone)
+
+          # ---------------- Basic 2D Button ----------------
+          button_world = load(ROOT / 'saves/worlds/basic_2d_button_zone.json')
+          button_zone = load(button_zone_path)
+          button_legacy_zone = nested_zone(button_world, 'Basic2DButtonZone')
+          button_laws, button_triggers = authored_bundle(button_world)
+          button_ids = [law.get('id') for law in button_laws]
+          assert button_ids == ['law-move-right', 'law-move-left', 'law-bounce-right', 'law-bounce-left']
+          assert {a for law in button_laws for a in law.get('authors', [])} == {'Antigravity'}
+
+          current_button = next(o for o in button_zone['world']['objects'] if o.get('objectID') == 'my-2d-button')
+          legacy_button = next(o for o in button_legacy_zone['world']['objects'] if o.get('objectID') == 'my-2d-button')
+          assert 'speedDir' not in current_button.get('authoredProperties', {})
+          current_button.setdefault('authoredProperties', {})['speedDir'] = copy.deepcopy(
+              legacy_button['authoredProperties']['speedDir'])
+
+          # Preserve Antigravity as the authored model/First-Mover Object referent.
+          # Deliberately DO NOT copy the compatibility Object named Zach: a real
+          # Person identity must never be forged or shadowed just to load a Law.
+          button_support = dedupe_support(button_world)
+          assert 'Antigravity' in button_support and 'Zach' in button_support
+          button_existing = {o.get('objectID') for o in button_zone['world']['objects']}
+          if 'Antigravity' not in button_existing:
+              button_zone['world']['objects'].append(offscreen_support(button_support['Antigravity']))
+          button_zone['lawRefs'] = button_ids
+          write(button_zone_path, button_zone)
+
+          # ---------------- Shared Law roots ----------------
+          bundles = [
+              (chess_laws, chess_triggers),
+              (button_laws, button_triggers),
+          ]
+          created = 0
+          for laws, triggers in bundles:
+              for law in laws:
+                  law_id = law['id']
+                  root_path = ROOT / 'saves/laws' / law_id / 'law.json'
+                  assert not root_path.exists(), f'refusing to overwrite existing shared Law root {law_id}'
+                  trig = triggers.get(law_id, [])
+                  assert isinstance(trig, list)
+                  root = {
+                      'authors': copy.deepcopy(law.get('authors', [])),
+                      'identifier': law_id,
+                      'injected_by': provenance,
+                      'law': copy.deepcopy(law),
+                      'triggers': copy.deepcopy(trig),
+                  }
+                  write(root_path, root)
+                  created += 1
+          assert created == 73
+
+          # Final detached-data checks before commit.
+          chess_after = load(chess_zone_path)
+          button_after = load(button_zone_path)
+          assert len(chess_after['lawRefs']) == 69
+          assert len(chess_after['formationRelations']) == 143
+          assert len(chess_after['world']['objects']) == 60
+          assert any(o.get('objectID') == 'grok-4.6' for o in chess_after['world']['objects'])
+          assert any(o.get('objectID') == 'state.chess' for o in chess_after['world']['objects'])
+          assert len(button_after['lawRefs']) == 4
+          assert len(button_after['world']['objects']) == 2
+          b = next(o for o in button_after['world']['objects'] if o.get('objectID') == 'my-2d-button')
+          assert b['authoredProperties']['speedDir'] == legacy_button['authoredProperties']['speedDir']
+          assert not any(o.get('objectID') == 'Zach' for o in button_after['world']['objects'])
+          print('restored Chess: 69 Laws, 143 relations, 21 support referents')
+          print('restored Basic2DButtonZone: 4 Laws, speedDir, Antigravity referent')
+          print('created shared Law roots:', created)
+          PY
+          git add saves/zones/Chess/zone.json saves/zones/Basic2DButtonZone/zone.json saves/laws
+          git add -f saves/backups/chess-button-zone-native-restoration-2026-09-15
+          git commit -m "Restore Chess and Basic Button Zone closures"
+          git push origin HEAD:sol/restore-legacy-chess-button-zones-v2-20260915
