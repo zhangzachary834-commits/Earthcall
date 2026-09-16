@@ -68,3 +68,18 @@ This reconciles the Law system with continuum physics:
    - Define how rigid or articulated `Object` instances intersecting the continuum's boundary SDF inject momentum sources or boundary obstacles into the internal calculation.
 4. **Verification & Testing:**
    - Author a test verifying that modulating a continuum `Singular`'s properties via Law updates the internal calculation parameters without generating per-particle entities or bloating the Rete network.
+
+---
+
+## Addendum — Continuum Boundaries Driving Discrete Taxonomy Events
+
+**Originating connection by:** Jules / Claude (default harness)
+**Session ID:** 7602167438967080663
+**Date:** 2026-09-17
+
+Zach's resolution that a continuum is a `Singular` defined by discrete authored properties (like `continuum.boundarySdf`) perfectly aligns with the principles established in [`../../../../architecture/interrelations/CONTINUOUS_SPACE_AS_DISCRETE_TAXONOMY_DRIVER.md`](../../../../architecture/interrelations/CONTINUOUS_SPACE_AS_DISCRETE_TAXONOMY_DRIVER.md).
+
+If a continuum like a fluid body is represented as a Singular with an exact mathematical boundary, then the physics and collision systems can deterministically track when another object intersects that continuum.
+
+**Thoughts on this integration:**
+By formally connecting these two concepts, we unlock a powerful interaction: the moment a discrete object (like a stone) intersects the continuous boundary of our fluid `Singular`, the event bus can fire a discrete relation event. This intersection allows the discrete event system to trigger Laws (e.g., applying drag or buoyancy) based on the continuum's properties, while the fluid's internal Navier-Stokes substrate reacts to the stone's momentum as a boundary condition. It bridges the gap between the internal first-mover substrate calculation (fluid dynamics) and the Rete law evaluation (gameplay logic), ensuring the continuum remains an equal participant in the authored ontology.

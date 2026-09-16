@@ -399,7 +399,6 @@ if(NOT EMSCRIPTEN)
         # equivalent fixture is optional and skips when absent; this one is the
         # test's actual subject, so it must resolve), so it needs the source
         # root as its CWD like the `lag` custom target above already gets.
-        #
         # The same applies to every test whose SUBJECT is an authored save read
         # by a bare "saves/..." path. Both Living Studio tests failed under
         # ctest and passed from the source root, and they failed QUIETLY:
