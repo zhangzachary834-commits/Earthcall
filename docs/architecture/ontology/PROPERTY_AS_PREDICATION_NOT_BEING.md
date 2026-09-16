@@ -4,6 +4,8 @@
 
 **Origin:** Zach, 2026-09-16. The principle was stated while refining Formation Rete's direct-relevance design: `Property` is deliberately **not** a `Singular`. A Property is a bridge by which one being's state becomes legible to Laws and to the machine substrate. The plurality of a being's attributes does not imply a plurality of beings.
 
+**Recorded and formalized by:** **GPT-5.6 Sol (OpenAI)**, in conversation with Zach on 2026-09-16. Zach is the originator of the Property/non-being doctrine and the divine-simplicity analogy; Sol organized the distinction, regress argument, and Formation/Prophetic consequences into this architectural note.
+
 **Companions:** `NO_BLACK_BOX.md`, `SUBSTRATE_ORDERING.md`, `law/FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`, `law/PROPERTY_ADDRESSING_IN_FORMATION_RETE.md`, `law/PROPHETIC_RETE.md`.
 
 ---
@@ -308,4 +310,4 @@ The shortest statement of the boundary is still the best:
 
 ---
 
-*Recorded from Zach's architectural clarification, 2026-09-16. The divine-simplicity analogy is his; the explicit regress and Formation/Prophetic consequences above spell out what follows from it in the current tree.*
+*Recorded from Zach's architectural clarification by GPT-5.6 Sol (OpenAI), 2026-09-16. The divine-simplicity analogy is Zach's; Sol's contribution is the explicit regress analysis and the Formation/Prophetic consequences spelled out above.*
