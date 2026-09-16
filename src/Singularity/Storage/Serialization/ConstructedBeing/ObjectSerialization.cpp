@@ -156,25 +156,17 @@ void to_json(nlohmann::json& j, const Object& obj){
         };
     }
 
-    // Sculpted / authored topology is SEMANTIC truth, not a disposable matter
-    // cache.  The old writer only persisted Field payloads here; Patch and
-    // custom Polyhedron payloads survived solely because .ecmatter happened to
-    // be present.  A Zone identity must be independently complete.
-    if (obj.hasPatch()) {
-        const auto& patch = obj.getPatchData();
-        nlohmann::json pj{
-            {"du", patch.du},
-            {"dv", patch.dv},
-            {"ctrl", nlohmann::json::array()}
-        };
-        for (const auto& c : patch.ctrl) pj["ctrl"].push_back({c.x, c.y, c.z});
-        j["patch"] = std::move(pj);
-    }
+    // Split-substrate contract: semantic text says WHAT representation this
+    // being has; dense Patch control nets and custom Polyhedron vertex/face
+    // arrays are physical geometry and remain in .ecmatter.  The reader below
+    // still accepts historical/transitional semantic payloads for backward
+    // compatibility, but new writes intentionally do not duplicate them here.
 
     if (obj.hasField()) {
-        // A Field's ShapeKind is only its low-level representation label; the
-        // SDF/OntoMath tree is the authored form. Persist the complete tree and
-        // its evaluation extent so a reload cannot produce a bare Field shell.
+        // A Field's compact SDF/OntoMath recipe is semantic authoring intent,
+        // not a dense sampled/compiled buffer. Keep that recipe and its domain
+        // here until .ecmatter can encode the full recursive form losslessly;
+        // dense compiled/sampled field data belongs in Matter, not in text.
         j["field"] = geom::sdfToJson(obj.getFieldData());
         const auto& ext = obj.getFieldExtent();
         j["fieldExtent"] = {ext.x, ext.y, ext.z};
@@ -183,18 +175,10 @@ void to_json(nlohmann::json& j, const Object& obj){
         }
     }
 
-    if (obj.getShapeKind() == Object::ShapeKind::Polyhedron) {
-        const auto& poly = obj.getPolyhedronData();
-        if (!poly.vertices.empty() && !poly.faces.empty()) {
-            nlohmann::json pj{
-                {"vertices", nlohmann::json::array()},
-                {"faces", nlohmann::json::array()}
-            };
-            for (const auto& v : poly.vertices) pj["vertices"].push_back({v.x, v.y, v.z});
-            for (const auto& face : poly.faces) pj["faces"].push_back(face);
-            j["polyhedron"] = std::move(pj);
-        }
-    }
+    // Patch and Polyhedron density is deliberately omitted from the semantic
+    // record.  Their ShapeKind is semantic intent; their control-net / vertex
+    // buffers are hydrated from the matching .ecmatter entity after the
+    // semantic skeleton exists.
 
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
@@ -420,10 +404,11 @@ void from_json(const nlohmann::json& j, Object& obj){
         }
     }
 
-    // Custom polyhedron geometry belongs to the semantic identity too.  Only
-    // apply it when the discriminant says this Object is still a Polyhedron;
-    // an obsolete payload may coexist in a merged legacy record and must not
-    // overturn the newer declared shape.
+    // Backward compatibility only: older/transitional semantic records may
+    // embed custom Polyhedron geometry. New writers keep this dense topology
+    // in .ecmatter, but an embedded legacy payload is still accepted when the
+    // discriminant says this Object is a Polyhedron. An obsolete payload may
+    // never overturn a newer declared shape.
     if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron")) {
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;

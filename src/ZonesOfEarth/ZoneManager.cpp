@@ -2635,12 +2635,13 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
     // unique in this buffer. Sol's Invariant 3: "do not use iteration
     // order, unordered_map replacement, or last-record-wins anywhere."
     //
-    // IMPORTANT: authored semantic topology is already hydrated before this
-    // sidecar is applied. Matter may recover topology that an old semantic
-    // record genuinely lacks, but it may never redefine an already-authored
-    // representation. The checks below therefore ask both WHAT the semantic
-    // ShapeKind says the being is and WHETHER that representation is already
-    // complete before admitting legacy matter as a compatibility fill.
+    // IMPORTANT: semantic identity is hydrated before physical Matter.
+    // .ecmatter is the binary substrate for dense geometry, so a semantic
+    // Patch/Polyhedron shell is EXPECTED to receive its control-net/vertices
+    // here. What Matter may never do is redefine the semantic representation.
+    // The checks below therefore ask WHAT the semantic ShapeKind says the
+    // being is and whether topology is already present before injecting the
+    // matching physical payload. Older embedded-topology saves remain valid.
     const auto checkedSdfPrim = [](int raw, geom::SdfPrim& out) {
         const int first = static_cast<int>(geom::SdfPrim::Sphere);
         const int last = static_cast<int>(geom::SdfPrim::Convex);
@@ -2709,10 +2710,10 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
         }
         o->setRotationResponsiveness(entity->rotation_responsiveness());
 
-        // 2. Polyhedron. The sidecar may fill a legacy Polyhedron whose
-        // semantic identity names Polyhedron but has no topology. It may not
-        // turn some other authored shape INTO a Polyhedron, nor replace a
-        // semantic Polyhedron that already carries vertices/faces.
+        // 2. Polyhedron. Dense vertices/faces live in Matter. Inject them
+        // only into a semantic Polyhedron shell that does not already carry
+        // topology (for example an older embedded-topology record). Matter may
+        // not turn some other authored shape INTO a Polyhedron.
         if (entity->polyhedron() && entity->polyhedron()->vertices() &&
             entity->polyhedron()->face_data() && entity->polyhedron()->face_offsets()) {
             if (o->getShapeKind() == Object::ShapeKind::Polyhedron &&
@@ -2769,14 +2770,14 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
                     o->setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
                 } else {
                     std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
-                                 "legacy Polyhedron matter for '" << key << "'.\n";
+                                 "Polyhedron matter for '" << key << "'.\n";
                 }
             }
         }
 
-        // 3. Bezier Patch. Same compatibility rule: only fill a semantic
-        // Patch shell. A stale patch payload is never permission to reclassify
-        // the current authored being.
+        // 3. Bezier Patch. Dense control points live in Matter. Fill only a
+        // semantic Patch shell; a stale patch payload is never permission to
+        // reclassify the current authored being.
         if (entity->patch() && entity->patch()->ctrl() &&
             o->getShapeKind() == Object::ShapeKind::Patch && !o->hasPatch()) {
             geom::BezierPatch patch;
@@ -2794,14 +2795,14 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
                 o->setBezierPatch(patch);
             } else {
                 std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
-                             "legacy Patch matter for '" << key << "'.\n";
+                             "Patch matter for '" << key << "'.\n";
             }
         }
 
-        // 4. Smooth Surface. Named analytic kinds rebuild their semantic
-        // surface from ShapeParams during JSON hydration. Matter is therefore
-        // only a legacy recovery source when the ShapeKind itself agrees AND
-        // the semantic topology is actually missing.
+        // 4. Smooth Surface. Named analytic kinds currently rebuild their
+        // surface deterministically from semantic ShapeParams, so Matter is
+        // normally redundant for them today. It may hydrate missing physical
+        // topology only when the exact semantic analytic kind agrees.
         if (entity->smooth_data() && entity->smooth_data()->quadric_matrix() &&
             smoothKind(o->getShapeKind()) && !o->hasSmoothSurface()) {
             const auto* sm = entity->smooth_data();
@@ -2861,7 +2862,7 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
                 o->setSmoothSurface(sd);
             } else {
                 std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
-                             "legacy SmoothSurface matter for '" << key << "'.\n";
+                             "SmoothSurface matter for '" << key << "'.\n";
             }
         }
 
@@ -2911,7 +2912,7 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
                 o->setFieldShape(node, extent);
             } else {
                 std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected lossy or malformed "
-                             "legacy Field matter for '" << key << "'.\n";
+                             "Field matter for '" << key << "'.\n";
             }
         }
 

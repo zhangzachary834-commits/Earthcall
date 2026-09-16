@@ -230,38 +230,68 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    // 6. A Zone identity is independently complete for sculpted topology.
-    //    Patch and custom Polyhedron data may not require .ecmatter to exist.
+    // 6. ORIGINAL SPLIT-SUBSTRATE CONTRACT. Semantic text carries the
+    //    representation/intent; dense Bezier control points and Polyhedron
+    //    vertex/face arrays live in .ecmatter. Hydration is therefore:
+    //       semantic shell first -> matching physical Matter second.
+    //    New semantic writes must not duplicate those dense arrays.
     // ------------------------------------------------------------------
     {
-        Object patchSource("semantic-patch-test");
+        const std::string zoneId = "split-substrate-shape-test";
+        auto sourceZone = std::make_shared<Zone>(zoneId, "strict");
+
+        auto patchSource = std::make_shared<Object>("split-patch-test");
         geom::BezierPatch patch = geom::makeBezierGrid(3, 3, 0.5f);
         patch.ctrl[0] = glm::vec3(-2.0f, 0.25f, 1.0f);
-        patchSource.setBezierPatch(patch);
+        patchSource->setBezierPatch(patch);
+        sourceZone->addObject(patchSource);
 
-        nlohmann::json j;
-        to_json(j, patchSource);
-        check(j.contains("patch"), "semantic Object JSON carries the Bezier control net");
-        Object patchBack("semantic-patch-test");
-        from_json(j, patchBack);
-        check(patchBack.hasPatch() && patchBack.getPatchData().ctrl.size() == patch.ctrl.size(),
-              "Bezier patch survives semantic-only round trip");
-        if (patchBack.hasPatch() && !patchBack.getPatchData().ctrl.empty()) {
-            check(near(patchBack.getPatchData().ctrl[0].x, -2.0f),
-                  "Bezier control point survives semantic-only round trip");
-        }
+        auto polySource = std::make_shared<Object>("split-polyhedron-test");
+        polySource->createIcosahedron();
+        sourceZone->addObject(polySource);
 
-        Object polySource("semantic-polyhedron-test");
-        polySource.createIcosahedron();
-        nlohmann::json pj;
-        to_json(pj, polySource);
-        check(pj.contains("polyhedron"), "semantic Object JSON carries custom polyhedron topology");
-        Object polyBack("semantic-polyhedron-test");
-        from_json(pj, polyBack);
-        check(polyBack.getShapeKind() == Object::ShapeKind::Polyhedron &&
-                  polyBack.getPolyhedronData().vertices.size() ==
-                      polySource.getPolyhedronData().vertices.size(),
-              "custom polyhedron survives semantic-only round trip");
+        ZoneManager writer;
+        writer.addZone(sourceZone);
+        const std::vector<uint8_t> matter = writer.buildMatterFlatBuffer();
+        check(!matter.empty(), "split-substrate matter carries dense shape topology");
+
+        nlohmann::json patchJson;
+        nlohmann::json polyJson;
+        to_json(patchJson, *patchSource);
+        to_json(polyJson, *polySource);
+        check(patchJson["shapeKind"].get<int>() == static_cast<int>(Object::ShapeKind::Patch) &&
+                  !patchJson.contains("patch"),
+              "semantic Patch record keeps identity but does not duplicate its control net");
+        check(polyJson["shapeKind"].get<int>() == static_cast<int>(Object::ShapeKind::Polyhedron) &&
+                  !polyJson.contains("polyhedron"),
+              "semantic Polyhedron record keeps identity but does not duplicate vertices/faces");
+
+        auto patchBack = std::make_shared<Object>("split-patch-test");
+        auto polyBack = std::make_shared<Object>("split-polyhedron-test");
+        from_json(patchJson, *patchBack);
+        from_json(polyJson, *polyBack);
+        check(patchBack->getShapeKind() == Object::ShapeKind::Patch && !patchBack->hasPatch(),
+              "semantic Patch hydration creates the shell before Matter supplies density");
+        check(polyBack->getShapeKind() == Object::ShapeKind::Polyhedron &&
+                  polyBack->getPolyhedronData().vertices.empty(),
+              "semantic Polyhedron hydration creates the shell before Matter supplies density");
+
+        auto destinationZone = std::make_shared<Zone>(zoneId, "strict");
+        destinationZone->addObject(patchBack);
+        destinationZone->addObject(polyBack);
+        ZoneManager reader;
+        reader.addZone(destinationZone);
+        reader.applyMatterFlatBuffer(matter);
+
+        check(patchBack->hasPatch() &&
+                  patchBack->getPatchData().ctrl.size() == patch.ctrl.size() &&
+                  near(patchBack->getPatchData().ctrl[0].x, -2.0f),
+              "matching .ecmatter fleshes out the semantic Patch shell");
+        check(polyBack->getShapeKind() == Object::ShapeKind::Polyhedron &&
+                  polyBack->getPolyhedronData().vertices.size() ==
+                      polySource->getPolyhedronData().vertices.size() &&
+                  !polyBack->getPolyhedronData().faces.empty(),
+              "matching .ecmatter fleshes out the semantic Polyhedron shell");
     }
 
     // ------------------------------------------------------------------
@@ -344,10 +374,10 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    // 9. Matter is a legacy recovery/cache substrate, never a competing
-    //    semantic topology authority. Exercise all four topology families
-    //    through the REAL writer/reader boundary, including positive legacy
-    //    recovery where semantic JSON genuinely carries only a shell.
+    // 9. Matter is the physical geometry substrate, but semantic identity
+    //    constrains what Matter is allowed to flesh out. Exercise all four
+    //    topology families through the REAL writer/reader boundary, including
+    //    positive hydration of matching semantic shells and stale refusal.
     // ------------------------------------------------------------------
     {
         const std::string zoneId = "matter-authority-zone";
@@ -468,21 +498,21 @@ int main() {
         check(legacyPatch->hasPatch() &&
                   !legacyPatch->getPatchData().ctrl.empty() &&
                   near(legacyPatch->getPatchData().ctrl[0].x, 4.25f),
-              "valid legacy Patch matter can recover a semantic Patch shell");
+              "valid Patch matter hydrates a matching semantic Patch shell");
         check(legacyPoly->getShapeKind() == Object::ShapeKind::Polyhedron &&
                   legacyPoly->getPolyhedronData().vertices.size() == 4 &&
                   !legacyPoly->getPolyhedronData().faces.empty(),
-              "valid legacy Polyhedron matter can recover missing topology");
+              "valid Polyhedron matter hydrates a matching semantic Polyhedron shell");
         check(legacyField->hasField() &&
                   legacyField->getFieldData().prim == geom::SdfPrim::Box &&
                   near(legacyField->getFieldExtent().x, 4.0f) &&
                   near(legacyField->getFieldExtent().y, 5.0f) &&
                   near(legacyField->getFieldExtent().z, 6.0f),
-              "valid leaf Field matter can recover a legacy semantic Field shell");
+              "valid leaf Field matter can hydrate a matching semantic Field shell");
         check(legacySmooth->getShapeKind() == Object::ShapeKind::Sphere &&
                   legacySmooth->hasSmoothSurface() &&
                   near(legacySmooth->getSmoothData().axes.x, 0.62f),
-              "valid SmoothSurface matter can recover missing topology when semantic kind agrees");
+              "valid SmoothSurface matter can hydrate missing topology when semantic kind agrees");
     }
 
     // ------------------------------------------------------------------
