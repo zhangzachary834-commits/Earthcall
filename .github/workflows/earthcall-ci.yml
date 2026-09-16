@@ -1,14 +1,14 @@
 name: Earthcall focused CI
 
-# TEMPORARY branch-only one-shot patch bridge. It is restored to read-only
-# immediately after the bounded semantic-shape guard commit lands.
+# CI is intentionally read-only. It builds and runs tests; it does not deploy,
+# publish, merge, delete, upload releases, or write back to the repository.
 on:
   push:
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: earthcall-focused-ci-${{ github.workflow }}-${{ github.ref }}
@@ -24,14 +24,7 @@ jobs:
       - name: Check out tested commit
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
-
-      - name: Apply final semantic-shape guard patch on branch push
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          set -euxo pipefail
-          python3 scripts/sol_final_shape_guard_patch.py
+          persist-credentials: false
 
       - name: Report runner and vendored library architecture
         shell: bash
