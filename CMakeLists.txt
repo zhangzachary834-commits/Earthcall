@@ -399,7 +399,7 @@ if(NOT EMSCRIPTEN)
         # equivalent fixture is optional and skips when absent; this one is the
         # test's actual subject, so it must resolve), so it needs the source
         # root as its CWD like the `lag` custom target above already gets.
-        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
+        if (${TEST_NAME} MATCHES "^synthesis_studio_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         endif()
