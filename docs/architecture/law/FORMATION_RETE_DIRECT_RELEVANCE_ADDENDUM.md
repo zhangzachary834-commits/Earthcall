@@ -2,9 +2,11 @@
 
 **Status:** Architectural addendum, 2026-09-16. This document extends `FORMATION_RETE.md` §§1–4, §6, §8 and §9. It does not replace the rung ladder. It records a refinement Zach articulated after the 2026-09-16 Formation Rete work: the variable-like role of Categories and concept-Singulars, the complexity consequences of bidirectional / Magic-Set-style traversal, and the final step in which a proved relevance route may crystallize into a direct Relation from a Law to the Singular/property address it can actually affect.
 
-**Origin and attribution.** The core ideas in this addendum are Zach's: (1) a Category or concept-Singular can play the role ordinary rule engines give to variables; (2) search should be constrained from both ends so the goals meet in the middle rather than fan out from one side; (3) once category/Relation structure has mapped a Law to the specific Singular or property it can affect, a **direct relevance Relation** should be made only when that shortcut is **provably sound**; and (4) the shortcut-validation phase belongs after Prophetic Rete has incorporated the changes relevant to the present Moment, so the hot path does not rediscover whether the route changed. This document formalizes those ideas and relates them to the already-built Prophetic filter, Slow Adapter, Magic Sets framing, and derived-state invalidation discipline.
+**Origin and attribution.** The core ideas in this addendum are Zach's: (1) a Category or concept-Singular can play the role ordinary rule engines give to variables; (2) search should be constrained from both ends so the goals meet in the middle rather than fan out from one side; (3) once category/Relation structure has mapped a Law to the specific Singular or property it can affect, a **direct relevance Relation** should be made only when that shortcut is **provably sound**; and (4) the shortcut-validation phase belongs after Prophetic Rete has incorporated the changes relevant to the present Moment, so the hot path does not rediscover whether the route changed.
 
-**Companions:** `FORMATION_RETE.md`, `PROPHETIC_RETE.md` §2, `B-time Rete.md`, `DERIVED_STATE_LEDGER.md`, `AUTHORED_CATEGORIES.md`, `PRIMARY_AND_SUB_RELATIONS.md`.
+**Recorded and formalized by:** **GPT-5.6 Sol (OpenAI)**, in conversation with Zach on 2026-09-16. Zach originated the architectural refinements above; Sol compared them against indexed Beta complexity, formalized the meet-in-the-middle and amortized-direct-edge consequences, and connected them to the existing Prophetic filter, Slow Adapter, Magic Sets framing, and derived-state invalidation discipline.
+
+**Companions:** `FORMATION_RETE.md`, `PROPHETIC_RETE.md` §2, `B-time Rete.md`, `DERIVED_STATE_LEDGER.md`, `AUTHORED_CATEGORIES.md`, `PRIMARY_AND_SUB_RELATIONS.md`, `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md`, `../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`.
 
 ---
 
@@ -241,25 +243,26 @@ Law L
 If the engine can prove that `S.P` is a sound downstream relevance destination for `L` under the current declared premises, it may crystallize the route into a direct relevance Relation conceptually equivalent to:
 
 ```text
-Law L ── relevant-to ──> S.P
+Law L ── relevant-to ──> Singular S
+                     + PropertyPath P
 ```
 
-The next hot-path write no longer needs to traverse `L → C → R → S → P`. It follows the proved shortcut.
+The next hot-path write no longer needs to traverse `L → C → R → S → P`. It follows the proved shortcut to the bearer, with the PropertyPath identifying the relevant predication on that bearer.
 
-### 4.1 What exists literally today
+### 4.1 What exists literally today — and why that boundary is deliberate
 
 A `Law` is a `Singular`, so it can stand in an ordinary first-class Relation.
 
-A `Property`, however, is currently an abstract readable/writable state interface and **does not inherit `Singular`**. Therefore a literal Relation endpoint cannot presently be a `Property` object without changing the ontology/type system.
+A `Property` deliberately **does not inherit `Singular`**. This is not an implementation gap awaiting future reification. Per `../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`, a Property is a legible predication of one bearer and a bridge into machine-level state, not another being. Reifying every Property would both confuse attribute with substance and reopen an infinite regress of Properties-of-Properties.
 
-The admissible present-day representation is therefore:
+The ontologically correct representation is therefore:
 
 ```text
 Law L ── relevant-to ──> Singular S
                      + authored/derived PropertyPath P as the address within S
 ```
 
-or an equivalent first-class in-world structure that preserves both the Singular endpoint and the property path without inventing a new domain C++ kind. If Properties later become first-class Singulars by an independently justified ontology decision, the direct endpoint may become literal; this addendum does **not** make that decision.
+or an equivalent first-class in-world structure that preserves the Singular endpoint and the property-path qualification without inventing a Property-being. `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md` records the execution rule compactly: **Relations join beings; Properties disclose them.**
 
 ### 4.2 A direct relevance edge is a derived proof object, not a guess
 
@@ -530,3 +533,7 @@ possible tuple space
 ```
 
 The ambition is not to make search magically disappear. It is to **pay discovery when knowledge is genuinely absent, preserve the knowledge when it becomes sound, and stop paying discovery once the world already knows the answer.**
+
+---
+
+*Recorded and formalized by GPT-5.6 Sol (OpenAI) from Zach's Formation/Prophetic Rete refinements, 2026-09-16. Zach is the originator of the architectural ideas identified above; Sol's contribution is their complexity analysis, synthesis with indexed Beta/Magic Sets, and integration with the existing Earthcall documentation and derived-state discipline.*
