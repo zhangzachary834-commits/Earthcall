@@ -37,13 +37,15 @@ The FlatBuffer schema has fields for richer SDF data, but the current writer ser
 
 PR #188 adds a defensive Field boundary in `Object::setFieldShape`: an incomplete operator / Expr / Convex shell may not demote an already-complete semantic Field. The historical `Sphere + expr string` form is also normalized into an actual Expr and its RPN is compiled.
 
-This closes the demonstrated Field corruption path, but it does **not** make `.ecmatter` a fully safe semantic authority. `applyMatterFlatBuffer` still directly applies Polyhedron, Bezier Patch, and SmoothSurface payloads. A stale Patch/Polyhedron sidecar can change ShapeKind; stale SmoothSurface data can change runtime topology while leaving ShapeKind unchanged. That is tracked explicitly in #189.
+This closes the demonstrated Field-tree corruption path, but it does **not** make `.ecmatter` a fully safe semantic authority. `applyMatterFlatBuffer` still directly applies Polyhedron, Bezier Patch, and SmoothSurface payloads. A stale Patch/Polyhedron sidecar can change ShapeKind; stale SmoothSurface data can change runtime topology while leaving ShapeKind unchanged. The Field guard also currently accepts the incoming matter extent even when it refuses a lossy root, so the project must decide explicitly whether evaluation extent belongs to semantic Form or to physical cache state. These are tracked in #189.
+
+The matter reader also performs semantic operations on structurally verified but otherwise unchecked values: Polyhedron `face_offsets` can still be negative/non-monotone/out-of-range, face indices can be invalid, and SDF/SmoothSurface enum integers are direct-cast into runtime enums. Structural FlatBuffer verification is not a substitute for those semantic checks.
 
 ### ObjectConcept member templates
 
-`ObjectConcept::MemberTemplate` had a separate shape codec. It wrote only the historical first nine `ShapeParams` slots even after Shape2D/Text2D added `width2D` and `height2D`. Therefore a concept could correctly capture a 2D member in memory and lose its authored dimensions merely by crossing concept save/load.
+`ObjectConcept::MemberTemplate` had a separate shape codec. Its historical `params` reader required **exactly nine** slots even after Shape2D/Text2D added `width2D` and `height2D`. Therefore a concept could correctly capture a 2D member in memory and lose its authored dimensions merely by crossing concept save/load.
 
-PR #188 now writes all eleven current slots, continues reading historical nine-slot members, and validates member ShapeKind ordinals.
+Simply changing that array to eleven entries is not compatibility-safe: an older Earthcall reader still checking `params.size() == 9` would treat a new eleven-slot record as though no parameters existed. PR #188 therefore keeps the legacy `params` arm exactly nine entries wide and adds `width2D` / `height2D` as named additive fields. The new reader accepts historical nine-slot records, the brief eleven-slot development representation produced while this repair branch was in flight, and the additive named fields (which win when present). Persisted member ShapeKind ordinals are validated before admission, including wrong JSON types.
 
 ### BodyPart / composite sub-object hydration
 
@@ -70,9 +72,10 @@ This correction must not be mistaken for authoring the Cathedral manifesto's ful
 5. named parameter precedence over stale positional compatibility data;
 6. semantic-only Bezier Patch round trip;
 7. semantic-only custom Polyhedron round trip;
-8. ObjectConcept eleven-slot round trip and historical nine-slot readability;
-9. invalid ObjectConcept ShapeKind refusal;
-10. invalid BodyPart primary and nested sub-object ShapeKind refusal.
+8. ObjectConcept 2D parameters via additive fields while the legacy array remains nine-wide;
+9. historical nine-slot and brief eleven-slot ObjectConcept readability;
+10. invalid and non-integer ObjectConcept ShapeKind refusal;
+11. invalid BodyPart primary and nested sub-object ShapeKind refusal.
 
 Focused CI explicitly builds and runs this witness.
 
@@ -87,19 +90,23 @@ Focused CI explicitly builds and runs this witness.
 
 A compatibility bridge may still hydrate legacy objects that genuinely lack semantic topology, but it must never let stale matter overwrite a complete newer semantic form.
 
-### B. Polyhedron matter input needs semantic validation
+### B. Field extent needs an explicit authority decision
 
-FlatBuffers structural verification does not imply valid face topology. The current reader should reject negative, non-monotone, or out-of-range `face_offsets` before using `end - start` as a reserve size or traversing `face_data`. Face vertex indices should likewise be checked against the vertex count before constructing the custom polyhedron.
+The current Field defense refuses an incomplete matter tree over a complete semantic tree but still accepts the sidecar's extent. If extent defines the mathematical evaluation domain, it is semantic and must remain with the authored Field. If it is deliberately a physical sampling/cache hint, that status should be explicit. The current ambiguity is itself a persistence risk because a stale matter sidecar can still change what portion of the field manifests.
 
-### C. RoundedBox needs an explicit size contract
+### C. Polyhedron and matter enum inputs need semantic validation
+
+FlatBuffers structural verification does not imply valid face topology. The current reader should reject negative, non-monotone, or out-of-range `face_offsets` before using `end - start` as a reserve size or traversing `face_data`; face vertex indices should be checked against vertex count. SDF primitive/operator and SmoothSurface model/form/parametric-kind integers also need checked conversion before entering runtime geometry evaluation.
+
+### D. RoundedBox needs an explicit size contract
 
 `Object::setShape(RoundedBox, p)` currently passes hardcoded `0.5f` as the box size and only consumes `p.fillet`. `ShapeParams` currently defines no explicit rounded-box size/half-extent field. Reusing `r` because it happens to exist would silently change the meaning documented for that field. The correct repair is append-only: introduce and expose an explicit rounded-box size/half-extent parameter, persist it, register it to the Law/property surface, then consume it in the constructor.
 
-### D. Remaining enum boundaries should be classified, not blindly replaced
+### E. Remaining enum boundaries should be classified, not blindly replaced
 
 The main Object, ObjectConcept, and BodyPart persisted ShapeKind readers are checked in PR #188. Other integer-to-shape casts should be classified by role. Persisted geometry filters/law targets need the same checked boundary; UI/live-selection paths that already prove `0..Text2D` before casting are not the same persistence bug.
 
-### E. Cathedral generated artifacts and exact authored math remain separate work
+### F. Cathedral generated artifacts and exact authored math remain separate work
 
 The tracked Cathedral Zone identity was empty at this branch point even though the World package held Cathedral data. The generator path is corrected, but this session intentionally did not overwrite/regenerate the committed Zone artifact without verification. Separately, the standing-wave OntoMath zero-set must actually be authored if the desired manifestation is to be that mathematical cathedral rather than a composition of boxes, spheres and tori.
 
