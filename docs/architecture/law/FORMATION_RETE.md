@@ -2,7 +2,7 @@
 
 *The Ontological, Graph-Routed Successor to Standard Rete*
 
-**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is done** (2026-09-14), **rung 7's departure half is done and rungs 5–6 are measured and deferred** (2026-09-15) — overlap still has no users; membership, the real idiom, now costs what a property read costs, and the cause turned out to be an opaque Prophetic read rather than the relation walk (see §8 item 4). Rung 0 closed §1.2(a):
+**Status:** **Rungs 0–3 of §8 are done** (2026-09-08 / 2026-09-09); **rung 4 is done** (2026-09-14), **rung 7's departure half is done** (2026-09-15) and **rung 5's slow adapter is built, with rung 6's Law-as-traverser half on top of it** (2026-09-16, shipped inactive after measurement) — overlap still has no users; membership, the real idiom, now costs what a property read costs, and the cause turned out to be an opaque Prophetic read rather than the relation walk (see §8 item 4). Rung 0 closed §1.2(a):
 relation-state facts now have an incremental update path and both endpoints. Rung 1 measured
 §1.2(b) — and the measurement found a **larger quadratic that was masking it**, in transient
 `Moment` destruction rather than in quantifiers; that is fixed, and §8 rung 1 records why the
@@ -655,7 +655,20 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    during play. Now ~14 ms: the rebuild walks each being's own property names once instead of
    asking each being about each name, and the indexed-name set is keyed on `Law::textRevision()`
    rather than re-collected per law per tick. Guarded by `vocabulary_index_test` §H.
-5. ⚠️ **The instance-side slow adapter** — capped, two-rate clock, candidates only. *Measured
+5. ✅ **The instance-side slow adapter** — capped, two-rate clock, candidates only. *Built
+   2026-09-16 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), shipped OFF by default after
+   measurement.* `src/Relation/Traversal/SlowAdapter.{hpp,cpp}`: it walks each Law's
+   `Related(kind, category)` roads on its own clock — one bounded improve step and one revisit step
+   per tick — and `sweepSubjects` reads the result instead of deriving candidates per frame. Zach,
+   2026-09-16: "The mechanism that creates Relations between Relations and pre-loads Law Relations
+   to these Relation Formations is also supposed to be in the slow adapter rather than constantly
+   rebuilt every frame." Its search primitive is the bounded BFS of
+   `RelevanceTraversal.{hpp,cpp}`. **Measured: 0.71-0.73x per event in a world whose vocabulary
+   index cannot narrow (400 and 1600 beings, 8 in the category); slightly WORSE in chess, where
+   rung 2's index already narrows to the 32 pieces.** So it is inactive scaffolding, maintained and
+   tested but not queried, per Zach: "Leave elements as inactive scaffolding if u measure it to be
+   worse off dont delete it altogether." Record and guards:
+   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § 2026-09-16. *Measured
    2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), adapter deferred.* Real
    worlds sweep only in `Scope::Everyone` event laws (chess: 0.3% hit rate), and 92% of each
    missed candidate's cost was the transient `ECA::Event`'s destructor walking the whole
@@ -665,8 +678,14 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    sub-questions (a)–(d), on §9.2, and on rung 7, which §6 makes its prerequisite. Record:
    `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 5.
 6. ⚠️ **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
-   restriction. *Measured 2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), not
-   built:* the heaviest real world (chess) evaluates 41 quantifiers in a whole game test, 7 ms
+   restriction. *Half built 2026-09-16 (reification returns beings the caller owns, so making them
+   and admitting them to a world stay two separate decisions):* the Law-as-traverser half is the slow adapter above — a
+   Law's roads are pre-loaded and `sweepSubjects` traverses them, and `SlowAdapter::reify` makes the
+   path into beings (a Formation of the carrying Relations, `gathers` Relations between the
+   gathering and each edge, a `routes-through` Relation from the Law). Reification is **not run by
+   the engine**: it writes Relations into a Person's world and a save then carries them, so it waits
+   on Zach. The magic-set restriction of quantifier domains is still unbuilt. *Measured 2026-09-15,
+   and still true of the quantifier half:* the heaviest real world (chess) evaluates 41 quantifiers in a whole game test, 7 ms
    total, so restricting them by traversal has no measurable payoff yet. When it does, only
    `ForAny ∃b: Related(T, X) ∧ φ(b)` may be restricted to `X`'s neighbours, and never `ForAll`.
 7. ✅ **Departure reporting on the reactive path.** *Done 2026-09-15 (Opus 5, same session).*
@@ -842,7 +861,32 @@ joins they exist for.
        derived state, not Relations.
 2. **What `Relation::weight` means.** Value (strength/telos, in the sense of the Hierarchy
    of Joys) or cost (fan-out)? §5 argues for two axes; if weight is strength, traversal cost
-   needs its own home. Zach is *"not too sure yet"* and leaning toward strength.
+   needs its own home. Zach was *"not too sure yet"* and leaning toward strength.
+
+   **Update — Zach, 2026-09-15, now leaning toward REMOVING weight entirely:** *"I am actually
+   leaning toward removing weight because it is too vague and the ML-like version carries too
+   many assumptions about the Relation's conditions that the program doesn't automatically
+   guarantee."* And on what to build meanwhile: *"I think its fine to just implement BFS for now
+   we can always adjust it to dijkstras later if I decide weight is something like strength."*
+
+   **Built accordingly (Opus 5, 2026-09-16):** `src/Relation/Traversal/RelevanceTraversal.{hpp,cpp}`
+   — bounded breadth-first routing that reads no weight at all. Hop count is Dijkstra with every
+   edge weighing 1, so the upgrade is a priority queue and a cost function, nothing more.
+   Guarded by `tests/relation/relevance_traversal_test.cpp`.
+
+   **What removal would cost, verified in the tree 2026-09-16** (recorded so the decision is made
+   with the price in view, not to argue either way):
+   - `"weight"` is **written into save files** — chess, Go, both Synthesis Studio zones, the
+     Cathedral of the Living Logos. Save files are sacred; removing the field decides what
+     happens to the values already in them.
+   - `RelationManager::add` **merges a duplicate relation by summing weights**
+     (`it->setWeight(it->getWeight() + r.getWeight())`), and records the delta in the relation's
+     `events` history. Removing weight removes that merge rule; what replaces it is a real
+     question (refuse the duplicate, keep one, count them?).
+   - It is a **registered governable property** (`weight`, `ComputedProperty`), so any authored
+     law may already read or write it, and `Relation::describe()` prints it as "strength".
+   - `Relation::getWeight` **refuses to default outside developer mode** and logs an audit
+     warning when unsettled — the Synthesis Studio and chess worlds emit those warnings today.
 3. ~~**The sweep schedule.**~~ **ANSWERED — Zach, 2026-09-07: on structural revision.**
    `Universe::structuralRevision()` (`Universe.hpp:241`) is the signal: sweep when the counter
    has moved past what the index was built at, otherwise trust the index. Verified before
@@ -852,10 +896,11 @@ joins they exist for.
    on a property's value changing, which is the separate change feed. That is exactly the shape
    of "which beings carry a property named X".
    **Two things a later rung must handle before depending on it:** it has **no readers at all
-   today**, so Formation Rete would be its first consumer; and `Zone::removeObject` does **not**
-   bump it, so a being removed outside the unmaking path leaves the counter still. Since
-   Formations hold raw pointers, that is a dangling read rather than merely a stale one. Rung 2
-   prerequisite. The maximum-staleness half of the question is still open.
+   today**, so Formation Rete would be its first consumer; and `Zone::removeObject` did **not**
+   bump it, so a being removed outside the unmaking path left the counter still — a dangling read
+   rather than merely a stale one, since Formations hold raw pointers. **Both holes are now
+   closed:** the counter has consumers (the rung 2 vocabulary index, and the rung 5 adapter), and
+   `Zone::removeObject` bumps it, with a comment saying why. The maximum-staleness half of the question is still open.
 4. **The stratification rule** (§7): which layer's edges may be read but not walked.
 5. **Hysteresis on derived relations.** A `Near`-style relation needs a threshold and will
    chatter at the boundary; the standard fix is a two-threshold band (enter at *r*, leave at

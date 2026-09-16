@@ -4,13 +4,22 @@
 // per-frame 'still happening' event is a bug — that is what WhileTrue is for."
 //
 // WHY THIS TEST EXISTS SEPARATELY FROM rete_compile_test §C.
-// That section already asserts "an edge fires once, not once per tick" — and it
-// passed while this exact bug was live. Its OnBecomeTrue law is created DISABLED and
-// enabled later, so it never gets compiled terminals, so it only ever exercises the
-// SWEEP path, which was never broken. A guard that cannot reach the code it guards is
-// not a guard. This one builds the law the way a running world does — connected,
-// enabled, with a condition that compiles to Rete terminals — so it takes the
-// reactive path.
+// That section also asserts "an edge fires once, not once per tick".
+//
+// CORRECTION, 2026-09-16 (Opus 5). When this file was written I claimed §C could
+// not catch the regression, because its law is created disabled and enabled late
+// and therefore "never compiles terminals". **That claim was wrong, and it was
+// never verified.** Terminals are compiled by syncReteCompilation for every law
+// with a condition model, enabled or not; measured, §C's law has 1 terminal and
+// runs on the REACTIVE path, and reintroducing the regression turns §C red too.
+// §C now prints which path it is on and asserts it, so the answer cannot drift.
+//
+// This file still earns its place, for a different and smaller reason: it
+// isolates the edge/level question from §C's other five sections, uses an
+// accumulating action so "fired once" and "fired every tick" cannot look alike,
+// and states the failure in its assertion text. But it is not the only guard,
+// and saying so was the error — an unverified claim about which code a test
+// reaches is the same species of mistake as the bug it was describing.
 //
 // THE REGRESSION (2026-09-13, `698059e0 Rete performance sweep hunt`). The reactive
 // path in LawManager::tick was widened from `WhileTrue` to `WhileTrue || OnBecomeTrue`.

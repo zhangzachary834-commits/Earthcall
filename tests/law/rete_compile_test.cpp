@@ -225,6 +225,16 @@ int main() {
             ECA::Event{"object-created", &edgeSubject, nullptr, std::time(nullptr)});
 
         mgr.tick();
+        // WHICH PATH IS THIS TESTING? A law with no Rete terminals falls through
+        // to the sweep, and then this section proves nothing about the reactive
+        // branch — where the edge check has been lost twice (04c52ed4,
+        // 698059e0). Stated out loud so the answer cannot drift silently.
+        std::printf("  section C runs on the %s path (%zu terminals)\n",
+                    mgr.terminalCountOf(edgeLaw->getIdentifier()) ? "REACTIVE" : "sweep",
+                    mgr.terminalCountOf(edgeLaw->getIdentifier()));
+        assert(mgr.terminalCountOf(edgeLaw->getIdentifier()) > 0 &&
+               "section C must exercise the REACTIVE branch: a law that compiles no "
+               "terminals sweeps, and the edge regressions this guards live in the other path");
         assert(nearf(static_cast<float>(readNumber(edgeSubject, "position.z")), 0.5f));
         mgr.tick();
         mgr.tick();
