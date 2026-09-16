@@ -1,3 +1,4 @@
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
@@ -5,6 +6,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/SecondNatureLawAuthoring.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -51,16 +53,16 @@ int main() {
 
     Object request;
     request.setObjectID("law-forge-state");
-    request.setDynamicProperty(SecondNatureLawAuthoring::kTemplateProperty,
-                               PropertyValue(std::string("law-template-click-set")));
+    request.setDynamicProperty(SecondNatureLawAuthoring::kPrototypeProperty,
+                               PropertyValue(std::string("law-prototype-click-set")));
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
                                PropertyValue(std::string("forge-target")));
     request.setDynamicProperty(SecondNatureLawAuthoring::kNameProperty,
                                PropertyValue(std::string("When $TARGET is clicked, set its forge value")));
 
-    auto prototype = std::make_shared<Law>("Concept: click -> set", std::vector<Singular*>{&author});
-    prototype->setLawIdentifier("law-template-click-set");
-    prototype->setEnabled(false); // a concept is inert until a Person invokes it
+    auto prototype = std::make_shared<Law>("Prototype: click -> set", std::vector<Singular*>{&author});
+    prototype->setLawIdentifier("law-prototype-click-set");
+    prototype->setEnabled(false); // ordinary Law serving as a source/prototype
     prototype->setActivation(Law::Activation::OnEvent);
     prototype->setScope(Law::Scope::Subject);
     prototype->setConditionModel(ConditionNode::identity("$TARGET"));
@@ -68,10 +70,22 @@ int main() {
     laws.add(prototype);
     laws.bindTrigger(prototype->getIdentifier(), "object-clicked");
 
+    Zone zone("forge-zone", "strict");
+
+    Object objectPrototype;
+    objectPrototype.setObjectID("object-prototype-orb");
+    objectPrototype.setShape(Object::ShapeKind::Sphere, Object::ShapeParams{});
+    objectPrototype.setDynamicProperty("meaning", PropertyValue(std::string("ordinary Singular prototype")));
+
     Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
         beings.push_back(&author);
         beings.push_back(&target);
         beings.push_back(&request);
+        beings.push_back(&objectPrototype);
+        beings.push_back(&zone);
+        for (const auto& object : zone.getOwnedObjects()) {
+            if (object) beings.push_back(object.get());
+        }
         for (const auto& law : laws.getAll()) {
             if (law) beings.push_back(law.get());
         }
@@ -82,11 +96,12 @@ int main() {
         if (event.type == SecondNatureLawAuthoring::kAuthoredEvent) ++authoredEvents;
     });
 
+    // The authored-interface adapter creates a Law THROUGH universal set-to-set.
     ECA::Event invoke{SecondNatureLawAuthoring::kInvokeEvent,
                       &request, nullptr, std::time(nullptr), author.getIdentifier()};
     assert(SecondNatureLawAuthoring::instantiate(invoke));
 
-    Law* first = laws.find("law-template-click-set.birth-1");
+    Law* first = laws.find("law-prototype-click-set.branch-1");
     assert(first);
     assert(first != prototype.get());
     assert(first->isEnabled());
@@ -104,23 +119,41 @@ int main() {
     assert(readString(request, SecondNatureLawAuthoring::kStatusProperty).find("authored:") == 0);
     assert(authoredEvents == 1);
 
-    // The newborn is ordinary executable Law text, not a UI-only token.
     assert(first->applyTo(target) == Law::ApplicationResult::Applied);
     assert(std::abs(readNumber(target, "forgeValue") - 7.0) < 1e-9);
 
-    // Reusing the same instrument mints another identity without overwriting
-    // the first result or the prototype.
+    // SAME creation operation, different Singular kind: no CreateLaw pathway.
+    SingularSetToSetCreation::Request objectBirth{
+        objectPrototype,
+        {&objectPrototype},
+        &author,
+        nullptr,
+        &zone,
+        {},
+        "Derived Orb",
+        {}}
+    ;
+    auto objectResult = SingularSetToSetCreation::derive(objectBirth);
+    assert(objectResult);
+    auto* derivedObject = dynamic_cast<Object*>(objectResult.newborn);
+    assert(derivedObject);
+    assert(derivedObject->getIdentifier() == "object-prototype-orb.branch-1");
+    assert(derivedObject->getShapeKind() == Object::ShapeKind::Sphere);
+    assert(readString(*derivedObject, "meaning") == "ordinary Singular prototype");
+    assert(zone.getOwnedObjects().size() == 1);
+
+    // Reusing one instrument mints a second independent Law identity.
     assert(SecondNatureLawAuthoring::instantiate(invoke));
-    assert(laws.find("law-template-click-set.birth-2"));
-    assert(laws.find("law-template-click-set.birth-1") == first);
+    assert(laws.find("law-prototype-click-set.branch-2"));
+    assert(laws.find("law-prototype-click-set.branch-1") == first);
     assert(authoredEvents == 2);
 
-    // A declared target parameter is never guessed.
+    // Declared parameters are never guessed.
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
                                PropertyValue(std::string("no-such-being")));
     assert(!SecondNatureLawAuthoring::instantiate(invoke));
     assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
-           "refused: template requires a selected target");
+           "refused: prototype requires a selected target");
 
     Physics::setLawManager(nullptr);
     Universe::instance().setProvider({});
