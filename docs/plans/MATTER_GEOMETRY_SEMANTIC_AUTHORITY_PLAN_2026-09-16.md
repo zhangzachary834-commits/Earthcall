@@ -3,6 +3,7 @@
 **Author:** GPT-5.6 Sol  
 **Session:** ChatGPT account session, 2026-09-16  
 **Timestamp:** 2026-09-16 ~12:05 PDT  
+**Status:** Implemented for PR #188; long-term cache-fingerprint migration remains follow-up  
 **Parent audit:** `docs/audits/SHAPE_SERIALIZATION_HYDRATION_INTEGRITY_AUDIT_2026-09-16.md`  
 **Repair PR:** #188  
 **Follow-up issue:** #189
@@ -15,145 +16,130 @@ The rule is one-way:
 
 > **Authored semantic Form determines what the Object is. Matter may carry a derived physical/render representation or recover a genuinely incomplete legacy record, but matter never changes the current semantic Form.**
 
-The demonstrated Field failure is only one instance of the larger substrate split. `applyMatterFlatBuffer()` currently runs after semantic Zone hydration and can still call topology setters for Polyhedron, Patch, SmoothSurface and Field. Those setters are not equivalent: Patch and Polyhedron can change `ShapeKind`; SmoothSurface can alter runtime topology while leaving `ShapeKind` unchanged; Field now has a defensive incomplete-shell guard. The boundary therefore needs one explicit policy rather than four accidental setter behaviors.
-
 ## Decision: Field extent is semantic
 
-`fieldExtent` belongs to the authored Field, not to a disposable physical cache.
+`fieldExtent` belongs to the authored Field, not to a disposable topology cache. It is persisted beside the semantic SDF/OntoMath tree and determines the evaluation/manifestation domain. Therefore a sidecar that is not authoritative for the Field tree is also not authoritative for its extent.
 
-Reasons:
+Implemented result: if a semantic Field already exists, `applyMatterFlatBuffer` does not call `setFieldShape` at all. `Object::setFieldShape` also leaves the existing extent untouched when it refuses a lossy incoming shell.
 
-1. It is already persisted in semantic Object JSON next to the SDF/OntoMath tree.
-2. It determines the evaluation/manifestation domain. A stale extent can clip an otherwise correct implicit surface or expand work far beyond what was authored.
-3. A matter sidecar whose SDF root is too stale/lossy to replace the semantic tree is not credible authority for the domain of that same tree.
-
-Therefore when an Object already has a complete semantic Field, matter must not replace either the Field tree **or its extent**. Matter may supply both only as a compatibility fallback for a semantic record that genuinely lacks a Field payload.
-
-## Rung 1 — make `applyMatterFlatBuffer` representation-aware
-
-Before any matter topology setter runs, inspect the already-hydrated semantic Object.
+## Rung 1 — representation-aware matter boundary — DONE
 
 ### Field
 
-- If current semantic `ShapeKind != Field`: ignore matter Field topology entirely.
-- If `ShapeKind == Field` and `hasField() == true`: keep semantic tree, extent and cell-size authority; do not call `setFieldShape` from matter.
-- If `ShapeKind == Field` and `hasField() == false`: legacy-recovery mode may hydrate a validated matter Field payload.
-- An incomplete operator, empty Expr or empty Convex root is never enough to replace a complete semantic Field.
+Implemented:
 
-The existing setter guard remains useful as defense in depth, but the matter boundary should stop asking the setter to adjudicate source authority.
+- semantic kind must still be `Field`;
+- semantic `hasField()` must be false before matter is considered;
+- existing semantic Field tree and extent are never replaced by matter;
+- current root-only matter can recover a validated leaf only;
+- non-leaf operator roots are refused because their children are not present in the current matter representation;
+- Convex roots are refused because required planes are not present;
+- Expr recovery requires an expression payload.
 
 ### Bezier Patch
 
-- If current semantic `ShapeKind != Patch`: ignore matter Patch payload. A stale sidecar may not turn a Sphere/Cube/etc. back into a Patch.
-- If `ShapeKind == Patch` and `hasPatch() == true`: semantic control net wins; skip matter topology.
-- If `ShapeKind == Patch` and `hasPatch() == false`: allow validated matter Patch as legacy recovery.
-- Validate degrees and control-net cardinality before admission; malformed cache data is discarded, not normalized into a different patch.
+Implemented:
+
+- semantic kind must still be `Patch`;
+- semantic `hasPatch()` must be false;
+- an existing semantic control net wins;
+- finite, valid matter Patch data may recover a legacy Patch shell;
+- stale Patch payload cannot reclassify another current shape.
 
 ### Polyhedron
 
-- If current semantic `ShapeKind != Polyhedron`: ignore matter Polyhedron payload. `setPolyhedronData` must never be reached from a mismatched sidecar because it changes the semantic kind.
-- If `ShapeKind == Polyhedron` and semantic vertices/faces are already present: keep them and skip matter topology.
-- If `ShapeKind == Polyhedron` but semantic topology is absent: allow a validated matter Polyhedron as legacy recovery.
-- Validate offsets and face indices before allocating/constructing faces (Rung 2).
+Implemented:
+
+- semantic kind must still be `Polyhedron`;
+- existing semantic vertices/faces win;
+- validated matter topology may fill a legacy semantic Polyhedron shell;
+- `setPolyhedronData` is unreachable from a mismatched sidecar, so stale matter cannot change another current ShapeKind into Polyhedron.
 
 ### SmoothSurface
 
-Analytic named forms already reconstruct deterministically from semantic `ShapeKind + ShapeParams` during semantic hydration.
+Implemented:
 
-- If semantic hydration produced `hasSmoothSurface() == true`, matter `smooth_data` is derived/cache data and must not replace the semantic surface.
-- If the semantic kind is not one of the named smooth forms, ignore stale `smooth_data` entirely.
-- Only a legacy record whose semantic form explicitly identifies a smooth representation but lacks reconstructible topology may use matter as recovery.
+- named analytic smooth kinds continue to reconstruct from semantic ShapeKind + ShapeParams;
+- existing semantic smooth topology wins;
+- matter is admitted only when the current semantic kind belongs to the analytic smooth family and `hasSmoothSurface()` is false;
+- payload presence is never used as a semantic discriminant.
 
-Do **not** infer the semantic kind from the presence of `smooth_data`; payload presence is not a discriminant.
+## Rung 2 — semantic validation of matter geometry — DONE
 
-## Rung 2 — validate matter geometry before construction
+FlatBuffers verification is structural, so the reader now proves Earthcall geometry invariants before mutation.
 
-FlatBuffers verification proves buffer structure, not Earthcall geometry semantics.
+### Polyhedron
 
-### Polyhedron validation
+Implemented checks:
 
-Before creating any face vector:
+1. vertices must be finite;
+2. `face_offsets` must contain at least a start/end pair;
+3. first offset must be zero;
+4. final offset must equal `face_data.size()`;
+5. each range must be non-negative, monotone and in bounds before `end - start` is used for allocation;
+6. each face must contain at least three vertices;
+7. each vertex index must be within the vertex array.
 
-1. `face_offsets` must begin at or above zero.
-2. Every offset must be monotone non-decreasing.
-3. Every offset must be `<= face_data.size()`.
-4. Each face range must satisfy `end >= start` before `reserve(end - start)`.
-5. Every vertex index in every accepted face must be `0 <= index < vertices.size()`.
-6. Faces with fewer than three vertices should be rejected (prefer rejecting the whole matter topology rather than silently changing authored connectivity).
+Invalid topology is logged and skipped as a whole.
 
-No subtraction used for allocation may occur before those checks.
+### SDF
 
-### SDF enum validation
+Implemented checks:
 
-Validate FlatBuffer integers before casting to:
+- FlatBuffer `type` is range-checked before conversion to `geom::SdfPrim`;
+- `operation` is range-checked before conversion to `geom::SdfOp`;
+- dimensions, offset, scalar parameters and extent must be finite;
+- extent components must be positive;
+- lossy root-only representations that cannot reconstruct their required structure are refused.
 
-- `geom::SdfPrim`
-- `geom::SdfOp`
+### SmoothSurface
 
-Unknown/future values make that matter Field ineligible for legacy recovery. They do not become a different primitive by guess.
+Implemented checks:
 
-### SmoothSurface enum validation
+- model, quadric form and parametric kind are range-checked before enum conversion;
+- the quadric matrix must contain exactly 16 finite values;
+- axes, z trim and parameter values must be finite.
 
-Validate integers before casting to:
+## Rung 3 — adversarial source-precedence regression witnesses — DONE
 
-- model kind
-- form kind
-- parametric kind
-- any other persisted discriminant that controls evaluator dispatch
+`shape_hydration_integrity_test` now attacks the real `ZoneManager` writer/reader boundary.
 
-Unknown values discard the derived payload. Semantic form remains alive.
+Covered cases include:
 
-## Rung 3 — regression witnesses that attack source precedence
+- stale Patch over current Sphere;
+- stale Polyhedron over current Sphere;
+- stale SmoothSurface over current Torus, proving runtime topology cannot split from semantic identity;
+- current semantic Field plus stale matter extent;
+- direct lossy `setFieldShape` call attempting to mutate semantic extent;
+- valid legacy recovery for Patch, Polyhedron, leaf Field and SmoothSurface shells;
+- negative/non-monotone Polyhedron offsets;
+- out-of-range Polyhedron vertex indices;
+- invalid SDF enum ordinals;
+- invalid SmoothSurface enum ordinals.
 
-Extend `shape_hydration_integrity_test` (or split a dedicated matter-authority witness if link time becomes excessive) with adversarial cases produced through the real matter path:
+Assertions check public ShapeKind **and** representation flags/data, so a split-brain object cannot pass by keeping only the right label.
 
-1. **Stale Patch over current Sphere:** semantic Sphere remains Sphere and does not acquire a Patch.
-2. **Stale Polyhedron over current Sphere:** semantic Sphere remains Sphere and its topology does not become the matter polyhedron.
-3. **Stale SmoothSurface over current Cube:** Cube remains flat/polyhedral and does not acquire a hidden smooth runtime surface.
-4. **Current semantic Patch plus different matter Patch:** semantic control points survive exactly.
-5. **Current semantic custom Polyhedron plus different matter Polyhedron:** semantic vertices/faces survive exactly.
-6. **Current semantic Field plus stale matter extent:** both SDF tree and semantic extent survive exactly.
-7. **Legacy Field shell with no semantic payload:** valid matter can still recover it.
-8. **Legacy Patch/Polyhedron missing semantic payload:** valid matter can still recover them when the semantic discriminant explicitly names that representation.
-9. **Negative/decreasing/out-of-range poly face offsets:** matter topology is rejected without allocation blow-up or crash.
-10. **Out-of-range poly vertex index:** matter topology rejected.
-11. **Invalid SDF/Smooth enum ordinal:** matter payload rejected; semantic Object remains unchanged.
+Focused CI also includes `object_roundtrip_test` and `matter_semantic_precedence_test` to guard older matter/address/paint behavior while this topology precedence rule changes.
 
-Every test should assert both the public `ShapeKind` and the representation flags (`hasField`, `hasPatch`, `hasSmoothSurface`, topology contents) so split-brain states cannot pass by checking only the label.
+## Rung 4 — stricter long-term matter architecture — FOLLOW-UP
 
-## Rung 4 — stop relying on parallel semantic truth long-term
-
-The compatibility boundary above is necessary while historical `.ecmatter` files exist, but it should not become the permanent architecture.
-
-Choose one end-state:
+The compatibility boundary is now in place, but the clean end-state remains one of:
 
 ### Preferred: matter is purely derived
 
-Semantic Form stores every authored topology and mathematical representation. `.ecmatter` stores only data that can be regenerated from that Form (compiled/tessellated/physical acceleration data, pose caches where appropriate). Deleting `.ecmatter` may make a load slower, never semantically different.
+Semantic Form stores all authored topology and mathematical representation. `.ecmatter` contains only data that can be regenerated. Deleting matter can make loading slower, never semantically different.
 
-### Transitional alternative: key matter to semantic Form revision
+### Transitional alternative: key derived matter to semantic Form revision
 
-If matter must continue carrying topology-shaped data, add an append-only semantic-form fingerprint/revision to both sides:
+If topology-shaped cache data remains in matter, add an append-only semantic-form fingerprint/revision to both representations. Matter topology is usable only when the fingerprint matches the already-hydrated semantic form; otherwise it is discarded/regenerated.
 
-- canonicalize the semantic Form representation;
-- hash/revision it at save time;
-- write the fingerprint into the matter entity;
-- on load, apply derived matter only when its fingerprint equals the already-hydrated semantic Form;
-- on mismatch, discard/regenerate matter.
+That fingerprint proves cache coherence. It does not become a second Object identity.
 
-The fingerprint is a cache-coherence proof, not a new identity for the Object.
+## Rung 5 — keep setters about geometry, not persistence authority — SATISFIED FOR THIS RUNG
 
-## Rung 5 — remove duplicated defensive authority once the boundary is proven
+The matter boundary now decides whether a sidecar is allowed to call a topology setter. Setters still defend their own geometry invariants—such as recognizing an authored expression as an Expr—but they are not expected to infer whether a caller is semantic JSON, matter, a Law, Creator Console, or a live Person action.
 
-After matter source precedence is enforced and the regression suite proves it:
-
-- retain input-normalization in shape setters (e.g. a valid expression is an Expr), because setters should defend their own invariants;
-- do not make every topology setter independently guess whether its caller is semantic JSON, matter, a Law, the Creator Console, or a live Person action;
-- source authority belongs at the persistence boundary, before the setter call.
-
-This prevents a future caller from being blocked merely because a setter accumulated save-system policy it cannot actually know.
-
-## Non-goals
+## Non-goals retained
 
 This plan does not:
 
@@ -161,6 +147,8 @@ This plan does not:
 - reinterpret `ShapeParams.r` as RoundedBox size;
 - regenerate the Cathedral save artifact;
 - author the Cathedral's standing-wave OntoMath expression;
-- remove legacy fields before compatibility evidence says it is safe.
+- remove append-only legacy matter fields before compatibility evidence says it is safe.
 
-Those are separate contracts. The purpose here is narrower and foundational: **a cache cannot rewrite a being.**
+Those remain separate contracts. The result of this plan is narrower and foundational:
+
+**a cache cannot rewrite a being.**
