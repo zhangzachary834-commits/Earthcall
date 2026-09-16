@@ -15,73 +15,80 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, pathlib, collections
-          root = pathlib.Path('.')
-
-          cases = [
-              ('Chess', pathlib.Path('saves/zones/Chess/zone.json'), pathlib.Path('saves/worlds/chess_app.json')),
-              ('Basic2DButtonZone', pathlib.Path('saves/zones/Basic2DButtonZone/zone.json'), pathlib.Path('saves/worlds/basic_2d_button_zone.json')),
-              ('Basic 2D Button Zone', pathlib.Path('saves/zones/Basic 2D Button Zone/zone.json'), pathlib.Path('saves/worlds/basic_2d_button_zone.json')),
-          ]
 
           def load(path):
-              with path.open() as f: return json.load(f)
+              with pathlib.Path(path).open() as f: return json.load(f)
 
           def laws_from_world(w):
-              vals = []
-              for key in ('laws','authoredLaws'):
-                  v = w.get(key, [])
-                  if isinstance(v, list): vals.extend(v)
-              # some worlds keep laws under a nested current zone/session object; report keys below if absent
-              return vals
+              authored = w.get('authoredLaws', {})
+              if isinstance(authored, dict):
+                  return authored.get('laws', []), authored.get('triggers', {})
+              if isinstance(authored, list):
+                  return authored, {}
+              return w.get('laws', []) if isinstance(w.get('laws'), list) else [], {}
 
-          for label, zp, wp in cases:
+          def nested_zone(w, ident):
+              for z in w.get('zones', []):
+                  if z.get('identifier') == ident: return z
+              return None
+
+          cases = [
+              ('Chess', 'saves/zones/Chess/zone.json', 'saves/worlds/chess_app.json', 'Chess'),
+              ('Basic2DButtonZone', 'saves/zones/Basic2DButtonZone/zone.json', 'saves/worlds/basic_2d_button_zone.json', 'Basic2DButtonZone'),
+              ('Basic 2D Button Zone', 'saves/zones/Basic 2D Button Zone/zone.json', 'saves/worlds/basic_2d_button_zone.json', 'Basic2DButtonZone'),
+          ]
+
+          for label, zp, wp, world_ident in cases:
+              z, w = load(zp), load(wp)
+              laws, triggers = laws_from_world(w)
+              ids=[]; authors=collections.Counter(); targets=collections.Counter()
+              for law in laws:
+                  ident = law.get('id') or law.get('identifier')
+                  ids.append(ident)
+                  for a in law.get('authors', []): authors[str(a)] += 1
+                  for t in law.get('targets', []): targets[str(t)] += 1
               print(f'=== {label} ===')
-              z = load(zp)
-              w = load(wp)
-              print('zone path:', zp)
-              print('zone identifier:', z.get('identifier'))
-              print('zone name:', z.get('name'))
-              print('zone owner:', z.get('owner'))
-              print('zone top keys:', sorted(z.keys()))
-              print('zone object count:', len(z.get('world',{}).get('objects',[])))
-              print('zone relations:', len(z.get('formationRelations',[])))
-              print('zone lawRefs:', len(z.get('lawRefs',[])), z.get('lawRefs',[])[:8])
-              print('zone authoredLaws:', len(z.get('authoredLaws',[])))
-              print('world currentZoneId:', w.get('currentZoneId'))
-              print('world zoneRefs:', w.get('zoneRefs'))
-              print('world top keys:', sorted(w.keys()))
-              laws = laws_from_world(w)
-              print('world top-level law-ish count:', len(laws))
-              if laws:
-                  ids=[]; authors=collections.Counter(); targets=collections.Counter()
-                  for entry in laws:
-                      law = entry.get('law', entry) if isinstance(entry,dict) else {}
-                      ident = entry.get('identifier') or law.get('identifier') or law.get('id')
-                      ids.append(ident)
-                      for a in law.get('authors', entry.get('authors',[]) if isinstance(entry,dict) else []): authors[str(a)] += 1
-                      for t in law.get('targets', entry.get('targets',[]) if isinstance(entry,dict) else []): targets[str(t)] += 1
-                  print('world law ids sample:', ids[:12])
-                  print('world law authors:', dict(authors))
-                  print('world law targets sample:', list(targets.items())[:12])
-                  missing=[]
-                  for ident in ids:
-                      if not ident: continue
-                      if not pathlib.Path('saves/laws', ident, 'law.json').exists(): missing.append(ident)
-                  print('missing shared roots:', len(missing), missing[:20])
+              print('zone identifier/name/owner:', z.get('identifier'), '|', z.get('name'), '|', z.get('owner'))
+              print('zone objects/relations/lawRefs:', len(z.get('world',{}).get('objects',[])), len(z.get('formationRelations',[])), len(z.get('lawRefs',[])))
+              print('legacy law count:', len(laws))
+              print('legacy law ids:', ids)
+              print('legacy authors:', dict(authors))
+              print('legacy explicit targets:', dict(targets))
+              print('legacy trigger keys:', sorted(triggers.keys()))
+              print('missing roots:', [i for i in ids if i and not pathlib.Path('saves/laws', i, 'law.json').exists()])
+              nz = nested_zone(w, world_ident)
+              if nz:
+                  current_objs={o.get('objectID'):o for o in z.get('world',{}).get('objects',[])}
+                  legacy_objs={o.get('objectID'):o for o in nz.get('world',{}).get('objects',[])}
+                  print('legacy nested objects/relations:', len(legacy_objs), len(nz.get('formationRelations',[])))
+                  changed=[]
+                  for oid, old in legacy_objs.items():
+                      cur=current_objs.get(oid)
+                      if not cur:
+                          changed.append((oid,'missing-object'))
+                          continue
+                      oldprops=old.get('authoredProperties',{})
+                      curprops=cur.get('authoredProperties',{})
+                      missing_props=sorted(set(oldprops)-set(curprops))
+                      if missing_props: changed.append((oid,'missing-authoredProperties:'+','.join(missing_props)))
+                  print('legacy properties missing from Zone:', changed[:50])
               print()
 
-          # Find all Zone identities that semantically mention Chess/Button for duplicate analysis.
           print('=== duplicate identity scan ===')
           for p in sorted(pathlib.Path('saves/zones').glob('*/zone.json')):
               try: z=load(p)
               except Exception: continue
-              ident=str(z.get('identifier','')); name=str(z.get('name',''))
+              ident,name=str(z.get('identifier','')),str(z.get('name',''))
               if 'Chess' in ident or 'Chess' in name or 'Button' in ident or 'Button' in name:
                   print(p, '=>', ident, '|', name, '| objects', len(z.get('world',{}).get('objects',[])), '| lawRefs', len(z.get('lawRefs',[])))
 
-          # Shared-law root counts by prefixes already in saves/laws.
-          print('=== existing shared law roots ===')
-          for prefix in ('law-chess','law-basic','law-button'):
+          print('=== model author referents in legacy worlds ===')
+          for wp in ('saves/worlds/chess_app.json','saves/worlds/basic_2d_button_zone.json'):
+              w=load(wp)
+              print(wp, [(o.get('objectID'), o.get('authoredProperties',{}).get('displayName')) for o in w.get('categories',[])])
+
+          print('=== existing shared roots ===')
+          for prefix in ('law-chess','law-basic','law-button','law-move','law-bounce'):
               vals=sorted(p.parent.name for p in pathlib.Path('saves/laws').glob(prefix+'*/law.json'))
-              print(prefix, len(vals), vals[:30])
+              print(prefix, len(vals), vals)
           PY
