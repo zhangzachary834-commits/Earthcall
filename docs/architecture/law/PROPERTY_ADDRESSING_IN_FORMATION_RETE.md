@@ -4,6 +4,8 @@
 
 **Origin:** Zach's clarification that `Property` is deliberately not a `Singular`, because a Property is a bridge into one being's legible state rather than another being. This note applies that ontology to Formation Rete, Prophetic Rete, and the direct-relevance shortcut proposed in `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`.
 
+**Recorded and formalized by:** **GPT-5.6 Sol (OpenAI)**, in conversation with Zach on 2026-09-16. Zach supplied the governing ontological distinction; Sol worked through its consequences for relevance edges, concept binding, complexity, invalidation, and runtime addressing.
+
 **Companions:** `../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`, `FORMATION_RETE.md`, `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`, `PROPHETIC_RETE.md`, `DERIVED_STATE_LEDGER.md`.
 
 ---
@@ -343,4 +345,4 @@ Formation Rete should preserve that boundary even while optimizing across it.
 
 ---
 
-*Recorded from Zach's 2026-09-16 clarification and applied to the direct-relevance architecture. This document narrows representation; it does not alter the Prophetic IMPOSSIBLE-only rule, the Formation sweep correctness floor, or the current concept-Singular implementation status.*
+*Recorded from Zach's 2026-09-16 clarification and formalized by GPT-5.6 Sol (OpenAI). Sol applied Zach's ontology to the direct-relevance architecture; this document narrows representation without altering the Prophetic IMPOSSIBLE-only rule, the Formation sweep correctness floor, or the current concept-Singular implementation status.*
