@@ -6,6 +6,7 @@
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleFixtureLaw.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
@@ -134,6 +135,20 @@ namespace Core {
         _keyboardHandler->update();
         _mouseHandler->update();
         _mouseLeftPressedLast = (_window && glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+
+        // Creator Console visibility has one legible truth: the first-mover
+        // fixture law's `enabled` bit. `_creatorConsoleOpen` remains the native
+        // ImGui/Dock pointer because those foreign surfaces require a bool*, but
+        // it is only a mirror now. Writers on the native side are F8/menu/tool
+        // entry points and IDEDockManager; Law Author/other laws write the law.
+        // Readers of the mirror are stepCreationTools, IDE docking, and render
+        // previews/windows. Reconcile BEFORE any of those consumers run.
+        static bool lastCreatorConsoleFixtureVisible = false;
+        if (Law* fixture = Rendering::syncRegisterCreatorConsoleFixtureLaw(
+                *_lawManager, *_person, _creatorConsoleOpen)) {
+            Rendering::reconcileCreatorConsoleFixtureVisibility(
+                *fixture, _creatorConsoleOpen, lastCreatorConsoleFixtureVisible);
+        }
 
         // Update camera front from mouse handler
         _camera->front = _mouseHandler->calculateCameraFront();
