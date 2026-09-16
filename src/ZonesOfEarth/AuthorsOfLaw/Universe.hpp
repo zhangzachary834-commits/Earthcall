@@ -90,6 +90,21 @@ public:
 
     // An index over the same graph relations() walks: every relation that
     // could involve `being`, as CANDIDATES the caller must still check.
+    // HOW MANY TIMES THE ACTIVE GRAPH HAS CHANGED (RelationManager::generation).
+    // structuralRevision does NOT move when a relation is formed or dissolved —
+    // it is about beings entering, leaving and gaining properties — so anything
+    // derived from the graph needs this second number to know it is current.
+    // Returns 0 when nobody installed a provider, which reads as "unknown" and
+    // must make a consumer fall back rather than trust what it holds.
+    using RelationGenerationProvider = std::function<std::size_t()>;
+    void setRelationGenerationProvider(RelationGenerationProvider provider) {
+        _relationGenerationProvider = std::move(provider);
+    }
+    std::size_t relationGeneration() const {
+        return _relationGenerationProvider ? _relationGenerationProvider() : 0;
+    }
+    bool hasRelationGeneration() const { return static_cast<bool>(_relationGenerationProvider); }
+
     // Formation Rete rung 4 — see RelationManager::relationsInvolving.
     using RelationsInvolvingProvider =
         std::function<void(const Singular& being, std::vector<Relation*>& out)>;
@@ -271,6 +286,7 @@ private:
     Provider _provider;
     RelationProvider _relationProvider;
     RelationsInvolvingProvider _relationsInvolvingProvider;
+    RelationGenerationProvider _relationGenerationProvider;
     RelationRegistrar _relationRegistrar;
     EventInterest _eventInterest;
 

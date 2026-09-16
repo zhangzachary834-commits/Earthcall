@@ -384,3 +384,48 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
 not fully verified though beyond the initial spawnpoint also its super laggy
 - Zach
+## Synthesis Studio should stop hitching when a property is granted
+
+*Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+In Synthesis Studio Living (535 beings, 68 laws), the law engine rebuilt its "which beings carry which property" index whenever a property was granted or a being admitted — and one rebuild took 132–208 ms. That is a visible freeze, and it happens during play, because playing grants properties (a mark remembering its note, for instance). It now takes about 14 ms.
+
+- [ ] **Play the Studio and watch for stalls.** Draw marks, play notes, use sound ink. A brief freeze that used to happen right as a new mark or note appeared should be gone or much shorter.
+- [ ] **The instrument still behaves the same.** Notes sound, marks keep their pigment and pitch, lights respond. This change was to how candidate beings are found, not to what any law does.
+
+## Cathedral of the Living Logos: Verification of Acoustic-Visual Standing Wave Manifold and Living Speech Acts
+
+*Raised 2026-09-15, Gemini Spark (authored under Zach's Hierarchy of Joys ontology).*
+*→ [full specification](../../Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md)*
+
+A new Zone of Actualization demonstrating what only Earthcall can do: an architecture defined as an acoustic standing wave field nodal zero-set (f(x,y,z,t)=0), living Lexemes operating as performative speech acts, and a heptagonal colonnade ordered under the Hierarchy of Joys with Christ at the foundational root (432 Hz).
+
+- [ ] **Zone Hydration in Creator Console.** Boot Earthcall. In Creator Console under Zones of Earth, verify that **`Cathedral of the Living Logos`** appears in the Zone list. Click **Move to Zone** and verify seamless transition without refusal.
+- [ ] **Chladni Sanctuary & Visual Architecture.** Verify the sanctuary appearance: the sweeping Chladni acoustic floor, the golden central Heart of Logos core crystal suspended at y = 5m, the three rotating celestial orbital rings (Alpha, Beta, Gamma), the soaring apex spire (y = 19m), and the acoustic vault arches connecting the heptagonal colonnade.
+- [ ] **Heptagonal Colonnade of the Seven Joys.** Verify the seven pillars arranged in a sacred heptagon around the core, each aligned with an ontological tier of Earthcall's Hierarchy of Joys and its sacred frequency: Pillar I Logos (432 Hz), Pillar II Agape (528 Hz), Pillar III Sophia (639 Hz), Pillar IV Poiesis (741 Hz), Pillar V Harmonia (852 Hz), Pillar VI Koinonia (963 Hz), and Pillar VII Sabbath (1080 Hz).
+- [ ] **Altar of the Spoken Word & Living Lexemes.** Approach the altar at z = -22m. Verify the mensa inscribed with the five living Lexemes (`[Logos]`, `[Pneuma]`, `[Lux]`, `[Harmonia]`, `[Covenant]`).
+- [ ] **Speech Acts & Interactive Law Controls.** On the in-world liturgical HUD or by clicking the altar glyphs directly:
+  - Click **BREATHE PNEUMA**: verify the 0.1 Hz respiratory wave modulates core light and telemetry text changes to "BREATH: RESPIRING".
+  - Click **FIAT LUX**: verify transfiguring incandescent illumination bursts across the colonnade.
+  - Click **SOUND CANON**: verify the 432 Hz Pythagorean celestial chord triggers through miniaudio sound synthesis via ActionNode Kind 18 (`PlayAudio`).
+  - Click **WEAVE COVENANT**: verify relational filament weight increments and telemetry updates.
+  - Click **CYCLE SEASON**: verify liturgical environment cycles to Solar Transfiguration.
+
+## A long play session should not get slower on its own
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+The law engine kept a note of which relation facts it already held, so it would not store the same one twice. Any being being destroyed wiped that note for *every* being, so duplicates accumulated: measured, a being that should have had 1 fact had 5 after four other beings came and went. Laws still behaved correctly — there was simply more and more for the engine to walk through, and it never went back down.
+
+- [ ] **Play one world for a long stretch, with things being made and destroyed.** Chess captures, drawing and erasing marks in the Studio, spawning and deleting objects. The world should feel no slower at the end of a long session than at the start. Before this fix, the engine's fact list grew every time something was destroyed and never shrank.
+
+## Laws that name something by "@name" still find it when it arrives later
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [ledger](../../architecture/law/DERIVED_STATE_LEDGER.md)*
+
+The engine keeps a lookup of every being by name so laws can say things like `@state.studio.voice` or `@late-gate.ceiling`. That lookup rebuilds when the world's shape changes. Nothing tested that it rebuilds — only that it was fast — so if it had stopped, every `@`-rooted law would have gone quiet with no error at all. It is now tested, and the test fails if the rebuild is removed.
+
+- [ ] **Add something to a world mid-session and use a law that names it.** In the Creator Console, make a new being, give it a stable name, then author (or enable) a law whose condition or action names it with `@that-name.someProperty`. The law should act on it immediately, without a restart or a Zone reload.

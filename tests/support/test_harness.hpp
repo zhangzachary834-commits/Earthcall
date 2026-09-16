@@ -103,6 +103,11 @@ struct BootedEngineHarness {
                 if (!active) return;
                 active->formation().relations().relationsInvolving(being, out);
             });
+        Universe::instance().setRelationGenerationProvider([this]() -> std::size_t {
+            if (zones.zones().empty()) return 0;
+            auto active = zones.zones()[zones.currentIndex()];
+            return active ? active->formation().relations().generation() : 0;
+        });
 
         Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
             if (zones.zones().empty()) return;

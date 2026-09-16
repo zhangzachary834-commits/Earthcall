@@ -125,6 +125,15 @@ private:
     // tests/law/relation_endpoint_index_test.cpp that goes through it. An index
     // that misses an insertion hides an edge from every law, silently.
     void touch() { ++_generation; }
+public:
+    // HOW MANY TIMES THIS GRAPH HAS CHANGED. Not a new change system — this is
+    // the stamp the endpoint index already keys on, surfaced so a consumer can
+    // ask "has the graph moved since I looked?" without walking it. Every write
+    // to `relations` bumps it (see the note above), including the ones that
+    // announce nothing on the EventBus: loadFromJson, copy and move assignment,
+    // and forgetBeingEverywhere when an endpoint actually moves.
+    std::size_t generation() const { return _generation; }
+private:
     void rebuildEndpointIndex() const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);

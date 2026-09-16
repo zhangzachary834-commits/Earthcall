@@ -314,7 +314,12 @@ protected, it is *ungoverned forever* — invisibility is not security. The temp
 correctness cannot be checked, argued about, or tested, because nothing states what it should
 depend on.
 
-**Extension — the proposal.** A derived-state ledger: for each structure, a declared *(depends on,
+**Extension — the proposal.** *(Written 2026-09-16 as
+`docs/architecture/law/DERIVED_STATE_LEDGER.md`: every structure below with its declared triple, the
+test that guards it, and — where a mutation was actually run — a note that breaking the invalidation
+turns that test red. Writing it found two more gaps: a structure credited to a test that does not
+exercise it, and the referent map's currency, which had no test at all and now has one.)* A
+derived-state ledger: for each structure, a declared *(depends on,
 invalidated by, rebuilt where)* triple, written where the field is declared and — this is the part
 with teeth — **testable**. A test that mutates each declared input and asserts the structure
 changed would have caught findings 1, 3 and 4 mechanically, without anyone suspecting them.
@@ -764,13 +769,22 @@ Two things make this worth more than a bug entry. First, **the same check was lo
 inside another performance commit (`04c52ed4`)**, and the function carried a comment calling it
 "LOAD-BEARING and reads as redundant". The comment went, and the bug came back. §2b said a comment
 describing a fixed bug marks where its twin is. This is the other half: **a comment protecting a
-fix is only as durable as the next edit that deletes it.** Second, **the guard that existed could
-not reach the code it guarded.** `rete_compile_test` §C asserts "an edge fires once, not once per
-tick" and stayed green throughout, because its law is created disabled and enabled late, never
-compiles terminals, and so only ever exercises the sweep path, which was never broken. A test like
-that can't fail when the bug is present. It measures nothing. The fix narrows the application list to `newlyTrue` for edges and keeps
-`subjects` for levels; `tests/law/edge_reactive_path_test.cpp` builds its law connected and enabled
-so it reaches the branch, and was confirmed red before the fix.
+fix is only as durable as the next edit that deletes it.** Second — and this is a **correction of 2026-09-16**, because what was written here first was
+itself an unverified claim. This section originally said `rete_compile_test` §C "could not reach the
+code it guarded": that its law, created disabled and enabled late, never compiles terminals and so
+only exercised the sweep path. **Measured on 2026-09-16, that is false.** `syncReteCompilation`
+compiles terminals for every law carrying a condition model, enabled or not; §C's law has one
+terminal, runs on the reactive path, and goes red when the regression is reintroduced. §C now
+prints and asserts which path it is on.
+
+So the lesson this passage drew — "a test that cannot fail when the bug is present measures
+nothing" — was true in general and **wrong about this test**, and the error was the same shape as
+the bug: a claim about which code something reaches, asserted from reading rather than running.
+`ENGINEERING_DISCIPLINE.md` says it in one line: don't claim a doc is verified because you read the
+source — run things. What remains true is the first half: the comment calling the check
+LOAD-BEARING was deleted, and the bug came back. The fix narrows the application list to `newlyTrue`
+for edges and keeps `subjects` for levels; `tests/law/edge_reactive_path_test.cpp` guards it with an
+accumulating action, and was confirmed red before the fix.
 
 **§7, applied to rung 2's own index.** `ZoneManager::switchTo` replaces every being in front of the
 Person by assigning `_currentIndex`, because `EngineInit`'s providers read `active()` on every call.
