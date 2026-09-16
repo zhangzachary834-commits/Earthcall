@@ -109,6 +109,121 @@
             1.0
           ]
         ],
+        "field": {
+          "dims": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "mathNode": {
+            "children": [
+              {
+                "op": 1,
+                "var": "y"
+              },
+              {
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 40.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.008,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "children": [
+                              {
+                                "op": 1,
+                                "var": "p"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 100.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 0.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "op": 0,
+                                    "scalarForm": {
+                                      "terms": [
+                                        {
+                                          "c": 100.0,
+                                          "factors": {}
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ],
+                                "op": 2
+                              }
+                            ],
+                            "op": 4
+                          }
+                        ],
+                        "op": 6
+                      }
+                    ],
+                    "op": 29
+                  }
+                ],
+                "op": 6
+              }
+            ],
+            "op": 5
+          },
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "op": 0,
+          "p0": 0.0,
+          "p1": 0.0,
+          "prim": 7,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1000.0,
+          30.0,
+          1000.0
+        ],
         "geometryType": 10,
         "materialId": "material.grass",
         "objectID": "perlin-ground-plane",
@@ -153,109 +268,7 @@
         ],
         "x2D": 100.0,
         "y2D": 100.0,
-        "zOrder2D": 0,
-        "field": {
-          "op": 0,
-          "prim": 7,
-          "mathNode": {
-            "op": 5,
-            "children": [
-              {
-                "op": 1,
-                "var": "y"
-              },
-              {
-                "op": 6,
-                "children": [
-                  {
-                    "op": 0,
-                    "scalarForm": {
-                      "terms": [
-                        {
-                          "c": 40.0,
-                          "factors": {}
-                        }
-                      ]
-                    }
-                  },
-                  {
-                    "op": 29,
-                    "children": [
-                      {
-                        "op": 6,
-                        "children": [
-                          {
-                            "op": 0,
-                            "scalarForm": {
-                              "terms": [
-                                {
-                                  "c": 0.008,
-                                  "factors": {}
-                                }
-                              ]
-                            }
-                          },
-                          {
-                            "op": 4,
-                            "children": [
-                              {
-                                "op": 1,
-                                "var": "p"
-                              },
-                              {
-                                "op": 2,
-                                "children": [
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 0.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "op": 0,
-                                    "scalarForm": {
-                                      "terms": [
-                                        {
-                                          "c": 100.0,
-                                          "factors": {}
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        "fieldExtent": [
-          1000.0,
-          30.0,
-          1000.0
-        ]
+        "zOrder2D": 0
       }
     ]
   }
