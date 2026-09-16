@@ -1,0 +1,36 @@
+name: One-shot generic post-Law Zone relation hydration
+on:
+  push:
+    branches:
+      - sol/restore-legacy-chess-button-zones-v2-20260915
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch switchTo lifecycle and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git config user.name "GPT-5.6 Sol"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/ZonesOfEarth/ZoneManager.cpp')
+          s = p.read_text()
+          old = '''        _activeZoneLawIds = std::move(requestedLawIds);\n\n        _currentIndex = index;\n'''
+          new = '''        _activeZoneLawIds = std::move(requestedLawIds);\n\n        // A Zone identity graph can legitimately name its authored Laws as\n        // relation endpoints (for example Law -> instance-of -> category).\n        // Boot hydration runs before those shared Law roots are active, so\n        // such edges remain pending during the first relation pass. Legacy\n        // loadState already retries relation hydration after loading its Law\n        // register; Zone-native Move to Zone must honor the same lifecycle.\n        // applyFormationRelations is idempotent by type + endpoint ids, so\n        // already-bound Object/category edges are retained and only newly\n        // resolvable Law edges are admitted here.\n        if (identity.is_object()) {\n            applyFormationRelations(*targetZone, identity);\n        }\n\n        _currentIndex = index;\n'''
+          if old not in s:
+              raise SystemExit('expected switchTo marker not found')
+          if 'Zone-native Move to Zone must honor the same lifecycle' in s:
+              raise SystemExit('post-Law hydration patch already present')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          rm .github/workflows/one-shot-zone-post-law-relations.yml
+          git add src/ZonesOfEarth/ZoneManager.cpp .github/workflows/one-shot-zone-post-law-relations.yml
+          git commit -m "Retry Zone relations after shared Laws activate"
+          git push origin HEAD:sol/restore-legacy-chess-button-zones-v2-20260915
