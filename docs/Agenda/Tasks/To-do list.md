@@ -47,7 +47,7 @@
 
 - CRITICAL: Ensure Singular set-to-set Creation is working, that we have a window where I can easil and intuitively perform set-to-set Creation, and that Law creation uses Set to Set.
 
-- There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach
+- There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach. WAIT **Part 2** BROOOOOO THE DISTORTION EFFECT LOOKS SO COOL WHEN I MOVE THROUGH THE FAR LANDS ZONE. NEED TO HAVE THIS AT THE RIGHT MOMENT. PLZ MAKE THIS AN AUTHORABLE PROEPRTY INSTAEDDDDDDDDDD - Zach
 
 - ✅ **Basic 2D Button** — done and verified (2026-09-04): Authored a 2D shape with Laws to act as a button that moves when clicked without UI C++ code. → [full task](Specific%20Tasks/Basic_2D_Button/Basic_2D_Button.md)
 

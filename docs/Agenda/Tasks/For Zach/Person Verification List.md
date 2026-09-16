@@ -379,3 +379,8 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 - [ ] **Enter, leave, and re-enter.** In any world with a law that reacts once when a being enters a region or zone, move the being in, out, and back in. The reaction should happen on each entry, not only the first.
 - [ ] **Timers restart.** A continuous law that uses how long its condition has held (`time.sinceApplied`) should restart its timing after the condition stops and starts again, rather than continuing from the first time.
 - [ ] **Nothing fires more than before while a condition simply holds.** Held conditions should still react once (`OnBecomeTrue`) or every frame (`WhileTrue`), as before.
+
+
+YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
+not fully verified though beyond the initial spawnpoint also its super laggy
+- Zach
