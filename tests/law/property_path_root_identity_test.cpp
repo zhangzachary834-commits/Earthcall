@@ -9,7 +9,7 @@
 //
 // This test carries both paths required by ENGINEERING_DISCIPLINE.md:
 //   1. isolated root resolution (`resolveLawRoot`), and
-//   2. the real law-facing read funnel (`lawGetValue`).
+//   2. the real law-facing read/write funnels (`lawGetValue` / `lawSetValue`).
 
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
@@ -68,7 +68,7 @@ int main() {
     Universe::instance().bumpStructuralRevision();
 
     // Control: lexical interning remains useful when the spelling designates a
-    // single live being.
+    // single live being, on both the read and write side.
     {
         const PropertyPath path = PropertyPath::parse("@unique-root.value");
         std::size_t startIndex = 0;
@@ -78,10 +78,16 @@ int main() {
         PropertyValue value;
         assert(lawGetValue(subject, path, value));
         assert(std::fabs(number(value) - 7.0) < 1e-9);
+
+        assert(lawSetValue(subject, path, PropertyValue(8.0)) ==
+               PropertyPath::PathResult::Ok);
+        assert(lawGetValue(subject, path, value));
+        assert(std::fabs(number(value) - 8.0) < 1e-9);
     }
 
     // Identity witness: equal spelling is not equal being.  There is no
-    // principled referent, so both the root resolver and the law read fail.
+    // principled referent, so root resolution, reads, AND writes fail.  Most
+    // importantly, neither claimant may be mutated by insertion order.
     {
         const PropertyPath path = PropertyPath::parse("@duplicate-root.value");
         std::size_t startIndex = 0;
@@ -89,6 +95,15 @@ int main() {
 
         PropertyValue value;
         assert(!lawGetValue(subject, path, value));
+        assert(lawSetValue(subject, path, PropertyValue(99.0)) ==
+               PropertyPath::PathResult::NoSuchProperty);
+
+        PropertyValue a;
+        PropertyValue b;
+        assert(duplicateA.getDynamicProperty("value", a));
+        assert(duplicateB.getDynamicProperty("value", b));
+        assert(std::fabs(number(a) - 1.0) < 1e-9);
+        assert(std::fabs(number(b) - 2.0) < 1e-9);
     }
 
     // Same invariant when the identifier itself contains dots and root
@@ -100,6 +115,10 @@ int main() {
 
         PropertyValue value;
         assert(!lawGetValue(subject, path, value));
+        assert(lawSetValue(subject, path, PropertyValue(99.0)) ==
+               PropertyPath::PathResult::NoSuchProperty);
+        assert(std::fabs(dottedA.getPosition().x - 1.0f) < 1e-6f);
+        assert(std::fabs(dottedB.getPosition().x - 2.0f) < 1e-6f);
     }
 
     Universe::instance().setProvider(nullptr);
