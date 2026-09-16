@@ -5,3 +5,4 @@
 - One master Zach tasks file that links to both author flags and person verification
 - Inside Agenda
 - Make a milestone celebration document that celebrates and admires Earthcall’s progress
+- Write the manifesto into a complete and keep the draft commentary, along with a technical spec version

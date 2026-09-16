@@ -144,9 +144,12 @@ bool ZoneManager::switchTo(size_t index)
                     if (!authorJson.is_string()) {
                         throw std::runtime_error("Law '" + ref + "' has a non-string author ref");
                     }
-                    Singular* author = resolveReference(authorJson.get<std::string>(), true);
+                    // Authorship is a Formation of Singular beings, not a Person-only slot.
+                    // Declared model-author Objects remain Objects; never forge a Person
+                    // identity merely to make a shared Law root load.
+                    Singular* author = resolveReference(authorJson.get<std::string>(), false);
                     if (!author) {
-                        throw std::runtime_error("Law '" + ref + "' cannot resolve Person author '" +
+                        throw std::runtime_error("Law '" + ref + "' cannot resolve author '" +
                                                  authorJson.get<std::string>() + "'");
                     }
                     law->addAuthor(*author);

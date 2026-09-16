@@ -91,6 +91,8 @@
 
 ## Synthesis Studio (added 2026-09-02, from the play-test that corrected the audit's first pass)
 
+- [ ] **Perlin hills + Living Studio Zone-native restoration — GPT-5.6 Sol, 2026-09-14:** fully quit any stale running Earthcall instance **without saving its old live Zones**, relaunch this restored build, then use Creator Console → Zones. Move to `NoiseFloorWorld` and verify the rolling Perlin SDF hills are visible again. Then Move to `SynthesisStudio.LivingInstrument` without loading a legacy World: play C5 and several other pads, verify each note is audible, and verify the corresponding floating resonator sphere visibly swells/rises and relaxes while the pad still depresses/releases. Automated Zone-native witnesses prove the SDF payload rehydrates and C5 reaches the audio sink at 523.25 Hz and grows its matching sphere; this checkbox is the remaining Person-facing visual/audio manifestation witness.
+
 - [x] **Recovered Studio 3D poses — Zach + Codex, 2026-09-11:** VERIFIED BY ZACH in-app (commit 7abcd38c: "now the stuff in synthesis studio living is not one cube YAYYYYY"). Distinct rectangular forms and living instrument layout confirmed recovered and persistent.
 - [ ] **Resonance Studio upgrade — Codex, session `synthesis-studio-20260904`, 2026-09-04 22:00 PDT:** reopen Earthcall and load `synthesis_studio` at the default 1280×720 window size; verify the full spectrum dock and upper-right voice/ink controls fit, text is readable, and the floating resonators remain visible above the easel.
 - [x] **Play the room:** play C5 through B5 on both the desk and dock; each matching sphere should swell/rise, its colored meter should jump then settle, and the last-note caption should change; play repeatedly for over a minute and check responsiveness and animation feel.
@@ -377,3 +379,8 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 - [ ] **Enter, leave, and re-enter.** In any world with a law that reacts once when a being enters a region or zone, move the being in, out, and back in. The reaction should happen on each entry, not only the first.
 - [ ] **Timers restart.** A continuous law that uses how long its condition has held (`time.sinceApplied`) should restart its timing after the condition stops and starts again, rather than continuing from the first time.
 - [ ] **Nothing fires more than before while a condition simply holds.** Held conditions should still react once (`OnBecomeTrue`) or every frame (`WhileTrue`), as before.
+
+
+YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
+not fully verified though beyond the initial spawnpoint also its super laggy
+- Zach

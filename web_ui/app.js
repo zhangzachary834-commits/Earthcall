@@ -95,6 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('logos-interface');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (emitBtn.getAttribute('aria-disabled') === 'true') {
+            return;
+        }
         emitUtterance();
     });
 
@@ -119,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isEmpty = inputField.value.trim() === '';
         const isDisabled = inputField.disabled;
 
-        emitBtn.disabled = isEmpty || isDisabled;
+        emitBtn.setAttribute('aria-disabled', String(isEmpty || isDisabled));
 
         if (isDisabled) {
             emitBtn.title = "Engine disconnected";
@@ -127,6 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
             emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
         }
 
-        emitBtn.setAttribute('aria-disabled', (isEmpty || isDisabled).toString());
+
     });
 });

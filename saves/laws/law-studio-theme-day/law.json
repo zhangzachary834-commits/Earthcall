@@ -1,0 +1,74 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-studio-theme-day",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "kind": 0,
+      "operand": {
+        "t": "vec3",
+        "x": 0.38,
+        "y": 0.42,
+        "z": 0.5
+      },
+      "path": "color"
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "isStudioSurface"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.studio.themeNight"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-studio-theme-day",
+    "name": "Studio: Surfaces take the day ambient",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-studio-theme-day",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}

@@ -560,10 +560,10 @@ void Engine::renderKeymapContent() {
     ImGui::BulletText("F10: Toggle IDE Docking Mode (Sidebars/Bottom Bar)");
     ImGui::BulletText("C: Character Architect Forge Zone");
     ImGui::Separator();
-    ImGui::TextUnformatted("Saves");
+    ImGui::TextUnformatted("Persistence");
     ImGui::Separator();
-    ImGui::BulletText("S: Quick Save (from the menu)");
-    ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
+    ImGui::BulletText("S: Save Active Zone (from the menu)");
+    ImGui::BulletText("A: Legacy Session Export...  L: Legacy Session Import / Recovery  G: Legacy Session Manager");
     ImGui::Separator();
     ImGui::TextUnformatted("Camera");
     ImGui::Separator();

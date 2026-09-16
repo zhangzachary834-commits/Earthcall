@@ -297,24 +297,28 @@ void Engine::initLogic() {
     });
     printf("[Init] Checkpoint B2: after menu addOption(Resume)\n");
 
-    // Menu options answer or they are not on the menu. Dead Settings/Toolbar
-    // entries were deleted rather than shown empty. Placement/Selection
-    // inspectors point at the living Create3D console, not the pre-split ones.
-    _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() {
-        SaveContext ctx;
-        ctx.camera = getCamera();
-        ctx.mouseHandler = getMouseHandler();
-        ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
-        ctx.person = getPerson();
-        ctx.lawManager = getLawManager();
-        ctx.ourverse = &_ourverse;
-        ctx.worldTime = &_worldTime;
-        ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
-        mgr.saveStateWithLog("", ctx);
+    // The normal persistence act is Zone-native. Legacy session import/export
+    // remains reachable here only under explicit names for migration/recovery.
+    // S must never route through saveStateWithLog: doing so would silently
+    // resurrect saves/worlds as the ordinary unit of authorship.
+    _mainMenu.addOption("Save Active Zone", GLFW_KEY_S, [this]() {
+        if (!mgr.persistActiveZone()) {
+            std::cerr << "[ZoneSave] Save Active Zone refused; active Zone remains live and no legacy session was written.\n";
+        }
     });
-    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; ensureCursorUnlocked(); });
-    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; ensureCursorUnlocked(); });
-    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; ensureCursorUnlocked(); });
+    _mainMenu.addOption("Legacy Session Export...", GLFW_KEY_A, [this]() {
+        mgr.getSaveLoadState().showSaveWindow = true;
+        ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+        mgr.updateSaveFiles();
+        mgr.getSaveLoadState().showLoadWindow = true;
+        ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Legacy Session Manager", GLFW_KEY_G, [this]() {
+        mgr.getSaveLoadState().showManager = true;
+        ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() {
         _showChatWindow = !_showChatWindow;
         if (_showChatWindow) ensureCursorUnlocked();

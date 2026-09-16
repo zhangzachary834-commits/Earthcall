@@ -31,7 +31,7 @@ namespace Rendering {
             return Singularity::Core::CreationChannel::find(*engine->getLawManager());
         }
 
-        void render3DModeButton(Mode3D mode, const char* label,
+        void render3DModeButton(Mode3D mode, const char* label, const char* shortcut,
                                 Singularity::Core::CreationChannel* channel,
                                 float btnWidth) {
             auto& state = getCreatorConsoleState();
@@ -40,6 +40,9 @@ namespace Rendering {
                                   ImVec4(0.26f, 0.62f, 0.85f, 1.0f));
             const bool pressed = ImGui::Button(label, ImVec2(btnWidth, 26.0f));
             popActiveButtonStyle(active);
+            if (shortcut && ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s [%s]", label, shortcut);
+            }
             if (pressed) {
                 if (active) {
                     apply3DMode(state, channel, Mode3D::None);
@@ -111,7 +114,8 @@ namespace Rendering {
         Object* spawnAuthoredObject(ZoneManager& zoneMgr,
                                     Singularity::Core::CreationChannel* channel,
                                     Core::Engine* engine,
-                                    const glm::vec3& color) {
+                                    const glm::vec3& color,
+                                    const std::string& desc = "Spawn Object") {
             auto obj = std::make_shared<Object>();
             obj->setTransform(spawnTransform(channel, engine));
             obj->updateCollisionZone(obj->getTransform());
@@ -119,19 +123,92 @@ namespace Rendering {
             Object* raw = obj.get();
             zoneMgr.active().addObject(obj);
             if (channel) channel->recordProvenance("authored-by", *raw, *channel, true, 1.0f);
+            getCreatorConsoleState().recordSpawn(obj, desc);
             return raw;
         }
 
-        void renderSelectionDetails(Object* sel, bool showHeader = true) {
+        void renderSelectionDetails(Object* sel, ZoneManager& zoneMgr, Core::Engine* engine, bool showHeader = true) {
             if (!sel) {
-                ImGui::TextDisabled("No object selected. Click Select mode above to target objects.");
+                ImGui::TextDisabled("No object selected. Click Select mode [F5] to target objects.");
                 return;
             }
+
+            auto& state = getCreatorConsoleState();
 
             if (showHeader) {
                 ImGui::TextColored(ImVec4(0.4f, 0.85f, 1.0f, 1.0f), "Target: %s", sel->getIdentifier().c_str());
             }
 
+            // Quick Ergonomic Actions for Selected Object
+            float halfBtnW = responsiveItemWidth(2, 70.0f);
+            if (ImGui::Button("Duplicate [Ctrl+D]##Sel", ImVec2(halfBtnW, 24.0f)) ||
+                (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_D))) {
+                auto dup = std::make_shared<Object>();
+                dup->setShape(sel->getShapeKind(), sel->getShapeParams());
+                if (sel->hasPatch()) dup->setBezierPatch(sel->getPatchData());
+                if (sel->hasField()) dup->setFieldShape(sel->getFieldData(), glm::vec3(1.1f));
+                glm::mat4 t = sel->getTransform();
+                t = glm::translate(t, glm::vec3(1.0f, 0.0f, 0.0f));
+                dup->setTransform(t);
+                dup->updateCollisionZone(dup->getTransform());
+                if (auto srcMat = sel->ownMaterial()) {
+                    if (auto dMat = dup->ownMaterial()) {
+                        dMat->baseColor = srcMat->baseColor;
+                        dMat->opacity = srcMat->opacity;
+                        dMat->shininess = srcMat->shininess;
+                    }
+                }
+                zoneMgr.active().addObject(dup);
+                state.recordSpawn(dup, "Duplicate " + sel->getIdentifier());
+                state.selectedObject3D = dup.get();
+                HighlightSystem::setSelected(dup.get());
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicate the selected object with an offset (Ctrl+D)");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Delete [Del]##Sel", ImVec2(halfBtnW, 24.0f)) || ImGui::IsKeyPressed(ImGuiKey_Delete)) {
+                std::shared_ptr<Object> targetShared = nullptr;
+                for (const auto& o : zoneMgr.active().getOwnedObjects()) {
+                    if (o.get() == sel) {
+                        targetShared = o;
+                        break;
+                    }
+                }
+                if (targetShared) {
+                    state.recordDelete(targetShared, "Delete " + sel->getIdentifier());
+                    zoneMgr.active().removeObject(sel);
+                    clearSelection3D();
+                    return;
+                }
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Remove selected object from active zone (Del)");
+
+            float thirdBtnW = responsiveItemWidth(3, 60.0f);
+            if (ImGui::Button("Focus View [F]##Sel", ImVec2(thirdBtnW, 22.0f)) || ImGui::IsKeyPressed(ImGuiKey_F)) {
+                if (engine && engine->getCamera()) {
+                    glm::vec3 c = sel->getCenter();
+                    glm::vec3 camPos = engine->getCamera()->getPos();
+                    glm::vec3 dir = c - camPos;
+                    if (glm::length(dir) > 0.001f) {
+                        engine->getCamera()->setFront(glm::normalize(dir));
+                    }
+                }
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Align camera view to look at selected object (F)");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Snap Rot##Sel", ImVec2(thirdBtnW, 22.0f))) {
+                sel->setRotationEulerDegrees(sel->getTargetRotationEulerDegrees());
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Snap current rotation to target Euler degrees");
+
+            ImGui::SameLine();
+            if (ImGui::Button("Deselect##Sel", ImVec2(thirdBtnW, 22.0f))) {
+                clearSelection3D();
+                return;
+            }
+
+            ImGui::Separator();
             glm::vec3 center = sel->getCenter();
             if (ImGui::DragFloat3("Center##Sel", &center.x, 0.01f, -100.0f, 100.0f, "%.2f")) {
                 sel->setCenter(center);
@@ -140,16 +217,36 @@ namespace Rendering {
             if (ImGui::DragFloat3("Rotation##Sel", &targetRotation.x, 0.5f, -720.0f, 720.0f, "%.1f")) {
                 sel->setTargetRotationEulerDegrees(targetRotation);
             }
-            if (ImGui::Button("Snap Rotation##Sel")) {
-                sel->setRotationEulerDegrees(sel->getTargetRotationEulerDegrees());
-            }
-            ImGui::SameLine();
+
+            // Material Color & Quick Swatches
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.9f, 0.85f, 0.55f, 1.0f), "Material & Tint");
             if (auto mat = sel->ownMaterial()) {
-                ImGui::ColorEdit3("Material Color##Sel", &mat->baseColor.x, ImGuiColorEditFlags_NoInputs);
+                ImGui::ColorEdit3("Color##SelMat", &mat->baseColor.x, ImGuiColorEditFlags_NoInputs);
                 ImGui::SameLine();
-            }
-            if (ImGui::Button("Deselect##Sel")) {
-                clearSelection3D();
+
+                // Quick Palette Swatches
+                static const glm::vec3 kPalette[] = {
+                    {1.0f, 1.0f, 1.0f},     // White
+                    {0.5f, 0.5f, 0.5f},     // Grey
+                    {0.15f, 0.15f, 0.15f},  // Charcoal
+                    {0.9f, 0.2f, 0.2f},     // Red
+                    {0.95f, 0.55f, 0.15f},  // Orange
+                    {0.95f, 0.85f, 0.2f},   // Yellow
+                    {0.25f, 0.75f, 0.35f},  // Green
+                    {0.2f, 0.75f, 0.9f},    // Cyan
+                    {0.25f, 0.45f, 0.95f},  // Blue
+                    {0.7f, 0.3f, 0.85f}     // Purple
+                };
+                for (int i = 0; i < 10; ++i) {
+                    ImGui::PushID(i);
+                    ImVec4 col(kPalette[i].r, kPalette[i].g, kPalette[i].b, 1.0f);
+                    if (ImGui::ColorButton("##pal", col, ImGuiColorEditFlags_NoTooltip, ImVec2(16, 16))) {
+                        mat->baseColor = kPalette[i];
+                    }
+                    ImGui::PopID();
+                    if (i < 9) ImGui::SameLine();
+                }
             }
         }
     } // namespace
@@ -160,26 +257,25 @@ namespace Rendering {
         auto& state = getCreatorConsoleState();
         auto* channel = channelOf(engine);
 
-        // Keep currentShapeKind in sync with polyhedron.shapeKind
         state.currentShapeKind = state.polyhedron.shapeKind;
 
         struct Mode3DDef {
             Mode3D mode;
             const char* label;
-            const char* category;
+            const char* shortcut;
         };
 
         static const Mode3DDef modeDefs[] = {
-            {Mode3D::BrushCreate, "Create",     "Creation"},
-            {Mode3D::Selection,   "Select",     "Inspection"},
-            {Mode3D::FaceBrush,   "Face Brush", "Painting"},
-            {Mode3D::FacePaint,   "Face Fill",  "Painting"},
-            {Mode3D::Pottery,     "Pottery",    "Sculpting"},
-            {Mode3D::Rotation,    "Rotate",     "Transformation"},
-            {Mode3D::Morph,       "Morph",      "Deformation"},
-            {Mode3D::Combine,     "Combine",    "CSG / Boolean"},
-            {Mode3D::Sculpt,      "Clay",       "CSG / Boolean"},
-            {Mode3D::Graph,       "Graph",      "Logic & Laws"}
+            {Mode3D::BrushCreate, "Create",     "F4"},
+            {Mode3D::Selection,   "Select",     "F5"},
+            {Mode3D::FaceBrush,   "Face Brush", "B"},
+            {Mode3D::FacePaint,   "Face Fill",  ""},
+            {Mode3D::Pottery,     "Pottery",    ""},
+            {Mode3D::Rotation,    "Rotate",     "R"},
+            {Mode3D::Morph,       "Morph",      "M"},
+            {Mode3D::Combine,     "Combine",    ""},
+            {Mode3D::Sculpt,      "Clay",       ""},
+            {Mode3D::Graph,       "Graph",      "G"}
         };
 
         // Header and Mode Toolbar
@@ -189,7 +285,7 @@ namespace Rendering {
         const float modeBtnWidth = responsiveItemWidth(modeCols, 80.0f);
 
         for (int i = 0; i < IM_ARRAYSIZE(modeDefs); ++i) {
-            render3DModeButton(modeDefs[i].mode, modeDefs[i].label, channel, modeBtnWidth);
+            render3DModeButton(modeDefs[i].mode, modeDefs[i].label, modeDefs[i].shortcut, channel, modeBtnWidth);
             responsiveSameLine(i, modeCols);
         }
 
@@ -198,6 +294,9 @@ namespace Rendering {
             bool armed = channel->spawnLawArmed;
             if (ImGui::Checkbox("Spawn as law (L)", &armed)) {
                 channel->spawnLawArmed = armed;
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("When armed, left-click in viewport invokes the first-mover Spawn Law (L)");
             }
             if (armed) {
                 ImGui::SameLine();
@@ -219,10 +318,10 @@ namespace Rendering {
         switch (state.current3DMode) {
             case Mode3D::None: {
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.7f, 0.75f, 0.8f, 1.0f), "Select a tool mode above to start creating or editing.");
+                ImGui::TextColored(ImVec4(0.7f, 0.75f, 0.8f, 1.0f), "Select a tool mode above or use keyboard shortcuts:");
                 ImGui::BulletText("Create [F4] : Spawn primitives, implicit SDFs, and surfaces");
-                ImGui::BulletText("Select [F5] : Click objects to view transforms and parameters");
-                ImGui::BulletText("Face Brush/Fill : Paint on 3D geometry faces");
+                ImGui::BulletText("Select [F5] : Target objects, transform, duplicate, or delete");
+                ImGui::BulletText("Face Brush : Paint on 3D geometry faces");
                 ImGui::BulletText("Morph / Clay : Deform topology, edit vertices, and fuse shapes");
                 break;
             }
@@ -405,7 +504,7 @@ namespace Rendering {
                     if (ImGui::SmallButton("Heart")) std::snprintf(implicitBuf, sizeof(implicitBuf), "(x*x + 2.25*z*z + y*y - 0.25)^3 - x*x*y*y*y - 0.1125*z*z*y*y*y");
                     if (ImGui::Button("Create Implicit Object")) {
                         geom::SdfNode node = geom::makeImplicit(implicitBuf);
-                        Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);
+                        Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor, "Spawn Implicit");
                         if (o) {
                             o->setFieldShape(node, glm::vec3(1.1f));
                             paintNewObject(*o, state.createColor);
@@ -418,7 +517,7 @@ namespace Rendering {
                     ImGui::SliderInt("Degree U", &du, 1, 6);
                     ImGui::SliderInt("Degree V", &dv, 1, 6);
                     if (ImGui::Button("Create Bézier Surface")) {
-                        Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor);
+                        Object* o = spawnAuthoredObject(zoneMgr, channel, engine, state.createColor, "Spawn Bézier Surface");
                         if (o) {
                             o->setBezierPatch(geom::makeBezierGrid(du, dv, 0.5f));
                             paintNewObject(*o, state.createColor);
@@ -431,7 +530,7 @@ namespace Rendering {
 
             case Mode3D::Selection: {
                 Object* sel = selectedObject3D ? selectedObject3D : state.selectedObject3D;
-                renderSelectionDetails(sel, true);
+                renderSelectionDetails(sel, zoneMgr, engine, true);
                 break;
             }
 
@@ -439,7 +538,7 @@ namespace Rendering {
                 ImGui::TextColored(ImVec4(0.95f, 0.85f, 0.55f, 1.0f), "Morph (Topology & Deformation)");
                 Object* o = selectedObject3D ? selectedObject3D : state.selectedObject3D;
                 if (!o) {
-                    ImGui::TextDisabled("Select an object first (using Select mode) to edit its topology.");
+                    ImGui::TextDisabled("Select an object first (using Select mode [F5]) to edit its topology.");
                 } else if (o->isBinaryField()) {
                     ImGui::TextDisabled("Drag the gold handle in viewport to offset operand B.");
                     glm::vec3 off = o->getFieldOperandBOffset();
@@ -599,8 +698,16 @@ namespace Rendering {
             ImGui::Separator();
             ImGui::TextColored(ImVec4(0.4f, 0.85f, 1.0f, 1.0f), "Selected: %s", liveSel->getIdentifier().c_str());
             ImGui::SameLine();
-            if (ImGui::SmallButton("Inspect##Footer")) {
+            if (ImGui::SmallButton("Inspect [F5]##Footer")) {
                 apply3DMode(state, channel, Mode3D::Selection);
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Focus [F]##Footer")) {
+                if (engine && engine->getCamera()) {
+                    glm::vec3 c = liveSel->getCenter();
+                    glm::vec3 dir = c - engine->getCamera()->getPos();
+                    if (glm::length(dir) > 0.001f) engine->getCamera()->setFront(glm::normalize(dir));
+                }
             }
             ImGui::SameLine();
             if (ImGui::SmallButton("Clear##Footer")) {
