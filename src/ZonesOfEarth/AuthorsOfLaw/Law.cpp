@@ -3065,7 +3065,9 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _reteTerminals.erase(law->getIdentifier());
         _compiledConditionRevision.erase(law->getIdentifier());
     }
+    std::vector<std::shared_ptr<Law>> oldLaws = std::move(_laws);
     _laws = std::move(firstMovers);
+    oldLaws.clear();
     _driveSessions.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();
@@ -3214,4 +3216,21 @@ nlohmann::json LawManager::toJson() const {
         {"firstMoverEnabled", firstMoverEnabled},
         {"maxChainRounds", _maxChainRounds}
     };
+}
+
+#include "MathBinding.hpp"
+void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out) {
+    if (out.index() == 15) {
+        const auto& dict = std::get<15>(out);
+        if (dict) {
+            auto itType = dict->elements.find("_type");
+            if (itType != dict->elements.end() && itType->second.index() == 7 && std::get<7>(itType->second) == "projection") {
+                auto itTarget = dict->elements.find("target");
+                if (itTarget != dict->elements.end() && itTarget->second.index() == 7) {
+                    root->readAuthoredPropertyProjectionColors(
+                        Earthcall::StringInterner::intern(std::get<7>(itTarget->second)), out);
+                }
+            }
+        }
+    }
 }
