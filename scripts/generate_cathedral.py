@@ -1,6 +1,13 @@
 import json
 import os
 
+# This generator authors semantic shape dimensions in ShapeParams and uses the
+# transform only for placement/orientation unless the primitive itself has a
+# fixed unit form (Cube).  Do not encode one dimension twice: analytic shapes
+# such as Sphere and Torus already carry their size in their geometry recipe,
+# and multiplying the transform by the same radius again squares the authored
+# scale at manifestation time.
+
 def mat4(pos, scale=[1.0, 1.0, 1.0]):
     sx, sy, sz = scale
     px, py, pz = pos
@@ -35,7 +42,9 @@ def make_sphere(obj_id, name, pos, radius, mat_id, color, extra_props=None):
         "shapeKind": 2,
         "geometryType": 2,
         "shapeParams": [float(radius), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4(pos, [radius * 2, radius * 2, radius * 2]),
+        # Sphere radius is already geometry truth in shapeParams[0].  Scaling
+        # the transform by radius again used to apply size twice.
+        "transform": mat4(pos),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
         "faceColors": [color] * 6,
@@ -48,13 +57,13 @@ def make_sphere(obj_id, name, pos, radius, mat_id, color, extra_props=None):
     return obj
 
 def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, extra_props=None):
-    scale_val = majorR * 2 + minorR * 2
     obj = {
         "objectID": obj_id,
         "shapeKind": 8,
         "geometryType": 8,
         "shapeParams": [0.0, 0.0, 0.0, 0.0, float(majorR), float(minorR), 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4(pos, [scale_val, minorR * 2, scale_val]),
+        # The analytic torus already owns majorR/minorR; transform is pose.
+        "transform": mat4(pos),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
         "faceColors": [color] * 6,
@@ -405,7 +414,11 @@ zone_doc = {
     ]
 }
 
-zone_path = "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/zones/Cathedral of the Living Logos/zone.json"
+# Never write through one developer's absolute home directory. This script is
+# a repository authoring tool: its output belongs beside the repository that
+# contains the script, whichever machine/agent runs it.
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+zone_path = os.path.join(repo_root, "saves", "zones", "Cathedral of the Living Logos", "zone.json")
 os.makedirs(os.path.dirname(zone_path), exist_ok=True)
 with open(zone_path, "w") as f:
     json.dump(zone_doc, f, indent=2)
@@ -533,7 +546,7 @@ world_doc = {
     }
 }
 
-world_path = "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/worlds/cathedral_of_the_living_logos.json"
+world_path = os.path.join(repo_root, "saves", "worlds", "cathedral_of_the_living_logos.json")
 with open(world_path, "w") as f:
     json.dump(world_doc, f, indent=2)
 print(f"Wrote {world_path}")

@@ -1,8 +1,22 @@
 #include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include <cstring>
+#include <iostream>
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
+
+namespace {
+ObjectTypes::ShapeKind checkedBodyShapeKind(int raw) {
+    constexpr int first = static_cast<int>(ObjectTypes::ShapeKind::Cube);
+    constexpr int last = static_cast<int>(ObjectTypes::ShapeKind::Text2D);
+    if (raw >= first && raw <= last) {
+        return static_cast<ObjectTypes::ShapeKind>(raw);
+    }
+    std::cerr << "[BodySerialization] invalid ShapeKind ordinal " << raw
+              << " — refusing it and hydrating as Cube instead.\n";
+    return ObjectTypes::ShapeKind::Cube;
+}
+}
 
 static std::vector<float> mat4ToVector(const glm::mat4& m){
     std::vector<float> v(16);
@@ -89,8 +103,8 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
 
 void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
     // Primary 3D shape (must come before texture load so face count is correct)
-    if (j.contains("geometryType")) {
-        part.setPrimaryShape(static_cast<ObjectTypes::ShapeKind>(j["geometryType"].get<int>()));
+    if (j.contains("geometryType") && j["geometryType"].is_number_integer()) {
+        part.setPrimaryShape(checkedBodyShapeKind(j["geometryType"].get<int>()));
     }
 
     // Geometry dimensions
@@ -179,9 +193,13 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
                 localOffset = vectorToMat4(tvals);
             }
 
-            Object* sub = sj.contains("shapeKind")
-                ? part.addSubObject(static_cast<Object::ShapeKind>(sj["shapeKind"].get<int>()), localOffset)
-                : part.addSubObject(static_cast<Object::ShapeKind>(sj.value("geometryType", 0)), localOffset);
+            int rawKind = static_cast<int>(ObjectTypes::ShapeKind::Cube);
+            if (sj.contains("shapeKind") && sj["shapeKind"].is_number_integer()) {
+                rawKind = sj["shapeKind"].get<int>();
+            } else if (sj.contains("geometryType") && sj["geometryType"].is_number_integer()) {
+                rawKind = sj["geometryType"].get<int>();
+            }
+            Object* sub = part.addSubObject(checkedBodyShapeKind(rawKind), localOffset);
             if (sub) {
                 // Load everything except transform (already set by addSubObject)
                 glm::mat4 savedWorld = sub->getTransform();
@@ -240,4 +258,3 @@ void bodyFromJson(const nlohmann::json& j, Body& body) {
         }
     }
 }
-

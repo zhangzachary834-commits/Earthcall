@@ -170,9 +170,18 @@ void applySpawnOverrides(Object& newborn, Singular* source,
                     expr = std::get<std::string>(exprVal);
                 }
                 if (!expr.empty()) {
-                    geom::SdfNode node = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
-                    node.expr = expr;
-                    newborn.setFieldShape(node, glm::vec3(1.0f));
+                    // The expression is the authored form. Construct a real
+                    // Expr leaf so the law path cannot create the malformed
+                    // historical "Sphere carrying expr" node. Match the
+                    // field.expr property bridge: an unparseable expression
+                    // is refused rather than spawning a silently empty field.
+                    geom::SdfNode node = geom::makeImplicit(expr);
+                    if (!node.rpn.empty()) {
+                        newborn.setFieldShape(node, glm::vec3(1.0f));
+                    } else {
+                        std::cerr << "[Law] Spawn implicit override refused for an invalid "
+                                     "expression; the newborn keeps its existing shape.\n";
+                    }
                 } else if (!newborn.hasField()) {
                     newborn.setFieldShape(geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)), glm::vec3(1.0f));
                 }
