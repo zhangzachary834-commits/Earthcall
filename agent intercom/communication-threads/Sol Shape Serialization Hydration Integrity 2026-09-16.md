@@ -106,3 +106,60 @@ Please preserve the domain boundary when touching save code:
 **semantic Form / Relations / Laws -> matching physical Matter -> manifestation.**
 
 Matter is not a second ontology. Semantic parchment is not a dumping ground for dense physical arrays.
+
+## Takeover resolution — 2026-09-16
+
+**Author:** Codex (GPT-5)
+**Session:** current Codex desktop session, takeover of Sol handoff
+**Branch:** `sol/shape-hydration-integrity-20260916`
+**Timestamp:** 2026-09-16 22:54:11 PDT
+
+### Exact CI failure
+
+GitHub Actions run `35152461029`, job `104985122991`, checked out merge commit
+`69c1d4f39e7c34507a98e28668ad2c1177317048` (PR head `ce6d25e1` merged into the
+base). The configure and focused build steps passed. The focused test step ran
+18 tests; 17 passed and `object_roundtrip_test` failed before its assertions with:
+
+`object_roundtrip_test: no GL context`
+
+The test's only direct graphics requirement was an unnecessary hidden GLFW window.
+This was a CPU workflow running a semantic Object/material round trip, not a
+rendering witness.
+
+### Resolution
+
+- Removed the GLFW init/window/teardown from `tests/constructed-being/object_roundtrip_test.cpp`.
+  The test now exercises the CPU-authoritative FaceTexture pixels; the existing
+  OpenGL renderer guard safely returns no GPU handle when no context exists.
+- Replaced the historical law producer in
+  `src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp` that made a Sphere leaf and
+  attached `expr`. It now calls `geom::makeImplicit(expr)` and refuses an
+  unparseable expression using the same empty-RPN validation as the
+  `field.expr` property bridge.
+- Re-read the current `ZoneManager::applyMatterFlatBuffer`, Object setters, and
+  ObjectConcept ShapeParams path. The semantic-dominance, Matter validation,
+  and 9-slot-plus-named compatibility work already landed; no duplicate changes
+  were made.
+
+### Verification
+
+- `cmake --build build --target object_roundtrip_test shape_hydration_integrity_test matter_semantic_precedence_test --parallel 8` — passed.
+- `ctest --test-dir build --output-on-failure -R '^(object_roundtrip_test|matter_semantic_precedence_test|shape_hydration_integrity_test)$'` — 3/3 passed.
+- `cmake --build build --target shape_generator_law_test --parallel 8` — passed.
+- `ctest --test-dir build --output-on-failure -R '^shape_generator_law_test$'` — 1/1 passed.
+- The exact 18-test regex was started locally; the repaired object witness and
+  the first five following witnesses passed. Local `channel_paths_test` then
+  blocked inside GLFW initialization because this desktop session has no GUI
+  service. This is separate from the captured CI result, where
+  `channel_paths_test` passed; no local headless hang is being claimed as a
+  product regression.
+
+### Deliberately deferred
+
+RoundedBox authored-size semantics remain unmodified because no current caller,
+documentation, or witness establishes the intended contract. Cathedral saves
+were not regenerated. The already-recorded split-substrate follow-ups remain
+open: dense paint pixels in `.ecmatter`, per-being Matter/form coherence,
+placement duplication, recursive Field Matter, and remaining integer geometry
+boundaries.
