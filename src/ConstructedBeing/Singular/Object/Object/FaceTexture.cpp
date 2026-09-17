@@ -170,7 +170,9 @@ bool FaceTexture::writePixelWithRadius(const glm::vec2& uv, const glm::vec3& col
         }
     }
     std::vector<glm::vec3> colors(coordinates.size(), color);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 bool FaceTexture::writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
@@ -237,7 +239,9 @@ bool FaceTexture::writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
     }
 
     std::vector<glm::vec3> colors(coordinates.size(), color);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
@@ -251,7 +255,9 @@ bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
     coordinates.reserve(colors.size());
     for (int y = y0; y < y1; ++y)
         for (int x = x0; x < x1; ++x) coordinates.emplace_back(x, y);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 
@@ -315,6 +321,7 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
         uint32_t regionH = maxY - minY + 1;
         currentRenderer().uploadTextureRegion(id, pixels.data(), width, height, minX, minY, regionW, regionH);
     }
+    revision++;
     return true;
 }
 

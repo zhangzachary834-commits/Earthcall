@@ -803,6 +803,7 @@ public:
     void setName(const std::string& name) { _name = name; }
     
     std::string getTextString() const { return _textString; }
+    bool readAuthoredPropertyProjectionColors(Earthcall::StringId id, PropertyValue& out) const override;
     void setTextString(const std::string& text) { _textString = text; }
 
     const std::string& getEntityName() const { return _entityName; }
@@ -816,6 +817,7 @@ private:
     // authored definition + property is what elevates the set.
     bool readAuthoredPropertyProjection(Earthcall::StringId id,
                                         PropertyValue& out) const override;
+    
     bool recognizesAuthoredPropertyProjection(Earthcall::StringId id) const override;
     bool writeAuthoredPropertyProjection(Earthcall::StringId id,
                                          const PropertyValue& value) override;

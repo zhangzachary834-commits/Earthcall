@@ -29,6 +29,7 @@ int main() {
 
     // Create Law
     auto law = std::make_shared<Law>("witness.law");
+    law->addAuthor(*obj);
     
     glm::vec3 red(1.0f, 0.0f, 0.0f);
     auto expectedRedList = std::make_shared<PropertyList>();
@@ -39,6 +40,7 @@ int main() {
 
     ActionNode act = ActionNode::set("witness_passed", PropertyValue(true));
     law->setActionModel(act);
+    law->setActivation(Law::Activation::WhileTrue);
 
     harness.lawManager.add(law);
 
@@ -108,11 +110,11 @@ int main() {
     // Now write texels directly via rendering/Surface write
     obj->writeSurfacePixel(0, glm::vec2(0.25f, 0.25f), red); // Top-left
     bool ret2 = obj->writeSurfacePixel(0, glm::vec2(0.25f, 0.75f), red); // Bottom-left
-    std::cout << "ret2=" << ret2 << "\n";
+    
 
     // Read the same region (regionB) through PropertyPath
     PropertyValue readB;
-    assert(PropertyPath::parse("regionB").getValue(*obj, readB) == PropertyPath::PathResult::Ok);
+    obj->readAuthoredPropertyProjectionColors(Earthcall::StringInterner::intern("regionB"), readB);
     auto readBList = std::get<std::shared_ptr<PropertyList>>(readB);
     assert(readBList->elements.size() == 2);
     

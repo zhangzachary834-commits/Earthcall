@@ -512,7 +512,29 @@ bool Object::recognizesAuthoredPropertyProjection(Earthcall::StringId id) const 
     return selectionDefinition(*this, name, face, selector);
 }
 
+
 bool Object::readAuthoredPropertyProjection(Earthcall::StringId id,
+                                            PropertyValue& out) const {
+    const std::string name = Earthcall::StringInterner::resolve(id);
+    PixelAddress pixel;
+    int face = -1;
+    OntoMath::Piecewise selector;
+    const bool single = parsePixelAddress(name, pixel);
+    if (single) face = pixel.face;
+    else if (!selectionDefinition(*this, name, face, selector)) return false;
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (!mat || face < 0 || face >= static_cast<int>(mat->faceTextures.size())) return false;
+    const FaceTexture& ft = mat->faceTextures[static_cast<std::size_t>(face)];
+    
+    auto dict = std::make_shared<PropertyDict>();
+    dict->elements["_type"] = PropertyValue(std::string("projection"));
+    dict->elements["target"] = PropertyValue(name);
+    dict->elements["revision"] = PropertyValue(static_cast<double>(ft.revision));
+    out = PropertyValue(std::move(dict));
+    return true;
+}
+
+bool Object::readAuthoredPropertyProjectionColors(Earthcall::StringId id,
                                             PropertyValue& out) const {
     const std::string name = Earthcall::StringInterner::resolve(id);
     PixelAddress pixel;

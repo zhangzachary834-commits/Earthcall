@@ -17,6 +17,20 @@
 #include <cmath>
 #include <utility>
 
+static void resolveProjectionToken(Singular& target, const PropertyValue& in, PropertyValue& out) {
+    out = in;
+    const auto* dict = std::get_if<std::shared_ptr<PropertyDict>>(&in);
+    if (!dict || !*dict) return;
+    auto itType = (*dict)->elements.find("_type");
+    if (itType == (*dict)->elements.end() || !std::holds_alternative<std::string>(itType->second) || std::get<std::string>(itType->second) != "projection") return;
+    
+    auto itTarget = (*dict)->elements.find("target");
+    if (itTarget == (*dict)->elements.end() || !std::holds_alternative<std::string>(itTarget->second)) return;
+    std::string targetName = std::get<std::string>(itTarget->second);
+    
+    target.readAuthoredPropertyProjectionColors(Earthcall::StringInterner::intern(targetName), out);
+}
+
 namespace {
 
 const char* opName(ConditionNode::Op op) {
@@ -248,6 +262,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                     }
                     return false;
                 }
+                resolveProjectionToken(t, lhs, lhs);
                 PropertyValue rhs = rhsLiteral;
                 if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) {
                     if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
