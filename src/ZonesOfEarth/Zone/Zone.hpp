@@ -131,6 +131,7 @@ public:
         int substeps = 0;
     };
     void update(float dt = 0.016f, UpdateTiming* out = nullptr);
+    const UpdateTiming& lastUpdateTiming() const { return _lastUpdateTiming; }
 
     const std::string& getParentZone() const { return _parentZoneName; }
     void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
@@ -171,6 +172,8 @@ private:
     std::string _ownerId;
     std::vector<std::shared_ptr<Object>> _objects;
     float _accumulator = 0.0f;
+    // Kernel performance instrumentation — sub-phase tick telemetry beneath the Law system.
+    UpdateTiming _lastUpdateTiming;
     Formation _formation;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;

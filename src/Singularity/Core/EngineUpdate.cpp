@@ -218,6 +218,13 @@ namespace Core {
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
 
+        const auto& zt = mgr.active().lastUpdateTiming();
+        g_frameTimings.zone_ground_ms = static_cast<float>(zt.groundScanMs);
+        g_frameTimings.zone_rot_ms    = static_cast<float>(zt.rotationMs);
+        g_frameTimings.zone_auto_ms   = static_cast<float>(zt.automationMs);
+        g_frameTimings.zone_phys_ms   = static_cast<float>(zt.physicsMs);
+        g_frameTimings.zone_substeps  = zt.substeps;
+
         clearMouseLeftJustPressed();
     }
 }

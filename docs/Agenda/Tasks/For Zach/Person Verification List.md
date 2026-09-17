@@ -437,3 +437,23 @@ The law engine kept a note of which relation facts it already held, so it would 
 The engine keeps a lookup of every being by name so laws can say things like `@state.studio.voice` or `@late-gate.ceiling`. That lookup rebuilds when the world's shape changes. Nothing tested that it rebuilds — only that it was fast — so if it had stopped, every `@`-rooted law would have gone quiet with no error at all. It is now tested, and the test fails if the rebuild is removed.
 
 - [ ] **Add something to a world mid-session and use a law that names it.** In the Creator Console, make a new being, give it a stable name, then author (or enable) a law whose condition or action names it with `@that-name.someProperty`. The law should act on it immediately, without a restart or a Zone reload.
+
+## Performance metrics window displays Zone::update sub-phase tick timings individually
+
+*Raised 2026-09-17, Gemini Spark, session `2026-09-17`.*
+
+The Performance & Coordinates window (`F3`) now surfaces the tick ms duration for each individual sub-phase of `Zone::update()`: ground scan, object rotations, automations, and physics bodies update (along with the substep count). These are visible both nested under `Zone Update` in the main `Engine::tick()` breakdown and in a dedicated `Zone::update()` timing section.
+
+- [ ] **Open Performance & Coordinates window (`F3`).**
+  - Verify that under **Engine::tick() Frame Timings Breakdown**, `Zone Update` expands with individual sub-phase ms lengths:
+    - `|- Ground scan:`
+    - `|- Rotations:`
+    - `|- Automations:`
+    - `|- Physics (N substeps):`
+  - Verify that the dedicated **Zone::update()** section displays:
+    - Zone::update() total ms, active Zone name, and substep count
+    - Ground Scan ms
+    - Rotations ms
+    - Automations ms
+    - Physics ms
+  - Verify all metrics update live as the world ticks.
