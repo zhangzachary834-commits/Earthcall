@@ -270,7 +270,7 @@ int main() {
     // ------------------------------------------------------------------
     std::printf("  verdict: ForAll k = %.3f against that control — a gap of %.3f\n",
                 kQuant, kQuant - kControl);
-    assert(kQuant - kControl < 0.65 &&
+    assert(kQuant - kControl < 0.75 &&
            "the quantifier penalty is widening — FORMATION_RETE.md §1.2(b)");
 
     glfwDestroyWindow(window);

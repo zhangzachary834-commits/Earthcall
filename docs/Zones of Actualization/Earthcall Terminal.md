@@ -28,6 +28,8 @@ set<Singular set 1>, set<Singular set 2>, create Singular <Kind: base Singular (
 specified), Object, Relation, Law, Formation, Lexeme, Zone, Home, Event, Moment, Material, etc.>, then it displays 
 what properties the Singular should have.
 
+Another crucial element: OntoMath needs to become crystallized into fundamental *opcodes.* Opcodes that can be authorable propereties of Singulras.
+
 Once you enter that, it lets you write OntoMath opcodes over the collective properties of Singular sets 1 and 2, 
 and add or remove new properties. 
 

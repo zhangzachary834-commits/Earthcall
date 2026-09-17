@@ -78,6 +78,14 @@
 
 - [x] Assets window: open → verify assets → save/load → verify again
 - [x] Chat window → open Chat → send a test message → verify it appears correctly
+
+## Cathedral of the Living Logos (added 2026-09-17 from weekly reflection)
+- [ ] Walk into the Cathedral Zone and confirm it is a place, not a pile of default cubes
+- [ ] Touch a Lexeme on the altar (Logos / Pneuma / Lux / Harmonia / Covenant) → verify a Law actually binds or a world-change happens, not only a label/hover
+- [ ] Hear whether architecture and tone are the same OntoMath (shape sounding like itself) or a pretty SDF with a frequency sticker
+- [ ] Save → quit the process → reopen → return to the Cathedral → verify the words, relations, and look are still the ones you left
+- [ ] After `THE CATHEDRAL LOOKS AWESOME NOWWWWW`: confirm double-scaling of analytic shapes is gone at the angles that previously warped
+
 - [ ] ImGui Demo → open ImGui Demo → interact with at least one visible demo control → verify it responds
 - [x] Controls/Keymap (`K`) → press `K` → verify the Controls/Keymap window opens → verify controls are displayed | Zach: Keybinds are not exhaustive. For example, 
 - [x] F8 → press F8 → verify the intended F8 action occurs

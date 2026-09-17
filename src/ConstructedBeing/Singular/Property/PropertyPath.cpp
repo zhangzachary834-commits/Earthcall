@@ -295,21 +295,25 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             if (currentVal.index() != v.index()) return PathResult::TypeMismatch;
             return PathResult::ReadOnly;
                         } else if (slot.dynamicSlot) {
-            // Check coercion for dynamic slots too to prevent type changing if it's currently a number
             double n = 0.0;
             PropertyValue coerced;
-            if (propertyValueToNumber(v, n) && coerceLike(*slot.dynamicSlot, n, coerced)) {
-                if (propertyValuesEquivalent(*slot.dynamicSlot, coerced)) return PathResult::Unchanged;
-                if (slot.owner->setDynamicProperty(slot.dynamicKey, coerced)) {
-                    return PathResult::Ok; // setDynamicProperty already called notifyPropertyChanged
+            bool coerceSuccess = propertyValueToNumber(v, n) && coerceLike(*slot.dynamicSlot, n, coerced);
+            const PropertyValue& valToWrite = coerceSuccess ? coerced : v;
+
+            if (propertyValuesEquivalent(*slot.dynamicSlot, valToWrite)) return PathResult::Unchanged;
+
+            if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
+                if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), valToWrite)) {
+                    return PathResult::Ok;
                 }
             } else {
-                if (propertyValuesEquivalent(*slot.dynamicSlot, v)) return PathResult::Unchanged;
-                if (slot.owner->setDynamicProperty(slot.dynamicKey, v)) {
-                    return PathResult::Ok; // setDynamicProperty already called notifyPropertyChanged
+                *slot.dynamicSlot = valToWrite;
+                if (!slot.dynamicKey.empty()) {
+                    slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
                 }
+                return PathResult::Ok;
             }
-            return PathResult::ReadOnly; // If setDynamicProperty fails
+            return PathResult::ReadOnly;
         }
     }
 
@@ -331,8 +335,16 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         if (slot.prop->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, slot.prop, slot.owner);
         return PathResult::ReadOnly;
             } else if (slot.dynamicSlot) {
-        if (slot.owner->setDynamicProperty(slot.dynamicKey, PropertyValue(*vec))) {
-            return PathResult::Ok; // setDynamicProperty already called notifyPropertyChanged
+        if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
+            if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), PropertyValue(*vec))) {
+                return PathResult::Ok;
+            }
+        } else {
+            *slot.dynamicSlot = PropertyValue(*vec);
+            if (!slot.dynamicKey.empty()) {
+                slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
+            }
+            return PathResult::Ok;
         }
         return PathResult::ReadOnly;
     }
