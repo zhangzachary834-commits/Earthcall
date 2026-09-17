@@ -36,5 +36,6 @@ One such property is OntoMath opcodes.
 The current CLI implements what is essentially a new subsystem above the essential ontology of creation. That's NOT how it should be. 
 It should correspond to the invariatns the ontology already gives rather than hardcoding a command system sitting above it wearing an Earthcall costume.  
 
-Person-facing First movers wrapping Opcodes around Lexemes. It says something like "." enable the first Singulars and Laws to be created 
+Person-facing First movers wrapping Opcodes around Lexemes. You type a first-mover opcode command like "setsetcreation law." enable the first Singulars and Laws to be created 
 -> 
+
