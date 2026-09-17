@@ -1555,7 +1555,7 @@
                   "op": 4,
                   "operand": {
                     "t": "double",
-                    "v": 6.0
+                    "v": 0.9
                   },
                   "path": "@interaction-channel.dragX"
                 },
@@ -1564,7 +1564,7 @@
                   "op": 2,
                   "operand": {
                     "t": "double",
-                    "v": -6.0
+                    "v": -0.9
                   },
                   "path": "@interaction-channel.dragX"
                 },
@@ -1573,7 +1573,7 @@
                   "op": 4,
                   "operand": {
                     "t": "double",
-                    "v": 6.0
+                    "v": 0.9
                   },
                   "path": "@interaction-channel.dragY"
                 },
@@ -1582,7 +1582,7 @@
                   "op": 2,
                   "operand": {
                     "t": "double",
-                    "v": -6.0
+                    "v": -0.9
                   },
                   "path": "@interaction-channel.dragY"
                 }
@@ -5015,7 +5015,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "✎ ART DRAWING CANVAS (Drag to draw light strokes)"
+                "v": "\u270e ART DRAWING CANVAS (Drag to draw light strokes)"
               }
             },
             "center": [
@@ -5269,7 +5269,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "✦ Spawn Harmonic Orb"
+                "v": "\u2726 Spawn Harmonic Orb"
               },
               "restY": {
                 "t": "double",
@@ -5351,7 +5351,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ✦ SPAWN ORB ]"
+                "v": "[ \u2726 SPAWN ORB ]"
               }
             },
             "center": [
@@ -5527,7 +5527,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "☼ Toggle Night/Day Theme"
+                "v": "\u263c Toggle Night/Day Theme"
               },
               "restY": {
                 "t": "double",
@@ -5609,7 +5609,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ☼ DAY / NIGHT ]"
+                "v": "[ \u263c DAY / NIGHT ]"
               }
             },
             "center": [
@@ -5781,7 +5781,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note C5 (Do)"
+                "v": "\u266b Note C5 (Do)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5887,7 +5887,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note D5 (Re)"
+                "v": "\u266b Note D5 (Re)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5993,7 +5993,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note E5 (Mi)"
+                "v": "\u266b Note E5 (Mi)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6099,7 +6099,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note F5 (Fa)"
+                "v": "\u266b Note F5 (Fa)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6205,7 +6205,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note G5 (Sol)"
+                "v": "\u266b Note G5 (Sol)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6311,7 +6311,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note A5 (La)"
+                "v": "\u266b Note A5 (La)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6417,7 +6417,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note B5 (Ti)"
+                "v": "\u266b Note B5 (Ti)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6507,7 +6507,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ♫ MAJOR SCALE: C5 · D5 · E5 · F5 · G5 · A5 · B5 ]"
+                "v": "[ \u266b MAJOR SCALE: C5 \u00b7 D5 \u00b7 E5 \u00b7 F5 \u00b7 G5 \u00b7 A5 \u00b7 B5 ]"
               }
             },
             "center": [
@@ -6765,7 +6765,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ⟷ RESONANCE SLIDER ]"
+                "v": "[ \u27f7 RESONANCE SLIDER ]"
               }
             },
             "center": [
