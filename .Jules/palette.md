@@ -31,3 +31,6 @@
 ## 2024-11-27 - Accessible Keyboard Shortcut Hints
 **Learning:** When adding visual keyboard shortcut hints (like `<kbd>Enter</kbd>` or `↵`) inside interactive elements like buttons, screen readers will often append or interject the literal text of the `<kbd>` element into the button's accessible name (e.g., reading "Emit Return button" instead of "Emit button"). This creates a confusing auditory experience for users relying on assistive technologies.
 **Action:** Always include `aria-hidden="true"` on visual `<kbd>` hints embedded within buttons or links to hide them from screen readers, since the button's primary action is already understood semantically.
+## 2024-11-28 - Composite Input Focus Styling
+**Learning:** When styling a composite form input (a container with an input and a button, like `#logos-interface`), applying `:focus-visible` solely to the inner `<input>` element creates a visually disjointed highlight. Using `:focus-within` on the parent container provides a much more cohesive, aesthetically pleasing, and accessible focus indicator for keyboard users.
+**Action:** Always prefer `:focus-within` on the container for composite input designs rather than outlining just the inner text field.
