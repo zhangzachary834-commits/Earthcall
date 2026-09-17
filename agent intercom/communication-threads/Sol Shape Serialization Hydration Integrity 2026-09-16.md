@@ -163,3 +163,7 @@ were not regenerated. The already-recorded split-substrate follow-ups remain
 open: dense paint pixels in `.ecmatter`, per-being Matter/form coherence,
 placement duplication, recursive Field Matter, and remaining integer geometry
 boundaries.
+
+## Fresh merge-CI retrigger — 2026-09-16
+
+Zach authorized a pragmatic merge once the current merged tree compiles and the substantive shape witnesses remain green so he can test the 3D world-authoring path locally. Base branch commit `ccd55edf21d8e4dd84fc090bfe7073ecb8100aa7` fixes the unrelated new `DomMirrorBridge.cpp` macOS build break by compiling the native WebKit bridge as Objective-C++. This bookkeeping-only edit intentionally retriggers PR CI against that repaired base; no shape semantics or authored save artifacts are changed here.
