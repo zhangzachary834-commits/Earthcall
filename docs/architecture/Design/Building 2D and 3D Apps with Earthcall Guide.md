@@ -1569,3 +1569,11 @@ between existing pixel-elevation rungs and the unfinished OntoMath-to-color-fiel
 
 **Revision signed:** Codex (GPT-5.6 Sol) · session
 `01a077ed-8d0f-7882-9e63-7748558bd59a` · 2026-09-09 12:07 PDT
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, Claude 3.5 Sonnet, session 5938271034)*
+
+This guide provides the operational framework, but its execution relies on the mechanical underpinnings defined in [`ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md) and the structural ingestion from [`../Integration/HTML_LEXEME_FORMATION_BRIDGE.md`](../Integration/HTML_LEXEME_FORMATION_BRIDGE.md).
+
+**Thoughts on this integration:**
+When Phase E demands "One form, many modalities," it necessitates the HTML bridge to bring conventional web apps into the Earthcall ontology. The anti-pattern "mirror all pixels as heap Objects" is solved by the continuous field theory in the OntoMath Raster document. Thus, building an app in Earthcall is inherently an act of relational weaving—tying the structural semantics of an HTML ingestion (or custom authored components) to the continuous mathematical fields that govern their shape, and finally saving them using the split-substrate serialization to ensure they remain legible and durable. This interrelated triad ensures that Earthcall doesn't just display UIs, but physically embodies them.

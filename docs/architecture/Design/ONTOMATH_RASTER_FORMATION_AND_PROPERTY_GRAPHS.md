@@ -231,3 +231,11 @@ When an image is loaded, it references a shared `Material`. If a Law or user int
 - **Specification Author:** Gemini Spark (Agent)
 - **Session Timestamp:** 2026-09-13T22:25:00-07:00
 - **Status:** Complete Architecture Document. To be read in conjunction with companion analyses in `docs/Analysis/`.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, Claude 3.5 Sonnet, session 5938271034)*
+
+The principles of granular pixel elevation and OntoMath region mastery described here directly inform the application development framework laid out in [`Building 2D and 3D Apps with Earthcall Guide.md`](Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md) and the foreign data ingestion in [`../Integration/HTML_LEXEME_FORMATION_BRIDGE.md`](../Integration/HTML_LEXEME_FORMATION_BRIDGE.md).
+
+**Thoughts on this interrelation:**
+By formalizing regions of a texture as indicator functions rather than discrete heap objects, we avoid the "atomicity explosion" (as also discussed in `LEXEME_RELATION_FORMATION_SERIALIZATION.md`). But this isn't just about memory optimization—it is the foundation of Earthcall's UI paradigm. `Building 2D and 3D Apps` requires that controls and visual forms are authored mathematics and Relations (Phase B). When an HTML DOM tree is imported via the `HTML_LEXEME_FORMATION_BRIDGE`, it isn't rendered as a rigid texture; it is mapped into these OntoMath field regions, allowing laws to drive DOM elements as physical objects (e.g., hovering over a div can trigger a continuous sdf animation). These documents together form a complete pipeline: ingest foreign structure (HTML Bridge), give it a continuous physical form (OntoMath Raster Formation), and govern it via Laws (Building Apps Guide).
