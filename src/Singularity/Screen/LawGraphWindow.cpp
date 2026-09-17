@@ -1833,7 +1833,81 @@ bool actionKindPalette(ActionNode& node) {
     return changed;
 }
 
-bool editActionNode(ActionNode& node) {
+Singular* resolveCandidateSubject(const Law* currentLaw) {
+    if (g.testSubject) return g.testSubject;
+    if (currentLaw) {
+        const auto& targets = currentLaw->targets().getMembers();
+        if (!targets.empty() && targets.front()) {
+            return targets.front();
+        }
+    }
+    return nullptr;
+}
+
+bool evaluateLivePath(const PropertyPath& path, const Law* currentLaw, PropertyValue& out) {
+    if (path.empty()) return false;
+    Singular* candidate = resolveCandidateSubject(currentLaw);
+    if (candidate && lawGetValue(*candidate, path, out)) {
+        return true;
+    }
+    if (isTimePath(path)) {
+        return lawGetTime(path, out);
+    }
+    std::size_t startIndex = 0;
+    static Object fallbackSubject;
+    Singular* root = resolveLawRoot(candidate ? *candidate : fallbackSubject, path, startIndex);
+    if (root) {
+        return path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok;
+    }
+    return false;
+}
+
+void showLiveValueBadge(const PropertyPath& path, const Law* currentLaw, const char* expectedType = nullptr) {
+    if (path.empty()) {
+        ImGui::TextDisabled("  (no path bound)");
+        return;
+    }
+    PropertyValue val;
+    const bool hasVal = evaluateLivePath(path, currentLaw, val);
+    if (!hasVal) {
+        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "  Live: (no read / inactive)");
+        return;
+    }
+
+    double num = 0.0;
+    if (propertyValueToNumber(val, num)) {
+        if (expectedType && std::strcmp(expectedType, "int") == 0) {
+            int intVal = static_cast<int>(num);
+            ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %d", intVal);
+            if (intVal < 0) {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "(miss / no face hit)");
+            }
+        } else {
+            ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %.4f", num);
+            if (expectedType && std::strcmp(expectedType, "uv") == 0) {
+                if (num < 0.0 || num > 1.0) {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "(! outside [0, 1])");
+                }
+            }
+        }
+    } else if (std::holds_alternative<glm::vec3>(val)) {
+        glm::vec3 v = std::get<glm::vec3>(val);
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: RGB(%.3f, %.3f, %.3f)", v.r, v.g, v.b);
+        ImGui::SameLine();
+        ImGui::ColorButton("##swatch", ImVec4(v.r, v.g, v.b, 1.0f), ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(16.0f, 14.0f));
+    } else if (std::holds_alternative<bool>(val)) {
+        bool b = std::get<bool>(val);
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %s", b ? "true" : "false");
+    } else if (std::holds_alternative<std::string>(val)) {
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: \"%s\"", std::get<std::string>(val).c_str());
+    } else {
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %s", propertyTypeName(val));
+    }
+}
+
+bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
     bool changed = false;
     if (actionKindPalette(node)) changed = true;
 
@@ -2111,47 +2185,199 @@ bool editActionNode(ActionNode& node) {
 
         case ActionNode::Kind::PlayAudio: {
             ImGui::TextDisabled("Trigger the procedural audio synthesizer via properties.");
+            ImGui::Spacing();
+
+            fieldCaption("Frequency Path", "Numeric frequency in Hz (e.g. 440.0 for A4, or an acoustic property).");
             if (pathPicker("Frequency path", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, "number");
+            ImGui::Spacing();
+
+            fieldCaption("Amplitude Path", "Numeric volume/amplitude in [0.0, 1.0].");
             if (pathPicker("Amplitude path", node.input)) changed = true;
+            showLiveValueBadge(node.input, currentLaw, "number");
+            ImGui::Spacing();
+
             char waveBuf[64];
             copyToBuf(waveBuf, sizeof(waveBuf), node.propertyName);
+            fieldCaption("Wave Type", "Oscillator waveform: sine, square, sawtooth, triangle, noise.");
             if (textField("Wave type", waveBuf, sizeof(waveBuf),
                           "sine, square, sawtooth…")) {
                 node.propertyName = waveBuf;
                 changed = true;
             }
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("material/waveType string (e.g. sine, square, sawtooth)");
+            ImGui::TextDisabled("Presets:");
+            ImGui::SameLine();
+            const char* presets[] = {"sine", "square", "sawtooth", "triangle", "noise"};
+            for (int i = 0; i < 5; ++i) {
+                if (i) ImGui::SameLine();
+                if (ImGui::SmallButton(presets[i])) {
+                    node.propertyName = presets[i];
+                    changed = true;
+                }
             }
+            ImGui::TextDisabled("On play: publishes past-tense 'audio-synthesized' event.");
             break;
         }
 
         case ActionNode::Kind::WritePixel: {
             ImGui::TextDisabled("Replace one surface sample through the Screen channel.");
             ImGui::TextDisabled("Every operand is a PropertyPath; no shape or palette meaning is fixed here.");
+            ImGui::Spacing();
+
+            // Target Context Banner
+            Singular* candidate = resolveCandidateSubject(currentLaw);
+            Object* targetObj = dynamic_cast<Object*>(candidate);
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "SURFACE & TARGET CONTEXT");
+            if (targetObj) {
+                ImGui::Text("  Target Object: %s", targetObj->getIdentifier().c_str());
+                auto mat = targetObj->ownMaterial();
+                if (mat && !mat->faceTextures.empty()) {
+                    ImGui::Text("  Material: %s (CoW isolated, %zu face(s))",
+                                mat->getIdentifier().c_str(), mat->faceTextures.size());
+                } else {
+                    ImGui::TextDisabled("  Material: %s (no raster face textures)", targetObj->materialId().c_str());
+                }
+            } else if (candidate) {
+                ImGui::Text("  Target: %s (non-Object; requires textured surface)", candidate->getIdentifier().c_str());
+            } else {
+                ImGui::TextDisabled("  Target: (select an object in world or assign law target)");
+            }
+
+            const bool sinkBound = static_cast<bool>(pixelWriteSink());
+            if (sinkBound) {
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Screen Sink: Active");
+            } else {
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "  Screen Sink: Not bound (headless/offscreen)");
+            }
+            ImGui::Spacing();
+
+            // 4 Properties with captions & live readouts
+            fieldCaption("Face Index Path", "Specifies which polygon/face of the geometry to write. 0 for 2D canvas, >= 0 for 3D meshes, -1 for miss.");
             if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            showLiveValueBadge(node.pixelFacePath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("Normalized U Coordinate Path", "Local horizontal coordinate in [0.0, 1.0]. Typically @interaction-channel.hoveredU.");
             if (pathPicker("U path", node.pixelUPath)) changed = true;
+            showLiveValueBadge(node.pixelUPath, currentLaw, "uv");
+            ImGui::Spacing();
+
+            fieldCaption("Normalized V Coordinate Path", "Local vertical coordinate in [0.0, 1.0]. Typically @interaction-channel.hoveredV.");
             if (pathPicker("V path", node.pixelVPath)) changed = true;
+            showLiveValueBadge(node.pixelVPath, currentLaw, "uv");
+            ImGui::Spacing();
+
+            fieldCaption("Sample Color Path", "RGB color to write (must resolve to vec3). E.g. canvas paintColor or @creation-channel.activeColor.");
             if (pathPicker("Color path", node.pixelColorPath)) changed = true;
+            showLiveValueBadge(node.pixelColorPath, currentLaw, "color");
+            ImGui::Spacing();
+
+            // Discrete Texel Calculation (Live Projection)
+            PropertyValue faceVal, uVal, vVal;
+            double faceNum = 0.0, uNum = 0.0, vNum = 0.0;
+            const bool hasFace = evaluateLivePath(node.pixelFacePath, currentLaw, faceVal) && propertyValueToNumber(faceVal, faceNum);
+            const bool hasU = evaluateLivePath(node.pixelUPath, currentLaw, uVal) && propertyValueToNumber(uVal, uNum);
+            const bool hasV = evaluateLivePath(node.pixelVPath, currentLaw, vVal) && propertyValueToNumber(vVal, vNum);
+
+            if (targetObj) {
+                auto mat = targetObj->ownMaterial();
+                int faceIdx = hasFace ? static_cast<int>(faceNum) : 0;
+                if (mat && faceIdx >= 0 && faceIdx < static_cast<int>(mat->faceTextures.size())) {
+                    const auto& ft = mat->faceTextures[faceIdx];
+                    ImGui::TextColored(kHeaderColor, "TEXEL RESOLUTION & ADDRESSING");
+                    ImGui::Text("  Face %d resolution: %d × %d texels", faceIdx, ft.width, ft.height);
+                    if (hasU && hasV && faceIdx >= 0) {
+                        int tx = std::clamp(static_cast<int>(std::floor(uNum * ft.width)), 0, ft.width - 1);
+                        int ty = std::clamp(static_cast<int>(std::floor(vNum * ft.height)), 0, ft.height - 1);
+                        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                           "  Target Texel Address: (x: %d, y: %d)", tx, ty);
+                    } else {
+                        ImGui::TextDisabled("  Target Texel Address: (hover over canvas to calculate)");
+                    }
+                    ImGui::Spacing();
+                }
+            }
+
+            // Quick Presets
+            ImGui::TextDisabled("Quick bindings:");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Canvas paintColor##preset")) {
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+                node.pixelUPath = PropertyPath::parse("@interaction-channel.hoveredU");
+                node.pixelVPath = PropertyPath::parse("@interaction-channel.hoveredV");
+                node.pixelColorPath = PropertyPath::parse("paintColor");
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Console activeColor##preset")) {
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+                node.pixelUPath = PropertyPath::parse("@interaction-channel.hoveredU");
+                node.pixelVPath = PropertyPath::parse("@interaction-channel.hoveredV");
+                node.pixelColorPath = PropertyPath::parse("@creation-channel.activeColor");
+                changed = true;
+            }
+
+            // Recent Execution Activity
+            int writeCount = 0;
+            std::string lastTarget;
+            for (const auto& entry : g.actionNodeFeed) {
+                if (entry.actionName == "WritePixel") {
+                    writeCount += entry.count;
+                    if (lastTarget.empty()) lastTarget = entry.targetId;
+                }
+            }
+            if (writeCount > 0) {
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                   "Recent Activity: %d write(s) on target '%s'",
+                                   writeCount, lastTarget.c_str());
+            }
+
+            ImGui::TextDisabled("On write: publishes past-tense 'surface-pixel-written' event.");
+            ImGui::TextDisabled("For mathematical regions/brushes, see Action: Elevate pixel set.");
             break;
         }
 
         case ActionNode::Kind::ElevatePixels: {
             ImGui::TextDisabled("Elevate the selector's defined set over local (u,v) as one Property.");
             ImGui::TextDisabled("No region kind is preset: OntoMath alone defines membership.");
+            ImGui::Spacing();
+
             char nameBuf[128];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            fieldCaption("Elevated Property Identifier", "The name of the new Property granted to the subject (e.g. selectedPixels).");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
                           "Name the elevated pixel set…")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
+            if (!node.propertyName.empty()) {
+                ImGui::TextDisabled("  ↳ Grants Property: '%s' (row-major list<vec3>)", node.propertyName.c_str());
+                ImGui::TextDisabled("  ↳ Persists Selection: 'surface.selection.%s'", node.propertyName.c_str());
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Face Index Path", "Which surface face to evaluate over. Typically 0 for 2D or @interaction-channel.hoveredFace.");
             if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            showLiveValueBadge(node.pixelFacePath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("OntoMath Defined Set Selector (u, v)", "Membership condition: evaluated at each texel center with local u, v in [0.0, 1.0]. Defined values are included.");
             const MathBindings localCoordinates{
                 {"u", PropertyPath::parse("u")},
                 {"v", PropertyPath::parse("v")},
             };
             if (editPiecewise(node.mapFunction, localCoordinates)) changed = true;
+
+            Singular* candidate = resolveCandidateSubject(currentLaw);
+            Object* targetObj = dynamic_cast<Object*>(candidate);
+            if (targetObj) {
+                auto mat = targetObj->ownMaterial();
+                if (mat && !mat->faceTextures.empty()) {
+                    const auto& ft = mat->faceTextures[0];
+                    ImGui::TextDisabled("Target grid: %d × %d texels (%d potential samples)",
+                                        ft.width, ft.height, ft.width * ft.height);
+                }
+            }
             break;
         }
 
@@ -3540,7 +3766,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
     } else if (card.kind == LawCard::Kind::Action && law->hasActionModel()) {
         ActionModel model = *law->actionModel();
         if (ActionNode* node = actionAt(model, card.modelPath)) {
-            if (editActionNode(*node)) law->setActionModel(std::move(model));
+            if (editActionNode(*node, law)) law->setActionModel(std::move(model));
         }
         if (!card.modelPath.empty()) {
             ActionModel again = *law->actionModel();

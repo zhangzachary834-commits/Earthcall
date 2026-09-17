@@ -1,12 +1,20 @@
 import json
 import os
 
-# This generator authors semantic shape dimensions in ShapeParams and uses the
-# transform only for placement/orientation unless the primitive itself has a
-# fixed unit form (Cube).  Do not encode one dimension twice: analytic shapes
-# such as Sphere and Torus already carry their size in their geometry recipe,
-# and multiplying the transform by the same radius again squares the authored
-# scale at manifestation time.
+# ==============================================================================
+# CATHEDRAL OF THE LIVING LOGOS — GENERATOR
+# Fully aligned with Earthcall Save System Overhaul (PR #188)
+#
+# Rule 1: Form determines what the being is.
+# Rule 2: Writes canonical self-describing 'shape' arm (kind + params) alongside
+#         legacy fields (shapeKind, geometryType, shapeParams) for full integrity.
+# Rule 3: Analytic shapes (Sphere, Torus) carry size in shape.params; transform
+#         carries pose/rotation only (never multiply scale twice).
+# Rule 4: Cube (ShapeKind 0) has unit shape params [0.5, 0.5, 0.5, 0.5] and
+#         scale in transform matrix diagonal.
+# Rule 5: 2D HUD uses Shape2D (12) and Text2D (13) with width2D/height2D,
+#         screen coordinates x2D/y2D, zOrder2D, faceColors, textString, and label2D.
+# ==============================================================================
 
 def mat4(pos, scale=[1.0, 1.0, 1.0]):
     sx, sy, sz = scale
@@ -18,15 +26,25 @@ def mat4(pos, scale=[1.0, 1.0, 1.0]):
         float(px), float(py), float(pz), 1.0
     ]
 
-def make_box(obj_id, name, pos, scale, mat_id, color, emit=[0.0, 0.0, 0.0], extra_props=None):
+def make_box(obj_id, name, pos, scale, mat_id, color, extra_props=None):
     obj = {
         "objectID": obj_id,
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "shape": {
+            "kind": 0,
+            "params": {
+                "r": 0.5, "ry": 0.5, "rz": 0.5, "halfH": 0.5,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
         "transform": mat4(pos, scale),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 0,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -42,11 +60,20 @@ def make_sphere(obj_id, name, pos, radius, mat_id, color, extra_props=None):
         "shapeKind": 2,
         "geometryType": 2,
         "shapeParams": [float(radius), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        # Sphere radius is already geometry truth in shapeParams[0].  Scaling
-        # the transform by radius again used to apply size twice.
+        "shape": {
+            "kind": 2,
+            "params": {
+                "r": float(radius), "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        # Analytic sphere carries radius in shape.params.r. Transform is pose.
         "transform": mat4(pos),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 0,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -62,10 +89,20 @@ def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, extra_props=Non
         "shapeKind": 8,
         "geometryType": 8,
         "shapeParams": [0.0, 0.0, 0.0, 0.0, float(majorR), float(minorR), 0.0, 0.0, 0.0, 0.0, 0.0],
-        # The analytic torus already owns majorR/minorR; transform is pose.
+        "shape": {
+            "kind": 8,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": float(majorR), "minorR": float(minorR),
+                "paraboloidA": 0.0, "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        # Analytic torus carries majorR/minorR in shape.params. Transform is pose.
         "transform": mat4(pos),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 0,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -75,60 +112,127 @@ def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, extra_props=Non
         obj["authoredProperties"].update(extra_props)
     return obj
 
+def make_label2d(obj_id, text, x, y, size=16.0, color=[0.9, 0.92, 0.95]):
+    return {
+        "objectID": obj_id,
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(size)],
+        "shape": {
+            "kind": 13,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": float(size)
+            }
+        },
+        "x2D": float(x),
+        "y2D": float(y),
+        "zOrder2D": 25,
+        "textString": text,
+        "transform": mat4([0, 0, 0]),
+        "center": [0, 0, 0],
+        "faceColors": [color] * 6,
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": text},
+            "label2D": {"t": "string", "v": text}
+        }
+    }
+
+def make_button2d(btn_id, label, x, y, w, h, bg_color):
+    btn = {
+        "objectID": btn_id,
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(w), float(h)],
+        "shape": {
+            "kind": 12,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": float(w), "height2D": float(h)
+            }
+        },
+        "x2D": float(x),
+        "y2D": float(y),
+        "zOrder2D": 20,
+        "transform": mat4([0, 0, 0]),
+        "center": [0, 0, 0],
+        "faceColors": [bg_color] * 6,
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": label},
+            "label2D": {"t": "string", "v": label},
+            "controlLabel": {"t": "string", "v": label},
+            "isButton": {"t": "bool", "v": True}
+        }
+    }
+    lbl = make_label2d(f"{btn_id}.text", label, x + 12, y + 8, 13.0, [1.0, 1.0, 1.0])
+    return [btn, lbl]
+
 objects = []
 
-# 1. Floors & Sanctuary Dais
+# ==============================================================================
+# 1. FLOORS & SANCTUARY DAIS
+# ==============================================================================
+# Grand Acoustic Stone Floor (32m wide, 72m long)
 objects.append(make_box(
     "cathedral.floor.main", "Chladni Acoustic Floor",
     [0.0, -0.3, -2.0], [32.0, 0.6, 72.0],
     "material.logos.floor", [0.08, 0.09, 0.12]
 ))
 
+# Lapis Lazuli Processional Runner (6m wide, 68m long)
 objects.append(make_box(
     "cathedral.floor.runner", "Sacred Lapis Processional Runner",
     [0.0, 0.03, -2.0], [6.0, 0.06, 68.0],
     "material.logos.sapphire", [0.12, 0.22, 0.55]
 ))
 
-# Sanctuary Tiers
+# Three-Tiered Sanctuary Chancel Dais leading to the High Altar
 objects.append(make_box(
     "cathedral.dais.tier1", "Chancel Step I",
-    [0.0, 0.15, -24.0], [18.0, 0.3, 16.0],
+    [0.0, 0.15, -25.0], [18.0, 0.3, 16.0],
     "material.logos.floor", [0.12, 0.13, 0.16]
 ))
 objects.append(make_box(
     "cathedral.dais.tier2", "Chancel Step II",
-    [0.0, 0.45, -26.0], [14.0, 0.3, 13.0],
+    [0.0, 0.45, -27.0], [14.0, 0.3, 13.0],
     "material.logos.floor", [0.15, 0.16, 0.20]
 ))
 objects.append(make_box(
     "cathedral.dais.tier3", "Sanctuary High Dais",
-    [0.0, 0.75, -28.0], [10.0, 0.3, 10.0],
+    [0.0, 0.75, -29.0], [10.0, 0.3, 10.0],
     "material.logos.gold", [0.85, 0.72, 0.22]
 ))
 
-# 2. High Altar & Reredos
+# ==============================================================================
+# 2. HIGH ALTAR & REREDOS
+# ==============================================================================
 objects.append(make_box(
     "altar.logos.mensa", "High Altar of the Spoken Word",
-    [0.0, 1.6, -28.0], [5.2, 1.4, 2.2],
+    [0.0, 1.6, -29.0], [5.2, 1.4, 2.2],
     "material.logos.altar", [0.05, 0.05, 0.08],
     extra_props={"isAltar": {"t": "bool", "v": True}}
 ))
 
 objects.append(make_box(
     "altar.logos.reredos", "Sacred Sanctuary Reredos",
-    [0.0, 8.0, -32.5], [8.0, 14.0, 0.8],
+    [0.0, 8.0, -33.5], [8.0, 14.0, 0.8],
     "material.logos.gold", [0.92, 0.78, 0.25],
     extra_props={"isReredos": {"t": "bool", "v": True}}
 ))
 
-# 3. Living Lexeme Glyphs on the Altar Mensa
+# ==============================================================================
+# 3. LIVING LEXEME GLYPHS ON THE ALTAR MENSA
+# ==============================================================================
 glyphs_info = [
-    ("glyph.lexeme.logos", "Lexeme: [Logos]", [-1.8, 2.45, -28.0], [0.95, 0.82, 0.25], "material.logos.gold"),
-    ("glyph.lexeme.pneuma", "Lexeme: [Pneuma]", [-0.9, 2.45, -28.0], [0.15, 0.45, 0.95], "material.logos.sapphire"),
-    ("glyph.lexeme.lux", "Lexeme: [Lux]", [0.0, 2.45, -28.0], [1.0, 0.98, 0.85], "material.logos.core"),
-    ("glyph.lexeme.harmonia", "Lexeme: [Harmonia]", [0.9, 2.45, -28.0], [0.98, 0.65, 0.15], "material.logos.amber"),
-    ("glyph.lexeme.covenant", "Lexeme: [Covenant]", [1.8, 2.45, -28.0], [0.75, 0.25, 0.95], "material.logos.amethyst"),
+    ("glyph.lexeme.logos", "Lexeme: [Logos]", [-1.8, 2.45, -29.0], [0.95, 0.82, 0.25], "material.logos.gold"),
+    ("glyph.lexeme.pneuma", "Lexeme: [Pneuma]", [-0.9, 2.45, -29.0], [0.15, 0.45, 0.95], "material.logos.sapphire"),
+    ("glyph.lexeme.lux", "Lexeme: [Lux]", [0.0, 2.45, -29.0], [1.0, 0.98, 0.85], "material.logos.core"),
+    ("glyph.lexeme.harmonia", "Lexeme: [Harmonia]", [0.9, 2.45, -29.0], [0.98, 0.65, 0.15], "material.logos.amber"),
+    ("glyph.lexeme.covenant", "Lexeme: [Covenant]", [1.8, 2.45, -29.0], [0.75, 0.25, 0.95], "material.logos.amethyst"),
 ]
 for gid, gname, gpos, gcolor, gmat in glyphs_info:
     objects.append(make_box(
@@ -136,63 +240,76 @@ for gid, gname, gpos, gcolor, gmat in glyphs_info:
         extra_props={"isSpeechAct": {"t": "bool", "v": True}}
     ))
 
-# 4. Colossal Pillars (Left X = -8, Right X = +8)
-z_positions = [20.0, 10.0, 0.0, -10.0, -20.0]
-sacred_frequencies = [432.0, 528.0, 639.0, 741.0, 852.0]
-joy_names = ["Logos", "Agape", "Sophia", "Poiesis", "Harmonia"]
+# ==============================================================================
+# 4. COLONNADE OF THE SEVEN JOYS (Left X = -8m, Right X = +8m, 7 Bays along Z)
+# ==============================================================================
+joy_pillars = [
+    ("Logos", 432.0, 24.0, [0.12, 0.35, 0.95], "material.logos.sapphire"),
+    ("Agape", 528.0, 16.0, [0.95, 0.55, 0.65], "material.logos.core"),
+    ("Sophia", 639.0, 8.0, [0.15, 0.75, 0.95], "material.logos.sapphire"),
+    ("Poiesis", 741.0, 0.0, [0.15, 0.85, 0.45], "material.logos.emerald"),
+    ("Harmonia", 852.0, -8.0, [0.98, 0.65, 0.15], "material.logos.amber"),
+    ("Koinonia", 963.0, -16.0, [0.75, 0.25, 0.95], "material.logos.amethyst"),
+    ("Sabbath", 1080.0, -24.0, [0.94, 0.95, 1.0], "material.logos.core"),
+]
 
-for i, z in enumerate(z_positions):
-    # Left Pillar
-    col_l = f"pillar.L{i+1}"
-    objects.append(make_box(f"{col_l}.base", f"Pillar Base L{i+1}", [-8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
-    objects.append(make_box(f"{col_l}.shaft", f"Pillar Shaft L{i+1} ({joy_names[i]})", [-8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
-    objects.append(make_box(f"{col_l}.capital", f"Pillar Capital L{i+1}", [-8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
-    objects.append(make_sphere(f"{col_l}.crystal", f"Resonance Crystal L{i+1}", [-8.0, 21.0, z], 0.65, "material.logos.core", [0.95, 0.88, 0.45],
-        extra_props={"frequency": {"t": "float", "v": sacred_frequencies[i]}, "light.intensity": {"t": "float", "v": 2.5}}
+for i, (name, freq, z, crystal_col, crystal_mat) in enumerate(joy_pillars):
+    idx = i + 1
+    # --- Left Pillar (X = -8m) ---
+    col_l = f"pillar.L{idx}"
+    objects.append(make_box(f"{col_l}.base", f"Pillar Base L{idx}", [-8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
+    objects.append(make_box(f"{col_l}.shaft", f"Pillar Shaft L{idx} ({name})", [-8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
+    objects.append(make_box(f"{col_l}.capital", f"Pillar Capital L{idx}", [-8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
+    objects.append(make_sphere(f"{col_l}.crystal", f"Resonance Crystal L{idx} ({name} {freq:.0f}Hz)", [-8.0, 21.0, z], 0.65, crystal_mat, crystal_col,
+        extra_props={"frequency": {"t": "float", "v": freq}, "light.intensity": {"t": "float", "v": 2.5}}
     ))
 
-    # Right Pillar
-    col_r = f"pillar.R{i+1}"
-    objects.append(make_box(f"{col_r}.base", f"Pillar Base R{i+1}", [8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
-    objects.append(make_box(f"{col_r}.shaft", f"Pillar Shaft R{i+1} ({joy_names[i]})", [8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
-    objects.append(make_box(f"{col_r}.capital", f"Pillar Capital R{i+1}", [8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
-    objects.append(make_sphere(f"{col_r}.crystal", f"Resonance Crystal R{i+1}", [8.0, 21.0, z], 0.65, "material.logos.core", [0.95, 0.88, 0.45],
-        extra_props={"frequency": {"t": "float", "v": sacred_frequencies[i]}, "light.intensity": {"t": "float", "v": 2.5}}
+    # --- Right Pillar (X = +8m) ---
+    col_r = f"pillar.R{idx}"
+    objects.append(make_box(f"{col_r}.base", f"Pillar Base R{idx}", [8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
+    objects.append(make_box(f"{col_r}.shaft", f"Pillar Shaft R{idx} ({name})", [8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
+    objects.append(make_box(f"{col_r}.capital", f"Pillar Capital R{idx}", [8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
+    objects.append(make_sphere(f"{col_r}.crystal", f"Resonance Crystal R{idx} ({name} {freq:.0f}Hz)", [8.0, 21.0, z], 0.65, crystal_mat, crystal_col,
+        extra_props={"frequency": {"t": "float", "v": freq}, "light.intensity": {"t": "float", "v": 2.5}}
     ))
 
-    # Transverse Vault Arch Beam Spanning Nave
+    # --- Transverse Vault Arch Beam Spanning Nave (Span 16m) ---
     objects.append(make_box(
-        f"cathedral.vault.arch{i+1}", f"Vault Arch Bay {i+1}",
+        f"cathedral.vault.arch{idx}", f"Vault Arch Bay {idx} ({name})",
         [0.0, 21.5, z], [17.6, 1.2, 1.2],
         "material.logos.arch", [0.85, 0.82, 0.78]
     ))
     objects.append(make_box(
-        f"cathedral.vault.keystone{i+1}", f"Arch Keystone {i+1}",
+        f"cathedral.vault.keystone{idx}", f"Arch Keystone {idx}",
         [0.0, 22.8, z], [2.2, 1.4, 1.8],
         "material.logos.gold", [0.95, 0.82, 0.28]
     ))
 
-# 5. Longitudinal Roof Ridge Spine
+# ==============================================================================
+# 5. LONGITUDINAL ROOF RIDGE SPINE (64m Long at y = 23.6m)
+# ==============================================================================
 objects.append(make_box(
     "cathedral.vault.spine", "Cathedral Roof Vault Spine",
-    [0.0, 23.6, 0.0], [1.2, 1.2, 60.0],
+    [0.0, 23.6, 0.0], [1.2, 1.2, 64.0],
     "material.logos.gold", [0.88, 0.75, 0.22]
 ))
 
-# 6. Outer Walls
+# ==============================================================================
+# 6. ENCLOSING OUTER WALLS
+# ==============================================================================
 objects.append(make_box(
     "cathedral.wall.left", "North Clerestory Wall",
-    [-15.0, 12.0, -2.0], [1.2, 24.0, 70.0],
+    [-15.0, 12.0, -2.0], [1.2, 24.0, 72.0],
     "material.logos.floor", [0.15, 0.16, 0.18]
 ))
 objects.append(make_box(
     "cathedral.wall.right", "South Clerestory Wall",
-    [15.0, 12.0, -2.0], [1.2, 24.0, 70.0],
+    [15.0, 12.0, -2.0], [1.2, 24.0, 72.0],
     "material.logos.floor", [0.15, 0.16, 0.18]
 ))
 objects.append(make_box(
     "cathedral.wall.apse", "Sanctuary Apse Wall",
-    [0.0, 13.0, -34.5], [30.0, 26.0, 1.2],
+    [0.0, 13.0, -35.5], [30.0, 26.0, 1.2],
     "material.logos.floor", [0.14, 0.15, 0.17]
 ))
 objects.append(make_box(
@@ -201,18 +318,20 @@ objects.append(make_box(
     "material.logos.floor", [0.14, 0.15, 0.17]
 ))
 
-# 7. Glowing Stained-Glass Lancet Windows along Walls
+# ==============================================================================
+# 7. GLOWING STAINED-GLASS LANCET WINDOWS (Emissive Light Sources)
+# ==============================================================================
 window_colors_left = [
-    ("window.stained.L1", "Stained Glass: Sapphire Logos", [-14.3, 14.0, 15.0], [0.12, 0.35, 0.95]),
-    ("window.stained.L2", "Stained Glass: Emerald Poiesis", [-14.3, 14.0, 5.0], [0.15, 0.85, 0.35]),
-    ("window.stained.L3", "Stained Glass: Topaz Harmonia", [-14.3, 14.0, -5.0], [0.98, 0.65, 0.15]),
-    ("window.stained.L4", "Stained Glass: Amethyst Koinonia", [-14.3, 14.0, -15.0], [0.75, 0.25, 0.95]),
+    ("window.stained.L1", "Stained Glass: Sapphire Logos", [-14.3, 14.0, 18.0], [0.12, 0.35, 0.95]),
+    ("window.stained.L2", "Stained Glass: Emerald Poiesis", [-14.3, 14.0, 6.0], [0.15, 0.85, 0.35]),
+    ("window.stained.L3", "Stained Glass: Topaz Harmonia", [-14.3, 14.0, -6.0], [0.98, 0.65, 0.15]),
+    ("window.stained.L4", "Stained Glass: Amethyst Koinonia", [-14.3, 14.0, -18.0], [0.75, 0.25, 0.95]),
 ]
 window_colors_right = [
-    ("window.stained.R1", "Stained Glass: Ruby Agape", [14.3, 14.0, 15.0], [0.95, 0.22, 0.35]),
-    ("window.stained.R2", "Stained Glass: Cyan Sophia", [14.3, 14.0, 5.0], [0.15, 0.75, 0.95]),
-    ("window.stained.R3", "Stained Glass: Solar Lux", [14.3, 14.0, -5.0], [1.0, 0.85, 0.25]),
-    ("window.stained.R4", "Stained Glass: Pearl Sabbath", [14.3, 14.0, -15.0], [0.92, 0.95, 1.0]),
+    ("window.stained.R1", "Stained Glass: Ruby Agape", [14.3, 14.0, 18.0], [0.95, 0.22, 0.35]),
+    ("window.stained.R2", "Stained Glass: Cyan Sophia", [14.3, 14.0, 6.0], [0.15, 0.75, 0.95]),
+    ("window.stained.R3", "Stained Glass: Solar Lux", [14.3, 14.0, -6.0], [1.0, 0.85, 0.25]),
+    ("window.stained.R4", "Stained Glass: Pearl Sabbath", [14.3, 14.0, -18.0], [0.92, 0.95, 1.0]),
 ]
 for wid, wname, wpos, wcol in window_colors_left + window_colors_right:
     objects.append(make_box(
@@ -220,7 +339,9 @@ for wid, wname, wpos, wcol in window_colors_left + window_colors_right:
         extra_props={"light.intensity": {"t": "float", "v": 2.0}, "light.source": {"t": "bool", "v": True}}
     ))
 
-# 8. Central Crossing: Resonating Heart of Logos & Celestial Rings
+# ==============================================================================
+# 8. CENTRAL CROSSING: RESONATING HEART OF LOGOS & CELESTIAL RINGS
+# ==============================================================================
 objects.append(make_sphere(
     "logos.resonator.core", "Heart of Logos (432 Hz Radiant Core)",
     [0.0, 7.5, 0.0], 2.0, "material.logos.core", [1.0, 0.92, 0.65],
@@ -245,82 +366,43 @@ objects.append(make_torus(
     [0.0, 7.5, 0.0], 6.5, 0.10, "material.logos.amber", [0.98, 0.65, 0.15]
 ))
 
-# 9. State Manager Being
+# ==============================================================================
+# 9. STATE MANAGER BEING
+# ==============================================================================
 objects.append({
-    "objectID": "state.logos",
-    "shapeKind": 12,
-    "geometryType": 12,
-    "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
-    "transform": mat4([0,0,0]),
-    "center": [0,0,0],
-    "authoredProperties": {
-        "breathActive": {"t": "bool", "v": True},
-        "pulseRate": {"t": "float", "v": 1.618},
-        "resonanceFreq": {"t": "float", "v": 432.0},
-        "covenantCount": {"t": "float", "v": 1.0},
-        "luxActive": {"t": "bool", "v": True},
-        "season": {"t": "string", "v": "Genesis Dawn"}
-    }
-})
+    "objectID": "state.logos",    "shapeKind": 12,    "geometryType": 12,    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],    "shape": {        "kind": 12,        "params": {            "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,            "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,            "ovoidAsym": 0.0, "fillet": 0.0,            "width2D": 0.0, "height2D": 0.0        }    },    "transform": mat4([0, 0, 0]),    "center": [0, 0, 0],    "authoredProperties": {        "breathActive": {"t": "bool", "v": True},        "pulseRate": {"t": "float", "v": 1.618},        "resonanceFreq": {"t": "float", "v": 432.0},        "covenantCount": {"t": "float", "v": 1.0},        "luxActive": {"t": "bool", "v": True},        "season": {"t": "string", "v": "Genesis Dawn"}    }})
 
-# 10. Clean, Docked 2D Liturgical HUD (Docked neatly in top-left)
+# ==============================================================================
+# 10. CLEAN DOCKED 2D LITURGICAL HUD (Docked in top-left)
+# ==============================================================================
 hud_bg = {
     "objectID": "hud.logos.dock",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, 360.0, 190.0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 190.0],
+    "shape": {
+        "kind": 12,
+        "params": {
+            "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+            "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+            "ovoidAsym": 0.0, "fillet": 0.0,
+            "width2D": 360.0, "height2D": 190.0
+        }
+    },
     "x2D": 20.0,
     "y2D": 20.0,
     "zOrder2D": 10,
-    "transform": mat4([0,0,0]),
-    "center": [0,0,0],
+    "transform": mat4([0, 0, 0]),
+    "center": [0, 0, 0],
     "faceColors": [[0.05, 0.07, 0.12]] * 6,
     "authoredProperties": {"displayName": {"t": "string", "v": "Liturgical Console Dock"}}
 }
 objects.append(hud_bg)
 
-def make_label2d(obj_id, text, x, y, size=16.0, color=[0.9, 0.92, 0.95]):
-    return {
-        "objectID": obj_id,
-        "shapeKind": 13,
-        "geometryType": 13,
-        "shapeParams": [0,0,0,0,0,0,0,0,0,0, float(size)],
-        "x2D": float(x),
-        "y2D": float(y),
-        "zOrder2D": 25,
-        "transform": mat4([0,0,0]),
-        "center": [0,0,0],
-        "faceColors": [color] * 6,
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": text},
-            "label2D": {"t": "string", "v": text}
-        }
-    }
-
 objects.append(make_label2d("hud.logos.title", "CATHEDRAL OF THE LIVING LOGOS", 35, 35, 18.0, [1.0, 0.85, 0.35]))
 objects.append(make_label2d("hud.logos.telemetry.freq", "FREQUENCY: 432.0 Hz (SACRED ROOT)", 35, 58, 14.0, [0.35, 0.85, 0.95]))
 objects.append(make_label2d("hud.logos.telemetry.breath", "BREATH: RESPIRING (0.1 Hz PNEUMA WAVE)", 35, 78, 14.0, [0.45, 0.95, 0.65]))
 objects.append(make_label2d("hud.logos.telemetry.season", "LITURGY: GENESIS DAWN", 35, 98, 14.0, [0.95, 0.75, 0.45]))
-
-def make_button2d(btn_id, label, x, y, w, h, bg_color):
-    btn = {
-        "objectID": btn_id,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, float(w), float(h)],
-        "x2D": float(x),
-        "y2D": float(y),
-        "zOrder2D": 20,
-        "transform": mat4([0,0,0]),
-        "center": [0,0,0],
-        "faceColors": [bg_color] * 6,
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": label},
-            "isButton": {"t": "bool", "v": True}
-        }
-    }
-    lbl = make_label2d(f"{btn_id}.text", label, x + 15, y + 8, 13.0, [1.0, 1.0, 1.0])
-    return [btn, lbl]
 
 for item in make_button2d("hud.btn.pneuma", "BREATHE PNEUMA", 35, 125, 155, 32, [0.15, 0.45, 0.85]):
     objects.append(item)
@@ -331,6 +413,9 @@ for item in make_button2d("hud.btn.chord", "SOUND CANON", 35, 165, 155, 32, [0.9
 for item in make_button2d("hud.btn.season", "CYCLE SEASON", 205, 165, 155, 32, [0.75, 0.25, 0.85]):
     objects.append(item)
 
+# ==============================================================================
+# MATERIALS PALETTE
+# ==============================================================================
 materials = [
     {"name": "material.logos.floor", "ambient": 0.2, "diffuse": 0.75, "specular": 0.6, "shininess": 40.0, "baseColor": [0.08, 0.09, 0.12], "roughness": 0.2, "metallic": 0.8},
     {"name": "material.logos.gold", "ambient": 0.35, "diffuse": 0.85, "specular": 0.9, "shininess": 64.0, "baseColor": [1.0, 0.82, 0.28], "emission": [0.3, 0.24, 0.08], "roughness": 0.15, "metallic": 0.95},
@@ -344,6 +429,9 @@ materials = [
     {"name": "material.logos.arch", "ambient": 0.3, "diffuse": 0.8, "specular": 0.7, "shininess": 40.0, "baseColor": [0.85, 0.82, 0.78], "emission": [0.08, 0.08, 0.12], "roughness": 0.3, "metallic": 0.4}
 ]
 
+# ==============================================================================
+# LEXEMES (First-Class Singular Beings)
+# ==============================================================================
 lexemes = [
     {"id": "lexeme.logos", "symbol": "Logos"},
     {"id": "lexeme.pneuma", "symbol": "Pneuma"},
@@ -357,6 +445,9 @@ lexemes = [
     {"id": "lexeme.sabbath", "symbol": "Sabbath"}
 ]
 
+# ==============================================================================
+# FORMATION RELATIONS
+# ==============================================================================
 formationRelations = [
     {"directed": True, "entityA": "altar.logos.mensa", "entityB": "logos.resonator.core", "type": "acoustic-resonance", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "acoustic-resonance", "timestamp": 1787395000}]},
     {"directed": True, "entityA": "glyph.lexeme.logos", "entityB": "lexeme.logos", "type": "speech-act", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "speech-act", "timestamp": 1787395000}]},
@@ -406,17 +497,14 @@ zone_doc = {
     "lawRefs": [
         "law-logos-breath",
         "law-logos-fiat-lux",
-        "law-logos-celestial-chord",
-        "law-logos-covenant-weave",
+        "law-logos-celestial-chord",        "law-logos-covenant-weave",
         "law-logos-unison",
         "law-logos-season-toggle",
         "law-logos-pillar-pulse"
     ]
 }
 
-# Never write through one developer's absolute home directory. This script is
-# a repository authoring tool: its output belongs beside the repository that
-# contains the script, whichever machine/agent runs it.
+# Repository-relative output paths
 repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 zone_path = os.path.join(repo_root, "saves", "zones", "Cathedral of the Living Logos", "zone.json")
 os.makedirs(os.path.dirname(zone_path), exist_ok=True)
@@ -424,7 +512,7 @@ with open(zone_path, "w") as f:
     json.dump(zone_doc, f, indent=2)
 print(f"Wrote {zone_path} ({len(objects)} objects)")
 
-# Now build the full world package with camera placement!
+# Full world package with grounded player camera viewpoint
 world_doc = {
     "saveFormat": "zone-identity-v1",
     "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
@@ -443,6 +531,15 @@ world_doc = {
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "shape": {
+                "kind": 12,
+                "params": {
+                    "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                    "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                    "ovoidAsym": 0.0, "fillet": 0.0,
+                    "width2D": 0.0, "height2D": 0.0
+                }
+            },
             "transform": mat4([0,0,0]),
             "center": [0,0,0],
             "authoredProperties": {"displayName": {"t": "string", "v": "Zachary Zhang"}}
