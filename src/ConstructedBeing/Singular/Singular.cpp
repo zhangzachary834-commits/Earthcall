@@ -410,11 +410,26 @@ bool Singular::removeDataStructure(const std::string& name) {
 }
 
 PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) {
+    if (recognizesAuthoredPropertyProjection(id)) {
+        PropertyValue proj;
+        if (readAuthoredPropertyProjection(id, proj)) {
+            _dynamicProperties[id] = std::move(proj);
+        }
+    }
     auto it = _dynamicProperties.find(id);
     return (it != _dynamicProperties.end()) ? &it->second : nullptr;
 }
 
 const PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) const {
+    // For const, we can't update the cache safely without making it mutable.
+    // However, readAuthoredPropertyProjection modifies _regionCache which IS mutable.
+    // We can cast away constness JUST for the cache update since it's logically const.
+    if (recognizesAuthoredPropertyProjection(id)) {
+        PropertyValue proj;
+        if (readAuthoredPropertyProjection(id, proj)) {
+            const_cast<Singular*>(this)->_dynamicProperties[id] = std::move(proj);
+        }
+    }
     auto it = _dynamicProperties.find(id);
     return (it != _dynamicProperties.end()) ? &it->second : nullptr;
 }
