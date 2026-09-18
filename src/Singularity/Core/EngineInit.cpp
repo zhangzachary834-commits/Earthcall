@@ -1,4 +1,8 @@
 #include "Person/Person.hpp"
+#include "Person/PersonDatabase.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Identity/KeyStore.hpp"
+#include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 // GameInit.cpp – Game initialisation, GLFW callbacks
@@ -48,6 +52,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
+#include <cstdlib>
 #include <iostream>
 #include "CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
@@ -101,6 +106,38 @@ void Engine::initLogic() {
                          "Person is present.\n";
         }
     }
+#ifndef __EMSCRIPTEN__
+    // Identity migration is an explicit trust act, never an ordinary-load side
+    // effect. Set EARTHCALL_MIGRATE_PERSON_IDENTITY=1 for a deliberate one-time
+    // migration and provide EARTHCALL_KEY_PASSPHRASE to seal the private key.
+    // The migration ledger is the proof that lets a keyed Person reclaim old
+    // name-addressed Homes without making "same spelling == same Person" true.
+    if (const char* requested = std::getenv("EARTHCALL_MIGRATE_PERSON_IDENTITY");
+        requested && std::string(requested) == "1") {
+        const char* passphrase = std::getenv("EARTHCALL_KEY_PASSPHRASE");
+        if (!passphrase || !*passphrase) {
+            std::cerr << "[Init] REFUSED explicit Person identity migration: "
+                         "EARTHCALL_KEY_PASSPHRASE is not set.\n";
+        } else {
+            Identity::IdentityLedger ledger;
+            (void)ledger.load(); // absence is normal on the first migration
+            Identity::KeyStore keys;
+            const bool alreadyKeyed = _person->hasIdentity();
+            auto migrated = Identity::migratePersonIdentity(
+                *_person, ledger, keys, passphrase);
+            if (!migrated) {
+                std::cerr << "[Init] Explicit Person identity migration failed; "
+                             "continuing as the pre-migration Person.\n";
+            } else if (!alreadyKeyed) {
+                PersonDatabase::getInstance().savePerson(*_person);
+                std::cout << "[Init] Person identity migration committed for '"
+                          << _person->getDisplayName() << "' as "
+                          << migrated->abbreviated() << ".\n";
+            }
+        }
+    }
+#endif
+
     if (!_chat) _chat = std::make_unique<Chat>();
     if (!_cursorTools) _cursorTools = std::make_unique<CursorTools>();
 
@@ -271,14 +308,18 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Temple of Echoes", "default"));
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
-    mgr.ensureHomeZone(_person->getIdentifier());
     mgr.bindLive();
     mgr.bindLawManager(_lawManager.get());
-    // Home (and every other identity-stable Zone) lives in
-    // saves/zones/<id>/, not inside a session/"world" file. Hydrate
-    // after minting the boot Zones so an empty Sanctum/Home is filled
-    // from the store rather than a second copy being born.
+    // Read the ground before asking whether a Home must be born. Previously
+    // ensureHomeZone ran first, so a persisted Home could not possibly answer
+    // the question and a name-twin could be minted before hydration saw disk.
+    // The four kernel boot Zones already make mgr.active() valid for the
+    // Universe provider while this hydration runs.
     mgr.hydrateFromZoneStore();
+    if (!mgr.ensureHomeZone(*_person)) {
+        std::cerr << "[Init] Primary Home continuity is unresolved; refusing to invent a "
+                     "replacement. See the preceding ownership diagnosis.\n";
+    }
     _ourverse.ensureGatheringZone(mgr);
     if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
