@@ -482,11 +482,6 @@ int main() {
 
     // ------------------------------------------------------------------
     
-        // Inject lastStroke coordinates because the legacy save file lacks them
-        stateStudio->setDynamicProperty("lastStrokeX", PropertyValue(0.0));
-        stateStudio->setDynamicProperty("lastStrokeY", PropertyValue(0.0));
-        stateStudio->setDynamicProperty("lastStrokeZ", PropertyValue(0.0));
-        stateStudio->setDynamicProperty("strokeSpacing", PropertyValue(0.1));
 
 // 7. Strokes are drawn on the canvas, and nowhere else.
     //

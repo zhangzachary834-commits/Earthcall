@@ -9098,6 +9098,22 @@
               "voice": {
                 "t": "string",
                 "v": "triangle"
+              },
+              "lastStrokeX": {
+                "t": "double",
+                "v": 0.0
+              },
+              "lastStrokeY": {
+                "t": "double",
+                "v": 0.0
+              },
+              "lastStrokeZ": {
+                "t": "double",
+                "v": 0.0
+              },
+              "strokeSpacing": {
+                "t": "double",
+                "v": 0.1
               }
             },
             "center": [
