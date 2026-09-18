@@ -74,6 +74,13 @@ public:
     // through it atomically; ZoneManager does not own or duplicate Laws.
     void bindLawManager(LawManager* manager) { _lawManager = manager; }
 
+    // A Law born while a Zone is active belongs to that Zone only when the
+    // authored act says so. Universal Singular creation uses this after the
+    // Law is registered: it enters the SAME closure switchTo loaded from
+    // `lawRefs`, so leaving the Zone releases it and Save Zone can persist it.
+    // This is authored membership, not inference from the global LawManager.
+    bool adoptLawIntoActiveZone(const std::string& lawId);
+
     // Primary Home is a kernel fact: find-or-mint the Person's dwelling,
     // not "any Zone they own". Additional Homes go through authorZone.
     void ensureHomeZone(const std::string& personId);

@@ -12,6 +12,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -51,6 +52,11 @@ struct BootedEngineHarness {
           player(std::move(soul), std::move(body), "default") {
 
         lawManager.connectToEventBus();
+        // Mirror EngineInit: authored systems such as universal Singular creation
+        // resolve the one running LawManager through Physics::getLawManager().
+        // A boot harness that omits this wire is not actually exercising the
+        // same runtime graph as the app.
+        Physics::setLawManager(&lawManager);
 
         // 1. Sync register standard channels like InteractionChannel
         Singularity::Input::InteractionChannel::syncRegister(lawManager);
@@ -129,6 +135,14 @@ struct BootedEngineHarness {
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
         zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
+    }
+
+    ~BootedEngineHarness() {
+        // The Physics bridge is process-global; do not leave a dangling pointer
+        // when a block-scoped harness goes away. Only clear the slot we own.
+        if (Physics::getLawManager() == &lawManager) {
+            Physics::setLawManager(nullptr);
+        }
     }
 
     void loadWorld(const std::string& filename) {
