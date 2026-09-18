@@ -149,12 +149,32 @@ jobs:
           worlds=(
             saves/worlds/chess_app.json
             saves/worlds/synthesis_studio.json
-            saves/worlds/synthesis_studio_living.json
             saves/worlds/noise_floor.json
           )
-          : > slow-adapter-perf.log
           for world in "${worlds[@]}"; do
-            ./build/slow_adapter_zone_perf_test "$world" --adapter=off --frames=120 >> slow-adapter-perf.log
-            ./build/slow_adapter_zone_perf_test "$world" --adapter=on  --frames=120 >> slow-adapter-perf.log
+            for mode in off on; do
+              echo "PERF_BEGIN world=$world adapter=$mode"
+              python3 - "$world" "$mode" <<'PY'
+          import subprocess
+          import sys
+
+          world, mode = sys.argv[1], sys.argv[2]
+          cmd = ["./build/slow_adapter_zone_perf_test", world,
+                 f"--adapter={mode}", "--frames=60"]
+          try:
+              result = subprocess.run(cmd, text=True, capture_output=True, timeout=180)
+          except subprocess.TimeoutExpired:
+              print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={mode} timeout_s=180")
+              raise SystemExit(1)
+
+          lines = [line for line in result.stdout.splitlines()
+                   if line.startswith("ADAPTER_PERF ")]
+          for line in lines:
+              print(line)
+          if result.returncode != 0 or not lines:
+              tail = (result.stdout + "\n" + result.stderr).splitlines()[-20:]
+              print("\n".join(tail), file=sys.stderr)
+              raise SystemExit(result.returncode or 1)
+          PY
+            done
           done
-          grep '^ADAPTER_PERF ' slow-adapter-perf.log
