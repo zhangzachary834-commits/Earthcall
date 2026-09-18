@@ -7,6 +7,7 @@
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Identity/SingularId.hpp"
 #include "Person/Person.hpp"
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -16,6 +17,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
@@ -24,6 +26,7 @@
 
 #include "json.hpp"
 #include <GLFW/glfw3.h>
+#include <array>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -245,6 +248,119 @@ int main() {
         check(fromFaces && !fromFaces->faceTextures.empty() &&
                   fromFaces->faceTextures[0].pixels[0] == red,
               "keep-live Home with no identity materials reinstates FaceTextures from faceColors");
+    }
+
+    // P0 inhabitability witness: ownership is a Relation to the Person being,
+    // survives a complete manager/process-shaped reload, and does not fall back
+    // to display spelling once the Person has a stable cryptographic identity.
+    {
+        auto continuitySandbox = std::filesystem::temp_directory_path()
+            / "earthcall_home_identity_continuity";
+        std::filesystem::remove_all(continuitySandbox);
+        std::filesystem::create_directories(continuitySandbox);
+        SaveSystem::setSaveRoot(continuitySandbox.string());
+
+        std::array<uint8_t, 32> keyBytes{};
+        for (std::size_t i = 0; i < keyBytes.size(); ++i) {
+            keyBytes[i] = static_cast<uint8_t>(i + 1);
+        }
+        const Identity::SingularId continuityId =
+            Identity::SingularId::fromPublicKey(keyBytes);
+
+        {
+            Soul firstSoul("Continuity Person");
+            Body firstBody("humanoid", "default");
+            Person firstPerson(std::move(firstSoul), std::move(firstBody), "default");
+            firstPerson.setPersonId(continuityId);
+
+            ZoneManager firstProcess;
+            Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+                beings.push_back(&firstPerson);
+            });
+            check(firstProcess.ensureHomeZone(firstPerson),
+                  "Person-aware ensureHomeZone establishes ownership by identity");
+            Zone* firstHome = firstProcess.findPrimaryHome(firstPerson);
+            check(firstHome && firstHome->getIdentifier() == "Home",
+                  "identity-aware Home creation still uses the canonical Home identity");
+
+            bool liveOwnedBy = false;
+            if (firstHome) {
+                for (const auto& relation : firstHome->getFormation().relations().getAll()) {
+                    if (relation && relation->type == "owned-by" && relation->directed
+                        && relation->a() == firstHome && relation->b() == &firstPerson) {
+                        liveOwnedBy = true;
+                    }
+                }
+            }
+            check(liveOwnedBy,
+                  "primary Home carries a directed Zone -> owned-by -> Person Relation");
+
+            firstProcess.persistZones();
+            const nlohmann::json savedHome = SaveSystem::readHomeIdentity("Home");
+            bool savedOwnedBy = false;
+            for (const auto& relation : savedHome.value("formationRelations", nlohmann::json::array())) {
+                if (relation.value("type", std::string{}) == "owned-by"
+                    && relation.value("entityA", std::string{}) == "Home"
+                    && relation.value("entityB", std::string{}) == continuityId.toString()
+                    && relation.value("directed", false)) {
+                    savedOwnedBy = true;
+                }
+            }
+            check(savedOwnedBy,
+                  "owned-by persists with the Person SingularId rather than a display spelling");
+            Universe::instance().setProvider({});
+        }
+
+        {
+            Soul returnedSoul("Renamed Display");
+            Body returnedBody("humanoid", "default");
+            Person returnedPerson(std::move(returnedSoul), std::move(returnedBody), "default");
+            returnedPerson.setPersonId(continuityId);
+
+            ZoneManager returnedProcess;
+            Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+                beings.push_back(&returnedPerson);
+            });
+            returnedProcess.hydrateFromZoneStore();
+            Zone* returnedHome = returnedProcess.findPrimaryHome(returnedPerson);
+            check(returnedHome && returnedHome->getIdentifier() == "Home",
+                  "fresh hydration resolves the same Home through Person identity after display rename");
+            const std::size_t zoneCountBeforeEnsure = returnedProcess.zones().size();
+            check(returnedProcess.ensureHomeZone(returnedPerson),
+                  "fresh-process ensureHomeZone accepts the hydrated identity relation");
+            check(returnedProcess.zones().size() == zoneCountBeforeEnsure,
+                  "fresh-process ensureHomeZone mints no duplicate Home");
+            Universe::instance().setProvider({});
+        }
+
+        {
+            Soul ambiguousSoul("Ambiguous Person");
+            Body ambiguousBody("humanoid", "default");
+            Person ambiguousPerson(std::move(ambiguousSoul), std::move(ambiguousBody), "default");
+            const std::string ambiguousId = ambiguousPerson.getIdentifier();
+
+            ZoneManager ambiguous;
+            auto primaryA = std::make_shared<Home>("PrimaryA", "strict");
+            primaryA->markPrimaryHome();
+            primaryA->setOwner(ambiguousId, Zone::kOwnerKindPerson);
+            auto primaryB = std::make_shared<Home>("PrimaryB", "strict");
+            primaryB->markPrimaryHome();
+            primaryB->setOwner(ambiguousId, Zone::kOwnerKindPerson);
+            ambiguous.addZone(primaryA);
+            ambiguous.addZone(primaryB);
+
+            const std::size_t beforeRefusal = ambiguous.zones().size();
+            check(ambiguous.findPrimaryHome(ambiguousPerson) == nullptr,
+                  "two primary Homes refuse resolution instead of choosing by load order");
+            check(!ambiguous.ensureHomeZone(ambiguousPerson),
+                  "two primary Homes refuse ensureHomeZone loudly");
+            check(ambiguous.zones().size() == beforeRefusal,
+                  "duplicate-primary refusal never mints a third Home");
+        }
+
+        Universe::instance().setProvider({});
+        std::filesystem::remove_all(continuitySandbox);
+        SaveSystem::setSaveRoot(sandbox.string());
     }
 
     PropertyValue v;
