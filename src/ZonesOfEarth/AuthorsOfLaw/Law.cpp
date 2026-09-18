@@ -1792,6 +1792,7 @@ void LawManager::connectToEventBus() {
         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
             _seededSubjects.erase(subjectId);
         }
+        _seededBeingPointers.erase(being);
         for (auto& law : _laws) {
             law->forgetSubject(being);
         }
@@ -2563,6 +2564,7 @@ void LawManager::releaseFromLaws(Singular* being) {
     // Forget that we introduced it to the network, so an id reused by a later
     // being is seeded afresh instead of being taken for one we already know.
     _seededSubjects.erase(id);
+    _seededBeingPointers.erase(being);
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&id](const DriveSession& s) { return s.subjectId == id; }),
@@ -2768,9 +2770,17 @@ const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId)
 
 void LawManager::seedStateFacts(Singular* being) {
     if (!being) return;
+    // Fast path: avoid virtual getIdentifier() and string allocations on every tick
+    // if this pointer is already known to have been seeded.
+    if (_seededBeingPointers.count(being)) return;
+
     const std::string subjectId = being->getIdentifier();
     if (subjectId.empty()) return;
-    if (!_seededSubjects.insert(subjectId).second) return;   // already known
+    if (!_seededSubjects.insert(subjectId).second) {
+        _seededBeingPointers.insert(being);
+        return;   // already known
+    }
+    _seededBeingPointers.insert(being);
 
     for (auto* prop : being->listProperties()) {
         if (!prop) continue;

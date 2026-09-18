@@ -1153,6 +1153,7 @@ public:
 
 private:
     std::unordered_set<std::string> _seededSubjects;
+    std::unordered_set<const Singular*> _seededBeingPointers;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.
