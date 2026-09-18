@@ -160,6 +160,7 @@ static void testLoadPersonMalformedJson() {
     std::cout << "  loadPerson exception handling (malformed json) OK\n";
 }
 
+
 static void testSavePersonDirectoryCreationFailure() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
@@ -183,28 +184,39 @@ static void testLoadPersonUnreadableFile() {
 
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
     std::string filepath = folder + "/Unreadable.ecform";
-    std::ofstream file(filepath);
-    file << R"({"displayName": "Unreadable"})";
-    file.close();
 
-    // Remove read permissions from the file
-    std::filesystem::permissions(filepath, std::filesystem::perms::none);
+    // Create a directory at the target file path to force std::ifstream file open failure across all environments (including root)
+    std::filesystem::create_directory(filepath);
 
     Person loaded = createDummyPerson("Temp");
     bool success = db.loadPerson("Unreadable", loaded);
     assert(!success);
 
-    // Restore permissions for cleanup
-    std::filesystem::permissions(filepath, std::filesystem::perms::owner_read | std::filesystem::perms::owner_write);
-
-    std::cout << "  loadPerson unreadable file handling OK\n";
+    std::cout << "  loadPerson unreadable file error handling OK\n";
 }
+
+static void testLoadPersonInvalidJsonStructure() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/InvalidStruct.ecform");
+    file << "[1, 2, 3]";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("InvalidStruct", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson invalid json structure error handling OK\n";
+}
+
 
 static void testLoadPersonDeserializationFailure() {
     TestEnvironment env;
     PersonDatabase& db = PersonDatabase::getInstance();
 
-    // Write JSON with mismatched type structure for body height that causes nlohmann::json::exception during deserialization
+    // Write JSON with a mismatched type for body height to exercise deserialization exception handling.
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
     std::ofstream file(folder + "/InvalidSchema.ecform");
     file << R"({"displayName": "Invalid", "body": {"height": "not_a_float"}})";
@@ -229,6 +241,7 @@ int main() {
     testLoadPersonMalformedJson();
     testSavePersonDirectoryCreationFailure();
     testLoadPersonUnreadableFile();
+    testLoadPersonInvalidJsonStructure();
     testLoadPersonDeserializationFailure();
     std::cout << "person_database_test: ALL OK\n";
     return 0;

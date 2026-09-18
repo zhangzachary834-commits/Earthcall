@@ -245,7 +245,7 @@ void LanguageSystem::tick(float) {
 
                 auto existing = activeZone.formation().relations().getRelationsBetween(*rel->a(), *rel->b());
                 bool found = false;
-                for (auto r : existing) {
+                for (const auto& r : existing) {
                     if (r && r->type == rel->type) {
                         float w = r->getWeight();
                         r->setWeight(std::min(1.0f, w + 0.2f)); // Reinforce existing pathway

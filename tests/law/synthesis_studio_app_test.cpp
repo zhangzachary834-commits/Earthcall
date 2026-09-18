@@ -481,7 +481,9 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    // 7. Strokes are drawn on the canvas, and nowhere else.
+    
+
+// 7. Strokes are drawn on the canvas, and nowhere else.
     //
     //    `isCanvas` was authored on the easel from the first draft and read by
     //    NO law, so strokes could be laid on the sky — where pointerWorld is
@@ -536,8 +538,8 @@ int main() {
         check(zone->getOwnedObjects().size() == before + drawn,
               "sub-spacing movement does not create a frame-rate-dependent flood");
 
-        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.50f, 2.1f, 2.3f)));
-        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.50));
+        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.51f, 2.1f, 2.3f)));
+        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.51));
         laws.tick();
         check(zone->getOwnedObjects().size() == before + drawn + 1,
               "accumulated slow travel reaches the authored spacing and lays the next segment");
