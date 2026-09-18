@@ -1,5 +1,6 @@
 #include "ZoneManager.hpp"
 #include "HomesOfEarth/Home.hpp"
+#include "Identity/IdentityLedger.hpp"
 #include "Relation/Relation.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
@@ -389,10 +390,16 @@ bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
         return false;
     }
     if (zone.owner() == person.getIdentifier()) return true;
-    // A display spelling is a migration bridge only while this Person does not
-    // yet have cryptographic identity. Once a key exists, a same-spelled Person
-    // is not proof of ownership; the owned-by edge (or explicit migration) is.
-    return !person.hasIdentity() && zone.owner() == person.getDisplayName();
+    if (!person.hasIdentity()) return zone.owner() == person.getDisplayName();
+
+    // Once the Person has a key, spelling alone is deliberately insufficient.
+    // The ONE legitimate bridge from an old owner string to a keyed Person is
+    // the migration ledger: it records the explicit trust-on-first-migration
+    // act that this legacy spelling was signed over to this exact SingularId.
+    Identity::IdentityLedger ledger;
+    if (!ledger.load()) return false;
+    const auto migrated = ledger.find(zone.owner());
+    return migrated.has_value() && *migrated == person.personId();
 }
 
 bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
