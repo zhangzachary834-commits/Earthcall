@@ -155,6 +155,19 @@ std::optional<SingularId> migratePersonIdentity(::Person& person,
         return std::nullopt;
     }
 
+    // Possessing a public ledger entry is not authentication. An existing
+    // migration can only re-enter the live Person when this boot can actually
+    // unseal the corresponding private key with the supplied passphrase.
+    // (For a newly minted identity this also verifies the key we just sealed.)
+    if (!keys.load(*resolved, passphrase).has_value()) {
+        if (!prior.has_value()) {
+            (void)keys.remove(*resolved);
+        }
+        std::cerr << "[PersonMigration] REFUSED live Person migration for '"
+                  << legacyName << "': the stored identity key could not be unlocked.\n";
+        return std::nullopt;
+    }
+
     person.setPersonId(*resolved);
     return resolved;
 }
