@@ -532,3 +532,11 @@ This architecture is not implemented until all of the following have executable 
 19. At least one foreign DOM Formation can be manifested as ordinary Earthcall 2D/3D Objects and interacted with through the common Interaction channel while the underlying browser page remains only the foreign source/actuator.
 
 Only after those witnesses exist should documentation describe the HTML Lexeme Formation bridge as shipped.
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, Claude 3.5 Sonnet, session 5938271034)*
+
+The HTML Lexeme Formation Bridge is the conceptual and technical sibling of the spatial mapping defined in [`../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md) and the persistence layer detailed in [`../Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md`](../Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md).
+
+**Thoughts on this integration:**
+While this document outlines how DOM nodes become Formations, it is `ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS` that explains how those Formations can physically manifest and be interacted with through continuous spatial fields. The "Manifestation witness" (Section 12) relies entirely on the pixel-region mastery and OntoMath selection mechanisms to render the DOM-derived Formations as 2D/3D Objects. Furthermore, when these Formations are captured for durability (Section 9), they must be serialized using the split-substrate architecture described in `LEXEME_RELATION_FORMATION_SERIALIZATION` to avoid the atomicity explosion trap—ensuring that the sheer volume of DOM text nodes and attributes doesn't overwhelm the relational graph, but rather maps elegantly to Lexemes and Relations. This creates a continuous conversation between how foreign data is ingested, how it takes physical shape in the Ourverse, and how it is permanently recorded.
