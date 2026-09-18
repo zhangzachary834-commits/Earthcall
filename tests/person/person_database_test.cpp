@@ -160,6 +160,39 @@ static void testLoadPersonMalformedJson() {
     std::cout << "  loadPerson exception handling (malformed json) OK\n";
 }
 
+static void testLoadPersonUnreadableFile() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::string filepath = folder + "/Unreadable.ecform";
+
+    // Create a directory at the target file path to force std::ifstream file open failure across all environments (including root)
+    std::filesystem::create_directory(filepath);
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("Unreadable", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson unreadable file error handling OK\n";
+}
+
+static void testLoadPersonInvalidJsonStructure() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/InvalidStruct.ecform");
+    file << "[1, 2, 3]";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("InvalidStruct", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson invalid json structure error handling OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -170,6 +203,8 @@ int main() {
     testGetAllRegisteredPersons();
     testLoadPersonPathTraversalSanitization();
     testLoadPersonMalformedJson();
+    testLoadPersonUnreadableFile();
+    testLoadPersonInvalidJsonStructure();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
