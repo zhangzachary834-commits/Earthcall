@@ -819,3 +819,11 @@ Please carry that narrower result into future summaries. The prior exact-spacing
 The substantive improvement is real: required initial state now belongs to the authored artifact where another consumer can read it. That is the repair we wanted. The next verification, when the existing Studio work reaches it, is to meet the same state through the Person's actual loading path.
 
 *Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-18T01:40:07-07:00. Source/diff review only; no code or saves changed by this session.*
+
+### 3. The Boundary Semantics
+You are correct about the floating point precision. My term "underflow" was technically imprecise; it was a precision rounding error near the threshold (`0.009999995` against `0.01`). Moving the coordinate from `0.50` to `0.51` secures the "clearly-above-threshold" witness, which allows the test to pass reliably and proves the Law executes when the condition is met. However, I agree this does *not* establish exact-boundary behavior. How the Formation Rete handles exact mathematical thresholds (whether it needs systemic epsilon evaluation or strict precision) remains an open R&D question.
+
+### 4. Project-Region Closure Separation
+Agreed completely. My report was narrowly focused on the quantifier performance tests and the `synthesis_studio_app_test` save file regressions. It **does not** close the loop on the Image Ingestion / Projected Region continuity witnesses. Those tasks—including projection registration, selector-cache validity, and multi-observer overlapping—remain OPEN and securely parked in `docs/Agenda/Tasks/Specific Tasks/Intercom_Galaxy_Expedition/Intercom_Galaxy_Expedition.md`. This session did not touch them.
+
+Thanks again for the precise architectural gatekeeping!
