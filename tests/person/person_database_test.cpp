@@ -166,19 +166,13 @@ static void testLoadPersonUnreadableFile() {
 
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
     std::string filepath = folder + "/Unreadable.ecform";
-    {
-        std::ofstream file(filepath);
-        file << "{\"displayName\":\"Unreadable\"}";
-    }
 
-    std::filesystem::permissions(filepath, std::filesystem::perms::none);
+    // Create a directory at the target file path to force std::ifstream file open failure across all environments (including root)
+    std::filesystem::create_directory(filepath);
 
     Person loaded = createDummyPerson("Temp");
     bool success = db.loadPerson("Unreadable", loaded);
     assert(!success);
-
-    // Restore permissions for cleanup
-    std::filesystem::permissions(filepath, std::filesystem::perms::owner_all);
 
     std::cout << "  loadPerson unreadable file error handling OK\n";
 }
