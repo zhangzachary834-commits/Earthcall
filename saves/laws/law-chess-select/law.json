@@ -1,0 +1,177 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-select",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "isSelected"
+        },
+        {
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "gx": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.selectedX"
+        },
+        {
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "gy": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.selectedY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@state.chess.selectionActive"
+        },
+        {
+          "bindings": {
+            "ry": "restY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "ry": 1
+                      }
+                    },
+                    {
+                      "c": 0.18,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.y"
+        },
+        {
+          "eventType": "piece-selected",
+          "kind": 10,
+          "publishObject": "",
+          "publishSubject": ""
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.chess.piece",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "onBoard"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.chess.gameOver"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operandPath": "@state.chess.turn",
+          "path": "chessColor"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-select",
+    "name": "select-own-piece",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-select",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "square-clicked"
+  ]
+}

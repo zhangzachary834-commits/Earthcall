@@ -240,3 +240,18 @@ This is deliberately **not** the completion of the reopened task. General Materi
 Category shared roots, Zone-scoped matter generations, a detached whole-closure
 transaction across every root kind, Save Zone isolation, and migration of the other
 authored app Laws remain open under the completion contract above.
+
+## 2026-09-18 — `chess_app` → independent Chess Zone boot
+
+**Authorized by Zach. Implemented by GPT-5.6 Sol.** Zach explicitly asked to migrate the Chess Zone whose legacy source is exactly `saves/worlds/chess_app.json` so Chess no longer requires loading the conglomerate World.
+
+The migration keeps the historical `chess_app.{json,ecform}` files untouched as compatibility/recovery artifacts and changes the ordinary source of truth instead:
+
+- `saves/zones/Chess/zone.json` keeps the newer serialized forms of the 39 board/piece/seat/promotion beings, restores the legacy bundle's complete persisted Relation graph, embeds the three Chess materials, and admits the formerly session-only extra-spatial dependency beings (Chess/category roots, `state.chess`, `object.chess.status`, `grok-4.6`, and `codex-gpt5`) exactly once.
+- The Zone names all 69 authored Chess Laws through `lawRefs`; each existing Law is copied unchanged from the legacy authored register into its own stable `saves/laws/<id>/law.json` root with its original `authors` and trigger set. The migration records GPT-5.6 Sol only in `injected_by`; it does **not** rewrite grok-4.6's or Codex's authorship.
+- `ZoneManager::switchTo` now repeats the idempotent persisted-Relation hydration pass immediately after the referenced Laws are committed. This is the Zone-native counterpart of the second pass legacy `loadState` already needed: Law→category edges cannot bind before those Law beings exist.
+- `scripts/author_chess.py` now emits the Zone identity + shared Law roots by default. Regenerating the legacy `chess_app` session requires explicit `--legacy-session`, preventing routine authoring from sliding Chess back behind a conglomerate-file dependency.
+- `tests/law/chess_zone_native_boot_test.cpp` constructs an isolated SaveRoot with **only** the Chess Zone and its named Law roots, never creates a `worlds/` directory, never calls `loadState`, moves to Chess through `switchTo`, verifies materials/relations/all 69 Laws, and executes e2-e4.
+
+Person-facing rendering/input acceptance is routed to [For Zach/Person Verification List.md](../../For%20Zach/Person%20Verification%20List.md); automated closure verification is not treated as a substitute for Zach seeing and playing the Zone in the real app.
+

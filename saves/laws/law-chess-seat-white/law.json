@@ -1,0 +1,89 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-seat-white",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "actionModel": {
+      "bindings": {
+        "t": "@state.chess.turn"
+      },
+      "function": {
+        "pieces": [
+          {
+            "expr": {
+              "terms": [
+                {
+                  "c": 1,
+                  "factors": {}
+                },
+                {
+                  "c": -1,
+                  "factors": {
+                    "t": 1
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "kind": 8,
+      "path": "isToMove"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.chess.player",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "playsColor"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-seat-white",
+    "name": "mark-white-to-move",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-seat-white",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "turn-changed"
+  ]
+}
