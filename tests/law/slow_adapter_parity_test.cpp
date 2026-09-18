@@ -37,7 +37,6 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/Core/EventBus.hpp"
 
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -65,12 +64,6 @@ double hits(Object& o) {
 
 
 int main() {
-    if (!glfwInit()) { std::fprintf(stderr, "slow_adapter_parity_test: glfwInit failed\n"); return 1; }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "slow_adapter_parity_test", nullptr, nullptr);
-    if (!window) { glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
-
     // ONE LawManager, toggled between phases — not two managers run back to
     // back. The EventBus has no unsubscribe (Law.hpp says so: "a connected
     // LawManager must outlive all publishing"), so a second connected manager in
@@ -207,8 +200,6 @@ int main() {
     Universe::instance().setRelationProvider(nullptr);
     Universe::instance().setProvider(nullptr);
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::printf("%s\n", g_failures ? "slow_adapter_parity_test: FAILURES"
                                    : "slow_adapter_parity_test: OK");
     return g_failures ? 1 : 0;
