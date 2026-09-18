@@ -271,7 +271,6 @@ int main() {
             Soul firstSoul("Continuity Person");
             Body firstBody("humanoid", "default");
             Person firstPerson(std::move(firstSoul), std::move(firstBody), "default");
-            firstPerson.setPersonId(continuityId);
 
             ZoneManager firstProcess;
             Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
@@ -282,6 +281,17 @@ int main() {
             Zone* firstHome = firstProcess.findPrimaryHome(firstPerson);
             check(firstHome && firstHome->getIdentifier() == "Home",
                   "identity-aware Home creation still uses the canonical Home identity");
+            check(firstHome && firstHome->owner() == firstPerson.getDisplayName(),
+                  "legacy Home starts with the display spelling only as a compatibility cache");
+
+            const std::size_t beforeStableId = firstProcess.zones().size();
+            firstPerson.setPersonId(continuityId);
+            check(firstProcess.findPrimaryHome(firstPerson) == firstHome,
+                  "owned-by still resolves the same Person after a stable id is assigned");
+            check(firstProcess.ensureHomeZone(firstPerson),
+                  "stable id assignment reuses the existing Home");
+            check(firstProcess.zones().size() == beforeStableId,
+                  "stable id assignment does not mint another Home");
 
             bool liveOwnedBy = false;
             if (firstHome) {
@@ -308,6 +318,8 @@ int main() {
             }
             check(savedOwnedBy,
                   "owned-by persists with the Person SingularId rather than a display spelling");
+            check(savedHome.value("owner", std::string{}) == continuityId.toString(),
+                  "saved owner cache follows the owned-by Person identity");
             Universe::instance().setProvider({});
         }
 
