@@ -19,6 +19,9 @@ nlohmann::json personToJson(const Person& person) {
 }
 
 void personFromJson(const nlohmann::json& j, Person& person) {
+    if (!j.is_object()) {
+        throw std::invalid_argument("JSON for Person deserialization must be an object");
+    }
     // Type-checked: profile/session files are untrusted by construction.
     if (j.contains("displayName") && j["displayName"].is_string()) {
         person.setDisplayName(j["displayName"].get<std::string>());

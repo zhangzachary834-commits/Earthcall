@@ -68,7 +68,7 @@
 // ---------------------------------------------------------------------------
 
 
-// Zach: The adapter makes Chess takes longer. I'm going to personally audit to investigate why.
+// Zach: Opus 5 measured the adapter makes Chess take longer. I'm going to personally audit to investigate why.
 
 class Formation;
 
