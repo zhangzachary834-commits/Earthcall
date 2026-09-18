@@ -80,7 +80,7 @@ jobs:
             synthesis_studio_zone_closure_test \
             synthesis_studio_full_store_boot_test \
             second_nature_law_authoring_test \
-            second_nature_law_forge_zone_test \65
+            second_nature_law_forge_zone_test \
             person_database_test \
             body_part_test
 
