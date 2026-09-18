@@ -43,7 +43,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cstdio>
 #include <memory>
@@ -96,12 +95,6 @@ std::string join(const std::vector<std::string>& ids) {
 } // namespace
 
 int main() {
-    if (!glfwInit()) { std::fprintf(stderr, "slow_adapter_test: glfwInit failed\n"); return 1; }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "slow_adapter_test", nullptr, nullptr);
-    if (!window) { glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
-
     {
         Object target;   target.setObjectID("category.target");
         Object other;    other.setObjectID("category.other");
@@ -366,8 +359,6 @@ int main() {
         Universe::instance().setProvider(nullptr);
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::printf("%s\n", g_failures ? "slow_adapter_test: FAILURES" : "slow_adapter_test: OK");
     return g_failures ? 1 : 0;
 }
