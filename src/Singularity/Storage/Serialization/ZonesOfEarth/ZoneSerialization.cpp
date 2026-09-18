@@ -5,7 +5,9 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_set>
@@ -74,6 +76,31 @@ Zone::Scope scopeFromName(const std::string& name) {
     if (name == "Regional") return Zone::Scope::Regional;
     if (name == "UI") return Zone::Scope::UI;
     return Zone::Scope::Local;
+}
+
+
+std::string ownerIdForPersistence(const Zone& zone) {
+    std::string relationalOwner;
+    bool found = false;
+    for (const auto& relation : zone.formation().relations().getAll()) {
+        if (!relation || !relation->directed || relation->typeLabel() != "owned-by") continue;
+        if (relation->a() != &zone && relation->aId() != zone.getIdentifier()) continue;
+        const std::string target = relation->bId();
+        if (target.empty()) continue;
+        if (!found) {
+            relationalOwner = target;
+            found = true;
+            continue;
+        }
+        if (relationalOwner != target) {
+            std::cerr << "[ZoneSave] REFUSED to treat owned-by as a single owner for Zone '"
+                      << zone.getIdentifier() << "': conflicting targets '"
+                      << relationalOwner << "' and '" << target
+                      << "'. Keeping the compatibility owner cache visible instead.\n";
+            return zone.owner();
+        }
+    }
+    return found ? relationalOwner : zone.owner();
 }
 
 } // namespace
@@ -166,7 +193,12 @@ nlohmann::json zoneToJson(const Zone& zone) {
     nlohmann::json zj;
     zj["name"] = zone.name();
     zj["identifier"] = zone.getIdentifier();
-    zj["owner"] = zone.owner();
+    // Person ownership is relational truth. _ownerId remains a compatibility
+    // cache for old saves and non-Person owners, but once a single directed
+    // owned-by edge exists its target identity is what crosses persistence.
+    // A Relation already bound to a Person therefore follows that same Person
+    // when their address upgrades from display spelling to a stable DID.
+    zj["owner"] = ownerIdForPersistence(zone);
     zj["parentZone"] = zone.getParentZone();
     zj["scope"] = zone.scopeName();
     nlohmann::json qualities = nlohmann::json::object();

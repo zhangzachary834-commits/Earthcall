@@ -302,45 +302,116 @@
           "path": "@world.pointerOver"
         },
         {
+          "kind": 4,
           "children": [
             {
               "kind": 0,
-              "op": 4,
+              "op": 1,
               "operand": {
                 "t": "double",
-                "v": 6.0
+                "v": 0.0
               },
               "path": "@interaction-channel.dragX"
             },
             {
               "kind": 0,
-              "op": 2,
+              "op": 1,
               "operand": {
                 "t": "double",
-                "v": -6.0
-              },
-              "path": "@interaction-channel.dragX"
-            },
-            {
-              "kind": 0,
-              "op": 4,
-              "operand": {
-                "t": "double",
-                "v": 6.0
-              },
-              "path": "@interaction-channel.dragY"
-            },
-            {
-              "kind": 0,
-              "op": 2,
-              "operand": {
-                "t": "double",
-                "v": -6.0
+                "v": 0.0
               },
               "path": "@interaction-channel.dragY"
             }
-          ],
-          "kind": 4
+          ]
+        },
+        {
+          "kind": 6,
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "px": 2.0
+                      }
+                    },
+                    {
+                      "c": -2.0,
+                      "factors": {
+                        "px": 1.0,
+                        "lx": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "lx": 2.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "py": 2.0
+                      }
+                    },
+                    {
+                      "c": -2.0,
+                      "factors": {
+                        "py": 1.0,
+                        "ly": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ly": 2.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "pz": 2.0
+                      }
+                    },
+                    {
+                      "c": -2.0,
+                      "factors": {
+                        "pz": 1.0,
+                        "lz": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "lz": 2.0
+                      }
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "s": 2.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "bindings": {
+            "px": "@interaction-channel.pointerWorldX",
+            "py": "@interaction-channel.pointerWorldY",
+            "pz": "@interaction-channel.pointerWorldZ",
+            "lx": "@state.studio.lastStrokeX",
+            "ly": "@state.studio.lastStrokeY",
+            "lz": "@state.studio.lastStrokeZ",
+            "s": "@state.studio.strokeSpacing"
+          },
+          "lo": {
+            "t": "double",
+            "v": 0.0
+          }
         }
       ],
       "kind": 3

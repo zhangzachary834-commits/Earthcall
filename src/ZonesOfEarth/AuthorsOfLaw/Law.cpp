@@ -2053,12 +2053,6 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     refreshVocabularyIndex();
     revalidateRelationStateFacts();
 
-    // THE ADAPTER'S OWN CLOCK. One bounded unit of work per tick — build one
-    // road that is not yet known, re-check one that has not been looked at
-    // lately — never "rebuild everything now". This is what keeps §3.1's
-    // promise that the adapter runs beside the frame rather than inside it.
-    if (_useSlowAdapter) _adapter.step(Relevance::SlowAdapter::Budget{});
-
     auto T2 = glfwGetTime();
 
     if (_rete.hasDirtyFacts()) {
@@ -2446,8 +2440,16 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     // clock instead of derived here. `couldApplyTo` still decides, exactly as it
     // does for the vocabulary index below: the adapter only proposes.
     if (_useSlowAdapter) {
+        // Law text can change between maintenance Moments. A road registered
+        // for an older condition revision is not allowed to answer even if the
+        // world/graph generations are current; fall back until the slow clock
+        // has synchronized this Law's routes.
+        const auto routeRevision = _adapterRouteRevision.find(law.getIdentifier());
+        const bool routesMatchLaw =
+            routeRevision != _adapterRouteRevision.end() &&
+            routeRevision->second == law.conditionRevision();
         std::vector<Singular*> travelled;
-        if (_adapter.candidatesFor(law.getIdentifier(), travelled)) {
+        if (routesMatchLaw && _adapter.candidatesFor(law.getIdentifier(), travelled)) {
             std::vector<Singular*> chosen;
             chosen.reserve(travelled.size());
             for (Singular* being : travelled) {
@@ -2971,8 +2973,35 @@ void LawManager::syncAdapterRoutes(Law& law) {
     _adapter.noteLaw(lawId, routes);
 }
 
+std::size_t LawManager::serviceSlowAdapterClock(double wallSeconds) {
+    if (!_useSlowAdapter) return 0;
+
+    // Priming establishes this clock's own next Moment. In particular, enabling
+    // the adapter does NOT make the frame that enabled it perform maintenance.
+    if (!_slowAdapterClockPrimed) {
+        _slowAdapterClockPrimed = true;
+        _slowAdapterNextAt = wallSeconds + kSlowAdapterPeriodSeconds;
+        return 0;
+    }
+    if (wallSeconds < _slowAdapterNextAt) return 0;
+
+    // Never replay missed periods. A long foreground stall must not be followed
+    // by N maintenance slices in one frame; the slow clock resumes from now.
+    _slowAdapterNextAt = wallSeconds + kSlowAdapterPeriodSeconds;
+    ++_slowAdapterMaintenanceRuns;
+
+    // Route discovery belongs to the same slow temporal domain as route
+    // maintenance. A Law edited between maintenance Moments simply falls back
+    // to the complete sweep until this catches up (sweepSubjects verifies the
+    // condition revision before consulting the adapter).
+    for (const auto& law : _laws) {
+        if (law) syncAdapterRoutes(*law);
+    }
+
+    return _adapter.step(Relevance::SlowAdapter::Budget{});
+}
+
 void LawManager::syncReteCompilation(Law& law) {
-    syncAdapterRoutes(law);
     const std::string lawId = law.getIdentifier();
     const bool wantsRete =
         law.activation() != Law::Activation::OnEvent && law.conditionModel() != nullptr;
