@@ -34,3 +34,6 @@
 ## 2024-11-28 - Composite Input Focus Styling
 **Learning:** When styling a composite form input (a container with an input and a button, like `#logos-interface`), applying `:focus-visible` solely to the inner `<input>` element creates a visually disjointed highlight. Using `:focus-within` on the parent container provides a much more cohesive, aesthetically pleasing, and accessible focus indicator for keyboard users.
 **Action:** Always prefer `:focus-within` on the container for composite input designs rather than outlining just the inner text field.
+## 2024-11-28 - [Accessible Button Contrast Overlays]
+**Learning:** When layering semi-transparent backgrounds (like `.kbd-hint` over a primary `#emit-btn`), alpha-blended white (`rgba(255,255,255,0.15)`) on top of a light blue button background (`#4a90e2`) causes both the text and the hint background to fail WCAG AA contrast ratios (falling below 4.5:1).
+**Action:** Always verify contrast ratios for primary action buttons. Deepen the base button color (`#2563eb`) to provide sufficient contrast for white text, and use black with alpha (`rgba(0,0,0,0.2)`) instead of white for nested hint backgrounds to maintain legibility without blowing out the lightness.
