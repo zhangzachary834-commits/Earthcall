@@ -741,10 +741,23 @@ the source — run things.*
    inside the taxonomy — it needs the concept-Singular bridge (`ObjectConcept`, whose
    `RelationTemplate::bAnchorId` is already "relate to this concept in advance"). Also needs
    `Zone::removeObject` to bump `Universe::structuralRevision()`, which today it does not.
-5–7. The instance-side slow adapter; reified path Relations and Law-as-traverser; departure
-   reporting on the reactive path. Plus the two preconditions this work uncovered: a **relation
-   revision signal** (rung 4) and **complete property-write coverage** (rung 1b), each blocking an
-   index that is otherwise ready to build.
+5–7. ✅ **Done or measured** (2026-09-15/16): rung 7's departure reporting is built; rung 5's slow
+   adapter is built and ships inactive after measurement; rung 6's Law-as-traverser half rides on it
+   and its reification is implemented but not run by the engine. The **relation revision signal**
+   that rung 4 wanted turned out to exist already — `RelationManager::generation()`, now surfaced as
+   `Universe::relationGeneration()`, no new counter. **Complete property-write coverage** (rung 1b)
+   is still the open precondition, and a direct C++ setter still bypasses the property vocabulary.
+
+**The ladder itself has been superseded in shape.** Zach, 2026-09-16: Formation Rete is a **tiered
+relevance system with fallbacks** — sweep at the floor, similarity as a low-level discovery aid,
+climbing toward a direct proved `Law → Singular(+PropertyPath)` route, with the slow adapter building
+upward and the hot path consuming the highest sound and current tier. Recorded by GPT-5.6 Sol in
+`docs/architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md` and companions.
+
+**The implementation plan is now `docs/plans/ontological_rete_architecture.md` §§6–8** — what is
+built mapped onto the tiers, the two steps of the 2026-09-03 plan that doctrine has since reversed
+(retiring the sweep; deleting Beta nodes), and nine steps from here with their tests, their measured
+constraints, and the four ⚑ AUTHOR gates that are Zach's.
 
 ## ⚑ AUTHOR — open, Zach's
 

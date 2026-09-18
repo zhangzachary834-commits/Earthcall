@@ -9,6 +9,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
 extern ZoneManager mgr;
@@ -156,6 +157,10 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
         ImGui::Text("  Creation Tools:  %6.2f ms", g_frameTimings.creation_ms);
         ImGui::Text("  Interaction:     %6.2f ms", g_frameTimings.interaction_ms);
         ImGui::Text("  Zone Update:     %6.2f ms", g_frameTimings.zone_ms);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Ground scan:           %6.2f ms", g_frameTimings.zone_ground_ms);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Rotations:             %6.2f ms", g_frameTimings.zone_rot_ms);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Automations:           %6.2f ms", g_frameTimings.zone_auto_ms);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Physics (%d substeps):  %6.2f ms", g_frameTimings.zone_substeps, g_frameTimings.zone_phys_ms);
         ImGui::Text("  Laws (Rete):     %6.2f ms", g_frameTimings.laws_ms);
         ImGui::Text("  Language:        %6.2f ms", g_frameTimings.language_ms);
         ImGui::Text("  Audio:           %6.2f ms", g_frameTimings.audio_ms);
@@ -234,6 +239,19 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
             } else if (s_telemetryHistory.size() >= 30) {
                 ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "  Time-to-steady-state: Pending convergence");
             }
+        }
+
+        // ---- Zone::update() timing breakdown ----
+        {
+            Zone& activeZone = mgr.active();
+            const auto& zt = activeZone.lastUpdateTiming();
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.8f, 0.4f, 1.0f, 1.0f), "Zone::update()  %.2f ms (%s, %d substep%s)",
+                               zt.totalMs, activeZone.name().c_str(), zt.substeps, zt.substeps == 1 ? "" : "s");
+            ImGui::Text("  Ground Scan:     %6.2f ms", zt.groundScanMs);
+            ImGui::Text("  Rotations:       %6.2f ms", zt.rotationMs);
+            ImGui::Text("  Automations:     %6.2f ms", zt.automationMs);
+            ImGui::Text("  Physics:         %6.2f ms", zt.physicsMs);
         }
 
         // ---- LawManager tick() timing breakdown ----

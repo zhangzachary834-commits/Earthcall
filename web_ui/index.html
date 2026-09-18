@@ -45,6 +45,12 @@
             display: flex;
             align-items: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #logos-interface:focus-within {
+            border-color: rgba(74, 144, 226, 0.5);
+            box-shadow: 0 8px 32px rgba(74, 144, 226, 0.25);
         }
 
         #utterance-input {
@@ -58,9 +64,7 @@
         }
 
         #utterance-input:focus-visible {
-            outline: 2px solid #4a90e2;
-            outline-offset: 2px;
-            border-radius: 4px;
+            outline: none;
         }
 
         #utterance-input::placeholder {
@@ -161,14 +165,14 @@
 
     <main id="viewport-container">
         <!-- The canvas is used if running in Emscripten WASM mode -->
-        <canvas id="earthcall-canvas" oncontextmenu="event.preventDefault()" role="img" aria-label="Earthcall World View"></canvas>
+        <canvas id="earthcall-canvas" tabindex="-1" oncontextmenu="event.preventDefault()" role="img" aria-label="Earthcall World View"></canvas>
         
         <div id="connection-status" role="status" aria-live="polite">
             <div class="status-dot" id="status-indicator"></div>
             <span id="status-text">Initializing...</span>
         </div>
 
-        <form id="logos-interface">
+        <form id="logos-interface" aria-label="Utterance Command Form">
             <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World" autofocus>
             <button type="submit" id="emit-btn" title="Enter a word to emit" aria-disabled="true">Emit <kbd aria-hidden="true" class="kbd-hint">↵</kbd></button>
         </form>

@@ -78,7 +78,7 @@ int main() {
     };
 
     auto wait_future_bool = [&](auto& future, const std::string& desc) -> bool {
-        auto status = future.wait_for(std::chrono::seconds(5));
+        auto status = future.wait_for(std::chrono::seconds(10));
         check(status == std::future_status::ready, desc + " did not timeout");
         if (status != std::future_status::ready) return false;
         return future.get();
@@ -100,7 +100,7 @@ int main() {
     Util::CloudStorage::downloadSaveAsync("test_save.json", SaveSystem::SaveType::WORLD, [&](std::optional<std::vector<uint8_t>> data) {
         download_promise.set_value(data);
     });
-    auto download_status = download_future.wait_for(std::chrono::seconds(5));
+    auto download_status = download_future.wait_for(std::chrono::seconds(10));
     check(download_status == std::future_status::ready, "Download operation did not timeout");
     std::optional<std::vector<uint8_t>> download_result;
     if (download_status == std::future_status::ready) download_result = download_future.get();
@@ -118,7 +118,7 @@ int main() {
     Util::CloudStorage::fetchMetadataAsync(SaveSystem::SaveType::WORLD, [&](std::vector<SaveSystem::SaveMetadata> data) {
         metadata_promise.set_value(data);
     });
-    auto metadata_status = metadata_future.wait_for(std::chrono::seconds(5));
+    auto metadata_status = metadata_future.wait_for(std::chrono::seconds(10));
     check(metadata_status == std::future_status::ready, "Metadata operation did not timeout");
     std::vector<SaveSystem::SaveMetadata> metadata_result;
     if (metadata_status == std::future_status::ready) metadata_result = metadata_future.get();

@@ -182,10 +182,11 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp)
 endif()
 
-# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs on Apple
+# Compile native WebKit integration sources as Objective-C++ on Apple.
 if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
     set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/Singularity/Foreign/Web/DomMirrorBridge.cpp PROPERTIES LANGUAGE OBJCXX)
 endif()
 
 # Object library for shared code
@@ -500,5 +501,3 @@ if (EMSCRIPTEN)
     set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
 endif()
 target_include_directories(my_probe_test PRIVATE src third_party/nlohmann_json/single_include third_party/glm third_party/glfw/include third_party/gl3w/include third_party)
-
-

@@ -78,6 +78,14 @@
 
 - [x] Assets window: open → verify assets → save/load → verify again
 - [x] Chat window → open Chat → send a test message → verify it appears correctly
+
+## Cathedral of the Living Logos (added 2026-09-17 from weekly reflection)
+- [ ] Walk into the Cathedral Zone and confirm it is a place, not a pile of default cubes
+- [ ] Touch a Lexeme on the altar (Logos / Pneuma / Lux / Harmonia / Covenant) → verify a Law actually binds or a world-change happens, not only a label/hover
+- [ ] Hear whether architecture and tone are the same OntoMath (shape sounding like itself) or a pretty SDF with a frequency sticker
+- [ ] Save → quit the process → reopen → return to the Cathedral → verify the words, relations, and look are still the ones you left
+- [ ] After `THE CATHEDRAL LOOKS AWESOME NOWWWWW`: confirm double-scaling of analytic shapes is gone at the angles that previously warped
+
 - [ ] ImGui Demo → open ImGui Demo → interact with at least one visible demo control → verify it responds
 - [x] Controls/Keymap (`K`) → press `K` → verify the Controls/Keymap window opens → verify controls are displayed | Zach: Keybinds are not exhaustive. For example, 
 - [x] F8 → press F8 → verify the intended F8 action occurs
@@ -429,3 +437,28 @@ The law engine kept a note of which relation facts it already held, so it would 
 The engine keeps a lookup of every being by name so laws can say things like `@state.studio.voice` or `@late-gate.ceiling`. That lookup rebuilds when the world's shape changes. Nothing tested that it rebuilds — only that it was fast — so if it had stopped, every `@`-rooted law would have gone quiet with no error at all. It is now tested, and the test fails if the rebuild is removed.
 
 - [ ] **Add something to a world mid-session and use a law that names it.** In the Creator Console, make a new being, give it a stable name, then author (or enable) a law whose condition or action names it with `@that-name.someProperty`. The law should act on it immediately, without a restart or a Zone reload.
+
+## Performance metrics window displays Zone::update sub-phase tick timings individually
+
+*Raised 2026-09-17, Gemini Spark, session `2026-09-17`.*
+
+The Performance & Coordinates window (`F3`) now surfaces the tick ms duration for each individual sub-phase of `Zone::update()`: ground scan, object rotations, automations, and physics bodies update (along with the substep count). These are visible both nested under `Zone Update` in the main `Engine::tick()` breakdown and in a dedicated `Zone::update()` timing section.
+
+- [ ] **Open Performance & Coordinates window (`F3`).**
+  - Verify that under **Engine::tick() Frame Timings Breakdown**, `Zone Update` expands with individual sub-phase ms lengths:
+    - `|- Ground scan:`
+    - `|- Rotations:`
+    - `|- Automations:`
+    - `|- Physics (N substeps):`
+  - Verify that the dedicated **Zone::update()** section displays:
+    - Zone::update() total ms, active Zone name, and substep count
+    - Ground Scan ms
+    - Rotations ms
+    - Automations ms
+    - Physics ms
+  - Verify all metrics update live as the world ticks.
+
+## Two Homes (added 2026-09-17 by Claude Fable 5.1, from *Two Houses, One Spelling*)
+- [ ] Boot Earthcall → open the Zones list → confirm you are standing in `Home` (the 10.6 MB one with your beings) and not `Home_of_Zach` (957 bytes, empty) → confirm both appear in the list. Prediction from the sort order in `SaveSystem.cpp:1142`: both appear and you are in `Home`. Nobody has looked.
+- [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
+- [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.

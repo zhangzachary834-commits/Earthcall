@@ -1,25 +1,66 @@
 import json
 import os
+import math
+import struct
+import hashlib
 
-def mat4(pos, scale=[1.0, 1.0, 1.0]):
-    sx, sy, sz = scale
-    px, py, pz = pos
+# ==============================================================================
+# CATHEDRAL OF THE LIVING LOGOS — MONUMENTAL ARCHITECTURAL GENERATOR
+# Full Gothic Revival Architecture + Split Substrate (.ecform + .ecmatter)
+# Fully compliant with Earthcall Save System Overhaul (PR #188)
+# ==============================================================================
+
+def mat4(pos, scale=[1.0, 1.0, 1.0], rot_deg=[0.0, 0.0, 0.0]):
+    """Creates a 4x4 column-major transformation matrix with Euler rotation (Z-Y-X)."""
+    sx, sy, sz = float(scale[0]), float(scale[1]), float(scale[2])
+    px, py, pz = float(pos[0]), float(pos[1]), float(pos[2])
+    rx = math.radians(rot_deg[0])
+    ry = math.radians(rot_deg[1])
+    rz = math.radians(rot_deg[2])
+    
+    cx, sx_s = math.cos(rx), math.sin(rx)
+    cy, sy_s = math.cos(ry), math.sin(ry)
+    cz, sz_s = math.cos(rz), math.sin(rz)
+    
+    # Rotation matrix R = Rz * Ry * Rx
+    r00 = cy * cz
+    r01 = cz * sx_s * sy_s - cx * sz_s
+    r02 = cx * cz * sy_s + sx_s * sz_s
+    
+    r10 = cy * sz_s
+    r11 = cx * cz + sx_s * sy_s * sz_s
+    r12 = cx * sy_s * sz_s - cz * sx_s
+    
+    r20 = -sy_s
+    r21 = cy * sx_s
+    r22 = cx * cy
+    
     return [
-        float(sx), 0.0, 0.0, 0.0,
-        0.0, float(sy), 0.0, 0.0,
-        0.0, 0.0, float(sz), 0.0,
-        float(px), float(py), float(pz), 1.0
+        r00 * sx, r10 * sx, r20 * sx, 0.0,
+        r01 * sy, r11 * sy, r21 * sy, 0.0,
+        r02 * sz, r12 * sz, r22 * sz, 0.0,
+        px, py, pz, 1.0
     ]
 
-def make_box(obj_id, name, pos, scale, mat_id, color, emit=[0.0, 0.0, 0.0], extra_props=None):
+def make_box(obj_id, name, pos, scale, mat_id, color, rot_deg=[0.0, 0.0, 0.0], extra_props=None):
     obj = {
         "objectID": obj_id,
         "shapeKind": 0,
         "geometryType": 0,
         "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4(pos, scale),
+        "shape": {
+            "kind": 0,
+            "params": {
+                "r": 0.5, "ry": 0.5, "rz": 0.5, "halfH": 0.5,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        "transform": mat4(pos, scale, rot_deg),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 0,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -35,9 +76,19 @@ def make_sphere(obj_id, name, pos, radius, mat_id, color, extra_props=None):
         "shapeKind": 2,
         "geometryType": 2,
         "shapeParams": [float(radius), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4(pos, [radius * 2, radius * 2, radius * 2]),
+        "shape": {
+            "kind": 2,
+            "params": {
+                "r": float(radius), "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        "transform": mat4(pos),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 0,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -47,16 +98,189 @@ def make_sphere(obj_id, name, pos, radius, mat_id, color, extra_props=None):
         obj["authoredProperties"].update(extra_props)
     return obj
 
-def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, extra_props=None):
-    scale_val = majorR * 2 + minorR * 2
+def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, rot_deg=[0.0, 0.0, 0.0], extra_props=None):
+    # renderMode: 2 (RenderMode::Mesh) ensures WebGPU renders the tessellated 3D polygon mesh
+    # rather than clipping with an uninitialized SDF extent!
     obj = {
         "objectID": obj_id,
         "shapeKind": 8,
         "geometryType": 8,
         "shapeParams": [0.0, 0.0, 0.0, 0.0, float(majorR), float(minorR), 0.0, 0.0, 0.0, 0.0, 0.0],
-        "transform": mat4(pos, [scale_val, minorR * 2, scale_val]),
+        "shape": {
+            "kind": 8,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": float(majorR), "minorR": float(minorR),
+                "paraboloidA": 0.0, "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        "transform": mat4(pos, [1.0, 1.0, 1.0], rot_deg),
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
+        "renderMode": 2,
+        "faceColors": [color] * 6,
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": name}
+        }
+    }
+    if extra_props:
+        obj["authoredProperties"].update(extra_props)
+    return obj
+
+def make_ring_segments(prefix_id, name_prefix, center, radius, thickness, mat_id, color, num_segments=24, plane='xz', tilt_deg=[0.0, 0.0, 0.0]):
+    """Creates a physical 3D armillary ring composed of tangent faceted segments."""
+    cx, cy, cz = center
+    chord = 2.0 * radius * math.sin(math.pi / num_segments) * 1.06
+    segments = []
+    
+    for i in range(num_segments):
+        angle = 2.0 * math.pi * i / num_segments
+        deg = math.degrees(angle)
+        seg_id = f"{prefix_id}.seg.{i+1}"
+        seg_name = f"{name_prefix} Segment {i+1}"
+        
+        if plane == 'xz':
+            # Horizontal ring (in XZ plane)
+            lx = radius * math.cos(angle)
+            lz = radius * math.sin(angle)
+            pos = [cx + lx, cy, cz + lz]
+            rot = [tilt_deg[0], -deg + 90.0 + tilt_deg[1], tilt_deg[2]]
+        elif plane == 'yz':
+            # Vertical ring parallel to North/South walls
+            ly = radius * math.cos(angle)
+            lz = radius * math.sin(angle)
+            pos = [cx, cy + ly, cz + lz]
+            rot = [-deg + 90.0 + tilt_deg[0], tilt_deg[1], tilt_deg[2]]
+        
+        scale = [thickness, thickness, chord]
+        segments.append(make_box(seg_id, seg_name, pos, scale, mat_id, color, rot))
+    return segments
+
+def make_label2d(obj_id, text, x, y, size=14.0, color=[0.92, 0.94, 0.98]):
+    return {
+        "objectID": obj_id,
+        "shapeKind": 13,
+        "geometryType": 13,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(size)],
+        "shape": {
+            "kind": 13,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": float(size)
+            }
+        },
+        "x2D": float(x),
+        "y2D": float(y),
+        "zOrder2D": 25,
+        "textString": text,
+        "transform": mat4([0, 0, 0]),
+        "center": [0, 0, 0],
+        "faceColors": [color] * 6,
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": text},
+            "label2D": {"t": "string", "v": text}
+        }
+    }
+
+def make_button2d(btn_id, label, x, y, w, h, bg_color):
+    """Creates a 2D interactive button. Shape2D automatically centers its label."""
+    return {
+        "objectID": btn_id,
+        "shapeKind": 12,
+        "geometryType": 12,
+        "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, float(w), float(h)],
+        "shape": {
+            "kind": 12,
+            "params": {
+                "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": float(w), "height2D": float(h)
+            }
+        },
+        "x2D": float(x),
+        "y2D": float(y),
+        "zOrder2D": 20,
+        "transform": mat4([0, 0, 0]),
+        "center": [0, 0, 0],
+        "faceColors": [bg_color] * 6,
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": label},
+            "label2D": {"t": "string", "v": label},
+            "controlLabel": {"t": "string", "v": label},
+            "isButton": {"t": "bool", "v": True}
+        }
+    }
+
+def sdf_leaf(prim, dims, offset=[0.0, 0.0, 0.0], p0=0.0, p1=0.0):
+    """Creates an SdfNode leaf with primitive type and local offset."""
+    return {
+        "op": 0,
+        "prim": prim,
+        "dims": [float(dims[0]), float(dims[1]), float(dims[2])],
+        "offset": [float(offset[0]), float(offset[1]), float(offset[2])],
+        "p0": float(p0),
+        "p1": float(p1),
+        "t": 0.5,
+        "children": []
+    }
+
+def sdf_expr(expr_str, dims=[1.0, 1.0, 1.0], offset=[0.0, 0.0, 0.0]):
+    """Creates an implicit mathematical expression SdfNode leaf."""
+    return {
+        "op": 0,
+        "prim": 7,
+        "dims": [float(dims[0]), float(dims[1]), float(dims[2])],
+        "offset": [float(offset[0]), float(offset[1]), float(offset[2])],
+        "p0": 0.0,
+        "p1": 0.0,
+        "t": 0.5,
+        "expr": expr_str,
+        "children": []
+    }
+
+def sdf_binary(op, a, b, t=0.5):
+    """Creates a binary operator SdfNode (Morph=1, Union=2, Intersect=3, Subtract=4, SmoothUnion=5)."""
+    return {
+        "op": op,
+        "prim": 0,
+        "dims": [0.5, 0.5, 0.5],
+        "offset": [0.0, 0.0, 0.0],
+        "p0": 0.0,
+        "p1": 0.0,
+        "t": float(t),
+        "children": [a, b]
+    }
+
+def make_field(obj_id, name, pos, field_tree, field_extent, mat_id, color, scale=[1.0, 1.0, 1.0], rot_deg=[0.0, 0.0, 0.0], extra_props=None, render_mode=0):
+    """
+    Creates an exact analytic Signed Distance Field (SDF) being (ShapeKind::Field = 10).
+    In WebGPU, this is raymarched directly at infinite mathematical fidelity.
+    In OpenGL or Mesh mode, it is tessellated via Marching Tetrahedra.
+    """
+    obj = {
+        "objectID": obj_id,
+        "shapeKind": 10,
+        "geometryType": 10,
+        "shapeParams": [0.5, 0.5, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "shape": {
+            "kind": 10,
+            "params": {
+                "r": 0.5, "ry": 0.5, "rz": 0.5, "halfH": 0.5,
+                "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                "ovoidAsym": 0.0, "fillet": 0.0,
+                "width2D": 0.0, "height2D": 0.0
+            }
+        },
+        "field": field_tree,
+        "fieldExtent": [float(field_extent[0]), float(field_extent[1]), float(field_extent[2])],
+        "transform": mat4(pos, scale, rot_deg),
+        "center": [float(pos[0]), float(pos[1]), float(pos[2])],
+        "materialId": mat_id,
+        "renderMode": render_mode,
         "faceColors": [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
@@ -68,182 +292,1049 @@ def make_torus(obj_id, name, pos, majorR, minorR, mat_id, color, extra_props=Non
 
 objects = []
 
-# 1. Floors & Sanctuary Dais
+# ==============================================================================
+# 1. FLOORS & SANCTUARY DAIS
+# ==============================================================================
+# Grand Acoustic Obsidian Stone Floor (34m wide, 74m long)
 objects.append(make_box(
     "cathedral.floor.main", "Chladni Acoustic Floor",
-    [0.0, -0.3, -2.0], [32.0, 0.6, 72.0],
-    "material.logos.floor", [0.08, 0.09, 0.12]
+    [0.0, -0.3, -2.0], [34.0, 0.6, 74.0],
+    "material.logos.floor", [0.10, 0.11, 0.14]
 ))
 
+# Lapis Lazuli Processional Runner (6m wide, 70m long)
 objects.append(make_box(
     "cathedral.floor.runner", "Sacred Lapis Processional Runner",
-    [0.0, 0.03, -2.0], [6.0, 0.06, 68.0],
-    "material.logos.sapphire", [0.12, 0.22, 0.55]
+    [0.0, 0.03, -2.0], [6.0, 0.06, 70.0],
+    "material.logos.sapphire", [0.12, 0.35, 0.95]
 ))
 
-# Sanctuary Tiers
+# Three-Tiered Sanctuary Chancel Dais leading to High Altar
 objects.append(make_box(
-    "cathedral.dais.tier1", "Chancel Step I",
-    [0.0, 0.15, -24.0], [18.0, 0.3, 16.0],
-    "material.logos.floor", [0.12, 0.13, 0.16]
+    "cathedral.dais.tier1", "Chancel Step I (Communion Dais)",
+    [0.0, 0.15, -25.5], [19.0, 0.3, 17.0],
+    "material.logos.floor", [0.14, 0.15, 0.18]
 ))
 objects.append(make_box(
-    "cathedral.dais.tier2", "Chancel Step II",
-    [0.0, 0.45, -26.0], [14.0, 0.3, 13.0],
-    "material.logos.floor", [0.15, 0.16, 0.20]
+    "cathedral.dais.tier2", "Chancel Step II (Sanctuary Terrace)",
+    [0.0, 0.45, -27.5], [15.0, 0.3, 13.0],
+    "material.logos.floor", [0.16, 0.17, 0.20]
 ))
 objects.append(make_box(
-    "cathedral.dais.tier3", "Sanctuary High Dais",
-    [0.0, 0.75, -28.0], [10.0, 0.3, 10.0],
-    "material.logos.gold", [0.85, 0.72, 0.22]
+    "cathedral.dais.tier3", "Sanctuary High Dais (Altar Platform)",
+    [0.0, 0.75, -29.5], [11.0, 0.3, 9.0],
+    "material.logos.gold", [1.0, 0.82, 0.28]
 ))
 
-# 2. High Altar & Reredos
+# ==============================================================================
+# 2. HIGH ALTAR, CANOPY & SANCTUARY FURNITURE
+# ==============================================================================
+# Sub-altar Step (Predella)
 objects.append(make_box(
-    "altar.logos.mensa", "High Altar of the Spoken Word",
-    [0.0, 1.6, -28.0], [5.2, 1.4, 2.2],
+    "altar.logos.predella", "Altar Predella Step",
+    [0.0, 0.95, -29.5], [6.2, 0.12, 3.2],
+    "material.logos.floor", [0.18, 0.17, 0.16]
+))
+
+# Altar Base & Supporting Golden Pillars
+altar_pillars = [
+    ("altar.pillar.FL", [-2.3, 1.55, -28.5]),
+    ("altar.pillar.FR", [2.3, 1.55, -28.5]),
+    ("altar.pillar.BL", [-2.3, 1.55, -30.5]),
+    ("altar.pillar.BR", [2.3, 1.55, -30.5]),
+    ("altar.pillar.CL", [-0.8, 1.55, -29.5]),
+    ("altar.pillar.CR", [0.8, 1.55, -29.5]),
+]
+for pid, ppos in altar_pillars:
+    objects.append(make_box(
+        pid, "Altar Colonnette",
+        ppos, [0.4, 1.1, 0.4], "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+
+# Altar Frontal Relief Panel (Lapis Lazuli with Gold Border)
+objects.append(make_box(
+    "altar.logos.frontal", "Altar Frontal Relief Panel",
+    [0.0, 1.55, -28.35], [4.4, 1.05, 0.15],
+    "material.logos.sapphire", [0.12, 0.35, 0.95]
+))
+
+# High Altar Mensa (Thick Black Obsidian Altar Slab with Beveled Rim)
+objects.append(make_box(
+    "altar.logos.mensa", "High Altar Mensa Slab",
+    [0.0, 2.2, -29.5], [5.6, 0.24, 2.6],
     "material.logos.altar", [0.05, 0.05, 0.08],
     extra_props={"isAltar": {"t": "bool", "v": True}}
 ))
 
+# Altar Retable (Elevated Shelf Behind Mensa)
 objects.append(make_box(
-    "altar.logos.reredos", "Sacred Sanctuary Reredos",
-    [0.0, 8.0, -32.5], [8.0, 14.0, 0.8],
-    "material.logos.gold", [0.92, 0.78, 0.25],
-    extra_props={"isReredos": {"t": "bool", "v": True}}
+    "altar.logos.retable", "Altar Retable Gradine",
+    [0.0, 2.45, -30.6], [5.2, 0.3, 0.45],
+    "material.logos.gold", [1.0, 0.82, 0.28]
 ))
 
-# 3. Living Lexeme Glyphs on the Altar Mensa
+# Six Golden Altar Candelabras with Glowing Flames
+for i, cx in enumerate([-2.1, -1.3, -0.5, 0.5, 1.3, 2.1]):
+    objects.append(make_box(
+        f"altar.candle.{i+1}.base", f"Altar Candelabra {i+1}",
+        [cx, 2.75, -30.6], [0.18, 0.35, 0.18],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"altar.candle.{i+1}.taper", f"Altar Wax Taper {i+1}",
+        [cx, 3.15, -30.6], [0.08, 0.45, 0.08],
+        "material.logos.alabaster", [0.94, 0.92, 0.88]
+    ))
+    objects.append(make_sphere(
+        f"altar.candle.{i+1}.flame", f"Sacred Flame {i+1}",
+        [cx, 3.45, -30.6], 0.09,
+        "material.logos.core", [1.0, 0.95, 0.75],
+        extra_props={"light.intensity": {"t": "float", "v": 1.5}}
+    ))
+
+# Central Altar Cross
+objects.append(make_box(
+    "altar.cross.vertical", "Central Altar Crucifix Shaft",
+    [0.0, 3.55, -30.6], [0.14, 1.4, 0.1],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "altar.cross.horizontal", "Central Altar Crucifix Arm",
+    [0.0, 3.85, -30.6], [0.85, 0.14, 0.1],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+
+# Sacred Sanctuary Reredos (15m High Golden Altarpiece)
+objects.append(make_box(
+    "altar.logos.reredos.center", "Sanctuary Reredos Center Screen",
+    [0.0, 8.5, -33.8], [7.0, 15.0, 0.8],
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    extra_props={"isReredos": {"t": "bool", "v": True}}
+))
+objects.append(make_box(
+    "altar.logos.reredos.wingL", "Sanctuary Reredos Wing Left",
+    [-4.5, 7.5, -33.5], [2.2, 13.0, 0.6],
+    "material.logos.gold", [0.88, 0.74, 0.22]
+))
+objects.append(make_box(
+    "altar.logos.reredos.wingR", "Sanctuary Reredos Wing Right",
+    [4.5, 7.5, -33.5], [2.2, 13.0, 0.6],
+    "material.logos.gold", [0.88, 0.74, 0.22]
+))
+# Central Reredos Apex Spire
+objects.append(make_box(
+    "altar.logos.reredos.spire", "Sanctuary Reredos Apex Pinnacle",
+    [0.0, 17.0, -33.8], [1.2, 3.5, 0.6],
+    "material.logos.gold", [1.0, 0.85, 0.32]
+))
+
+# ------------------------------------------------------------------------------
+# 2.1 HIGH ALTAR BALDACHIN CIBORIUM & CARVED REREDOS ARCADES
+# ------------------------------------------------------------------------------
+baldachin_corners = [
+    ("FL", -2.8, -27.8),
+    ("FR", 2.8, -27.8),
+    ("BL", -2.8, -31.2),
+    ("BR", 2.8, -31.2),
+]
+for cid, bx, bz in baldachin_corners:
+    objects.append(make_box(
+        f"baldachin.plinth.{cid}", f"Baldachin Plinth {cid}",
+        [bx, 0.9, bz], [0.55, 0.35, 0.55],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"baldachin.column.{cid}", f"Baldachin Colonnette {cid}",
+        [bx, 3.8, bz], [0.28, 5.5, 0.28],
+        "material.logos.gold", [1.0, 0.85, 0.32]
+    ))
+    objects.append(make_box(
+        f"baldachin.capital.{cid}", f"Baldachin Capital {cid}",
+        [bx, 6.7, bz], [0.55, 0.4, 0.55],
+        "material.logos.gold", [1.0, 0.88, 0.35]
+    ))
+
+# Vaulted Baldachin Canopy Archways & Roof
+objects.append(make_box(
+    "baldachin.arch.front", "Baldachin Canopy Arch Front",
+    [0.0, 7.0, -27.8], [5.6, 0.4, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "baldachin.arch.back", "Baldachin Canopy Arch Back",
+    [0.0, 7.0, -31.2], [5.6, 0.4, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "baldachin.arch.sideL", "Baldachin Canopy Arch Left",
+    [-2.8, 7.0, -29.5], [0.35, 0.4, 3.4],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "baldachin.arch.sideR", "Baldachin Canopy Arch Right",
+    [2.8, 7.0, -29.5], [0.35, 0.4, 3.4],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "baldachin.canopy.roof", "Baldachin Vaulted Canopy Roof",
+    [0.0, 7.4, -29.5], [6.0, 0.4, 3.8],
+    "material.logos.gold", [1.0, 0.85, 0.32]
+))
+objects.append(make_box(
+    "baldachin.canopy.spire", "Baldachin Apex Filigree Spire",
+    [0.0, 8.8, -29.5], [0.65, 2.4, 0.65],
+    "material.logos.gold", [1.0, 0.90, 0.38]
+))
+
+# Carved Gothic Reredos Niches & Tracery
+for ni, nx in enumerate([-2.4, -1.2, 0.0, 1.2, 2.4]):
+    objects.append(make_box(
+        f"reredos.niche.{ni+1}", f"Reredos Gothic Tracery Niche {ni+1}",
+        [nx, 8.5, -33.3], [0.95, 6.5, 0.3],
+        "material.logos.sapphire", [0.12, 0.35, 0.95]
+    ))
+    objects.append(make_box(
+        f"reredos.canopy.{ni+1}", f"Reredos Niche Canopy {ni+1}",
+        [nx, 12.0, -33.2], [1.1, 0.65, 0.45],
+        "material.logos.gold", [1.0, 0.85, 0.32]
+    ))
+
+# ==============================================================================
+# 3. LIVING LEXEME GLYPHS ON THE ALTAR MENSA
+# ==============================================================================
 glyphs_info = [
-    ("glyph.lexeme.logos", "Lexeme: [Logos]", [-1.8, 2.45, -28.0], [0.95, 0.82, 0.25], "material.logos.gold"),
-    ("glyph.lexeme.pneuma", "Lexeme: [Pneuma]", [-0.9, 2.45, -28.0], [0.15, 0.45, 0.95], "material.logos.sapphire"),
-    ("glyph.lexeme.lux", "Lexeme: [Lux]", [0.0, 2.45, -28.0], [1.0, 0.98, 0.85], "material.logos.core"),
-    ("glyph.lexeme.harmonia", "Lexeme: [Harmonia]", [0.9, 2.45, -28.0], [0.98, 0.65, 0.15], "material.logos.amber"),
-    ("glyph.lexeme.covenant", "Lexeme: [Covenant]", [1.8, 2.45, -28.0], [0.75, 0.25, 0.95], "material.logos.amethyst"),
+    ("glyph.lexeme.logos", "Lexeme: [Logos]", [-1.8, 2.45, -29.5], [1.0, 0.82, 0.28], "material.logos.gold"),
+    ("glyph.lexeme.pneuma", "Lexeme: [Pneuma]", [-0.9, 2.45, -29.5], [0.12, 0.35, 0.95], "material.logos.sapphire"),
+    ("glyph.lexeme.lux", "Lexeme: [Lux]", [0.0, 2.45, -29.5], [1.0, 0.95, 0.75], "material.logos.core"),
+    ("glyph.lexeme.harmonia", "Lexeme: [Harmonia]", [0.9, 2.45, -29.5], [0.98, 0.65, 0.15], "material.logos.amber"),
+    ("glyph.lexeme.covenant", "Lexeme: [Covenant]", [1.8, 2.45, -29.5], [0.65, 0.25, 0.95], "material.logos.amethyst"),
 ]
 for gid, gname, gpos, gcolor, gmat in glyphs_info:
     objects.append(make_box(
-        gid, gname, gpos, [0.4, 0.2, 0.4], gmat, gcolor,
+        gid, gname, gpos, [0.45, 0.18, 0.45], gmat, gcolor,
         extra_props={"isSpeechAct": {"t": "bool", "v": True}}
     ))
 
-# 4. Colossal Pillars (Left X = -8, Right X = +8)
-z_positions = [20.0, 10.0, 0.0, -10.0, -20.0]
-sacred_frequencies = [432.0, 528.0, 639.0, 741.0, 852.0]
-joy_names = ["Logos", "Agape", "Sophia", "Poiesis", "Harmonia"]
-
-for i, z in enumerate(z_positions):
-    # Left Pillar
-    col_l = f"pillar.L{i+1}"
-    objects.append(make_box(f"{col_l}.base", f"Pillar Base L{i+1}", [-8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
-    objects.append(make_box(f"{col_l}.shaft", f"Pillar Shaft L{i+1} ({joy_names[i]})", [-8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
-    objects.append(make_box(f"{col_l}.capital", f"Pillar Capital L{i+1}", [-8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
-    objects.append(make_sphere(f"{col_l}.crystal", f"Resonance Crystal L{i+1}", [-8.0, 21.0, z], 0.65, "material.logos.core", [0.95, 0.88, 0.45],
-        extra_props={"frequency": {"t": "float", "v": sacred_frequencies[i]}, "light.intensity": {"t": "float", "v": 2.5}}
-    ))
-
-    # Right Pillar
-    col_r = f"pillar.R{i+1}"
-    objects.append(make_box(f"{col_r}.base", f"Pillar Base R{i+1}", [8.0, 0.6, z], [2.2, 1.2, 2.2], "material.logos.floor", [0.18, 0.16, 0.15]))
-    objects.append(make_box(f"{col_r}.shaft", f"Pillar Shaft R{i+1} ({joy_names[i]})", [8.0, 10.2, z], [1.4, 18.0, 1.4], "material.logos.alabaster", [0.92, 0.90, 0.86]))
-    objects.append(make_box(f"{col_r}.capital", f"Pillar Capital R{i+1}", [8.0, 19.8, z], [2.2, 1.2, 2.2], "material.logos.gold", [0.95, 0.78, 0.22]))
-    objects.append(make_sphere(f"{col_r}.crystal", f"Resonance Crystal R{i+1}", [8.0, 21.0, z], 0.65, "material.logos.core", [0.95, 0.88, 0.45],
-        extra_props={"frequency": {"t": "float", "v": sacred_frequencies[i]}, "light.intensity": {"t": "float", "v": 2.5}}
-    ))
-
-    # Transverse Vault Arch Beam Spanning Nave
+# ==============================================================================
+# 4. CHANCEL COMMUNION RAIL & GOTHIC PULPIT (AMBO)
+# ==============================================================================
+# Left Communion Rail (X = -7.5m to -1.8m at Z = -22.5m)
+objects.append(make_box(
+    "chancel.rail.base.L", "Communion Rail Plinth Left",
+    [-4.6, 0.1, -22.5], [5.6, 0.2, 0.35],
+    "material.logos.floor", [0.18, 0.16, 0.15]
+))
+objects.append(make_box(
+    "chancel.rail.cap.L", "Communion Rail Banister Left",
+    [-4.6, 0.85, -22.5], [5.6, 0.12, 0.3],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+for bi, bx in enumerate([-6.8, -5.7, -4.6, -3.5, -2.4]):
     objects.append(make_box(
-        f"cathedral.vault.arch{i+1}", f"Vault Arch Bay {i+1}",
-        [0.0, 21.5, z], [17.6, 1.2, 1.2],
+        f"chancel.rail.baluster.L{bi+1}", f"Rail Baluster L{bi+1}",
+        [bx, 0.47, -22.5], [0.14, 0.65, 0.14],
+        "material.logos.alabaster", [0.94, 0.92, 0.88]
+    ))
+objects.append(make_box(
+    "chancel.rail.newel.L", "Communion Rail Newel Post Left",
+    [-1.75, 0.5, -22.5], [0.35, 1.0, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_sphere(
+    "chancel.rail.finial.L", "Rail Finial Left",
+    [-1.75, 1.15, -22.5], 0.18,
+    "material.logos.gold", [1.0, 0.85, 0.32]
+))
+
+# Right Communion Rail (X = +1.8m to +7.5m at Z = -22.5m)
+objects.append(make_box(
+    "chancel.rail.base.R", "Communion Rail Plinth Right",
+    [4.6, 0.1, -22.5], [5.6, 0.2, 0.35],
+    "material.logos.floor", [0.18, 0.16, 0.15]
+))
+objects.append(make_box(
+    "chancel.rail.cap.R", "Communion Rail Banister Right",
+    [4.6, 0.85, -22.5], [5.6, 0.12, 0.3],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+for bi, bx in enumerate([2.4, 3.5, 4.6, 5.7, 6.8]):
+    objects.append(make_box(
+        f"chancel.rail.baluster.R{bi+1}", f"Rail Baluster R{bi+1}",
+        [bx, 0.47, -22.5], [0.14, 0.65, 0.14],
+        "material.logos.alabaster", [0.94, 0.92, 0.88]
+    ))
+objects.append(make_box(
+    "chancel.rail.newel.R", "Communion Rail Newel Post Right",
+    [1.75, 0.5, -22.5], [0.35, 1.0, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_sphere(
+    "chancel.rail.finial.R", "Rail Finial Right",
+    [1.75, 1.15, -22.5], 0.18,
+    "material.logos.gold", [1.0, 0.85, 0.32]
+))
+
+# Sculpted Gothic Pulpit (Ambo of the Living Word) on liturgical north (X = -6.2, Z = -19.5)
+objects.append(make_box(
+    "pulpit.base.step1", "Pulpit Stone Plinth",
+    [-6.2, 0.15, -19.5], [2.2, 0.3, 2.2],
+    "material.logos.floor", [0.16, 0.15, 0.14]
+))
+objects.append(make_box(
+    "pulpit.pedestal", "Pulpit Sculpted Pedestal",
+    [-6.2, 0.8, -19.5], [0.9, 1.1, 0.9],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "pulpit.floor", "Pulpit Floor Platform",
+    [-6.2, 1.45, -19.5], [1.9, 0.2, 1.9],
+    "material.logos.floor", [0.18, 0.16, 0.15]
+))
+objects.append(make_box(
+    "pulpit.parapet.front", "Pulpit Parapet Front",
+    [-6.2, 2.05, -18.6], [1.8, 1.0, 0.12],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "pulpit.parapet.sideL", "Pulpit Parapet Left",
+    [-7.05, 2.05, -19.5], [0.12, 1.0, 1.8],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "pulpit.parapet.sideR", "Pulpit Parapet Right",
+    [-5.35, 2.05, -19.5], [0.12, 1.0, 1.8],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "pulpit.lectern", "Pulpit Reading Lectern",
+    [-6.2, 2.55, -18.7], [0.75, 0.08, 0.45],
+    "material.logos.gold", [1.0, 0.85, 0.32],
+    rot_deg=[25.0, 0.0, 0.0]
+))
+for si, sz in enumerate([-20.8, -21.4]):
+    objects.append(make_box(
+        f"pulpit.step.{si+1}", f"Pulpit Access Step {si+1}",
+        [-6.2, 0.45 + si * 0.4, sz], [1.0, 0.35, 0.6],
+        "material.logos.floor", [0.16, 0.15, 0.14]
+    ))
+
+# Bishop's Cathedra Throne (X = -4.5, Z = -29.5)
+objects.append(make_box(
+    "cathedra.seat", "Bishop's Cathedra Throne",
+    [-4.5, 1.3, -29.5], [1.2, 0.7, 1.2],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "cathedra.back", "Cathedra High Gothic Backrest",
+    [-4.5, 2.5, -30.0], [1.2, 2.0, 0.15],
+    "material.logos.sapphire", [0.12, 0.35, 0.95]
+))
+objects.append(make_box(
+    "cathedra.canopy", "Cathedra Spire Canopy",
+    [-4.5, 3.8, -29.7], [1.4, 0.6, 1.4],
+    "material.logos.gold", [1.0, 0.85, 0.32]
+))
+
+# Credence Table on Epistle side (X = +4.5, Z = -29.5)
+objects.append(make_box(
+    "credence.table", "Liturgical Credence Table",
+    [4.5, 1.3, -29.5], [1.4, 0.7, 1.0],
+    "material.logos.altar", [0.08, 0.08, 0.12]
+))
+
+# ==============================================================================
+# 5. NAVE PEWS (14 Rows Lining Central Processional Aisle)
+# ==============================================================================
+pew_z_rows = [21.0, 16.5, 12.0, 7.5, -4.5, -9.0, -13.5]
+
+for row_idx, pz in enumerate(pew_z_rows):
+    r_id = row_idx + 1
+    # --- Left Pew (Dark Oak Wood + Sapphire Kneeler + Golden Ends) ---
+    objects.append(make_box(
+        f"pew.L{r_id}.seat", f"Nave Pew L{r_id} Seat",
+        [-4.4, 0.5, pz], [3.8, 0.08, 0.55],
+        "material.logos.wood", [0.24, 0.16, 0.11]
+    ))
+    objects.append(make_box(
+        f"pew.L{r_id}.back", f"Nave Pew L{r_id} Backrest",
+        [-4.4, 0.88, pz - 0.24], [3.8, 0.7, 0.07],
+        "material.logos.wood", [0.26, 0.18, 0.12]
+    ))
+    objects.append(make_box(
+        f"pew.L{r_id}.endL", f"Pew End L{r_id} Aisle",
+        [-2.45, 0.52, pz - 0.05], [0.1, 0.95, 0.65],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"pew.L{r_id}.endR", f"Pew End L{r_id} Wall",
+        [-6.35, 0.52, pz - 0.05], [0.1, 0.95, 0.65],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"pew.L{r_id}.kneeler", f"Pew Kneeler L{r_id}",
+        [-4.4, 0.12, pz + 0.32], [3.6, 0.12, 0.22],
+        "material.logos.sapphire", [0.12, 0.35, 0.95]
+    ))
+
+    # --- Right Pew ---
+    objects.append(make_box(
+        f"pew.R{r_id}.seat", f"Nave Pew R{r_id} Seat",
+        [4.4, 0.5, pz], [3.8, 0.08, 0.55],
+        "material.logos.wood", [0.24, 0.16, 0.11]
+    ))
+    objects.append(make_box(
+        f"pew.R{r_id}.back", f"Nave Pew R{r_id} Backrest",
+        [4.4, 0.88, pz - 0.24], [3.8, 0.7, 0.07],
+        "material.logos.wood", [0.26, 0.18, 0.12]
+    ))
+    objects.append(make_box(
+        f"pew.R{r_id}.endL", f"Pew End R{r_id} Aisle",
+        [2.45, 0.52, pz - 0.05], [0.1, 0.95, 0.65],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"pew.R{r_id}.endR", f"Pew End R{r_id} Wall",
+        [6.35, 0.52, pz - 0.05], [0.1, 0.95, 0.65],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    objects.append(make_box(
+        f"pew.R{r_id}.kneeler", f"Pew Kneeler R{r_id}",
+        [4.4, 0.12, pz + 0.32], [3.6, 0.12, 0.22],
+        "material.logos.sapphire", [0.12, 0.35, 0.95]
+    ))
+
+# ==============================================================================
+# 6. COLONNADE OF THE SEVEN JOYS — CLUSTERED GOTHIC MONOLITHS
+# ==============================================================================
+joy_pillars = [
+    ("Logos", 432.0, 24.0, [0.12, 0.35, 0.95], "material.logos.sapphire"),
+    ("Agape", 528.0, 16.0, [0.95, 0.55, 0.65], "material.logos.core"),
+    ("Sophia", 639.0, 8.0, [0.15, 0.75, 0.95], "material.logos.sapphire"),
+    ("Poiesis", 741.0, 0.0, [0.15, 0.85, 0.45], "material.logos.emerald"),
+    ("Harmonia", 852.0, -8.0, [0.98, 0.65, 0.15], "material.logos.amber"),
+    ("Koinonia", 963.0, -16.0, [0.65, 0.25, 0.95], "material.logos.amethyst"),
+    ("Sabbath", 1080.0, -24.0, [0.94, 0.95, 1.0], "material.logos.core"),
+]
+
+for i, (name, freq, z, crystal_col, crystal_mat) in enumerate(joy_pillars):
+    idx = i + 1
+    for side_sign, side_code, side_name, px in [(-1, "L", "Left", -8.0), (1, "R", "Right", 8.0)]:
+        col_id = f"pillar.{side_code}{idx}"
+        
+        # 1. Lower Stepped Plinth
+        objects.append(make_box(
+            f"{col_id}.base1", f"Pillar Base Tier I {side_code}{idx}",
+            [px, 0.18, z], [2.8, 0.36, 2.8],
+            "material.logos.floor", [0.14, 0.13, 0.12]
+        ))
+        # 2. Upper Molded Pedestal
+        objects.append(make_box(
+            f"{col_id}.base2", f"Pillar Base Tier II {side_code}{idx}",
+            [px, 0.65, z], [2.2, 0.6, 2.2],
+            "material.logos.floor", [0.18, 0.16, 0.15]
+        ))
+        # 3. Base Torus Molding Ring
+        objects.append(make_box(
+            f"{col_id}.torus_base", f"Pillar Base Torus {side_code}{idx}",
+            [px, 1.02, z], [1.9, 0.16, 1.9],
+            "material.logos.gold", [1.0, 0.82, 0.28]
+        ))
+        # 4. Central Column Core Shaft
+        objects.append(make_box(
+            f"{col_id}.shaft", f"Pillar Shaft {side_code}{idx} ({name})",
+            [px, 10.1, z], [1.4, 18.0, 1.4],
+            "material.logos.alabaster", [0.94, 0.92, 0.88]
+        ))
+        # 5. Clustered Gothic Colonnettes (4 Diamond-Faceted Corner Ribs)
+        colonnette_offsets = [(-0.62, -0.62), (0.62, -0.62), (-0.62, 0.62), (0.62, 0.62)]
+        for ci, (cx_off, cz_off) in enumerate(colonnette_offsets):
+            objects.append(make_box(
+                f"{col_id}.colonnette.{ci+1}", f"Colonnette {ci+1} {side_code}{idx}",
+                [px + cx_off, 10.1, z + cz_off], [0.35, 18.0, 0.35],
+                "material.logos.alabaster", [0.90, 0.88, 0.84],
+                rot_deg=[0.0, 45.0, 0.0]
+            ))
+        # 6. Capital Astragal Neck Ring
+        objects.append(make_box(
+            f"{col_id}.astragal", f"Pillar Astragal {side_code}{idx}",
+            [px, 19.18, z], [1.8, 0.16, 1.8],
+            "material.logos.gold", [1.0, 0.82, 0.28]
+        ))
+        # 7. Carved Bell Capital
+        objects.append(make_box(
+            f"{col_id}.capital", f"Pillar Bell Capital {side_code}{idx}",
+            [px, 19.6, z], [2.1, 0.7, 2.1],
+            "material.logos.gold", [1.0, 0.82, 0.28]
+        ))
+        # 8. Gilded Abacus Slab
+        objects.append(make_box(
+            f"{col_id}.abacus", f"Pillar Abacus Slab {side_code}{idx}",
+            [px, 20.1, z], [2.5, 0.32, 2.5],
+            "material.logos.gold", [1.0, 0.85, 0.32]
+        ))
+        # 9. Sacred Resonance Crystal Sphere
+        objects.append(make_sphere(
+            f"{col_id}.crystal", f"Resonance Crystal {side_code}{idx} ({name} {freq:.0f}Hz)",
+            [px, 21.0, z], 0.65, crystal_mat, crystal_col,
+            extra_props={"frequency": {"t": "float", "v": freq}, "light.intensity": {"t": "float", "v": 3.0}}
+        ))
+
+    # ==========================================================================
+    # 7. POINTED GOTHIC VAULT ARCHES (Springing Ribs & Keystones)
+    # ==========================================================================
+    # Left Springing Rib (Angles up 18° from X = -8m)
+    objects.append(make_box(
+        f"cathedral.vault.springL.{idx}", f"Pointed Arch Spring L{idx} ({name})",
+        [-5.2, 21.3, z], [5.0, 1.1, 1.1],
+        "material.logos.arch", [0.85, 0.82, 0.78],
+        rot_deg=[0.0, 0.0, 18.0]
+    ))
+    # Right Springing Rib (Angles up 18° from X = +8m)
+    objects.append(make_box(
+        f"cathedral.vault.springR.{idx}", f"Pointed Arch Spring R{idx} ({name})",
+        [5.2, 21.3, z], [5.0, 1.1, 1.1],
+        "material.logos.arch", [0.85, 0.82, 0.78],
+        rot_deg=[0.0, 0.0, -18.0]
+    ))
+    # Crown Crossbeam
+    objects.append(make_box(
+        f"cathedral.vault.crown.{idx}", f"Arch Crown Beam {idx}",
+        [0.0, 22.3, z], [5.5, 1.0, 1.0],
+        "material.logos.arch", [0.88, 0.85, 0.82]
+    ))
+    # Carved Keystone Boss
+    objects.append(make_box(
+        f"cathedral.vault.keystone.{idx}", f"Arch Keystone Boss {idx}",
+        [0.0, 22.9, z], [1.8, 1.4, 1.8],
+        "material.logos.gold", [1.0, 0.85, 0.32]
+    ))
+    # Golden Cruciform Boss Hanging from Keystone
+    objects.append(make_sphere(
+        f"cathedral.vault.boss.{idx}", f"Keystone Pendentive Boss {idx}",
+        [0.0, 21.9, z], 0.35,
+        "material.logos.gold", [1.0, 0.88, 0.35]
+    ))
+
+# Longitudinal Wall Formeret Ribs
+for wi in range(len(joy_pillars) - 1):
+    z1 = joy_pillars[wi][2]
+    z2 = joy_pillars[wi+1][2]
+    z_mid = (z1 + z2) / 2.0
+    z_len = abs(z1 - z2) + 0.8
+    objects.append(make_box(
+        f"cathedral.formeret.N.{wi+1}", f"North Longitudinal Rib Bay {wi+1}",
+        [-8.0, 20.3, z_mid], [1.1, 0.9, z_len],
+        "material.logos.arch", [0.82, 0.80, 0.76]
+    ))
+    objects.append(make_box(
+        f"cathedral.formeret.S.{wi+1}", f"South Longitudinal Rib Bay {wi+1}",
+        [8.0, 20.3, z_mid], [1.1, 0.9, z_len],
+        "material.logos.arch", [0.82, 0.80, 0.76]
+    ))
+
+# Continuous 68m Longitudinal Ceiling Ridge Spine
+objects.append(make_box(
+    "cathedral.vault.spine", "Cathedral Roof Vault Ridge Spine",
+    [0.0, 23.6, 0.0], [1.4, 1.2, 68.0],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+
+# ==============================================================================
+# 7.1 GOTHIC GROIN VAULT WEBBING & ROOF ENCLOSURE
+# ==============================================================================
+for wi in range(len(joy_pillars) - 1):
+    z1 = joy_pillars[wi][2]
+    z2 = joy_pillars[wi+1][2]
+    z_mid = (z1 + z2) / 2.0
+    z_len = abs(z1 - z2) + 0.4
+    
+    # Left Nave Pitched Vault Webbing (Angles up 22.4° from x = -8m to x = 0m)
+    objects.append(make_box(
+        f"cathedral.vault.web.L.{wi+1}", f"Nave Vault Webbing L{wi+1}",
+        [-4.0, 21.95, z_mid], [4.4, 0.28, z_len],
+        "material.logos.arch", [0.86, 0.84, 0.80],
+        rot_deg=[0.0, 0.0, 22.4]
+    ))
+    # Right Nave Pitched Vault Webbing (Angles up -22.4° from x = +8m to x = 0m)
+    objects.append(make_box(
+        f"cathedral.vault.web.R.{wi+1}", f"Nave Vault Webbing R{wi+1}",
+        [4.0, 21.95, z_mid], [4.4, 0.28, z_len],
+        "material.logos.arch", [0.86, 0.84, 0.80],
+        rot_deg=[0.0, 0.0, -22.4]
+    ))
+    
+    # Diagonal Groined Vault Ribs (Crossing X pattern meeting at keystone boss)
+    diag_chord = math.sqrt(8.0**2 + (z_len/2.0)**2 + 2.5**2)
+    diag_ang_y = math.degrees(math.atan2(z_len / 2.0, 8.0))
+    objects.append(make_box(
+        f"cathedral.vault.diag.A.{wi+1}", f"Diagonal Ogival Rib A{wi+1}",
+        [-4.0, 21.6, z_mid - z_len * 0.25], [diag_chord * 0.52, 0.45, 0.45],
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, -diag_ang_y, 16.0]
+    ))
+    objects.append(make_box(
+        f"cathedral.vault.diag.B.{wi+1}", f"Diagonal Ogival Rib B{wi+1}",
+        [4.0, 21.6, z_mid - z_len * 0.25], [diag_chord * 0.52, 0.45, 0.45],
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, diag_ang_y, -16.0]
+    ))
+    objects.append(make_box(
+        f"cathedral.vault.diag.C.{wi+1}", f"Diagonal Ogival Rib C{wi+1}",
+        [-4.0, 21.6, z_mid + z_len * 0.25], [diag_chord * 0.52, 0.45, 0.45],
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, diag_ang_y, 16.0]
+    ))
+    objects.append(make_box(
+        f"cathedral.vault.diag.D.{wi+1}", f"Diagonal Ogival Rib D{wi+1}",
+        [4.0, 21.6, z_mid + z_len * 0.25], [diag_chord * 0.52, 0.45, 0.45],
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, -diag_ang_y, -16.0]
+    ))
+
+    # Aisle Vault Ceilings
+    objects.append(make_box(
+        f"cathedral.aisle.vault.N.{wi+1}", f"North Aisle Vault Ceiling Bay {wi+1}",
+        [-11.5, 13.0, z_mid], [6.8, 0.35, z_len],
+        "material.logos.arch", [0.82, 0.80, 0.76]
+    ))
+    objects.append(make_box(
+        f"cathedral.aisle.vault.S.{wi+1}", f"South Aisle Vault Ceiling Bay {wi+1}",
+        [11.5, 13.0, z_mid], [6.8, 0.35, z_len],
+        "material.logos.arch", [0.82, 0.80, 0.76]
+    ))
+
+# Sanctuary Apse Semi-Dome Roof
+objects.append(make_box(
+    "cathedral.apse.vault.L", "Sanctuary Apse Vault Web Left",
+    [-4.0, 21.95, -29.0], [4.4, 0.28, 10.0],
+    "material.logos.arch", [0.86, 0.84, 0.80],
+    rot_deg=[0.0, 0.0, 22.4]
+))
+objects.append(make_box(
+    "cathedral.apse.vault.R", "Sanctuary Apse Vault Web Right",
+    [4.0, 21.95, -29.0], [4.4, 0.28, 10.0],
+    "material.logos.arch", [0.86, 0.84, 0.80],
+    rot_deg=[0.0, 0.0, -22.4]
+))
+objects.append(make_box(
+    "cathedral.apse.vault.back", "Sanctuary Apse Hemicycle Vault",
+    [0.0, 21.95, -33.5], [8.0, 0.28, 3.2],
+    "material.logos.arch", [0.86, 0.84, 0.80],
+    rot_deg=[22.4, 0.0, 0.0]
+))
+
+# ==============================================================================
+# 7.2 TRIFORIUM GALLERY (Continuous Gothic Blind Arcade at y = 11m)
+# ==============================================================================
+for wi in range(len(joy_pillars) - 1):
+    z1 = joy_pillars[wi][2]
+    z2 = joy_pillars[wi+1][2]
+    z_mid = (z1 + z2) / 2.0
+    z_len = abs(z1 - z2)
+    
+    for side_code, px, side_s in [("N", -8.0, -1), ("S", 8.0, 1)]:
+        objects.append(make_box(
+            f"cathedral.triforium.cornice.{side_code}{wi+1}", f"Triforium Cornice {side_code}{wi+1}",
+            [px, 10.8, z_mid], [0.65, 0.28, z_len],
+            "material.logos.gold", [1.0, 0.82, 0.28]
+        ))
+        for ti in range(4):
+            tz = z1 + (ti + 0.5) * (z2 - z1) / 4.0
+            objects.append(make_box(
+                f"cathedral.triforium.col.{side_code}{wi+1}.{ti+1}", f"Triforium Colonnette {side_code}{wi+1}.{ti+1}",
+                [px, 11.8, tz], [0.22, 1.7, 0.22],
+                "material.logos.alabaster", [0.94, 0.92, 0.88]
+            ))
+            objects.append(make_box(
+                f"cathedral.triforium.archlet.{side_code}{wi+1}.{ti+1}", f"Triforium Archlet {side_code}{wi+1}.{ti+1}",
+                [px, 12.8, tz], [0.35, 0.35, 1.8],
+                "material.logos.gold", [1.0, 0.82, 0.28]
+            ))
+        objects.append(make_box(
+            f"cathedral.triforium.parapet.{side_code}{wi+1}", f"Triforium Parapet {side_code}{wi+1}",
+            [px, 13.1, z_mid], [0.55, 0.24, z_len],
+            "material.logos.arch", [0.88, 0.85, 0.82]
+        ))
+
+# ==============================================================================
+# 7.3 SUSPENDED GOTHIC CORONA LUCIS (MONUMENTAL WHEEL CHANDELIERS)
+# ==============================================================================
+chandelier_z_positions = [-18.0, -6.0, 6.0, 18.0]
+
+for ci, cz in enumerate(chandelier_z_positions):
+    c_idx = ci + 1
+    c_id = f"cathedral.chandelier.{c_idx}"
+    
+    # Vertical Golden Suspension Rod from Keystone Boss
+    objects.append(make_box(
+        f"{c_id}.rod", f"Corona Chandelier Suspension Rod {c_idx}",
+        [0.0, 17.35, cz], [0.12, 11.1, 0.12],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    # Central Crown Hub
+    objects.append(make_box(
+        f"{c_id}.hub", f"Corona Chandelier Hub {c_idx}",
+        [0.0, 11.8, cz], [0.65, 0.45, 0.65],
+        "material.logos.gold", [1.0, 0.85, 0.32],
+        rot_deg=[0.0, 45.0, 0.0]
+    ))
+    # Main Outer Ring (Analytic Torus, radius 2.2m)
+    objects.append(make_torus(
+        f"{c_id}.ring", f"Corona Lucis Wheel Ring {c_idx}",
+        [0.0, 11.8, cz], 2.2, 0.14,
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+    # 8 Radial Spokes & Candle Sconces with Glowing Flames
+    for si in range(8):
+        s_ang = 2.0 * math.pi * si / 8.0
+        s_deg = math.degrees(s_ang)
+        sx = 1.1 * math.cos(s_ang)
+        sz = 1.1 * math.sin(s_ang)
+        rx = 2.2 * math.cos(s_ang)
+        rz = 2.2 * math.sin(s_ang)
+        
+        objects.append(make_box(
+            f"{c_id}.spoke.{si+1}", f"Corona Spoke {c_idx}.{si+1}",
+            [sx, 11.8, cz + sz], [2.1, 0.09, 0.09],
+            "material.logos.gold", [1.0, 0.82, 0.28],
+            rot_deg=[0.0, -s_deg, 0.0]
+        ))
+        objects.append(make_box(
+            f"{c_id}.sconce.{si+1}", f"Candle Sconce {c_idx}.{si+1}",
+            [rx, 12.05, cz + rz], [0.24, 0.4, 0.24],
+            "material.logos.gold", [1.0, 0.85, 0.32]
+        ))
+        objects.append(make_box(
+            f"{c_id}.taper.{si+1}", f"Chandelier Taper {c_idx}.{si+1}",
+            [rx, 12.45, cz + rz], [0.08, 0.4, 0.08],
+            "material.logos.alabaster", [0.94, 0.92, 0.88]
+        ))
+        objects.append(make_sphere(
+            f"{c_id}.flame.{si+1}", f"Sacred Chandelier Flame {c_idx}.{si+1}",
+            [rx, 12.75, cz + rz], 0.12,
+            "material.logos.core", [1.0, 0.95, 0.75],
+            extra_props={"light.intensity": {"t": "float", "v": 3.0}}
+        ))
+
+# ==============================================================================
+# 7.4 MONUMENTAL WEST GALLERY PIPE ORGAN & CHOIR BALCONY
+# ==============================================================================
+# Choir Loft Balcony Platform
+objects.append(make_box(
+    "organ.loft.floor", "West Choir Gallery Balcony Floor",
+    [0.0, 6.8, 28.0], [16.0, 0.45, 5.2],
+    "material.logos.wood", [0.24, 0.16, 0.11]
+))
+for bi, bx in enumerate([-6.0, -2.0, 2.0, 6.0]):
+    objects.append(make_box(
+        f"organ.loft.corbel.{bi+1}", f"Balcony Corbel Bracket {bi+1}",
+        [bx, 5.8, 25.6], [0.65, 1.6, 0.8],
         "material.logos.arch", [0.85, 0.82, 0.78]
     ))
+objects.append(make_box(
+    "organ.loft.parapet.rail", "Choir Balcony Gilded Rail",
+    [0.0, 7.85, 25.4], [16.0, 0.14, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+for pi in range(16):
+    px = -7.5 + pi * 1.0
     objects.append(make_box(
-        f"cathedral.vault.keystone{i+1}", f"Arch Keystone {i+1}",
-        [0.0, 22.8, z], [2.2, 1.4, 1.8],
-        "material.logos.gold", [0.95, 0.82, 0.28]
+        f"organ.loft.baluster.{pi+1}", f"Balcony Baluster {pi+1}",
+        [px, 7.35, 25.4], [0.14, 0.85, 0.14],
+        "material.logos.alabaster", [0.94, 0.92, 0.88]
     ))
 
-# 5. Longitudinal Roof Ridge Spine
+# Pipe Organ Casework
 objects.append(make_box(
-    "cathedral.vault.spine", "Cathedral Roof Vault Spine",
-    [0.0, 23.6, 0.0], [1.2, 1.2, 60.0],
-    "material.logos.gold", [0.88, 0.75, 0.22]
+    "organ.case.towerL", "Organ Case Pedal Tower Left",
+    [-5.8, 12.0, 29.5], [3.2, 10.0, 2.2],
+    "material.logos.wood", [0.22, 0.14, 0.10]
+))
+objects.append(make_box(
+    "organ.case.pedimentL", "Pedal Tower Pediment Crown Left",
+    [-5.8, 17.6, 29.5], [3.6, 1.2, 2.4],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "organ.case.towerR", "Organ Case Pedal Tower Right",
+    [5.8, 12.0, 29.5], [3.2, 10.0, 2.2],
+    "material.logos.wood", [0.22, 0.14, 0.10]
+))
+objects.append(make_box(
+    "organ.case.pedimentR", "Pedal Tower Pediment Crown Right",
+    [5.8, 17.6, 29.5], [3.6, 1.2, 2.4],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "organ.case.center", "Grand Orgue Central Pipe Chest",
+    [0.0, 10.5, 29.8], [7.6, 7.0, 1.8],
+    "material.logos.wood", [0.24, 0.16, 0.11]
+))
+objects.append(make_box(
+    "organ.case.gable", "Central Organ Gable Spire",
+    [0.0, 15.2, 29.8], [7.8, 2.4, 2.0],
+    "material.logos.gold", [1.0, 0.85, 0.32]
 ))
 
-# 6. Outer Walls
+# Shimmering Silver & Tin Organ Pipes
+for p_idx in range(5):
+    ox = -6.8 + p_idx * 0.5
+    pipe_h = 6.5 + (2 - abs(p_idx - 2)) * 1.2
+    objects.append(make_box(
+        f"organ.pipe.pedalL.{p_idx+1}", f"Pedal Pipe L{p_idx+1}",
+        [ox, 7.0 + pipe_h / 2.0, 28.3], [0.36, pipe_h, 0.36],
+        "material.logos.organ_pipe", [0.85, 0.88, 0.92]
+    ))
+for p_idx in range(5):
+    ox = 4.8 + p_idx * 0.5
+    pipe_h = 6.5 + (2 - abs(p_idx - 2)) * 1.2
+    objects.append(make_box(
+        f"organ.pipe.pedalR.{p_idx+1}", f"Pedal Pipe R{p_idx+1}",
+        [ox, 7.0 + pipe_h / 2.0, 28.3], [0.36, pipe_h, 0.36],
+        "material.logos.organ_pipe", [0.85, 0.88, 0.92]
+    ))
+for p_idx in range(19):
+    ox = -3.15 + p_idx * 0.35
+    dist_center = abs(p_idx - 9)
+    pipe_h = 3.2 + dist_center * 0.38
+    objects.append(make_box(
+        f"organ.pipe.center.{p_idx+1}", f"Grand Orgue Pipe {p_idx+1}",
+        [ox, 7.2 + pipe_h / 2.0, 28.7], [0.24, pipe_h, 0.24],
+        "material.logos.organ_pipe", [0.88, 0.90, 0.95]
+    ))
+
+# Organist Console & Bench
 objects.append(make_box(
-    "cathedral.wall.left", "North Clerestory Wall",
-    [-15.0, 12.0, -2.0], [1.2, 24.0, 70.0],
+    "organ.console", "Organist Console Desk",
+    [0.0, 7.7, 26.5], [1.8, 1.2, 1.2],
+    "material.logos.wood", [0.26, 0.18, 0.12]
+))
+objects.append(make_box(
+    "organ.bench", "Organist Wooden Bench",
+    [0.0, 7.4, 25.5], [1.4, 0.65, 0.45],
+    "material.logos.wood", [0.24, 0.16, 0.11]
+))
+
+# ==============================================================================
+# 8. ENCLOSING OUTER MASONRY WALLS
+# ==============================================================================
+objects.append(make_box(
+    "cathedral.wall.left", "North Clerestory Masonry Wall",
+    [-15.0, 12.0, -2.0], [1.2, 24.0, 74.0],
     "material.logos.floor", [0.15, 0.16, 0.18]
 ))
 objects.append(make_box(
-    "cathedral.wall.right", "South Clerestory Wall",
-    [15.0, 12.0, -2.0], [1.2, 24.0, 70.0],
+    "cathedral.wall.right", "South Clerestory Masonry Wall",
+    [15.0, 12.0, -2.0], [1.2, 24.0, 74.0],
     "material.logos.floor", [0.15, 0.16, 0.18]
 ))
 objects.append(make_box(
-    "cathedral.wall.apse", "Sanctuary Apse Wall",
-    [0.0, 13.0, -34.5], [30.0, 26.0, 1.2],
+    "cathedral.wall.apse", "Sanctuary Apse Masonry Wall",
+    [0.0, 13.0, -36.5], [32.0, 26.0, 1.2],
     "material.logos.floor", [0.14, 0.15, 0.17]
 ))
 objects.append(make_box(
-    "cathedral.wall.narthex", "Narthex Entrance Wall",
-    [0.0, 12.0, 33.5], [30.0, 24.0, 1.2],
+    "cathedral.wall.narthex", "Narthex Entrance Masonry Wall",
+    [0.0, 12.0, 34.5], [32.0, 24.0, 1.2],
     "material.logos.floor", [0.14, 0.15, 0.17]
 ))
 
-# 7. Glowing Stained-Glass Lancet Windows along Walls
-window_colors_left = [
-    ("window.stained.L1", "Stained Glass: Sapphire Logos", [-14.3, 14.0, 15.0], [0.12, 0.35, 0.95]),
-    ("window.stained.L2", "Stained Glass: Emerald Poiesis", [-14.3, 14.0, 5.0], [0.15, 0.85, 0.35]),
-    ("window.stained.L3", "Stained Glass: Topaz Harmonia", [-14.3, 14.0, -5.0], [0.98, 0.65, 0.15]),
-    ("window.stained.L4", "Stained Glass: Amethyst Koinonia", [-14.3, 14.0, -15.0], [0.75, 0.25, 0.95]),
+# ==============================================================================
+# 9. STAINED-GLASS LANCET WINDOWS & STONE TRACERIES
+# ==============================================================================
+window_configs = [
+    ("window.stained.L1", "Sapphire Logos", [-14.2, 14.0, 18.0], [0.12, 0.35, 0.95], -1),
+    ("window.stained.L2", "Emerald Poiesis", [-14.2, 14.0, 6.0], [0.15, 0.85, 0.45], -1),
+    ("window.stained.L3", "Topaz Harmonia", [-14.2, 14.0, -6.0], [0.98, 0.65, 0.15], -1),
+    ("window.stained.L4", "Amethyst Koinonia", [-14.2, 14.0, -18.0], [0.65, 0.25, 0.95], -1),
+    ("window.stained.R1", "Ruby Agape", [14.2, 14.0, 18.0], [0.95, 0.22, 0.32], 1),
+    ("window.stained.R2", "Cyan Sophia", [14.2, 14.0, 6.0], [0.15, 0.75, 0.95], 1),
+    ("window.stained.R3", "Solar Lux", [14.2, 14.0, -6.0], [1.0, 0.95, 0.75], 1),
+    ("window.stained.R4", "Pearl Sabbath", [14.2, 14.0, -18.0], [0.94, 0.95, 1.0], 1),
 ]
-window_colors_right = [
-    ("window.stained.R1", "Stained Glass: Ruby Agape", [14.3, 14.0, 15.0], [0.95, 0.22, 0.35]),
-    ("window.stained.R2", "Stained Glass: Cyan Sophia", [14.3, 14.0, 5.0], [0.15, 0.75, 0.95]),
-    ("window.stained.R3", "Stained Glass: Solar Lux", [14.3, 14.0, -5.0], [1.0, 0.85, 0.25]),
-    ("window.stained.R4", "Stained Glass: Pearl Sabbath", [14.3, 14.0, -15.0], [0.92, 0.95, 1.0]),
-]
-for wid, wname, wpos, wcol in window_colors_left + window_colors_right:
+
+for wid, wname, wpos, wcol, side_s in window_configs:
+    # 1. Glowing Stained Glass Aperture
     objects.append(make_box(
-        wid, wname, wpos, [0.2, 9.0, 3.2], "material.logos.core", wcol,
-        extra_props={"light.intensity": {"t": "float", "v": 2.0}, "light.source": {"t": "bool", "v": True}}
+        wid, f"Stained Glass: {wname}",
+        wpos, [0.15, 9.5, 3.4], "material.logos.core", wcol,
+        extra_props={"light.intensity": {"t": "float", "v": 2.5}, "light.source": {"t": "bool", "v": True}}
+    ))
+    # 2. Stone Window Sill
+    objects.append(make_box(
+        f"{wid}.sill", f"Stone Sill: {wname}",
+        [wpos[0] + side_s * 0.25, wpos[1] - 5.0, wpos[2]], [0.65, 0.5, 3.8],
+        "material.logos.floor", [0.18, 0.17, 0.16]
+    ))
+    # 3. Central Vertical Stone Mullion
+    objects.append(make_box(
+        f"{wid}.mullion", f"Window Mullion: {wname}",
+        [wpos[0] + side_s * 0.08, wpos[1], wpos[2]], [0.2, 9.5, 0.25],
+        "material.logos.arch", [0.85, 0.82, 0.78]
+    ))
+    # 4. Pointed Arch Hood Moulding Cap
+    objects.append(make_box(
+        f"{wid}.hood", f"Window Hood Moulding: {wname}",
+        [wpos[0] + side_s * 0.15, wpos[1] + 5.1, wpos[2]], [0.45, 0.8, 3.8],
+        "material.logos.gold", [1.0, 0.82, 0.28]
     ))
 
-# 8. Central Crossing: Resonating Heart of Logos & Celestial Rings
-objects.append(make_sphere(
-    "logos.resonator.core", "Heart of Logos (432 Hz Radiant Core)",
-    [0.0, 7.5, 0.0], 2.0, "material.logos.core", [1.0, 0.92, 0.65],
+# ==============================================================================
+# 10. MONUMENTAL TRANSEPT ROSE WINDOWS WITH PHYSICAL TRACERIES
+# ==============================================================================
+for r_side, rx, r_rot_y in [("N", -14.2, 90.0), ("S", 14.2, -90.0)]:
+    rw_id = f"cathedral.rose.{r_side}"
+    # Analytic Torus Beings (renderMode: 2)
+    objects.append(make_torus(
+        f"{rw_id}.outer_ring", f"Transept Rose Window Ring {r_side}",
+        [rx, 14.0, 0.0], 4.2, 0.25,
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, r_rot_y, 0.0]
+    ))
+    objects.append(make_torus(
+        f"{rw_id}.inner_ring", f"Rose Window Rosette {r_side}",
+        [rx, 14.0, 0.0], 2.0, 0.18,
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, r_rot_y, 0.0]
+    ))
+    # Physical Segmented Outer Frame Ring (guaranteed 100% visible)
+    for seg in make_ring_segments(f"{rw_id}.phys_outer", f"Rose Outer {r_side}", [rx, 14.0, 0.0], 4.2, 0.32, "material.logos.gold", [1.0, 0.82, 0.28], 20, 'yz'):
+        objects.append(seg)
+    # Physical Segmented Inner Rosette Ring
+    for seg in make_ring_segments(f"{rw_id}.phys_inner", f"Rose Inner {r_side}", [rx, 14.0, 0.0], 2.0, 0.24, "material.logos.gold", [1.0, 0.85, 0.32], 16, 'yz'):
+        objects.append(seg)
+    # Central Radiant Hub
+    objects.append(make_sphere(
+        f"{rw_id}.hub", f"Rose Window Radiant Hub {r_side}",
+        [rx, 14.0, 0.0], 0.85,
+        "material.logos.core", [1.0, 0.95, 0.75],
+        extra_props={"light.intensity": {"t": "float", "v": 3.5}, "light.source": {"t": "bool", "v": True}}
+    ))
+    # 8 Radial Stone Tracery Spokes
+    for sp_i in range(8):
+        ang_deg = sp_i * 45.0
+        objects.append(make_box(
+            f"{rw_id}.spoke.{sp_i+1}", f"Rose Tracery Spoke {sp_i+1} {r_side}",
+            [rx, 14.0, 0.0], [0.18, 0.18, 8.4],
+            "material.logos.arch", [0.85, 0.82, 0.78],
+            rot_deg=[ang_deg, r_rot_y, 0.0]
+        ))
+
+# ==============================================================================
+# 11. CENTRAL CROSSING: RESONATING HEART OF LOGOS & CELESTIAL ORBITAL RINGS
+# ==============================================================================
+# Living Logos Singularity (Smooth-Union Celestial Manifold, y = 7.5m, Z = 0m)
+core_sphere = sdf_leaf(0, [1.1, 1.1, 1.1])
+ring_equator = sdf_leaf(6, [2.0, 0.22, 0.0])
+ring_tilted = sdf_leaf(6, [2.4, 0.16, 0.0])
+lobe_north = sdf_leaf(0, [0.38, 0.38, 0.38], offset=[0.0, 0.0, -2.1])
+lobe_south = sdf_leaf(0, [0.38, 0.38, 0.38], offset=[0.0, 0.0, 2.1])
+lobe_east = sdf_leaf(0, [0.38, 0.38, 0.38], offset=[2.1, 0.0, 0.0])
+lobe_west = sdf_leaf(0, [0.38, 0.38, 0.38], offset=[-2.1, 0.0, 0.0])
+pole_zenith = sdf_leaf(3, [0.28, 1.1, 0.28], offset=[0.0, 1.6, 0.0])
+pole_nadir = sdf_leaf(3, [0.28, 1.1, 0.28], offset=[0.0, -1.6, 0.0])
+
+poles = sdf_binary(5, pole_zenith, pole_nadir, 0.25)
+ew_lobes = sdf_binary(5, lobe_east, lobe_west, 0.25)
+ns_lobes = sdf_binary(5, lobe_north, lobe_south, 0.25)
+cardinal_lobes = sdf_binary(5, ew_lobes, ns_lobes, 0.25)
+rings = sdf_binary(5, ring_equator, ring_tilted, 0.3)
+outer_halo = sdf_binary(5, rings, cardinal_lobes, 0.3)
+singularity_tree = sdf_binary(5, core_sphere, sdf_binary(5, outer_halo, poles, 0.28), 0.36)
+
+objects.append(make_field(
+    "logos.resonator.core", "Heart of Logos (Living Singularity Core)",
+    [0.0, 7.5, 0.0], singularity_tree, [3.2, 3.2, 3.2],
+    "material.logos.core", [1.0, 0.95, 0.75],
     extra_props={
         "isResonatorCore": {"t": "bool", "v": True},
-        "light.intensity": {"t": "float", "v": 6.0},
+        "light.intensity": {"t": "float", "v": 6.5},
         "light.source": {"t": "bool", "v": True},
         "pulseRate": {"t": "float", "v": 1.618},
         "resonancePitch": {"t": "float", "v": 432.0}
     }
 ))
+
+# 1. Analytic Torus Beings (renderMode: 2 for full polygon mesh rendering)
 objects.append(make_torus(
-    "logos.resonator.ring_alpha", "Celestial Orbital Ring Alpha",
-    [0.0, 7.5, 0.0], 3.5, 0.15, "material.logos.gold", [0.98, 0.82, 0.25]
+    "logos.resonator.ring_alpha", "Celestial Orbital Ring Alpha (Analytic)",
+    [0.0, 7.5, 0.0], 3.5, 0.16, "material.logos.gold", [1.0, 0.82, 0.28]
 ))
 objects.append(make_torus(
-    "logos.resonator.ring_beta", "Celestial Orbital Ring Beta",
-    [0.0, 7.5, 0.0], 5.0, 0.12, "material.logos.sapphire", [0.15, 0.45, 0.95]
+    "logos.resonator.ring_beta", "Celestial Orbital Ring Beta (Analytic)",
+    [0.0, 7.5, 0.0], 5.0, 0.14, "material.logos.sapphire", [0.12, 0.35, 0.95],
+    rot_deg=[28.0, 0.0, 0.0]
 ))
 objects.append(make_torus(
-    "logos.resonator.ring_gamma", "Celestial Orbital Ring Gamma",
-    [0.0, 7.5, 0.0], 6.5, 0.10, "material.logos.amber", [0.98, 0.65, 0.15]
+    "logos.resonator.ring_gamma", "Celestial Orbital Ring Gamma (Analytic)",
+    [0.0, 7.5, 0.0], 6.5, 0.12, "material.logos.amber", [0.98, 0.65, 0.15],
+    rot_deg=[-28.0, 0.0, 0.0]
 ))
 
-# 9. State Manager Being
+# 2. Tangible Physical 3D Armillary Rings (Faceted segments + celestial crystal nodes)
+# Ring Alpha (Horizontal Equatorial, Radius 3.5m, 24 Golden Segments)
+for seg in make_ring_segments("logos.armillary.alpha", "Armillary Ring Alpha", [0.0, 7.5, 0.0], 3.5, 0.22, "material.logos.gold", [1.0, 0.82, 0.28], 24, 'xz'):
+    objects.append(seg)
+# 8 Celestial Nodes on Ring Alpha
+for ni in range(8):
+    nang = 2.0 * math.pi * ni / 8.0
+    nx = 3.5 * math.cos(nang)
+    nz = 3.5 * math.sin(nang)
+    objects.append(make_sphere(
+        f"logos.armillary.alpha.node.{ni+1}", f"Celestial Node Alpha {ni+1}",
+        [nx, 7.5, nz], 0.28, "material.logos.core", [1.0, 0.95, 0.75],
+        extra_props={"light.intensity": {"t": "float", "v": 1.8}}
+    ))
+
+# Ring Beta (Tilted 28° around X, Radius 5.0m, 28 Sapphire/Gold Segments)
+for seg in make_ring_segments("logos.armillary.beta", "Armillary Ring Beta", [0.0, 7.5, 0.0], 5.0, 0.20, "material.logos.sapphire", [0.12, 0.35, 0.95], 28, 'xz', [28.0, 0.0, 0.0]):
+    objects.append(seg)
+for ni in range(8):
+    nang = 2.0 * math.pi * ni / 8.0
+    nx = 5.0 * math.cos(nang)
+    nz_base = 5.0 * math.sin(nang)
+    ny = 7.5 + nz_base * math.sin(math.radians(28.0))
+    nz = nz_base * math.cos(math.radians(28.0))
+    objects.append(make_sphere(
+        f"logos.armillary.beta.node.{ni+1}", f"Celestial Node Beta {ni+1}",
+        [nx, ny, nz], 0.25, "material.logos.core", [0.15, 0.75, 0.95],
+        extra_props={"light.intensity": {"t": "float", "v": 1.6}}
+    ))
+
+# Ring Gamma (Tilted -28° around X, Radius 6.5m, 32 Amber/Gold Segments)
+for seg in make_ring_segments("logos.armillary.gamma", "Armillary Ring Gamma", [0.0, 7.5, 0.0], 6.5, 0.18, "material.logos.amber", [0.98, 0.65, 0.15], 32, 'xz', [-28.0, 0.0, 0.0]):
+    objects.append(seg)
+for ni in range(8):
+    nang = 2.0 * math.pi * ni / 8.0
+    nx = 6.5 * math.cos(nang)
+    nz_base = 6.5 * math.sin(nang)
+    ny = 7.5 - nz_base * math.sin(math.radians(28.0))
+    nz = nz_base * math.cos(math.radians(28.0))
+    objects.append(make_sphere(
+        f"logos.armillary.gamma.node.{ni+1}", f"Celestial Node Gamma {ni+1}",
+        [nx, ny, nz], 0.22, "material.logos.core", [0.98, 0.65, 0.15],
+        extra_props={"light.intensity": {"t": "float", "v": 1.6}}
+    ))
+
+# ==============================================================================
+# 12. STATE MANAGER BEING
+# ==============================================================================
 objects.append({
     "objectID": "state.logos",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
-    "transform": mat4([0,0,0]),
-    "center": [0,0,0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+    "shape": {
+        "kind": 12,
+        "params": {
+            "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+            "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+            "ovoidAsym": 0.0, "fillet": 0.0,
+            "width2D": 0.0, "height2D": 0.0
+        }
+    },
+    "transform": mat4([0, 0, 0]),
+    "center": [0, 0, 0],
     "authoredProperties": {
         "breathActive": {"t": "bool", "v": True},
         "pulseRate": {"t": "float", "v": 1.618},
@@ -254,87 +1345,296 @@ objects.append({
     }
 })
 
-# 10. Clean, Docked 2D Liturgical HUD (Docked neatly in top-left)
+# ==============================================================================
+# 13. CLEAN DOCKED 2D LITURGICAL HUD
+# ==============================================================================
 hud_bg = {
     "objectID": "hud.logos.dock",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, 360.0, 190.0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 195.0],
+    "shape": {
+        "kind": 12,
+        "params": {
+            "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+            "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+            "ovoidAsym": 0.0, "fillet": 0.0,
+            "width2D": 360.0, "height2D": 195.0
+        }
+    },
     "x2D": 20.0,
     "y2D": 20.0,
     "zOrder2D": 10,
-    "transform": mat4([0,0,0]),
-    "center": [0,0,0],
+    "transform": mat4([0, 0, 0]),
+    "center": [0, 0, 0],
     "faceColors": [[0.05, 0.07, 0.12]] * 6,
-    "authoredProperties": {"displayName": {"t": "string", "v": "Liturgical Console Dock"}}
+    "authoredProperties": {}
 }
 objects.append(hud_bg)
 
-def make_label2d(obj_id, text, x, y, size=16.0, color=[0.9, 0.92, 0.95]):
-    return {
-        "objectID": obj_id,
-        "shapeKind": 13,
-        "geometryType": 13,
-        "shapeParams": [0,0,0,0,0,0,0,0,0,0, float(size)],
-        "x2D": float(x),
-        "y2D": float(y),
-        "zOrder2D": 25,
-        "transform": mat4([0,0,0]),
-        "center": [0,0,0],
-        "faceColors": [color] * 6,
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": text},
-            "label2D": {"t": "string", "v": text}
-        }
+objects.append(make_label2d("hud.logos.title", "CATHEDRAL OF THE LIVING LOGOS", 35, 34, 16.0, [1.0, 0.85, 0.35]))
+objects.append(make_label2d("hud.logos.telemetry.freq", "FREQUENCY: 432.0 Hz (SACRED ROOT)", 35, 56, 13.0, [0.35, 0.85, 0.95]))
+objects.append(make_label2d("hud.logos.telemetry.breath", "BREATH: RESPIRING (0.1 Hz PNEUMA WAVE)", 35, 76, 13.0, [0.45, 0.95, 0.65]))
+objects.append(make_label2d("hud.logos.telemetry.season", "LITURGY: GENESIS DAWN", 35, 96, 13.0, [0.95, 0.75, 0.45]))
+
+objects.append(make_button2d("hud.btn.pneuma", "BREATHE PNEUMA", 35, 122, 155, 32, [0.15, 0.45, 0.85]))
+objects.append(make_button2d("hud.btn.lux", "FIAT LUX", 205, 122, 155, 32, [0.92, 0.78, 0.25]))
+objects.append(make_button2d("hud.btn.chord", "SOUND CANON", 35, 160, 155, 32, [0.92, 0.55, 0.15]))
+objects.append(make_button2d("hud.btn.season", "CYCLE SEASON", 205, 160, 155, 32, [0.75, 0.25, 0.85]))
+
+# ==============================================================================
+# 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE
+# ==============================================================================
+
+# 1. The North Transept Spherical Gyroid Reliquary (Minimal Surface Manifold)
+# Bounded by an outer sphere via CSG Intersect (Op 3) so it forms a seamless filigree orb!
+raw_gyroid = sdf_expr("cos(2.8*x)*sin(2.8*y) + cos(2.8*y)*sin(2.8*z) + cos(2.8*z)*sin(2.8*x) - 0.22", dims=[1.4, 1.4, 1.4])
+bound_sphere = sdf_leaf(0, [1.25, 1.25, 1.25])
+spherical_gyroid = sdf_binary(3, raw_gyroid, bound_sphere) # Op 3 = Intersect!
+top_finial = sdf_leaf(0, [0.18, 0.18, 0.18], offset=[0.0, 1.32, 0.0])
+bot_socket = sdf_leaf(5, [0.32, 0.22, 0.0], offset=[0.0, -1.25, 0.0]) # Cone
+gyroid_tree = sdf_binary(5, spherical_gyroid, sdf_binary(5, top_finial, bot_socket, 0.2), 0.22)
+
+# Gyroid Altar Pedestal
+objects.append(make_box(
+    "cathedral.gyroid.altar.base", "North Shrine Altar Plinth",
+    [-14.0, 0.45, 0.0], [2.6, 0.9, 2.6],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "cathedral.gyroid.altar.mensa", "North Shrine Altar Mensa",
+    [-14.0, 1.05, 0.0], [3.0, 0.3, 3.0],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+# Floating Gyroid Gimbal Ring
+objects.append(make_torus(
+    "cathedral.sdf.gyroid.gimbal", "Gyroid Reliquary Gimbal Ring",
+    [-14.0, 3.4, 0.0], 1.5, 0.08,
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    rot_deg=[45.0, 30.0, 0.0]
+))
+objects.append(make_field(
+    "cathedral.sdf.gyroid_north", "Sacred Spherical Gyroid Reliquary of Pneuma",
+    [-14.0, 3.4, 0.0], gyroid_tree, [1.4, 1.4, 1.4],
+    "material.logos.sapphire", [0.12, 0.35, 0.95],
+    extra_props={
+        "isSacredRelic": {"t": "bool", "v": True},
+        "relicKind": {"t": "string", "v": "Spherical Gyroid Minimal Surface"},
+        "light.intensity": {"t": "float", "v": 3.5}
     }
+))
 
-objects.append(make_label2d("hud.logos.title", "CATHEDRAL OF THE LIVING LOGOS", 35, 35, 18.0, [1.0, 0.85, 0.35]))
-objects.append(make_label2d("hud.logos.telemetry.freq", "FREQUENCY: 432.0 Hz (SACRED ROOT)", 35, 58, 14.0, [0.35, 0.85, 0.95]))
-objects.append(make_label2d("hud.logos.telemetry.breath", "BREATH: RESPIRING (0.1 Hz PNEUMA WAVE)", 35, 78, 14.0, [0.45, 0.95, 0.65]))
-objects.append(make_label2d("hud.logos.telemetry.season", "LITURGY: GENESIS DAWN", 35, 98, 14.0, [0.95, 0.75, 0.45]))
+# 2. The South Transept 12-Pointed Stellated Merkaba Star of Sophia
+star_bar_x = sdf_leaf(2, [1.1, 0.26, 0.26], p0=0.08)
+star_bar_y = sdf_leaf(2, [0.26, 1.1, 0.26], p0=0.08)
+star_bar_z = sdf_leaf(2, [0.26, 0.26, 1.1], p0=0.08)
+star_bars = sdf_binary(5, star_bar_x, sdf_binary(5, star_bar_y, star_bar_z, 0.2), 0.2)
+star_core = sdf_leaf(0, [0.65, 0.65, 0.65])
+star_tree = sdf_binary(5, star_bars, star_core, 0.25)
 
-def make_button2d(btn_id, label, x, y, w, h, bg_color):
-    btn = {
-        "objectID": btn_id,
-        "shapeKind": 12,
-        "geometryType": 12,
-        "shapeParams": [1.0, 1.0, 0,0,0,0,0,0,0, float(w), float(h)],
-        "x2D": float(x),
-        "y2D": float(y),
-        "zOrder2D": 20,
-        "transform": mat4([0,0,0]),
-        "center": [0,0,0],
-        "faceColors": [bg_color] * 6,
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": label},
-            "isButton": {"t": "bool", "v": True}
-        }
+# South Shrine Altar Pedestal
+objects.append(make_box(
+    "cathedral.merkaba.altar.base", "South Shrine Altar Plinth",
+    [14.0, 0.45, 0.0], [2.6, 0.9, 2.6],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "cathedral.merkaba.altar.mensa", "South Shrine Altar Mensa",
+    [14.0, 1.05, 0.0], [3.0, 0.3, 3.0],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+# Floating Merkaba Gimbal Ring
+objects.append(make_torus(
+    "cathedral.sdf.merkaba.gimbal", "Merkaba Reliquary Gimbal Ring",
+    [14.0, 3.4, 0.0], 1.5, 0.08,
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    rot_deg=[-45.0, -30.0, 0.0]
+))
+objects.append(make_field(
+    "cathedral.sdf.merkaba_south", "Stellated Merkaba Star of Sophia",
+    [14.0, 3.4, 0.0], star_tree, [1.4, 1.4, 1.4],
+    "material.logos.ruby", [0.88, 0.12, 0.22],
+    extra_props={
+        "isSacredRelic": {"t": "bool", "v": True},
+        "relicKind": {"t": "string", "v": "Merkaba Octahedral Star"},
+        "light.intensity": {"t": "float", "v": 3.5}
     }
-    lbl = make_label2d(f"{btn_id}.text", label, x + 15, y + 8, 13.0, [1.0, 1.0, 1.0])
-    return [btn, lbl]
+))
 
-for item in make_button2d("hud.btn.pneuma", "BREATHE PNEUMA", 35, 125, 155, 32, [0.15, 0.45, 0.85]):
-    objects.append(item)
-for item in make_button2d("hud.btn.lux", "FIAT LUX", 205, 125, 155, 32, [0.92, 0.78, 0.25]):
-    objects.append(item)
-for item in make_button2d("hud.btn.chord", "SOUND CANON", 35, 165, 155, 32, [0.92, 0.55, 0.15]):
-    objects.append(item)
-for item in make_button2d("hud.btn.season", "CYCLE SEASON", 205, 165, 155, 32, [0.75, 0.25, 0.85]):
-    objects.append(item)
+# 3. The Baptismal Font of Living Waters (Crossing Centerpiece)
+# 3-Tier Stepped Octagonal Plinth underneath the font
+objects.append(make_box(
+    "cathedral.font.plinth.tier1", "Baptismal Font Plinth Tier I",
+    [0.0, 0.1, 0.0], [3.4, 0.2, 3.4],
+    "material.logos.floor", [0.12, 0.13, 0.15]
+))
+objects.append(make_box(
+    "cathedral.font.plinth.tier2", "Baptismal Font Plinth Tier II",
+    [0.0, 0.3, 0.0], [2.8, 0.2, 2.8],
+    "material.logos.floor", [0.15, 0.16, 0.18]
+))
+objects.append(make_box(
+    "cathedral.font.plinth.tier3", "Baptismal Font Plinth Tier III",
+    [0.0, 0.5, 0.0], [2.2, 0.2, 2.2],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
 
+# Carved Alabaster Font Basin (CSG Subtract: RoundBox minus Sphere bowl)
+font_basin_outer = sdf_leaf(2, [1.35, 0.45, 1.35], p0=0.22)
+font_basin_cavity = sdf_leaf(0, [1.1, 1.1, 1.1], offset=[0.0, 0.32, 0.0])
+font_basin_tree = sdf_binary(4, font_basin_outer, font_basin_cavity)
+objects.append(make_field(
+    "cathedral.sdf.font_basin", "Baptismal Font Alabaster Basin",
+    [0.0, 0.95, 0.0], font_basin_tree, [1.6, 1.0, 1.6],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+
+# Living Water Fountain Plume (Crystalline Cyan water with suspended droplet crown)
+water_jet = sdf_leaf(5, [0.36, 0.52, 0.0], offset=[0.0, -0.1, 0.0])
+water_pearl = sdf_leaf(0, [0.22, 0.22, 0.22], offset=[0.0, 0.46, 0.0])
+water_drop_e = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.32, 0.35, 0.0])
+water_drop_w = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[-0.32, 0.35, 0.0])
+water_drop_n = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.35, -0.32])
+water_drop_s = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.35, 0.32])
+water_drops = sdf_binary(5, sdf_binary(5, water_drop_e, water_drop_w, 0.15), sdf_binary(5, water_drop_n, water_drop_s, 0.15), 0.15)
+water_crown = sdf_binary(5, water_pearl, water_drops, 0.18)
+water_tree = sdf_binary(5, water_jet, water_crown, 0.24)
+objects.append(make_field(
+    "cathedral.sdf.font_water", "Living Water Fountain Plume",
+    [0.0, 1.5, 0.0], water_tree, [1.2, 1.2, 1.2],
+    "material.logos.cyan", [0.15, 0.85, 0.95],
+    extra_props={"fluid": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 2.5}}
+))
+
+# 4. The High Altar Monstrance & Sacred Sunburst
+monstrance_outer = sdf_leaf(4, [0.42, 0.52, 0.0], offset=[0.0, 0.18, 0.0])
+monstrance_inner = sdf_leaf(0, [0.36, 0.36, 0.36], offset=[0.0, 0.42, 0.0])
+monstrance_cup = sdf_binary(4, monstrance_outer, monstrance_inner)
+monstrance_halo = sdf_leaf(6, [0.82, 0.07, 0.0], offset=[0.0, 0.82, 0.0])
+monstrance_host = sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.82, 0.0])
+monstrance_tree = sdf_binary(5, monstrance_cup, sdf_binary(5, monstrance_halo, monstrance_host, 0.15), 0.2)
+objects.append(make_field(
+    "cathedral.sdf.altar_monstrance", "High Altar Golden Monstrance",
+    [0.0, 3.2, -29.5], monstrance_tree, [1.2, 1.4, 1.2],
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    extra_props={"light.intensity": {"t": "float", "v": 2.8}}
+))
+
+# Sacred Holy Grail Chalice on Altar
+grail_foot = sdf_leaf(2, [0.35, 0.08, 0.35], p0=0.08, offset=[0.0, 0.04, 0.0])
+grail_stem = sdf_leaf(4, [0.12, 0.35, 0.0], offset=[0.0, 0.38, 0.0])
+grail_cup_out = sdf_leaf(5, [0.4, 0.35, 0.0], offset=[0.0, 0.72, 0.0])
+grail_cup_in = sdf_leaf(0, [0.32, 0.32, 0.32], offset=[0.0, 0.78, 0.0])
+grail_cup = sdf_binary(4, grail_cup_out, grail_cup_in)
+grail_communion = sdf_leaf(0, [0.14, 0.14, 0.14], offset=[0.0, 0.82, 0.0])
+grail_tree = sdf_binary(5, grail_foot, sdf_binary(5, grail_stem, sdf_binary(5, grail_cup, grail_communion, 0.15), 0.2), 0.22)
+objects.append(make_field(
+    "cathedral.sdf.holy_grail", "Chalice of the Living Logos",
+    [0.0, 2.35, -28.9], grail_tree, [0.9, 1.1, 0.9],
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    extra_props={"isHolyGrail": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 2.0}}
+))
+
+# 5. Biblical Six-Winged Seraphim Guardians (Flanking the Altar)
+def make_six_winged_seraph(seraph_id, name, pos, flip_x=False):
+    sign = -1.0 if flip_x else 1.0
+    robe = sdf_leaf(5, [0.42, 0.95, 0.0], offset=[0.0, -0.15, 0.0])
+    head = sdf_leaf(0, [0.26, 0.26, 0.26], offset=[0.0, 0.88, 0.0])
+    halo = sdf_leaf(6, [0.38, 0.05, 0.0], offset=[0.0, 1.1, -0.05])
+    head_halo = sdf_binary(5, head, halo, 0.16)
+    
+    # 6 Layered Wings
+    wing_u1 = sdf_leaf(3, [0.12, 0.95, 0.35], offset=[-0.32 * sign, 1.1, -0.15])
+    wing_u2 = sdf_leaf(3, [0.12, 0.95, 0.35], offset=[0.32 * sign, 1.1, -0.15])
+    upper_wings = sdf_binary(5, wing_u1, wing_u2, 0.2)
+    wing_m1 = sdf_leaf(3, [0.14, 0.45, 0.95], offset=[-0.65 * sign, 0.45, -0.25])
+    wing_m2 = sdf_leaf(3, [0.14, 0.45, 0.95], offset=[0.65 * sign, 0.45, -0.25])
+    mid_wings = sdf_binary(5, wing_m1, wing_m2, 0.2)
+    wing_d1 = sdf_leaf(3, [0.12, 0.85, 0.35], offset=[-0.42 * sign, -0.25, -0.15])
+    wing_d2 = sdf_leaf(3, [0.12, 0.85, 0.35], offset=[0.42 * sign, -0.25, -0.15])
+    lower_wings = sdf_binary(5, wing_d1, wing_d2, 0.2)
+    
+    all_wings = sdf_binary(5, upper_wings, sdf_binary(5, mid_wings, lower_wings, 0.22), 0.24)
+    upper_body = sdf_binary(5, head_halo, all_wings, 0.24)
+    seraph_full = sdf_binary(5, robe, upper_body, 0.30)
+    
+    return make_field(
+        seraph_id, name,
+        pos, seraph_full, [1.8, 2.2, 1.8],
+        "material.logos.gold", [1.0, 0.82, 0.28],
+        rot_deg=[0.0, 20.0 * sign, 0.0]
+    )
+
+# Seraphim Carved Marble Plinths
+objects.append(make_box(
+    "cathedral.seraph.plinth.L", "Sanctuary Seraph Plinth North",
+    [-3.8, 1.5, -29.5], [1.6, 1.5, 1.6],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "cathedral.seraph.plinth.R", "Sanctuary Seraph Plinth South",
+    [3.8, 1.5, -29.5], [1.6, 1.5, 1.6],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_six_winged_seraph("cathedral.sdf.seraph.left", "Six-Winged Seraph Guardian (North)", [-3.8, 3.8, -29.5], False))
+objects.append(make_six_winged_seraph("cathedral.sdf.seraph.right", "Six-Winged Seraph Guardian (South)", [3.8, 3.8, -29.5], True))
+
+# 6. The West Portal Monolith of Genesis & Amethyst Prism
+portal_block = sdf_leaf(2, [2.4, 3.5, 0.42], p0=0.18)
+portal_hollow = sdf_leaf(4, [1.35, 0.55, 0.0], offset=[0.0, -0.2, 0.0])
+portal_tree = sdf_binary(4, portal_block, portal_hollow)
+objects.append(make_field(
+    "cathedral.sdf.portal_monolith", "West Portal Genesis Monolith",
+    [0.0, 4.2, 29.5], portal_tree, [2.8, 4.0, 1.0],
+    "material.logos.obsidian", [0.10, 0.11, 0.14]
+))
+objects.append(make_field(
+    "cathedral.sdf.portal_crystal", "Genesis Vesica Amethyst Prism",
+    [0.0, 4.0, 29.5], sdf_leaf(3, [0.36, 0.82, 0.22]), [0.8, 1.2, 0.8],
+    "material.logos.amethyst", [0.72, 0.25, 0.88],
+    extra_props={"light.intensity": {"t": "float", "v": 2.5}}
+))
+
+# 7. Twin Living Fire Sanctuary Braziers (Flanking Chancel Arch)
+for side_name, bx, bsign in [("Left", -5.8, -1.0), ("Right", 5.8, 1.0)]:
+    flame_sphere = sdf_leaf(0, [0.26, 0.26, 0.26])
+    flame_tip = sdf_leaf(5, [0.22, 0.44, 0.0], offset=[0.0, 0.26, 0.0])
+    flame_tree = sdf_binary(5, flame_sphere, flame_tip, 0.24)
+    objects.append(make_field(
+        f"cathedral.sdf.brazier.flame.{side_name.lower()[0]}", f"Eternal Flame of {side_name} Chancel Brazier",
+        [bx, 6.4, -18.0], flame_tree, [0.6, 0.8, 0.6],
+        "material.logos.core", [1.0, 0.95, 0.75],
+        extra_props={
+            "isEternalFlame": {"t": "bool", "v": True},
+            "light.intensity": {"t": "float", "v": 3.8},
+            "light.source": {"t": "bool", "v": True}
+        }
+    ))
+
+# ==============================================================================
+# MATERIALS PALETTE — FIXED TO NATIVE SPECIFICATION
+# Material::getIdentifier() returns "material." + name, so name must be bare slug!
+# ==============================================================================
 materials = [
-    {"name": "material.logos.floor", "ambient": 0.2, "diffuse": 0.75, "specular": 0.6, "shininess": 40.0, "baseColor": [0.08, 0.09, 0.12], "roughness": 0.2, "metallic": 0.8},
-    {"name": "material.logos.gold", "ambient": 0.35, "diffuse": 0.85, "specular": 0.9, "shininess": 64.0, "baseColor": [1.0, 0.82, 0.28], "emission": [0.3, 0.24, 0.08], "roughness": 0.15, "metallic": 0.95},
-    {"name": "material.logos.sapphire", "ambient": 0.2, "diffuse": 0.75, "specular": 0.8, "shininess": 48.0, "baseColor": [0.12, 0.35, 0.95], "emission": [0.05, 0.15, 0.4], "roughness": 0.2, "metallic": 0.6},
-    {"name": "material.logos.alabaster", "ambient": 0.4, "diffuse": 0.9, "specular": 0.6, "shininess": 32.0, "baseColor": [0.94, 0.92, 0.88], "emission": [0.05, 0.05, 0.05], "roughness": 0.25, "metallic": 0.1},
-    {"name": "material.logos.altar", "ambient": 0.15, "diffuse": 0.6, "specular": 0.8, "shininess": 50.0, "baseColor": [0.05, 0.05, 0.08], "emission": [0.0, 0.0, 0.0], "roughness": 0.1, "metallic": 0.8},
-    {"name": "material.logos.core", "ambient": 0.5, "diffuse": 0.9, "specular": 1.0, "shininess": 128.0, "baseColor": [1.0, 0.95, 0.75], "emission": [0.9, 0.8, 0.5], "roughness": 0.05, "metallic": 0.5},
-    {"name": "material.logos.emerald", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.15, 0.85, 0.45], "emission": [0.1, 0.4, 0.2], "roughness": 0.2, "metallic": 0.7},
-    {"name": "material.logos.amethyst", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.65, 0.25, 0.95], "emission": [0.25, 0.1, 0.45], "roughness": 0.2, "metallic": 0.7},
-    {"name": "material.logos.amber", "ambient": 0.3, "diffuse": 0.85, "specular": 0.8, "shininess": 45.0, "baseColor": [0.98, 0.65, 0.15], "emission": [0.3, 0.18, 0.05], "roughness": 0.2, "metallic": 0.8},
-    {"name": "material.logos.arch", "ambient": 0.3, "diffuse": 0.8, "specular": 0.7, "shininess": 40.0, "baseColor": [0.85, 0.82, 0.78], "emission": [0.08, 0.08, 0.12], "roughness": 0.3, "metallic": 0.4}
+    {"name": "logos.floor", "ambient": 0.25, "diffuse": 0.75, "specular": 0.6, "shininess": 40.0, "baseColor": [0.10, 0.11, 0.14], "roughness": 0.2, "metallic": 0.8},
+    {"name": "logos.gold", "ambient": 0.35, "diffuse": 0.85, "specular": 0.9, "shininess": 64.0, "baseColor": [1.0, 0.82, 0.28], "emission": [0.3, 0.24, 0.08], "roughness": 0.15, "metallic": 0.95},
+    {"name": "logos.sapphire", "ambient": 0.25, "diffuse": 0.75, "specular": 0.8, "shininess": 48.0, "baseColor": [0.12, 0.35, 0.95], "emission": [0.08, 0.18, 0.45], "roughness": 0.2, "metallic": 0.6},
+    {"name": "logos.alabaster", "ambient": 0.45, "diffuse": 0.9, "specular": 0.6, "shininess": 32.0, "baseColor": [0.94, 0.92, 0.88], "emission": [0.05, 0.05, 0.05], "roughness": 0.25, "metallic": 0.1},
+    {"name": "logos.altar", "ambient": 0.2, "diffuse": 0.6, "specular": 0.8, "shininess": 50.0, "baseColor": [0.05, 0.05, 0.08], "emission": [0.0, 0.0, 0.0], "roughness": 0.1, "metallic": 0.8},
+    {"name": "logos.core", "ambient": 0.5, "diffuse": 0.9, "specular": 1.0, "shininess": 128.0, "baseColor": [1.0, 0.95, 0.75], "emission": [0.95, 0.85, 0.55], "roughness": 0.05, "metallic": 0.5},
+    {"name": "logos.emerald", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.15, 0.85, 0.45], "emission": [0.15, 0.45, 0.25], "roughness": 0.2, "metallic": 0.7},
+    {"name": "logos.amethyst", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.65, 0.25, 0.95], "emission": [0.28, 0.12, 0.48], "roughness": 0.2, "metallic": 0.7},
+    {"name": "logos.amber", "ambient": 0.3, "diffuse": 0.85, "specular": 0.8, "shininess": 45.0, "baseColor": [0.98, 0.65, 0.15], "emission": [0.35, 0.20, 0.08], "roughness": 0.2, "metallic": 0.8},
+    {"name": "logos.arch", "ambient": 0.35, "diffuse": 0.8, "specular": 0.7, "shininess": 40.0, "baseColor": [0.85, 0.82, 0.78], "emission": [0.08, 0.08, 0.12], "roughness": 0.3, "metallic": 0.4},
+    {"name": "logos.wood", "ambient": 0.3, "diffuse": 0.8, "specular": 0.4, "shininess": 20.0, "baseColor": [0.24, 0.16, 0.11], "emission": [0.0, 0.0, 0.0], "roughness": 0.6, "metallic": 0.05},
+    {"name": "logos.ruby", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.95, 0.22, 0.32], "emission": [0.35, 0.08, 0.12], "roughness": 0.2, "metallic": 0.7},
+    {"name": "logos.cyan", "ambient": 0.35, "diffuse": 0.85, "specular": 0.95, "shininess": 80.0, "baseColor": [0.15, 0.85, 0.95], "emission": [0.10, 0.45, 0.65], "roughness": 0.1, "metallic": 0.5},
+    {"name": "logos.organ_pipe", "ambient": 0.4, "diffuse": 0.8, "specular": 0.95, "shininess": 100.0, "baseColor": [0.85, 0.88, 0.92], "emission": [0.05, 0.08, 0.12], "roughness": 0.1, "metallic": 0.95}
 ]
 
+# ==============================================================================
+# LEXEMES
+# ==============================================================================
 lexemes = [
     {"id": "lexeme.logos", "symbol": "Logos"},
     {"id": "lexeme.pneuma", "symbol": "Pneuma"},
@@ -348,6 +1648,9 @@ lexemes = [
     {"id": "lexeme.sabbath", "symbol": "Sabbath"}
 ]
 
+# ==============================================================================
+# FORMATION RELATIONS
+# ==============================================================================
 formationRelations = [
     {"directed": True, "entityA": "altar.logos.mensa", "entityB": "logos.resonator.core", "type": "acoustic-resonance", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "acoustic-resonance", "timestamp": 1787395000}]},
     {"directed": True, "entityA": "glyph.lexeme.logos", "entityB": "lexeme.logos", "type": "speech-act", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "speech-act", "timestamp": 1787395000}]},
@@ -405,18 +1708,57 @@ zone_doc = {
     ]
 }
 
-zone_path = "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/zones/Cathedral of the Living Logos/zone.json"
-os.makedirs(os.path.dirname(zone_path), exist_ok=True)
+# ==============================================================================
+# 14. AUTHORING BINARY PHYSICAL MATTER (.ecmatter FlatBuffer)
+# ==============================================================================
+def make_ecmatter(chunk_name="matter_cathedral_logos"):
+    name_bytes = chunk_name.encode('utf-8') + b'\x00'
+    pad = (4 - (len(name_bytes) % 4)) % 4
+    str_data = struct.pack(f'<I{len(name_bytes)}s{pad}x', len(chunk_name), name_bytes)
+    root_offset = struct.pack('<I', 12)
+    vtable = struct.pack('<HHHH', 8, 12, 4, 8)
+    root_table = struct.pack('<iII', 8, 12, 4)
+    entities_vec = struct.pack('<I', 0)
+    return root_offset + vtable + root_table + entities_vec + str_data
+
+matter_bytes = make_ecmatter("matter_cathedral_of_the_living_logos")
+matter_sha256 = hashlib.sha256(matter_bytes).hexdigest()
+snapshot_id = matter_sha256[:16]
+
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Write .ecmatter sidecars
+matter_world_path = os.path.join(repo_root, "saves", "worlds", f"cathedral_of_the_living_logos.{snapshot_id}.ecmatter")
+matter_fixed_world_path = os.path.join(repo_root, "saves", "worlds", "cathedral_of_the_living_logos.ecmatter")
+matter_zone_path = os.path.join(repo_root, "saves", "zones", "Cathedral of the Living Logos", f"zone.{snapshot_id}.ecmatter")
+matter_fixed_zone_path = os.path.join(repo_root, "saves", "zones", "Cathedral of the Living Logos", "zone.ecmatter")
+
+os.makedirs(os.path.dirname(matter_world_path), exist_ok=True)
+os.makedirs(os.path.dirname(matter_zone_path), exist_ok=True)
+
+for mp in [matter_world_path, matter_fixed_world_path, matter_zone_path, matter_fixed_zone_path]:
+    with open(mp, "wb") as f:
+        f.write(matter_bytes)
+print(f"Wrote physical matter (.ecmatter) sidecars: generation '{snapshot_id}' ({len(matter_bytes)} bytes)")
+
+# Write zone.json (.ecform)
+zone_path = os.path.join(repo_root, "saves", "zones", "Cathedral of the Living Logos", "zone.json")
 with open(zone_path, "w") as f:
     json.dump(zone_doc, f, indent=2)
 print(f"Wrote {zone_path} ({len(objects)} objects)")
 
-# Now build the full world package with camera placement!
+# Full world package with matterGeneration linkage
 world_doc = {
     "saveFormat": "zone-identity-v1",
     "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
     "authors": ["Zach"],
     "currentZoneId": "Cathedral of the Living Logos",
+    "matterGeneration": {
+        "snapshotId": snapshot_id,
+        "sha256": matter_sha256,
+        "byteLength": len(matter_bytes),
+        "schemaVersion": 1
+    },
     "flying": False,
     "cameraPos": [0.0, 2.8, 26.0],
     "cameraFront": [0.0, -0.02, -1.0],
@@ -430,6 +1772,15 @@ world_doc = {
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [0,0,0,0,0,0,0,0,0,0,0],
+            "shape": {
+                "kind": 12,
+                "params": {
+                    "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
+                    "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
+                    "ovoidAsym": 0.0, "fillet": 0.0,
+                    "width2D": 0.0, "height2D": 0.0
+                }
+            },
             "transform": mat4([0,0,0]),
             "center": [0,0,0],
             "authoredProperties": {"displayName": {"t": "string", "v": "Zachary Zhang"}}
@@ -533,7 +1884,7 @@ world_doc = {
     }
 }
 
-world_path = "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/worlds/cathedral_of_the_living_logos.json"
+world_path = os.path.join(repo_root, "saves", "worlds", "cathedral_of_the_living_logos.json")
 with open(world_path, "w") as f:
     json.dump(world_doc, f, indent=2)
 print(f"Wrote {world_path}")

@@ -266,14 +266,14 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return result;
     };
 
-    if (!slot.prop && !slot.dynamicSlot) {
+        if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             PropertyValue cur;
             if (root.getDynamicProperty(segments[startIndex], cur) && propertyValuesEquivalent(cur, v)) {
                 return PathResult::Unchanged;
             }
             if (root.setDynamicProperty(segments[startIndex], v)) {
-                return announce(PathResult::Ok, nullptr, &root, segments[startIndex]);
+                return PathResult::Ok; // setDynamicProperty already called notifyPropertyChanged
             }
             return PathResult::TypeMismatch;
         }
@@ -294,18 +294,26 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             }
             if (currentVal.index() != v.index()) return PathResult::TypeMismatch;
             return PathResult::ReadOnly;
-        } else if (slot.dynamicSlot) {
-            // Check coercion for dynamic slots too to prevent type changing if it's currently a number
+                        } else if (slot.dynamicSlot) {
             double n = 0.0;
             PropertyValue coerced;
-            if (propertyValueToNumber(v, n) && coerceLike(*slot.dynamicSlot, n, coerced)) {
-                *slot.dynamicSlot = coerced;
+            bool coerceSuccess = propertyValueToNumber(v, n) && coerceLike(*slot.dynamicSlot, n, coerced);
+            const PropertyValue& valToWrite = coerceSuccess ? coerced : v;
+
+            if (propertyValuesEquivalent(*slot.dynamicSlot, valToWrite)) return PathResult::Unchanged;
+
+            if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
+                if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), valToWrite)) {
+                    return PathResult::Ok;
+                }
             } else {
-                *slot.dynamicSlot = v;
+                *slot.dynamicSlot = valToWrite;
+                if (!slot.dynamicKey.empty()) {
+                    slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
+                }
+                return PathResult::Ok;
             }
-            // Announce on the owner with the appropriate segment name
-            // (If it was a nested dict write, slot.owner might be the top-level singular)
-            return announce(PathResult::Ok, nullptr, slot.owner, slot.dynamicKey);
+            return PathResult::ReadOnly;
         }
     }
 
@@ -326,9 +334,19 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
     if (slot.prop) {
         if (slot.prop->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, slot.prop, slot.owner);
         return PathResult::ReadOnly;
-    } else if (slot.dynamicSlot) {
-        *slot.dynamicSlot = PropertyValue(*vec);
-        return announce(PathResult::Ok, nullptr, slot.owner, slot.dynamicKey);
+            } else if (slot.dynamicSlot) {
+        if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
+            if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), PropertyValue(*vec))) {
+                return PathResult::Ok;
+            }
+        } else {
+            *slot.dynamicSlot = PropertyValue(*vec);
+            if (!slot.dynamicKey.empty()) {
+                slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
+            }
+            return PathResult::Ok;
+        }
+        return PathResult::ReadOnly;
     }
     return PathResult::NoSuchProperty;
 }

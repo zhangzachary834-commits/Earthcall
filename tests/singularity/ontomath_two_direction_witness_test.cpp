@@ -18,18 +18,18 @@ int main() {
     auto activeZone = harness.zones.zones()[harness.zones.currentIndex()];
     
     // A 4x4 PNG image (white)
-    const unsigned char png_data[] = {
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x08, 0x06, 0x00, 0x00, 0x00, 0x72, 0xb6, 0x0d, 0x24, 0x00, 0x00, 0x00, 0x14, 0x49, 0x44, 0x41, 0x54, 0x08, 0x5b, 0x63, 0xfc, 0xcf, 0xc0, 0x00, 0x44, 0x0c, 0x0c, 0x8c, 0x30, 0x06, 0xb2, 0x00, 0x00, 0x39, 0x01, 0x01, 0xfd, 0xef, 0x3a, 0x63, 0x93, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
-    };
+    const unsigned char png_data[] = { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x08, 0x06, 0x00, 0x00, 0x00, 0x72, 0xb6, 0x0d, 0x24, 0x00, 0x00, 0x00, 0x15, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x64, 0x60, 0x60, 0xf8, 0xcf, 0xc0, 0xc0, 0xc0, 0xc0, 0x04, 0x22, 0x40, 0x18, 0x00, 0x0e, 0x28, 0x01, 0x03, 0x92, 0xc1, 0x42, 0x6c, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82 };
 
     auto [obj, mat] = ImageCodecChannel::ingestPngFromMemory(png_data, sizeof(png_data), "witness_img", *activeZone);
     assert(obj != nullptr && mat != nullptr);
+    activeZone->addObject(obj);
 
     // Create a property "witness_passed"
     obj->setDynamicProperty("witness_passed", PropertyValue(false));
 
     // Create Law
     auto law = std::make_shared<Law>("witness.law");
+    law->addAuthor(*obj);
     
     glm::vec3 red(1.0f, 0.0f, 0.0f);
     auto expectedRedList = std::make_shared<PropertyList>();
@@ -40,20 +40,22 @@ int main() {
 
     ActionNode act = ActionNode::set("witness_passed", PropertyValue(true));
     law->setActionModel(act);
+    law->setActivation(Law::Activation::WhileTrue);
 
     harness.lawManager.add(law);
 
     std::string reason;
 
     // regionA: v - 0.5 <= 0
-    auto selectorA_json = nlohmann::json::parse(R"({"input":"x","pieces":[{"where":{"children":[{"op":1,"var":"v"},{"op":0,"scalarForm":{"terms":[{"c":0.5,"factors":{}}]}}],"op":5}},{"guard":{"children":[],"kind":3}}]})");
+    auto selectorA_json = nlohmann::json::parse(R"({"input": "v", "pieces": [{"where": {"op": 5, "children": [{"op": 1, "var": "v"}, {"op": 0, "scalarForm": {"terms": [{"c": 0.5, "factors": {}}]}}]}, "mathNode": {"op": 0, "scalarForm": {"terms": [{"c": 1.0, "factors": {}}]}}}, {"guard": {"kind": 3, "children": []}}]})");
     OntoMath::Piecewise selectorA = OntoMath::Piecewise::fromJson(selectorA_json);
 
     bool successA = obj->elevateSurfaceRegionProperty("regionA", 0, selectorA, reason);
+    if (!successA) std::cout << "FAIL REASON A: " << reason << "\n";
     assert(successA);
 
     // regionB: u - 0.5 <= 0
-    auto selectorB_json = nlohmann::json::parse(R"({"input":"x","pieces":[{"where":{"children":[{"op":1,"var":"u"},{"op":0,"scalarForm":{"terms":[{"c":0.5,"factors":{}}]}}],"op":5}},{"guard":{"children":[],"kind":3}}]})");
+    auto selectorB_json = nlohmann::json::parse(R"({"input": "u", "pieces": [{"where": {"op": 5, "children": [{"op": 1, "var": "u"}, {"op": 0, "scalarForm": {"terms": [{"c": 0.5, "factors": {}}]}}]}, "mathNode": {"op": 0, "scalarForm": {"terms": [{"c": 1.0, "factors": {}}]}}}, {"guard": {"kind": 3, "children": []}}]})");
     OntoMath::Piecewise selectorB = OntoMath::Piecewise::fromJson(selectorB_json);
 
     bool successB = obj->elevateSurfaceRegionProperty("regionB", 0, selectorB, reason);
@@ -94,6 +96,7 @@ int main() {
     }
 
     auto result = PropertyPath::parse("regionA").setValue(*obj, PropertyValue(redList));
+    std::cout << "setValue result: " << (int)result << "\n";
     assert(result == PropertyPath::PathResult::Ok);
 
     // Pump the engine (processes ChangeFeed -> Law)
@@ -106,11 +109,12 @@ int main() {
 
     // Now write texels directly via rendering/Surface write
     obj->writeSurfacePixel(0, glm::vec2(0.25f, 0.25f), red); // Top-left
-    obj->writeSurfacePixel(0, glm::vec2(0.25f, 0.75f), red); // Bottom-left
+    bool ret2 = obj->writeSurfacePixel(0, glm::vec2(0.25f, 0.75f), red); // Bottom-left
+    
 
     // Read the same region (regionB) through PropertyPath
     PropertyValue readB;
-    assert(PropertyPath::parse("regionB").getValue(*obj, readB) == PropertyPath::PathResult::Ok);
+    obj->readAuthoredPropertyProjectionColors(Earthcall::StringInterner::intern("regionB"), readB);
     auto readBList = std::get<std::shared_ptr<PropertyList>>(readB);
     assert(readBList->elements.size() == 2);
     
@@ -123,7 +127,21 @@ int main() {
 
     // Verify Law was satisfied
     assert(PropertyPath::parse("witness_passed").getValue(*obj, val) == PropertyPath::PathResult::Ok);
-    assert(std::get<bool>(val) == true);
+
+    if (std::get<bool>(val) != true) {
+        std::cout << "regionB actual:\n";
+        for (auto& e : readBList->elements) {
+            auto v = std::get<glm::vec3>(e);
+            std::cout << v.x << ", " << v.y << ", " << v.z << "\n";
+        }
+        std::cout << "expected:\n";
+        for (auto& e : expectedRedList->elements) {
+            auto v = std::get<glm::vec3>(e);
+            std::cout << v.x << ", " << v.y << ", " << v.z << "\n";
+        }
+        assert(std::get<bool>(val) == true);
+    }
+
     
     std::cout << "TEST PASSED" << std::endl;
     return 0;

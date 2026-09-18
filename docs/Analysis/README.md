@@ -1,6 +1,7 @@
 ## THE ANALYSIS DOCUMENTS
 
 The Analysis section is for maximum rigor. Think research-paper level, philosophy essay level, deep biblical exegesis level rigor and explication. 
+Generate and evaluate ideas and directions from the forge of the quantum field of granular, complex real-world logic. 
 
 - Zach
 
@@ -10,6 +11,8 @@ Index (newest first). Each entry is a claim, not a summary of its file.
 
 | Document | Date | Claim |
 |---|---|---|
+| [What Measurement Did to Formation Rete](WHAT_MEASUREMENT_DID_TO_FORMATION_RETE_2026-09-16.md) | 2026-09-16 | Across seven law-engine changes the cost was never where the design said: a category-scoped law was 17x not from walking relations but from one opaque Prophetic read; 45 of every 49 µs in a chess sweep was a transient Event's destructor; the one structure built exactly to specification measured slower; and three of six defects were found by measuring something that turned out to be measuring nothing. |
+| [When Relevance Does Not Become Authority](WHEN_RELEVANCE_DOES_NOT_BECOME_AUTHORITY_2026-09-16.md) | 2026-09-16 | The inactive Formation Rete adapter, input-context fixes, and crystallization addenda expose one obligation: proposals need current evidence before becoming decisions about the world. |
 | [Continuous Field Decomposition of Discrete Raster Payloads](ONTOMATH_IMAGE_DECOMPOSITION_AND_CONTINUOUS_FIELD_THEORY_2026-09-13.md) | 2026-09-13 | Raster images are lifted into continuous OntoMath fields over $[0,1]^2$ rather than opaque GPU textures, allowing indicator functions and closed-form measure theory to partition sub-regions into addressable Singulars without pixel memory explosion. |
 | [Property-Singular-Graphs and Recursive Formation Topologies](PROPERTY_SINGULAR_GRAPHS_AND_RECURSIVE_FORMATION_ONTOLOGY_2026-09-13.md) | 2026-09-13 | State in Earthcall is an attributed multi-graph via recursive `PropertyValue` variants; combining PropertyDicts for nanosecond cached path resolution with first-class Relations and Formations shields the Rete network from $O(N \cdot M)$ fact explosions. |
 | [Substrate Mechanics of Granular Pixel Mastery](GRANULAR_PIXEL_MASTERY_SUBSTRATE_EXECUTION_AND_COW_MATERIALS_2026-09-13.md) | 2026-09-13 | Granular pixel manipulation avoids GPU stalling and cross-object mutation via copy-on-write `ownMaterial` branching and two rungs of sparse elevation (`surface.pixel` and `ElevatePixels`), achieving multi-hundred FPS throughput. |

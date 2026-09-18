@@ -299,7 +299,7 @@ int main() {
                                     std::time(nullptr)}, *canvas);
     Property* pixel = canvas->findProperty("surface.pixel.0.3.4");
     check(pixel != nullptr, "one pixel can be elevated by authored AddProperty");
-    check(pixel != nullptr && near(std::get<glm::vec3>(pixel->value()),
+    check(pixel != nullptr && near([&]() { PropertyValue val; canvas->readAuthoredPropertyProjectionColors(Earthcall::StringInterner::intern("surface.pixel.0.3.4"), val); return std::get<glm::vec3>(val); }(),
                                    glm::vec3(0.2f, 0.3f, 0.9f)),
           "elevated pixel reads live texture state");
     check(pixel && pixel->setValue(PropertyValue(glm::vec3(0.9f, 0.1f, 0.2f))) &&
@@ -328,7 +328,7 @@ int main() {
     Property* region = canvas->findProperty("authored.left-quarter");
     check(region != nullptr,
           "authored ElevatePixels makes an OntoMath-defined set a named Property");
-    const PropertyValue regionSnapshot = region ? region->value() : PropertyValue{};
+    const PropertyValue regionSnapshot = region ? [&]() { PropertyValue val; canvas->readAuthoredPropertyProjectionColors(Earthcall::StringInterner::intern("authored.left-quarter"), val); return val; }() : PropertyValue{};
     const auto* regionValue = std::get_if<std::shared_ptr<PropertyList>>(&regionSnapshot);
     check(regionValue && *regionValue && (*regionValue)->elements.size() == 16u * 64u,
           "named Property contains exactly the samples in OntoMath's defined set");

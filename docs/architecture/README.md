@@ -10,8 +10,8 @@ A **framework name is not a directory name.** `Integration/` stays
 
 | Folder | Holds |
 |---|---|
-| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys, primary and sub-Relations |
-| [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law, Prophetic Rete, derived-state ledger |
+| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys, primary and sub-Relations, and the [`Property as Predication`](ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md) boundary between beings and their attributes |
+| [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law, Prophetic Rete, derived-state ledger, Formation Rete and its [`tiered relevance ladder`](law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md), [`direct-relevance`](law/FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md), and [`Property-addressing`](law/PROPERTY_ADDRESSING_IN_FORMATION_RETE.md) companions |
 | [`events/`](events/) | Event bus vs handler, hover / person / relation / physics & collision events ([`events/PHYSICS_AND_COLLISION.md`](events/PHYSICS_AND_COLLISION.md)) |
 | [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication, and the [`Geometry Execution Substrate Manifesto`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md) separating authored meaning from geometry IR/backend execution |
 | [`ourverse/`](ourverse/) | Ourverse the being; second-person frameworks |

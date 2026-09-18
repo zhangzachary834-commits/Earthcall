@@ -1,8 +1,8 @@
 # HTML Lexeme Formation Bridge — Implementation Plan
 
-**Status:** Planned / not implemented  
+**Status:** In Progress (Foundations Rungs 0–2 implemented and verified)  
 **Section:** Modalities · integration · web  
-**Date:** 2026-09-15  
+**Date:** 2026-09-15 (Updated 2026-09-16)  
 **Architecture:** [`docs/architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md`](../../../../architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md)  
 **Human origin:** Zachary Zhang specified that Earthcall should model website HTML as Lexeme Formations and retain a live local socket back into the page so Person-authored Earthcall changes can modify that page's DOM. The implementation below preserves that requirement while using the existing `RealWebView`, Language/Lexeme identity, Relations/Formations, EventBus/Law, and Foreign/Web boundaries instead of adding a parallel browser ontology.
 

@@ -67,6 +67,9 @@
 // To-do: docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md
 // ---------------------------------------------------------------------------
 
+
+// Zach: The adapter makes Chess takes longer. I'm going to personally audit to investigate why.
+
 class Formation;
 
 namespace Relevance {
