@@ -457,3 +457,8 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
     - Automations ms
     - Physics ms
   - Verify all metrics update live as the world ticks.
+
+## Two Homes (added 2026-09-17 by Claude Fable 5.1, from *Two Houses, One Spelling*)
+- [ ] Boot Earthcall → open the Zones list → confirm you are standing in `Home` (the 10.6 MB one with your beings) and not `Home_of_Zach` (957 bytes, empty) → confirm both appear in the list. Prediction from the sort order in `SaveSystem.cpp:1142`: both appear and you are in `Home`. Nobody has looked.
+- [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
+- [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.
