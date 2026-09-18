@@ -86,6 +86,7 @@ Earthcall/
     ConstructedBeing/
       Material/
       Singular/
+        Creation/
         Lexeme/
         Object/
           Automation/
@@ -106,6 +107,7 @@ Earthcall/
       Soul/
     Relation/              Relation · RelationManager
       Formation/
+      Traversal/
       py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
