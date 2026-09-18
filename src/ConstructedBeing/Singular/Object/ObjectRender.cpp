@@ -583,7 +583,14 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     if (!mine) return false;
     const int faces = getFaces() > 0 ? getFaces() : 1;
     if (face < 0 || face >= faces) return false;
-    if (static_cast<int>(mine->faceTextures.size()) != faces) mine->initFaceTextures(faces);
+    if (static_cast<int>(mine->faceTextures.size()) != faces) {
+        int w = 0, h = 0;
+        if (!mine->faceTextures.empty()) {
+            w = mine->faceTextures[0].width;
+            h = mine->faceTextures[0].height;
+        }
+        mine->initFaceTextures(faces, w, h);
+    }
     FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(face)];
     std::vector<glm::ivec2> selected;
     if (single) {
