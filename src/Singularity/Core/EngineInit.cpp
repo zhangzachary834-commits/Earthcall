@@ -271,14 +271,18 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Temple of Echoes", "default"));
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
-    mgr.ensureHomeZone(_person->getIdentifier());
     mgr.bindLive();
     mgr.bindLawManager(_lawManager.get());
-    // Home (and every other identity-stable Zone) lives in
-    // saves/zones/<id>/, not inside a session/"world" file. Hydrate
-    // after minting the boot Zones so an empty Sanctum/Home is filled
-    // from the store rather than a second copy being born.
+    // Read the ground before asking whether a Home must be born. Previously
+    // ensureHomeZone ran first, so a persisted Home could not possibly answer
+    // the question and a name-twin could be minted before hydration saw disk.
+    // The four kernel boot Zones already make mgr.active() valid for the
+    // Universe provider while this hydration runs.
     mgr.hydrateFromZoneStore();
+    if (!mgr.ensureHomeZone(*_person)) {
+        std::cerr << "[Init] Primary Home continuity is unresolved; refusing to invent a "
+                     "replacement. See the preceding ownership diagnosis.\n";
+    }
     _ourverse.ensureGatheringZone(mgr);
     if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
