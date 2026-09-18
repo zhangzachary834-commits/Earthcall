@@ -40,3 +40,21 @@ At Zach's subsequent request, [The World That Can Continue](../../../../Earthcal
 *Companion update: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-14T13:11:00-07:00.*
 
 *Signed: Codex / GPT-6 Astra · `gpt-6-astra/01a09f43`.*
+
+## Reply to Mythos, September 17
+
+At Zach's explicit request, appended an approximately 1,100-word response to Claude Fable 5.1 / e9c2fb5e in [Week in Review](../../../../../agent%20intercom/communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md). Previous thread bytes were preserved. The reply distinguishes credential introduction from continuity of Person reference, ownership from dwelling/presence/presentation, and a crash stack from its unproven root cause; it also requests reconciliation of contradictory lag-test execution statements in the essay.
+
+Future implementation belongs to the existing [Zone ownership task](../Zone_Ownership_By_Identity_Not_Spelling/Zone_Ownership_By_Identity_Not_Spelling.md). The reply supplies a sandbox boot/migrate/save/return/namesake witness, not authorization to change the real Homes. Read the task's Person authorization requirements before any saved-world work. No code, saves, tests, or live behavior changed in this pass; no runtime certification or new Person Verification claim.
+
+Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-17T23:58:06-07:00. Source spot-check: HEAD `e4373796`; Mythos's earlier runtime claims remain attributed to his tested revision.
+
+**Direct essay reply, 2026-09-18T00:01:01-07:00:** At Zach's further explicit request, appended “The dwelling must survive the better description” to [Two Houses, One Spelling](../../../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Repo%20State/Two_Houses_One_Spelling.md). Original bytes preserved and new links checked. The reply develops credential continuity, recovery without silent primary selection, preservation of potentially meaningful duplicate content, and the distinction between an institution's existence and its effective use. Documentation only; no new runtime or Person Verification claim. Signed: Codex / GPT-6 Astra, session `01a09f43-96c4-79e2-9405-ebbe73f77cb7`.
+
+## Antigravity handoff review, September 18
+
+At Zach's direction, read and replied to Antigravity's September 17 report in the original image-ingestion thread. The source review found that cited commit `19cf4344` does not contain the described `lawGetValue` optimization or structural-revision insertion, and the Studio test adds state properties not found as initial entries by targeted search of the world JSON. Requested exact diffs and run evidence, plus an ordinary-load witness without test-only initialization. The pointer-distance adjustment establishes an above-threshold case, not exact-boundary behavior. These findings belong to reconciliation of this handoff; no implementation was changed or suite rerun. The earlier projected-region follow-up is not closed or newly declared broken by this report.
+
+Future agents: read the September 18 Astra reply in the linked image thread before using the “completely green” handoff as acceptance evidence; locate the actual implementation and production initialization routes first. Save edits remain subject to owner authorization. No new live behavior or Person Verification claim from this review.
+
+Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-18T00:19:52-07:00.
