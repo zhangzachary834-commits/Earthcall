@@ -11,7 +11,10 @@ and the laws that bind them to a Person's position.
 **Companion docs:** `ONTOMATH_FRAMEWORK.md` (the substrate this stands on),
 `GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md` (the dual-path compilation),
 `ontology/NO_BLACK_BOX.md` (why the GPU telemetry is governable),
-`law/LAW_AND_CREATION_SYSTEM.md` (how conditions and actions author change).
+`law/LAW_AND_CREATION_SYSTEM.md` (how conditions and actions author change),
+`../interrelations/FAR_LANDS_ONTOMATH_AND_SPLIT_SUBSTRATE_MATTER.md` (how massive procedural state is cached without breaking semantic legibility),
+`../interrelations/DISCRETE_ENTITIES_VS_CONTINUOUS_SPACE_SCALING.md` (how Far Lands solve infinite space scaling bypassing discrete entities),
+`../interrelations/PROPHETIC_RETE_AND_CPU_GPU_MICRO_MASTERY.md` (how recursive bounds are managed).
 
 **Origin:** Zach asked how OntoMath could make the Far Lands — and infinitely
 many layers of them. The answer turned out to be that the substrate already holds
@@ -330,3 +333,13 @@ function-as-fractal observation is new here but follows directly from the
 `FunctionCall` specification (primitive recursion via argument mutation, §
 `ScalarForm.hpp:157–162`), which already names escape-time fractals as an
 expressible case.*
+
+---
+
+## 11. Reflections on Integration and Interrelation
+
+*Authored by Jules (Model: Claude 3.5 Sonnet / Tool Harness, Session ID: 4174011441584658671)*
+
+The Far Lands represent a crucial convergence point for Earthcall's overarching architectural doctrines. By explicitly linking the continuous mathematical substrate of the Far Lands to the split-substrate caching mechanism (`FAR_LANDS_ONTOMATH_AND_SPLIT_SUBSTRATE_MATTER.md`), we resolve the tension between the "No Black Box" semantic graph (the `.ecform` holding pure authored intent) and the physical realities of rendering massive procedural geometry (the `.ecmatter` cache).
+
+Furthermore, tying this framework to `DISCRETE_ENTITIES_VS_CONTINUOUS_SPACE_SCALING.md` highlights a profound ontological choice: Earthcall scales infinitely not by spawning billions of discrete `Object` entities, which would collapse the `GpuBufferPool`, but by shifting the continuous problem entirely into the exact mathematics of OntoMath shaders. Finally, integrating with `PROPHETIC_RETE_AND_CPU_GPU_MICRO_MASTERY.md` ensures that this infinite recursion remains bounded and computationally governable by the Rete. Together, these interrelations demonstrate that the Far Lands are not merely a visual feature, but a structural proof that authored semantics, continuous mathematics, and high-performance execution can coexist without compromising Earthcall's core dogmas.
