@@ -160,6 +160,19 @@ int main() {
     assert(api.getDataKeys().empty()); // Hardcoded
 
 
+    // --- UI CONTROL & CURSOR TESTS ---
+    std::cout << "\n--- UI Control & Cursor Tests ---" << std::endl;
+    assert(!api.setCursorType("pointer") && "setCursorType should fail without ui_control permission");
+    assert(api.getCursorType() == "default");
+
+    Integration::SecurityManager::instance().grantPermission(
+        Integration::PermissionType::UI_CONTROL, "earthcall_api"
+    );
+    assert(api.hasPermission("ui_control"));
+
+    assert(api.setCursorType("pointer") && "setCursorType should succeed with ui_control permission");
+    assert(api.getCursorType() == "pointer");
+
     // --- COMMUNICATION TESTS ---
     std::cout << "\n--- Communication Tests ---" << std::endl;
     bool event_received = false;
@@ -178,14 +191,14 @@ int main() {
 
     // --- PERMISSIONS TESTS ---
     std::cout << "\n--- Permissions Tests ---" << std::endl;
-    assert(!api.hasPermission("ui_control"));
-    api.requestPermission("ui_control");
+    assert(!api.hasPermission("network_access"));
+    api.requestPermission("network_access");
     // Depending on SecurityManager, it might auto-grant or just queue.
     // We explicitly grant to test getGrantedPermissions properly.
     Integration::SecurityManager::instance().grantPermission(
-        Integration::PermissionType::UI_CONTROL, "earthcall_api"
+        Integration::PermissionType::NETWORK_ACCESS, "earthcall_api"
     );
-    assert(api.hasPermission("ui_control"));
+    assert(api.hasPermission("network_access"));
 
     auto granted = api.getGrantedPermissions();
     // Check if the granted string vector contains the mapped integer for UI_CONTROL

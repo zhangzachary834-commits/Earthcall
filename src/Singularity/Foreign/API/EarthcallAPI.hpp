@@ -78,10 +78,12 @@ public:
     std::string loadData(const std::string& key);
     std::vector<std::string> getDataKeys();
 
-    // Communication
+    // Communication & UI Control
     void registerCallback(const std::string& event_type, std::function<void(const std::string&)> callback);
     void unregisterCallback(const std::string& event_type);
     void sendEvent(const std::string& event_type, const std::string& data);
+    bool setCursorType(const std::string& cursorType);
+    std::string getCursorType() const;
 
     // Permissions
     bool requestPermission(const std::string& permission);
@@ -115,6 +117,9 @@ private:
     // Permissions
     std::vector<std::string> _grantedPermissions;
     std::map<std::string, std::function<void(const std::string&)>> _callbacks;
+
+    // UI Cursor state
+    std::string _currentCursorType = "default";
 
     // Internal methods
     bool _checkPermission(const std::string& permission) const;

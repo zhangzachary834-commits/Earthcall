@@ -1141,12 +1141,12 @@ void RealWebView::_handleUISetCursor(const nlohmann::json& data) {
     try {
         std::string cursorType = data["cursorType"];
         
-        std::cout << "🖱️ [INTEGRATION] Would set cursor: " << cursorType << std::endl;
+        std::cout << "🖱️ [INTEGRATION] Setting cursor: " << cursorType << std::endl;
         
-        // TODO: Integrate with Earthcall's cursor system
+        bool success = getEarthcallAPI().setCursorType(cursorType);
         nlohmann::json response = {
             {"type", "cursor_set"},
-            {"data", {{"cursorType", cursorType}, {"success", true}}}
+            {"data", {{"cursorType", cursorType}, {"success", success}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {
