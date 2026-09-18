@@ -146,21 +146,26 @@ int main() {
         return std::string(buffer);
     };
 
-    // OFF is the default, and off means off: no roads are noted and none walked,
-    // so the adapter costs nothing at all until someone turns it on.
+    // This test explicitly measures both modes even though the adapter now ships
+    // ON. Off must still mean off: no roads maintained and no query overhead.
+    mgr.setUseSlowAdapter(false);
     ring(1);
     check(mgr.slowAdapter().roadsKnown() == 0,
           "while the adapter is off it maintains nothing");
 
-    mgr.setUseSlowAdapter(false);  reset();  ring(6);
+    reset();  ring(6);
     const std::string sweeping = snapshot(nullptr);
 
-    // Turning it on re-registers the laws' roads; warm it so the phase below
-    // really reads a pre-loaded road rather than quietly falling back to the
-    // sweep and proving nothing.
+    // Turning it on re-registers the laws' roads on the SLOW CLOCK, not in
+    // LawManager::tick(). Warm only through serviceSlowAdapterClock so this
+    // parity test also guards the independent scheduling boundary.
     mgr.setUseSlowAdapter(true);
-    ring(1);
-    for (int i = 0; i < 4; ++i) mgr.slowAdapter().step();
+    double adapterWall = 0.0;
+    mgr.serviceSlowAdapterClock(adapterWall); // prime only
+    for (int i = 0; i < 4; ++i) {
+        adapterWall += mgr.slowAdapterClockPeriodSeconds();
+        mgr.serviceSlowAdapterClock(adapterWall);
+    }
     check(mgr.slowAdapter().roadsKnown() == 1,
           "turned on, it knows the one road these laws travel (the Any and Not laws yield none)");
     check(mgr.slowAdapter().ready("law-1"),
@@ -176,6 +181,10 @@ int main() {
     population.push_back(&latecomer);
     graph.add(std::make_shared<Relation>("instance-of", latecomer, target, true));
     Universe::instance().bumpStructuralRevision();
+    // The stale road is safe immediately (candidatesFor refuses it), then the
+    // independent clock is allowed to catch up before the measured ON phase.
+    adapterWall += mgr.slowAdapterClockPeriodSeconds();
+    mgr.serviceSlowAdapterClock(adapterWall);
     reset();  ring(6);
     const std::string withLate = snapshot(&latecomer);
     mgr.setUseSlowAdapter(false);  reset();  latecomer.setDynamicProperty("hits", PropertyValue(0.0));  ring(6);
