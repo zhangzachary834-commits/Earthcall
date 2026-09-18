@@ -79,7 +79,8 @@ jobs:
             synthesis_studio_zone_closure_test \
             synthesis_studio_full_store_boot_test \
             second_nature_law_authoring_test \
-            second_nature_law_forge_zone_test
+            second_nature_law_forge_zone_test \
+            material_being_test
 
       - name: Run Terminal exact-reference smoke
         shell: bash
@@ -99,5 +100,5 @@ jobs:
         run: |
           set -euxo pipefail
           ctest --test-dir build --output-on-failure \
-            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|perlin_zone_field_restore_test|object_roundtrip_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test)
+            -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|perlin_zone_field_restore_test|object_roundtrip_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|material_being_test)$'
 
