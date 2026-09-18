@@ -1,6 +1,7 @@
 #include "Identity/PersonMigration.hpp"
 
 #include "Identity/Claim.hpp"
+#include "Person/Person.hpp"
 
 #include <algorithm>
 #include <set>
@@ -116,6 +117,47 @@ int rewriteLawAuthors(nlohmann::json& save,
 }
 
 } // namespace
+
+std::optional<SingularId> migratePersonIdentity(::Person& person,
+                                                IdentityLedger& ledger,
+                                                KeyStore& keys,
+                                                const std::string& passphrase) {
+    if (person.hasIdentity()) return person.personId();
+    if (passphrase.empty()) {
+        std::cerr << "[PersonMigration] REFUSED live Person migration: empty passphrase.\n";
+        return std::nullopt;
+    }
+
+    const std::string legacyName = person.getDisplayName();
+    if (legacyName.empty()) {
+        std::cerr << "[PersonMigration] REFUSED live Person migration: Person has no display name.\n";
+        return std::nullopt;
+    }
+
+    const auto prior = ledger.find(legacyName);
+    auto resolved = ledger.resolveOrMint(legacyName, keys, passphrase);
+    if (!resolved || !resolved->canAuthenticate()) {
+        std::cerr << "[PersonMigration] REFUSED live Person migration for '"
+                  << legacyName << "': no durable identity could be resolved.\n";
+        return std::nullopt;
+    }
+
+    // resolveOrMint seals a new private key before it records the in-memory
+    // mapping. The mapping must itself reach disk before the live Person is
+    // allowed to cross the identity boundary; otherwise a crash here would
+    // leave a key no future boot can prove belongs to this legacy Person.
+    if (!ledger.save()) {
+        if (!prior.has_value()) {
+            (void)keys.remove(*resolved);
+        }
+        std::cerr << "[PersonMigration] REFUSED live Person migration for '"
+                  << legacyName << "': identity ledger could not be persisted.\n";
+        return std::nullopt;
+    }
+
+    person.setPersonId(*resolved);
+    return resolved;
+}
 
 MigrationReport migrateSave(nlohmann::json& save,
                             IdentityLedger& ledger,
