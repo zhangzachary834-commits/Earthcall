@@ -142,29 +142,29 @@ std::optional<SingularId> migratePersonIdentity(::Person& person,
         return std::nullopt;
     }
 
-    // resolveOrMint seals a new private key before it records the in-memory
-    // mapping. The mapping must itself reach disk before the live Person is
-    // allowed to cross the identity boundary; otherwise a crash here would
-    // leave a key no future boot can prove belongs to this legacy Person.
-    if (!ledger.save()) {
-        if (!prior.has_value()) {
-            (void)keys.remove(*resolved);
-        }
-        std::cerr << "[PersonMigration] REFUSED live Person migration for '"
-                  << legacyName << "': identity ledger could not be persisted.\n";
-        return std::nullopt;
-    }
-
     // Possessing a public ledger entry is not authentication. An existing
     // migration can only re-enter the live Person when this boot can actually
     // unseal the corresponding private key with the supplied passphrase.
-    // (For a newly minted identity this also verifies the key we just sealed.)
+    // For a newly minted identity this also verifies the key we just sealed,
+    // BEFORE we make the name -> identity mapping durable.
     if (!keys.load(*resolved, passphrase).has_value()) {
         if (!prior.has_value()) {
             (void)keys.remove(*resolved);
         }
         std::cerr << "[PersonMigration] REFUSED live Person migration for '"
                   << legacyName << "': the stored identity key could not be unlocked.\n";
+        return std::nullopt;
+    }
+
+    // resolveOrMint seals a new private key and records the mapping in memory.
+    // Only after the key is proven usable do we persist that mapping. The live
+    // Person crosses the identity boundary last.
+    if (!ledger.save()) {
+        if (!prior.has_value()) {
+            (void)keys.remove(*resolved);
+        }
+        std::cerr << "[PersonMigration] REFUSED live Person migration for '"
+                  << legacyName << "': identity ledger could not be persisted.\n";
         return std::nullopt;
     }
 
