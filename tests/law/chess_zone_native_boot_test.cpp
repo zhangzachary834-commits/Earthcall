@@ -60,7 +60,9 @@ void click(Singularity::Input::InteractionChannel* interaction,
     interaction->pointerWorld = world;
     Core::EventBus::instance().publish(
         ECA::Event{"object-clicked", subject, nullptr, std::time(nullptr)});
-    laws.tick();
+    for (int i = 0; i < 5; ++i) {
+        laws.tick();
+    }
 }
 
 struct Scratch {
