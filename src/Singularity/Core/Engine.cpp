@@ -89,7 +89,7 @@ std::filesystem::path findRepoRoot() {
         if (!ec) seeds.push_back(exe.parent_path());
     }
 #endif
-    for (auto dir : seeds) {
+    for (auto& dir : seeds) {
         for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
             if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
                 std::filesystem::is_directory(dir / "saves", ec)) {
