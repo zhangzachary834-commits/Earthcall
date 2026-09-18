@@ -41,7 +41,9 @@
 #include <set>
 #include <functional>
 #include <chrono>
+#ifndef __EMSCRIPTEN__
 #include <openssl/sha.h>
+#endif
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -1335,6 +1337,7 @@ constexpr int kMatterSchemaVersion = 1;
 // borrow a hash utility would be a backward dependency edge for a
 // one-function need.
 std::string sha256Hex(const std::vector<uint8_t>& data) {
+#ifndef __EMSCRIPTEN__
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(data.data(), data.size(), hash);
     static const char hexDigits[] = "0123456789abcdef";
@@ -1345,6 +1348,9 @@ std::string sha256Hex(const std::vector<uint8_t>& data) {
         out.push_back(hexDigits[byte & 0x0F]);
     }
     return out;
+#else
+    throw std::runtime_error("sha256Hex refused: no OpenSSL in WASM build");
+#endif
 }
 
 // Writes `bytes` to `finalPath` via write-temp-then-atomic-rename, so a

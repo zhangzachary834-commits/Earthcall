@@ -590,7 +590,11 @@ bool WebGpuRenderer::initGpuTimestampQueries(bool deviceCapability) {
         }
     }
 
+#ifdef __EMSCRIPTEN__
+    _gpuTimestampPeriodNs = 1.0f;
+#else
     _gpuTimestampPeriodNs = wgpuQueueGetTimestampPeriod(_queue);
+#endif
     if (!std::isfinite(_gpuTimestampPeriodNs) || _gpuTimestampPeriodNs <= 0.0f) {
         releaseGpuTimestampQueries();
         return false;
