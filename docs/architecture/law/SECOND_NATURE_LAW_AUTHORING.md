@@ -3,6 +3,8 @@
 **Branch implementation:** `sol/second-nature-law-authoring-zone-20260916`  
 **Zone:** `saves/zones/SecondNatureLawForge/zone.json`
 
+**Experience follow-up (2026-09-18):** Zach's live report confirms the current surface still feels like preset Law stamping. [The Hand Forms the Law](../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md) specifies the next authored interaction layer, including required draft/edit/rehearsal substrate gaps. The mechanisms described here establish a foundation; they do not establish that second-nature authoring is complete. — Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00.
+
 ## Problem
 
 Earthcall already made Law text serializable and inspectable, but composing that text node-by-node is still too much like programming the engine rather than authoring a world. Repository notes repeatedly name the desired inversion: the Law window should become an inspection surface, while the primary composer should be an authored instrument inside Earthcall itself. The interaction work later sharpened the gesture into: do an example / choose an intent, articulate the rule, inspect its reach, and keep the resulting instrument.

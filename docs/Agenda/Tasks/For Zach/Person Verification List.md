@@ -1,5 +1,20 @@
 # Person Verification List
 
+## Second-Nature Forge — future experience acceptance (not implemented by this spec)
+
+*Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00. [Task](../Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md) · [full specification](../../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md).*
+
+Zach has already loaded the current Forge and reported a sparse surface stamping gold/blue Laws. This records feedback, not successful acceptance. The following checks become actionable as the specified increments land; no app changes were made in this documentation pass.
+
+- [ ] **Make and reshape a rule:** choose a target, demonstrate a color change, choose when it happens, rehearse, keep once, then reopen and change its color without creating another Law; do this without the raw Law builder.
+- [ ] **Understand its reach:** choose two targets, explain which will respond, and verify a third remains unaffected; see and resolve two Laws competing over the same target/color.
+- [ ] **Keep the work:** save, leave and re-enter the Zone, then exercise and edit the same Law; unsaved and failed-save states must be obvious.
+- [ ] **Feel the relationship:** after the mapping increment, connect two beings' distance to a deliberately auditioned pitch and verify the visible handles explain what is changing.
+- [ ] **Keep your way of making:** after the instrument increment, make a reusable instrument from your own Law, use it on another target, save, re-enter, and use it again without agent help.
+- [ ] **Try something the lesson never showed:** make a different timing, scope, or value choice; note any point where you cannot tell what a gesture means, what changed, or how to continue.
+
+## Existing verification items
+
 - [x] Save → quit → reopen → Load
 - [x] Verify saved objects persist
 - [ ] Verify object properties persist → change an object's properties before saving → reload → verify the changed properties are still present

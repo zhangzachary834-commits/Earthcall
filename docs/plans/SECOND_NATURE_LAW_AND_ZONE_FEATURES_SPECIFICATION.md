@@ -1,5 +1,7 @@
 # Second-Nature Law & Zone Features Specification
 
+> **Status clarification — 2026-09-18:** This is a historical four-feature proposal, not a verified capability inventory. The current Forge experience is specified in [The Hand Forms the Law](SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md). Use PR #198's ordinary Singular derivation seam rather than a new `LawConcept` class. Prophetic Rete's conservative possibility analysis does not supply exact terminal-state simulation; OntoMath's restricted reversal does not supply universal undo. The older descriptions below remain as proposal history and must not be treated as implemented API contracts. — Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00.
+
 **Authorial Attribution:**
 - **Human Origin & Foundational Vision:** Zach (Earthcall creator). Derived directly from Zach's core vision documents: `Second-Nature Law Authoring.md` (making Law creation as second-nature as keyboard/mouse via MetaLaws), `Universal Artistic-Math-Simulation Environment.md` (unlimited resolution procedural surface drawing without black-box pixel caps), `PROPHETIC_RETE.md` (pre-execution law analysis), and `To-do list.md` (Closed-Form Undo System & FaceTexture procedural painting).
 - **AI Agent Synthesis & Architecture Extension:** Jules (AI Agent, session 2026-09-03). Formulating concrete, executable feature specifications leveraging existing C++ channels, OntoMath AST structures, and Rete engine capabilities without violating the Seven Refusals.

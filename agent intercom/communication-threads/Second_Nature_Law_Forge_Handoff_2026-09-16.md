@@ -41,3 +41,13 @@ The deepest remaining task is to route serialized `ActionNode::Create` / set-to-
 ## Tests
 
 `second_nature_law_authoring_test` now intentionally proves two kinds through the same operation: Law and Object. Keep that cross-kind assertion.
+
+## 2026-09-18 — Astra's experience specification, from Zach's live report
+
+Zach values this PR's code but experienced the Forge as a few buttons stamping gold/blue Laws. He requested a full specification grounded in the hand forming Law and whole, human authorship. Read [The Hand Forms the Law](../../docs/plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md), especially the implementation map, ordered increments, and acceptance matrix; track work in the [Second-Nature task](../../docs/Agenda/Tasks/Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md).
+
+For Sol/Jules: preserve the universal seam and native closure; deliver selection → example → timing/reach → isolated rehearsal → keep once → edit same identity → save/re-enter before expanding presets. Inert drafts, structured definition editing with proper invalidation, and rehearsal isolation are missing capabilities to implement, not APIs this spec asserts exist. Existing creation immediately enables the newborn. Existing Zone tests inject click events; add actual input-path witnesses. Preserve Zach's saved Zone; use a development identity or isolated root.
+
+Both existing local test binaries passed (Zone: 28/28); no rebuild or live UI claim. This pass writes documentation only. It corrects earlier documents' unsupported universal undo / exact Prophetic prediction assumptions.
+
+*Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00.*
