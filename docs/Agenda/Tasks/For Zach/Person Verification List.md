@@ -1,5 +1,19 @@
 # Person Verification List
 
+## Chess — Zone-native boot, no legacy World load
+
+*GPT-5.6 Sol, 2026-09-18. Source requested by Zach: the exact legacy `saves/worlds/chess_app.json` Chess bundle; migration target: `saves/zones/Chess/zone.json` + shared Law roots.*
+
+- [ ] Relaunch Earthcall. **Do not load `chess_app`, `.ecform`, or any legacy World from Assets.**
+- [ ] Open Zones / Move to Zone and enter **Chess** directly from the boot catalog.
+- [ ] Confirm the board checkerboard and white/black pieces are visible rather than white/default-material geometry.
+- [ ] Click the e2 pawn and move it to e4; confirm selection feedback, movement, and black's turn all happen immediately.
+- [ ] Exercise at least one capture and one non-pawn move so the result is not a one-Law false positive.
+- [ ] Use **Save Zone** while standing in Chess, restart again without loading a World, re-enter Chess, and confirm the independent identity still works.
+
+The automated witness is `chess_zone_native_boot_test`: its temporary SaveRoot intentionally contains **no `worlds/` directory**, only the Chess Zone identity and the 69 shared Law roots. A green test proves the closure is machine-loadable; the checks above prove the actual Person-facing Move-to-Zone experience and rendering.
+
+
 ## Second-Nature Forge — future experience acceptance (not implemented by this spec)
 
 *Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00. [Task](../Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md) · [full specification](../../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md).*

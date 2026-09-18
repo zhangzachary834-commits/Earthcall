@@ -269,6 +269,13 @@ bool ZoneManager::switchTo(size_t index)
         }
         _activeZoneLawIds = std::move(requestedLawIds);
 
+        // Zone identities hydrate before their referenced authored Laws become
+        // eligible. Relation endpoints that are Laws are therefore legitimately
+        // pending on the first pass. Legacy loadState already retries persisted
+        // Relations after authoredLaws arrive; Move to Zone must complete the
+        // same closure without requiring a conglomerate World.
+        applyFormationRelations(*targetZone, identity);
+
         _currentIndex = index;
         // THE WORLD IN FRONT OF THE PERSON WAS JUST REPLACED, and nothing else
         // says so. EngineInit's Universe providers read `active()` on every
