@@ -53,10 +53,10 @@ int main() {
     ZoneManager manager;
     check(manager.ensureHomeZone(person1), "Home zone ensured for person1");
 
-    Zone* home1 = manager.findPrimaryHome(person1);
+    const Zone* home1 = manager.findPrimaryHome(person1);
     check(home1 != nullptr, "findPrimaryHome(person1) finds Home for person1");
 
-    Zone* home2 = manager.findPrimaryHome(person2);
+    const Zone* home2 = manager.findPrimaryHome(person2);
     check(home2 == nullptr, "findPrimaryHome(person2) returns nullptr despite matching display name");
 
     check(manager.findPrimaryHome(person1.getIdentifier()) == home1, "findPrimaryHome by person1 identifier succeeds");
