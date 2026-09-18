@@ -101,3 +101,60 @@ jobs:
           ctest --test-dir build --output-on-failure \
             -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|perlin_zone_field_restore_test|object_roundtrip_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test)
 
+
+
+  slow-adapter-independent-clock:
+    name: Slow Adapter independent clock (macOS)
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build Slow Adapter witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel 4 --target \
+            slow_adapter_test \
+            slow_adapter_parity_test \
+            slow_adapter_clock_test \
+            slow_adapter_zone_perf_test
+
+      - name: Verify Slow Adapter soundness and independent cadence
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir build --output-on-failure \
+            -R '^(slow_adapter_test|slow_adapter_parity_test|slow_adapter_clock_test)$'
+
+      - name: Measure adapter impact across authored worlds
+        shell: bash
+        run: |
+          set -euo pipefail
+          worlds=(
+            saves/worlds/chess_app.json
+            saves/worlds/synthesis_studio.json
+            saves/worlds/synthesis_studio_living.json
+            saves/worlds/noise_floor.json
+          )
+          : > slow-adapter-perf.log
+          for world in "${worlds[@]}"; do
+            ./build/slow_adapter_zone_perf_test "$world" --adapter=off --frames=120 >> slow-adapter-perf.log
+            ./build/slow_adapter_zone_perf_test "$world" --adapter=on  --frames=120 >> slow-adapter-perf.log
+          done
+          grep '^ADAPTER_PERF ' slow-adapter-perf.log
