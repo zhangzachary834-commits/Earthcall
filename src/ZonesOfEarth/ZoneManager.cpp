@@ -1,5 +1,7 @@
 #include "ZoneManager.hpp"
 #include "HomesOfEarth/Home.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Relation/Relation.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -367,6 +369,163 @@ void ZoneManager::bindLive() { g_liveZones = this; }
 
 ZoneManager* ZoneManager::live() { return g_liveZones; }
 
+namespace {
+constexpr const char* kOwnedByRelation = "owned-by";
+
+bool relationNamesOwner(const Zone& zone, const Person& person) {
+    const std::string personId = person.getIdentifier();
+    for (const auto& relation : zone.getFormation().relations().getAll()) {
+        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
+        const bool startsAtZone = relation->a() == &zone
+            || relation->aId() == zone.getIdentifier();
+        if (!startsAtZone) continue;
+        if (relation->b() == &person) return true;
+        if (!personId.empty() && relation->bId() == personId) return true;
+    }
+    return false;
+}
+
+bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
+    if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
+        return false;
+    }
+    if (zone.owner() == person.getIdentifier()) return true;
+    if (!person.hasIdentity()) return zone.owner() == person.getDisplayName();
+
+    // Once the Person has a key, spelling alone is deliberately insufficient.
+    // The ONE legitimate bridge from an old owner string to a keyed Person is
+    // the migration ledger: it records the explicit trust-on-first-migration
+    // act that this legacy spelling was signed over to this exact SingularId.
+    Identity::IdentityLedger ledger;
+    if (!ledger.load()) return false;
+    const auto migrated = ledger.find(zone.owner());
+    return migrated.has_value() && *migrated == person.personId();
+}
+
+bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
+    return relationNamesOwner(zone, person) || legacyOwnerNamesPerson(zone, person);
+}
+
+std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,
+                                               const Person& person) {
+    std::vector<const Zone*> matches;
+    for (const auto& zone : manager.zones()) {
+        if (!zone || !zone->isPrimaryHome()) continue;
+        if (zoneNamesPersonOwner(*zone, person)) matches.push_back(zone.get());
+    }
+    return matches;
+}
+
+void reportAmbiguousPrimaryHomes(const Person& person,
+                                 const std::vector<const Zone*>& matches) {
+    std::cerr << "[zones] REFUSED primary Home resolution for Person '"
+              << person.getIdentifier() << "': " << matches.size()
+              << " primary Homes claim the same Person (";
+    for (std::size_t i = 0; i < matches.size(); ++i) {
+        if (i) std::cerr << ", ";
+        std::cerr << "'" << matches[i]->getIdentifier() << "'";
+    }
+    std::cerr << "). No alphabetical winner is chosen and no replacement Home is minted. "
+                 "Repair requires explicit Person authorization.\n";
+}
+
+bool bindOwnedBy(Zone& zone, Person& person) {
+    const std::string personId = person.getIdentifier();
+    for (const auto& relation : zone.getFormation().relations().getAll()) {
+        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
+        const bool startsAtZone = relation->a() == &zone
+            || relation->aId() == zone.getIdentifier();
+        if (!startsAtZone) continue;
+        if (relation->b() == &person || relation->bId() == personId) {
+            // Hydration can leave a saved relation temporarily unbound. Once the
+            // same Person is present, bind the actual beings so the next save
+            // emits their current stable identifiers rather than stale spellings.
+            if (relation->a() != &zone || relation->b() != &person) {
+                relation->bind(&zone, &person);
+            }
+            return true;
+        }
+        std::cerr << "[zones] REFUSED owned-by binding for Home '"
+                  << zone.getIdentifier() << "': an owned-by edge already names '"
+                  << relation->bId() << "', not Person '" << personId
+                  << "'. Ownership conflict remains visible.\n";
+        return false;
+    }
+
+    auto relation = std::make_shared<Relation>(kOwnedByRelation, zone, person, true, 1.0f);
+    if (!zone.getFormation().addRelation(relation)) {
+        std::cerr << "[zones] REFUSED owned-by binding for Home '"
+                  << zone.getIdentifier() << "': the Relation graph refused the edge.\n";
+        return false;
+    }
+    return true;
+}
+} // namespace
+
+Zone* ZoneManager::findPrimaryHome(Person& person) {
+    return const_cast<Zone*>(
+        static_cast<const ZoneManager*>(this)->findPrimaryHome(
+            static_cast<const Person&>(person)));
+}
+
+const Zone* ZoneManager::findPrimaryHome(const Person& person) const {
+    const auto matches = primaryHomesForPerson(*this, person);
+    if (matches.size() > 1) {
+        reportAmbiguousPrimaryHomes(person, matches);
+        return nullptr;
+    }
+    return matches.empty() ? nullptr : matches.front();
+}
+
+bool ZoneManager::ensureHomeZone(Person& person) {
+    const std::string personId = person.getIdentifier();
+    if (personId.empty()) return false;
+
+    const auto matches = primaryHomesForPerson(*this, person);
+    if (matches.size() > 1) {
+        reportAmbiguousPrimaryHomes(person, matches);
+        return false;
+    }
+    if (matches.size() == 1) {
+        Zone* existing = const_cast<Zone*>(matches.front());
+        existing->markPrimaryHome();
+        if (existing->owner().empty()) {
+            existing->setOwner(personId, Zone::kOwnerKindPerson);
+        }
+        return bindOwnedBy(*existing, person);
+    }
+
+    // A save from before ownership existed may hold an unowned "Home". Claim
+    // it instead of minting a name-twin, then immediately ground ownership in
+    // the Person being rather than leaving the display string authoritative.
+    for (auto& zone : _zones) {
+        if (zone && zone->name() == "Home" && zone->owner().empty()
+            && !zone->isOurverseGathering()) {
+            zone->markPrimaryHome();
+            zone->setOwner(personId, Zone::kOwnerKindPerson);
+            return bindOwnedBy(*zone, person);
+        }
+    }
+
+    bool homeSlugFree = true;
+    for (const auto& zone : _zones) {
+        if (zone && zone->getIdentifier() == "Home") {
+            homeSlugFree = false;
+            break;
+        }
+    }
+    const std::string id = homeSlugFree ? std::string("Home")
+                                        : std::string("Home_of_") + personId;
+    auto home = std::make_shared<Home>(id, "strict");
+    home->markPrimaryHome();
+    home->setOwner(personId, Zone::kOwnerKindPerson);
+    if (!bindOwnedBy(*home, person)) return false;
+    addZone(home);
+    printf("[Init] Home established for '%s' (zone count now %zu)\n",
+           personId.c_str(), _zones.size());
+    return true;
+}
+
 Zone* ZoneManager::findPrimaryHome(const std::string& personId) {
     return const_cast<Zone*>(
         static_cast<const ZoneManager*>(this)->findPrimaryHome(personId));
@@ -374,10 +533,19 @@ Zone* ZoneManager::findPrimaryHome(const std::string& personId) {
 
 const Zone* ZoneManager::findPrimaryHome(const std::string& personId) const {
     if (personId.empty()) return nullptr;
+    const Zone* found = nullptr;
     for (const auto& zone : _zones) {
-        if (!zone) continue;
-        if (zone->isPrimaryHome() && zone->owner() == personId) return zone.get();
+        if (!zone || !zone->isPrimaryHome() || zone->owner() != personId) continue;
+        if (found) {
+            std::cerr << "[zones] REFUSED legacy primary Home resolution for owner '"
+                      << personId << "': both '" << found->getIdentifier() << "' and '"
+                      << zone->getIdentifier()
+                      << "' are primary. No load-order winner is chosen.\n";
+            return nullptr;
+        }
+        found = zone.get();
     }
+    if (found) return found;
     for (const auto& zone : _zones) {
         if (!zone) continue;
         if (zone->name() == "Home" && zone->owner() == personId
@@ -391,6 +559,24 @@ const Zone* ZoneManager::findPrimaryHome(const std::string& personId) const {
 
 void ZoneManager::ensureHomeZone(const std::string& personId) {
     if (personId.empty()) return;
+
+    std::size_t primaryMatches = 0;
+    Zone* exact = nullptr;
+    for (auto& zone : _zones) {
+        if (!zone || !zone->isPrimaryHome() || zone->owner() != personId) continue;
+        ++primaryMatches;
+        if (!exact) exact = zone.get();
+    }
+    if (primaryMatches > 1) {
+        std::cerr << "[zones] REFUSED legacy ensureHomeZone for owner '" << personId
+                  << "': " << primaryMatches
+                  << " primary Homes already claim that spelling. No replacement is minted.\n";
+        return;
+    }
+    if (exact) {
+        exact->markPrimaryHome();
+        return;
+    }
 
     if (Zone* existing = findPrimaryHome(personId)) {
         existing->markPrimaryHome();
