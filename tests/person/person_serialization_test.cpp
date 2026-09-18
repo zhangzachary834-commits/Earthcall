@@ -8,6 +8,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
 
 namespace {
 
@@ -45,6 +47,32 @@ int main() {
     assert(near(restored.velocity().x, -4.0f));
     assert(near(restored.velocity().y, 5.5f));
     assert(near(restored.velocity().z, 6.25f));
+
+    // Test updatePriorPersonSerializations exception handling for malformed JSON
+    std::filesystem::create_directories("saves/test_malformed");
+    std::string malformedPath = "saves/test_malformed/corrupted.json";
+    std::string validPath = "saves/test_malformed/valid.json";
+    {
+        std::ofstream badFile(malformedPath);
+        badFile << "{ malformed json: true, ";
+        badFile.close();
+        std::ofstream goodFile(validPath);
+        goodFile << R"({"person": {"displayName": "OldName", "soulName": "OldName"}})";
+        goodFile.close();
+    }
+
+    Person updatedPerson = makePerson("NewName");
+    updatePriorPersonSerializations(updatedPerson, "OldName");
+
+    // Verify valid file was updated and corrupted file did not crash execution
+    {
+        std::ifstream checkGood(validPath);
+        nlohmann::json jGood;
+        checkGood >> jGood;
+        assert(jGood["person"]["displayName"] == "NewName");
+    }
+
+    std::filesystem::remove_all("saves/test_malformed");
 
     std::puts("person_serialization_test: ALL OK");
     return 0;
