@@ -17,6 +17,7 @@ namespace Physics {
     // Legacy engine toggle
     bool getLegacyEngineEnabled();
     void setLegacyEngineEnabled(bool enabled);
+    bool hasAnyActivePhysics(const LawManager* lm = nullptr);
 
 
     // Applies gravity and basic physics integration (velocity & air resistance)

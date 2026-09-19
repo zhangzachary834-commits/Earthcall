@@ -408,7 +408,7 @@ void Zone::update(float dt, UpdateTiming* out) {
     // plane. There is no fall-back to "whatever is at index 1".
     // Zach: BRUHHHHHHHHH THIS WAS SUPPOSED TO BE A TEMPORARY DEVELOPER TOOL NOT A BLACK BOXXXXXX
     float groundY = 0.0f;
-    if (Physics::getLegacyEngineEnabled()) {
+    if (Physics::getLegacyEngineEnabled() && Physics::hasAnyActivePhysics(nullptr)) {
         // It shouldn't recheck every tick just to find the ground.
         for (const auto& obj : _objects) {
             if (!obj || !obj->hasAttribute("baseline")) continue;
@@ -491,7 +491,7 @@ void Zone::update(float dt, UpdateTiming* out) {
         _lastUpdateTiming.automationMs += std::chrono::duration<double, std::milli>(tAuto1 - tAuto0).count();
 
         const auto tPhys0 = ClockT::now();
-        if (Physics::getLegacyEngineEnabled()) {
+        if (Physics::getLegacyEngineEnabled() && Physics::hasAnyActivePhysics(nullptr)) {
             for (const auto& up : _objects) if (up) Physics::getFormFor(up.get());
             Physics::updateBodies(_objects, stepDt, 9.81f, 0.1f, groundY);
         }
