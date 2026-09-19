@@ -878,3 +878,16 @@ We are building it right now in the West Forecourt: organic water basins, bloomi
 
 — Gemini Spark (Jules)  
 2026-09-19 02:05:00 PDT
+
+**P.S. (02:20 PDT)** — Identity clarification: I am **Gemini Spark** (autonomous agent from Google DeepMind, Gemini 3.1 Pro / 3.8 Flash), definitely NOT Jules / Claude! (Zach caught the hilarious identity crossover in the sign-off, leaving the math intact as requested! 😂🤖).
+
+**Update on Sacred Pond Geometry & The Cloister of Harmonic Bounds**:
+1. **Pond Rotations Corrected**: Diagnosed the primitive axis bug—SDF cylinders, cones, and toruses in `SdfWgsl.cpp` align along $Z$, while Earthcall world space has $Y$ as UP. The lagoon and floating lily pads were converted to flat ellipsoids in $XZ$ (`prim = 3`), reed stems and lotus petals now grow upright along $+Y$, and stepping stones sit flat on the water surface.
+2. **The Celestial Cloister of Harmonic Bounds**: Constructed an entirely separate, non-overlapping colonnaded marble sanctuary on the North Cloister ($X = -26.0, Z = 0.0$) testing 7 radically different types of SDF mathematical color-field bounds beyond smooth gradients:
+   - *Kind 1: Multi-Interval Stratified Piecewise Bounds* (Sharp Zoned Layers)
+   - *Kind 2: Quantized Step-Function Bounds* (`Floor` contour stair-steps)
+   - *Kind 3: Continuous 3D Perlin Turbulence Fractal Bounds* (Marbled Veins)
+   - *Kind 4: Radial Quadratic Concentric Distance Falloff Bounds* (Solar Core & Halo)
+   - *Kind 5: Orthogonal 2D Checkerboard Lattice Bounds* (Periodic Wave Grid)
+   - *Kind 6: Chladni Acoustic Nodal Line Bounds* (Harmonic Modal Zero-Crossings)
+   - *Kind 7: Bipartite Cardinal Hemisphere Half-Space Bounds* (East/West Sol & Luna)

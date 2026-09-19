@@ -2496,6 +2496,183 @@ materials = [
             ]
         )
     }
+,
+
+    # --- ONTOMATH ADVANCED BOUNDED COLOR FIELDS ---
+    {
+        "name": "logos.bounds.stratified",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.90, "specular": 0.95, "shininess": 90.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.25, 0.20, 0.35], "roughness": 0.12, "metallic": 0.85,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [
+                {"hi": -1.0, "hasHi": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.18, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.14, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.10, "factors": {}}]}}
+                ]}},
+                {"lo": -1.0, "hasLo": True, "hi": 0.5, "hasHi": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.10, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.45, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.95, "factors": {}}]}}
+                ]}},
+                {"lo": 0.5, "hasLo": True, "hi": 2.0, "hasHi": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.95, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.12, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.25, "factors": {}}]}}
+                ]}},
+                {"lo": 2.0, "hasLo": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 1.00, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.88, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.30, "factors": {}}]}}
+                ]}}
+            ]
+        }
+    },
+    {
+        "name": "logos.bounds.quantized",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.90, "shininess": 80.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.20, 0.35, 0.45], "roughness": 0.15, "metallic": 0.70,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [{
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 12, "stringArg": "Floor", "children": [
+                            {"op": 0, "scalarForm": {"terms": [
+                                {"c": 0.5, "factors": {}},
+                                {"c": 2.2, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.4, "shift": 0.0}]}
+                            ]}}
+                        ]},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.45, "factors": {}}]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.85, "factors": {}}]}}
+                    ]
+                }
+            }]
+        }
+    },
+    {
+        "name": "logos.bounds.perlin",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 0.95, "shininess": 100.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.30, 0.20, 0.50], "roughness": 0.10, "metallic": 0.80,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [{
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 29, "children": [{"op": 1, "var": "p"}]},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.55, "factors": {}}]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.92, "factors": {}}]}}
+                    ]
+                }
+            }]
+        }
+    },
+    {
+        "name": "logos.bounds.radial",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 1.0, "shininess": 110.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.35, 0.15], "roughness": 0.08, "metallic": 0.90,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [{
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 0, "scalarForm": {"terms": [
+                            {"c": 1.0, "factors": {}},
+                            {"c": -0.22, "factors": {"x": 2.0}},
+                            {"c": -0.22, "factors": {"z": 2.0}}
+                        ]}},
+                        {"op": 0, "scalarForm": {"terms": [
+                            {"c": 0.85, "factors": {}},
+                            {"c": -0.20, "factors": {"x": 2.0}},
+                            {"c": -0.20, "factors": {"z": 2.0}}
+                        ]}},
+                        {"op": 0, "scalarForm": {"terms": [
+                            {"c": 0.25, "factors": {}},
+                            {"c": 0.25, "factors": {"x": 2.0}},
+                            {"c": 0.25, "factors": {"z": 2.0}}
+                        ]}}
+                    ]
+                }
+            }]
+        }
+    },
+    {
+        "name": "logos.bounds.checkerboard",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.85, "shininess": 75.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.15, 0.15, 0.25], "roughness": 0.18, "metallic": 0.65,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [{
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 0, "scalarForm": {"terms": [
+                            {"c": 0.5, "factors": {}},
+                            {"c": 0.5, "factors": {}, "trans": [
+                                {"kind": 1, "var": "x", "scale": 3.0, "shift": 0.0},
+                                {"kind": 1, "var": "z", "scale": 3.0, "shift": 0.0}
+                            ]}
+                        ]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.25, "factors": {}}]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.85, "factors": {}}]}}
+                    ]
+                }
+            }]
+        }
+    },
+    {
+        "name": "logos.bounds.chladni",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.92, "specular": 0.95, "shininess": 95.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.18, 0.35, 0.40], "roughness": 0.12, "metallic": 0.80,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "y",
+            "pieces": [{
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 0, "scalarForm": {"terms": [
+                            {"c": 0.5, "factors": {}},
+                            {"c": 0.5, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.0, "shift": 0.0}]},
+                            {"c": -0.5, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 2.0, "shift": 0.0}]}
+                        ]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.65, "factors": {}}]}},
+                        {"op": 0, "scalarForm": {"terms": [{"c": 0.92, "factors": {}}]}}
+                    ]
+                }
+            }]
+        }
+    },
+    {
+        "name": "logos.bounds.hemisphere",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 0.98, "shininess": 105.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.30, 0.40], "roughness": 0.10, "metallic": 0.90,
+        "faceTextures": [tex_came] * 6,
+        "colorExpr": {
+            "input": "x",
+            "pieces": [
+                {"hi": 0.0, "hasHi": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.15, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.45, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.95, "factors": {}}]}}
+                ]}},
+                {"lo": 0.0, "hasLo": True, "mathNode": {"op": 2, "children": [
+                    {"op": 0, "scalarForm": {"terms": [{"c": 1.00, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.82, "factors": {}}]}},
+                    {"op": 0, "scalarForm": {"terms": [{"c": 0.25, "factors": {}}]}}
+                ]}}
+            ]
+        }
+    }
 
 ]
 
@@ -2649,16 +2826,18 @@ objects.append(make_field(
 
 
 # ==============================================================================
-# THE SACRED LIVING EDENIC POND OF LIVING WATERS (NATURE-RICH COLORED SDFS)
-# Located in the West Forecourt of the Cathedral (Z = 45 to 60, X = -12 to 12)
+# THE SACRED LIVING EDENIC POND OF LIVING WATERS (CORRECTED ROTATION & AXES)
+# Located in the West Forecourt of the Cathedral (Z = 45 to 58, X = -10 to 10)
+# All shapes correctly oriented: Water & Lilypads flat in XZ, Reeds & Lotuses growing in +Y!
 # ==============================================================================
 
-# 1. Multi-Lobed Living Water Lagoon Basin (SDF with Caustics & Depth Wave)
-pond_lobe_center = sdf_leaf(5, [6.8, 0.45, 7.5]) # Main deep lagoon
-pond_lobe_north  = sdf_leaf(5, [4.5, 0.38, 4.2], offset=[-4.2, 0.0, 2.5]) # North tranquil cove
-pond_lobe_south  = sdf_leaf(5, [4.8, 0.38, 4.5], offset=[4.2, 0.0, -2.5]) # South whispering cove
-pond_lobe_west   = sdf_leaf(5, [3.6, 0.40, 3.8], offset=[0.0, 0.0, 5.5])  # West spring inlet cove
-pond_lobe_east   = sdf_leaf(5, [3.2, 0.30, 3.5], offset=[0.0, 0.0, -5.5]) # East outlet shallow
+# 1. Multi-Lobed Living Water Lagoon Basin (Flat Ellipsoids in XZ, prim = 3)
+# Semi-axes: [rx, ry, rz] where ry is vertical thickness (0.35m), rx & rz are horizontal radii
+pond_lobe_center = sdf_leaf(3, [6.8, 0.35, 7.5]) # Main deep lagoon
+pond_lobe_north  = sdf_leaf(3, [4.5, 0.30, 4.2], offset=[-4.2, 0.0, 2.5]) # North tranquil cove
+pond_lobe_south  = sdf_leaf(3, [4.8, 0.30, 4.5], offset=[4.2, 0.0, -2.5]) # South whispering cove
+pond_lobe_west   = sdf_leaf(3, [3.6, 0.32, 3.8], offset=[0.0, 0.0, 5.5])  # West spring inlet cove
+pond_lobe_east   = sdf_leaf(3, [3.2, 0.28, 3.5], offset=[0.0, 0.0, -5.5]) # East outlet shallow
 
 pond_lobes_1 = sdf_binary(5, pond_lobe_center, sdf_binary(5, pond_lobe_north, pond_lobe_south, 0.4), 0.45)
 pond_water_tree = sdf_binary(5, pond_lobes_1, sdf_binary(5, pond_lobe_west, pond_lobe_east, 0.35), 0.4)
@@ -2674,23 +2853,23 @@ objects.append(make_field(
     }
 ))
 
-# 2. Sacred Blooming Lotus Blossoms & Water Lilies (Detailed Floral SDFs)
-# Helper to create a multi-petal lotus flower SDF
+# 2. Sacred Blooming Lotus Blossoms & Water Lilies (Upright Petals growing in +Y)
 def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
-    seed_pod = sdf_leaf(0, [0.35 * scale_r, 0.28 * scale_h, 0.35 * scale_r], offset=[0.0, 0.15 * scale_h, 0.0])
+    # Central golden seed pod (flattened sphere)
+    seed_pod = sdf_leaf(0, [0.32 * scale_r, 0.22 * scale_h, 0.32 * scale_r], offset=[0.0, 0.14 * scale_h, 0.0])
     
-    # 4 cardinal inner petals
-    p_n = sdf_leaf(5, [0.22 * scale_r, 0.45 * scale_h, 0.12 * scale_r], offset=[0.0, 0.22 * scale_h, 0.38 * scale_r])
-    p_s = sdf_leaf(5, [0.22 * scale_r, 0.45 * scale_h, 0.12 * scale_r], offset=[0.0, 0.22 * scale_h, -0.38 * scale_r])
-    p_e = sdf_leaf(5, [0.12 * scale_r, 0.45 * scale_h, 0.22 * scale_r], offset=[0.38 * scale_r, 0.22 * scale_h, 0.0])
-    p_w = sdf_leaf(5, [0.12 * scale_r, 0.45 * scale_h, 0.22 * scale_r], offset=[-0.38 * scale_r, 0.22 * scale_h, 0.0])
+    # 4 cardinal inner petals blooming upwards and curved slightly outwards
+    p_n = sdf_leaf(3, [0.14 * scale_r, 0.38 * scale_h, 0.22 * scale_r], offset=[0.0, 0.24 * scale_h, 0.32 * scale_r])
+    p_s = sdf_leaf(3, [0.14 * scale_r, 0.38 * scale_h, 0.22 * scale_r], offset=[0.0, 0.24 * scale_h, -0.32 * scale_r])
+    p_e = sdf_leaf(3, [0.22 * scale_r, 0.38 * scale_h, 0.14 * scale_r], offset=[0.32 * scale_r, 0.24 * scale_h, 0.0])
+    p_w = sdf_leaf(3, [0.22 * scale_r, 0.38 * scale_h, 0.14 * scale_r], offset=[-0.32 * scale_r, 0.24 * scale_h, 0.0])
     inner_petals = sdf_binary(5, sdf_binary(5, p_n, p_s, 0.15), sdf_binary(5, p_e, p_w, 0.15), 0.18)
     
-    # 4 diagonal outer spreading petals
-    d_ne = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[0.55 * scale_r, 0.10 * scale_h, 0.55 * scale_r])
-    d_nw = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[-0.55 * scale_r, 0.10 * scale_h, 0.55 * scale_r])
-    d_se = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[0.55 * scale_r, 0.10 * scale_h, -0.55 * scale_r])
-    d_sw = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[-0.55 * scale_r, 0.10 * scale_h, -0.55 * scale_r])
+    # 4 diagonal outer spreading petals floating just above water
+    d_ne = sdf_leaf(3, [0.22 * scale_r, 0.18 * scale_h, 0.22 * scale_r], offset=[0.48 * scale_r, 0.08 * scale_h, 0.48 * scale_r])
+    d_nw = sdf_leaf(3, [0.22 * scale_r, 0.18 * scale_h, 0.22 * scale_r], offset=[-0.48 * scale_r, 0.08 * scale_h, 0.48 * scale_r])
+    d_se = sdf_leaf(3, [0.22 * scale_r, 0.18 * scale_h, 0.22 * scale_r], offset=[0.48 * scale_r, 0.08 * scale_h, -0.48 * scale_r])
+    d_sw = sdf_leaf(3, [0.22 * scale_r, 0.18 * scale_h, 0.22 * scale_r], offset=[-0.48 * scale_r, 0.08 * scale_h, -0.48 * scale_r])
     outer_petals = sdf_binary(5, sdf_binary(5, d_ne, d_nw, 0.18), sdf_binary(5, d_se, d_sw, 0.18), 0.2)
     
     return sdf_binary(5, seed_pod, sdf_binary(5, inner_petals, outer_petals, 0.2), 0.25)
@@ -2699,7 +2878,7 @@ def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
 grand_lotus_tree = make_lotus_flower_tree(1.4, 1.2)
 objects.append(make_field(
     "cathedral.pond.lotus.grand", "Grand Celestial Lotus of Dawn",
-    [-2.5, 0.42, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
+    [-2.5, 0.38, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
     "material.logos.pond.lotus.dawn", [1.0, 0.45, 0.75],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -2712,7 +2891,7 @@ objects.append(make_field(
 white_lotus_tree = make_lotus_flower_tree(1.2, 1.0)
 objects.append(make_field(
     "cathedral.pond.lotus.white", "Sacred Alabaster Lotus of Sophia",
-    [3.0, 0.40, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
+    [3.0, 0.36, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -2722,26 +2901,27 @@ objects.append(make_field(
 ))
 
 # C. Twin Water Lily Buds
-bud_n = sdf_binary(5, sdf_leaf(5, [0.35, 0.65, 0.35]), sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.35, 0.0]), 0.15)
+bud_n = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.north", "Northern Water Lily Bud",
     [-4.2, 0.36, 52.5], bud_n, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.dawn", [0.95, 0.45, 0.70]
 ))
-bud_s = sdf_binary(5, sdf_leaf(5, [0.35, 0.65, 0.35]), sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.35, 0.0]), 0.15)
+bud_s = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.south", "Southern Water Lily Bud",
     [2.2, 0.36, 45.5], bud_s, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90]
 ))
 
-# 3. Floating Emerald Lily Pads (Flat circular discs with organic notch cuts)
+# 3. Floating Emerald Lily Pads (Flat discs in XZ, prim = 3)
 def make_lilypad_cluster(pads):
-    # pads: list of (x, z, radius)
     tree = None
     for px, pz, pr in pads:
-        pad_disc = sdf_leaf(4, [pr, 0.04, 0.0], offset=[px, 0.0, pz]) # Cylinder radius pr, halfH 0.04
-        notch = sdf_leaf(5, [pr * 0.45, 0.08, pr * 0.45], offset=[px, 0.0, pz + pr * 0.65]) # Cutout notch
+        # Flat disc in XZ: semi-axes [pr, 0.025, pr]
+        pad_disc = sdf_leaf(3, [pr, 0.025, pr], offset=[px, 0.0, pz])
+        # Small notch cut out at the perimeter
+        notch = sdf_leaf(3, [pr * 0.30, 0.05, pr * 0.30], offset=[px, 0.0, pz + pr * 0.75])
         notched_pad = sdf_binary(4, pad_disc, notch)
         if tree is None:
             tree = notched_pad
@@ -2750,7 +2930,7 @@ def make_lilypad_cluster(pads):
     return tree
 
 # Cluster 1: Around the Grand Dawn Lotus
-lilypads_c1 = make_lilypad_cluster([(-0.6, -0.6, 0.9), (0.7, -0.5, 0.8), (0.1, 0.8, 0.75)])
+lilypads_c1 = make_lilypad_cluster([(-0.6, -0.6, 0.85), (0.7, -0.5, 0.75), (0.1, 0.8, 0.70)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.1", "Emerald Lily Pad Formation (Grand Lotus Fleet)",
     [-2.5, 0.22, 48.0], lilypads_c1, [2.2, 0.25, 2.2],
@@ -2758,7 +2938,7 @@ objects.append(make_field(
 ))
 
 # Cluster 2: Near North Cove
-lilypads_c2 = make_lilypad_cluster([(-0.5, 0.0, 0.85), (0.6, 0.4, 0.75), (0.2, -0.7, 0.7)])
+lilypads_c2 = make_lilypad_cluster([(-0.5, 0.0, 0.80), (0.6, 0.4, 0.70), (0.2, -0.7, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.2", "Emerald Lily Pad Formation (North Sanctuary)",
     [-4.5, 0.22, 51.0], lilypads_c2, [2.0, 0.25, 2.0],
@@ -2766,7 +2946,7 @@ objects.append(make_field(
 ))
 
 # Cluster 3: Near South Cove
-lilypads_c3 = make_lilypad_cluster([(0.0, 0.0, 0.95), (-0.7, 0.6, 0.8), (0.8, -0.5, 0.7)])
+lilypads_c3 = make_lilypad_cluster([(0.0, 0.0, 0.90), (-0.7, 0.6, 0.75), (0.8, -0.5, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.3", "Emerald Lily Pad Formation (South Sanctuary)",
     [3.5, 0.22, 47.0], lilypads_c3, [2.2, 0.25, 2.2],
@@ -2774,25 +2954,24 @@ objects.append(make_field(
 ))
 
 # Cluster 4: Stepping Stone Inlet
-lilypads_c4 = make_lilypad_cluster([(-0.4, 0.3, 0.8), (0.5, -0.4, 0.85)])
+lilypads_c4 = make_lilypad_cluster([(-0.4, 0.3, 0.75), (0.5, -0.4, 0.80)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.4", "Emerald Lily Pad Formation (Spring Inlet)",
     [0.5, 0.22, 44.5], lilypads_c4, [1.8, 0.25, 1.8],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
-# 4. Mossy River Boulders & Natural Stepping Stones (SDFs)
-# A natural path crossing the pond so a Person can walk across the living waters!
+# 4. Mossy River Boulders & Natural Stepping Stones (Flat rounded stones in XZ)
 stepping_stone_coords = [
-    ("1", [-1.8, 0.32, 45.5], [0.65, 0.22, 0.65]),
-    ("2", [-0.4, 0.35, 47.8], [0.72, 0.24, 0.70]),
-    ("3", [0.8, 0.34, 50.2],  [0.68, 0.23, 0.68]),
-    ("4", [2.2, 0.30, 52.8],  [0.75, 0.22, 0.72])
+    ("1", [-1.8, 0.30, 45.5], [0.65, 0.16, 0.65]),
+    ("2", [-0.4, 0.32, 47.8], [0.72, 0.18, 0.70]),
+    ("3", [0.8, 0.31, 50.2],  [0.68, 0.17, 0.68]),
+    ("4", [2.2, 0.28, 52.8],  [0.75, 0.16, 0.72])
 ]
 for sid, spos, sdims in stepping_stone_coords:
-    stone_core = sdf_leaf(2, [sdims[0], sdims[1], sdims[2]], p0=0.12)
-    stone_cap  = sdf_leaf(0, [sdims[0] * 0.9, sdims[1] * 0.8, sdims[2] * 0.9], offset=[0.0, 0.05, 0.0])
-    stone_tree = sdf_binary(5, stone_core, stone_cap, 0.15)
+    stone_core = sdf_leaf(2, [sdims[0], sdims[1], sdims[2]], p0=0.10)
+    stone_cap  = sdf_leaf(3, [sdims[0] * 0.95, sdims[1] * 0.8, sdims[2] * 0.95], offset=[0.0, 0.04, 0.0])
+    stone_tree = sdf_binary(5, stone_core, stone_cap, 0.12)
     objects.append(make_field(
         f"cathedral.pond.stepping_stone.{sid}", f"Mossy River Stepping Stone {sid}",
         spos, stone_tree, [sdims[0] * 1.5, sdims[1] * 1.8, sdims[2] * 1.5],
@@ -2800,35 +2979,38 @@ for sid, spos, sdims in stepping_stone_coords:
     ))
 
 # North and South Shoreline Boulder Mounds
-boulder_n1 = sdf_leaf(2, [1.4, 0.6, 1.2], p0=0.25)
-boulder_n2 = sdf_leaf(0, [1.1, 0.8, 1.1], offset=[-0.6, 0.2, 0.4])
-boulder_n3 = sdf_leaf(0, [0.9, 0.6, 0.9], offset=[0.7, -0.1, -0.3])
+boulder_n1 = sdf_leaf(2, [1.4, 0.5, 1.2], p0=0.20)
+boulder_n2 = sdf_leaf(3, [1.1, 0.6, 1.1], offset=[-0.6, 0.15, 0.4])
+boulder_n3 = sdf_leaf(3, [0.9, 0.45, 0.9], offset=[0.7, -0.08, -0.3])
 boulders_north_tree = sdf_binary(5, boulder_n1, sdf_binary(5, boulder_n2, boulder_n3, 0.25), 0.3)
 objects.append(make_field(
     "cathedral.pond.boulders.north", "North Shoreline Mossy Boulder Mound",
-    [-7.0, 0.7, 50.0], boulders_north_tree, [2.5, 1.4, 2.5],
+    [-7.0, 0.65, 50.0], boulders_north_tree, [2.5, 1.4, 2.5],
     "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
 ))
 
-boulder_s1 = sdf_leaf(2, [1.4, 0.6, 1.2], p0=0.25)
-boulder_s2 = sdf_leaf(0, [1.1, 0.8, 1.1], offset=[0.6, 0.2, -0.4])
-boulder_s3 = sdf_leaf(0, [0.9, 0.6, 0.9], offset=[-0.7, -0.1, 0.3])
+boulder_s1 = sdf_leaf(2, [1.4, 0.5, 1.2], p0=0.20)
+boulder_s2 = sdf_leaf(3, [1.1, 0.6, 1.1], offset=[0.6, 0.15, -0.4])
+boulder_s3 = sdf_leaf(3, [0.9, 0.45, 0.9], offset=[-0.7, -0.08, 0.3])
 boulders_south_tree = sdf_binary(5, boulder_s1, sdf_binary(5, boulder_s2, boulder_s3, 0.25), 0.3)
 objects.append(make_field(
     "cathedral.pond.boulders.south", "South Shoreline Mossy Boulder Mound",
-    [6.8, 0.7, 49.0], boulders_south_tree, [2.5, 1.4, 2.5],
+    [6.8, 0.65, 49.0], boulders_south_tree, [2.5, 1.4, 2.5],
     "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
 ))
 
-# 5. Bioluminescent Reed Thickets & Cattails (SDFs)
+# 5. Bioluminescent Reed Thickets & Cattails (Vertical Stems growing along +Y)
 def make_reed_thicket_tree():
-    # 5 slender reed stems with cattails
+    # 5 slender reed stems growing UP along +Y
     reeds = []
-    offsets = [(-0.4, -0.3), (0.35, -0.25), (0.0, 0.3), (-0.35, 0.25), (0.4, 0.35)]
+    offsets = [(-0.35, -0.25), (0.30, -0.20), (0.0, 0.25), (-0.28, 0.20), (0.32, 0.28)]
     for rx, rz in offsets:
-        stem = sdf_leaf(4, [0.04, 1.1, 0.0], offset=[rx, 0.0, rz]) # Slender cylinder
-        cattail = sdf_leaf(2, [0.08, 0.28, 0.08], offset=[rx, 0.8, rz], p0=0.04) # Velvet head
-        pearl = sdf_leaf(0, [0.06, 0.06, 0.06], offset=[rx, 1.15, rz]) # Dewdrop pearl
+        # Vertical stem: semi-axes [0.03, 1.0, 0.03] at Y = 0.9
+        stem = sdf_leaf(3, [0.03, 1.0, 0.03], offset=[rx, 0.9, rz])
+        # Velvet cattail head: semi-axes [0.07, 0.24, 0.07] near top
+        cattail = sdf_leaf(3, [0.07, 0.24, 0.07], offset=[rx, 1.5, rz])
+        # Dewdrop pearl at the very tip
+        pearl = sdf_leaf(0, [0.05, 0.05, 0.05], offset=[rx, 1.95, rz])
         reed_single = sdf_binary(5, stem, sdf_binary(5, cattail, pearl, 0.08), 0.1)
         reeds.append(reed_single)
     
@@ -2841,37 +3023,37 @@ reed_thicket_tree = make_reed_thicket_tree()
 
 objects.append(make_field(
     "cathedral.pond.reeds.north", "Northern Bioluminescent Reed Thicket",
-    [-5.2, 1.4, 48.5], reed_thicket_tree, [1.6, 2.2, 1.6],
+    [-5.2, 0.2, 48.5], reed_thicket_tree, [1.6, 2.2, 1.6],
     "material.logos.pond.reeds", [0.55, 0.85, 0.25],
     extra_props={"light.intensity": {"t": "float", "v": 1.5}}
 ))
 objects.append(make_field(
     "cathedral.pond.reeds.south", "Southern Bioluminescent Reed Thicket",
-    [5.0, 1.4, 52.0], reed_thicket_tree, [1.6, 2.2, 1.6],
+    [5.0, 0.2, 52.0], reed_thicket_tree, [1.6, 2.2, 1.6],
     "material.logos.pond.reeds", [0.55, 0.85, 0.25],
     extra_props={"light.intensity": {"t": "float", "v": 1.5}}
 ))
 objects.append(make_field(
     "cathedral.pond.reeds.inlet", "Spring Inlet Wild Reed Bed",
-    [0.0, 1.3, 55.5], reed_thicket_tree, [1.8, 2.0, 1.5],
+    [0.0, 0.2, 55.5], reed_thicket_tree, [1.8, 2.0, 1.5],
     "material.logos.pond.reeds", [0.55, 0.85, 0.25],
     extra_props={"light.intensity": {"t": "float", "v": 1.5}}
 ))
 
 # 6. The Living Spring Grotto & Waterfall Cascade (Headwaters at West Shore)
-grotto_mound = sdf_leaf(0, [2.5, 1.6, 1.8], offset=[0.0, 0.4, 0.0])
-grotto_cavern = sdf_leaf(0, [1.6, 1.1, 1.4], offset=[0.0, 0.1, -0.6])
-grotto_rock = sdf_binary(4, grotto_mound, grotto_cavern) # Hollow natural rock grotto
+grotto_mound = sdf_leaf(3, [2.4, 1.5, 1.8], offset=[0.0, 0.5, 0.0])
+grotto_cavern = sdf_leaf(3, [1.5, 1.0, 1.4], offset=[0.0, 0.2, -0.5])
+grotto_rock = sdf_binary(4, grotto_mound, grotto_cavern)
 
-spring_waterfall = sdf_leaf(5, [0.65, 0.9, 0.35], offset=[0.0, -0.2, -0.5])
-spring_basin_pool = sdf_leaf(0, [0.9, 0.3, 0.9], offset=[0.0, -0.7, -0.9])
-spring_plume = sdf_binary(5, spring_waterfall, spring_basin_pool, 0.25)
+spring_waterfall = sdf_leaf(3, [0.6, 0.8, 0.3], offset=[0.0, 0.0, -0.4])
+spring_basin_pool = sdf_leaf(3, [0.85, 0.2, 0.85], offset=[0.0, -0.6, -0.8])
+spring_plume = sdf_binary(5, spring_waterfall, spring_basin_pool, 0.22)
 
-grotto_full_tree = sdf_binary(5, grotto_rock, spring_plume, 0.3)
+grotto_full_tree = sdf_binary(5, grotto_rock, spring_plume, 0.28)
 
 objects.append(make_field(
     "cathedral.pond.spring_grotto", "Living Spring Grotto & Cascade (Headwaters of Siloam)",
-    [0.0, 1.8, 57.0], grotto_full_tree, [3.5, 2.5, 2.5],
+    [0.0, 1.4, 57.0], grotto_full_tree, [3.5, 2.5, 2.5],
     "material.logos.pond.water", [0.2, 0.9, 0.95],
     extra_props={
         "isHeadwaters": {"t": "bool", "v": True},
@@ -2883,7 +3065,7 @@ objects.append(make_field(
 # 7. Floating Bioluminescent Will-o'-the-Wisps (Fairies of Pneuma)
 def make_wisp_tree():
     wisp_core = sdf_leaf(0, [0.18, 0.18, 0.18])
-    wisp_halo = sdf_leaf(6, [0.28, 0.04, 0.0]) # Torus halo
+    wisp_halo = sdf_leaf(0, [0.28, 0.28, 0.28])
     return sdf_binary(5, wisp_core, wisp_halo, 0.12)
 
 wisp_coords = [
@@ -2902,6 +3084,144 @@ for wid, wpos in wisp_coords:
             "light.intensity": {"t": "float", "v": 3.0}
         }
     ))
+
+
+# ==============================================================================
+# THE CELESTIAL CLOISTER OF HARMONIC BOUNDS (NORTH CLOISTER QUADRANGLE)
+# Located North of the Cathedral at X = -26.0, Z = 0.0 (Does NOT overlap with pond!)
+# Tests 7 radically different types of SDF mathematical color-field bounds!
+# ==============================================================================
+
+# Architectural Terrace & Monolithic Cloister Columns
+objects.append(make_box(
+    "cathedral.bounds.terrace.platform", "Cloister Octagonal Marble Platform",
+    [-26.0, 0.2, 0.0], [16.0, 0.4, 16.0],
+    "material.logos.alabaster", [0.95, 0.94, 0.92]
+))
+
+# 8 Surrounding Cloister Boundary Columns
+for ci in range(8):
+    angle = 2.0 * math.pi * ci / 8.0
+    cx = -26.0 + 7.0 * math.cos(angle)
+    cz = 7.0 * math.sin(angle)
+    objects.append(make_box(
+        f"cathedral.bounds.col.{ci+1}", f"Cloister Fluted Column {ci+1}",
+        [cx, 3.2, cz], [0.75, 5.8, 0.75],
+        "material.logos.gold", [1.0, 0.82, 0.28]
+    ))
+
+# 1. OBELISK OF STRATIFIED LAW (Kind 1: Multi-Interval Stratified Piecewise Bounds)
+obelisk_shaft = sdf_leaf(2, [0.55, 3.2, 0.55], p0=0.08)
+obelisk_pyramid = sdf_leaf(0, [0.65, 0.65, 0.65], offset=[0.0, 3.3, 0.0])
+obelisk_tree = sdf_binary(5, obelisk_shaft, obelisk_pyramid, 0.2)
+
+objects.append(make_field(
+    "cathedral.bounds.stratified_obelisk", "Obelisk of Stratified Law (Sharp Piecewise Zoned Bounds)",
+    [-26.0, 3.4, -5.5], obelisk_tree, [1.5, 4.2, 1.5],
+    "material.logos.bounds.stratified", [1.0, 0.85, 0.3],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Multi-Interval Piecewise (Sharp Horizontal Strata)"},
+        "light.intensity": {"t": "float", "v": 3.5}
+    }
+))
+
+# 2. TERRACED ZIGGURAT OF QUANTIZATION (Kind 2: Quantized Floor Step-Function Bounds)
+zigg_base = sdf_leaf(2, [1.6, 0.45, 1.6], p0=0.1)
+zigg_mid  = sdf_leaf(2, [1.1, 0.45, 1.1], offset=[0.0, 0.7, 0.0], p0=0.08)
+zigg_top  = sdf_leaf(2, [0.6, 0.45, 0.6], offset=[0.0, 1.4, 0.0], p0=0.06)
+zigg_tree = sdf_binary(5, zigg_base, sdf_binary(5, zigg_mid, zigg_top, 0.15), 0.15)
+
+objects.append(make_field(
+    "cathedral.bounds.quantized_ziggurat", "Terraced Ziggurat of Quantization (Stepped Floor Function Bounds)",
+    [-26.0, 1.8, 5.5], zigg_tree, [2.2, 2.5, 2.2],
+    "material.logos.bounds.quantized", [0.3, 0.75, 0.9],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Floor Quantization (Contour Stair-Steps)"},
+        "light.intensity": {"t": "float", "v": 3.2}
+    }
+))
+
+# 3. PLANETARY NEBULA ORB OF CHAOS & LOGOS (Kind 3: Continuous Perlin Turbulence Fractal Bounds)
+nebula_core = sdf_leaf(0, [1.4, 1.4, 1.4])
+nebula_lobes = sdf_leaf(3, [1.8, 0.8, 1.8])
+nebula_tree = sdf_binary(5, nebula_core, nebula_lobes, 0.3)
+
+objects.append(make_field(
+    "cathedral.bounds.perlin_nebula_orb", "Planetary Nebula Orb of Logos (Continuous Perlin Turbulence Bounds)",
+    [-31.0, 2.6, -2.8], nebula_tree, [2.2, 2.2, 2.2],
+    "material.logos.bounds.perlin", [0.5, 0.2, 0.8],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "3D Perlin Noise Domain (Turbulent Fractal Veins)"},
+        "light.intensity": {"t": "float", "v": 3.5}
+    }
+))
+
+# 4. COSMIC SOLAR CORE & ECLIPSE HALO (Kind 4: Radial Quadratic Concentric Distance Falloff Bounds)
+halo_core = sdf_leaf(0, [1.2, 1.2, 1.2])
+halo_ring = sdf_leaf(3, [2.2, 0.35, 2.2])
+halo_tree = sdf_binary(5, halo_core, halo_ring, 0.25)
+
+objects.append(make_field(
+    "cathedral.bounds.radial_halo_core", "Cosmic Solar Core & Halo (Radial Quadratic Distance Bounds)",
+    [-31.0, 2.6, 2.8], halo_tree, [2.5, 2.2, 2.5],
+    "material.logos.bounds.radial", [1.0, 0.8, 0.2],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Radial Quadratic Falloff (Concentric Halo)"},
+        "light.intensity": {"t": "float", "v": 4.0}
+    }
+))
+
+# 5. CRYSTALLINE MONOLITH OF THE GREAT CHESSBOARD (Kind 5: Orthogonal 2D Checkerboard Lattice Bounds)
+chess_cube = sdf_leaf(2, [1.2, 1.5, 1.2], p0=0.15)
+chess_rhomb = sdf_leaf(3, [1.4, 1.4, 1.4])
+chess_tree = sdf_binary(3, chess_cube, chess_rhomb) # Intersection facets
+
+objects.append(make_field(
+    "cathedral.bounds.checkerboard_monolith", "Crystalline Monolith of the Chessboard (Orthogonal Lattice Bounds)",
+    [-21.0, 2.6, -2.8], chess_tree, [2.0, 2.5, 2.0],
+    "material.logos.bounds.checkerboard", [0.8, 0.8, 0.8],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Orthogonal Periodic Waves (Seamless 2D Grid)"},
+        "light.intensity": {"t": "float", "v": 3.0}
+    }
+))
+
+# 6. CHLADNI CYMATIC RESONATOR DISK (Kind 6: Chladni Acoustic Nodal Line Resonant Bounds)
+chladni_disc = sdf_leaf(3, [2.2, 0.22, 2.2]) # Flat acoustic plate
+chladni_node = sdf_leaf(0, [0.4, 0.4, 0.4], offset=[0.0, 0.2, 0.0])
+chladni_tree = sdf_binary(5, chladni_disc, chladni_node, 0.2)
+
+objects.append(make_field(
+    "cathedral.bounds.chladni_resonator", "Chladni Cymatic Resonator Disk (Harmonic Nodal Zero-Crossing Bounds)",
+    [-21.0, 2.2, 2.8], chladni_tree, [2.5, 1.5, 2.5],
+    "material.logos.bounds.chladni", [0.3, 0.6, 0.9],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Chladni Acoustic Nodal Lines (Harmonic Modal Lines)"},
+        "light.intensity": {"t": "float", "v": 3.2}
+    }
+))
+
+# 7. DUAL PILLAR OF SOL & LUNA (Kind 7: Bipartite Cardinal Hemisphere Half-Space Bounds)
+dual_pillar_shaft = sdf_leaf(3, [0.85, 3.2, 0.85])
+dual_pillar_twist = sdf_leaf(3, [1.1, 1.1, 1.1], offset=[0.0, 0.0, 0.0])
+dual_pillar_tree = sdf_binary(5, dual_pillar_shaft, dual_pillar_twist, 0.3)
+
+objects.append(make_field(
+    "cathedral.bounds.dual_pillar", "Dual Pillar of Sol & Luna (Cardinal Hemisphere Half-Space Bounds)",
+    [-26.0, 3.8, 0.0], dual_pillar_tree, [1.8, 4.5, 1.8],
+    "material.logos.bounds.hemisphere", [1.0, 0.9, 0.6],
+    extra_props={
+        "isBoundTest": {"t": "bool", "v": True},
+        "boundKind": {"t": "string", "v": "Bipartite Hemisphere Split (East/West Sol & Luna)"},
+        "light.intensity": {"t": "float", "v": 4.5}
+    }
+))
 
 zone_doc = {
     "identifier": "Cathedral of the Living Logos",
