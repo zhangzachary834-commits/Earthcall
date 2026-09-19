@@ -11,25 +11,24 @@ PersonDatabase& PersonDatabase::getInstance() {
 }
 
 void PersonDatabase::savePerson(const Person& person) {
-    if (person.getDisplayName().empty()) {
-        std::cerr << "Cannot save Person with empty displayName." << std::endl;
+    std::string identifier = person.getIdentifier();
+    if (identifier.empty()) {
+        std::cerr << "Cannot save Person with empty identifier." << std::endl;
         return;
     }
     
     nlohmann::json j = person.serialize();
     
-    // Save to the PERSON save type in SaveSystem
-    SaveSystem::writeSaveData(j, person.getDisplayName(), SaveSystem::SaveType::PERSON);
+    // Save to the PERSON save type in SaveSystem keyed on unique identifier
+    SaveSystem::writeSaveData(j, identifier, SaveSystem::SaveType::PERSON);
     
-    ECA::Logger::instance().log(ECA::LogCategory::Person, "PROFILE_SAVE", "Successfully saved Person profile for: " + person.getDisplayName(), nlohmann::json{{"person", person.getDisplayName()}});
-    std::cout << "Successfully saved Person profile for: " << person.getDisplayName() << std::endl;
+    ECA::Logger::instance().log(ECA::LogCategory::Person, "PROFILE_SAVE", "Successfully saved Person profile for: " + person.getDisplayName() + " [" + identifier + "]", nlohmann::json{{"person", person.getDisplayName()}, {"identifier", identifier}});
+    std::cout << "Successfully saved Person profile for: " << person.getDisplayName() << " [" << identifier << "]" << std::endl;
 }
 
-bool PersonDatabase::loadPerson(const std::string& displayName, Person& outPerson) {
-    // displayName reaches here from deserialized save data, so it is untrusted
-    // and cannot be concatenated into a path raw. ensureSaveTypeFolder (not
-    // getSaveTypeFolderName) is what savePerson writes into.
-    std::string safeName = SaveSystem::sanitizeLabel(displayName);
+bool PersonDatabase::loadPerson(const std::string& identifier, Person& outPerson) {
+    // identifier reaches here from untrusted sources, so sanitize before path construction
+    std::string safeName = SaveSystem::sanitizeLabel(identifier);
     if (safeName.empty()) return false;
 
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
