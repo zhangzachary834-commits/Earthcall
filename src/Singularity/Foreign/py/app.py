@@ -22,8 +22,26 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
-# Apply CORS (Cross-Origin Resource Sharing)
-CORS(app)
+# Apply CORS (Cross-Origin Resource Sharing).
+# Keep the legacy app surface permissive, but give the read-only portfolio
+# bridge its own narrow origin set so a public page cannot inherit wildcard
+# access to localhost just because the Studio historically used CORS(app).
+_portfolio_cors_env = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
+if _portfolio_cors_env.strip():
+    _portfolio_cors_origins = [origin.strip() for origin in _portfolio_cors_env.split(",") if origin.strip()]
+else:
+    _portfolio_cors_origins = [
+        "https://zhangzachary834-commits.github.io",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5005",
+        "http://127.0.0.1:5005",
+    ]
+
+CORS(app, resources={
+    r"/api/portfolio/live": {"origins": _portfolio_cors_origins},
+    r"/*": {"origins": "*"},
+})
 
 # Initialize SocketIO
 # Read allowed origins from environment variable, split by comma, fallback to None (same-origin)
