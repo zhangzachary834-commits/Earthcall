@@ -10,6 +10,9 @@
 // Real web view implementation using native WebKit
 #ifndef __EMSCRIPTEN__
 #include "Singularity/Foreign/Web/RealWebView.hpp"
+#include "Singularity/Foreign/Web/DomMirrorBridge.hpp"
+#include "Singularity/Foreign/Web/DomMirrorTranslator.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #else
 #include <emscripten.h>
 #endif
@@ -37,7 +40,19 @@ public:
     bool init() {
 #ifndef __EMSCRIPTEN__
         if (_realWebView) {
-            return _realWebView->init();
+            bool ok = _realWebView->init();
+            if (ok) {
+                _mirrorBridge = std::make_unique<Singularity::Foreign::Web::DomMirrorBridge>(_realWebView.get());
+                
+                // When dom_mirror.js connects and sends a snapshot, it's admitted to the local graph.
+                _mirrorBridge->onSnapshotAdmitted([](const Singularity::Foreign::Web::DomSnapshot& snapshot) {
+                    std::cout << "🌐 [DomMirrorBridge] Snapshot admitted for " << snapshot.url << std::endl;
+                    // Provide the document formation to the world, etc.
+                });
+
+                _mirrorBridge->injectMirrorScript();
+            }
+            return ok;
         }
 #endif
         return true;
@@ -70,6 +85,7 @@ public:
     void navigate(const std::string& url) {
 #ifndef __EMSCRIPTEN__
         if (_realWebView) {
+            if (_mirrorBridge) _mirrorBridge->onNavigationStarted();
             _realWebView->navigate(url);
         }
 #else
@@ -197,6 +213,7 @@ public:
 private:
 #ifndef __EMSCRIPTEN__
     std::unique_ptr<RealWebView> _realWebView;
+    std::unique_ptr<Singularity::Foreign::Web::DomMirrorBridge> _mirrorBridge;
 #endif
 };
 
