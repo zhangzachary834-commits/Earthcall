@@ -25,7 +25,8 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/Core/EventBus.hpp"
 
-#include <algorithm>\n#include <array>
+#include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>

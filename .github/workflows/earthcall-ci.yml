@@ -180,7 +180,7 @@ jobs:
               try:
                   result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={mode} timeout_s=120")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
