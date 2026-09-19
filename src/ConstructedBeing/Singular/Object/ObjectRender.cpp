@@ -750,12 +750,17 @@ void Object::drawFieldModel() const {
         }
     }
     if (analytic) {
-        // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
-        // on first access after a revision bump, mirroring rebuildFieldMesh();
-        // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.
-        const geom::HeightGrid& hg = getHeightGrid();
+        // HeightGrid is derived acceleration data, not field identity. Demand-
+        // build it only when the active backend can actually consume it; while
+        // WebGPU's grazing-root DDA hand-off is quarantined, constructing the
+        // grid here would have no downstream reader.
+        const geom::HeightGrid* hg = nullptr;
+        if (r.usesHeightGridDda()) {
+            const geom::HeightGrid& cached = getHeightGrid();
+            if (cached.dimX > 0) hg = &cached;
+        }
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
-                       getMemoId(), getFieldRevision(), hg.dimX > 0 ? &hg : nullptr);
+                       getMemoId(), getFieldRevision(), hg);
         return;
     }
     rebuildFieldMesh();
