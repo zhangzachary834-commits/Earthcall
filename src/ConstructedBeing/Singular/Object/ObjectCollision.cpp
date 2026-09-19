@@ -198,6 +198,7 @@ namespace {
 // would change which points GJK sees for no benefit.
 void Object::rebuildGeometryCaches() {
     _fieldRevision++;
+    _renderSdfCachesDirty = true;
     _supportCloud.clear();
     _smoothMesh.reset();
     _complexMeshes.clear();
