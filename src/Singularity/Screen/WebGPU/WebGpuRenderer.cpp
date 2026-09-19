@@ -1034,14 +1034,16 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     bool needsCompile = true;
     if (memoId != 0) {
         auto& entry = _programCache[memoId];
-        if (entry.revision == memoRevision) {
+        if (entry.revision == memoRevision && 
+            entry.colorRevision == mat.colorRevision &&
+            entry.colorExprPtr == mat.colorExpr.get()) {
             prog = entry.prog;
             sp = entry.sp;
             needsCompile = false;
         }
     }
     if (needsCompile) {
-        prog = sdfwgsl::compile(field, fieldNode);
+        prog = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
         if (!prog.ok) {
             std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", prog.error.c_str());
             return;
@@ -1050,6 +1052,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (memoId != 0) {
             auto& entry = _programCache[memoId];
             entry.revision = memoRevision;
+            entry.colorRevision = mat.colorRevision;
+            entry.colorExprPtr = mat.colorExpr.get();
             entry.prog = prog;
             entry.sp = sp;
         }

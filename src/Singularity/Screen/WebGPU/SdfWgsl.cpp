@@ -1260,7 +1260,7 @@ fn fs(in: VSOut) -> FSOut {
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
     // Combine hard surface with accumulated volumetric scatter
-    let base_rgb = inst.baseColor.rgb * lit + vec3<f32>(spec);
+    let base_rgb = sdfColor(pf) * lit + vec3<f32>(spec);
     let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
     let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
@@ -1281,7 +1281,7 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
+Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, const OntoMath::Piecewise* colorExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1382,6 +1382,14 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode) {
         prog.wgsl += "    return vec3<f32>(0.0);\n";
     }
     prog.wgsl += "}\n";
+
+    std::string colorBody = "";
+    if (colorExpr && !colorExpr->pieces.empty()) {
+        emitPiecewise(*colorExpr, e, "p", "vec3<f32>", colorBody);
+    } else {
+        colorBody = "    return instances[g_instIdx].baseColor.xyz;\n";
+    }
+    prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);

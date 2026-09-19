@@ -207,6 +207,8 @@ private:
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
+        uint32_t colorRevision = 0xffffffff;
+        const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
     };
