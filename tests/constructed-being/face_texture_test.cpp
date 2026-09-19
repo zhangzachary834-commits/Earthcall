@@ -65,6 +65,31 @@ int main() {
     tex.deleteLayer(1);
     assert(tex.layers.size() == 1);
 
+    // Test resize preserving layers
+    FaceTexture rtex;
+    rtex.create(2, 2, 0xFFFFFFFF);
+    rtex.useLayers = true;
+    rtex.addLayer();
+    assert(rtex.layers.size() == 2);
+    // Fill layer 1 with blue
+    for (size_t i = 0; i < rtex.layers[1].size(); i += 4) {
+        rtex.layers[1][i + 0] = 0;
+        rtex.layers[1][i + 1] = 0;
+        rtex.layers[1][i + 2] = 255;
+        rtex.layers[1][i + 3] = 255;
+    }
+    rtex.compositeLayers();
+    rtex.resize(4, 4);
+    assert(rtex.width == 4);
+    assert(rtex.height == 4);
+    assert(rtex.pixels.size() == 4 * 4 * 4);
+    assert(rtex.layers.size() == 2);
+    assert(rtex.layers[1].size() == 4 * 4 * 4);
+    // Verify layer 1 was resampled and NOT wiped to zero
+    for (size_t i = 0; i < rtex.layers[1].size(); i += 4) {
+        assert(rtex.layers[1][i + 2] == 255); // Blue preserved
+    }
+
     std::cout << "OK\n";
     return 0;
 }

@@ -248,6 +248,7 @@ void to_json(nlohmann::json& j, const Object& obj){
         {obj.faceColors[2][0], obj.faceColors[2][1], obj.faceColors[2][2]},
         {obj.faceColors[3][0], obj.faceColors[3][1], obj.faceColors[3][2]},
         {obj.faceColors[4][0], obj.faceColors[4][1], obj.faceColors[4][2]},
+        {obj.faceColors[5][0], obj.faceColors[5][1], obj.faceColors[5][2]}
     });
 
     const int texRes = obj.getTextureResolution();
