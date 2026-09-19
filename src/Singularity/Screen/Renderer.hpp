@@ -47,6 +47,13 @@ public:
         uint32_t bufferSuballocations = 0;
         uint32_t pipelineSwitches = 0;
         uint32_t cachedMeshesCount = 0;
+        // SDF-specific observability: these distinguish structural CPU churn
+        // from ordinary draw/upload work instead of making FPS carry every cause.
+        uint32_t sdfProgramCompiles = 0;
+        uint32_t sdfProgramCacheHits = 0;
+        uint32_t sdfProgramCacheMisses = 0;
+        size_t   sdfWgslBytesGenerated = 0;
+        size_t   sdfParameterBytesUploaded = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
