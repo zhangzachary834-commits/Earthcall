@@ -701,7 +701,8 @@ void Object::drawSmoothModel() const {
                                       std::abs(smoothData.axes.z)) + 0.25f;
         if (_smoothRenderSdf) {
             r.drawImplicit(*_smoothRenderSdf, glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                           getMemoId(), getFieldRevision());
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
         }
         return;
     }
@@ -733,7 +734,8 @@ void Object::drawComplexModel() const {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
             r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
-                           getMemoId(), getFieldRevision());
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
             return;
         }
         for (size_t i = 0; i < complexData.patches.size(); ++i) {
@@ -745,7 +747,8 @@ void Object::drawComplexModel() const {
                 if (i < _complexPatchRenderSdfs.size() && _complexPatchRenderSdfs[i]) {
                     r.drawImplicit(*_complexPatchRenderSdfs[i],
                                    glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                                   getMemoId(static_cast<int>(i) + 1), getFieldRevision());
+                                   getMemoId(static_cast<int>(i) + 1), getSdfStructureRevision(), nullptr,
+                                   getSdfParameterRevision());
                 }
             } else if (i < _complexMeshes.size()) {
                 r.drawMesh(_complexMeshes[i], mat);
@@ -794,7 +797,8 @@ void Object::drawFieldModel() const {
             if (cached.dimX > 0) hg = &cached;
         }
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
-                       getMemoId(), getFieldRevision(), hg);
+                       getMemoId(), getSdfStructureRevision(), hg,
+                       getSdfParameterRevision());
         return;
     }
     rebuildFieldMesh();
