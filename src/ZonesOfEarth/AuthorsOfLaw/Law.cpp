@@ -3016,7 +3016,11 @@ void LawManager::seedStateFacts(Singular* being) {
     // Comparing `relation->b()` is a POINTER compare and does not dereference
     // the far end, which is what keeps the guarantee below intact.
     if (!_relationTypesInPlay.empty()) {
-        for (Relation* relation : Universe::instance().relations()) {
+        std::vector<Relation*> edges;
+        if (!Universe::instance().relationsInvolving(*being, edges)) {
+            edges = Universe::instance().relations();
+        }
+        for (Relation* relation : edges) {
             if (!relation) continue;
             if (relation->a() != being && relation->b() != being) continue;
             if (!_relationTypesInPlay.count(relation->type)) continue;
