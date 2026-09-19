@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include "../support/test_save_helper.hpp"
 
 namespace {
 
