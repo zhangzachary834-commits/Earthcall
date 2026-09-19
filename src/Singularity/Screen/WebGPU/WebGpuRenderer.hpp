@@ -221,6 +221,20 @@ private:
         bool isProvenHeightfield = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
+
+    // Pipeline-local parameter storage survives frame boundaries. The frame still
+    // assembles the compact contiguous parameter vector in instance order, but an
+    // unchanged vector is not uploaded again. This is the first persistent-GPU
+    // rung; later work can eliminate the remaining CPU repack via stable slots.
+    struct PersistentSdfParams {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<float> mirror;
+    };
+    std::unordered_map<const SdfPipeline*, PersistentSdfParams> _persistentSdfParams;
+    size_t _persistentSdfParamVramBytes = 0;
+    void releasePersistentSdfParams();
+
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
 
