@@ -1044,6 +1044,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
+            // We have a structural hit unless parameter recollection proves that
+            // the claimed structure identity is stale. Start on the cheap path;
+            // only fall back to compile on a refused/mismatched recollection.
+            needsCompile = false;
             // Structural cache hit. If only numeric field values changed,
             // refresh the parameter block without rebuilding the WGSL module.
             if (memo->parameterRevision != memoParameterRevision) {
