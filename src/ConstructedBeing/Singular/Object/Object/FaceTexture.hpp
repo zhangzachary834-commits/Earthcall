@@ -35,6 +35,7 @@ struct FaceTexture {
     std::vector<std::vector<StrokePoint>> undoStack;
 
     void create(int w = 64, int h = 64, uint32_t initColorRGBA = 0xFFFFFFFFu);
+    void resize(int newWidth, int newHeight);
     void addLayer();
     void deleteLayer(int layerIndex);
     void setLayerOpacity(int layerIndex, float opacity);

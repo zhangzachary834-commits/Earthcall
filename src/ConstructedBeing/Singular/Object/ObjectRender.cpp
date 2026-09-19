@@ -287,6 +287,24 @@ void Object::initFaceTextures() {
     mine->initFaceTextures(faces);
 }
 
+int Object::getTextureResolution() const {
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (mat) return mat->getTextureResolution();
+    return 64;
+}
+
+void Object::setTextureResolution(const int& res) {
+    if (res <= 0 || res > 4096) return;
+    auto mine = ownMaterial();
+    if (!mine) return;
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (mine->faceTextures.empty()) {
+        mine->initFaceTextures(faces, res, res);
+    } else {
+        mine->setTextureResolution(res);
+    }
+}
+
 void Object::setFaceColor(int faceIndex, float r, float g, float b) {
     if (faceIndex >= 0 && faceIndex < 6) {
         faceColors[faceIndex][0] = r;

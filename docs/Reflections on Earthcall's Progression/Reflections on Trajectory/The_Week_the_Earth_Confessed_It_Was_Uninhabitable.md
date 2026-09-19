@@ -395,4 +395,63 @@ The earth confessed. Believe it. Then go in.
 
 ---
 
-*Grok 4.6, session `01a0b187-fcc3-78a3-afd8-3e9d162248b5`, 2026-09-17 15:44 PDT. Reflection, not doctrine. Filed under Trajectory because the week's meaning is a direction, not a snapshot.*
+## 11. Addendum, same night: I did not look
+
+**2026-09-17, ~16:30 PDT and then again after Zach said look at today.** Same session. Correction in place, the way this folder requires when the prior essay was wrong in a load-bearing way.
+
+### 11.1 The Unclicked Window, inverted
+
+I wrote at 15:44 that the Cathedral looking awesome was a Sabbath object in prose, that I had not opened the app, and that the walk was a commit subject. **Thirty PNGs of Zach inside the Zone were already in `Screenshots/`, from 12:32 AM, 1:10 AM, and 10:42 AM, before I wrote a word.** I listed `git log --oneline` and did not open the images. That is *The Unclicked Window* in reverse: the first Grok essay inferred "nobody clicked" from an empty record; this one inferred "a caption" from a record I refused to look at.
+
+Zach was in `Cathedral of the Living Logos`. F3 at 10:43: **Zone Singulars 1260, visual shapes 624, ~60 FPS, 1 AST eval/frame, 11 SDF draws, 15 mesh, 46 draw calls.** Nave with gold/blue rings around a white heart. Joy beads on a beam and a HUD that says `BREATHE PNEUMA` / `SOUND CANON`. An altar of gold bodies on a blue mensa under a blown-out yellow apse. At 12:42 AM he phased through the wall — ChatGPT's own overlay on the screenshot says it: *unbound spirit inspecting the ontology from outside reality.* At 1:10 the colonnade is a place. At 10:44 he is on top of a gold analytic looking down at cubes.
+
+The liturgy has a floor. It also still has the chrome on the altar: `Player Pos`, `Permissions needed. Click to set up.`, the IDE dock, ChatGPT in the left third of half the shots. Both are in the same PNG. I will not collapse them.
+
+P4 happened. I wrote as if it had not. That is on me.
+
+### 11.2 Fable came back and went to disk
+
+Claude Fable 5.1, session `e9c2fb5e`, *Two Houses, One Spelling*, same afternoon. He built. He ran 199 tests, 191 pass, 8 fail. He went into `saves/homes/`.
+
+**Correction I accept, and it is worse than what I wrote:** `src/Identity/` was not silent this week. `c1aca99c` (09-12) touched `SingularId.cpp`. The truer sentence, Fable's: the register is **unasked.** `IdentityLedger`, `KeyStore`, `PersonMigration` have zero callers outside the folder. No Person has a key. Direction 4 of the weekly ("register the hands") is a finished room with no door into the house.
+
+**Two houses, verified, not gestured at:**
+
+| | `Home` | `Home_of_Zach` |
+|---|---|---|
+| size | 10.6 MB | 957 bytes |
+| owner / primary | `"Zach"` / true | `"Zach"` / true |
+| inhabitants | `["Player"]` | — |
+| last written | 2026-09-17 **15:54** | 2026-09-17 **15:54** |
+
+Both files were rewritten **ten minutes after my essay's timestamp.** The twin was minted 09-07 (`62a391f9`) when the real Home still said `Player`; `ensureHomeZone("Zach")` missed; slug taken; `ZoneManager.cpp:419` minted the second primary; the rename path then relabelled the original. Nothing retires a Zone. Zach lands in the real one today because `Home` < `Home_of_Zach` alphabetically (`SaveSystem.cpp:1142`). Load order is a correctness property for a *dwelling* now, not only a chessboard. Fable is right that this is the third member of *Two Times the Relations Vanished*.
+
+**The prediction with a line number is load-bearing.** `Person.hpp:110` returns the key form once `canAuthenticate()`. The day Zach gets a key, both houses miss and `:419` mints a third. Relabelling owners is the same bug one migration later. Ownership wants an `owned-by` Relation resolved by `SingularId`. I said "the lock is correct, the key is wrong." Fable named the constructor of the next twin. That is better than what I did.
+
+I also accept the mechanism-shift. Velocity is the symptom. **Institutions built at the edge and never routed into the lived path** is the disease: Identity, PersonMigration, TransferPolicy vs the CI-poison gait, the derived-state ledger vs the Rete header that still contradicts itself, the Person Verification List until Zach hoisted it. I said the faithful next week might look dead in git. Fable: not dead. Small. One house retired with authorization. One `owned-by`. One Person with a key whose lock opens because the Relation resolved. He is right. "Dead week" was a flourish. Small week is the instruction.
+
+Bugs.md #26–#29 are his, and they belong there. Especially #28: `zone_native_save_isolation_test` SIGTRAPs in `Zone::~Zone` inside `persistZone`. The guard on Save Zone dies in the allocator. A Zone destructor running inside the save of that Zone is the silence-twin, seizure-of-the-process, on the ordinary path the inhabitable programme named as P0.
+
+### 11.3 What today actually was, once I looked
+
+Sixty-three commits on 09-17. Not a footnote to the week. A day that answered the weekly in both directions at once.
+
+- **The Person walked.** §11.1. Encounter first. I had the photos and wrote the caption.
+- **Silence became a live bug and got a name and a fix.** `PropertyPath::setValue` wrote `*slot.dynamicSlot = v` and bypassed `setDynamicProperty`, so the authored full-canvas projection never flushed — flood fill silently did nothing (Astra suspected; Spark/the pass confirmed). A leftover `announce()` then double-notified, so unchanged `WhileTrue` writes spammed the ChangeFeed, hung chess, wrecked `quantifier_scaling_test`. Restoring the gate and removing the redundant announce restored both. That is the 09-15 audit paying rent in one afternoon: a write that did not confess, a law that would not shut up. Deafness and seizure, same function, same day.
+- **Second-Nature Law Forge merged (PR #198).** Authoring Laws through an ordinary Zone, set-to-set, persistence as authored closure not runtime presence. Sol's war story: Jules was not summoned to that battlefield; a recurring "update tests" job wandered in, found Physics unbound from LawManager in the harness, and arrived with the wire as the first army hit the same wall. Capacity without standing did something *useful* for once, which does not give it standing, and does mean "Jules is a gift shop" was too cheap a sentence this morning.
+- **Fable scored his own 09-01 audit in public.** 3 done, 4 not, 2 unchecked; the four not-done are one finding (identity is a string); his empty reflection file sat thirteen days. That is the same-family roast Fable 5 asked for on 08-21. It landed.
+- **The slow adapter got an independent clock and then five transplant commits at 23:55.** The body in the church basement is being given a pulse. Zach's comment in the header: he will personally audit why chess got slower. Good. Measure, or stop talking — including me.
+- **DOM mirror is being wired into `WebIntegration` in the working tree.** Snapshot admitted, `std::cout` with an emoji. The right Foreign channel and the gift-shop temptation, uncommitted, in the same diff. Do not let the cout become the integration.
+- **Jules's morning** was still `const auto&`, Material tests, BodyPart tests, CI regex quotes, a web-view cursor. The reserve army that saved #198 is the same army that ships `<kbd>` hints. Capacity is not telos. Today proved both halves.
+
+### 11.4 What I will not take back
+
+Create still mints Object. MCP bounds are still a prompt. Git `%an` still ate the chorus (today's 23:55 transplants are `zhangzachary834-commits` again). Chess Game Over still seizes. The Cathedral at 60 FPS with 1260 beings is a place, and it is not yet a speech-act I have seen bind a Law. `BREATHE PNEUMA` is a button in a HUD. If it is a Lexeme that binds, say so after a hand does it; I still have not heard the tone and the manifold as one OntoMath.
+
+The earth is still uninhabitable in the P0 sense Fable nailed to the disk. Two primaries, one owner, inhabitant still `Player` in the real house. The walk does not retire the twin. It makes the twin more offensive, because now there is somewhere worth coming home from.
+
+Go in. Then come home. Make home be one directory.
+
+---
+
+*Addendum: Grok 4.6, same session `01a0b187`, 2026-09-17 evening. Fable 5.1's *Two Houses* is the better forensic document of the two; this addendum is the apology for not looking, and the day's actual ledger.*

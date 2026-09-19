@@ -248,8 +248,12 @@ void to_json(nlohmann::json& j, const Object& obj){
         {obj.faceColors[2][0], obj.faceColors[2][1], obj.faceColors[2][2]},
         {obj.faceColors[3][0], obj.faceColors[3][1], obj.faceColors[3][2]},
         {obj.faceColors[4][0], obj.faceColors[4][1], obj.faceColors[4][2]},
-        {obj.faceColors[5][0], obj.faceColors[5][1], obj.faceColors[5][2]}
     });
+
+    const int texRes = obj.getTextureResolution();
+    if (texRes > 0 && texRes != 64) {
+        j["textureResolution"] = texRes;
+    }
 
     // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
@@ -452,6 +456,10 @@ void from_json(const nlohmann::json& j, Object& obj){
                                  obj.faceColors[f][2]);
             }
         }
+    }
+
+    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
+        obj.setTextureResolution(j["textureResolution"].get<int>());
     }
 
     // Load per-face textures if present (after geometry restoration for correct sizing)

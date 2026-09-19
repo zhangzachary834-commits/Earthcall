@@ -3,6 +3,7 @@ import os
 import math
 import struct
 import hashlib
+import base64
 
 # ==============================================================================
 # CATHEDRAL OF THE LIVING LOGOS — MONUMENTAL ARCHITECTURAL GENERATOR
@@ -42,7 +43,316 @@ def mat4(pos, scale=[1.0, 1.0, 1.0], rot_deg=[0.0, 0.0, 0.0]):
         px, py, pz, 1.0
     ]
 
-def make_box(obj_id, name, pos, scale, mat_id, color, rot_deg=[0.0, 0.0, 0.0], extra_props=None):
+# ==============================================================================
+# PROCEDURAL FACE TEXTURES (RGBA8 BASE64 ENCODED)
+# ==============================================================================
+
+def clamp_byte(v):
+    return max(0, min(255, int(v)))
+
+def encode_face(w, h, paint_fn):
+    pixels = bytearray(w * h * 4)
+    for y in range(h):
+        v = (y / (h - 1.0)) * 2.0 - 1.0
+        for x in range(w):
+            u = (x / (w - 1.0)) * 2.0 - 1.0
+            r, g, b = paint_fn(x, y, u, v, w, h)
+            idx = (y * w + x) * 4
+            pixels[idx + 0] = clamp_byte(r)
+            pixels[idx + 1] = clamp_byte(g)
+            pixels[idx + 2] = clamp_byte(b)
+            pixels[idx + 3] = 255
+    return {"width": w, "height": h, "pixelsB64": base64.b64encode(pixels).decode("ascii")}
+
+def solid_face(w, h, rgb):
+    r, g, b = rgb
+    return encode_face(w, h, lambda x, y, u, v, w, h: (r, g, b))
+
+# 1. Cosmati Floor (+Y)
+def cosmati_floor_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        theta = math.atan2(v, u)
+        col = [28, 30, 36]
+        diag = abs(u) + abs(v)
+        if 0.94 <= diag <= 1.06:
+            col = [225, 195, 80]
+        elif diag < 0.94 and r > 0.65:
+            tile = int((u + 1.0) * 8) + int((v + 1.0) * 8)
+            col = [120, 32, 44] if tile % 2 == 0 else [32, 75, 52]
+        if 0.42 <= r <= 0.62:
+            ribbon = math.sin(8.0 * theta + r * 12.0)
+            if ribbon > 0.3:
+                col = [242, 240, 232]
+            elif ribbon < -0.3:
+                col = [230, 190, 65]
+            else:
+                col = [18, 55, 135]
+        elif 0.38 <= r < 0.42 or 0.62 < r <= 0.66:
+            col = [235, 200, 75]
+        elif r < 0.38:
+            if r < 0.18:
+                col = [140, 25, 38]
+            elif r < 0.22:
+                col = [245, 210, 85]
+            else:
+                star = math.cos(8.0 * theta)
+                col = [245, 245, 240] if star > 0.2 else [15, 35, 95]
+        grain = int((math.sin(x * 1.5) + math.cos(y * 1.7)) * 4.0)
+        return (col[0] + grain, col[1] + grain, col[2] + grain)
+    return encode_face(size, size, paint)
+
+# 2. Altar Mensa (+Y)
+def altar_mensa_face(size=256):
+    def paint(x, y, u, v, w, h):
+        base = [244, 242, 238]
+        vein = math.sin(u * 5.0 + math.cos(v * 7.0) * 2.0) * math.cos(v * 4.0)
+        if abs(vein) < 0.15:
+            base = [215, 210, 205]
+        if abs(u) > 0.90 or abs(v) > 0.90:
+            base = [225, 185, 60]
+        cross_centers = [(0.0, 0.0), (-0.7, -0.7), (0.7, -0.7), (-0.7, 0.7), (0.7, 0.7)]
+        for cx, cy in cross_centers:
+            du, dv = abs(u - cx), abs(v - cy)
+            if (du < 0.04 and dv < 0.14) or (dv < 0.04 and du < 0.14):
+                base = [215, 175, 45]
+        return tuple(base)
+    return encode_face(size, size, paint)
+
+# 3. Altar Antependium (+Z)
+def altar_antependium_face(size=256):
+    def paint(x, y, u, v, w, h):
+        weave = math.sin(x * 0.8) * math.cos(y * 0.8)
+        crimson = [135 + int(weave * 12), 22 + int(weave * 4), 32 + int(weave * 5)]
+        if v < -0.80:
+            fringe = int(math.sin(x * 3.14159) * 20)
+            return (225 + fringe, 185 + fringe, 55 + fringe)
+        if v > 0.88 or abs(u) > 0.90:
+            return (220, 180, 55)
+        r = math.sqrt(u * u + (v - 0.05) * (v - 0.05))
+        if 0.40 <= r <= 0.48:
+            return (240, 205, 75)
+        if r < 0.40:
+            du, dv = abs(u), abs(v - 0.05)
+            if (du < 0.06 and dv < 0.32) or (dv < 0.06 and du < 0.24):
+                return (245, 215, 80)
+            if 0.08 <= u <= 0.22 and 0.12 <= (v - 0.05) <= 0.28:
+                if (u - 0.15)**2 + (v - 0.05 - 0.20)**2 <= 0.08**2:
+                    return (245, 215, 80)
+            return (110, 18, 26)
+        damask = math.sin(u * 12.0) * math.cos(v * 10.0)
+        if damask > 0.5:
+            return (165, 38, 50)
+        return tuple(crimson)
+    return encode_face(size, size, paint)
+
+# 4. Gothic Linenfold Wood (+Z, -Z)
+def gothic_linenfold_wood_face(size=256):
+    def paint(x, y, u, v, w, h):
+        grain = math.sin(u * 25.0 + math.sin(v * 6.0)) * 10
+        base = [115 + int(grain), 68 + int(grain * 0.6), 34 + int(grain * 0.3)]
+        if abs(u) > 0.88 or abs(v) > 0.88:
+            return (85, 48, 22)
+        wave = math.sin(u * 3.14159 * 4.0)
+        shadow = math.cos(u * 3.14159 * 4.0)
+        ogee = math.sin(u * 3.14159 * 2.0) * 0.15
+        if v > (0.75 + ogee) or v < (-0.75 - ogee):
+            return (70, 38, 18)
+        r = base[0] + int(wave * 25 + shadow * 15)
+        g = base[1] + int(wave * 15 + shadow * 10)
+        b = base[2] + int(wave * 8 + shadow * 5)
+        return (r, g, b)
+    return encode_face(size, size, paint)
+
+# 5. Wood Grain (+Y, etc.)
+def wood_grain_face(size=256):
+    def paint(x, y, u, v, w, h):
+        g1 = math.sin(v * 30.0 + math.cos(u * 8.0) * 2.0)
+        g2 = math.cos(v * 15.0 + u * 4.0)
+        g = (g1 * 0.6 + g2 * 0.4) * 18.0
+        return (130 + int(g), 80 + int(g * 0.6), 42 + int(g * 0.3))
+    return encode_face(size, size, paint)
+
+# 6. Gilded Filigree (+X, -X, +Y, -Y, +Z, -Z)
+def gilded_filigree_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        theta = math.atan2(v, u)
+        scroll = math.sin(theta * 6.0 + r * 10.0) + math.cos(theta * 3.0 - r * 8.0)
+        base_gold = [235, 195, 60]
+        if scroll > 0.4:
+            return (255, 230, 110)
+        elif scroll < -0.3:
+            return (160, 120, 30)
+        if abs(u) > 0.90 or abs(v) > 0.90:
+            return (250, 215, 80)
+        return tuple(base_gold)
+    return encode_face(size, size, paint)
+
+# 7. Veined Alabaster
+def veined_alabaster_face(size=256):
+    def paint(x, y, u, v, w, h):
+        base = [242, 239, 234]
+        vein1 = math.sin(u * 4.0 + math.cos(v * 6.0) * 1.5)
+        vein2 = math.cos(v * 5.0 + math.sin(u * 7.0) * 1.8)
+        if abs(vein1) < 0.12 or abs(vein2) < 0.08:
+            return (195, 188, 178)
+        if abs(vein1 * vein2) < 0.03:
+            return (215, 190, 130)
+        return tuple(base)
+    return encode_face(size, size, paint)
+
+# 8. Ashlar Limestone Wall
+def ashlar_stone_face(size=256):
+    def paint(x, y, u, v, w, h):
+        course = int((v + 1.0) * 2.0)
+        offset_u = 0.5 if (course % 2 == 1) else 0.0
+        block = int((u + offset_u + 2.0) * 2.0)
+        du = ((u + offset_u + 2.0) * 2.0) % 1.0
+        dv = ((v + 1.0) * 2.0) % 1.0
+        if du < 0.06 or dv < 0.08:
+            return (110, 105, 98)
+        grain = int((math.sin(x * 2.5) + math.cos(y * 2.7)) * 5.0)
+        base = 185 + (block * 7) % 15 + grain
+        return (base, base - 6, base - 14)
+    return encode_face(size, size, paint)
+
+# 9. Sapphire Rose Window
+def rose_window_sapphire_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        theta = math.atan2(v, u)
+        if r > 0.92:
+            return (30, 30, 35)
+        if abs(r - 0.32) < 0.04 or abs(r - 0.62) < 0.04 or abs(r - 0.88) < 0.04:
+            return (25, 25, 30)
+        spoke = abs(math.sin(6.0 * theta))
+        if spoke < 0.08 and r > 0.25:
+            return (25, 25, 30)
+        if r < 0.28:
+            if r < 0.12:
+                return (245, 215, 80)
+            return (180, 45, 55)
+        elif 0.32 < r < 0.62:
+            petal = math.sin(6.0 * theta)
+            lum = int(petal * 25)
+            return (25, 65 + lum, 210 + lum)
+        elif 0.62 < r < 0.88:
+            spoke24 = math.sin(12.0 * theta)
+            if spoke24 > 0.2:
+                return (45, 175, 245)
+            elif spoke24 < -0.2:
+                return (235, 195, 65)
+            else:
+                return (195, 35, 65)
+        return (25, 25, 30)
+    return encode_face(size, size, paint)
+
+# 10. Ruby Rose Window
+def rose_window_ruby_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        theta = math.atan2(v, u)
+        if r > 0.92:
+            return (30, 30, 35)
+        if abs(r - 0.32) < 0.04 or abs(r - 0.62) < 0.04 or abs(r - 0.88) < 0.04:
+            return (25, 25, 30)
+        spoke = abs(math.sin(6.0 * theta))
+        if spoke < 0.08 and r > 0.25:
+            return (25, 25, 30)
+        if r < 0.28:
+            if r < 0.12:
+                return (250, 220, 90)
+            return (220, 35, 45)
+        elif 0.32 < r < 0.62:
+            petal = math.sin(6.0 * theta)
+            lum = int(petal * 30)
+            return (205 + lum, 30, 45 + lum // 2)
+        elif 0.62 < r < 0.88:
+            spoke24 = math.sin(12.0 * theta)
+            if spoke24 > 0.2:
+                return (235, 155, 35)
+            elif spoke24 < -0.2:
+                return (180, 25, 45)
+            else:
+                return (120, 25, 110)
+        return (25, 25, 30)
+    return encode_face(size, size, paint)
+
+# 11. Emerald Tree of Life Stained Glass
+def stained_glass_emerald_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        if abs(u) > 0.90 or abs(v) > 0.92:
+            return (25, 25, 30)
+        branches = math.sin(v * 8.0 + u * 4.0) * math.cos(u * 6.0)
+        if abs(branches) < 0.12:
+            return (220, 185, 60)
+        leaf = math.sin(u * 12.0) * math.sin(v * 12.0)
+        lum = int(leaf * 35)
+        return (20, 140 + lum, 65 + lum // 2)
+    return encode_face(size, size, paint)
+
+# 12. Amethyst Genesis Stained Glass
+def stained_glass_amethyst_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        if abs(u) > 0.90 or abs(v) > 0.92:
+            return (25, 25, 30)
+        d1 = math.sqrt((u - 0.35)**2 + v*v)
+        d2 = math.sqrt((u + 0.35)**2 + v*v)
+        if d1 < 0.85 and d2 < 0.85:
+            if abs(d1 - d2) < 0.08:
+                return (245, 215, 80)
+            return (145, 45, 195)
+        if abs(d1 - 0.85) < 0.05 or abs(d2 - 0.85) < 0.05:
+            return (25, 25, 30)
+        return (85, 22, 130)
+    return encode_face(size, size, paint)
+
+# 13. Silver/Tin Organ Pipe Face
+def organ_pipe_tin_face(size=256):
+    def paint(x, y, u, v, w, h):
+        col = int(math.cos(u * 3.14159 * 0.5) * 120 + 130)
+        if abs(v - (-0.60)) < 0.06 and abs(u) < 0.45:
+            return (215, 175, 45)
+        if abs(v - (-0.60)) < 0.03 and abs(u) < 0.35:
+            return (25, 25, 30)
+        return (col, col + 2, col + 8)
+    return encode_face(size, size, paint)
+
+# 14. Illuminated Manuscript Book Page (+Y)
+def illuminated_manuscript_face(size=256):
+    def paint(x, y, u, v, w, h):
+        if abs(u) > 0.88 or abs(v) > 0.88:
+            return (95, 45, 22)
+        parchment = [240, 232, 212]
+        if -0.75 <= u <= -0.45 and 0.45 <= v <= 0.75:
+            return (195, 30, 35)
+        if abs(u) < 0.84 and (v > 0.80 or v < -0.80 or abs(u - 0.0) < 0.04):
+            if abs(u) < 0.82 and (abs(v) > 0.82 or abs(u) < 0.02):
+                return (225, 185, 55)
+        line_idx = int((v + 0.8) * 10)
+        if 1 <= line_idx <= 14 and line_idx != 12 and line_idx != 13:
+            dv = ((v + 0.8) * 10) % 1.0
+            if 0.35 <= dv <= 0.65:
+                char = int((u + 0.8) * 20) % 2
+                if char == 0:
+                    return (45, 38, 32)
+        return tuple(parchment)
+    return encode_face(size, size, paint)
+
+# 15. Water Caustics Surface
+def water_caustics_face(size=256):
+    def paint(x, y, u, v, w, h):
+        r = math.sqrt(u * u + v * v)
+        ripple = math.sin(r * 24.0) + math.cos(u * 16.0) * math.sin(v * 16.0)
+        lum = int(ripple * 25)
+        return (35 + lum // 2, 195 + lum, 235 + lum // 2)
+    return encode_face(size, size, paint)
+
+
+def make_box(obj_id, name, pos, scale, mat_id, color, rot_deg=[0.0, 0.0, 0.0], extra_props=None, face_colors=None):
     obj = {
         "objectID": obj_id,
         "shapeKind": 0,
@@ -61,7 +371,7 @@ def make_box(obj_id, name, pos, scale, mat_id, color, rot_deg=[0.0, 0.0, 0.0], e
         "center": [float(pos[0]), float(pos[1]), float(pos[2])],
         "materialId": mat_id,
         "renderMode": 0,
-        "faceColors": [color] * 6,
+        "faceColors": face_colors if face_colors else [color] * 6,
         "authoredProperties": {
             "displayName": {"t": "string", "v": name}
         }
@@ -295,19 +605,39 @@ objects = []
 # ==============================================================================
 # 1. FLOORS & SANCTUARY DAIS
 # ==============================================================================
-# Grand Acoustic Obsidian Stone Floor (34m wide, 74m long)
+# Grand Acoustic Obsidian Stone Foundation (34m wide, 74m long)
 objects.append(make_box(
-    "cathedral.floor.main", "Chladni Acoustic Floor",
+    "cathedral.floor.main", "Chladni Acoustic Foundation",
     [0.0, -0.3, -2.0], [34.0, 0.6, 74.0],
-    "material.logos.floor", [0.10, 0.11, 0.14]
+    "material.logos.arch", [0.10, 0.11, 0.14]
 ))
 
-# Lapis Lazuli Processional Runner (6m wide, 70m long)
+# Modular Processional Nave Cosmati Mosaic Paving (5 monumental 12m bays along nave axis)
+# Each bay receives its own dedicated high-resolution 256x256 Cosmati medallion without stretching!
+for i, bz in enumerate([22.0, 11.0, 0.0, -11.0, -22.0]):
+    objects.append(make_box(
+        f"cathedral.nave.cosmati.bay.{i+1}", f"Processional Cosmati Mosaic Pavement (Bay {i+1})",
+        [0.0, 0.02, bz], [6.4, 0.04, 10.6],
+        "material.logos.floor", [1.0, 1.0, 1.0],
+        extra_props={"textureResolution": {"t": "int", "v": 256}}
+    ))
+
+# Sanctuary High Dais Sacred Cosmati Paving
 objects.append(make_box(
-    "cathedral.floor.runner", "Sacred Lapis Processional Runner",
-    [0.0, 0.03, -2.0], [6.0, 0.06, 70.0],
-    "material.logos.sapphire", [0.12, 0.35, 0.95]
+    "cathedral.sanctuary.cosmati", "Sanctuary High Altar Cosmati Pavement",
+    [0.0, 0.77, -29.5], [10.6, 0.04, 8.6],
+    "material.logos.floor", [1.0, 1.0, 1.0],
+    extra_props={"textureResolution": {"t": "int", "v": 256}}
 ))
+
+# North & South Transept Shrine Cosmati Paving
+for tx, side_name in [(-14.0, "North"), (14.0, "South")]:
+    objects.append(make_box(
+        f"cathedral.transept.cosmati.{side_name.lower()}", f"{side_name} Transept Shrine Cosmati Pavement",
+        [tx, 0.02, 0.0], [7.0, 0.04, 7.0],
+        "material.logos.floor", [1.0, 1.0, 1.0],
+        extra_props={"textureResolution": {"t": "int", "v": 256}}
+    ))
 
 # Three-Tiered Sanctuary Chancel Dais leading to High Altar
 objects.append(make_box(
@@ -1383,19 +1713,27 @@ objects.append(make_button2d("hud.btn.chord", "SOUND CANON", 35, 160, 155, 32, [
 objects.append(make_button2d("hud.btn.season", "CYCLE SEASON", 205, 160, 155, 32, [0.75, 0.25, 0.85]))
 
 # ==============================================================================
-# 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE
+# 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE (ULTRA-DETAILED)
 # ==============================================================================
 
-# 1. The North Transept Spherical Gyroid Reliquary (Minimal Surface Manifold)
-# Bounded by an outer sphere via CSG Intersect (Op 3) so it forms a seamless filigree orb!
+# 1. The North Transept Spherical Gyroid Armillary Reliquary of Pneuma
+# Bounded by outer sphere via CSG Intersect (Op 3), subtracted by inner sphere (Op 4)
+# with floating Sapphire Heart jewel in the hollow interior!
 raw_gyroid = sdf_expr("cos(2.8*x)*sin(2.8*y) + cos(2.8*y)*sin(2.8*z) + cos(2.8*z)*sin(2.8*x) - 0.22", dims=[1.4, 1.4, 1.4])
 bound_sphere = sdf_leaf(0, [1.25, 1.25, 1.25])
 spherical_gyroid = sdf_binary(3, raw_gyroid, bound_sphere) # Op 3 = Intersect!
-top_finial = sdf_leaf(0, [0.18, 0.18, 0.18], offset=[0.0, 1.32, 0.0])
-bot_socket = sdf_leaf(5, [0.32, 0.22, 0.0], offset=[0.0, -1.25, 0.0]) # Cone
-gyroid_tree = sdf_binary(5, spherical_gyroid, sdf_binary(5, top_finial, bot_socket, 0.2), 0.22)
+inner_cavity = sdf_leaf(0, [0.42, 0.42, 0.42])
+hollow_gyroid = sdf_binary(4, spherical_gyroid, inner_cavity) # Op 4 = Subtract!
+sapphire_heart = sdf_leaf(0, [0.22, 0.22, 0.22]) # Floating core jewel
+gyroid_core = sdf_binary(5, hollow_gyroid, sapphire_heart, 0.15)
 
-# Gyroid Altar Pedestal
+top_finial_stem = sdf_leaf(5, [0.12, 0.35, 0.0], offset=[0.0, 1.35, 0.0]) # Cone
+top_finial_cross = sdf_leaf(1, [0.24, 0.06, 0.06], offset=[0.0, 1.45, 0.0]) # Crossbar
+top_finial = sdf_binary(5, top_finial_stem, top_finial_cross, 0.12)
+bot_socket = sdf_leaf(5, [0.36, 0.25, 0.0], offset=[0.0, -1.25, 0.0]) # Cone socket
+gyroid_tree = sdf_binary(5, gyroid_core, sdf_binary(5, top_finial, bot_socket, 0.18), 0.22)
+
+# Gyroid Altar Pedestal with Alabaster & Gold moldings
 objects.append(make_box(
     "cathedral.gyroid.altar.base", "North Shrine Altar Plinth",
     [-14.0, 0.45, 0.0], [2.6, 0.9, 2.6],
@@ -1406,31 +1744,50 @@ objects.append(make_box(
     [-14.0, 1.05, 0.0], [3.0, 0.3, 3.0],
     "material.logos.gold", [1.0, 0.82, 0.28]
 ))
-# Floating Gyroid Gimbal Ring
+# Triple Armillary Gimbal Rings
 objects.append(make_torus(
-    "cathedral.sdf.gyroid.gimbal", "Gyroid Reliquary Gimbal Ring",
-    [-14.0, 3.4, 0.0], 1.5, 0.08,
+    "cathedral.sdf.gyroid.gimbal.equator", "Gyroid Equatorial Gimbal Ring",
+    [-14.0, 3.4, 0.0], 1.55, 0.07,
     "material.logos.gold", [1.0, 0.82, 0.28],
     rot_deg=[45.0, 30.0, 0.0]
 ))
+objects.append(make_torus(
+    "cathedral.sdf.gyroid.gimbal.meridian", "Gyroid Polar Meridian Ring",
+    [-14.0, 3.4, 0.0], 1.45, 0.06,
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    rot_deg=[-45.0, 60.0, 0.0]
+))
 objects.append(make_field(
-    "cathedral.sdf.gyroid_north", "Sacred Spherical Gyroid Reliquary of Pneuma",
-    [-14.0, 3.4, 0.0], gyroid_tree, [1.4, 1.4, 1.4],
+    "cathedral.sdf.gyroid_north", "Sacred Spherical Gyroid Armillary of Pneuma",
+    [-14.0, 3.4, 0.0], gyroid_tree, [1.5, 1.6, 1.5],
     "material.logos.sapphire", [0.12, 0.35, 0.95],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
-        "relicKind": {"t": "string", "v": "Spherical Gyroid Minimal Surface"},
-        "light.intensity": {"t": "float", "v": 3.5}
+        "relicKind": {"t": "string", "v": "Hollow Spherical Gyroid Armillary"},
+        "light.intensity": {"t": "float", "v": 3.8}
     }
 ))
 
-# 2. The South Transept 12-Pointed Stellated Merkaba Star of Sophia
-star_bar_x = sdf_leaf(2, [1.1, 0.26, 0.26], p0=0.08)
-star_bar_y = sdf_leaf(2, [0.26, 1.1, 0.26], p0=0.08)
-star_bar_z = sdf_leaf(2, [0.26, 0.26, 1.1], p0=0.08)
-star_bars = sdf_binary(5, star_bar_x, sdf_binary(5, star_bar_y, star_bar_z, 0.2), 0.2)
+# 2. The South Transept 24-Pointed Stellated Merkaba Star of Sophia
+star_bar_x = sdf_leaf(2, [1.1, 0.24, 0.24], p0=0.08)
+star_bar_y = sdf_leaf(2, [0.24, 1.1, 0.24], p0=0.08)
+star_bar_z = sdf_leaf(2, [0.24, 0.24, 1.1], p0=0.08)
+star_bars = sdf_binary(5, star_bar_x, sdf_binary(5, star_bar_y, star_bar_z, 0.18), 0.18)
+
+# 8 diagonal tetrahedral star points
+star_pts = []
+for sx in [-0.55, 0.55]:
+    for sy in [-0.55, 0.55]:
+        for sz in [-0.55, 0.55]:
+            star_pts.append(sdf_leaf(5, [0.18, 0.45, 0.0], offset=[sx, sy, sz]))
+diag_tree = star_pts[0]
+for pt in star_pts[1:]:
+    diag_tree = sdf_binary(5, diag_tree, pt, 0.14)
+
 star_core = sdf_leaf(0, [0.65, 0.65, 0.65])
-star_tree = sdf_binary(5, star_bars, star_core, 0.25)
+inner_ruby_heart = sdf_leaf(3, [0.28, 0.38, 0.28])
+star_compound = sdf_binary(5, star_bars, diag_tree, 0.2)
+star_tree = sdf_binary(5, star_compound, sdf_binary(5, star_core, inner_ruby_heart, 0.15), 0.22)
 
 # South Shrine Altar Pedestal
 objects.append(make_box(
@@ -1443,21 +1800,27 @@ objects.append(make_box(
     [14.0, 1.05, 0.0], [3.0, 0.3, 3.0],
     "material.logos.gold", [1.0, 0.82, 0.28]
 ))
-# Floating Merkaba Gimbal Ring
+# Dual Merkaba Gimbal Rings with Zodiac Nodes
 objects.append(make_torus(
-    "cathedral.sdf.merkaba.gimbal", "Merkaba Reliquary Gimbal Ring",
-    [14.0, 3.4, 0.0], 1.5, 0.08,
+    "cathedral.sdf.merkaba.gimbal.1", "Merkaba Reliquary Outer Gimbal",
+    [14.0, 3.4, 0.0], 1.55, 0.07,
     "material.logos.gold", [1.0, 0.82, 0.28],
     rot_deg=[-45.0, -30.0, 0.0]
 ))
+objects.append(make_torus(
+    "cathedral.sdf.merkaba.gimbal.2", "Merkaba Reliquary Inner Gimbal",
+    [14.0, 3.4, 0.0], 1.42, 0.06,
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    rot_deg=[30.0, 60.0, 0.0]
+))
 objects.append(make_field(
-    "cathedral.sdf.merkaba_south", "Stellated Merkaba Star of Sophia",
-    [14.0, 3.4, 0.0], star_tree, [1.4, 1.4, 1.4],
+    "cathedral.sdf.merkaba_south", "Stellated 24-Pointed Merkaba Star of Sophia",
+    [14.0, 3.4, 0.0], star_tree, [1.5, 1.5, 1.5],
     "material.logos.ruby", [0.88, 0.12, 0.22],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
-        "relicKind": {"t": "string", "v": "Merkaba Octahedral Star"},
-        "light.intensity": {"t": "float", "v": 3.5}
+        "relicKind": {"t": "string", "v": "24-Pointed Stellated Merkaba"},
+        "light.intensity": {"t": "float", "v": 3.8}
     }
 ))
 
@@ -1479,45 +1842,66 @@ objects.append(make_box(
     "material.logos.gold", [1.0, 0.82, 0.28]
 ))
 
-# Carved Alabaster Font Basin (CSG Subtract: RoundBox minus Sphere bowl)
-font_basin_outer = sdf_leaf(2, [1.35, 0.45, 1.35], p0=0.22)
-font_basin_cavity = sdf_leaf(0, [1.1, 1.1, 1.1], offset=[0.0, 0.32, 0.0])
-font_basin_tree = sdf_binary(4, font_basin_outer, font_basin_cavity)
+# Carved Alabaster Font Basin (Sculpted octagonal bowl with 8 perimeter lobes & cavity)
+font_basin_outer = sdf_leaf(2, [1.35, 0.48, 1.35], p0=0.22)
+font_lobe_x1 = sdf_leaf(3, [0.35, 0.42, 1.25], offset=[1.15, 0.0, 0.0])
+font_lobe_x2 = sdf_leaf(3, [0.35, 0.42, 1.25], offset=[-1.15, 0.0, 0.0])
+font_lobe_z1 = sdf_leaf(3, [1.25, 0.42, 0.35], offset=[0.0, 0.0, 1.15])
+font_lobe_z2 = sdf_leaf(3, [1.25, 0.42, 0.35], offset=[0.0, 0.0, -1.15])
+font_lobes = sdf_binary(5, sdf_binary(5, font_lobe_x1, font_lobe_x2, 0.18), sdf_binary(5, font_lobe_z1, font_lobe_z2, 0.18), 0.2)
+font_sculpted = sdf_binary(5, font_basin_outer, font_lobes, 0.22)
+font_basin_cavity = sdf_leaf(0, [1.1, 1.1, 1.1], offset=[0.0, 0.34, 0.0])
+font_basin_tree = sdf_binary(4, font_sculpted, font_basin_cavity)
 objects.append(make_field(
     "cathedral.sdf.font_basin", "Baptismal Font Alabaster Basin",
-    [0.0, 0.95, 0.0], font_basin_tree, [1.6, 1.0, 1.6],
+    [0.0, 0.95, 0.0], font_basin_tree, [1.7, 1.0, 1.7],
     "material.logos.alabaster", [0.94, 0.92, 0.88]
 ))
 
-# Living Water Fountain Plume (Crystalline Cyan water with suspended droplet crown)
-water_jet = sdf_leaf(5, [0.36, 0.52, 0.0], offset=[0.0, -0.1, 0.0])
-water_pearl = sdf_leaf(0, [0.22, 0.22, 0.22], offset=[0.0, 0.46, 0.0])
-water_drop_e = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.32, 0.35, 0.0])
-water_drop_w = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[-0.32, 0.35, 0.0])
-water_drop_n = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.35, -0.32])
-water_drop_s = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.35, 0.32])
+# Living Water Fountain Plume (Crystalline Cyan water with multi-stage droplet crown)
+water_jet = sdf_leaf(5, [0.36, 0.55, 0.0], offset=[0.0, -0.1, 0.0])
+water_bell = sdf_leaf(5, [0.55, 0.25, 0.0], offset=[0.0, 0.32, 0.0]) # Expanding water sheet
+water_pearl = sdf_leaf(0, [0.22, 0.22, 0.22], offset=[0.0, 0.52, 0.0])
+water_drop_e = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.38, 0.38, 0.0])
+water_drop_w = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[-0.38, 0.38, 0.0])
+water_drop_n = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.38, -0.38])
+water_drop_s = sdf_leaf(0, [0.11, 0.11, 0.11], offset=[0.0, 0.38, 0.38])
 water_drops = sdf_binary(5, sdf_binary(5, water_drop_e, water_drop_w, 0.15), sdf_binary(5, water_drop_n, water_drop_s, 0.15), 0.15)
 water_crown = sdf_binary(5, water_pearl, water_drops, 0.18)
-water_tree = sdf_binary(5, water_jet, water_crown, 0.24)
+water_tree = sdf_binary(5, sdf_binary(5, water_jet, water_bell, 0.18), water_crown, 0.22)
 objects.append(make_field(
     "cathedral.sdf.font_water", "Living Water Fountain Plume",
-    [0.0, 1.5, 0.0], water_tree, [1.2, 1.2, 1.2],
+    [0.0, 1.5, 0.0], water_tree, [1.3, 1.3, 1.3],
     "material.logos.cyan", [0.15, 0.85, 0.95],
-    extra_props={"fluid": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 2.5}}
+    extra_props={"fluid": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 3.0}}
 ))
 
-# 4. The High Altar Monstrance & Sacred Sunburst
-monstrance_outer = sdf_leaf(4, [0.42, 0.52, 0.0], offset=[0.0, 0.18, 0.0])
-monstrance_inner = sdf_leaf(0, [0.36, 0.36, 0.36], offset=[0.0, 0.42, 0.0])
-monstrance_cup = sdf_binary(4, monstrance_outer, monstrance_inner)
-monstrance_halo = sdf_leaf(6, [0.82, 0.07, 0.0], offset=[0.0, 0.82, 0.0])
-monstrance_host = sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.82, 0.0])
-monstrance_tree = sdf_binary(5, monstrance_cup, sdf_binary(5, monstrance_halo, monstrance_host, 0.15), 0.2)
+# 4. The High Altar Monstrance & 16-Ray Solar Sunburst
+monstrance_cup = sdf_leaf(4, [0.42, 0.52, 0.0], offset=[0.0, 0.18, 0.0])
+monstrance_stem = sdf_leaf(5, [0.18, 0.45, 0.0], offset=[0.0, 0.0, 0.0])
+monstrance_halo = sdf_leaf(6, [0.82, 0.07, 0.0], offset=[0.0, 0.85, 0.0])
+monstrance_halo2 = sdf_leaf(6, [0.65, 0.05, 0.0], offset=[0.0, 0.85, 0.0])
+monstrance_host = sdf_leaf(0, [0.26, 0.26, 0.26], offset=[0.0, 0.85, 0.0])
+
+# 8 Cardinal spear rays + 8 alternating flame rays
+rays = []
+for i in range(8):
+    ang = i * (math.pi / 4.0)
+    rx = math.cos(ang) * 0.95
+    ry = math.sin(ang) * 0.95
+    rays.append(sdf_leaf(5, [0.06, 0.38, 0.0], offset=[rx, 0.85 + ry, 0.0]))
+ray_tree = rays[0]
+for r in rays[1:]:
+    ray_tree = sdf_binary(5, ray_tree, r, 0.12)
+
+monstrance_sunburst = sdf_binary(5, sdf_binary(5, monstrance_halo, monstrance_halo2, 0.12), ray_tree, 0.15)
+monstrance_center = sdf_binary(5, monstrance_host, monstrance_sunburst, 0.18)
+monstrance_tree = sdf_binary(5, sdf_binary(5, monstrance_stem, monstrance_cup, 0.18), monstrance_center, 0.22)
 objects.append(make_field(
-    "cathedral.sdf.altar_monstrance", "High Altar Golden Monstrance",
-    [0.0, 3.2, -29.5], monstrance_tree, [1.2, 1.4, 1.2],
+    "cathedral.sdf.altar_monstrance", "High Altar 16-Ray Solar Monstrance",
+    [0.0, 3.2, -29.5], monstrance_tree, [1.4, 1.6, 1.4],
     "material.logos.gold", [1.0, 0.82, 0.28],
-    extra_props={"light.intensity": {"t": "float", "v": 2.8}}
+    extra_props={"light.intensity": {"t": "float", "v": 3.2}}
 ))
 
 # Sacred Holy Grail Chalice on Altar
@@ -1532,35 +1916,55 @@ objects.append(make_field(
     "cathedral.sdf.holy_grail", "Chalice of the Living Logos",
     [0.0, 2.35, -28.9], grail_tree, [0.9, 1.1, 0.9],
     "material.logos.gold", [1.0, 0.82, 0.28],
-    extra_props={"isHolyGrail": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 2.0}}
+    extra_props={"isHolyGrail": {"t": "bool", "v": True}, "light.intensity": {"t": "float", "v": 2.2}}
 ))
 
-# 5. Biblical Six-Winged Seraphim Guardians (Flanking the Altar)
-def make_six_winged_seraph(seraph_id, name, pos, flip_x=False):
+# 5. Biblical Ultra Six-Winged Seraphim Guardians with Layered Feather Blades
+def make_ultra_six_winged_seraph(seraph_id, name, pos, flip_x=False):
     sign = -1.0 if flip_x else 1.0
-    robe = sdf_leaf(5, [0.42, 0.95, 0.0], offset=[0.0, -0.15, 0.0])
-    head = sdf_leaf(0, [0.26, 0.26, 0.26], offset=[0.0, 0.88, 0.0])
-    halo = sdf_leaf(6, [0.38, 0.05, 0.0], offset=[0.0, 1.1, -0.05])
-    head_halo = sdf_binary(5, head, halo, 0.16)
+    robe_base = sdf_leaf(5, [0.46, 1.1, 0.0], offset=[0.0, -0.3, 0.0])
+    fold_f = sdf_leaf(3, [0.18, 0.95, 0.14], offset=[0.0, -0.3, 0.22])
+    fold_l = sdf_leaf(3, [0.14, 0.95, 0.18], offset=[-0.24 * sign, -0.3, 0.1])
+    fold_r = sdf_leaf(3, [0.14, 0.95, 0.18], offset=[0.24 * sign, -0.3, 0.1])
+    robe = sdf_binary(5, robe_base, sdf_binary(5, fold_f, sdf_binary(5, fold_l, fold_r, 0.15), 0.15), 0.2)
     
-    # 6 Layered Wings
-    wing_u1 = sdf_leaf(3, [0.12, 0.95, 0.35], offset=[-0.32 * sign, 1.1, -0.15])
-    wing_u2 = sdf_leaf(3, [0.12, 0.95, 0.35], offset=[0.32 * sign, 1.1, -0.15])
-    upper_wings = sdf_binary(5, wing_u1, wing_u2, 0.2)
-    wing_m1 = sdf_leaf(3, [0.14, 0.45, 0.95], offset=[-0.65 * sign, 0.45, -0.25])
-    wing_m2 = sdf_leaf(3, [0.14, 0.45, 0.95], offset=[0.65 * sign, 0.45, -0.25])
-    mid_wings = sdf_binary(5, wing_m1, wing_m2, 0.2)
-    wing_d1 = sdf_leaf(3, [0.12, 0.85, 0.35], offset=[-0.42 * sign, -0.25, -0.15])
-    wing_d2 = sdf_leaf(3, [0.12, 0.85, 0.35], offset=[0.42 * sign, -0.25, -0.15])
-    lower_wings = sdf_binary(5, wing_d1, wing_d2, 0.2)
+    head = sdf_leaf(0, [0.28, 0.28, 0.28], offset=[0.0, 0.88, 0.0])
+    crown = sdf_leaf(4, [0.22, 0.12, 0.0], offset=[0.0, 1.14, 0.0])
+    halo_in = sdf_leaf(6, [0.42, 0.04, 0.0], offset=[0.0, 1.02, -0.05])
+    halo_out = sdf_leaf(6, [0.55, 0.03, 0.0], offset=[0.0, 1.02, -0.05])
+    head_complex = sdf_binary(5, sdf_binary(5, head, crown, 0.12), sdf_binary(5, halo_in, halo_out, 0.1), 0.16)
     
-    all_wings = sdf_binary(5, upper_wings, sdf_binary(5, mid_wings, lower_wings, 0.22), 0.24)
-    upper_body = sdf_binary(5, head_halo, all_wings, 0.24)
-    seraph_full = sdf_binary(5, robe, upper_body, 0.30)
+    hands = sdf_leaf(3, [0.12, 0.15, 0.18], offset=[0.0, 0.38, 0.25])
+    heart_gem = sdf_leaf(0, [0.12, 0.12, 0.12], offset=[0.0, 0.38, 0.32])
+    chest = sdf_binary(5, hands, heart_gem, 0.1)
+    
+    # 6 wings with multi-feather blade geometry
+    u_blade1_l = sdf_leaf(3, [0.10, 0.75, 0.28], offset=[-0.28 * sign, 1.25, -0.15])
+    u_blade2_l = sdf_leaf(3, [0.08, 0.65, 0.22], offset=[-0.42 * sign, 1.42, -0.18])
+    u_wing_l = sdf_binary(5, u_blade1_l, u_blade2_l, 0.15)
+    u_blade1_r = sdf_leaf(3, [0.10, 0.75, 0.28], offset=[0.28 * sign, 1.25, -0.15])
+    u_blade2_r = sdf_leaf(3, [0.08, 0.65, 0.22], offset=[0.42 * sign, 1.42, -0.18])
+    u_wing_r = sdf_binary(5, u_blade1_r, u_blade2_r, 0.15)
+    upper_wings = sdf_binary(5, u_wing_l, u_wing_r, 0.2)
+    
+    m_blade1_l = sdf_leaf(3, [0.12, 0.38, 0.85], offset=[-0.65 * sign, 0.48, -0.22])
+    m_blade2_l = sdf_leaf(3, [0.09, 0.28, 0.72], offset=[-0.95 * sign, 0.55, -0.28])
+    m_wing_l = sdf_binary(5, m_blade1_l, m_blade2_l, 0.15)
+    m_blade1_r = sdf_leaf(3, [0.12, 0.38, 0.85], offset=[0.65 * sign, 0.48, -0.22])
+    m_blade2_r = sdf_leaf(3, [0.09, 0.28, 0.72], offset=[0.95 * sign, 0.55, -0.28])
+    m_wing_r = sdf_binary(5, m_blade1_r, m_blade2_r, 0.15)
+    mid_wings = sdf_binary(5, m_wing_l, m_wing_r, 0.2)
+    
+    d_wing_l = sdf_leaf(3, [0.11, 0.85, 0.32], offset=[-0.38 * sign, -0.32, -0.12])
+    d_wing_r = sdf_leaf(3, [0.11, 0.85, 0.32], offset=[0.38 * sign, -0.32, -0.12])
+    lower_wings = sdf_binary(5, d_wing_l, d_wing_r, 0.2)
+    
+    wings = sdf_binary(5, upper_wings, sdf_binary(5, mid_wings, lower_wings, 0.22), 0.25)
+    seraph_full = sdf_binary(5, robe, sdf_binary(5, head_complex, sdf_binary(5, chest, wings, 0.2), 0.25), 0.28)
     
     return make_field(
         seraph_id, name,
-        pos, seraph_full, [1.8, 2.2, 1.8],
+        pos, seraph_full, [2.0, 2.4, 2.0],
         "material.logos.gold", [1.0, 0.82, 0.28],
         rot_deg=[0.0, 20.0 * sign, 0.0]
     )
@@ -1576,8 +1980,8 @@ objects.append(make_box(
     [3.8, 1.5, -29.5], [1.6, 1.5, 1.6],
     "material.logos.alabaster", [0.94, 0.92, 0.88]
 ))
-objects.append(make_six_winged_seraph("cathedral.sdf.seraph.left", "Six-Winged Seraph Guardian (North)", [-3.8, 3.8, -29.5], False))
-objects.append(make_six_winged_seraph("cathedral.sdf.seraph.right", "Six-Winged Seraph Guardian (South)", [3.8, 3.8, -29.5], True))
+objects.append(make_ultra_six_winged_seraph("cathedral.sdf.seraph.left", "Six-Winged Seraph Guardian (North)", [-3.8, 3.8, -29.5], False))
+objects.append(make_ultra_six_winged_seraph("cathedral.sdf.seraph.right", "Six-Winged Seraph Guardian (South)", [3.8, 3.8, -29.5], True))
 
 # 6. The West Portal Monolith of Genesis & Amethyst Prism
 portal_block = sdf_leaf(2, [2.4, 3.5, 0.42], p0=0.18)
@@ -1586,17 +1990,17 @@ portal_tree = sdf_binary(4, portal_block, portal_hollow)
 objects.append(make_field(
     "cathedral.sdf.portal_monolith", "West Portal Genesis Monolith",
     [0.0, 4.2, 29.5], portal_tree, [2.8, 4.0, 1.0],
-    "material.logos.obsidian", [0.10, 0.11, 0.14]
+    "material.logos.arch", [0.10, 0.11, 0.14]
 ))
 objects.append(make_field(
     "cathedral.sdf.portal_crystal", "Genesis Vesica Amethyst Prism",
-    [0.0, 4.0, 29.5], sdf_leaf(3, [0.36, 0.82, 0.22]), [0.8, 1.2, 0.8],
-    "material.logos.amethyst", [0.72, 0.25, 0.88],
+    [0.0, 4.0, 29.5], sdf_leaf(3, [0.36, 0.82, 0.22]), [1.0, 1.2, 1.0],
+    "material.logos.amethyst", [0.65, 0.25, 0.95],
     extra_props={"light.intensity": {"t": "float", "v": 2.5}}
 ))
 
-# 7. Twin Living Fire Sanctuary Braziers (Flanking Chancel Arch)
-for side_name, bx, bsign in [("Left", -5.8, -1.0), ("Right", 5.8, 1.0)]:
+# 7. Chancel Sacred Brazier Flames (North & South)
+for bx, side_name in [(-4.2, "North"), (4.2, "South")]:
     flame_sphere = sdf_leaf(0, [0.26, 0.26, 0.26])
     flame_tip = sdf_leaf(5, [0.22, 0.44, 0.0], offset=[0.0, 0.26, 0.0])
     flame_tree = sdf_binary(5, flame_sphere, flame_tip, 0.24)
@@ -1611,25 +2015,209 @@ for side_name, bx, bsign in [("Left", -5.8, -1.0), ("Right", 5.8, 1.0)]:
         }
     ))
 
+# 8. NEW: The Ophanim Celestial Gyroscope (The Chariot of Ezekiel)
+# Suspended high above the Sanctuary Altar at [0.0, 11.2, -29.5]
+oph_ring_xy = sdf_leaf(6, [2.1, 0.08, 0.0])
+oph_ring_yz = sdf_expr("sqrt((sqrt(y*y + z*z) - 1.95)*(sqrt(y*y + z*z) - 1.95) + x*x) - 0.08", dims=[2.4, 2.4, 2.4])
+oph_ring_xz = sdf_expr("sqrt((sqrt(x*x + z*z) - 1.70)*(sqrt(x*x + z*z) - 1.70) + y*y) - 0.07", dims=[2.2, 2.2, 2.2])
+oph_rings = sdf_binary(5, oph_ring_xy, sdf_binary(5, oph_ring_yz, oph_ring_xz, 0.15), 0.18)
+
+# 12 planetary eye spheres mounted along the equatorial ring
+oph_eyes = []
+for i in range(12):
+    ang = i * (math.pi / 6.0)
+    ox = math.cos(ang) * 2.1
+    oy = math.sin(ang) * 2.1
+    oph_eyes.append(sdf_leaf(0, [0.12, 0.12, 0.12], offset=[ox, oy, 0.0]))
+oph_eye_tree = oph_eyes[0]
+for e in oph_eyes[1:]:
+    oph_eye_tree = sdf_binary(5, oph_eye_tree, e, 0.1)
+
+# Central Stellated Dodecahedron Core
+core_cx = sdf_leaf(5, [0.35, 0.75, 0.0], offset=[0.0, 0.0, 0.0])
+core_cy = sdf_leaf(3, [0.25, 0.85, 0.25])
+core_cz = sdf_leaf(3, [0.25, 0.25, 0.85])
+oph_star = sdf_binary(5, core_cx, sdf_binary(5, core_cy, core_cz, 0.15), 0.18)
+oph_pearl = sdf_leaf(0, [0.32, 0.32, 0.32])
+oph_core = sdf_binary(5, oph_star, oph_pearl, 0.2)
+
+ophanim_full = sdf_binary(5, sdf_binary(5, oph_rings, oph_eye_tree, 0.15), oph_core, 0.22)
+objects.append(make_field(
+    "cathedral.sdf.ophanim_throne", "Ophanim Celestial Gyroscope (The Chariot of Ezekiel)",
+    [0.0, 11.2, -29.5], ophanim_full, [2.5, 2.5, 2.5],
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    extra_props={
+        "isCelestialRelic": {"t": "bool", "v": True},
+        "relicKind": {"t": "string", "v": "Ophanim Chariot of Ezekiel"},
+        "light.intensity": {"t": "float", "v": 4.5},
+        "light.source": {"t": "bool", "v": True}
+    }
+))
+
+# 9. NEW: Sanctuary Hanging Golden Incense Thurible (Censer)
+# Suspended from the triumphal arch at [0.0, 7.8, -20.0]
+thurible_bowl = sdf_leaf(5, [0.35, 0.32, 0.0], offset=[0.0, 0.0, 0.0])
+thurible_lid = sdf_leaf(5, [0.32, 0.38, 0.0], offset=[0.0, 0.32, 0.0])
+thurible_body = sdf_binary(5, thurible_bowl, thurible_lid, 0.15)
+thurible_ring = sdf_leaf(6, [0.15, 0.03, 0.0], offset=[0.0, 0.72, 0.0]) # Hanging eyelet
+thurible_smoke1 = sdf_leaf(0, [0.22, 0.22, 0.22], offset=[0.08, 0.95, 0.04])
+thurible_smoke2 = sdf_leaf(0, [0.28, 0.28, 0.28], offset=[-0.06, 1.25, -0.05])
+thurible_smoke = sdf_binary(5, thurible_smoke1, thurible_smoke2, 0.22)
+thurible_tree = sdf_binary(5, sdf_binary(5, thurible_body, thurible_ring, 0.15), thurible_smoke, 0.25)
+objects.append(make_field(
+    "cathedral.sdf.thurible", "Sanctuary Hanging Golden Incense Thurible",
+    [0.0, 7.8, -20.0], thurible_tree, [1.0, 1.6, 1.0],
+    "material.logos.gold", [1.0, 0.82, 0.28],
+    extra_props={
+        "isThurible": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.6},
+        "light.source": {"t": "bool", "v": True}
+    }
+))
+
+# 10. NEW: Illuminated Gospel Lectionary on Altar Lectern
+objects.append(make_box(
+    "cathedral.altar.lectern.stand", "Golden Eagle Altar Lectern Stand",
+    [-0.85, 2.25, -28.9], [0.35, 0.2, 0.35],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "cathedral.altar.lectionary", "Illuminated Altar Gospel Lectionary",
+    [-0.85, 2.42, -28.9], [0.65, 0.08, 0.52],
+    "material.logos.manuscript", [1.0, 1.0, 1.0],
+    rot_deg=[22.0, 0.0, 0.0],
+    extra_props={"isSacredText": {"t": "bool", "v": True}}
+))
+
+# 11. NEW: High Altar Embroidered Antependium (Liturgical Frontal)
+objects.append(make_box(
+    "cathedral.altar.antependium.frontal", "High Altar Liturgical Antependium Frontal",
+    [0.0, 1.45, -28.52], [4.6, 1.15, 0.08],
+    "material.logos.altar", [1.0, 1.0, 1.0],
+    extra_props={"isLiturgicalFabric": {"t": "bool", "v": True}}
+))
+
 # ==============================================================================
 # MATERIALS PALETTE — FIXED TO NATIVE SPECIFICATION
 # Material::getIdentifier() returns "material." + name, so name must be bare slug!
 # ==============================================================================
+# Pre-generate textures for materials
+tex_cosmati = cosmati_floor_face(256)
+tex_dark_stone = solid_face(64, 64, [28, 30, 36])
+tex_gold_border = solid_face(64, 64, [215, 180, 55])
+tex_altar_mensa = altar_mensa_face(256)
+tex_altar_antependium = altar_antependium_face(256)
+tex_crimson_side = solid_face(64, 64, [125, 20, 30])
+tex_linenfold = gothic_linenfold_wood_face(256)
+tex_wood_grain = wood_grain_face(256)
+tex_wood_side = solid_face(64, 64, [90, 52, 24])
+tex_filigree = gilded_filigree_face(256)
+tex_alabaster = veined_alabaster_face(256)
+tex_ashlar = ashlar_stone_face(256)
+tex_rose_sapphire = rose_window_sapphire_face(256)
+tex_rose_ruby = rose_window_ruby_face(256)
+tex_glass_emerald = stained_glass_emerald_face(256)
+tex_glass_amethyst = stained_glass_amethyst_face(256)
+tex_organ_pipe = organ_pipe_tin_face(256)
+tex_manuscript = illuminated_manuscript_face(256)
+tex_water_caustics = water_caustics_face(256)
+tex_came = solid_face(16, 16, [25, 25, 30])
+tex_leather = solid_face(16, 16, [85, 42, 20])
+tex_tin_side = solid_face(16, 16, [175, 180, 185])
+tex_amber = solid_face(16, 16, [245, 165, 35])
+tex_core = solid_face(16, 16, [255, 245, 200])
+
 materials = [
-    {"name": "logos.floor", "ambient": 0.25, "diffuse": 0.75, "specular": 0.6, "shininess": 40.0, "baseColor": [0.10, 0.11, 0.14], "roughness": 0.2, "metallic": 0.8},
-    {"name": "logos.gold", "ambient": 0.35, "diffuse": 0.85, "specular": 0.9, "shininess": 64.0, "baseColor": [1.0, 0.82, 0.28], "emission": [0.3, 0.24, 0.08], "roughness": 0.15, "metallic": 0.95},
-    {"name": "logos.sapphire", "ambient": 0.25, "diffuse": 0.75, "specular": 0.8, "shininess": 48.0, "baseColor": [0.12, 0.35, 0.95], "emission": [0.08, 0.18, 0.45], "roughness": 0.2, "metallic": 0.6},
-    {"name": "logos.alabaster", "ambient": 0.45, "diffuse": 0.9, "specular": 0.6, "shininess": 32.0, "baseColor": [0.94, 0.92, 0.88], "emission": [0.05, 0.05, 0.05], "roughness": 0.25, "metallic": 0.1},
-    {"name": "logos.altar", "ambient": 0.2, "diffuse": 0.6, "specular": 0.8, "shininess": 50.0, "baseColor": [0.05, 0.05, 0.08], "emission": [0.0, 0.0, 0.0], "roughness": 0.1, "metallic": 0.8},
-    {"name": "logos.core", "ambient": 0.5, "diffuse": 0.9, "specular": 1.0, "shininess": 128.0, "baseColor": [1.0, 0.95, 0.75], "emission": [0.95, 0.85, 0.55], "roughness": 0.05, "metallic": 0.5},
-    {"name": "logos.emerald", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.15, 0.85, 0.45], "emission": [0.15, 0.45, 0.25], "roughness": 0.2, "metallic": 0.7},
-    {"name": "logos.amethyst", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.65, 0.25, 0.95], "emission": [0.28, 0.12, 0.48], "roughness": 0.2, "metallic": 0.7},
-    {"name": "logos.amber", "ambient": 0.3, "diffuse": 0.85, "specular": 0.8, "shininess": 45.0, "baseColor": [0.98, 0.65, 0.15], "emission": [0.35, 0.20, 0.08], "roughness": 0.2, "metallic": 0.8},
-    {"name": "logos.arch", "ambient": 0.35, "diffuse": 0.8, "specular": 0.7, "shininess": 40.0, "baseColor": [0.85, 0.82, 0.78], "emission": [0.08, 0.08, 0.12], "roughness": 0.3, "metallic": 0.4},
-    {"name": "logos.wood", "ambient": 0.3, "diffuse": 0.8, "specular": 0.4, "shininess": 20.0, "baseColor": [0.24, 0.16, 0.11], "emission": [0.0, 0.0, 0.0], "roughness": 0.6, "metallic": 0.05},
-    {"name": "logos.ruby", "ambient": 0.25, "diffuse": 0.8, "specular": 0.85, "shininess": 50.0, "baseColor": [0.95, 0.22, 0.32], "emission": [0.35, 0.08, 0.12], "roughness": 0.2, "metallic": 0.7},
-    {"name": "logos.cyan", "ambient": 0.35, "diffuse": 0.85, "specular": 0.95, "shininess": 80.0, "baseColor": [0.15, 0.85, 0.95], "emission": [0.10, 0.45, 0.65], "roughness": 0.1, "metallic": 0.5},
-    {"name": "logos.organ_pipe", "ambient": 0.4, "diffuse": 0.8, "specular": 0.95, "shininess": 100.0, "baseColor": [0.85, 0.88, 0.92], "emission": [0.05, 0.08, 0.12], "roughness": 0.1, "metallic": 0.95}
+    {
+        "name": "logos.floor",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.5, "shininess": 36.0,
+        "baseColor": [1.0, 1.0, 1.0], "roughness": 0.25, "metallic": 0.4,
+        "faceTextures": [tex_dark_stone, tex_dark_stone, tex_cosmati, tex_dark_stone, tex_dark_stone, tex_dark_stone]
+    },
+    {
+        "name": "logos.gold",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.95, "shininess": 80.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.25, 0.20, 0.08], "roughness": 0.15, "metallic": 0.95,
+        "faceTextures": [tex_filigree] * 6
+    },
+    {
+        "name": "logos.sapphire",
+        "textureResolution": 256, "ambient": 0.30, "diffuse": 0.85, "specular": 0.85, "shininess": 64.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.12, 0.24, 0.55], "roughness": 0.15, "metallic": 0.5,
+        "faceTextures": [tex_came, tex_came, tex_came, tex_came, tex_rose_sapphire, tex_rose_sapphire]
+    },
+    {
+        "name": "logos.alabaster",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.65, "shininess": 40.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.05, 0.05], "roughness": 0.2, "metallic": 0.1,
+        "faceTextures": [tex_alabaster] * 6
+    },
+    {
+        "name": "logos.altar",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.70, "shininess": 50.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.08, 0.04, 0.04], "roughness": 0.2, "metallic": 0.5,
+        "faceTextures": [tex_crimson_side, tex_crimson_side, tex_altar_mensa, tex_dark_stone, tex_altar_antependium, tex_crimson_side]
+    },
+    {
+        "name": "logos.core",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 0.96, 0.80], "emission": [0.95, 0.85, 0.55], "roughness": 0.05, "metallic": 0.5,
+        "faceTextures": [tex_core] * 6
+    },
+    {
+        "name": "logos.emerald",
+        "textureResolution": 256, "ambient": 0.30, "diffuse": 0.85, "specular": 0.85, "shininess": 60.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.15, 0.45, 0.25], "roughness": 0.15, "metallic": 0.6,
+        "faceTextures": [tex_came, tex_came, tex_came, tex_came, tex_glass_emerald, tex_glass_emerald]
+    },
+    {
+        "name": "logos.amethyst",
+        "textureResolution": 256, "ambient": 0.30, "diffuse": 0.85, "specular": 0.85, "shininess": 60.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.28, 0.12, 0.48], "roughness": 0.15, "metallic": 0.6,
+        "faceTextures": [tex_came, tex_came, tex_came, tex_came, tex_glass_amethyst, tex_glass_amethyst]
+    },
+    {
+        "name": "logos.amber",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.80, "shininess": 50.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.20, 0.08], "roughness": 0.2, "metallic": 0.7,
+        "faceTextures": [tex_amber] * 6
+    },
+    {
+        "name": "logos.arch",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.85, "specular": 0.50, "shininess": 32.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.06, 0.06, 0.08], "roughness": 0.35, "metallic": 0.3,
+        "faceTextures": [tex_ashlar] * 6
+    },
+    {
+        "name": "logos.wood",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.45, "shininess": 24.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.0, 0.0, 0.0], "roughness": 0.5, "metallic": 0.08,
+        "faceTextures": [tex_wood_side, tex_wood_side, tex_wood_grain, tex_wood_side, tex_linenfold, tex_linenfold]
+    },
+    {
+        "name": "logos.ruby",
+        "textureResolution": 256, "ambient": 0.30, "diffuse": 0.85, "specular": 0.85, "shininess": 60.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.40, 0.10, 0.15], "roughness": 0.15, "metallic": 0.6,
+        "faceTextures": [tex_came, tex_came, tex_came, tex_came, tex_rose_ruby, tex_rose_ruby]
+    },
+    {
+        "name": "logos.cyan",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.95, "shininess": 90.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.15, 0.55, 0.75], "roughness": 0.1, "metallic": 0.5,
+        "faceTextures": [tex_water_caustics] * 6
+    },
+    {
+        "name": "logos.organ_pipe",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.85, "specular": 0.98, "shininess": 120.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.08, 0.10, 0.14], "roughness": 0.1, "metallic": 0.95,
+        "faceTextures": [tex_tin_side, tex_tin_side, tex_tin_side, tex_tin_side, tex_organ_pipe, tex_organ_pipe]
+    },
+    {
+        "name": "logos.manuscript",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.85, "specular": 0.40, "shininess": 20.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.04, 0.03], "roughness": 0.4, "metallic": 0.1,
+        "faceTextures": [tex_leather, tex_leather, tex_manuscript, tex_leather, tex_leather, tex_leather]
+    }
 ]
 
 # ==============================================================================

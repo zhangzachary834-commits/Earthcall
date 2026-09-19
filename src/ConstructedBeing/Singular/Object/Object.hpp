@@ -577,6 +577,8 @@ public:
     // Resize this object's own material's face textures to the face count its
     // current geometry actually has. Idempotent.
     void initFaceTextures();
+    int getTextureResolution() const;
+    void setTextureResolution(const int& res);
     // Fill one face with a colour, through the object's own material, and
     // record it in the object's own faceColors slot so the "color" property
     // reads back what was painted.
