@@ -1,4 +1,27 @@
 import json
+
+def make_color_expr_piecewise(r_terms, g_terms, b_terms, input_var="y"):
+    """
+    Creates an OntoMath Piecewise dictionary whose mathNode is an Op::VectorConstruct (2)
+    with 3 scalar children (Op::ScalarLeaf = 0).
+    Kind: 0 = Sin, 1 = Cos, 2 = Exp, 3 = Ln
+    """
+    return {
+        "input": input_var,
+        "pieces": [
+            {
+                "mathNode": {
+                    "op": 2,
+                    "children": [
+                        {"op": 0, "scalarForm": {"terms": r_terms}},
+                        {"op": 0, "scalarForm": {"terms": g_terms}},
+                        {"op": 0, "scalarForm": {"terms": b_terms}}
+                    ]
+                }
+            }
+        ]
+    }
+
 import os
 import math
 import struct
@@ -2217,7 +2240,121 @@ materials = [
         "textureResolution": 256, "ambient": 0.40, "diffuse": 0.85, "specular": 0.40, "shininess": 20.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.04, 0.03], "roughness": 0.4, "metallic": 0.1,
         "faceTextures": [tex_leather, tex_leather, tex_manuscript, tex_leather, tex_leather, tex_leather]
+    },
+    # --- ONTOMATH DYNAMIC COLOR FIELD MATERIALS ---
+    {
+        "name": "logos.colorfield.mandorla",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.90, "specular": 0.95, "shininess": 96.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.20, 0.12, 0.35], "roughness": 0.12, "metallic": 0.85,
+        "faceTextures": [tex_came, tex_came, tex_came, tex_came, tex_rose_sapphire, tex_rose_ruby],
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.75, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.20, "shift": 0.0}]},
+                {"c": -0.003, "factors": {"x": 2.0}}
+            ],
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.25, "shift": 0.5}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.6, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.90, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.18, "shift": -0.4}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.4, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.singularity",
+        "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.45, 0.65], "roughness": 0.08, "metallic": 0.92,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.70, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35, "shift": 0.0}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.7, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.60, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.45, "shift": 1.2}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.8, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.30, "shift": -0.8}]},
+                {"c": 0.22, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.6, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.pneuma",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.95, "shininess": 80.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.10, 0.40, 0.55], "roughness": 0.15, "metallic": 0.75,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.20, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.32, "shift": 0.0}]},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.40, "shift": 0.6}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.6, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.25, "shift": 0.0}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.45, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.sophia",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.95, "shininess": 80.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.55, 0.15, 0.15], "roughness": 0.15, "metallic": 0.75,
+        "faceTextures": [tex_amber] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.96, "factors": {}},
+                {"c": 0.04, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35, "shift": 0.0}]},
+                {"c": 0.08, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.6, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.40, "factors": {}},
+                {"c": 0.40, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.45, "shift": -0.5}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.7, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.35, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.50, "shift": 0.7}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.5, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.genesis",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.90, "shininess": 70.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.25, 0.20, 0.45], "roughness": 0.18, "metallic": 0.65,
+        "faceTextures": [tex_rose_sapphire] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.40, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.40, "factors": {}},
+                {"c": 0.40, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.50, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.80, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35, "shift": 0.0}]}
+            ]
+        )
     }
+
 ]
 
 # ==============================================================================
@@ -2247,6 +2384,126 @@ formationRelations = [
     {"directed": True, "entityA": "glyph.lexeme.harmonia", "entityB": "lexeme.harmonia", "type": "speech-act", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "speech-act", "timestamp": 1787395000}]},
     {"directed": True, "entityA": "glyph.lexeme.covenant", "entityB": "lexeme.covenant", "type": "speech-act", "weight": 1.0, "events": [{"deltaWeight": 1.0, "description": "speech-act", "timestamp": 1787395000}]},
 ]
+
+
+# ==============================================================================
+# MONUMENTAL SACRED SDFS WITH ONTOMATH-DRIVEN MATHEMATICAL COLOR FIELDS
+# ==============================================================================
+
+# 1. The Great Apse Mandorla of Transfiguration (28m tall, 16m wide sacred gateway behind High Altar)
+# Constructed from nested Gothic pointed Vesica arches, fluted radiation rays, and inner sanctuary core
+mandorla_outer_l = sdf_leaf(0, [6.5, 9.5, 1.8], offset=[-3.2, 0.0, 0.0])
+mandorla_outer_r = sdf_leaf(0, [6.5, 9.5, 1.8], offset=[3.2, 0.0, 0.0])
+mandorla_vesica_outer = sdf_binary(3, mandorla_outer_l, mandorla_outer_r) # Intersection forms the pointed Vesica Piscis
+
+mandorla_inner_l = sdf_leaf(0, [5.2, 7.8, 2.2], offset=[-2.6, 0.0, 0.0])
+mandorla_inner_r = sdf_leaf(0, [5.2, 7.8, 2.2], offset=[2.6, 0.0, 0.0])
+mandorla_vesica_inner = sdf_binary(3, mandorla_inner_l, mandorla_inner_r)
+
+mandorla_frame = sdf_binary(4, mandorla_vesica_outer, mandorla_vesica_inner) # Hollow gothic frame
+
+mandorla_sun_core = sdf_leaf(0, [2.4, 3.8, 1.0])
+mandorla_torus1 = sdf_leaf(6, [3.8, 0.35, 0.0]) # Major R = 3.8, Minor R = 0.35
+mandorla_torus2 = sdf_leaf(6, [5.4, 0.28, 0.0]) # Major R = 5.4, Minor R = 0.28
+
+mandorla_sanctuary = sdf_binary(5, mandorla_frame, sdf_binary(5, mandorla_sun_core, sdf_binary(5, mandorla_torus1, mandorla_torus2, 0.25), 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.sdf.monumental_mandorla", "Great Apse Mandorla of Transfiguration",
+    [0.0, 15.0, -32.5], mandorla_sanctuary, [8.0, 14.0, 3.5],
+    "material.logos.colorfield.mandorla", [1.0, 0.85, 0.95],
+    extra_props={
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 6.0},
+        "description": {"t": "string", "v": "28-meter tall Gothic pointed Mandorla with continuous OntoMath transfiguration color field"}
+    }
+))
+
+# 2. The Colossal Pillar of Living Logos (28m tall braided double-helix singularity column at crossing)
+singularity_spire = sdf_leaf(4, [1.4, 11.0, 0.0]) # Central energy cylinder
+singularity_core_orb = sdf_leaf(0, [2.8, 2.8, 2.8], offset=[0.0, 0.0, 0.0])
+singularity_ring_1 = sdf_leaf(6, [3.8, 0.45, 0.0], offset=[0.0, 4.0, 0.0])
+singularity_ring_2 = sdf_leaf(6, [4.8, 0.40, 0.0], offset=[0.0, -4.0, 0.0])
+singularity_ring_3 = sdf_leaf(6, [3.2, 0.35, 0.0], offset=[0.0, 8.0, 0.0])
+
+singularity_rings = sdf_binary(5, singularity_ring_1, sdf_binary(5, singularity_ring_2, singularity_ring_3, 0.3), 0.35)
+singularity_tree = sdf_binary(5, singularity_spire, sdf_binary(5, singularity_core_orb, singularity_rings, 0.4), 0.45)
+
+objects.append(make_field(
+    "cathedral.sdf.singularity_pillar", "Colossal Pillar of Living Logos (Crossing Singularity)",
+    [0.0, 14.0, 0.0], singularity_tree, [6.0, 14.0, 6.0],
+    "material.logos.colorfield.singularity", [0.95, 0.95, 1.0],
+    extra_props={
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 5.5},
+        "description": {"t": "string", "v": "28-meter high crossing singularity column with OntoMath multi-harmonic plasma color field"}
+    }
+))
+
+# 3. The Monumental North Transept Gyroid Sanctuary Spire (22m tall Pneuma tower)
+gyroid_outer_spire = sdf_leaf(4, [2.2, 8.5, 0.0])
+gyroid_orb_upper = sdf_leaf(0, [2.8, 3.2, 2.8], offset=[0.0, 4.5, 0.0])
+gyroid_orb_lower = sdf_leaf(0, [3.2, 3.6, 3.2], offset=[0.0, -3.5, 0.0])
+gyroid_ring_pneuma = sdf_leaf(6, [3.8, 0.38, 0.0], offset=[0.0, 0.0, 0.0])
+
+gyroid_monument_tree = sdf_binary(5, gyroid_outer_spire, sdf_binary(5, gyroid_ring_pneuma, sdf_binary(5, gyroid_orb_upper, gyroid_orb_lower, 0.35), 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.sdf.monumental_gyroid_north", "Monumental North Transept Gyroid Spire of Pneuma",
+    [-14.0, 12.0, 0.0], gyroid_monument_tree, [5.0, 12.0, 5.0],
+    "material.logos.colorfield.pneuma", [0.2, 0.85, 0.95],
+    extra_props={
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 4.8},
+        "description": {"t": "string", "v": "24-meter tall North Transept spire with OntoMath celestial cyan-emerald color field"}
+    }
+))
+
+# 4. The Monumental South Transept Stellated Merkaba Star of Sophia (22m tall starfire beacon)
+star_axis_x = sdf_leaf(2, [2.6, 0.55, 0.55], p0=0.15)
+star_axis_y = sdf_leaf(2, [0.55, 2.6, 0.55], p0=0.15)
+star_axis_z = sdf_leaf(2, [0.55, 0.55, 2.6], p0=0.15)
+star_axes = sdf_binary(5, star_axis_x, sdf_binary(5, star_axis_y, star_axis_z, 0.25), 0.25)
+
+star_gimbal_1 = sdf_leaf(6, [3.6, 0.35, 0.0], offset=[0.0, 2.0, 0.0])
+star_gimbal_2 = sdf_leaf(6, [3.6, 0.35, 0.0], offset=[0.0, -2.0, 0.0])
+star_core_orb = sdf_leaf(0, [2.2, 2.2, 2.2])
+
+merkaba_monument_tree = sdf_binary(5, star_axes, sdf_binary(5, star_core_orb, sdf_binary(5, star_gimbal_1, star_gimbal_2, 0.3), 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.sdf.monumental_merkaba_south", "Monumental South Transept Stellated Merkaba Beacon",
+    [14.0, 12.0, 0.0], merkaba_monument_tree, [5.0, 12.0, 5.0],
+    "material.logos.colorfield.sophia", [0.95, 0.35, 0.25],
+    extra_props={
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 4.8},
+        "description": {"t": "string", "v": "24-meter tall South Transept starfire beacon with OntoMath ruby-gold color field"}
+    }
+))
+
+# 5. The Great West Portal Genesis Rose Monolith (17m diameter Gothic wheel rosette)
+rose_core = sdf_leaf(0, [2.2, 2.2, 0.8])
+rose_outer_ring = sdf_leaf(6, [6.5, 0.45, 0.0])
+rose_mid_ring = sdf_leaf(6, [4.2, 0.35, 0.0])
+rose_petals_h = sdf_leaf(2, [6.0, 0.45, 0.5], p0=0.1)
+rose_petals_v = sdf_leaf(2, [0.45, 6.0, 0.5], p0=0.1)
+
+rose_cross = sdf_binary(5, rose_petals_h, rose_petals_v, 0.2)
+rose_rings = sdf_binary(5, rose_outer_ring, rose_mid_ring, 0.25)
+rose_monument_tree = sdf_binary(5, rose_rings, sdf_binary(5, rose_cross, rose_core, 0.3), 0.35)
+
+objects.append(make_field(
+    "cathedral.sdf.monumental_genesis_rose", "West Portal Great Genesis Rose Monolith",
+    [0.0, 16.5, 33.0], rose_monument_tree, [8.5, 8.5, 2.5],
+    "material.logos.colorfield.genesis", [0.75, 0.45, 0.85],
+    rot_deg=[0.0, 0.0, 0.0],
+    extra_props={
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 5.0},
+        "description": {"t": "string", "v": "17-meter diameter West Portal Rose rosette with OntoMath stained-glass color field"}
+    }
+))
 
 zone_doc = {
     "identifier": "Cathedral of the Living Logos",
