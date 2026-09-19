@@ -6,6 +6,7 @@
 #include "Person/Body/Body.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -135,6 +136,7 @@ struct BootedEngineHarness {
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
         zones.bindLawManager(&lawManager);
         zones.hydrateFromZoneStore();
+        Integration::getEarthcallAPI().setZoneManager(&zones);
     }
 
     ~BootedEngineHarness() {

@@ -1,3 +1,18 @@
+// Witness Documentation:
+// OLD TEST PROVED:
+//   Synthetic unit testing of EarthcallAPI: verified that IF an EarthcallAPI
+//   instance is manually constructed and provided with pointers to a local
+//   ZoneManager and DesignSystem via setZoneManager()/setDesignSystem(), then
+//   methods like createObject() and createDesignElement() function on those
+//   attached objects.
+// OLD TEST COULD NOT PROVE:
+//   Real runtime application integration: whether the global singleton instance
+//   Integration::getEarthcallAPI() used by foreign/web/WASM runtime bridges is
+//   actually wired up with the active ZoneManager during production application
+//   boot (Engine::initLogic()). Without wiring getEarthcallAPI().setZoneManager(),
+//   all runtime foreign calls (createObject, modifyObject, deleteObject) failed
+//   silently with _zoneManager == nullptr.
+
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
