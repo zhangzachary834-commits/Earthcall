@@ -2353,6 +2353,148 @@ materials = [
                 {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35, "shift": 0.0}]}
             ]
         )
+    },
+    # --- SACRED EDENIC POND ONTOMATH DYNAMIC COLOR FIELDS ---
+    {
+        "name": "logos.pond.water",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.98, "shininess": 120.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.10, 0.35, 0.45], "roughness": 0.05, "metallic": 0.35,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.06, "factors": {}},
+                {"c": 0.08, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 1.2, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.8, "shift": 0.0}]},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.90, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 1.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.lotus.dawn",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 0.90, "shininess": 85.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.15, 0.25], "roughness": 0.15, "metallic": 0.50,
+        "faceTextures": [tex_rose_ruby] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.96, "factors": {}},
+                {"c": 0.04, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.48, "factors": {}},
+                {"c": 0.40, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 2.0, "shift": 0.6}]}
+            ],
+            [
+                {"c": 0.72, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 2.5, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.lotus.white",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 0.95, "shininess": 90.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.40, 0.38, 0.30], "roughness": 0.12, "metallic": 0.45,
+        "faceTextures": [tex_alabaster] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.98, "factors": {}},
+                {"c": 0.02, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 2.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.92, "factors": {}},
+                {"c": 0.08, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 2.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.80, "factors": {}},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.lilypad",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.70, "shininess": 45.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.08, 0.25, 0.10], "roughness": 0.20, "metallic": 0.25,
+        "faceTextures": [tex_glass_emerald] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.18, "factors": {}},
+                {"c": 0.16, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.2, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.78, "factors": {}},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 1.8, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.24, "factors": {}},
+                {"c": 0.14, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 1.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.mossy_stone",
+        "textureResolution": 256, "ambient": 0.38, "diffuse": 0.85, "specular": 0.50, "shininess": 30.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.10, 0.05], "roughness": 0.35, "metallic": 0.20,
+        "faceTextures": [tex_dark_stone] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.34, "factors": {}},
+                {"c": 0.14, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 1.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.60, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.2, "shift": 0.6}]}
+            ],
+            [
+                {"c": 0.32, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 1.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.reeds",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.90, "specular": 0.65, "shininess": 40.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.12, 0.28, 0.08], "roughness": 0.25, "metallic": 0.20,
+        "faceTextures": [tex_wood_grain] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.42, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.8, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.80, "factors": {}},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.18, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.6, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.wisp",
+        "textureResolution": 256, "ambient": 0.80, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.85, 0.95, 1.0], "roughness": 0.05, "metallic": 0.80,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.75, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 3.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 3.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 3.0, "shift": 0.0}]}
+            ]
+        )
     }
 
 ]
@@ -2504,6 +2646,262 @@ objects.append(make_field(
         "description": {"t": "string", "v": "17-meter diameter West Portal Rose rosette with OntoMath stained-glass color field"}
     }
 ))
+
+
+# ==============================================================================
+# THE SACRED LIVING EDENIC POND OF LIVING WATERS (NATURE-RICH COLORED SDFS)
+# Located in the West Forecourt of the Cathedral (Z = 45 to 60, X = -12 to 12)
+# ==============================================================================
+
+# 1. Multi-Lobed Living Water Lagoon Basin (SDF with Caustics & Depth Wave)
+pond_lobe_center = sdf_leaf(5, [6.8, 0.45, 7.5]) # Main deep lagoon
+pond_lobe_north  = sdf_leaf(5, [4.5, 0.38, 4.2], offset=[-4.2, 0.0, 2.5]) # North tranquil cove
+pond_lobe_south  = sdf_leaf(5, [4.8, 0.38, 4.5], offset=[4.2, 0.0, -2.5]) # South whispering cove
+pond_lobe_west   = sdf_leaf(5, [3.6, 0.40, 3.8], offset=[0.0, 0.0, 5.5])  # West spring inlet cove
+pond_lobe_east   = sdf_leaf(5, [3.2, 0.30, 3.5], offset=[0.0, 0.0, -5.5]) # East outlet shallow
+
+pond_lobes_1 = sdf_binary(5, pond_lobe_center, sdf_binary(5, pond_lobe_north, pond_lobe_south, 0.4), 0.45)
+pond_water_tree = sdf_binary(5, pond_lobes_1, sdf_binary(5, pond_lobe_west, pond_lobe_east, 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.pond.water_basin", "Sacred Edenic Lagoon of Living Water",
+    [0.0, 0.15, 50.0], pond_water_tree, [11.0, 1.2, 11.0],
+    "material.logos.pond.water", [0.15, 0.85, 0.95],
+    extra_props={
+        "isSacredPond": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 3.8},
+        "description": {"t": "string", "v": "Sculpted organic multi-lobed water lagoon with continuous turquoise-indigo caustics color field"}
+    }
+))
+
+# 2. Sacred Blooming Lotus Blossoms & Water Lilies (Detailed Floral SDFs)
+# Helper to create a multi-petal lotus flower SDF
+def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
+    seed_pod = sdf_leaf(0, [0.35 * scale_r, 0.28 * scale_h, 0.35 * scale_r], offset=[0.0, 0.15 * scale_h, 0.0])
+    
+    # 4 cardinal inner petals
+    p_n = sdf_leaf(5, [0.22 * scale_r, 0.45 * scale_h, 0.12 * scale_r], offset=[0.0, 0.22 * scale_h, 0.38 * scale_r])
+    p_s = sdf_leaf(5, [0.22 * scale_r, 0.45 * scale_h, 0.12 * scale_r], offset=[0.0, 0.22 * scale_h, -0.38 * scale_r])
+    p_e = sdf_leaf(5, [0.12 * scale_r, 0.45 * scale_h, 0.22 * scale_r], offset=[0.38 * scale_r, 0.22 * scale_h, 0.0])
+    p_w = sdf_leaf(5, [0.12 * scale_r, 0.45 * scale_h, 0.22 * scale_r], offset=[-0.38 * scale_r, 0.22 * scale_h, 0.0])
+    inner_petals = sdf_binary(5, sdf_binary(5, p_n, p_s, 0.15), sdf_binary(5, p_e, p_w, 0.15), 0.18)
+    
+    # 4 diagonal outer spreading petals
+    d_ne = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[0.55 * scale_r, 0.10 * scale_h, 0.55 * scale_r])
+    d_nw = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[-0.55 * scale_r, 0.10 * scale_h, 0.55 * scale_r])
+    d_se = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[0.55 * scale_r, 0.10 * scale_h, -0.55 * scale_r])
+    d_sw = sdf_leaf(5, [0.28 * scale_r, 0.30 * scale_h, 0.28 * scale_r], offset=[-0.55 * scale_r, 0.10 * scale_h, -0.55 * scale_r])
+    outer_petals = sdf_binary(5, sdf_binary(5, d_ne, d_nw, 0.18), sdf_binary(5, d_se, d_sw, 0.18), 0.2)
+    
+    return sdf_binary(5, seed_pod, sdf_binary(5, inner_petals, outer_petals, 0.2), 0.25)
+
+# A. The Grand Celestial Lotus of Dawn
+grand_lotus_tree = make_lotus_flower_tree(1.4, 1.2)
+objects.append(make_field(
+    "cathedral.pond.lotus.grand", "Grand Celestial Lotus of Dawn",
+    [-2.5, 0.42, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
+    "material.logos.pond.lotus.dawn", [1.0, 0.45, 0.75],
+    extra_props={
+        "isSacredRelic": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.8},
+        "description": {"t": "string", "v": "Blooming sacred lotus with continuous OntoMath dawn-rose color field"}
+    }
+))
+
+# B. The Sacred Alabaster Lotus of Sophia
+white_lotus_tree = make_lotus_flower_tree(1.2, 1.0)
+objects.append(make_field(
+    "cathedral.pond.lotus.white", "Sacred Alabaster Lotus of Sophia",
+    [3.0, 0.40, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
+    "material.logos.pond.lotus.white", [0.95, 0.95, 0.90],
+    extra_props={
+        "isSacredRelic": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.5},
+        "description": {"t": "string", "v": "Pure white-gold sacred lotus with warm solar golden center"}
+    }
+))
+
+# C. Twin Water Lily Buds
+bud_n = sdf_binary(5, sdf_leaf(5, [0.35, 0.65, 0.35]), sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.35, 0.0]), 0.15)
+objects.append(make_field(
+    "cathedral.pond.lily.bud.north", "Northern Water Lily Bud",
+    [-4.2, 0.36, 52.5], bud_n, [0.9, 1.0, 0.9],
+    "material.logos.pond.lotus.dawn", [0.95, 0.45, 0.70]
+))
+bud_s = sdf_binary(5, sdf_leaf(5, [0.35, 0.65, 0.35]), sdf_leaf(0, [0.25, 0.25, 0.25], offset=[0.0, 0.35, 0.0]), 0.15)
+objects.append(make_field(
+    "cathedral.pond.lily.bud.south", "Southern Water Lily Bud",
+    [2.2, 0.36, 45.5], bud_s, [0.9, 1.0, 0.9],
+    "material.logos.pond.lotus.white", [0.95, 0.95, 0.90]
+))
+
+# 3. Floating Emerald Lily Pads (Flat circular discs with organic notch cuts)
+def make_lilypad_cluster(pads):
+    # pads: list of (x, z, radius)
+    tree = None
+    for px, pz, pr in pads:
+        pad_disc = sdf_leaf(4, [pr, 0.04, 0.0], offset=[px, 0.0, pz]) # Cylinder radius pr, halfH 0.04
+        notch = sdf_leaf(5, [pr * 0.45, 0.08, pr * 0.45], offset=[px, 0.0, pz + pr * 0.65]) # Cutout notch
+        notched_pad = sdf_binary(4, pad_disc, notch)
+        if tree is None:
+            tree = notched_pad
+        else:
+            tree = sdf_binary(2, tree, notched_pad)
+    return tree
+
+# Cluster 1: Around the Grand Dawn Lotus
+lilypads_c1 = make_lilypad_cluster([(-0.6, -0.6, 0.9), (0.7, -0.5, 0.8), (0.1, 0.8, 0.75)])
+objects.append(make_field(
+    "cathedral.pond.lilypads.cluster.1", "Emerald Lily Pad Formation (Grand Lotus Fleet)",
+    [-2.5, 0.22, 48.0], lilypads_c1, [2.2, 0.25, 2.2],
+    "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
+))
+
+# Cluster 2: Near North Cove
+lilypads_c2 = make_lilypad_cluster([(-0.5, 0.0, 0.85), (0.6, 0.4, 0.75), (0.2, -0.7, 0.7)])
+objects.append(make_field(
+    "cathedral.pond.lilypads.cluster.2", "Emerald Lily Pad Formation (North Sanctuary)",
+    [-4.5, 0.22, 51.0], lilypads_c2, [2.0, 0.25, 2.0],
+    "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
+))
+
+# Cluster 3: Near South Cove
+lilypads_c3 = make_lilypad_cluster([(0.0, 0.0, 0.95), (-0.7, 0.6, 0.8), (0.8, -0.5, 0.7)])
+objects.append(make_field(
+    "cathedral.pond.lilypads.cluster.3", "Emerald Lily Pad Formation (South Sanctuary)",
+    [3.5, 0.22, 47.0], lilypads_c3, [2.2, 0.25, 2.2],
+    "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
+))
+
+# Cluster 4: Stepping Stone Inlet
+lilypads_c4 = make_lilypad_cluster([(-0.4, 0.3, 0.8), (0.5, -0.4, 0.85)])
+objects.append(make_field(
+    "cathedral.pond.lilypads.cluster.4", "Emerald Lily Pad Formation (Spring Inlet)",
+    [0.5, 0.22, 44.5], lilypads_c4, [1.8, 0.25, 1.8],
+    "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
+))
+
+# 4. Mossy River Boulders & Natural Stepping Stones (SDFs)
+# A natural path crossing the pond so a Person can walk across the living waters!
+stepping_stone_coords = [
+    ("1", [-1.8, 0.32, 45.5], [0.65, 0.22, 0.65]),
+    ("2", [-0.4, 0.35, 47.8], [0.72, 0.24, 0.70]),
+    ("3", [0.8, 0.34, 50.2],  [0.68, 0.23, 0.68]),
+    ("4", [2.2, 0.30, 52.8],  [0.75, 0.22, 0.72])
+]
+for sid, spos, sdims in stepping_stone_coords:
+    stone_core = sdf_leaf(2, [sdims[0], sdims[1], sdims[2]], p0=0.12)
+    stone_cap  = sdf_leaf(0, [sdims[0] * 0.9, sdims[1] * 0.8, sdims[2] * 0.9], offset=[0.0, 0.05, 0.0])
+    stone_tree = sdf_binary(5, stone_core, stone_cap, 0.15)
+    objects.append(make_field(
+        f"cathedral.pond.stepping_stone.{sid}", f"Mossy River Stepping Stone {sid}",
+        spos, stone_tree, [sdims[0] * 1.5, sdims[1] * 1.8, sdims[2] * 1.5],
+        "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
+    ))
+
+# North and South Shoreline Boulder Mounds
+boulder_n1 = sdf_leaf(2, [1.4, 0.6, 1.2], p0=0.25)
+boulder_n2 = sdf_leaf(0, [1.1, 0.8, 1.1], offset=[-0.6, 0.2, 0.4])
+boulder_n3 = sdf_leaf(0, [0.9, 0.6, 0.9], offset=[0.7, -0.1, -0.3])
+boulders_north_tree = sdf_binary(5, boulder_n1, sdf_binary(5, boulder_n2, boulder_n3, 0.25), 0.3)
+objects.append(make_field(
+    "cathedral.pond.boulders.north", "North Shoreline Mossy Boulder Mound",
+    [-7.0, 0.7, 50.0], boulders_north_tree, [2.5, 1.4, 2.5],
+    "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
+))
+
+boulder_s1 = sdf_leaf(2, [1.4, 0.6, 1.2], p0=0.25)
+boulder_s2 = sdf_leaf(0, [1.1, 0.8, 1.1], offset=[0.6, 0.2, -0.4])
+boulder_s3 = sdf_leaf(0, [0.9, 0.6, 0.9], offset=[-0.7, -0.1, 0.3])
+boulders_south_tree = sdf_binary(5, boulder_s1, sdf_binary(5, boulder_s2, boulder_s3, 0.25), 0.3)
+objects.append(make_field(
+    "cathedral.pond.boulders.south", "South Shoreline Mossy Boulder Mound",
+    [6.8, 0.7, 49.0], boulders_south_tree, [2.5, 1.4, 2.5],
+    "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
+))
+
+# 5. Bioluminescent Reed Thickets & Cattails (SDFs)
+def make_reed_thicket_tree():
+    # 5 slender reed stems with cattails
+    reeds = []
+    offsets = [(-0.4, -0.3), (0.35, -0.25), (0.0, 0.3), (-0.35, 0.25), (0.4, 0.35)]
+    for rx, rz in offsets:
+        stem = sdf_leaf(4, [0.04, 1.1, 0.0], offset=[rx, 0.0, rz]) # Slender cylinder
+        cattail = sdf_leaf(2, [0.08, 0.28, 0.08], offset=[rx, 0.8, rz], p0=0.04) # Velvet head
+        pearl = sdf_leaf(0, [0.06, 0.06, 0.06], offset=[rx, 1.15, rz]) # Dewdrop pearl
+        reed_single = sdf_binary(5, stem, sdf_binary(5, cattail, pearl, 0.08), 0.1)
+        reeds.append(reed_single)
+    
+    tree = reeds[0]
+    for r in reeds[1:]:
+        tree = sdf_binary(5, tree, r, 0.15)
+    return tree
+
+reed_thicket_tree = make_reed_thicket_tree()
+
+objects.append(make_field(
+    "cathedral.pond.reeds.north", "Northern Bioluminescent Reed Thicket",
+    [-5.2, 1.4, 48.5], reed_thicket_tree, [1.6, 2.2, 1.6],
+    "material.logos.pond.reeds", [0.55, 0.85, 0.25],
+    extra_props={"light.intensity": {"t": "float", "v": 1.5}}
+))
+objects.append(make_field(
+    "cathedral.pond.reeds.south", "Southern Bioluminescent Reed Thicket",
+    [5.0, 1.4, 52.0], reed_thicket_tree, [1.6, 2.2, 1.6],
+    "material.logos.pond.reeds", [0.55, 0.85, 0.25],
+    extra_props={"light.intensity": {"t": "float", "v": 1.5}}
+))
+objects.append(make_field(
+    "cathedral.pond.reeds.inlet", "Spring Inlet Wild Reed Bed",
+    [0.0, 1.3, 55.5], reed_thicket_tree, [1.8, 2.0, 1.5],
+    "material.logos.pond.reeds", [0.55, 0.85, 0.25],
+    extra_props={"light.intensity": {"t": "float", "v": 1.5}}
+))
+
+# 6. The Living Spring Grotto & Waterfall Cascade (Headwaters at West Shore)
+grotto_mound = sdf_leaf(0, [2.5, 1.6, 1.8], offset=[0.0, 0.4, 0.0])
+grotto_cavern = sdf_leaf(0, [1.6, 1.1, 1.4], offset=[0.0, 0.1, -0.6])
+grotto_rock = sdf_binary(4, grotto_mound, grotto_cavern) # Hollow natural rock grotto
+
+spring_waterfall = sdf_leaf(5, [0.65, 0.9, 0.35], offset=[0.0, -0.2, -0.5])
+spring_basin_pool = sdf_leaf(0, [0.9, 0.3, 0.9], offset=[0.0, -0.7, -0.9])
+spring_plume = sdf_binary(5, spring_waterfall, spring_basin_pool, 0.25)
+
+grotto_full_tree = sdf_binary(5, grotto_rock, spring_plume, 0.3)
+
+objects.append(make_field(
+    "cathedral.pond.spring_grotto", "Living Spring Grotto & Cascade (Headwaters of Siloam)",
+    [0.0, 1.8, 57.0], grotto_full_tree, [3.5, 2.5, 2.5],
+    "material.logos.pond.water", [0.2, 0.9, 0.95],
+    extra_props={
+        "isHeadwaters": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 4.5},
+        "description": {"t": "string", "v": "Natural living spring grotto and terraced water cascade flowing into the pond"}
+    }
+))
+
+# 7. Floating Bioluminescent Will-o'-the-Wisps (Fairies of Pneuma)
+def make_wisp_tree():
+    wisp_core = sdf_leaf(0, [0.18, 0.18, 0.18])
+    wisp_halo = sdf_leaf(6, [0.28, 0.04, 0.0]) # Torus halo
+    return sdf_binary(5, wisp_core, wisp_halo, 0.12)
+
+wisp_coords = [
+    ("1", [-2.0, 0.85, 47.0]),
+    ("2", [1.2, 1.10, 49.5]),
+    ("3", [-0.2, 0.95, 52.5]),
+    ("4", [3.5, 1.05, 51.0])
+]
+for wid, wpos in wisp_coords:
+    objects.append(make_field(
+        f"cathedral.pond.wisp.{wid}", f"Bioluminescent Will-o'-the-Wisp {wid} (Spirit of Pneuma)",
+        wpos, make_wisp_tree(), [0.6, 0.6, 0.6],
+        "material.logos.pond.wisp", [0.9, 0.95, 1.0],
+        extra_props={
+            "isWisp": {"t": "bool", "v": True},
+            "light.intensity": {"t": "float", "v": 3.0}
+        }
+    ))
 
 zone_doc = {
     "identifier": "Cathedral of the Living Logos",
