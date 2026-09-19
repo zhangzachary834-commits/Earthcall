@@ -33,6 +33,7 @@ public:
         
         // Math Operations
         Add,           // R[dst] = R[src1] + R[src2_reg]
+        Lerp,          // R[dst] = R[dst] + (R[src1] - R[dst]) * R[src2]
         Sub,           // R[dst] = R[src1] - R[src2_reg]
         Mul,           // R[dst] = R[src1] * R[src2_reg]
         

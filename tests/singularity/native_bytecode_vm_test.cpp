@@ -83,6 +83,33 @@ void testScaleAction() {
     std::cout << "  ✓ Compiled and Executed Scale bytecodes successfully!\n";
 }
 
+void testLerpAction() {
+    std::cout << "[Test 3] VM executing Lerp action\n";
+
+    Object obj;
+    obj.setDynamicProperty("alpha", 10.0);
+
+    Law law("test-law-lerp");
+    ActionNode lerp;
+    lerp.kind = ActionNode::Kind::Lerp;
+    lerp.path = PropertyPath::parse("alpha");
+    lerp.operand = PropertyValue(20.0);
+    lerp.factor = 0.25;
+    law.setActionModel(lerp);
+
+    Execution::NativeBytecodeVM vm;
+    auto bytecode = vm.emit(law);
+    assert(bytecode.instructions.size() > 1);
+    assert(vm.execute(bytecode, obj));
+
+    auto prop = obj.findProperty(StringInterner::intern("alpha"));
+    assert(prop != nullptr);
+    assert(std::holds_alternative<double>(prop->value()));
+    assert(std::get<double>(prop->value()) == 12.5);
+
+    std::cout << "  ✓ Lerp bytecode preserves authored interpolation semantics!\n";
+}
+
 void testSequenceAndParallel() {
     std::cout << "[Test 3] VM executing Sequence and Parallel actions\n";
 
@@ -316,6 +343,7 @@ int main() {
 
     testBasicSetAndAdd();
     testScaleAction();
+    testLerpAction();
     testSequenceAndParallel();
     testDirectInstructionExecution();
     testEmptyAndUnauthoredLaws();
