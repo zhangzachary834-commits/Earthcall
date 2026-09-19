@@ -213,6 +213,48 @@ int main() {
               "repair leaves the Person with at least one relationally true primary Home");
     }
 
+    {
+        // Hard-failure witness: the canonical unowned Home already carries an
+        // authoritative owned-by edge to somebody else. Repair is not allowed
+        // to steal it or mint around the conflict. The Person therefore still
+        // has zero primary Homes and ordinary admission must be refused.
+        std::array<uint8_t, 32> otherBytes{};
+        for (std::size_t i = 0; i < otherBytes.size(); ++i) {
+            otherBytes[i] = static_cast<uint8_t>(0x40 + i);
+        }
+        const Identity::SingularId otherIdentity =
+            Identity::SingularId::fromPublicKey(otherBytes);
+
+        Soul subjectSoul("Admission Subject");
+        Body subjectBody("humanoid", "default");
+        Person subject(std::move(subjectSoul), std::move(subjectBody), "default");
+        subject.setPersonId(identity);
+
+        Soul otherSoul("Canonical Home Owner");
+        Body otherBody("humanoid", "default");
+        Person other(std::move(otherSoul), std::move(otherBody), "default");
+        other.setPersonId(otherIdentity);
+
+        ZoneManager manager;
+        auto canonical = std::make_shared<Home>("Home", "strict");
+        canonical->markPrimaryHome();
+        auto ownedByOther =
+            std::make_shared<Relation>("owned-by", *canonical, other, true, 1.0f);
+        check(canonical->getFormation().addRelation(ownedByOther),
+              "hard-failure fixture installs another Person's owned-by edge");
+        manager.addZone(canonical);
+
+        const std::size_t before = manager.zones().size();
+        check(manager.primaryHomeCount(subject) == 0,
+              "another Person's canonical Home does not satisfy this Person's invariant");
+        check(!manager.enforcePrimaryHomeInvariant(subject),
+              "kernel refuses ordinary admission when repair still leaves zero primary Homes");
+        check(manager.primaryHomeCount(subject) == 0,
+              "failed repair leaves zero rather than fabricating ownership");
+        check(manager.zones().size() == before,
+              "failed repair does not mint around an ownership conflict");
+    }
+
     Universe::instance().setProvider({});
     SaveSystem::setSaveRoot("");
     fs::remove_all(sandbox, ec);
