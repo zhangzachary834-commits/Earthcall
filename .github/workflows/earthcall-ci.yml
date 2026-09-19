@@ -159,29 +159,45 @@ jobs:
             saves/worlds/noise_floor.json
           )
           for world in "${worlds[@]}"; do
-            for mode in off on; do
-              echo "PERF_BEGIN world=$world adapter=$mode"
-              python3 - "$world" "$mode" <<'PY'
-          import subprocess
-          import sys
+          echo "PERF_BEGIN world=$world"
+          python3 - "$world" <<'PY'
+        import subprocess
+        import sys
 
-          world, mode = sys.argv[1], sys.argv[2]
-          cmd = ["./build/slow_adapter_zone_perf_test", world,
-                 f"--adapter={mode}", "--frames=60"]
-          try:
-              result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
-          except subprocess.TimeoutExpired:
-              print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={mode} timeout_s=120")
-              raise SystemExit(1)
+        world = sys.argv[1]
 
-          lines = [line for line in result.stdout.splitlines()
-                   if line.startswith("ADAPTER_PERF ")]
-          for line in lines:
-              print(line)
-          if result.returncode != 0 or not lines:
-              tail = (result.stdout + "\n" + result.stderr).splitlines()[-20:]
-              print("\n".join(tail), file=sys.stderr)
-              raise SystemExit(result.returncode or 1)
+        def run_mode(mode):
+            cmd = ["./build/slow_adapter_zone_perf_test", world,
+                   f"--adapter={mode}", "--frames=60"]
+            try:
+                result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+            except subprocess.TimeoutExpired:
+                print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={mode} timeout_s=120")
+                raise SystemExit(1)
+
+            lines = [line for line in result.stdout.splitlines()
+                     if line.startswith("ADAPTER_PERF ")]
+            for line in lines:
+                print(line)
+            if result.returncode != 0 or not lines:
+                tail = (result.stdout + "\n" + result.stderr).splitlines()[-20:]
+                print("\n".join(tail), file=sys.stderr)
+                raise SystemExit(result.returncode or 1)
+
+            for token in lines[-1].split():
+                if token.startswith("frame_median_ms="):
+                    return float(token.split("=")[1])
+            return 0.0
+
+        off_ms = run_mode("off")
+        on_ms = run_mode("on")
+
+        if off_ms > 0:
+            ratio = on_ms / off_ms
+            diff = on_ms - off_ms
+            print(f"PERF_COMPARE world={world} off_ms={off_ms:.6f} on_ms={on_ms:.6f} ratio={ratio:.2f} diff={diff:.6f}")
+            if ratio > 1.20 and diff > 1.0:
+                print(f"ERROR: Slow Adapter regression too high! Allowed ratio <= 1.20 or diff <= 1.0ms")
+                raise SystemExit(2)
           PY
-            done
           done
