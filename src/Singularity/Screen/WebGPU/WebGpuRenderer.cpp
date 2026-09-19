@@ -1028,37 +1028,52 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const geom::HeightGrid* heightGrid) {
     if (!_pass) return;
 
-    // Memoize the WGSL string generation and pipeline lookup.
-    sdfwgsl::Program prog;
+    // Memoize WGSL generation and pipeline lookup. A cache hit must be an
+    // O(1)-ish reference acquisition, not a copy of the complete WGSL string and
+    // parameter vector. Keep a local Program only for uncached/compile-miss work.
+    sdfwgsl::Program localProg;
+    const sdfwgsl::Program* prog = nullptr;
     const SdfPipeline* sp = nullptr;
+    bool isProvenHeightfield = false;
     bool needsCompile = true;
+    MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
-        auto& entry = _programCache[memoId];
-        if (entry.revision == memoRevision && 
-            entry.colorRevision == mat.colorRevision &&
-            entry.colorExprPtr == mat.colorExpr.get()) {
-            prog = entry.prog;
-            sp = entry.sp;
+        memo = &_programCache[memoId];
+        if (memo->revision == memoRevision &&
+            memo->colorRevision == mat.colorRevision &&
+            memo->colorExprPtr == mat.colorExpr.get()) {
+            prog = &memo->prog;
+            sp = memo->sp;
+            isProvenHeightfield = memo->isProvenHeightfield;
             needsCompile = false;
         }
     }
     if (needsCompile) {
-        prog = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
-        if (!prog.ok) {
-            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", prog.error.c_str());
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
+        if (!localProg.ok) {
+            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", localProg.error.c_str());
             return;
         }
-        sp = sdfPipeline(prog.wgsl);
-        if (memoId != 0) {
-            auto& entry = _programCache[memoId];
-            entry.revision = memoRevision;
-            entry.colorRevision = mat.colorRevision;
-            entry.colorExprPtr = mat.colorExpr.get();
-            entry.prog = prog;
-            entry.sp = sp;
+        sp = sdfPipeline(localProg.wgsl);
+        if (!sp) return;
+
+        // Heightfield-ness is a theorem about tree structure, not frame state.
+        // Compute it at the same revision boundary as the compiled program.
+        isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
+
+        if (memo) {
+            memo->revision = memoRevision;
+            memo->colorRevision = mat.colorRevision;
+            memo->colorExprPtr = mat.colorExpr.get();
+            memo->prog = std::move(localProg);
+            memo->sp = sp;
+            memo->isProvenHeightfield = isProvenHeightfield;
+            prog = &memo->prog;
+        } else {
+            prog = &localProg;
         }
     }
-    if (!sp) return;
+    if (!sp || !prog) return;
 
     // The bounding cube, shared by every field: the vertex shader scales it by the
     // field extent, so one buffer serves all of them.
@@ -1100,7 +1115,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // derived conservative grid happened to be supplied for this draw. A test,
     // diagnostic, or disabled traversal must not change proxy coverage merely by
     // omitting that cache.
-    const bool isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
     const bool hasConservativeHeightGrid = heightGrid &&
                                            heightGrid->dimX > 0 && heightGrid->dimZ > 0;
     // DDA traversal is quarantined after the native Metal sweep found that its
@@ -1150,7 +1164,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the VERTICAL distance and can exceed the Euclidean distance when h slopes.
     // A min/max grid may conservatively skip empty cells, but it does not license
     // distance-field stepping inside a candidate cell.
-    const float damping = prog.needsGradientStep ? 0.25f : 1.0f;
+    const float damping = prog->needsGradientStep ? 0.25f : 1.0f;
     // misc.x is a distinct proof bit: damping selects the step policy, while
     // only a structurally-proved y-h(x,z) field may use heightfield-only
     // planar/vertical early exits. Keep the two latches separate so a generic
@@ -1161,7 +1175,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
 
     _sdfBatches[sp].push_back(inst);
-    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog.params.begin(), prog.params.end());
+    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
 
     mutableFrameStats().trianglesDrawn += 12;
 }
