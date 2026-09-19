@@ -55,7 +55,7 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | add a **field/member** to a being, or wonder whether one must be exposed | `ontology/NO_BLACK_BOX.md` §3, §5 | four questions; unregistered is not "protected", it is ungoverned forever |
 | decide who may *write* a property | `ontology/NO_BLACK_BOX.md` §2 → `Singularity/TransferPolicy` | one gate, three tiers; a second permission system was built here and deleted |
 | implement an algorithm — a loop, search, solver, traversal | `law/ALGORITHMS_AS_LAW.md` §3 | this is not a von Neumann machine; loops compile differently |
-| optimize the Rete, add a fact filter, or reason about a law before it fires | `law/PROPHETIC_RETE.md` §2 | the analysis may only ever conclude IMPOSSIBLE; a too-narrow answer makes a law go deaf, silently |
+| optimize the Rete, add a fact filter or index, or reason about a law before it fires | `law/PROPHETIC_RETE.md` §2, then `law/DERIVED_STATE_LEDGER.md` | the analysis may only ever conclude IMPOSSIBLE; a too-narrow answer makes a law go deaf, silently — and every cache needs its invalidation declared and tested |
 | move existing hard-coded behavior into law | `law/LAW_MIGRATION_FRAMEWORK.md` §2 | six rungs, in order; never skip |
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
@@ -118,7 +118,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 109 registered (2026-09-07) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 199 registered (2026-09-17) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -137,6 +137,7 @@ widening the baseline.
 
 ## Non-negotiables
 
+- **NO BIG CHUNGUS retrieval.** Retrieval must be proportional to the epistemic need: search before fetch; prefer exact symbol/error queries and bounded file, CI-log, and workflow slices; never ingest an entire large artifact when a narrow read answers the question. Expand incrementally only when needed — especially through GitHub Connector, where giant reads waste context and can time out.
 - **Stable identifiers.** Law text addresses beings by name (`@physical-channel.enabled`).
   Generated ids (`law-7`) change between runs. Any being that law-text names must override
   `getIdentifier()` with a stable slug. Namespaced ids may contain dots

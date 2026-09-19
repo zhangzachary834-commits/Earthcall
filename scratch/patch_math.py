@@ -1,24 +1,34 @@
-import sys
+import re
 
-file_path = "src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
-with open(file_path, "r") as f:
+with open("src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp", "r") as f:
     content = f.read()
 
-find_str = """    uint64_t currentRevision = Universe::instance().structuralRevision();
-    if (!s_initialized || s_lastRevision != currentRevision) {"""
+new_func = """void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out);
 
-replace_str = """    uint64_t currentRevision = Universe::instance().structuralRevision();
-    if (!s_initialized || s_lastRevision != currentRevision) {
-        static int rebuild_count = 0;
-        rebuild_count++;
-        if (rebuild_count % 100 == 0) {
-            printf("MathBinding cache rebuilt %d times!\\n", rebuild_count);
-        }"""
+inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
+    if (isTimePath(path)) return lawGetTime(path, out);
+    if (isWorldReadingPath(path)) {
+        const auto& readings = worldReadings();
+        if (readings.empty()) return false;          // no channel answers "@world.*"
+        const auto found = readings.find(path.fullId());
+        if (found == readings.end() || !found->second) return false;
+        return found->second(subject, out);
+    }
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, path, startIndex);
+    bool ok = root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
+    if (ok && out.index() == 15) {
+        resolveSemanticTokenSlowPath(root, out);
+    }
+    return ok;
+}"""
 
-if find_str in content:
-    content = content.replace(find_str, replace_str)
-    with open(file_path, "w") as f:
-        f.write(content)
-    print("Patched MathBinding.hpp")
-else:
-    print("Not found")
+content = re.sub(
+    r'inline bool lawGetValue\(Singular& subject, const PropertyPath& path, PropertyValue& out\) \{.*?return root && \(path\.getValue\(\*root, out, startIndex\) == PropertyPath::PathResult::Ok\);\n\}',
+    new_func,
+    content,
+    flags=re.DOTALL
+)
+
+with open("src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp", "w") as f:
+    f.write(content)

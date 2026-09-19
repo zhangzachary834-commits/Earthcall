@@ -160,6 +160,75 @@ static void testLoadPersonMalformedJson() {
     std::cout << "  loadPerson exception handling (malformed json) OK\n";
 }
 
+
+static void testSavePersonDirectoryCreationFailure() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    // Block folder creation by placing a regular file where the 'persons' folder should be
+    std::filesystem::path personsFolder = env.tempDir / "persons";
+    std::ofstream blockingFile(personsFolder);
+    blockingFile << "blocking file content";
+    blockingFile.close();
+
+    Person person = createDummyPerson("BlockedPerson");
+    // Should handle save failure gracefully without crashing
+    db.savePerson(person);
+
+    std::cout << "  savePerson directory creation failure handling OK\n";
+}
+
+static void testLoadPersonUnreadableFile() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::string filepath = folder + "/Unreadable.ecform";
+
+    // Create a directory at the target file path to force std::ifstream file open failure across all environments (including root)
+    std::filesystem::create_directory(filepath);
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("Unreadable", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson unreadable file error handling OK\n";
+}
+
+static void testLoadPersonInvalidJsonStructure() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/InvalidStruct.ecform");
+    file << "[1, 2, 3]";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("InvalidStruct", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson invalid json structure error handling OK\n";
+}
+
+
+static void testLoadPersonDeserializationFailure() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    // Write JSON with a mismatched type for body height to exercise deserialization exception handling.
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    std::ofstream file(folder + "/InvalidSchema.ecform");
+    file << R"({"displayName": "Invalid", "body": {"height": "not_a_float"}})";
+    file.close();
+
+    Person loaded = createDummyPerson("Temp");
+    bool success = db.loadPerson("InvalidSchema", loaded);
+    assert(!success);
+
+    std::cout << "  loadPerson deserialization failure handling OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -170,6 +239,10 @@ int main() {
     testGetAllRegisteredPersons();
     testLoadPersonPathTraversalSanitization();
     testLoadPersonMalformedJson();
+    testSavePersonDirectoryCreationFailure();
+    testLoadPersonUnreadableFile();
+    testLoadPersonInvalidJsonStructure();
+    testLoadPersonDeserializationFailure();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }

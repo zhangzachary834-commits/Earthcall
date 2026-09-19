@@ -5,6 +5,7 @@
 // 4. Threefold repetition draw
 
 #include "support/test_harness.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -15,7 +16,7 @@ namespace {
 
 int asInt(Singular& being, const char* name, int fallback = -999) {
     PropertyValue v;
-    if (!being.getDynamicProperty(name, v)) return fallback;
+    if (!lawGetValue(being, PropertyPath::parse(name), v)) return fallback;
     if (const int* i = std::get_if<int>(&v)) return *i;
     double n = 0.0;
     if (propertyValueToNumber(v, n)) return static_cast<int>(n);
@@ -24,7 +25,7 @@ int asInt(Singular& being, const char* name, int fallback = -999) {
 
 bool asBool(Singular& being, const char* name) {
     PropertyValue v;
-    if (!being.getDynamicProperty(name, v)) return false;
+    if (!lawGetValue(being, PropertyPath::parse(name), v)) return false;
     if (const bool* b = std::get_if<bool>(&v)) return *b;
     double n = 0.0;
     if (propertyValueToNumber(v, n)) return n != 0.0;

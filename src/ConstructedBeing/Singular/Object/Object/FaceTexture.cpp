@@ -24,6 +24,71 @@ void FaceTexture::create(int w, int h, uint32_t initColorRGBA) {
     uploadToGPU();
 }
 
+namespace {
+std::vector<uint8_t> resampleBilinear(const std::vector<uint8_t>& src,
+                                      int oldW, int oldH,
+                                      int newW, int newH) {
+    std::vector<uint8_t> dst(static_cast<size_t>(newW) * newH * 4, 0);
+    const size_t oldExpected = static_cast<size_t>(oldW) * oldH * 4;
+    if (src.size() != oldExpected || oldW <= 0 || oldH <= 0) {
+        return dst;
+    }
+    for (int y = 0; y < newH; ++y) {
+        float srcY = (static_cast<float>(y) + 0.5f) / newH * oldH - 0.5f;
+        int y0 = std::clamp(static_cast<int>(std::floor(srcY)), 0, oldH - 1);
+        int y1 = std::clamp(y0 + 1, 0, oldH - 1);
+        float fy = srcY - std::floor(srcY);
+        for (int x = 0; x < newW; ++x) {
+            float srcX = (static_cast<float>(x) + 0.5f) / newW * oldW - 0.5f;
+            int x0 = std::clamp(static_cast<int>(std::floor(srcX)), 0, oldW - 1);
+            int x1 = std::clamp(x0 + 1, 0, oldW - 1);
+            float fx = srcX - std::floor(srcX);
+
+            for (int c = 0; c < 4; ++c) {
+                float p00 = src[(y0 * oldW + x0) * 4 + c];
+                float p10 = src[(y0 * oldW + x1) * 4 + c];
+                float p01 = src[(y1 * oldW + x0) * 4 + c];
+                float p11 = src[(y1 * oldW + x1) * 4 + c];
+                float top = p00 * (1.0f - fx) + p10 * fx;
+                float bot = p01 * (1.0f - fx) + p11 * fx;
+                float val = top * (1.0f - fy) + bot * fy;
+                dst[(y * newW + x) * 4 + c] = static_cast<uint8_t>(std::clamp(std::round(val), 0.0f, 255.0f));
+            }
+        }
+    }
+    return dst;
+}
+} // namespace
+
+void FaceTexture::resize(int newWidth, int newHeight) {
+    if (newWidth <= 0 || newHeight <= 0 || newWidth > 4096 || newHeight > 4096) return;
+    if (newWidth == width && newHeight == height && pixels.size() == static_cast<size_t>(newWidth * newHeight * 4)) {
+        return;
+    }
+    const size_t oldExpected = static_cast<size_t>(width) * height * 4;
+    if (pixels.size() != oldExpected || width <= 0 || height <= 0) {
+        create(newWidth, newHeight);
+        return;
+    }
+    const int oldW = width;
+    const int oldH = height;
+    pixels = resampleBilinear(pixels, oldW, oldH, newWidth, newHeight);
+    for (auto& l : layers) {
+        if (!l.empty()) {
+            l = resampleBilinear(l, oldW, oldH, newWidth, newHeight);
+        } else {
+            l.assign(static_cast<size_t>(newWidth) * newHeight * 4, 0);
+        }
+    }
+    width = newWidth;
+    height = newHeight;
+    if (useLayers) {
+        compositeLayers();
+    }
+    revision++;
+    id = 0; // trigger re-upload to GPU on next frame
+}
+
 void FaceTexture::addLayer() {
     layers.emplace_back(width * height * 4, 0);
     layerOpacities.push_back(1.0f);
@@ -170,7 +235,9 @@ bool FaceTexture::writePixelWithRadius(const glm::vec2& uv, const glm::vec3& col
         }
     }
     std::vector<glm::vec3> colors(coordinates.size(), color);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 bool FaceTexture::writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
@@ -237,7 +304,9 @@ bool FaceTexture::writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
     }
 
     std::vector<glm::vec3> colors(coordinates.size(), color);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
@@ -251,7 +320,9 @@ bool FaceTexture::writeRegion(int x0, int y0, int x1, int y1,
     coordinates.reserve(colors.size());
     for (int y = y0; y < y1; ++y)
         for (int x = x0; x < x1; ++x) coordinates.emplace_back(x, y);
-    return writeSamples(coordinates, colors);
+    bool ok = writeSamples(coordinates, colors);
+    if (ok) revision++;
+    return ok;
 }
 
 
@@ -315,6 +386,7 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
         uint32_t regionH = maxY - minY + 1;
         currentRenderer().uploadTextureRegion(id, pixels.data(), width, height, minX, minY, regionW, regionH);
     }
+    revision++;
     return true;
 }
 

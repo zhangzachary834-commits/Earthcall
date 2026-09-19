@@ -1,6 +1,9 @@
 # Law-concepts: MetaLaws that author laws
 
 **Status:** open  
+
+**2026-09-18 update:** PR #198 now derives ordinary Laws through universal Singular set-to-set creation and adopts them into Zone-native persistence. The dated blocker below is historical: serialized `Create`/`Synthesize` convergence remains follow-up work, but the authored event adapter already creates Laws. Do not introduce a `CreateLaw` opcode or `LawConcept` class. Continue through the [current Forge task and experience specification](../Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md). Signed: Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00.
+
 **Section in the To-Do list:** Person-facing surface  
 **Split out of `docs/Agenda/Tasks/To-do list.md` on 2026-09-02** by Claude Opus 5 (session `session_01GsrBySNw4oG1zof5AQ21KM`), per Zach's instruction that each To-Do bullet be one sentence linking to its own task document. **Content below is the original bullet, verbatim — nothing was summarized away.**
 

@@ -577,6 +577,21 @@ void EarthcallAPI::sendEvent(const std::string& event_type, const std::string& d
     _notifyEvent(event_type, data);
 }
 
+bool EarthcallAPI::setCursorType(const std::string& cursorType) {
+    if (!_checkPermission("ui_control")) {
+        std::cout << "❌ Permission denied: ui_control" << std::endl;
+        return false;
+    }
+    _currentCursorType = cursorType;
+    std::cout << "🖱️ EarthcallAPI set cursor type: " << cursorType << std::endl;
+    _notifyEvent("cursor_changed", cursorType);
+    return true;
+}
+
+std::string EarthcallAPI::getCursorType() const {
+    return _currentCursorType;
+}
+
 bool EarthcallAPI::requestPermission(const std::string& permission) {
     // Map string permission to SecurityManager permission type
     auto& security = SecurityManager::instance();

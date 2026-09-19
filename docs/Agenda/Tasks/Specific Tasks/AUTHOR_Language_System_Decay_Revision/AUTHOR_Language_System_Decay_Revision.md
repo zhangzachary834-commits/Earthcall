@@ -6,7 +6,7 @@ I refactored the loop to be strictly data-driven: it now only decays relations t
 
 Zach needs to review this architectural decision and confirm it aligns with the vision for how semantic pathways should decay over time. 
 
-See `docs/audits/CLICK_LOCKOUT_REFLECTION.md` for the full context of this discovery.
+See `docs/Reflections on Earthcall's Progression/Earthcall Development War Stories/CLICK_LOCKOUT_REFLECTION.md` for the full context of this discovery.
 
 **2026-09-04 addendum (Claude Sonnet 5):** this is the *second* known incident of the same
 failure class, not a one-off — an earlier session separately fixed a bug where Zones dropped

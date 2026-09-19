@@ -172,7 +172,43 @@ Findings go to the audit log on every rebuild, and `Index::toJson()` renders the
 possibility space — read names, write ranges per path, per-law reads and writes with their
 reasons. Nothing here is a black box.
 
+### 3g. Branch provenance and the ahead-of-time relevance graph — 2026-09-18
+
+The Formation-Rete work of 2026-09-16 clarified what survived from the original §9
+"ActionNode → Beta back-pointer" idea. The destination is **not** a literal hidden Beta-node
+pointer anymore. Formation Rete supersedes the classical Beta cross-product as Earthcall's
+semantic join model. The enduring operation is:
+
+```text
+stable authored Action branch
+    -> Prophetic write/read possibility proof
+    -> conservative relevance edge
+    -> later Formation-Rete routing / crystallization
+```
+
+That first derived layer is now implemented in `Prophetic::Index`:
+
+- every `WriteEffect` and `ReadDemand` carries a deterministic branch id derived from the
+  authored node's canonical JSON, so recompilation and a save/load-shaped JSON round trip do
+  not change its provenance;
+- condition analysis keeps both the existing **effective demand** algebra and separate
+  branch-local reads, so `Any(A, B)` does not erase which arm a possible writer serves;
+- `Index::relevanceEdges()` runs the existing path normalization and range-disjointness proof
+  pairwise, retaining an edge only where the writer is not proved unable to meet the reader's
+  demand;
+- `aboutInstances` stays on the edge, so a quantifier's instance-side read is not silently
+  conflated with the Law subject;
+- opacity is global: if any read or write is not structurally legible,
+  `relevanceComplete() == false` and the derived graph is empty. A future consumer must fall
+  to a complete lower tier rather than trusting a partial graph.
+
+This graph is **derived state only**. It does not yet write Relations/Formations into a
+Person's world and it is not yet a hot-path narrowing decision. Those are Formation-Rete
+integration steps with separate authorship, save, currency, and fallback obligations.
+
 ---
+
+
 
 ## 4. The bug this uncovered
 
@@ -217,21 +253,37 @@ separate piece of work (see §6).
 
 Named so nobody mistakes the foundation for the whole design.
 
-**§9, ActionNode → Beta back-pointers.** Zach: *"the relevant action nodes get an innate
-pointer to the relevant beta-chain's evaluation criteria... it immediately links up the
-finished value to the relevant beta branches."* The index now computes exactly which
-(writing action, reading condition) pairs are live, which is the prerequisite. Installing the
-pointers and evaluating at write time — collapsing the assert/propagate/drain round trip into
-one step — is the next commit, and it is where the measured win lives.
+**The old §9 literal ActionNode → Beta back-pointer is superseded, not pending.**
+The 2026-09-16 Formation-Rete architecture keeps the intent — jump from a completed write
+toward only proved-relevant downstream work — but refuses the old literal destination.
+Branch-stable provenance and the conservative Prophetic relevance graph are now built (§3g).
+What remains is consuming that graph through Formation Rete's tier contract and, eventually,
+crystallizing direct `Law → Singular(+PropertyPath)` roads when their soundness, currency,
+authorship, and fallback witnesses exist.
 
 **§7 Pass 4, current-situation filtering.** The four-pass model's last pass ("would this
 branch fire in the situation we are *actually in*") is what the existing Rete already does.
 Passes 1–3 are the new ones, and they are what is here.
 
-**A fixpoint over the write graph.** `Add` / `Scale` / `Lerp` / `Flow` all answer Top today
-because they compose with a value the analysis never saw. A standard widening fixpoint over
-the write graph would bound many of them, and would turn "this law can only push health
-between 0 and 100" into a proof. This is the single highest-value refinement remaining.
+**Guard-aware write-state fixpoint — BUILT 2026-09-19.** The first high-value
+current-dependent rung is now implemented. Whole-Law analysis seeds an abstract pre-state from
+the Law's authored condition, then interprets ordered `Sequence` actions through that state.
+Consequently a Law guarded by `hp ∈ [0,95]` and applying `Add(+5)` now proves the write
+range `[5,100]`; guarded `Scale` and `Lerp` are affine interval images; a prior `Set` in
+the same `Sequence` can establish the exact state a later current-dependent action reads;
+`Parallel` siblings deliberately cannot borrow one another's outputs; `Map` inherits
+authored bounds through its bindings; and `Flow` narrows only when its target/rate inputs and
+`time.delta` are authored-bounded (zero-rate Flow is identity regardless of dt).
+
+The safety boundary is the open world: an unguarded current value may have come from a First
+Mover or foreign channel, so it remains `Top`. This is not a license to assume that the
+authored Law register is the only possible source of state.
+
+**General cross-Law widening closure remains a refinement.** The current rung uses each firing
+Law's invariant guard plus intra-`Sequence` state; it does not yet iterate mutually dependent
+writes across several Laws to a global least post-fixpoint. That broader solver should only
+narrow when its source-of-truth assumptions are explicit enough to remain sound in the
+presence of external/First-Mover writes.
 
 **⚑ AUTHOR — §16–19, Rete evaluation as Singulars, and the First Mover stratification.**
 Zach's question — *"what if Rete evaluation itself were Singulars exposed with
@@ -267,7 +319,7 @@ tessellator. Nothing further is done.
 | the wiring | `LawManager::syncProphetic` / `propheticHears` / `prophetic()` in `Law.{hpp,cpp}` |
 | alpha provenance | `ReteNetwork::AlphaSource`, `hasForeignBoundAlpha()` in `Law.{hpp,cpp}`; tagged in `ConditionModel.cpp` |
 | the change-feed fix | `PropertyPath::setValue` + `resolve`'s `owner` out-param; `Singular::setDynamicProperty` |
-| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section** |
+| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section; Section I is the guarded write-state/fixpoint witness** |
 
 ---
 

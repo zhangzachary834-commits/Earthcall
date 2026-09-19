@@ -1,22 +1,10 @@
-with open("tests/singularity/frame_lag_test.cpp", "r") as f:
+import re
+
+with open("src/ConstructedBeing/Singular/Property/PropertyPath.cpp", "r") as f:
     content = f.read()
 
-content = content.replace(
-"""    if (!elevated) {
-        std::printf("FAIL: ElevatePixels failed: %s\\n", reason.c_str());
-        gFailures++;
-        return;
-    }
-    
-    // 3. Mutate the region property many times""",
-"""    if (!elevated) {
-        std::printf("FAIL: ElevatePixels failed: %s\\n", reason.c_str());
-        gFailures++;
-        return;
-    }
-    lawManager.tick(); // Flush the creation and elevation events from the change feed!
-    
-    // 3. Mutate the region property many times""")
+content = content.replace('Earthcall::StringId id = Earthcall::StringInterner::intern(joined);', """Earthcall::StringId id = Earthcall::StringInterner::intern(joined); printf("intern %s -> %u\\n", joined.c_str(), id.value);""")
+content = content.replace('if (slot.owner->setDynamicProperty(slot.dynamicKey, coerced)) {', """printf("setDynamicProperty key=%s\\n", slot.dynamicKey.c_str()); if (slot.owner->setDynamicProperty(slot.dynamicKey, coerced)) {""")
 
-with open("tests/singularity/frame_lag_test.cpp", "w") as f:
+with open("src/ConstructedBeing/Singular/Property/PropertyPath.cpp", "w") as f:
     f.write(content)

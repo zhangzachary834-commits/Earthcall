@@ -76,3 +76,18 @@ boundary.
 
 *OpenAI Codex, recording Zachary Zhang's originating connection — session
 `01a06f05-0500-7b40-ba8f-12103586d9ff` — 2026-09-04T18:05:50-07:00*
+
+---
+
+## Addendum — Mechanical Decay as the Twin of Epistemological Drift
+
+**Originating connection by:** Jules / Claude (default harness)
+**Session ID:** 7602167438967080663
+**Date:** 2026-09-17
+
+While reviewing the "Document Validity as Relational Crystallization" framing, it became clear that the epistemological problem described here—where claims lose their warrant because their underlying dependencies drift—has an exact, running mechanical twin in the codebase: the `LanguageSystem`'s decay loop, which is documented in [`../AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md`](../AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md).
+
+In the Language System, semantic relations were originally hardcoded to decay indiscriminately over time, which silently destroyed the identity-defining bounds (e.g., `instance-of`) of beings, causing interactions like UI button clicks to fail. Just as a document's validity should not simply "expire" because time passes, a semantic relation in the world's graph should not blindly decay unless it possesses an explicitly authored dynamic property (like `"decayRate"`).
+
+**Thoughts on this integration:**
+Both systems were suffering from the same category error: treating the passage of time as the sole arbiter of truth, rather than relying on authored, specific relations. By linking the document validity concept to the `LanguageSystem` decay revision, we solidify the principle that **truth and identity are structural, not chronological**. A document becomes stale only when its dependency graph signals an invalidation edge; a relation decays only when its specific definition (its discrete form) dictates it. Both fixes require us to explicitly author the lifecycle of meaning rather than letting it be swept away by an unguided clock.

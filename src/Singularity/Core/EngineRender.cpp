@@ -85,11 +85,12 @@ namespace Core {
 
         // Refusal #6: renderer state is downstream of authored reality.
         //
-        // A Zone's existing FieldNode becomes a persistent illumination source
-        // only when its ordinary authored `light.source` property is true. The
-        // renderer consumes authored placement, color, intensity and channel
-        // coefficients through one shared resolver; there is still no C++ Light
-        // kind and no decorative Sun Object secretly standing in for radiance.
+        // A Zone's existing FieldNode can become the persistent illumination
+        // source by carrying the ordinary authored bool property
+        // `light.source=true`. Its registered `origin` is then the source's
+        // world-space placement. Nothing new is carved into the C++ ontology:
+        // FieldNode remains the continuous mathematical substrate, and the
+        // marker is Person/Law-authored vocabulary on a Singular.
         //
         // If no persistent radiant field has been authored yet, ScreenChannel
         // preserves the previous camera-relative compatibility path. That

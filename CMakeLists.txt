@@ -182,10 +182,11 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp)
 endif()
 
-# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs on Apple
+# Compile native WebKit integration sources as Objective-C++ on Apple.
 if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
     set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
+    set_source_files_properties(src/Singularity/Foreign/Web/DomMirrorBridge.cpp PROPERTIES LANGUAGE OBJCXX)
 endif()
 
 # Object library for shared code
@@ -399,7 +400,20 @@ if(NOT EMSCRIPTEN)
         # equivalent fixture is optional and skips when absent; this one is the
         # test's actual subject, so it must resolve), so it needs the source
         # root as its CWD like the `lag` custom target above already gets.
-        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
+        # The same applies to every test whose SUBJECT is an authored save read
+        # by a bare "saves/..." path. Both Living Studio tests failed under
+        # ctest and passed from the source root, and they failed QUIETLY:
+        # synthesis_studio_living_test returns 1 before its first tick, and
+        # synthesis_studio_full_store_boot_test reports that it could not
+        # discover the Zone. A measurement pass on 2026-09-15 read that silence
+        # as "this world never sweeps" and drew a wrong conclusion from it.
+        # Add a test here when its fixture is an authored save it must find,
+        # rather than one it creates in a temp SaveRoot.
+        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
+            ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
+            ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
+            ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
+            ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         endif()
@@ -409,8 +423,20 @@ if(NOT EMSCRIPTEN)
         # ctest give it the box to itself. (It survives contention either way
         # — it detects a moving machine and stops enforcing its timings — but
         # a run where nothing is enforced is a run that checked nothing.)
+        #
+        # The Formation Rete scaling probes are the same kind of measurement and
+        # need the same courtesy: they compare a law's cost against a control
+        # arm and assert the RATIO, which contention can skew because the arms
+        # run one after another. Both passed alone and failed inside a parallel
+        # ctest run on 2026-09-16 (category_membership 1.2x alone against a 4x
+        # guard; quantifier_scaling 0.619 alone against a 0.65 guard, 0.72 under
+        # a concurrent build — measured with the change under test stubbed out,
+        # so it was the machine, not the change).
         if (${TEST_NAME} STREQUAL "frame_lag_test" OR
-            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test")
+            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test" OR
+            ${TEST_NAME} STREQUAL "category_membership_scaling_test" OR
+            ${TEST_NAME} STREQUAL "quantifier_scaling_test" OR
+            ${TEST_NAME} STREQUAL "law_direct_stress_test")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 RUN_SERIAL TRUE
                 TIMEOUT 300
@@ -477,6 +503,3 @@ if (EMSCRIPTEN)
     set_target_properties(earthcall_wasm PROPERTIES OUTPUT_NAME "earthcall")
     set_target_properties(earthcall_wasm PROPERTIES SUFFIX ".js")
 endif()
-target_include_directories(my_probe_test PRIVATE src third_party/nlohmann_json/single_include third_party/glm third_party/glfw/include third_party/gl3w/include third_party)
-
-

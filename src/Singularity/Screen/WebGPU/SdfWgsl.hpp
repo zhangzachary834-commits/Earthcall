@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include "Singularity/OntoMath/ScalarForm.hpp"
+
 namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
@@ -64,7 +66,9 @@ struct Program {
 // the fragment output convention lives with the pipeline, not the codegen.
 //
 // An empty/degenerate tree still yields valid WGSL that reports "no surface", so
-// callers never have to special-case it.
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr);
+// fieldNode is optional (needed if the tree uses VolumetricField and needs to sample
+// the 3D texture).
+// colorExpr is optional; if provided, it replaces the uniform base color.
+Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr, const OntoMath::Piecewise* colorExpr = nullptr);
 
 } // namespace sdfwgsl

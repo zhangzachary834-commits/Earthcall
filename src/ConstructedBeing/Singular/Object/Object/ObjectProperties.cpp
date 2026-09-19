@@ -400,7 +400,7 @@ private:
 // the material would repaint every other object naming the same one.
 class FacePropertyBridge : public Property {
 public:
-    enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize };
+    enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize, Resolution };
 
     FacePropertyBridge(std::string name, Object* owner, int face, Field field)
         : _name(std::move(name)), _owner(owner), _face(face), _field(field) {}
@@ -444,6 +444,8 @@ public:
             }
             case Field::TextureSize:
                 return PropertyValue(tex ? tex->width : 0);
+            case Field::Resolution:
+                return PropertyValue(tex ? tex->width : 64);
         }
         return PropertyValue{};
     }
@@ -496,6 +498,24 @@ public:
             case Field::LayerCount:
             case Field::TextureSize:
                 return false;   // structure is made with tools, not assigned
+            case Field::Resolution: {
+                double n = 0.0;
+                if (!propertyValueToNumber(v, n) || n <= 0.0 || n > 4096.0) return false;
+                const int res = static_cast<int>(n);
+                if (tex) {
+                    tex->resize(res, res);
+                    return true;
+                }
+                auto mine = _owner->ownMaterial();
+                if (!mine) return false;
+                const int faces = _owner->getFaces() > 0 ? _owner->getFaces() : 1;
+                if (static_cast<int>(mine->faceTextures.size()) != faces) {
+                    mine->initFaceTextures(faces, res, res);
+                } else if (_face < static_cast<int>(mine->faceTextures.size())) {
+                    mine->faceTextures[static_cast<size_t>(_face)].resize(res, res);
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -683,5 +703,8 @@ void Object::buildProperties() {
         addFace("layerOpacity", FacePropertyBridge::Field::LayerOpacity);
         addFace("blendMode", FacePropertyBridge::Field::BlendMode);
         addFace("textureSize", FacePropertyBridge::Field::TextureSize);
+        addFace("resolution", FacePropertyBridge::Field::Resolution);
     }
+    registerProperty(std::make_unique<ComputedProperty<Object, int>>(
+        "textureResolution", this, &Object::getTextureResolution, &Object::setTextureResolution));
 }

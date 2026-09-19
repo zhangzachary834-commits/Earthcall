@@ -45,7 +45,7 @@ public:
 
     // Lifecycle -----------------------------------------------------------
     bool init(int argc = 0, char** argv = nullptr);
-    void initLogic();
+    bool initLogic();
     void run();
     void tick(float dt);
     void update(float dt);
@@ -131,6 +131,11 @@ private:
     bool _devToolsWindowOpen = false;
     bool _performanceMetricsWindowOpen = false;
     bool _creationConsoleOpen = false;
+    // Native mirror of fixture-creator-console-visibility-law.enabled.
+    // Writers: F8/menu/tool entry points, IDEDockManager's bool*, and the
+    // Engine::update fixture bridge. Readers: stepCreationTools, IDE docking,
+    // Creator Console rendering/previews. The fixture Law is the legible truth;
+    // this bit remains only because ImGui/docking requires a native bool*.
     bool _creatorConsoleOpen = false;
     bool _showKeymapWindow = false;
     bool _showChatWindow = false;

@@ -115,6 +115,20 @@ void ScreenChannel::buildProperties() {
         registerProperty(
             std::make_unique<ComputedProperty<ScreenChannel, bool>>(name, this, getter));
     };
+    const auto intRef = [this](const char* name, int ScreenChannel::*member) {
+        registerProperty(std::make_unique<PropertyRef<ScreenChannel, int>>(name, this, member));
+    };
+    const auto doubleRef = [this](const char* name, double ScreenChannel::*member) {
+        registerProperty(std::make_unique<PropertyRef<ScreenChannel, double>>(name, this, member));
+    };
+
+    intRef("fieldMeshMinRes", &ScreenChannel::fieldMeshMinRes);
+    intRef("screen.fieldMeshMinRes", &ScreenChannel::fieldMeshMinRes);
+    intRef("fieldMeshMaxRes", &ScreenChannel::fieldMeshMaxRes);
+    intRef("screen.fieldMeshMaxRes", &ScreenChannel::fieldMeshMaxRes);
+    doubleRef("fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
+    doubleRef("screen.fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
+
     boolean("recording", &ScreenChannel::recording);
     boolean("screen.recording", &ScreenChannel::recording);
     boolean("snapshot", &ScreenChannel::snapshotTrigger);
@@ -123,6 +137,16 @@ void ScreenChannel::buildProperties() {
     readOnlyBool("screen.hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
     readOnlyBool("hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
     readOnlyBool("screen.hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
+    readOnlyBool("rendersImplicitExactly", &ScreenChannel::getRendersImplicitExactly);
+    readOnlyBool("screen.rendersImplicitExactly", &ScreenChannel::getRendersImplicitExactly);
+}
+
+bool ScreenChannel::getRendersImplicitExactly() const {
+    PropertyValue v;
+    if (getDynamicProperty("rendersImplicitExactly", v)) {
+        if (const bool* b = std::get_if<bool>(&v)) return *b;
+    }
+    return currentRenderer().rendersImplicitExactly();
 }
 
 bool ScreenChannel::getHasScreenCapturePermission() const {

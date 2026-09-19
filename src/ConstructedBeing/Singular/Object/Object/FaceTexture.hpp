@@ -13,6 +13,7 @@ struct FaceTexture {
     // const from the caller's view — the paint is the same, only its GPU copy
     // changes. 0 while unuploaded, or under a backend that keeps no handles.
     mutable TextureHandle id = 0;
+    mutable uint64_t revision = 0;
     mutable std::vector<uint8_t> pixels;     // RGBA8 buffer, width×height×4
     int width = 64;
     int height = 64;
@@ -34,6 +35,7 @@ struct FaceTexture {
     std::vector<std::vector<StrokePoint>> undoStack;
 
     void create(int w = 64, int h = 64, uint32_t initColorRGBA = 0xFFFFFFFFu);
+    void resize(int newWidth, int newHeight);
     void addLayer();
     void deleteLayer(int layerIndex);
     void setLayerOpacity(int layerIndex, float opacity);

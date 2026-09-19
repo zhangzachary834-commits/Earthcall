@@ -534,6 +534,36 @@ ECA::ConditionPredicate ConditionNode::compile() const {
     return [](const ECA::Event&, const Singular&) { return false; };
 }
 
+ECA::ConditionPredicate ConditionNode::compileAssumingCategoryRoute(
+    const std::string& provenRelationType,
+    const std::string& provenOtherId) const {
+    if (kind == Kind::Related &&
+        relationType == provenRelationType &&
+        otherId == provenOtherId) {
+        return [](const ECA::Event&, const Singular&) { return true; };
+    }
+
+    // Only conjunction can safely inherit a necessary positive proof. Any,
+    // Not, and quantifiers retain their authored semantics by compiling whole.
+    if (kind == Kind::All) {
+        std::vector<ECA::ConditionPredicate> residual;
+        residual.reserve(children.size());
+        for (const auto& child : children) {
+            residual.push_back(
+                child.compileAssumingCategoryRoute(provenRelationType, provenOtherId));
+        }
+        return [residual = std::move(residual)](
+                   const ECA::Event& event, const Singular& target) {
+            for (const auto& predicate : residual) {
+                if (predicate && !predicate(event, target)) return false;
+            }
+            return true;
+        };
+    }
+
+    return compile();
+}
+
 // A quantifier says nothing about the subject.
 //
 // Its compiled closure takes `const Singular&` UNNAMED (see Kind::ForAny in
@@ -739,6 +769,30 @@ std::vector<std::size_t> ConditionNode::compileToRete(ReteNetwork& rete,
 void ConditionNode::collectRelationTypes(std::unordered_set<std::string>& out) const {
     if (kind == Kind::Related && !relationType.empty()) out.insert(relationType);
     for (const auto& child : children) child.collectRelationTypes(out);
+}
+
+void ConditionNode::collectCategoryRoutes(
+    std::vector<std::pair<std::string, std::string>>& out) const {
+    if (kind == Kind::Related && !relationType.empty() && !otherId.empty() &&
+        otherId.front() != '@') {
+        const std::pair<std::string, std::string> route{relationType, otherId};
+        if (std::find(out.begin(), out.end(), route) == out.end()) out.push_back(route);
+        return;
+    }
+    // ONLY DOWN `All` CHAINS, and this is the whole soundness of the thing.
+    //
+    // A route is usable as a candidate set only when EVERY being that satisfies
+    // the condition must travel it. That is true of a `Related` conjunct: the
+    // law cannot hold of a being the relation does not hold of. It is false
+    // everywhere else — under `Any` the other arm can satisfy the law on its
+    // own, under `Not` the relation holding is what DISqualifies a being, and a
+    // quantifier's inner condition is about the instances it ranges over, not
+    // about the law's subject (the same reason Prophetic files quantifier reads
+    // separately). Collecting from those would hand the sweep a candidate set
+    // missing the beings that qualify another way: a silently deaf law, which is
+    // the failure FORMATION_RETE's whole rung ladder keeps finding.
+    if (kind != Kind::All) return;
+    for (const auto& child : children) child.collectCategoryRoutes(out);
 }
 
 namespace {

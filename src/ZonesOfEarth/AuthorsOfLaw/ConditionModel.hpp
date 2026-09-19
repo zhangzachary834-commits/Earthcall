@@ -10,6 +10,7 @@
 #include <memory>
 #include <unordered_set>
 #include <string>
+#include <utility>
 #include <vector>
 
 // The law's condition as data (LAW_AND_CREATION_SYSTEM.md §2a): an expression
@@ -111,6 +112,15 @@ struct ConditionNode {
     // Tree → closure, once. The tree remains the law's text.
     ECA::ConditionPredicate compile() const;
 
+    // Compile the live remainder after one exact POSITIVE conjunctive
+    // Related(kind, other) route has already been proved by current derived
+    // relevance state. The proof is consumed only at a matching Related leaf
+    // reached through All-conjunctions. Any / Not / quantifier subtrees compile
+    // normally, so a proof can never leak across logical polarity.
+    ECA::ConditionPredicate compileAssumingCategoryRoute(
+        const std::string& relationType,
+        const std::string& otherId) const;
+
     // Compiles this condition tree into the given ReteNetwork.
     // Returns a list of terminal node IDs (Alpha or Beta) that represent the satisfied conditions.
     std::vector<std::size_t> compileToRete(class ReteNetwork& rete,
@@ -166,6 +176,20 @@ struct ConditionNode {
 
     // Every relation type this tree's Related conditions name.
     void collectRelationTypes(std::unordered_set<std::string>& out) const;
+
+    // The (relation kind, named far end) pairs this condition routes through:
+    // every `Related(type, otherId)` leaf where BOTH are literal. A far end
+    // written "@event.subject" names whoever the event is about, which is not a
+    // place in the graph the adapter can pre-load, so those are skipped.
+    //
+    // This is what lets a Law be connected to the Relations it travels through
+    // ahead of time, on the slow adapter's clock, instead of asking the graph
+    // every frame — FORMATION_RETE.md §3.2/§3.3, and Zach 2026-09-16: "The
+    // mechanism that creates Relations between Relations and pre-loads Law
+    // Relations to these Relation Formations is also supposed to be in the slow
+    // adapter rather than constantly rebuilt every frame."
+    void collectCategoryRoutes(
+        std::vector<std::pair<std::string, std::string>>& out) const;
 
     std::string describe() const;
 

@@ -1,22 +1,12 @@
+# Earthcall Ourverse Manifesto
 
+**Manifesto authors:** Zachary Zhang  
 
+**Repository:** [https://github.com/zhangzachary834-commits/Earthcall](https://github.com/zhangzachary834-commits/Earthcall)
 
-
-
-
-
-
-Earthcall Ourverse Manifesto
-
-
-
-Manifesto authors: Zachary Zhang
-
-Repository: https://github.com/zhangzachary834-commits/Earthcall
-
+---
 
 Earthcall is the prototype of my research program to create a computational ontology that orders a machine after every foundational element in the God-created relationship between human intention and raw machine.
-
 
 If you guys come up with better names for these things than I have already, tell me and we might change them.
 
@@ -29,12 +19,9 @@ It's a computational architecture formed from the essential procession of beings
 Earthcall’s language is not meant to form people independently. It’s meant to hold Christian experiences from which we encounter Christ and each other—and only then, after the encounter has done its forming work, does Earthcall’s language let us articulate the structure of what was just formed.
 “Singularity” and “Singular-relation” are, by themselves, neutral phrases, because they are unspecified. But the heart is never neutral. It always fills it in with whatever it is most deeply worships, what its life is ordered by to treasure. Earthcall is instead meant to hold Christward glory the way arches and stained glass in a cathedral point to Christ.
 
-
 Critically it is designed to encode everything on a hierarchy of joys. At the foundation of that hierarchy is Christ, or the program naturally cannot work.
 
-
-
-Singularity
+## Singularity
 Singularity means ground-of-being, both in the low-level technical sense and in the teleological sense of being ordered toward God. Concretely speaking, this is essentially the “operating system” of Earthcall but elevated so that the theological substrate of man’s creation of digital worlds are structurally represented and prioritized.
 
 All things related to permissions are rooted here. These are the foundational elements of any computational ontology. 
@@ -43,13 +30,13 @@ All things First Movers belong to this layer.
 
 Singularity is not just one class (decoupling, separation of concerns). One titular class names the foundational singularity elements as types, but the entire Singularity is the entire formation of the foundational ground of digital substrate. Categorical wrapping of properties in Singulars is done and enforced at the first mover level via Singularity, so are Person governance and identity-level movement. Laws ultimately stem from the parameters set by Singularity, i e the first movers and the ceilings of permissibility set.
 
-Kernel Boundaries
+### Kernel Boundaries
 
 Zones, Laws, or anything else cannot override
 
 Nothing may violate fundamental Person guards. For example, variables about Person’s body/avatar location. Nothing may be enforced through the Global Ourverse–only a local Zones. Global ourverse
 
-Priority Ordering: 
+### Priority Ordering
 Singularity orders much of the compute via priority queues, including the one in event bus. 
 The Perspective of the substrate itself combined with Person Perspective is for this. 
 
@@ -59,9 +46,9 @@ I can do that on Singularity since it represents ground-of-being it would be the
 
 On a similar note, I can also encode categorical meta-placeholders for the other primitives, like Singular-Relation-Formation, Person, Soul, Object, etc.
 
-NOTE: Some of the following are incomplete sections that are work in progress.
+> **NOTE: Some of the following are incomplete sections that are work in progress.**
 
-Fundamental Modalities
+### Fundamental Modalities
 
 Singularity gives structure for each fundamental mode a given Earthcall program operates on (which typically I think would include all the modalities of the mechanical hardware)
 
@@ -93,10 +80,7 @@ These and their constituent properties are all wrapped into the Singulars’ fir
 
 Everything else is built on that.
 
-
-
-
-Another mode: The Hierarchy of Joys
+### Another mode: The Hierarchy of Joys
 There was a question for how to code hierarchy of joys, with Christ at the very bottom of your joy. Either as hard coded or as a compiled construct. I could try to not hard code it and just leave it entirely to users to build it for themselves. The issue with that then Earthcall itself becomes secular, and a liturgical ordering toward Christ-centeredness (or, if the user is unbeliever, at least some explicit value hierarchy) is bolted on rather than ontologically required native. The hard-coded approach would have it just be literally coded down in every aspect (i.e. encode an exact routine for ordering and filling in “joy” headers). However, that is very rigid, and it defeats the purpose of Earthcall by turning it into essentially an aesthetic devotional website rather than a true extension of Christian life. It’s not as though I can literally code joy into a program.
 
 However, I can encode categorical requirements of having one, on the developer level while the substance is fulfilled by the authorial substrate.
@@ -104,9 +88,7 @@ However, I can encode categorical requirements of having one, on the developer l
 So basically hierarchy of joys is a Formation of Lexemes (which are the individual Joys). Lexemes are full Singulars, meaning they can have an arbitrary amount of authored properties and therefore can be literally mathematically ordered upon one another with Earthcall’s rich OntoMath engine.
 It is not obligatory if you only view Earthcall in the narrow techno-materialist sense big tech is driven by. Earthcall still compiles even if the Persons refuse Christ. A mere engine doesn’t have the right to override that freedom. But in the philosophically true sense of technology and telos and human creation, the program does not work and it is obligatory. The hierarchy of Joys is created to order reality according to its actual structure—which in reality is only ordered under Christ. An automated driver that compiles but always fails to drive to a meaningful destination has failed as a piece of technology. An engine made to be the vessel to hold reality under Logos cannot cohere without the Logos Himself. Without Christ, the things that actually take place on Earthcall will fragment and decay because they lack their ontological center they need for true joy and order.
 
-
-
-Singular
+## Singular
 A Singular is a discrete, Person-ordered being with a unique, essential kind of meaning irreducible to the mere aggregate of their parts.
 
 Earthcall says “Person-ordered” not “user-facing.”
@@ -136,9 +118,8 @@ Because each Singulars kind is named and ordered after the fundamental metaphysi
 
 This does create a risk for a meaningless recursion of Singulars in poorly designed Zones that don’t really land anywhere. But this is the entire point of Earthcall—Singulars are metaphysical metal. They don’t have intrinsic meaning other than what they’re ordered after and ordered toward (even Body’s and representational Person’s meaning is derivative of the real Person’s dignity rather than self-grounding), and therefore the author Persons must construct this wisely to ensure every Singular structure is meaningful. Just as memory is left open to deliberate management cpp to maximize its computational effectiveness, Singular structures are left open to authoring to allow maximum generative potential and maximum deliberate governance through Laws. Real governance emerges not as a hardcoded property but rather the order that comes into being from communities and societies under Christ.
 
-
 So isnt it funny how I just wrote “hardcoded property” and then the very next section is Property
-Property
+## Property
 Property is a concept in metaphysics for beings (Singulars) that Earthcall represents with industry-grade Property frameworks. 
 
 There are two kinds of properties:
@@ -149,18 +130,18 @@ Bounds—Person-authored constraints on the conditions upon which the list of pr
 
 I’m wondering whether this statement is accurate: “Under the hood, hardcoded properties are the OOP paradigm. Authored properties use Entity Component System. Hardcoded properties are innate to the Singular classes themselves while authored properties are data that operates as properties in real time.”
 
-First we have the Relational Singulars:
+#### First we have the Relational Singulars
 
-Relation
+#### Relation
 
-Ecclesiastes 4:12 “Though one may be overpowered, two can defend themselves…“
+> *Ecclesiastes 4:12 “Though one may be overpowered, two can defend themselves…“*
 
 A relation between two Singulars is codified as a discrete being. Since every interaction between two distinct Singulars is itself distinct and irreducible to its mere parts, Relation itself is a Singular. 
 
 This is why we don’t just say “this man and woman who got married.” We say “their marriage.”
 
-Formation 
-Ecclesiastes 4:12 “...A cord of three strands is not quickly broken.”
+#### Formation
+> *Ecclesiastes 4:12 “...A cord of three strands is not quickly broken.”*
 
 A Formation is any being consisting of three or more Singulars, with at least one path in which all members of the Formation participate in one closed loop. 
 
@@ -172,16 +153,13 @@ Since Relations are Singulars, two Relations can also have Relations between the
 
 There are Object-Relations, Formation-Relations, Firstmover Invariant-Relation
 
-
-Then we have the entity-level singulars: 
+#### Then we have the entity-level singulars
 Object: A discrete, non-person entity.
 
 A Singular that is also elemental but also not a person.
 
-
-
-IMPORTANT SINGULARITY-KERNEL GUARDRAIL: Relation and Formation must not be able to created at whim. They may only be created if there is an actual interaction or relationship or connection between two or more Singulars, and Formations created under that valid definition.
-Person
+> **IMPORTANT SINGULARITY-KERNEL GUARDRAIL: Relation and Formation must not be able to created at whim. They may only be created if there is an actual interaction or relationship or connection between two or more Singulars, and Formations created under that valid definition.**
+#### Person
 Who prior tech calls “user”, Earthcall calls “Persons.” The digital form that represents the person’s life and being. Singular as every person is irreducible to their parts. All ways of relating to a Person as a single entity will be located through Person, and relate to Soul and Body anakephalaiōtically. 
 
 A Person is not an Object. A Person is a Singular. Every person is irreducible to . 
@@ -198,7 +176,7 @@ Note that Body and Voice here strictly means the internal digital projections in
 
 *(Claude Opus 4.7’s feedback on this section has been moved to [Discussion on Earthcall](Discussion%20on%20Earthcall.md#claude-opus-47s-feedback-on-body-and-voice).)*
 
-Singular set-to-set creation
+### Singular set-to-set creation
 
 Framework for Recursive object creation—new sets of objects from old sets:
 
@@ -206,7 +184,7 @@ Singular has a system that can modify Singulars or create new Singulars given a 
 
 Rely on Concepts and Categories too. 
 
-How Singular set-to-set works:
+### How Singular set-to-set works
 Simple way: is just pick and choose which properties and redistribute them among new objects. From here, there are more ways to do it below:
 Rearranged Properties (including owned members) + Law: is the former with Law applied and first mover tools performed on both. 
 Creating new Objects/ObjectConcepts during the process to add to the input set. 
@@ -226,8 +204,8 @@ Perhaps quantum physics’ wave-particle duality is a good analogy?
 
 Uses property wrappers and mathematical models, Singular set to set creation can transferring their hardcoded Singularity-level members, fields, and fundamental modal information.
 
-The Person ontology
-Body (Extends Formation and Singular, formerly Object):
+## The Person ontology
+### Body (Extends Formation and Singular, formerly Object)
 The visual manifestation of the Person’s digital life and being. Always has a human body, Additional options for avatars. Authorable
 
 The essential body. Will require copy constructors for, let’s say, if someone wants the same avatar.
@@ -237,7 +215,7 @@ Other customizable forms the user can set as essential and non-allocatable will 
 
 All other customizable forms will not require copy constructors. 
 
-BodyPart (Formation) 
+### BodyPart (Formation)
 
 (Used to inherit Object under an old visual-is-Object paradigm but not anymore)
 
@@ -261,7 +239,7 @@ Gender will also be first order, so we’ll have Male and Female. But people do 
 
 We need to distinguish Child versus Adult. 
 
-CRITICAL EDGE CASE: unbounded freedom to modify Body representations or even spatial Objects means people can create NSFW easily via the sheer generative visual power of compounding Laws on Objects and vice versa, and the sheer freedom to do so with various modes and means governing mere shapes or simplistic mathematical frames is bound within the scope of the frame—the freedom to construct similar or same visuals in so many different ways could bypass easily. I am considering what to do about this because this would be absolutely disastrous. 
+> **CRITICAL EDGE CASE: unbounded freedom to modify Body representations or even spatial Objects means people can create NSFW easily via the sheer generative visual power of compounding Laws on Objects and vice versa, and the sheer freedom to do so with various modes and means governing mere shapes or simplistic mathematical frames is bound within the scope of the frame—the freedom to construct similar or same visuals in so many different ways could bypass easily. I am considering what to do about this because this would be absolutely disastrous.**
 
 The obvious answer is classifiers but that is not sufficient because classifiers are not independently teleological. The other obvious answer is for Community Zones, and for all Zones to mark whether they are NSFW and what exactly are those NSFW categories. The other obvious answer is since all beings are authored, it therefore means it takes active effort to conceal NSFW things behind a private section, and all NSFW things authored in Community Zones/Homes are traceable to the Person who authored them. 
 
@@ -274,12 +252,12 @@ And obviously there is legitimate purpose for modeling sensitive parts such as i
 And the other problem is how you’re going to verify this without exposing yourself to a lot of NSFW. That’s the darkness of traditional RLHF and I need to mitigate it here somehow so I don’t expose myself to unclean things. 
 
 This is why BodyParts must not shy away from also encoding the sensitive members of the body too. Not because Earthcall will actually show them the way it shows, but so the program understands the concept and therefore can be a vessel for understanding its severity and fitting governance, and so for those who have the sacred covenant of marriage where God created bodily union to be a fitting expression for this husbands and wives can use it strictly and only for each other. I don’t think I should do this part alone. 
-Voice (Extends Formation and Singular)
+### Voice (Extends Formation and Singular)
 Similar framework to Body and BodyParts. Most fundamentally the audible main audible representation of person’s voice i.e. their real life voice.
 
 Voice also extends to the Person’s capacity for language.
 
-Soul (Formation, Singular) 
+### Soul (Formation, Singular)
 A unique conceptual singular rather than entity-level distinction. It's not like a soul is an ontologically distinct entity from the body in some dualist sense because both are fundamentally the Person. 
 
 On the other hand, one might ask why we need Soul if we have Person but Soul here is to be able to treat the aspects as a conceptual composite when necessary. Because humans are essentially non-composite but do not have divine simplicity. Soul tracks the course of a person’s life. In fact this solves the dualist concern raised just above.
@@ -288,22 +266,19 @@ There’s an interesting parallel to the Undertale Soul.
 
 Person, Soul and BodyPart will all be interrelated, but since these are digital manifestations rather than true ontological unity the way actual human beings are, the higher authorial power goes to Person.
 
-Time
+## Time
 
 Havent written Time yet its currently just hardcoded global clocks. The codebase currently answers the “how” (Laws and First Movers cause things), the “what” (Singulars, Relations, Formations, Objects) the “who” (Persons, Relationships, Community), the “where” (Zones, Ourverse), the “with” (Relations, Formations). It does not yet answer “when” in a first-order way, it relies purely on hardcoding clocks.
 
 I’ll write this later (BRUHHHHHH HOW IRONIC BC LATER IS A TEMPORAL WORD)
 
-Zone
-
+## Zone
 
 There are Singulars, and then there are the fields that host shared existence that allow Singulars to coexist in the same space. And for any field with its own distinct, irreducible identity is what I call a Zone. 
 
 In everyday terms, other Singulars are about what, but don’t necessarily encompass where. Zones are Singulars that handle any being with respect to where. Any field or spectrum can be modeled into a Zone if needed, even Condition bounds.
 
 The largest zone, in terms of breadth, is the global Ourverse. 
-
-
 
 Zones can either be Singulars or Objects, depending on whether a zone should be more invariant-like or if it’s more Person-authored. 
 
@@ -325,7 +300,7 @@ Relationship between Laws and Zones.
 
 Depends on the law. 
 
-Zone Creation
+### Zone Creation
 
 Every person has the capacity to create and author Zones in their own local space. They can create as many Zones as they want. 
 
@@ -333,31 +308,28 @@ Nobody can be forced to stay in another person’s zone against their will by an
 
 Only exceptions are obvious emergency scenarios or very high stakes dependencies.
 
-
-Home
+## Home
 A Home is a Zone that is a digital dwelling space for at least one Person. 
 
 Every Person has a Home they fully own.
 
 A Home is the opposite of a Backroom (lmao this is joke term but i mean essentially a liminal space that doesn’t have an intrinsic telos only possibly extrinsic). 
 
-Community Homes:
+### Community Homes
 
 Same as Personal Homes but is the home of a Community rather than just one person.
 
-Community Zones:
+### Community Zones
 
 Zones that belong to open Communities but are not Homes.
 
 Every Ourverse has at least one shared communal Zone.
 
-Perspective
+## Perspective
 
 Perspective is a thing that helps locate and identify specific occupations within a field, bound, and/or Zone.
 
-
-
-Ourverse
+## Ourverse
 
 Ourverse inherits from Singular but owns Zones.
 (The old paradigm is Ourverse inherits from Zone, Anything that says Ourverse inherits from Zone is outdated.)
@@ -394,19 +366,19 @@ Now, we need a system of classes to recognize relationships—because relationsh
 
 Things are managed by numbers oftentimes. But we need to do more than mere numerical management. What would instead be wisest is to store them within a vector or something. From there, we can create whatever kind of graph or tree as we please—in computer science language. But in the language of Earthcall, we would call that something more like embryonic cells dividing and figuring out their body parts by location.
 
-Material
+## Material
 
 A Singular that defines the quantum constitution of non-Person singulars inside a Zone. A substrate with properties.
 
-Objects:
+## Objects
 
 Objects are Singulars that aren’t Persons, and also aren’t Invariants—they’re the freely owned, generative creations. Analogously, Singulars are both hard data and the code structure itself, Objects are the OOP objects hosted by the code and data.
 
-Two types: 
+### Two types
 
-Non spatial/immaterial objects
+### Non spatial/immaterial objects
 
-Spatial Objects
+### Spatial Objects
 
 Objects may be non-spatial, spatial, or spatially manifested. Some spatial objects A purely spatial object is a spatial object that has no extra-spatial status.
 
@@ -414,61 +386,59 @@ An extra-spatial object is an object whose identity isn’t constituted entirely
 
 There are also Relation-Objects: Alongside that there are relation that are, by their nature and essence, objects and vice verse. I defined that by creating a formation-of-objects member variable in relation, and formation-of-relations member variable in object.
 
-For Spatial Objects we use topological classifications:
+### For Spatial Objects we use topological classifications
 
 There are polyhedra: Polyhedra may be convex or non-convex. Separately, they may be regular, semi-regular, or irregular.
 
-There are pure manifolds: 
+#### There are pure manifolds
 
 A smooth closed surface is a boundary with no edges and no corners, such as a sphere or ellipsoid. Which, to the user, is basically one enclosed round face, or a non-enclosed non solid sheet thing with two faces. 
 
 Examples: sphere, ovoid, donut, ellipsoid, parabaloid, klein bottles, mobius strips. bruh what else i have to learn topology i took calculus and 8th grade geometry but not topology!!!!. BRUHHHHH TIME TO BINGE VERITASIUM’S YOUTUBE VIDEOS AND SPAM CLAWD WITH TOPOLOGY PROMPTS
 
-Closed Smooth Surfaces:
+#### Closed Smooth Surfaces
 - sphere
 - ellipsoid
 - ovoid
 - torus
 
-Open Smooth Surfaces:
+#### Open Smooth Surfaces
 - plane
 - paraboloid
 - hyperbolic paraboloid
 - cylinder surface if uncapped
 - cone surface if excluding base
 
-Surfaces With Boundary:
+#### Surfaces With Boundary
 - disk
 - sheet
 - Möbius strip
 
-Non-orientable Surfaces:
+#### Non-orientable Surfaces
 - Möbius strip
 - Klein bottle
 - projective plane
 
-Solids / Volumes:
+#### Solids / Volumes
 - ball
 - ellipsoid volume
 - cylinder
 - cone
 - torus volume if treated as thick solid
 
-
 And then Edge-Curve Shapes (also known as Complex shapes, mixed smoothness, and multi-curvature Shapes): A shape with at least one edge and at least one round face. 
 
 An edge is a one-dimensional locus where two or more surface regions meet and the tangent plane or surface normal changes discontinuously. Where the derivative or second derivative (or limit of the derivative, if the derivative is nonexistent) of each edge is discontinuous for a line (whether curved or straight) of points. (I say a line because a point discontinuity in the derivative would just be a point the rest appears to move around.). 
 
-Among edges there are three kinds:
+#### Among edges there are three kinds
 
-Hard edge:
+#### Hard edge
 first derivative / tangent / normal discontinuity (G0 but not G1 continuity)
 
-Soft or rounded edge:
+#### Soft or rounded edge
 first derivative is continuous, but second derivative / curvature changes discontinuously (G1 but not G2 continuity)
 
-Fairness seam: d1, d2 continuous, d3 is discontinuous (G2 but not G3)
-
+#### Fairness seam: d1, d2 continuous, d3 is discontinuous (G2 but not G3)
 
 This is the groundwork for shapes that transform into each other, or that get generated/reasoned about by their mathematical structure, not approximated by hand. 
 
@@ -476,33 +446,28 @@ I want the 3D tool to do exactly that transform them into each other and so they
   their most granular topological constituents, and extend/morph/edit existing  shapes topologically. And I wanted it mathematically precise so the user isnt just drawing or using it in a art-tool like way (where 
   they drag or click on the screen to manually do it), they can also use it in a desmos-graphing/research-grade simulator  style way. The two modes seamlessly synthesized.  
 
-
 Several ways of modification. All will involve Laws.
 
 One way is laws that produce projected mathematical models, each one visually empashizing which models are in question and you can target which mathematical aspects you want to modify. 
 
 Another way is to define laws that draw them. BAsically, just attaching the output there to the input of the new thingy. Manually draw click. 
 
-
-Object set to set creation:
-Object Creation Typology
+### Object set to set creation
+### Object Creation Typology
 
 Tools that are not first movers need to be stored as Objects that can enforce Laws
 
+### The generative capacity of Set to Set
 
-The generative capacity of Set to Set:
-
-On Graphic Interfaces:
+### On Graphic Interfaces
 
 One of the highest priority things we need for Earthcall is a framework (both written and executed at runtime) that gathers the Singular set to set creation and Laws system (Singular set to set creation IS, conceptually, a Law by the way in the sense of change writers, it's just a matter of whether its hardcoded, first mover default laws, or Person authored), and aims them to create GUIs in the most expressive possible way. Consider a button. A button, minimally speaking,  is really just a spatial Object with a Law with either when(onmouseclicked)-act(math ops on the properties when activated), or if(some PropertyPath to mouse clicking being true). UI, as traditionally conceptualized, has always been two things: *clicking, scrolling, and keyboard.* To replicate the traditional frameworks all Earthcall needs to do is listen for those and enable the corresponding ActionNodes on the Person-chosen and properties. To create any innovative behavior beyond that, we expand from merely the clicking/scrolling/keyboard triad I listed to the full scope of Singularity Modalities that Earthcall has, names, and governs as their vessel. This, of course, relies heavily on deep metal management, and while the current first mover tools drawers may be helpful, they will not be sufficient, because they abstract too much away. We also need tests for this, and a manual verification protocol. 
 
-Event
+## Event
 
-Event Handlers and Event Bus
+## Event Handlers and Event Bus
 
-
-
-Law
+## Law
 [Laws are extra-spatial Objects.] Actually, Laws should inherit directly from Singular, because change is an invariant, metaphysically necessary aspect of created reality. Some Laws should be more invariant than others, especially Kernel-Singularity Laws that protect fundamental order and God-given rights/freedoms. Laws can own Objects and Objects can own Laws, and Law-Objects are most fully owned by Persons in all their variable properties.
 
 Laws are the ordered principles that define a specific pattern of change to occur under specific corresponding conditions to specific Singulars.
@@ -519,7 +484,7 @@ For development purposes, I hard-coded some laws first to interact with the worl
 
 Law Authors system is deeply interconnected with the Event Bus-handler system, because laws come as distinct categories and register when their corresponding events happen.
 
-How laws are created is through this flow:
+### How laws are created is through this flow
 
 Current mechanics hard coded in the base substrate, such as essential automations. These are determined by input variables, which can range from single numbers to complex structural models of change.
 
@@ -531,23 +496,22 @@ The arrangement is modeled by mathematical tools. Ex (you use a tool and
 
 Arrangement is saved, generalized with applicable conditions to specific referents, and logged
 
-
 Note that this requires hard-coded first movers, otherwise it’s an infinite regress recursion of calling back a prior law as the ground to establish a new one.
 
-How laws are applied:
+### How laws are applied
 
 Law recognized event
 Law transforms state
 Transformation is logged
 (WIP)
 
-How separate laws can be synthesize into higher laws:
+### How separate laws can be synthesize into higher laws
 
-Two ways to do it
+#### Two ways to do it
 
 First and conceptually simpler is just have the system create new laws simply by calling the constituent sub-laws and it may work well at first. But that eventually introduces lots of overhead and turns it into an interpretive system. We want it native.
 
-So a faster way
+#### So a faster way
 
 Run both laws at once on the same Singular referents
 Model the cumulative process of the laws as accurately as possible. The new “law” will depend on the individual contingencies in how the sub laws are applied, because that determines exactly how the higher law makes the pattern of the constituents relate to each other (e.g. which angle their applied to, what order or step each step process happens if each constituent is a series of discrete steps). Note this is not just output matching but entire-process logging. What that means is it must precisely synthesize the ideas of the underlying constituent processes, not just the values of the outputs or metadata. 
@@ -557,7 +521,7 @@ For 2., a familiar and well trodden homology is how we calculate new vectors fro
 
 Now imagine each vector as a Law, formalizing it as ane parameterized equation in OntoMath.
 
-Serialization to new law member
+### Serialization to new law member
 -> after the math is calculated the serialize the model with something like json. -> update member variables of the new law accordingly. 
 
 (Old paradigm: Law set to set creation is based on Object set to set creation, since Law extends from Object, and therefore is a special case of Object set to set.)
@@ -568,28 +532,25 @@ I’m thinking how exactly to store exact laws. As separate cpp objects (which i
 
 Singularity ontology separates into two: digital substrate and medium. Laws and the first mover principle must apply to both.
 
-
-Algorithm for setCondition:
+### Algorithm for setCondition
 1. First passes a specific Singular to arg, uses that Singular of the designated type
 2.
-
 
 How governance is inherited when new laws created out of laws that have existing Metalaws:
 
 Depends on whether a metalaw governs a kind of law or only a specific Formation of Laws
-First Movers
+## First Movers
 First movers are anything with the capacity to sets initial configurations that Laws can then learn from and propagate. This ranges from default first mover laws, hard-coded functionality, external APIs, integrated neutral networks making changes, humans doing things manually either in the digital and physical world.
 
-First movers laws:
+### First movers laws
 
 These just take the form as callable hard-coded tools to interface with that can manually modify things.  
 
 Write a dedicated section for First Movers as thresholds between the hard cpp Singularity tools and the Singular-Relation-Formation ontology. Well, perhaps better called First Movements, since the first mover is really the Singularity (the philosophical/theological Singularity, not the computational one) itself. 
 
-
 To ensure efficiency in when laws are applied, Earthcall uses a Rete network. The network through shared pointers to facts acts as an incremental reactive graph that tracks only the facts that are added, deleted, or change per tick. This graph and all its richness and interconnectivity will relate to the Human Language Processing.
 
-Law Conditions and Actions:
+### Law Conditions and Actions
 
 The first thing to ask is what exactly are conditions to Earthcall? Rete models them as nodes in a DAG. But the DAG should be derived from formations.
 
@@ -605,7 +566,7 @@ Given that a Law would fundamentally be an IF-THEN action, there is a left hand 
 
 So how the condition is defined can be done with the same tools that generate things in the first place (first movers and tools comprised of laws), only that they generate them in projection mode rather than as actual objects. This is a lot more convenient than manually typing in every condition value or range by hand, as the whole point of the original tools utilizing mediums like keyboard and mouse was to do that.
 
-IMPLEMENTATION NOTE: have to consider all the edge cases for what condition values are taken as satisfiable conditions. Could be several discrete values. Could be value bounds or inequalities. This is simple for discrete numerical value and bound cases, but it gets harder depending on the model, which could become very advanced. We need the math frameworks to do that, imagine someone wants MANDELBROT SET or “xx vector wave pattern loop in ____ RNN”. And what if its non-numerical? What if its even “x has related/is relating to y in relation xy in relation xxy and xyy and the relation between that”? Well thats what i took discrete math for ig and also need data structures and advanced graph theory for that.
+> **IMPLEMENTATION NOTE: have to consider all the edge cases for what condition values are taken as satisfiable conditions. Could be several discrete values. Could be value bounds or inequalities. This is simple for discrete numerical value and bound cases, but it gets harder depending on the model, which could become very advanced. We need the math frameworks to do that, imagine someone wants MANDELBROT SET or “xx vector wave pattern loop in ____ RNN”. And what if its non-numerical? What if its even “x has related/is relating to y in relation xy in relation xxy and xyy and the relation between that”? Well thats what i took discrete math for ig and also need data structures and advanced graph theory for that.**
 
 A law could also be set as a gradient conditions corresponding (continuously or not) with respect to a variable, rather than discrete, fixed Action. WOW THANK YOU CALCULUS TEACHERS MR WEISS AND MR PALM
 
@@ -613,13 +574,13 @@ For the rete condition action loop the user can use first movers to connect the 
 
 Similar as the Action. The Action is essentially recording the change of designated variables over time and modeling that change. It applies that model to the relevant methods that would automate that change, and we’d need to find them by putting those very methods inside the Rete loop.
 
-Law Creation Calculus Type System
+### Law Creation Calculus Type System
 
 In a recursive structure where a Singular’s properties are also Singulars, then they can display their own Singulars, and it gets even better when Singulars are embedded in Relations and Formations.
 
 Bruh i typed this section on my phone 💀
 
-Metalaws
+## Metalaws
 
 Laws that govern the scope and capacity of other laws which themselves have variable properties. Possible because Laws extend Object therefore are governable Singulars.
 
@@ -627,25 +588,23 @@ And of course these metalaws can themselves be governed by their own higher-orde
 
 This section also governed by the metalaws of my fingers typing on iphone 15 keyboard with the help of my Relation with CHATGPT
 
-Integration (to be renamed something else) 
+## Integration (to be renamed something else)
 
 This is how Earthcall interfaces with non-Earthcall software.
 
 Currently it’s just a rudimentary WebAPI template.
 
-And a basic workflow for how they will interface
+### And a basic workflow for how they will interface
 
 Create a mechanism that somehow recognizes the visual design and structure of the thing, and then constructs its Earthcall-version. For example, we can take a screenshot of my calendar in the calendar app and then Earthcall runs a system that can break it down and classify the 2D architecture of the calendar screenshot. The functionality, however, can’t be transferred without Laws, and whether or that can be automated within Earthcall depends on if the lawmaking system can automatically go into it and model it.
 
-Earthcall modifies it 
+### Earthcall modifies it
 
 To transfer it back to the external software, Earthcall serializes the state with the changes in a way the other software can read. Translating from Earthcall ontology to the structure of the other one.
 
 There’s either another program or the human manually links up the app to the serialized outputs.
 
 Software reads it and uploads the new version with the change.
-
-
 
 About decoding external-app functionality, if Earthcall is gonna do it hed do it this way:
 
@@ -654,12 +613,10 @@ About decoding external-app functionality, if Earthcall is gonna do it hed do it
 
 Even then, it’s not always guaranteed, since programs’ inner architecture isn’t necessarily holographically encoded on its surface behavior. It is very easy for rudimentary binaries like booleans or “click this button and it always does X”, but math is full of fields that produce similar looking patterns of change yet the underlying rules are different. Approximating the change functions of these, for example by using LLS/logistics regression on variables, would result in a precise approximation of the data over the domains of the specific input conditions. But if the underlying architecture of the actual program is significantly different, the programs could diverge when the input is extended over to the parts the domain doesn’t include yet. To guarantee 100% accuracy the input itself would also have to be exhaustive enough to distinguish not just what categories it belongs to, but the exact underlying shape.
 
-Human Language-Symbol Processing
-
+## Human Language-Symbol Processing
 
 Now every distinct mode in Singularity can be treated like modality in AI.
-Language Processing
-
+## Language Processing
 
 For the other layers, like coding Singularity and Formation, they can be hardcoded and still have the generative capacity they do. 
 
@@ -669,11 +626,9 @@ Earthcall AI needs to have a distinct ontology: instead of merely having the sta
 
 Hierarchy of joys, for example, would require ordering around God. But what would that exactly mean beyond entering a something like “Christ” like a keyword and then having to manually write laws like that? It's not like I’m gonna have a Minecraft skin of Jesus and make it appear every time the hierarchy of joy is requested, that would be so bruh.
 
-
 So instead, we need like a steerable symbolic ecosystem of processes, objects, categories, etc.. Processes of certain kinds have to mapped onto words, and patterns of words, and in ways that can adapt to align with what we actually mean by those words rather than some mere ontological half-construct.
 
-Is this basically AI? 
-
+### Is this basically AI?
 
 Essentially a symbolic ecosystem around words. Perhaps ML/NLP frameworks useful here?
 
@@ -685,16 +640,11 @@ Could train models natively omnimodal with each Earthcall primitive and law as m
 
 Could also link up frontier LLMs for the most sophisticated pure-language processing.
 
+### Lexeme
 
-Lexeme: 
-
-Visual Processing:
+### Visual Processing
 
 Need a 
-
-
-
-
 
 The danger here is AI cannot be pope.
 The Semantic Interpretation Layer should not become an unquestionable spiritual authority.
@@ -707,8 +657,7 @@ User authorship with guardrails over AI takeover.
 So Earthcall can use AI as a servant-interpreter, but never treat it as doxological authority.
 The AI can help convert human words → structured law candidates, but the system should preserve human approval, auditability, and theological clarity. It needs to be able to be formed like pottery by serious churches and their councils and elders, so that AI interpretation remains accountable to Scripture, pastoral oversight, and the wisdom of Christ’s body rather than becoming a private algorithmic magisterium.
 
-
-Earthcall cybersecurity
+## Earthcall cybersecurity
 
 OH NOOOOO IDK WHAT TO DO HERE I NEVER LEARNED CYBERSECURITY
 
@@ -718,9 +667,7 @@ Ok Ill try my best now that i been to the Clawd Mythos monastery
 
 So Earthcall should be capability system unforgeable token for each Singular. 
 
-
-
-Earthcall’s Power
+## Earthcall’s Power
 
 The real advancement of earthcall is not just one feature, it’s that it roots computational ontology directly into its metaphysical primitives. Everything is built on the primitives rather than having to be written by scratch.
 
@@ -734,9 +681,7 @@ This means innovation can happen at the speed of thought.
 
 For example, laws that author the uis that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states that write the laws have been upgraded to become even more configurable, the very process of creating Laws improve as People design the laws in better and better ways. MetaLaws that govern law-set-to-set means that the Objects that own those MetaLaws. One concrete implementation is using laws to create a basic art app with math in it that serves as an interface to author laws. Metalaws configure it so that the art and math can be used to draw and design an even more precise version of the apps themselves. So the very interface that Persons actually use to create Laws is itself improved by those Laws. Over time this could turn into extraordinarily rich  biome—the law platform is not only more beautiful, but its buttons have been refined again and again to create laws in the most expressive way—creating UIs that show the entire Formatinos os place sthat would be affected, buttons that literally change size and shape depending on what else is in the screen, a law UI that is presented on the back of a 3D Object, flipping through different 2D projections that each represent different possible law states and giving you options to choose from, and many more things where only the imagination is the limit.
 
-
-
-Preventing Babel
+## Preventing Babel
 oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish bteween "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
 
 Earthcall as native OS not allow such a scenario. While it would still ultimately depend on human free will to maintain this within communities and societies, the mechanisms for preventing it would be far more robust. Every neural Formation would either be strictly scoped within Singularity-Kernel boundaries, or would need to directly authorized by stakeholder Persons. Every major decision is serialized and therefore accountable. 
@@ -754,9 +699,7 @@ BROOOOOOO YESSSSSS
 
 Ownership weighs stakes. They would “own” it in the sense of joining the stakeholder formation but not automaticlaly be co equal to Persons like the authors or zone owners.
 
-
 Preventing paralysis and stagnation with every stakeholder having too much veto power: I have to think about this. What Im thinking is many of these situations i believe often are that they involve one very broad zone (like a company) that is retiring a law but doing it over many different zones that individually have very different jurisdictions but don’t necessarily overlap with each other. So it really depends on what the model is. Some may be constitutive others may be incidental. Yet the proposed change may also be constitutive in nature for those its intended to benefit.
-
 
 Its also not just merely being on the broad list of stakeholders where you’re simply part of a community or zone, but a concrete property that actually alters their behavior and properties (which is precisely incidental vs constitutive), which is what it would mean to be a real “stakeholder” in the more specialized sense. 
 And not just any behavior or property, but ones that are load bearing—ones that are rare/scarce in kind, are of a special singularity level relation to the Persons, or belong to a relation or formation such that the contested alteration would cause a structural failure (valuable things are almost never a single primitive property in isolation) or any other sort of cascading structural shift (and relations/formations make this trackable). It just needs to point to at leadt one other thing that also points to more things. 
@@ -765,25 +708,14 @@ And finally the law scope can change. Law ownership can also change. Retirement 
 
 The structure of the ownership Formation would be a very emergent thing
 
-
-
-
-
 Write tbe Anti-Babel section about preventing Earthchaos and EarthBabel
 
+### Issue: LLMs cannot be first movers unless authorized
 
-Issue: LLMs cannot be first movers unless authorized
-
-
-
-
-
-
-Earthcall Internet — Global Ourverse
+## Earthcall Internet — Global Ourverse
 
 So im thinking maybe earthcall ontology not just for client cpp and hard OS metal but also server. But idk much about that. Endeavor for future. 
 
 Client/server is itself a false ontological vacuum—the true vacuum is its Singular Relation Formations.
 
 *(AI discussions and feedback previously at the end of this document have been moved to [Discussion on Earthcall](Discussion%20on%20Earthcall.md).)*
-

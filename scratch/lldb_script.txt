@@ -1,4 +1,0 @@
-process attach --pid $(pgrep my_probe_test)
-thread backtrace all
-detach
-quit

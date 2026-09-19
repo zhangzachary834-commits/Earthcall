@@ -89,7 +89,7 @@ std::filesystem::path findRepoRoot() {
         if (!ec) seeds.push_back(exe.parent_path());
     }
 #endif
-    for (auto dir : seeds) {
+    for (auto& dir : seeds) {
         for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
             if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
                 std::filesystem::is_directory(dir / "saves", ec)) {
@@ -225,7 +225,12 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     Core::Audio::AudioSystem::instance().init();
     Core::Audio::AudioSystem::instance().setupAudioEventListeners();
 
-    initLogic();
+    if (!initLogic()) {
+        std::cerr << "[Engine] Logic initialization refused Person admission; "
+                     "shutting down the partial engine.\n";
+        shutdown();
+        return false;
+    }
 
     return true;
 }
@@ -367,6 +372,12 @@ void Engine::tick(float dt) {
     if (_lawManager) _lawManager->tick();
     auto tLaws1 = clock::now();
     g_frameTimings.laws_ms = getMs(tLaws0, tLaws1);
+
+    // Slow Adapter maintenance has its OWN wall-time cadence. This call is a
+    // poll, not a frame tick: at 60 Hz, 144 Hz, or 240 Hz the adapter advances
+    // only when its independent deadline arrives. It remains on the main thread
+    // for this rung, so no graph-concurrency contract is introduced yet.
+    if (_lawManager) _lawManager->serviceSlowAdapterClock(glfwGetTime());
 
     // Interaction reticle
     if (_lawManager) {

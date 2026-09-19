@@ -6,8 +6,11 @@ one 8t×8t×D prism, FaceTextures for the checkerboard and the sides,
 distinct shapes, queens on their colours, click-select click-move,
 pieces placed at square centres on load and on move, a rule enforcer.
 
-This script is the injection. It is not a chess engine class. It writes
-saves/worlds/chess_app.json and saves/zones/Chess/zone.json.
+This script is the injection. It is not a chess engine class. Its ordinary
+output is the Zone-native Chess closure: saves/zones/Chess/zone.json plus one
+shared saves/laws/<id>/law.json root per authored Law. The historical
+saves/worlds/chess_app.{json,ecform} conglomerates remain compatibility and
+recovery artifacts and are refreshed only with --legacy-session.
 
 Author of the injection: grok-4.6, at Zach's request. Laws fire because
 a being with identifier grok-4.6 is in the world, not because Player was
@@ -2472,7 +2475,24 @@ def build_world():
             "triggers": TRIGGERS,
         },
     }
-    return session, zone
+
+    # Zone-native closure. These beings used to exist only in the chess_app
+    # session envelope, so boot could discover "Chess" while its Relations and
+    # Laws still named beings that had never arrived. Keep the legacy session
+    # shape untouched for compatibility; make the independent Zone complete.
+    native_zone = json.loads(json.dumps(zone))
+    native_objects = list(native_zone["world"]["objects"])
+    seen_native_ids = {item.get("objectID", item.get("id"))
+                       for item in native_objects}
+    for dependency in categories:
+        dependency_id = dependency.get("objectID", dependency.get("id"))
+        if dependency_id and dependency_id not in seen_native_ids:
+            native_objects.append(dependency)
+            seen_native_ids.add(dependency_id)
+    native_zone["world"]["objects"] = native_objects
+    native_zone["materials"] = materials
+    native_zone["lawRefs"] = list(FORMATION)
+    return session, native_zone
 
 
 def merge_law_categories(root, authored_session, authored_zone):
@@ -2568,6 +2588,70 @@ def merge_law_categories(root, authored_session, authored_zone):
     print(f"Merged authored Law categories into {zone_path}")
 
 
+def validate_zone_native_manifestation(zone):
+    """Refuse to emit the 2026-09-18 'two cubes' collapsed Chess regression."""
+    objects = {item["objectID"]: item for item in zone["world"]["objects"]}
+    board = objects.get("object.chess.board")
+    pawn = objects.get("piece-white-pawn-4-1")
+    if board is None or pawn is None:
+        raise ValueError("Chess Zone is missing its board or e2 pawn")
+
+    board_t = board.get("transform", [])
+    pawn_t = pawn.get("transform", [])
+    board_ok = (
+        len(board_t) == 16 and
+        abs(board_t[0] - 8.0) < 1e-6 and
+        abs(board_t[5] - BOARD_DEPTH) < 1e-6 and
+        abs(board_t[10] - 8.0) < 1e-6 and
+        abs(board_t[13] + BOARD_DEPTH / 2.0) < 1e-6
+    )
+    pawn_ok = (
+        len(pawn_t) == 16 and
+        abs(pawn_t[12] - 0.5) < 1e-6 and
+        abs(pawn_t[13] - 0.22) < 1e-6 and
+        abs(pawn_t[14] + 2.5) < 1e-6
+    )
+    positions = {
+        tuple(item.get("center", []))
+        for item in zone["world"]["objects"]
+        if item["objectID"].startswith("piece-")
+    }
+    if not board_ok or not pawn_ok or len(positions) != 32:
+        raise ValueError(
+            "REFUSED collapsed Chess Zone: board/e2 pose or 32 distinct piece "
+            "placements are missing"
+        )
+
+
+def write_zone_native(root, session, zone):
+    validate_zone_native_manifestation(zone)
+    zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
+    zone_path.parent.mkdir(parents=True, exist_ok=True)
+    zone_path.write_text(json.dumps(zone, indent=2) + "\n")
+
+    triggers = session["authoredLaws"]["triggers"]
+    law_root_dir = root / "saves" / "laws"
+    for law in session["authoredLaws"]["laws"]:
+        law_id = law["id"]
+        law_root = {
+            "authors": law.get("authors", []),
+            "identifier": law_id,
+            "injected_by": (
+                "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing "
+                "grok-4.6 Chess injection at Zach's request"
+            ),
+            "law": law,
+            "triggers": triggers.get(law_id, []),
+        }
+        law_path = law_root_dir / law_id / "law.json"
+        law_path.parent.mkdir(parents=True, exist_ok=True)
+        law_path.write_text(json.dumps(law_root, indent=2) + "\n")
+
+    print(f"Authored {zone_path}")
+    print(f"  Zone-native Law roots: {len(session['authoredLaws']['laws'])}")
+    return zone_path
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
@@ -2576,22 +2660,27 @@ def main():
         print(f"  Law categories: {len(LAW_CATEGORY_DEFINITIONS)}")
         print(f"  author: {LAW_CATEGORY_AUTHOR}, on behalf of Zach")
         return
-    world_path = root / "saves" / "worlds" / "chess_app.json"
-    ecform_path = root / "saves" / "worlds" / "chess_app.ecform"
-    zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
-    world_path.parent.mkdir(parents=True, exist_ok=True)
-    zone_path.parent.mkdir(parents=True, exist_ok=True)
-    world_path.write_text(json.dumps(session, indent=2) + "\n")
-    ecform_path.write_text(json.dumps(session, indent=2) + "\n")
-    zone_path.write_text(json.dumps(zone, indent=2) + "\n")
-    print(f"Authored {world_path}")
-    print(f"Authored {ecform_path}")
-    print(f"Authored {zone_path}")
-    print(f"  zone objects: {len(zone['world']['objects'])}")
-    print(f"  pieces: {sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))}")
+
+    write_zone_native(root, session, zone)
+
+    if "--legacy-session" in sys.argv:
+        world_path = root / "saves" / "worlds" / "chess_app.json"
+        ecform_path = root / "saves" / "worlds" / "chess_app.ecform"
+        world_path.parent.mkdir(parents=True, exist_ok=True)
+        world_path.write_text(json.dumps(session, indent=2) + "\n")
+        ecform_path.write_text(json.dumps(session, indent=2) + "\n")
+        print(f"Refreshed legacy compatibility artifact {world_path}")
+        print(f"Refreshed legacy compatibility artifact {ecform_path}")
+    else:
+        print("  legacy chess_app world files left untouched (use --legacy-session to refresh)")
+
+    print(f"  zone objects: {len(zone['world']['objects'])} "
+          f"({sum(1 for o in zone['world']['objects'] if o['objectID'].startswith('piece-'))} pieces)")
+    print(f"  materials embedded in Zone identity: {len(zone['materials'])}")
     print(f"  laws: {len(LAWS)}")
-    print(f"  Law categories: {len(LAW_CATEGORY_DEFINITIONS)} (author: {LAW_CATEGORY_AUTHOR}, on behalf of Zach)")
-    print(f"  author: {AUTHOR}")
+    print(f"  Law categories: {len(LAW_CATEGORY_DEFINITIONS)} "
+          f"(author: {LAW_CATEGORY_AUTHOR}, on behalf of Zach)")
+    print(f"  original Chess author: {AUTHOR}")
     print("  board: object.chess.board (one 8×8×D prism)")
     print("  queens: piece-white-queen-3-0 on light, piece-black-queen-3-7 on dark")
 

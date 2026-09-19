@@ -1362,66 +1362,181 @@
       },
       {
         "actionModel": {
+          "kind": 5,
           "children": [
             {
-              "kind": 0,
-              "operand": {
-                "t": "double",
-                "v": 0.045
-              },
-              "path": "shape.r"
+              "children": [
+                {
+                  "kind": 0,
+                  "operand": {
+                    "t": "double",
+                    "v": 0.045
+                  },
+                  "path": "shape.r"
+                },
+                {
+                  "kind": 0,
+                  "operand": {
+                    "t": "vec3",
+                    "x": 1.0,
+                    "y": 0.85,
+                    "z": 0.15
+                  },
+                  "path": "color"
+                },
+                {
+                  "kind": 12,
+                  "operand": {
+                    "t": "string",
+                    "v": "Stroke"
+                  },
+                  "propertyName": "displayName"
+                },
+                {
+                  "kind": 12,
+                  "operand": {
+                    "t": "double",
+                    "v": 1046.5
+                  },
+                  "propertyName": "acoustic.frequency"
+                },
+                {
+                  "kind": 12,
+                  "operand": {
+                    "t": "double",
+                    "v": 0.32
+                  },
+                  "propertyName": "acoustic.amplitude"
+                },
+                {
+                  "kind": 12,
+                  "operand": {
+                    "t": "string",
+                    "v": "triangle"
+                  },
+                  "propertyName": "acoustic.waveType"
+                },
+                {
+                  "kind": 20,
+                  "relationType": "instance-of",
+                  "sourceToken": "",
+                  "targetToken": "category.art.stroke"
+                },
+                {
+                  "bindings": {
+                    "v": "@state.studio.inkR"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "v": 1.0
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "kind": 8,
+                  "path": "color.r"
+                },
+                {
+                  "bindings": {
+                    "v": "@state.studio.inkG"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "v": 1.0
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "kind": 8,
+                  "path": "color.g"
+                },
+                {
+                  "bindings": {
+                    "v": "@state.studio.inkB"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1.0,
+                              "factors": {
+                                "v": 1.0
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  "kind": 8,
+                  "path": "color.b"
+                },
+                {
+                  "kind": 8,
+                  "path": "acoustic.frequency",
+                  "bindings": {
+                    "f": "@state.studio.lastNoteHz",
+                    "s": "@state.studio.soundInk"
+                  },
+                  "function": {
+                    "pieces": [
+                      {
+                        "expr": {
+                          "terms": [
+                            {
+                              "c": 1046.5,
+                              "factors": {}
+                            },
+                            {
+                              "c": -1046.5,
+                              "factors": {
+                                "s": 1
+                              }
+                            },
+                            {
+                              "c": 1,
+                              "factors": {
+                                "s": 1,
+                                "f": 1
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "createType": "art.stroke.segment",
+              "kind": 11,
+              "shapeKind": 2,
+              "spawnPlacementPath": "@interaction-channel.pointerWorld"
             },
             {
-              "kind": 0,
-              "operand": {
-                "t": "vec3",
-                "x": 1.0,
-                "y": 0.85,
-                "z": 0.15
-              },
-              "path": "color"
-            },
-            {
-              "kind": 12,
-              "operand": {
-                "t": "string",
-                "v": "Stroke"
-              },
-              "propertyName": "displayName"
-            },
-            {
-              "kind": 12,
-              "operand": {
-                "t": "double",
-                "v": 1046.5
-              },
-              "propertyName": "acoustic.frequency"
-            },
-            {
-              "kind": 12,
-              "operand": {
-                "t": "double",
-                "v": 0.32
-              },
-              "propertyName": "acoustic.amplitude"
-            },
-            {
-              "kind": 12,
-              "operand": {
-                "t": "string",
-                "v": "triangle"
-              },
-              "propertyName": "acoustic.waveType"
-            },
-            {
-              "kind": 20,
-              "relationType": "instance-of",
-              "sourceToken": "",
-              "targetToken": "category.art.stroke"
-            },
-            {
+              "kind": 8,
+              "path": "@state.studio.lastStrokeX",
               "bindings": {
-                "v": "@state.studio.inkR"
+                "p": "@interaction-channel.pointerWorldX"
               },
               "function": {
                 "pieces": [
@@ -1431,20 +1546,20 @@
                         {
                           "c": 1.0,
                           "factors": {
-                            "v": 1.0
+                            "p": 1.0
                           }
                         }
                       ]
                     }
                   }
                 ]
-              },
-              "kind": 8,
-              "path": "color.r"
+              }
             },
             {
+              "kind": 8,
+              "path": "@state.studio.lastStrokeY",
               "bindings": {
-                "v": "@state.studio.inkG"
+                "p": "@interaction-channel.pointerWorldY"
               },
               "function": {
                 "pieces": [
@@ -1454,20 +1569,20 @@
                         {
                           "c": 1.0,
                           "factors": {
-                            "v": 1.0
+                            "p": 1.0
                           }
                         }
                       ]
                     }
                   }
                 ]
-              },
-              "kind": 8,
-              "path": "color.g"
+              }
             },
             {
+              "kind": 8,
+              "path": "@state.studio.lastStrokeZ",
               "bindings": {
-                "v": "@state.studio.inkB"
+                "p": "@interaction-channel.pointerWorldZ"
               },
               "function": {
                 "pieces": [
@@ -1477,22 +1592,16 @@
                         {
                           "c": 1.0,
                           "factors": {
-                            "v": 1.0
+                            "p": 1.0
                           }
                         }
                       ]
                     }
                   }
                 ]
-              },
-              "kind": 8,
-              "path": "color.b"
+              }
             }
-          ],
-          "createType": "art.stroke.segment",
-          "kind": 11,
-          "shapeKind": 2,
-          "spawnPlacementPath": "@interaction-channel.pointerWorld"
+          ]
         },
         "activation": 1,
         "applicationLog": [],
@@ -1549,45 +1658,116 @@
               "path": "@world.pointerOver"
             },
             {
+              "kind": 4,
               "children": [
                 {
                   "kind": 0,
-                  "op": 4,
+                  "op": 1,
                   "operand": {
                     "t": "double",
-                    "v": 6.0
+                    "v": 0.0
                   },
                   "path": "@interaction-channel.dragX"
                 },
                 {
                   "kind": 0,
-                  "op": 2,
+                  "op": 1,
                   "operand": {
                     "t": "double",
-                    "v": -6.0
-                  },
-                  "path": "@interaction-channel.dragX"
-                },
-                {
-                  "kind": 0,
-                  "op": 4,
-                  "operand": {
-                    "t": "double",
-                    "v": 6.0
-                  },
-                  "path": "@interaction-channel.dragY"
-                },
-                {
-                  "kind": 0,
-                  "op": 2,
-                  "operand": {
-                    "t": "double",
-                    "v": -6.0
+                    "v": 0.0
                   },
                   "path": "@interaction-channel.dragY"
                 }
-              ],
-              "kind": 4
+              ]
+            },
+            {
+              "kind": 6,
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "px": 2.0
+                          }
+                        },
+                        {
+                          "c": -2.0,
+                          "factors": {
+                            "px": 1.0,
+                            "lx": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "lx": 2.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "py": 2.0
+                          }
+                        },
+                        {
+                          "c": -2.0,
+                          "factors": {
+                            "py": 1.0,
+                            "ly": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "ly": 2.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "pz": 2.0
+                          }
+                        },
+                        {
+                          "c": -2.0,
+                          "factors": {
+                            "pz": 1.0,
+                            "lz": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "lz": 2.0
+                          }
+                        },
+                        {
+                          "c": -1.0,
+                          "factors": {
+                            "s": 2.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "bindings": {
+                "px": "@interaction-channel.pointerWorldX",
+                "py": "@interaction-channel.pointerWorldY",
+                "pz": "@interaction-channel.pointerWorldZ",
+                "lx": "@state.studio.lastStrokeX",
+                "ly": "@state.studio.lastStrokeY",
+                "lz": "@state.studio.lastStrokeZ",
+                "s": "@state.studio.strokeSpacing"
+              },
+              "lo": {
+                "t": "double",
+                "v": 0.0
+              }
             }
           ],
           "kind": 3
@@ -1611,6 +1791,14 @@
             ],
             "type": "authored-by",
             "weight": 1.0
+          },
+          {
+            "type": "revised-by",
+            "entityA": "law-art-stroke-draw",
+            "entityB": "studio.author.astra",
+            "directed": true,
+            "weight": 1.0,
+            "events": []
           }
         ],
         "retrigger": 0,
@@ -5015,7 +5203,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "✎ ART DRAWING CANVAS (Drag to draw light strokes)"
+                "v": "\u270e ART DRAWING CANVAS (Drag to draw light strokes)"
               }
             },
             "center": [
@@ -5269,7 +5457,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "✦ Spawn Harmonic Orb"
+                "v": "\u2726 Spawn Harmonic Orb"
               },
               "restY": {
                 "t": "double",
@@ -5351,7 +5539,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ✦ SPAWN ORB ]"
+                "v": "[ \u2726 SPAWN ORB ]"
               }
             },
             "center": [
@@ -5527,7 +5715,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "☼ Toggle Night/Day Theme"
+                "v": "\u263c Toggle Night/Day Theme"
               },
               "restY": {
                 "t": "double",
@@ -5609,7 +5797,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ☼ DAY / NIGHT ]"
+                "v": "[ \u263c DAY / NIGHT ]"
               }
             },
             "center": [
@@ -5781,7 +5969,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note C5 (Do)"
+                "v": "\u266b Note C5 (Do)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5887,7 +6075,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note D5 (Re)"
+                "v": "\u266b Note D5 (Re)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -5993,7 +6181,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note E5 (Mi)"
+                "v": "\u266b Note E5 (Mi)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6099,7 +6287,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note F5 (Fa)"
+                "v": "\u266b Note F5 (Fa)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6205,7 +6393,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note G5 (Sol)"
+                "v": "\u266b Note G5 (Sol)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6311,7 +6499,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note A5 (La)"
+                "v": "\u266b Note A5 (La)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6417,7 +6605,7 @@
               },
               "displayName": {
                 "t": "string",
-                "v": "♫ Note B5 (Ti)"
+                "v": "\u266b Note B5 (Ti)"
               },
               "isChordPad": {
                 "t": "bool",
@@ -6507,7 +6695,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ♫ MAJOR SCALE: C5 · D5 · E5 · F5 · G5 · A5 · B5 ]"
+                "v": "[ \u266b MAJOR SCALE: C5 \u00b7 D5 \u00b7 E5 \u00b7 F5 \u00b7 G5 \u00b7 A5 \u00b7 B5 ]"
               }
             },
             "center": [
@@ -6765,7 +6953,7 @@
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ⟷ RESONANCE SLIDER ]"
+                "v": "[ \u27f7 RESONANCE SLIDER ]"
               }
             },
             "center": [
@@ -8910,6 +9098,22 @@
               "voice": {
                 "t": "string",
                 "v": "triangle"
+              },
+              "lastStrokeX": {
+                "t": "double",
+                "v": 0.0
+              },
+              "lastStrokeY": {
+                "t": "double",
+                "v": 0.0
+              },
+              "lastStrokeZ": {
+                "t": "double",
+                "v": 0.0
+              },
+              "strokeSpacing": {
+                "t": "double",
+                "v": 0.1
               }
             },
             "center": [

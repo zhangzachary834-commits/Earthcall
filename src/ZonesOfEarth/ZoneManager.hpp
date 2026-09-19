@@ -8,6 +8,7 @@
 #include "SaveContext.hpp"
 
 class LawManager;
+class Person;
 
 // Persistence and UI state for save/load operations
 struct SaveLoadState {
@@ -74,8 +75,27 @@ public:
     // through it atomically; ZoneManager does not own or duplicate Laws.
     void bindLawManager(LawManager* manager) { _lawManager = manager; }
 
+    // A Law born while a Zone is active belongs to that Zone only when the
+    // authored act says so. Universal Singular creation uses this after the
+    // Law is registered: it enters the SAME closure switchTo loaded from
+    // `lawRefs`, so leaving the Zone releases it and Save Zone can persist it.
+    // This is authored membership, not inference from the global LawManager.
+    bool adoptLawIntoActiveZone(const std::string& lawId);
+
     // Primary Home is a kernel fact: find-or-mint the Person's dwelling,
-    // not "any Zone they own". Additional Homes go through authorZone.
+    // not "any Zone they own". The Person-aware overload is the ordinary live
+    // path: ownership is witnessed by an `owned-by` Relation whose endpoint is
+    // the Person being, so a later change from legacy display spelling to a
+    // cryptographic SingularId does not create a new house. The string overload
+    // remains for legacy/tests and refuses ambiguous duplicate primaries.
+    bool ensureHomeZone(Person& person);
+    // Kernel admission invariant: every live Person must have >= 1 primary
+    // Home. This is existential, not uniqueness: two primaries are an
+    // unresolved policy conflict, but still satisfy "at least one".
+    std::size_t primaryHomeCount(const Person& person) const;
+    bool enforcePrimaryHomeInvariant(Person& person);
+    Zone* findPrimaryHome(Person& person);
+    const Zone* findPrimaryHome(const Person& person) const;
     void ensureHomeZone(const std::string& personId);
     Zone* findPrimaryHome(const std::string& personId);
     const Zone* findPrimaryHome(const std::string& personId) const;

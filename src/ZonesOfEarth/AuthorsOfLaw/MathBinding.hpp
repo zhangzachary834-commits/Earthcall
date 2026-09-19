@@ -203,6 +203,8 @@ inline bool isWorldReadingPath(const PropertyPath& path) {
     return path.segments.size() >= 2 && path.segments[0] == "@world";
 }
 
+void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out);
+
 inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
     if (isTimePath(path)) return lawGetTime(path, out);
     if (isWorldReadingPath(path)) {
@@ -214,7 +216,11 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     }
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
-    return root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
+    bool ok = root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
+    if (ok && out.index() == 15) {
+        resolveSemanticTokenSlowPath(root, out);
+    }
+    return ok;
 }
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {

@@ -45,6 +45,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include <iostream>
 
 // Material includes FaceTexture, which includes Renderer.hpp; an Object only
 // ever holds its material by identifier, so the declaration is enough here.
@@ -576,6 +577,8 @@ public:
     // Resize this object's own material's face textures to the face count its
     // current geometry actually has. Idempotent.
     void initFaceTextures();
+    int getTextureResolution() const;
+    void setTextureResolution(const int& res);
     // Fill one face with a colour, through the object's own material, and
     // record it in the object's own faceColors slot so the "color" property
     // reads back what was painted.
@@ -623,7 +626,62 @@ public:
     // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
     // of the region the field is meshed/marched over.
     void setFieldShape(const geom::SdfNode& f, const glm::vec3& extent = glm::vec3(1.0f)) {
-        fieldData = f; _fieldExtent = extent;
+        geom::SdfNode incoming = f;
+
+        // Repair the exact malformed form produced by two historical hydration
+        // paths: they copied the expression STRING but not its executable RPN,
+        // and the law-spawn path even left prim=Sphere while attaching expr.
+        // An expression is mathematical truth, not decoration. If it is present
+        // on a leaf, normalize it into an Expr leaf and derive the executable
+        // program. A parse failure stays an Expr with an empty program (empty
+        // space) and is reported loudly; it must never masquerade as a sphere.
+        if (incoming.op == geom::SdfOp::Leaf &&
+            (!incoming.expr.empty() || incoming.mathNode || incoming.piecewise)) {
+            incoming.prim = geom::SdfPrim::Expr;
+        }
+        if (incoming.op == geom::SdfOp::Leaf &&
+            incoming.prim == geom::SdfPrim::Expr &&
+            !incoming.expr.empty() && !incoming.mathNode && !incoming.piecewise &&
+            incoming.rpn.empty()) {
+            incoming.rpn = geom::compileExpr(incoming.expr);
+            if (incoming.rpn.empty()) {
+                std::cerr << "[Object] setFieldShape: implicit expression could not be compiled; "
+                             "keeping it as an Expr shell instead of lying with a primitive.\n";
+            }
+        }
+
+        // .ecmatter historically stored only an SDF ROOT. For a boolean/morph
+        // tree that means the operator arrives with zero children; for an
+        // OntoMath/piecewise/convex leaf it can arrive without the semantic
+        // payload entirely. Semantic JSON is hydrated first, so accepting such
+        // a shell here used to overwrite a complete authored form with a
+        // lossy cache record. A structurally incomplete node may fill an empty
+        // legacy object, but it may never demote an already-complete field.
+        const bool incomingOperatorShell =
+            incoming.op != geom::SdfOp::Leaf && incoming.children.size() < 2;
+        const bool incomingExprShell =
+            incoming.op == geom::SdfOp::Leaf && incoming.prim == geom::SdfPrim::Expr &&
+            incoming.expr.empty() && !incoming.mathNode && !incoming.piecewise &&
+            incoming.rpn.empty();
+        const bool incomingConvexShell =
+            incoming.op == geom::SdfOp::Leaf && incoming.prim == geom::SdfPrim::Convex &&
+            incoming.planes.empty();
+        const bool existingComplete = _hasField &&
+            ((fieldData.op != geom::SdfOp::Leaf && fieldData.children.size() >= 2) ||
+             fieldData.mathNode || fieldData.piecewise || !fieldData.rpn.empty() ||
+             !fieldData.planes.empty());
+
+        if (existingComplete &&
+            (incomingOperatorShell || incomingExprShell || incomingConvexShell)) {
+            // The evaluation extent is part of the authored Field too. A
+            // rejected lossy replacement does not get to clip or expand the
+            // surviving mathematical form as a side effect.
+            std::cerr << "[Object] setFieldShape: refused a lossy field shell over an "
+                         "already-complete authored SDF; semantic shape and extent remain authoritative.\n";
+            return;
+        }
+
+        fieldData = incoming; _fieldExtent = extent;
         _hasSmooth = _hasComplex = _hasPatch = false; _hasField = true;
         _shapeKind = ShapeKind::Field;
         rebuildGeometryCaches();
@@ -747,6 +805,7 @@ public:
     void setName(const std::string& name) { _name = name; }
     
     std::string getTextString() const { return _textString; }
+    bool readAuthoredPropertyProjectionColors(Earthcall::StringId id, PropertyValue& out) const override;
     void setTextString(const std::string& text) { _textString = text; }
 
     const std::string& getEntityName() const { return _entityName; }
@@ -760,6 +819,7 @@ private:
     // authored definition + property is what elevates the set.
     bool readAuthoredPropertyProjection(Earthcall::StringId id,
                                         PropertyValue& out) const override;
+    
     bool recognizesAuthoredPropertyProjection(Earthcall::StringId id) const override;
     bool writeAuthoredPropertyProjection(Earthcall::StringId id,
                                          const PropertyValue& value) override;

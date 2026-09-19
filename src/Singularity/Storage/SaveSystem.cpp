@@ -21,6 +21,11 @@ namespace {
 std::string g_saveRoot;
 }
 
+#ifdef __EMSCRIPTEN__
+static void ensureIdbMounted();
+static void syncIdb();
+#endif
+
 void setSaveRoot(const std::string& absoluteSavesDir) {
     g_saveRoot = absoluteSavesDir;
 }
@@ -284,45 +289,41 @@ static bool permitted(const std::string& filename) {
 // IDBFS state tracking
 static bool s_idbMounted = false;
 
+EM_JS(void, mount_idb, (), {
+    // Check if IDBFS is already available
+    if (typeof FS !== 'undefined' && FS.filesystems && FS.filesystems.IDBFS) {
+        try {
+            // Mount /saves to IDBFS. Use try-catch for mkdir in case it exists.
+            try { FS.mkdir('/saves'); } catch (e) {}
+            FS.mount(IDBFS, { root: '/saves' }, '/saves');
+        } catch (e) {
+            console.error('IDBFS mount failed:', e);
+        }
+    }
+});
+
+EM_JS(void, sync_idb, (), {
+    if (typeof FS !== 'undefined' && FS.syncfs) {
+        try {
+            FS.syncfs(false, function(err) {
+                if (err) {
+                    console.error('IDBFS sync failed:', err);
+                }
+            });
+        } catch (e) {
+            console.error('IDBFS sync error:', e);
+        }
+    }
+});
+
 static void ensureIdbMounted() {
     if (s_idbMounted) return;
-    // Mount the saves directory to IDBFS for persistence
-    // IDBFS persists to IndexedDB and survives page reloads
-    EM_JS(void, mount_idb, (), {
-        // Check if IDBFS is already available
-        if (typeof FS !== 'undefined' && FS.filesystems && FS.filesystems.IDBFS) {
-            try {
-                // Mount /saves to IDBFS
-                FS.mkdir('/saves');
-                FS.mount(IDBFS, { root: '/saves' }, '/saves');
-                // Also mount the current directory if saves are there
-                FS.mkdir('.');
-                FS.mount(IDBFS, {}, '.');
-            } catch (e) {
-                console.error('IDBFS mount failed:', e);
-            }
-        }
-    });
+    mount_idb();
     s_idbMounted = true;
 }
 
 static void syncIdb() {
-    // Sync IDBFS to IndexedDB
-    EM_JS(void, sync_idb, (), {
-        if (typeof FS !== 'undefined' && FS.syncfs) {
-            try {
-                FS.syncfs(true, function(err) {
-                    if (err) {
-                        console.error('IDBFS sync failed:', err);
-                    } else {
-                        console.log('IDBFS synced successfully');
-                    }
-                });
-            } catch (e) {
-                console.error('IDBFS sync error:', e);
-            }
-        }
-    });
+    sync_idb();
 }
 
 // There is no IDBFS mount, no FS.syncfs, and no --preload-file anywhere in

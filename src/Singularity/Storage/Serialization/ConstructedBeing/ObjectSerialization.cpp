@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include <cstring>
 #include <ctime>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -24,6 +25,109 @@ static std::vector<float> mat4ToVector(const glm::mat4& m) {
     for (int i = 0; i < 16; ++i) v[i] = ptr[i];
     return v;
 }
+
+namespace {
+
+constexpr int kFirstShapeKind = static_cast<int>(Object::ShapeKind::Cube);
+constexpr int kLastShapeKind  = static_cast<int>(Object::ShapeKind::Text2D);
+
+Object::ShapeKind checkedShapeKind(int raw) {
+    if (raw >= kFirstShapeKind && raw <= kLastShapeKind) {
+        return static_cast<Object::ShapeKind>(raw);
+    }
+    std::cerr << "[ObjectSerialization] invalid ShapeKind ordinal " << raw
+              << " — refusing it and hydrating as Cube instead.\n";
+    return Object::ShapeKind::Cube;
+}
+
+// The append-only integer array remains for old readers, but new writers also
+// emit named parameters under `shape.params`.  A First Mover (human or AI)
+// should never have to memorize that index 6 means paraboloidA while index 8
+// means fillet.  Named values override the legacy array when both are present.
+Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
+    Object::ShapeParams sp;
+    if (j.contains("shapeParams") && j["shapeParams"].is_array() && j["shapeParams"].size() >= 9) {
+        const auto& a = j["shapeParams"];
+        sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
+        sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
+        if (a.size() >= 11) {
+            sp.width2D = a[9].get<float>();
+            sp.height2D = a[10].get<float>();
+        }
+    }
+
+    if (j.contains("shape") && j["shape"].is_object()) {
+        const auto& shape = j["shape"];
+        if (shape.contains("params") && shape["params"].is_object()) {
+            const auto& p = shape["params"];
+            const auto read = [&](const char* key, float& dst) {
+                auto it = p.find(key);
+                if (it != p.end() && it->is_number()) dst = it->get<float>();
+            };
+            read("r", sp.r);
+            read("ry", sp.ry);
+            read("rz", sp.rz);
+            read("halfH", sp.halfH);
+            read("majorR", sp.majorR);
+            read("minorR", sp.minorR);
+            read("paraboloidA", sp.paraboloidA);
+            read("ovoidAsym", sp.ovoidAsym);
+            read("fillet", sp.fillet);
+            read("width2D", sp.width2D);
+            read("height2D", sp.height2D);
+        }
+    }
+    return sp;
+}
+
+bool declaredShapeKind(const nlohmann::json& j, Object::ShapeKind& out) {
+    if (j.contains("shape") && j["shape"].is_object() &&
+        j["shape"].contains("kind") && j["shape"]["kind"].is_number_integer()) {
+        out = checkedShapeKind(j["shape"]["kind"].get<int>());
+        return true;
+    }
+    if (j.contains("shapeKind") && j["shapeKind"].is_number_integer()) {
+        out = checkedShapeKind(j["shapeKind"].get<int>());
+        return true;
+    }
+    if (j.contains("geometryType") && j["geometryType"].is_number_integer()) {
+        out = checkedShapeKind(j["geometryType"].get<int>());
+        return true;
+    }
+    return false;
+}
+
+void hydratePatchPayload(const nlohmann::json& pj, Object& obj) {
+    geom::BezierPatch p;
+    p.du = pj.value("du", 3);
+    p.dv = pj.value("dv", 3);
+    if (pj.contains("ctrl") && pj["ctrl"].is_array()) {
+        for (const auto& c : pj["ctrl"]) {
+            if (c.is_array() && c.size() >= 3) {
+                p.ctrl.push_back(glm::vec3(c[0].get<float>(), c[1].get<float>(), c[2].get<float>()));
+            }
+        }
+    }
+    obj.setBezierPatch(p);
+}
+
+void hydrateFieldPayload(const nlohmann::json& j, Object& obj) {
+    glm::vec3 ext{1.0f};
+    if (j.contains("fieldExtent")) {
+        if (j["fieldExtent"].is_number()) {
+            ext = glm::vec3(j["fieldExtent"].get<float>());
+        } else if (j["fieldExtent"].is_array() && j["fieldExtent"].size() >= 3) {
+            ext = glm::vec3(j["fieldExtent"][0].get<float>(), j["fieldExtent"][1].get<float>(), j["fieldExtent"][2].get<float>());
+        }
+    }
+    obj.setFieldShape(geom::sdfFromJson(j["field"]), ext);
+    if (j.contains("fieldCellSize") && j["fieldCellSize"].is_number()) {
+        obj.setFieldCellSize(j["fieldCellSize"].get<float>());
+    }
+}
+
+} // namespace
+
 // ------------------------------------------------------------------
 // Object (.ecform / Semantic Text Substrate)
 // ------------------------------------------------------------------
@@ -31,20 +135,38 @@ static std::vector<float> mat4ToVector(const glm::mat4& m) {
 void to_json(nlohmann::json& j, const Object& obj){
     j = nlohmann::json{};
     j["geometryType"] = static_cast<int>(obj.getShapeKind()); // legacy axis
-    j["shapeKind"]    = static_cast<int>(obj.getShapeKind());    // topology framework
+    j["shapeKind"]    = static_cast<int>(obj.getShapeKind()); // legacy topology axis
     {
         const auto& sp = obj.getShapeParams();
         j["shapeParams"] = { sp.r, sp.ry, sp.rz, sp.halfH, sp.majorR,
                              sp.minorR, sp.paraboloidA, sp.ovoidAsym, sp.fillet,
                              sp.width2D, sp.height2D };
+        // `shape` is the canonical, self-describing authoring surface. Keep the
+        // two integer/array fields above for append-only compatibility with
+        // existing saves and old readers; new readers prefer this map.
+        j["shape"] = {
+            {"kind", static_cast<int>(obj.getShapeKind())},
+            {"params", {
+                {"r", sp.r}, {"ry", sp.ry}, {"rz", sp.rz}, {"halfH", sp.halfH},
+                {"majorR", sp.majorR}, {"minorR", sp.minorR},
+                {"paraboloidA", sp.paraboloidA}, {"ovoidAsym", sp.ovoidAsym},
+                {"fillet", sp.fillet}, {"width2D", sp.width2D},
+                {"height2D", sp.height2D}
+            }}
+        };
     }
-    // A Field's shape kind is only the ontological label; the SDF tree is the
-    // authored form that makes it renderable. Persist both the mathematical
-    // expression and its evaluation extent, otherwise a reload creates a
-    // ShapeKind::Field shell with no _hasField payload and drawObject() has
-    // nothing truthful to manifest. This is the live MCP -> native WebGPU
-    // failure found 2026-09-11 in Luna's zone.
+
+    // Split-substrate contract: semantic text says WHAT representation this
+    // being has; dense Patch control nets and custom Polyhedron vertex/face
+    // arrays are physical geometry and remain in .ecmatter.  The reader below
+    // still accepts historical/transitional semantic payloads for backward
+    // compatibility, but new writes intentionally do not duplicate them here.
+
     if (obj.hasField()) {
+        // A Field's compact SDF/OntoMath recipe is semantic authoring intent,
+        // not a dense sampled/compiled buffer. Keep that recipe and its domain
+        // here until .ecmatter can encode the full recursive form losslessly;
+        // dense compiled/sampled field data belongs in Matter, not in text.
         j["field"] = geom::sdfToJson(obj.getFieldData());
         const auto& ext = obj.getFieldExtent();
         j["fieldExtent"] = {ext.x, ext.y, ext.z};
@@ -52,6 +174,12 @@ void to_json(nlohmann::json& j, const Object& obj){
             j["fieldCellSize"] = *cell;
         }
     }
+
+    // Patch and Polyhedron density is deliberately omitted from the semantic
+    // record.  Their ShapeKind is semantic intent; their control-net / vertex
+    // buffers are hydrated from the matching .ecmatter entity after the
+    // semantic skeleton exists.
+
     j["objectID"] = obj.getIdentifier();
     j["materialId"] = obj.materialId(); // reference to a Material being, by identifier
 
@@ -123,6 +251,11 @@ void to_json(nlohmann::json& j, const Object& obj){
         {obj.faceColors[5][0], obj.faceColors[5][1], obj.faceColors[5][2]}
     });
 
+    const int texRes = obj.getTextureResolution();
+    if (texRes > 0 && texRes != 64) {
+        j["textureResolution"] = texRes;
+    }
+
     // Properties a LAW granted this being (ActionNode::AddProperty).
     if (!obj.dynamicProperties().empty()) {
         nlohmann::json dyn = nlohmann::json::object();
@@ -157,51 +290,32 @@ void to_json(nlohmann::json& j, const Object& obj){
     }
 }
 
-static Object::ShapeParams parseShapeParams(const nlohmann::json& j) {
-    Object::ShapeParams sp;
-    if (j.contains("shapeParams") && j["shapeParams"].is_array() && j["shapeParams"].size() >= 9) {
-        const auto& a = j["shapeParams"];
-        sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
-        sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
-        if (a.size() >= 11) {
-            sp.width2D = a[9].get<float>();
-            sp.height2D = a[10].get<float>();
-        }
-    }
-    return sp;
-}
-
 void from_json(const nlohmann::json& j, Object& obj){
-    // Prefer the topology framework's shapeKind; fall back to the legacy
-    // geometryType int (which setShapeKind migrates into the new model).
-    if (j.contains("patch")) {
-        const auto& pj = j["patch"];
-        geom::BezierPatch p;
-        p.du = pj.value("du", 3); p.dv = pj.value("dv", 3);
-        if (pj.contains("ctrl")) {
-            for (const auto& c : pj["ctrl"])
-                p.ctrl.push_back(glm::vec3(c[0].get<float>(), c[1].get<float>(), c[2].get<float>()));
+    const Object::ShapeParams params = parseShapeParams(j);
+    Object::ShapeKind kind = Object::ShapeKind::Cube;
+    const bool hasDeclaredKind = declaredShapeKind(j, kind);
+
+    // The shape discriminant is authoritative.  Previously payload PRESENCE
+    // won over shapeKind, so JSON merge-patch could resurrect an obsolete
+    // `field` key after a Field had been changed to a Sphere.  That turned a
+    // newer authored shape back into its stale ancestor at hydration time.
+    // Legacy records with no discriminant still infer from their payload.
+    if (hasDeclaredKind) {
+        if (kind == Object::ShapeKind::Patch && j.contains("patch") && j["patch"].is_object()) {
+            hydratePatchPayload(j["patch"], obj);
+        } else if (kind == Object::ShapeKind::Field && j.contains("field") && j["field"].is_object()) {
+            hydrateFieldPayload(j, obj);
+        } else {
+            obj.setShape(kind, params);
         }
-        obj.setBezierPatch(p);
-    } else if (j.contains("field")) {
-        glm::vec3 ext{1.0f};
-        if (j.contains("fieldExtent")) {
-            if (j["fieldExtent"].is_number()) {
-                ext = glm::vec3(j["fieldExtent"].get<float>());
-            } else if (j["fieldExtent"].is_array() && j["fieldExtent"].size() >= 3) {
-                ext = glm::vec3(j["fieldExtent"][0].get<float>(), j["fieldExtent"][1].get<float>(), j["fieldExtent"][2].get<float>());
-            }
-        }
-        obj.setFieldShape(geom::sdfFromJson(j["field"]), ext);
-        if (j.contains("fieldCellSize") && j["fieldCellSize"].is_number()) {
-            obj.setFieldCellSize(j["fieldCellSize"].get<float>());
-        }
-    } else if (j.contains("shapeKind")) {
-        obj.setShape(static_cast<Object::ShapeKind>(j["shapeKind"].get<int>()), parseShapeParams(j));
+    } else if (j.contains("patch") && j["patch"].is_object()) {
+        hydratePatchPayload(j["patch"], obj);
+    } else if (j.contains("field") && j["field"].is_object()) {
+        hydrateFieldPayload(j, obj);
     } else {
-        int gt = j.value("geometryType", 0);
-        obj.setShapeKind(static_cast<Object::ShapeKind>(gt));
+        obj.setShape(Object::ShapeKind::Cube, params);
     }
+
     if (j.contains("objectID") && j["objectID"].is_string()) {
         obj.setObjectID(j["objectID"].get<std::string>());
     }
@@ -294,7 +408,12 @@ void from_json(const nlohmann::json& j, Object& obj){
             );
         }
     }
-    // For polyhedron in legacy saves, restore geometry
+
+    // Backward compatibility only: older/transitional semantic records may
+    // embed custom Polyhedron geometry. New writers keep this dense topology
+    // in .ecmatter, but an embedded legacy payload is still accepted when the
+    // discriminant says this Object is a Polyhedron. An obsolete payload may
+    // never overturn a newer declared shape.
     if (obj.getShapeKind() == Object::ShapeKind::Polyhedron && j.contains("polyhedron")) {
         const auto& pj = j["polyhedron"];
         std::vector<glm::vec3> verts;
@@ -338,6 +457,10 @@ void from_json(const nlohmann::json& j, Object& obj){
                                  obj.faceColors[f][2]);
             }
         }
+    }
+
+    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
+        obj.setTextureResolution(j["textureResolution"].get<int>());
     }
 
     // Load per-face textures if present (after geometry restoration for correct sizing)

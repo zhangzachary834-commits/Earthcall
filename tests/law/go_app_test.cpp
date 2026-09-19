@@ -1,6 +1,17 @@
 // Probe: does saves/worlds/go_app.json load as a complete Go board game world
 // in Earthcall — a wooden Goban prism with 19x19 FaceTexture grid, 361 intersections,
 // stone bowls, player seats, and go state tracking.
+//
+// Witness Documentation:
+// OLD TEST PROVED:
+//   Static loading of the go_app.json save file: verifies board prism, 19x19
+//   intersections (361 objects), bowls, seats, and initial turn string.
+// OLD TEST COULD NOT PROVE:
+//   Real runtime gameplay interaction: whether clicking an intersection via
+//   InteractionChannel/EventBus actually triggers authored laws (law-go-click,
+//   law-go-place-black, law-go-place-white), places a stone on the board,
+//   updates intersection state (is_empty = false, stone_color), and advances
+//   turn state between Black and White.
 
 #include "support/test_harness.hpp"
 
@@ -47,6 +58,21 @@ Object* findObj(Zone& zone, const std::string& id) {
 Object* findCat(const std::string& id) {
     auto c = categories.get(id);
     return c ? c.get() : nullptr;
+}
+
+void click(Singularity::Input::InteractionChannel* interaction,
+           LawManager& lawManager,
+           Object* subject,
+           float wx, float wy, float wz) {
+    interaction->pointerWorld = glm::vec3(wx, wy, wz);
+    Core::EventBus::instance().publish(
+        ECA::Event{"object-clicked", subject, nullptr, std::time(nullptr)});
+    auto records = lawManager.tick();
+    std::cout << "  tick records: " << records.size() << "\n";
+    for (const auto& r : records) {
+        std::cout << "    " << r.lawId << " -> " << r.targetId
+                  << " " << Law::resultName(r.result) << "\n";
+    }
 }
 
 } // namespace
@@ -119,6 +145,36 @@ int main(int argc, char** argv) {
     assert(blackSeat && "black player seat exists");
     assert(whiteSeat && "white player seat exists");
     std::cout << "  bowls and seats verified\n";
+
+    // Live-path interaction test: exercise clicking intersections to place Black & White stones.
+    std::cout << "--- Testing real gameplay path: clicking intersections ---\n";
+    Universe::instance().setClock(0.0, 1.0 / 60.0);
+
+    Object* tengen = findObj(*active, "intersection_9_9");
+    assert(tengen && "Tengen intersection (9, 9) exists");
+
+    // 1. Black places a stone at Tengen (9, 9)
+    click(harness.interaction, harness.lawManager, tengen, 0.0f, 0.005f, 0.0f);
+    std::cout << "  after Tengen click: is_empty=" << asBool(*tengen, "is_empty")
+              << " stone_color='" << asString(*tengen, "stone_color") << "'"
+              << " turn='" << asString(*state, "current_turn") << "'\n";
+
+    assert(!asBool(*tengen, "is_empty") && "Tengen intersection is no longer empty");
+    assert(asString(*tengen, "stone_color") == "black" && "Tengen has black stone");
+    assert(asString(*state, "current_turn") == "white" && "turn advanced to white");
+
+    // 2. White places a stone at (10, 10)
+    Object* ix10_10 = findObj(*active, "intersection_10_10");
+    assert(ix10_10 && "intersection (10, 10) exists");
+
+    click(harness.interaction, harness.lawManager, ix10_10, 0.16f, 0.005f, 0.16f);
+    std::cout << "  after (10,10) click: is_empty=" << asBool(*ix10_10, "is_empty")
+              << " stone_color='" << asString(*ix10_10, "stone_color") << "'"
+              << " turn='" << asString(*state, "current_turn") << "'\n";
+
+    assert(!asBool(*ix10_10, "is_empty") && "intersection (10,10) is no longer empty");
+    assert(asString(*ix10_10, "stone_color") == "white" && "intersection (10,10) has white stone");
+    assert(asString(*state, "current_turn") == "black" && "turn advanced back to black");
 
     std::cout << "go_app_test: ALL OK\n";
     return 0;

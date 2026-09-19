@@ -1,5 +1,7 @@
 #include "ZoneManager.hpp"
 #include "HomesOfEarth/Home.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Relation/Relation.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -39,7 +41,9 @@
 #include <set>
 #include <functional>
 #include <chrono>
+#ifndef __EMSCRIPTEN__
 #include <openssl/sha.h>
+#endif
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -89,30 +93,74 @@ bool ZoneManager::switchTo(size_t index)
         }
 
         const auto resolveReference = [&](const std::string& id,
-                                          bool requirePerson) -> Singular* {
+                                          bool preferPerson) -> Singular* {
             if (id.empty()) return nullptr;
-            std::vector<Singular*> candidates;
-            const auto consider = [&](Singular* being) {
-                if (!being) return;
-                bool matches = being->getIdentifier() == id;
-                if (auto* person = dynamic_cast<Person*>(being)) {
-                    matches = person->matchesIdentifier(id);
-                } else if (requirePerson) {
-                    matches = false;
-                }
-                if (matches && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+
+            const auto appendUnique = [](std::vector<Singular*>& candidates, Singular* being) {
+                if (being && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
                     candidates.push_back(being);
                 }
             };
-            for (Singular* being : Universe::instance().beings()) consider(being);
-            // Target-Zone objects are not yet in the active Universe. They
-            // are still valid references in the closure being preflighted.
-            for (const auto& zone : _zones) {
-                if (!zone) continue;
-                consider(zone.get());
-                for (const auto& object : zone->getOwnedObjects()) consider(object.get());
+            const auto identifierMatches = [&](Singular* being) {
+                if (!being) return false;
+                if (auto* person = dynamic_cast<Person*>(being)) {
+                    return person->matchesIdentifier(id);
+                }
+                return being->getIdentifier() == id;
+            };
+
+            // Authorship can name a Person or a declared model-author Object.
+            // Prefer an actual Person when one answers the identifier so a
+            // legacy Object with the same slug can never impersonate them.
+            if (preferPerson) {
+                std::vector<Singular*> people;
+                for (Singular* being : Universe::instance().beings()) {
+                    if (dynamic_cast<Person*>(being) && identifierMatches(being)) {
+                        appendUnique(people, being);
+                    }
+                }
+                if (people.size() == 1) return people.front();
+                if (people.size() > 1) return nullptr;
             }
-            return candidates.size() == 1 ? candidates.front() : nullptr;
+
+            // The Law roots named by targetZone->lawRefs belong to the closure
+            // being preflighted. Resolve unqualified references in that closure
+            // first. Forked Zones intentionally preserve author-marker identity
+            // (for example SynthesisStudio and its Living fork both carry the
+            // same historical model-author marker); a sibling copy must not make
+            // the target Zone's own referent ambiguous.
+            std::vector<Singular*> local;
+            if (identifierMatches(targetZone.get())) appendUnique(local, targetZone.get());
+            for (const auto& object : targetZone->getOwnedObjects()) {
+                if (identifierMatches(object.get())) appendUnique(local, object.get());
+            }
+            if (local.size() == 1) return local.front();
+            if (local.size() > 1) return nullptr;
+
+            // Shared/global beings are the next lexical scope. When authorship
+            // already checked Persons above, do not let the same Person appear a
+            // second time in this fallback scope.
+            std::vector<Singular*> shared;
+            for (Singular* being : Universe::instance().beings()) {
+                if (preferPerson && dynamic_cast<Person*>(being)) continue;
+                if (identifierMatches(being)) appendUnique(shared, being);
+            }
+            if (shared.size() == 1) return shared.front();
+            if (shared.size() > 1) return nullptr;
+
+            // Compatibility fallback for older cross-Zone references. Keep the
+            // old reach, but only after the target closure and shared Universe
+            // fail to answer; genuinely ambiguous sibling identifiers still fail
+            // closed instead of picking one arbitrarily.
+            std::vector<Singular*> siblings;
+            for (const auto& zone : _zones) {
+                if (!zone || zone.get() == targetZone.get()) continue;
+                if (identifierMatches(zone.get())) appendUnique(siblings, zone.get());
+                for (const auto& object : zone->getOwnedObjects()) {
+                    if (identifierMatches(object.get())) appendUnique(siblings, object.get());
+                }
+            }
+            return siblings.size() == 1 ? siblings.front() : nullptr;
         };
 
         try {
@@ -147,7 +195,7 @@ bool ZoneManager::switchTo(size_t index)
                     // Authorship is a Formation of Singular beings, not a Person-only slot.
                     // Declared model-author Objects remain Objects; never forge a Person
                     // identity merely to make a shared Law root load.
-                    Singular* author = resolveReference(authorJson.get<std::string>(), false);
+                    Singular* author = resolveReference(authorJson.get<std::string>(), true);
                     if (!author) {
                         throw std::runtime_error("Law '" + ref + "' cannot resolve author '" +
                                                  authorJson.get<std::string>() + "'");
@@ -220,6 +268,13 @@ bool ZoneManager::switchTo(size_t index)
             }
         }
         _activeZoneLawIds = std::move(requestedLawIds);
+
+        // Zone identities hydrate before their referenced authored Laws become
+        // eligible. Relation endpoints that are Laws are therefore legitimately
+        // pending on the first pass. Legacy loadState already retries persisted
+        // Relations after authoredLaws arrive; Move to Zone must complete the
+        // same closure without requiring a conglomerate World.
+        applyFormationRelations(*targetZone, identity);
 
         _currentIndex = index;
         // THE WORLD IN FRONT OF THE PERSON WAS JUST REPLACED, and nothing else
@@ -323,6 +378,188 @@ void ZoneManager::bindLive() { g_liveZones = this; }
 
 ZoneManager* ZoneManager::live() { return g_liveZones; }
 
+namespace {
+constexpr const char* kOwnedByRelation = "owned-by";
+
+bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
+    if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
+        return false;
+    }
+    if (zone.owner() == person.getIdentifier()) return true;
+    if (!person.hasIdentity()) return zone.owner() == person.getDisplayName();
+
+    // Once the Person has a key, spelling alone is deliberately insufficient.
+    // The ONE legitimate bridge from an old owner string to a keyed Person is
+    // the migration ledger: it records the explicit trust-on-first-migration
+    // act that this legacy spelling was signed over to this exact SingularId.
+    Identity::IdentityLedger ledger;
+    if (!ledger.load()) return false;
+    const auto migrated = ledger.find(zone.owner());
+    return migrated.has_value() && *migrated == person.personId();
+}
+
+bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
+    const std::string personId = person.getIdentifier();
+    bool hasOwnedBy = false;
+    for (const auto& relation : zone.getFormation().relations().getAll()) {
+        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
+        const bool startsAtZone = relation->a() == &zone
+            || relation->aId() == zone.getIdentifier();
+        if (!startsAtZone) continue;
+        hasOwnedBy = true;
+        if (relation->b() == &person) return true;
+        if (!personId.empty() && relation->bId() == personId) return true;
+    }
+
+    // Once the authoritative Relation exists, a stale compatibility owner
+    // string is never allowed to overrule it. The cache is consulted only for
+    // legacy Homes that have no owned-by Relation yet.
+    if (hasOwnedBy) return false;
+    return legacyOwnerNamesPerson(zone, person);
+}
+
+std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,
+                                               const Person& person) {
+    std::vector<const Zone*> matches;
+    for (const auto& zone : manager.zones()) {
+        if (!zone || !zone->isPrimaryHome()) continue;
+        if (zoneNamesPersonOwner(*zone, person)) matches.push_back(zone.get());
+    }
+    return matches;
+}
+
+void reportAmbiguousPrimaryHomes(const Person& person,
+                                 const std::vector<const Zone*>& matches) {
+    std::cerr << "[zones] REFUSED primary Home resolution for Person '"
+              << person.getIdentifier() << "': " << matches.size()
+              << " primary Homes claim the same Person (";
+    for (std::size_t i = 0; i < matches.size(); ++i) {
+        if (i) std::cerr << ", ";
+        std::cerr << "'" << matches[i]->getIdentifier() << "'";
+    }
+    std::cerr << "). No alphabetical winner is chosen and no replacement Home is minted. "
+                 "Repair requires explicit Person authorization.\n";
+}
+
+bool bindOwnedBy(Zone& zone, Person& person) {
+    const std::string personId = person.getIdentifier();
+    for (const auto& relation : zone.getFormation().relations().getAll()) {
+        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
+        const bool startsAtZone = relation->a() == &zone
+            || relation->aId() == zone.getIdentifier();
+        if (!startsAtZone) continue;
+        if (relation->b() == &person || relation->bId() == personId) {
+            // Hydration can leave a saved relation temporarily unbound. Once the
+            // same Person is present, bind the actual beings so the next save
+            // emits their current stable identifiers rather than stale spellings.
+            if (relation->a() != &zone || relation->b() != &person) {
+                relation->bind(&zone, &person);
+            }
+            return true;
+        }
+        std::cerr << "[zones] REFUSED owned-by binding for Home '"
+                  << zone.getIdentifier() << "': an owned-by edge already names '"
+                  << relation->bId() << "', not Person '" << personId
+                  << "'. Ownership conflict remains visible.\n";
+        return false;
+    }
+
+    auto relation = std::make_shared<Relation>(kOwnedByRelation, zone, person, true, 1.0f);
+    if (!zone.getFormation().addRelation(relation)) {
+        std::cerr << "[zones] REFUSED owned-by binding for Home '"
+                  << zone.getIdentifier() << "': the Relation graph refused the edge.\n";
+        return false;
+    }
+    return true;
+}
+} // namespace
+
+Zone* ZoneManager::findPrimaryHome(Person& person) {
+    return const_cast<Zone*>(
+        static_cast<const ZoneManager*>(this)->findPrimaryHome(
+            static_cast<const Person&>(person)));
+}
+
+const Zone* ZoneManager::findPrimaryHome(const Person& person) const {
+    const auto matches = primaryHomesForPerson(*this, person);
+    if (matches.size() > 1) {
+        reportAmbiguousPrimaryHomes(person, matches);
+        return nullptr;
+    }
+    return matches.empty() ? nullptr : matches.front();
+}
+
+std::size_t ZoneManager::primaryHomeCount(const Person& person) const {
+    return primaryHomesForPerson(*this, person).size();
+}
+
+bool ZoneManager::enforcePrimaryHomeInvariant(Person& person) {
+    // Unique resolution and existential admission are deliberately different.
+    // ensureHomeZone() may return false when two existing primary Homes are
+    // ambiguous; that is still >= 1 Home and satisfies this invariant. What
+    // ordinary Earthcall may never admit is a Person for whom repair finishes
+    // with zero primary Homes.
+    (void)ensureHomeZone(person);
+    const std::size_t count = primaryHomeCount(person);
+    if (count > 0) return true;
+
+    std::cerr << "[zones] KERNEL INVARIANT VIOLATION: Person '"
+              << person.getIdentifier()
+              << "' has zero primary Homes after hydration/repair. "
+                 "Ordinary Person admission must stop.\n";
+    return false;
+}
+
+bool ZoneManager::ensureHomeZone(Person& person) {
+    const std::string personId = person.getIdentifier();
+    if (personId.empty()) return false;
+
+    const auto matches = primaryHomesForPerson(*this, person);
+    if (matches.size() > 1) {
+        reportAmbiguousPrimaryHomes(person, matches);
+        return false;
+    }
+    if (matches.size() == 1) {
+        Zone* existing = const_cast<Zone*>(matches.front());
+        existing->markPrimaryHome();
+        if (existing->owner().empty()) {
+            existing->setOwner(personId, Zone::kOwnerKindPerson);
+        }
+        return bindOwnedBy(*existing, person);
+    }
+
+    // A save from before ownership existed may hold an unowned "Home". Claim
+    // it instead of minting a name-twin, then immediately ground ownership in
+    // the Person being rather than leaving the display string authoritative.
+    for (auto& zone : _zones) {
+        if (zone && zone->name() == "Home" && zone->owner().empty()
+            && !zone->isOurverseGathering()) {
+            zone->markPrimaryHome();
+            if (!bindOwnedBy(*zone, person)) return false;
+            zone->setOwner(personId, Zone::kOwnerKindPerson);
+            return true;
+        }
+    }
+
+    bool homeSlugFree = true;
+    for (const auto& zone : _zones) {
+        if (zone && zone->getIdentifier() == "Home") {
+            homeSlugFree = false;
+            break;
+        }
+    }
+    const std::string id = homeSlugFree ? std::string("Home")
+                                        : std::string("Home_of_") + personId;
+    auto home = std::make_shared<Home>(id, "strict");
+    home->markPrimaryHome();
+    if (!bindOwnedBy(*home, person)) return false;
+    home->setOwner(personId, Zone::kOwnerKindPerson);
+    addZone(home);
+    printf("[Init] Home established for '%s' (zone count now %zu)\n",
+           personId.c_str(), _zones.size());
+    return true;
+}
+
 Zone* ZoneManager::findPrimaryHome(const std::string& personId) {
     return const_cast<Zone*>(
         static_cast<const ZoneManager*>(this)->findPrimaryHome(personId));
@@ -330,23 +567,41 @@ Zone* ZoneManager::findPrimaryHome(const std::string& personId) {
 
 const Zone* ZoneManager::findPrimaryHome(const std::string& personId) const {
     if (personId.empty()) return nullptr;
+    const Zone* found = nullptr;
     for (const auto& zone : _zones) {
-        if (!zone) continue;
-        if (zone->isPrimaryHome() && zone->owner() == personId) return zone.get();
-    }
-    for (const auto& zone : _zones) {
-        if (!zone) continue;
-        if (zone->name() == "Home" && zone->owner() == personId
-            && !zone->isOurverseGathering() && !zone->isCommunityHome()
-            && !zone->isCommunityZone()) {
-            return zone.get();
+        if (!zone || !zone->isPrimaryHome() || zone->owner() != personId) continue;
+        if (found) {
+            std::cerr << "[zones] REFUSED legacy primary Home resolution for owner '"
+                      << personId << "': both '" << found->getIdentifier() << "' and '"
+                      << zone->getIdentifier()
+                      << "' are primary. No load-order winner is chosen.\n";
+            return nullptr;
         }
+        found = zone.get();
     }
-    return nullptr;
+    return found;
 }
 
 void ZoneManager::ensureHomeZone(const std::string& personId) {
     if (personId.empty()) return;
+
+    std::size_t primaryMatches = 0;
+    Zone* exact = nullptr;
+    for (auto& zone : _zones) {
+        if (!zone || !zone->isPrimaryHome() || zone->owner() != personId) continue;
+        ++primaryMatches;
+        if (!exact) exact = zone.get();
+    }
+    if (primaryMatches > 1) {
+        std::cerr << "[zones] REFUSED legacy ensureHomeZone for owner '" << personId
+                  << "': " << primaryMatches
+                  << " primary Homes already claim that spelling. No replacement is minted.\n";
+        return;
+    }
+    if (exact) {
+        exact->markPrimaryHome();
+        return;
+    }
 
     if (Zone* existing = findPrimaryHome(personId)) {
         existing->markPrimaryHome();
@@ -1105,6 +1360,7 @@ constexpr int kMatterSchemaVersion = 1;
 // borrow a hash utility would be a backward dependency edge for a
 // one-function need.
 std::string sha256Hex(const std::vector<uint8_t>& data) {
+#ifndef __EMSCRIPTEN__
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(data.data(), data.size(), hash);
     static const char hexDigits[] = "0123456789abcdef";
@@ -1115,6 +1371,9 @@ std::string sha256Hex(const std::vector<uint8_t>& data) {
         out.push_back(hexDigits[byte & 0x0F]);
     }
     return out;
+#else
+    throw std::runtime_error("sha256Hex refused: no OpenSSL in WASM build");
+#endif
 }
 
 // Writes `bytes` to `finalPath` via write-temp-then-atomic-rename, so a
@@ -2590,6 +2849,44 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
     // Pass 2: apply fields, but only for entities whose composite key was
     // unique in this buffer. Sol's Invariant 3: "do not use iteration
     // order, unordered_map replacement, or last-record-wins anywhere."
+    //
+    // IMPORTANT: semantic identity is hydrated before physical Matter.
+    // .ecmatter is the binary substrate for dense geometry, so a semantic
+    // Patch/Polyhedron shell is EXPECTED to receive its control-net/vertices
+    // here. What Matter may never do is redefine the semantic representation.
+    // The checks below therefore ask WHAT the semantic ShapeKind says the
+    // being is and whether topology is already present before injecting the
+    // matching physical payload. Older embedded-topology saves remain valid.
+    const auto checkedSdfPrim = [](int raw, geom::SdfPrim& out) {
+        const int first = static_cast<int>(geom::SdfPrim::Sphere);
+        const int last = static_cast<int>(geom::SdfPrim::Convex);
+        if (raw < first || raw > last) return false;
+        out = static_cast<geom::SdfPrim>(raw);
+        return true;
+    };
+    const auto checkedSdfOp = [](int raw, geom::SdfOp& out) {
+        const int first = static_cast<int>(geom::SdfOp::Leaf);
+        const int last = static_cast<int>(geom::SdfOp::SmoothUnion);
+        if (raw < first || raw > last) return false;
+        out = static_cast<geom::SdfOp>(raw);
+        return true;
+    };
+    const auto smoothKind = [](Object::ShapeKind kind) {
+        switch (kind) {
+            case Object::ShapeKind::Sphere:
+            case Object::ShapeKind::Ellipsoid:
+            case Object::ShapeKind::Ovoid:
+            case Object::ShapeKind::Paraboloid:
+            case Object::ShapeKind::Torus:
+                return true;
+            default:
+                return false;
+        }
+    };
+    const auto finiteVec3 = [](const glm::vec3& v) {
+        return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
+    };
+
     std::unordered_set<std::string> loggedDuplicates;
     for (size_t i = 0; i < entities->size(); ++i) {
         auto& o = resolvedObj[i];
@@ -2628,91 +2925,210 @@ void ZoneManager::applyMatterFlatBuffer(const std::vector<uint8_t>& buffer) {
         }
         o->setRotationResponsiveness(entity->rotation_responsiveness());
 
-        // 2. Polyhedron
-        if (entity->polyhedron() && entity->polyhedron()->vertices() && entity->polyhedron()->face_data() && entity->polyhedron()->face_offsets()) {
-            const auto* poly = entity->polyhedron();
-            std::vector<glm::vec3> verts;
-            verts.reserve(poly->vertices()->size());
-            for (const auto* v : *poly->vertices()) {
-                verts.emplace_back(v->x(), v->y(), v->z());
-            }
+        // 2. Polyhedron. Dense vertices/faces live in Matter. Inject them
+        // only into a semantic Polyhedron shell that does not already carry
+        // topology (for example an older embedded-topology record). Matter may
+        // not turn some other authored shape INTO a Polyhedron.
+        if (entity->polyhedron() && entity->polyhedron()->vertices() &&
+            entity->polyhedron()->face_data() && entity->polyhedron()->face_offsets()) {
+            if (o->getShapeKind() == Object::ShapeKind::Polyhedron &&
+                (o->getPolyhedronData().vertices.empty() || o->getPolyhedronData().faces.empty())) {
+                const auto* poly = entity->polyhedron();
+                const auto* fData = poly->face_data();
+                const auto* fOffsets = poly->face_offsets();
+                bool valid = poly->vertices()->size() >= 3 && fOffsets->size() >= 2;
 
-            const auto* fData = poly->face_data();
-            const auto* fOffsets = poly->face_offsets();
-            std::vector<std::vector<int>> faces;
-            if (fOffsets->size() >= 2) {
-                faces.reserve(fOffsets->size() - 1);
-                for (size_t i = 0; i + 1 < fOffsets->size(); ++i) {
-                    int start = fOffsets->Get(i);
-                    int end = fOffsets->Get(i + 1);
-                    std::vector<int> face;
-                    face.reserve(end - start);
-                    for (int fi = start; fi < end && fi < (int)fData->size(); ++fi) {
-                        face.push_back(fData->Get(fi));
-                    }
-                    faces.push_back(std::move(face));
+                std::vector<glm::vec3> verts;
+                verts.reserve(poly->vertices()->size());
+                for (const auto* v : *poly->vertices()) {
+                    if (!v) { valid = false; break; }
+                    const glm::vec3 p(v->x(), v->y(), v->z());
+                    if (!finiteVec3(p)) { valid = false; break; }
+                    verts.push_back(p);
                 }
-            }
-            if (!verts.empty() && !faces.empty()) {
-                o->setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
+
+                std::vector<std::vector<int>> faces;
+                if (valid) {
+                    // A flattened face stream is accepted only when offsets
+                    // form an exact partition [0, face_data.size()]. This
+                    // proves end-start before reserve() and prevents negative,
+                    // non-monotone, truncated, or overrun ranges.
+                    valid = fOffsets->Get(0) == 0 &&
+                            fOffsets->Get(fOffsets->size() - 1) ==
+                                static_cast<int>(fData->size());
+                }
+                if (valid) {
+                    faces.reserve(fOffsets->size() - 1);
+                    for (size_t faceIndex = 0; faceIndex + 1 < fOffsets->size(); ++faceIndex) {
+                        const int start = fOffsets->Get(faceIndex);
+                        const int end = fOffsets->Get(faceIndex + 1);
+                        if (start < 0 || end < start ||
+                            end > static_cast<int>(fData->size()) || end - start < 3) {
+                            valid = false;
+                            break;
+                        }
+                        std::vector<int> face;
+                        face.reserve(static_cast<size_t>(end - start));
+                        for (int fi = start; fi < end; ++fi) {
+                            const int vertex = fData->Get(fi);
+                            if (vertex < 0 || vertex >= static_cast<int>(verts.size())) {
+                                valid = false;
+                                break;
+                            }
+                            face.push_back(vertex);
+                        }
+                        if (!valid) break;
+                        faces.push_back(std::move(face));
+                    }
+                }
+                if (valid && !verts.empty() && !faces.empty()) {
+                    o->setPolyhedronData(PolyhedronData::createCustomPolyhedron(verts, faces));
+                } else {
+                    std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
+                                 "Polyhedron matter for '" << key << "'.\n";
+                }
             }
         }
 
-        // 3. Bezier Patch
-        if (entity->patch() && entity->patch()->ctrl()) {
+        // 3. Bezier Patch. Dense control points live in Matter. Fill only a
+        // semantic Patch shell; a stale patch payload is never permission to
+        // reclassify the current authored being.
+        if (entity->patch() && entity->patch()->ctrl() &&
+            o->getShapeKind() == Object::ShapeKind::Patch && !o->hasPatch()) {
             geom::BezierPatch patch;
             patch.du = entity->patch()->du();
             patch.dv = entity->patch()->dv();
             patch.ctrl.reserve(entity->patch()->ctrl()->size());
+            bool finite = true;
             for (const auto* c : *entity->patch()->ctrl()) {
-                patch.ctrl.emplace_back(c->x(), c->y(), c->z());
+                if (!c) { finite = false; break; }
+                const glm::vec3 p(c->x(), c->y(), c->z());
+                if (!finiteVec3(p)) { finite = false; break; }
+                patch.ctrl.push_back(p);
             }
-            if (patch.valid()) {
+            if (finite && patch.valid()) {
                 o->setBezierPatch(patch);
+            } else {
+                std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
+                             "Patch matter for '" << key << "'.\n";
             }
         }
 
-        // 4. Smooth Surface
-        if (entity->smooth_data() && entity->smooth_data()->quadric_matrix()) {
+        // 4. Smooth Surface. Named analytic kinds currently rebuild their
+        // surface deterministically from semantic ShapeParams, so Matter is
+        // normally redundant for them today. It may hydrate missing physical
+        // topology only when the exact semantic analytic kind agrees.
+        if (entity->smooth_data() && entity->smooth_data()->quadric_matrix() &&
+            smoothKind(o->getShapeKind()) && !o->hasSmoothSurface()) {
             const auto* sm = entity->smooth_data();
+            const int rawModel = sm->model();
+            const int rawForm = sm->quadric_form();
+            const int rawPkind = sm->parametric_kind();
+            const bool enumOk =
+                rawModel >= static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                rawModel <= static_cast<int>(geom::SmoothSurfaceData::Model::Parametric) &&
+                rawForm >= static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Sphere) &&
+                rawForm <= static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Paraboloid) &&
+                rawPkind >= static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Torus) &&
+                rawPkind <= static_cast<int>(geom::SmoothSurfaceData::ParametricKind::ProjectivePlane);
+            const Object::ShapeKind semanticKind = o->getShapeKind();
+            const bool kindMatches =
+                (semanticKind == Object::ShapeKind::Sphere &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Sphere)) ||
+                (semanticKind == Object::ShapeKind::Ellipsoid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Ellipsoid)) ||
+                (semanticKind == Object::ShapeKind::Paraboloid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Quadric) &&
+                 rawForm == static_cast<int>(geom::SmoothSurfaceData::QuadricForm::Paraboloid)) ||
+                (semanticKind == Object::ShapeKind::Torus &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Parametric) &&
+                 rawPkind == static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Torus)) ||
+                (semanticKind == Object::ShapeKind::Ovoid &&
+                 rawModel == static_cast<int>(geom::SmoothSurfaceData::Model::Parametric) &&
+                 rawPkind == static_cast<int>(geom::SmoothSurfaceData::ParametricKind::Ovoid));
+            bool valid = enumOk && kindMatches && sm->quadric_matrix()->size() == 16;
+
             geom::SmoothSurfaceData sd;
             sd.closed = sm->closed();
             sd.orientable = sm->orientable();
             sd.hasBoundary = sm->has_boundary();
             sd.isVolume = sm->is_volume();
-            sd.model = static_cast<geom::SmoothSurfaceData::Model>(sm->model());
-            if (sm->quadric_matrix()->size() == 16) {
+            if (valid) {
+                sd.model = static_cast<geom::SmoothSurfaceData::Model>(rawModel);
                 std::vector<float> qv(sm->quadric_matrix()->begin(), sm->quadric_matrix()->end());
-                sd.Q = vectorToMat4(qv);
+                for (float q : qv) valid = valid && std::isfinite(q);
+                if (valid) sd.Q = vectorToMat4(qv);
+                sd.form = static_cast<geom::SmoothSurfaceData::QuadricForm>(rawForm);
+                sd.pkind = static_cast<geom::SmoothSurfaceData::ParametricKind>(rawPkind);
             }
-            sd.form = static_cast<geom::SmoothSurfaceData::QuadricForm>(sm->quadric_form());
-            sd.pkind = static_cast<geom::SmoothSurfaceData::ParametricKind>(sm->parametric_kind());
             if (sm->axes()) {
                 sd.axes = glm::vec3(sm->axes()->x(), sm->axes()->y(), sm->axes()->z());
+                valid = valid && finiteVec3(sd.axes);
             }
             sd.zTrim = glm::vec2(sm->z_trim_min(), sm->z_trim_max());
+            valid = valid && std::isfinite(sd.zTrim.x) && std::isfinite(sd.zTrim.y);
             if (sm->params()) {
                 sd.params.assign(sm->params()->begin(), sm->params()->end());
+                for (float p : sd.params) valid = valid && std::isfinite(p);
             }
-            o->setSmoothSurface(sd);
+            if (valid) {
+                o->setSmoothSurface(sd);
+            } else {
+                std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected malformed "
+                             "SmoothSurface matter for '" << key << "'.\n";
+            }
         }
 
-        // 5. Field Shape
-        if (entity->field() && entity->field()->root_node()) {
+        // 5. Field Shape. A semantic Field includes BOTH its mathematical
+        // tree and its evaluation extent. If it already exists, matter is not
+        // consulted at all: refusing a shallow tree but accepting a stale
+        // extent would still let the cache clip/expand the authored form.
+        if (entity->field() && entity->field()->root_node() &&
+            o->getShapeKind() == Object::ShapeKind::Field && !o->hasField()) {
             const auto* fbsField = entity->field();
             const auto* root = fbsField->root_node();
+            geom::SdfPrim prim = geom::SdfPrim::Sphere;
+            geom::SdfOp op = geom::SdfOp::Leaf;
+            bool valid = checkedSdfPrim(root->type(), prim) &&
+                         checkedSdfOp(root->operation(), op);
+
+            // Current .ecmatter stores only ONE root. It can honestly recover
+            // a leaf, but not a boolean/morph tree (children are absent) and
+            // not a Convex leaf (planes are absent). Refuse rather than invent.
+            if (valid && (op != geom::SdfOp::Leaf || prim == geom::SdfPrim::Convex)) {
+                valid = false;
+            }
+
             geom::SdfNode node;
-            node.prim = static_cast<geom::SdfPrim>(root->type());
-            node.op = static_cast<geom::SdfOp>(root->operation());
+            node.prim = prim;
+            node.op = op;
             if (root->dims()) node.dims = glm::vec3(root->dims()->x(), root->dims()->y(), root->dims()->z());
             if (root->offset()) node.offset = glm::vec3(root->offset()->x(), root->offset()->y(), root->offset()->z());
+            valid = valid && finiteVec3(node.dims) && finiteVec3(node.offset);
             node.p0 = root->p0();
             node.p1 = root->p1();
             node.t = root->t();
+            valid = valid && std::isfinite(node.p0) && std::isfinite(node.p1) && std::isfinite(node.t);
             if (root->expr()) node.expr = root->expr()->str();
+            if (valid && prim == geom::SdfPrim::Expr) {
+                if (node.expr.empty() || geom::compileExpr(node.expr).empty()) valid = false;
+            }
+
             glm::vec3 extent(1.0f);
-            if (fbsField->extent()) extent = glm::vec3(fbsField->extent()->x(), fbsField->extent()->y(), fbsField->extent()->z());
-            o->setFieldShape(node, extent);
+            if (fbsField->extent()) {
+                extent = glm::vec3(fbsField->extent()->x(), fbsField->extent()->y(), fbsField->extent()->z());
+            }
+            valid = valid && finiteVec3(extent) &&
+                    extent.x > 0.0f && extent.y > 0.0f && extent.z > 0.0f;
+
+            if (valid) {
+                o->setFieldShape(node, extent);
+            } else {
+                std::cerr << "[ZoneManager] applyMatterFlatBuffer: rejected lossy or malformed "
+                             "Field matter for '" << key << "'.\n";
+            }
         }
 
         // Face textures and face colors: not applied. See the comment

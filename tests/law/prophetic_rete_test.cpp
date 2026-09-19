@@ -82,15 +82,9 @@ int main() {
         std::fprintf(stderr, "prophetic_rete_test: glfwInit failed\n");
         return 1;
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "prophetic_rete_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "prophetic_rete_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
+    // CPU-only test. LawManager::tick uses GLFW's timer, so initialize GLFW,
+    // but do not create a window/context: headless CI has no display and none
+    // of the Prophetic analysis below renders anything.
     // ======================================================================
     // A. The abstract value lattice.
     // ======================================================================
@@ -549,7 +543,283 @@ int main() {
         std::puts("  G. prophecy OK");
     }
 
-    glfwDestroyWindow(window);
+
+    // ======================================================================
+    // H. Branch-stable provenance + the pairwise Prophetic relevance graph.
+    //    This is the modern descendant of the old ActionNode->Beta pointer:
+    //    preserve WHICH authored branch wrote/read, prove possible pairings
+    //    ahead of time, and leave runtime/reified routing to Formation Rete.
+    // ======================================================================
+    {
+        // Two Any arms must remain distinguishable even though the effective
+        // demand algebra correctly says neither path is required overall.
+        const ConditionNode condition = ConditionNode::any({
+            ConditionNode::compare("hp", ConditionNode::Op::Gt, PropertyValue(100.0)),
+            ConditionNode::compare("mood", ConditionNode::Op::Eq,
+                                   PropertyValue(std::string("bright")))
+        });
+        Prophetic::LawFacts conditionFacts;
+        conditionFacts.lawId = "reader";
+        Prophetic::analyzeCondition(condition, conditionFacts);
+        assert(conditionFacts.branchReads.size() == 2);
+
+        std::map<std::string, std::string> conditionIds;
+        for (const auto& r : conditionFacts.branchReads) conditionIds[r.path] = r.branchId;
+        assert(conditionIds.count("hp") && conditionIds.count("mood"));
+        assert(conditionIds["hp"] != conditionIds["mood"]);
+
+        // Stable means authored-text stable, not pointer/vector stable:
+        // recompilation and a save/load-shaped JSON round trip must preserve it.
+        const ConditionNode conditionRoundTrip = ConditionNode::fromJson(condition.toJson());
+        Prophetic::LawFacts conditionRoundTripFacts;
+        conditionRoundTripFacts.lawId = "reader";
+        Prophetic::analyzeCondition(conditionRoundTrip, conditionRoundTripFacts);
+        std::map<std::string, std::string> conditionRoundTripIds;
+        for (const auto& r : conditionRoundTripFacts.branchReads) {
+            conditionRoundTripIds[r.path] = r.branchId;
+        }
+        assert(conditionIds == conditionRoundTripIds);
+
+        const ActionNode action = ActionNode::sequence({
+            ActionNode::set("hp", PropertyValue(500.0)),
+            ActionNode::set("mood", PropertyValue(std::string("bright")))
+        });
+        Prophetic::LawFacts actionFacts;
+        actionFacts.lawId = "writer";
+        Prophetic::analyzeAction(action, actionFacts);
+        assert(actionFacts.writes.size() == 2);
+        assert(actionFacts.writes[0].branchId != actionFacts.writes[1].branchId);
+
+        const ActionNode actionRoundTrip = ActionNode::fromJson(action.toJson());
+        Prophetic::LawFacts actionRoundTripFacts;
+        actionRoundTripFacts.lawId = "writer";
+        Prophetic::analyzeAction(actionRoundTrip, actionRoundTripFacts);
+        assert(actionRoundTripFacts.writes.size() == actionFacts.writes.size());
+        for (std::size_t i = 0; i < actionFacts.writes.size(); ++i) {
+            assert(actionFacts.writes[i].path == actionRoundTripFacts.writes[i].path);
+            assert(actionFacts.writes[i].branchId == actionRoundTripFacts.writes[i].branchId);
+        }
+
+        // Pairwise proof: hp := 500 can feed hp > 100; hp := 1 provably cannot.
+        auto high = std::make_shared<Law>("high-writer");
+        high->setLawIdentifier("high-writer");
+        high->setActionModel(ActionNode::set("hp", PropertyValue(500.0)));
+
+        auto low = std::make_shared<Law>("low-writer");
+        low->setLawIdentifier("low-writer");
+        low->setActionModel(ActionNode::set("hp", PropertyValue(1.0)));
+
+        auto branchReader = std::make_shared<Law>("branch-reader");
+        branchReader->setLawIdentifier("branch-reader");
+        branchReader->setConditionModel(condition);
+
+        Prophetic::Index relevance;
+        relevance.rebuild({high, low, branchReader});
+        assert(relevance.relevanceComplete());
+
+        bool sawHighHp = false;
+        bool sawLowHp = false;
+        for (const auto& edge : relevance.relevanceEdges()) {
+            if (edge.readerLawId != "branch-reader" || edge.path != "hp") continue;
+            if (edge.writerLawId == "high-writer") sawHighHp = true;
+            if (edge.writerLawId == "low-writer") sawLowHp = true;
+        }
+        assert(sawHighHp);
+        assert(!sawLowHp);
+
+        // Opacity is GLOBAL, not local. One unreadable condition invalidates
+        // every relevance edge rather than inviting a dangerously partial graph.
+        auto opaqueReader = std::make_shared<Law>("opaque-reader");
+        opaqueReader->setLawIdentifier("opaque-reader");
+        opaqueReader->setConditionModel(ConditionNode::overlaps("@event.object"));
+
+        Prophetic::Index opaqueGraph;
+        opaqueGraph.rebuild({high, branchReader, opaqueReader});
+        assert(!opaqueGraph.relevanceComplete());
+        assert(opaqueGraph.relevanceEdges().empty());
+
+        // The same incompleteness must suppress cross-law "no lawful driver"
+        // findings. Before this pass only opaque WRITES were checked here,
+        // despite PROPHETIC_RETE.md requiring a complete index.
+        auto impossibleReader = std::make_shared<Law>("impossible-reader");
+        impossibleReader->setLawIdentifier("impossible-reader");
+        impossibleReader->setConditionModel(
+            ConditionNode::compare("hp", ConditionNode::Op::Gt, PropertyValue(100.0)));
+
+        Prophetic::Index incompleteFinding;
+        incompleteFinding.rebuild({low, impossibleReader, opaqueReader});
+        assert(!incompleteFinding.complete());
+        for (const auto& u : incompleteFinding.unreachable()) {
+            assert(u.selfImpossible);
+        }
+
+        const nlohmann::json report = relevance.toJson();
+        assert(report["relevanceComplete"] == true);
+        assert(!report["relevanceEdges"].empty());
+        std::puts("  H. branch provenance / relevance graph OK");
+    }
+
+    // ======================================================================
+    // I. Guarded write-state fixpoint.
+    //
+    // Current-dependent actions are only narrowable from AUTHORED pre-state:
+    // a Law's own condition, or an earlier write in the same ordered Sequence.
+    // An unguarded value stays Top because a First Mover / foreign channel may
+    // have supplied anything. Parallel siblings may not borrow each other's
+    // output. Flow additionally needs an authored time.delta bound.
+    // ======================================================================
+    {
+        const auto bounded = [](const char* path, double lo, double hi) {
+            return ConditionNode::all({
+                ConditionNode::compare(path, ConditionNode::Op::Ge, PropertyValue(lo)),
+                ConditionNode::compare(path, ConditionNode::Op::Le, PropertyValue(hi))
+            });
+        };
+
+        // Guard image: hp in [0,95], then hp += 5 -> [5,100].
+        auto guardedAdd = std::make_shared<Law>("guarded-add");
+        guardedAdd->setConditionModel(bounded("hp", 0.0, 95.0));
+        guardedAdd->setActionModel(ActionNode::add("hp", 5.0));
+
+        Prophetic::Index addIndex;
+        addIndex.rebuild({guardedAdd});
+        auto hp = addIndex.writeRangeOf("hp");
+        assert(hp.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(hp.number.lo, 5.0) && nearf(hp.number.hi, 100.0));
+
+        // The refined write can now prove a downstream demand unreachable.
+        auto tooHigh = std::make_shared<Law>("wants-impossible-hp");
+        tooHigh->setConditionModel(
+            ConditionNode::compare("hp", ConditionNode::Op::Gt, PropertyValue(200.0)));
+        Prophetic::Index guardedPair;
+        guardedPair.rebuild({guardedAdd, tooHigh});
+        bool sawGuardedNoDriver = false;
+        for (const auto& u : guardedPair.unreachable()) {
+            if (u.lawId == tooHigh->getIdentifier() && !u.selfImpossible) {
+                sawGuardedNoDriver = true;
+            }
+        }
+        assert(sawGuardedNoDriver);
+
+        // Scale and Lerp are affine over the guarded current interval.
+        auto guardedScale = std::make_shared<Law>("guarded-scale");
+        guardedScale->setConditionModel(bounded("scale-me", -2.0, 4.0));
+        guardedScale->setActionModel(ActionNode::scale("scale-me", 3.0));
+        Prophetic::Index scaleIndex;
+        scaleIndex.rebuild({guardedScale});
+        auto scaled = scaleIndex.writeRangeOf("scale-me");
+        assert(scaled.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(scaled.number.lo, -6.0) && nearf(scaled.number.hi, 12.0));
+
+        ActionNode blend;
+        blend.kind = ActionNode::Kind::Lerp;
+        blend.path = PropertyPath::parse("blend-me");
+        blend.operand = PropertyValue(100.0);
+        blend.factor = 0.5;
+        auto guardedLerp = std::make_shared<Law>("guarded-lerp");
+        guardedLerp->setConditionModel(bounded("blend-me", 0.0, 10.0));
+        guardedLerp->setActionModel(blend);
+        Prophetic::Index lerpIndex;
+        lerpIndex.rebuild({guardedLerp});
+        auto blended = lerpIndex.writeRangeOf("blend-me");
+        assert(blended.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(blended.number.lo, 50.0) && nearf(blended.number.hi, 55.0));
+
+        // Ordered Sequence carries the established value forward.
+        auto sequence = std::make_shared<Law>("sequence-fixed-point");
+        sequence->setActionModel(ActionNode::sequence({
+            ActionNode::set("energy", PropertyValue(10.0)),
+            ActionNode::add("energy", 5.0)
+        }));
+        Prophetic::Index sequenceIndex;
+        sequenceIndex.rebuild({sequence});
+        bool sawExactAdd = false;
+        for (const auto& w : sequenceIndex.facts().front().writes) {
+            if (w.via == "Add" && w.path == "energy") {
+                assert(w.range.kind == Prophetic::Range::Kind::Number);
+                assert(nearf(w.range.number.lo, 15.0) && nearf(w.range.number.hi, 15.0));
+                sawExactAdd = true;
+            }
+        }
+        assert(sawExactAdd);
+
+        // Parallel siblings are simultaneous in the authored language. The Add
+        // must NOT steal the Set sibling's 10 as a pre-state.
+        auto parallel = std::make_shared<Law>("parallel-not-sequence");
+        parallel->setActionModel(ActionNode::parallel({
+            ActionNode::set("energy", PropertyValue(10.0)),
+            ActionNode::add("energy", 5.0)
+        }));
+        Prophetic::Index parallelIndex;
+        parallelIndex.rebuild({parallel});
+        bool sawParallelTop = false;
+        for (const auto& w : parallelIndex.facts().front().writes) {
+            if (w.via == "Add" && w.path == "energy") {
+                assert(w.range.isTop());
+                sawParallelTop = true;
+            }
+        }
+        assert(sawParallelTop);
+
+        // Open world: with no authored guard or earlier Sequence write, the
+        // current value may have come from a First Mover. Never narrow it.
+        auto unguarded = std::make_shared<Law>("unguarded-add");
+        unguarded->setActionModel(ActionNode::add("mystery", 1.0));
+        Prophetic::Index openIndex;
+        openIndex.rebuild({unguarded});
+        assert(openIndex.writeRangeOf("mystery").isTop());
+
+        // Flow is current + rate*dt. Authored bounds on BOTH current and dt
+        // make the one-step image finite.
+        auto boundedFlow = std::make_shared<Law>("bounded-flow");
+        boundedFlow->setConditionModel(ConditionNode::all({
+            bounded("position.y", 0.0, 10.0),
+            bounded("time.delta", 0.0, 0.1)
+        }));
+        boundedFlow->setActionModel(ActionNode::flow(
+            "position.y", everywhere(ScalarForm::constant(5.0), "t"), {}));
+        Prophetic::Index flowIndex;
+        flowIndex.rebuild({boundedFlow});
+        auto flowed = flowIndex.writeRangeOf("position.y");
+        assert(flowed.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(flowed.number.lo, 0.0) && nearf(flowed.number.hi, 10.5));
+
+        // Remove the authored dt bound and the exact same Flow becomes Top.
+        auto unboundedFlow = std::make_shared<Law>("unbounded-flow");
+        unboundedFlow->setConditionModel(bounded("position.y", 0.0, 10.0));
+        unboundedFlow->setActionModel(ActionNode::flow(
+            "position.y", everywhere(ScalarForm::constant(5.0), "t"), {}));
+        Prophetic::Index unboundedFlowIndex;
+        unboundedFlowIndex.rebuild({unboundedFlow});
+        assert(unboundedFlowIndex.writeRangeOf("position.y").isTop());
+
+        // A zero-rate Flow is identity even when dt itself is unconstrained.
+        auto zeroFlow = std::make_shared<Law>("zero-flow");
+        zeroFlow->setConditionModel(bounded("position.y", -3.0, 7.0));
+        zeroFlow->setActionModel(ActionNode::flow(
+            "position.y", everywhere(ScalarForm::constant(0.0), "t"), {}));
+        Prophetic::Index zeroFlowIndex;
+        zeroFlowIndex.rebuild({zeroFlow});
+        auto zeroed = zeroFlowIndex.writeRangeOf("position.y");
+        assert(zeroed.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(zeroed.number.lo, -3.0) && nearf(zeroed.number.hi, 7.0));
+
+        // Map can now inherit authored bounds through its MathBindings too.
+        auto boundedMap = std::make_shared<Law>("bounded-map-input");
+        boundedMap->setConditionModel(bounded("source", 0.0, 10.0));
+        boundedMap->setActionModel(ActionNode::map(
+            "mapped",
+            everywhere(ScalarForm::variable("x", 1.0, 2.0), "x"),
+            {{"x", PropertyPath::parse("source")}}));
+        Prophetic::Index mapIndex;
+        mapIndex.rebuild({boundedMap});
+        auto mapped = mapIndex.writeRangeOf("mapped");
+        assert(mapped.kind == Prophetic::Range::Kind::Number);
+        assert(nearf(mapped.number.lo, 0.0) && nearf(mapped.number.hi, 20.0));
+
+        std::puts("  I. guarded write-state fixpoint OK");
+    }
+
     glfwTerminate();
     std::puts("prophetic_rete_test: ALL OK");
     return 0;

@@ -5,9 +5,11 @@
 #include "json.hpp"
 
 #include "ConstructedBeing/Singular/Object/Object/FaceTexture.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <glm/glm.hpp>
 #include <string>
+#include <memory>
 
 // ---------------------------------------------------------------------------
 // Material is the bridge between Singulars and raw Singularity metal.
@@ -53,10 +55,28 @@ public:
     float ambient   = 0.2f;                // ambient coefficient   (was light ambient)
     float diffuse   = 0.8f;                // diffuse coefficient   (was light diffuse)
 
+    // OntoMath-driven color evaluation for SDFs. If present, the WGSL backend
+    // compiles this directly into the shader instead of using baseColor.
+    std::shared_ptr<OntoMath::Piecewise> colorExpr;
+    uint32_t getRevision() const { return _revision; }
+    void bumpRevision() { ++_revision; }
+
+    int textureResolution = 64;
+    int textureWidth = 64;
+    int textureHeight = 64;
+
+    int getTextureResolution() const;
+    void setTextureResolution(const int& res);
+    int getTextureWidth() const;
+    void setTextureWidth(const int& w);
+    int getTextureHeight() const;
+    void setTextureHeight(const int& h);
+
 private:
     // Identity, like a Relation's endpoints, is not a mutable property: renaming
     // a material is re-identifying it. Everything else is Law-addressable.
     std::string _name = "default";
+    uint32_t _revision = 0;
     void buildProperties() override;
 
 public:
@@ -64,5 +84,5 @@ public:
     std::vector<struct FaceTexture> faceTextures;
     
     // Initialise or reinitialise textures after geometry type set/changed
-    void initFaceTextures(int numFaces, int defaultWidth = 64, int defaultHeight = 64);
+    void initFaceTextures(int numFaces, int defaultWidth = -1, int defaultHeight = -1);
 };

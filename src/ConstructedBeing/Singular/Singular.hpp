@@ -22,6 +22,10 @@ class Formation;
 // ------------------------------------------------------------------
 class Singular {
 public:
+    virtual bool readAuthoredPropertyProjectionColors(Earthcall::StringId,
+                                                      PropertyValue&) const {
+        return false;
+    }
     Singular();
     Singular(const Singular&);
     Singular& operator=(const Singular&);

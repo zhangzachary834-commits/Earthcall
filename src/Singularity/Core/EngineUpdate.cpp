@@ -6,6 +6,7 @@
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleFixtureLaw.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
@@ -125,15 +126,33 @@ namespace Core {
             return std::chrono::duration<float, std::milli>(end - start).count();
         };
 
-        // Update input handlers
+        // Update input handlers. Snapshot the shell boundary before processing
+        // it: a click on Resume may close the menu during processInput(), but
+        // that same physical click still belongs to the menu for this frame and
+        // must never fall through to a creation tool or authored object.
         auto tInput0 = clock::now();
-        if (_mainMenu.isOpen()) {
+        const bool menuOwnedThisFrame = _mainMenu.isOpen();
+        if (menuOwnedThisFrame) {
             _mainMenu.processInput(_window);
         }
         
         _keyboardHandler->update();
         _mouseHandler->update();
         _mouseLeftPressedLast = (_window && glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+
+        // Creator Console visibility has one legible truth: the first-mover
+        // fixture law's `enabled` bit. `_creatorConsoleOpen` remains the native
+        // ImGui/Dock pointer because those foreign surfaces require a bool*, but
+        // it is only a mirror now. Writers on the native side are F8/menu/tool
+        // entry points and IDEDockManager; Law Author/other laws write the law.
+        // Readers of the mirror are stepCreationTools, IDE docking, and render
+        // previews/windows. Reconcile BEFORE any of those consumers run.
+        static bool lastCreatorConsoleFixtureVisible = false;
+        if (Law* fixture = Rendering::syncRegisterCreatorConsoleFixtureLaw(
+                *_lawManager, *_person, _creatorConsoleOpen)) {
+            Rendering::reconcileCreatorConsoleFixtureVisibility(
+                *fixture, _creatorConsoleOpen, lastCreatorConsoleFixtureVisible);
+        }
 
         // Update camera front from mouse handler
         _camera->front = _mouseHandler->calculateCameraFront();
@@ -156,9 +175,13 @@ namespace Core {
         // Creation first mover — sense placement, honour L, push the
         // console's live selection onto the channel, actuate the armed
         // tool. Used to run inside render3DConsole / DeveloperToolsWindow,
-        // so collapsing the console froze every 3D tool.
+        // so collapsing the console froze every 3D tool. The main menu is a
+        // stronger shell boundary, though: while it owns this frame the Person
+        // is choosing a shell command, not authoring the world behind it.
         auto tCreate0 = clock::now();
-        Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+        if (!menuOwnedThisFrame) {
+            Rendering::stepCreationTools(_window, this, mgr, dt, _creatorConsoleOpen);
+        }
         auto tCreate1 = clock::now();
         g_frameTimings.creation_ms = getMs(tCreate0, tCreate1);
 
@@ -168,12 +191,13 @@ namespace Core {
         // while a window is on screen is a channel that freezes when the
         // window collapses.
         //
-        // WantCaptureMouse is the foreign-surface veto: while an ImGui panel
-        // owns the pointer, the world must see no pointer at all, or the
-        // Person clicks a menu and a button behind it fires too.
+        // WantCaptureMouse is the foreign-surface veto. The custom main menu
+        // is not an ImGui window, so it must explicitly join that veto or a
+        // menu click/wheel can also actuate the authored world behind it.
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
-            interaction->step(_window, *_camera, mgr, ImGui::GetIO().WantCaptureMouse);
+            const bool shellCapturedPointer = ImGui::GetIO().WantCaptureMouse || menuOwnedThisFrame;
+            interaction->step(_window, *_camera, mgr, shellCapturedPointer);
             static int frameCount = 0;
             frameCount++;
         }
@@ -193,6 +217,13 @@ namespace Core {
         Universe::instance().setClock(_worldTime, static_cast<double>(dt));
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
+
+        const auto& zt = mgr.active().lastUpdateTiming();
+        g_frameTimings.zone_ground_ms = static_cast<float>(zt.groundScanMs);
+        g_frameTimings.zone_rot_ms    = static_cast<float>(zt.rotationMs);
+        g_frameTimings.zone_auto_ms   = static_cast<float>(zt.automationMs);
+        g_frameTimings.zone_phys_ms   = static_cast<float>(zt.physicsMs);
+        g_frameTimings.zone_substeps  = zt.substeps;
 
         clearMouseLeftJustPressed();
     }

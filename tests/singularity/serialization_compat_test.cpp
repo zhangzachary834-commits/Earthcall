@@ -5,11 +5,15 @@
 
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <chrono>
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
 
 using json = nlohmann::json;
+
+namespace {
+} // namespace
 
 void test_msgpack_roundtrip() {
     json j;
@@ -108,6 +112,8 @@ void test_retired_condition_kind_survives_roundtrip() {
 }
 
 int main() {
+    TempSaveRoot tempSaveRoot;
+
     // Object's constructor touches GL, so the probe subject needs a context.
     if (!glfwInit()) {
         std::fprintf(stderr, "serialization_compat_test: glfwInit failed\n");

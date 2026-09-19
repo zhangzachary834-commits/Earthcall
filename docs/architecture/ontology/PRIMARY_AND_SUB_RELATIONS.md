@@ -2,9 +2,11 @@
 
 **A Relation between two Singulars does not disappear. What is part of it may.**
 
-**Status:** Principle stated by Zach, 2026-09-15. Not yet built. The engine currently erases
+**Status:** Principle stated by Zach, 2026-09-15; its four open questions answered by him
+2026-09-16 (§6). Not yet built. The engine currently erases
 Relations outright (§5), so this document describes a direction the tree has not taken yet, not
-behaviour it has. Four ⚑ AUTHOR questions (§6) stand between the principle and a first rung.
+behaviour it has. §6 holds his answers and what each still leaves to design; those design choices, not the
+principle, are what stands between this and a first rung.
 **Origin:** Zach, answering Formation Rete §9.1(d) on 2026-09-15, when asked what happens to
 routing Relations discovered by the slow adapter that later go stale. He stated it as a principle
 **for Earthcall**, not only for routing. Recorded and cross-read against the tree by Claude Opus 5
@@ -29,9 +31,9 @@ freely. Formation Rete rung 4 retracts an edge *fact* when the edge is gone. Tha
 violation of this principle, because no Relation was removed.
 
 **Not an event log.** "Keeps history" does not mean replaying a list of every change to recover
-the past. `ONTOMATH_FRAMEWORK.md` §6 already refuses that shape for continuous state. What the
-primary Relation keeps is its sub-Relations' record, which it can consult if one becomes relevant
-again (§3).
+the past. `ONTOMATH_FRAMEWORK.md` §6 already refuses that shape for continuous state, and Zach's
+§6(d) answer says the same here: what is kept is a **record that the sub-Relation existed** plus a
+**mathematical model of its past**, not a tape of what happened to it.
 
 ---
 
@@ -64,15 +66,17 @@ same nonsense the first note rejects, in the other direction.
 | What | When | Outcome |
 |---|---|---|
 | **Primary Relation** between two Singulars | always | **Persists.** Never removed. Keeps the history of its sub-Relations. |
-| **Sub-Relation**, founding premise now **logically impossible** | e.g. a relevance sub-Relation necessarily conditioned on "this polyhedron is red", and it is now blue | **Dissolved.** It leaves the primary's live structure; the primary's history records that it was. |
+| **Sub-Relation**, founding premise now **false as the world stands** (Zach, 2026-09-16: not "impossible for ever" — *"very few things are impossible forever in Earthcall"*) | a relevance sub-Relation conditioned on "this polyhedron is red", and it is now blue | **Re-kinded** (§6b, Zach 2026-09-16): it changes from its active kind to a historical one and stays connected to its primary. Only the ACTIVE VARIANT is deleted. |
 | **Sub-Relation**, merely **less optimal**, founding premise still possible | a better route or stronger reason has appeared, but the original reason still holds | **Deprioritised, not removed.** |
 
 The line between rows two and three is **logical impossibility, not usefulness.** A sub-Relation
-that is no longer the best choice stays. Only one whose reason for existing *cannot* hold goes.
+that is no longer the best choice keeps its kind. Only one whose reason for existing *cannot* hold
+is re-kinded out of the active set.
 
 "Hybrid" is Zach's word for this. It is neither pure append-only (nothing ever changes) nor pure
-mutation (the present overwrites the past). Structure the world can no longer support is removed
-from the live graph, and the fact that it existed is kept.
+mutation (the present overwrites the past). Structure the world can no longer support stops being
+live — and, per §6(b), stops being live by CHANGING KIND rather than by being destroyed, so the
+fact that it existed survives in the thing itself, still attached to its primary.
 
 ---
 
@@ -84,19 +88,19 @@ returns to that state. Deleting it makes the world pay to rediscover it.
 
 *Extension (Opus 5), three connections already present in the tree:*
 
-**The dissolution test is the one soundness rule Earthcall already enforces.**
-`PROPHETIC_RETE.md` §2 allows analysis to conclude only IMPOSSIBLE, never "unlikely" or "not
-needed", because a too-narrow answer makes a law silently deaf. This principle draws the same line
-through Relations: dissolve on proved impossibility, never on estimated uselessness. Earthcall
-therefore has one rule for when something may be dropped, not two. It also means the machinery for
-proving a premise impossible, the abstract interpreter over authored conditions and OntoMath
-ranges, already exists.
+**The test is "false as the world now stands", and that is affordable BECAUSE nothing is destroyed.**
+Zach, 2026-09-16: *"by logically impossible when I said earlier I just meant false in the current
+state not impossible forever (very few things are impossible forever in Earthcall)"*. A premise is
+an authored `ConditionModel` (§4), so this is the same evaluation a law does every tick — no
+abstract interpretation required. The reason a test this eager is safe is §6(b): a sub-Relation that
+fails it changes kind and stays attached to its primary, so a premise that becomes true again can
+restore it. Under deletion the same test would destroy structure that is about to be needed.
 
-**Deprioritisation is where `Relation::weight` lands.** Row three needs an ordering among
-sub-Relations that are all still valid. That is the question Formation Rete §9.2 holds open (is
-weight value or cost?), and Zach tied §9.1(c) to it. This principle does not answer §9.2. It adds
-a requirement: whatever weight means, lowering it must be how "less optimal" is expressed, because
-removal is not available.
+**Deprioritisation needs an ordering, and what carries it is unsettled.** Row three needs a way to
+rank sub-Relations that are all still valid. `Relation::weight` was the obvious carrier — but
+Formation Rete §9.2 holds its meaning open, and as of 2026-09-15 Zach is leaning toward **removing
+weight entirely** as too vague. So this principle states the requirement without naming the field:
+whatever expresses "less optimal" must not be removal, because removal is not available here.
 
 **It makes the relevance graph safe to let improve itself.** The Formation Rete slow adapter is a
 First Mover (Zach, §9.1(a)) that discovers and retains routing Relations. A self-improving
@@ -123,7 +127,28 @@ sub-Relation**, not inferred afterwards. The natural carrier already exists: the
 
 The distinction that matters: a premise that is **currently false** is not the same as one that is
 **logically impossible**. "The polyhedron is red" is false while it is blue. It becomes impossible
-only if nothing in the world can ever make it red again. §6(b) asks which one Zach means.
+only if nothing in the world can ever make it red again.
+
+**ANSWERED — Zach, 2026-09-16:**
+
+> by logically impossible when I said earlier I just meant false in the current state not impossible
+> forever (very few things are impossible forever in Earthcall)
+
+So the test is **the premise is false as the world now stands**, not "no future world could satisfy
+it". That is decidable today: evaluate the premise's `ConditionModel` against the world, which is
+what every law already does each tick.
+
+*Reading (Opus 5):* this only works because §6(b) re-kinds rather than destroys. A "false right now"
+test fires often — the polyhedron is blue this second and red the next — and under deletion that
+would be catastrophic, erasing structure that is about to be true again. Under re-kinding it moves a
+sub-Relation out of the active set and keeps it attached to its primary, where the same test can
+move it back. **Deletion needed "impossible for ever"; re-kinding can afford "false now".** The two
+answers hold each other up.
+
+It also means this principle does NOT inherit `PROPHETIC_RETE.md` §2's IMPOSSIBLE-only rule, which
+§3 above suggested it would. That rule governs an INDEX that may not narrow what a law can see.
+Re-kinding is not an index: it is a change to the world that the world can undo, and the sweep
+re-tests every premise anyway.
 
 ---
 
@@ -144,40 +169,104 @@ What exists, and where it disagrees with the principle:
 
 ---
 
-## 6. ⚑ AUTHOR — open, Zach's
+## 6. Zach's answers, 2026-09-16
 
-**(a) What is the primary Relation between two Singulars?** Either exactly one per pair, with every
-kind-specific Relation between them (`instance-of`, `touching`, a relevance route) its
-sub-Relation, or one primary per kind. The first reads most naturally from "*the* primary Relation
-between two Singulars". It would change the identity rule in `Relation.hpp`, which says kind is part
-of a Relation's identity.
+The four questions §6 held open are answered. His words first, then what each one lands on in the
+tree (verified, Opus 5) and what it still leaves to design — marked, so nothing of mine is mistaken
+for his.
 
-**(b) "Logically impossible": for ever, or given the world as it now stands?** A premise false now
-but reachable again (the polyhedron can be repainted) vs a premise no authored Law or First Mover
-can ever restore. `PROPHETIC_RETE.md` §2 proves the second kind and is careful to scope it to
-*authored* law, since First Movers and foreign channels can move properties the analysis cannot
-see. The stricter reading dissolves almost nothing; the looser one needs a rule for when "not now"
-becomes "not ever".
+### (a) What is the primary Relation?
 
-**(c) Can a Person sever a primary Relation?** The Relations console's **Break**, and any future
-authored removal. Is that a real removal a Person may choose, a dissolution of sub-Relations with
-the primary kept, or something the kernel refuses? A Person ending a `Relationship` is the sharpest
-form of this question.
+> The primary relation would simply be "Primary" kind and the others would be constitutive of it.
+> Constitutiveness could be modeled in various ways: a property that is a Formation of the sub
+> Relations, or a hierarchical Singular graph of those Relations, or a linear authored property
+> vector of them.
 
-**(d) What does the primary keep about a dissolved sub-Relation?** The whole sub-Relation (premise,
-weight, endpoints), or a record that it existed and why it ended? The first allows reinstatement
-without rediscovery, which is what "in case it ever needs to be used again" suggests. The second is
-smaller.
+So the primary is **not a new C++ concept**: it is a Relation whose KIND is `Primary`, and the
+sub-Relations are **constitutive of** it. That keeps Refusals 1 and 3 — an authored, Lexeme-grounded
+kind, not a class and not an enum member — and it answers the identity worry §5 raised: a Relation's
+identity is its endpoints and its kind, and `Primary` is simply the kind that stands for "these two
+beings are related at all", with the specific kinds hanging under it.
 
----
+*In the tree already (Opus 5):* **constitutiveness is not new here either.** `Relation` carries
+`ConstitutiveOpcode` / `ConstitutiveStatus` and `evaluateConstitutive()`, which reads an authored
+opcode off the relation kind's **Lexeme** (`relation.constitutiveOpcode`) and answers Holds /
+Violated / Invalid / NotApplicable. One opcode exists today (`CppInheritance`). A sub-Relation's
+constitutive membership in its primary is the same shape: authored on the kind, evaluated against
+the world, and legible.
+
+*Left to design:* which of Zach's three carriers holds the sub-Relations — a Formation-valued
+property, a graph of Relations-between-Relations, or an authored property vector. He listed them as
+alternatives, not a choice. The Formation reading is the one that needs no new vocabulary
+(`Formation` is already a Singular holding members, and a Relation is a Singular), but a Formation
+of a relation's parts is a claim about what a Formation is, and that is Zach's to make.
+
+### (b) What happens when a sub-Relation's premise becomes impossible?
+
+> Either way, the sub relations should change in kind and preserve the history by being connected to
+> the primary Relation. We only delete the active variants in both cases.
+
+This **replaces "dissolved"** in §2 with something more careful, and it applies to BOTH rows — the
+impossible one and the merely-less-optimal one. Nothing is destroyed: a sub-Relation whose premise
+has failed **changes kind** — from the active kind to a past/historical one — and stays connected to
+its primary. What is deleted is only the **active variant**: the live, matchable form. The record
+remains, re-kinded.
+
+*In the tree already (Opus 5):* a Relation's kind can change in place, and as of 2026-09-15 that
+change **announces itself** — `setTypeLexeme` and a write to the `type` property both re-validate
+the endpoints' Rete facts, so a law watching the active kind stops seeing a re-kinded relation on
+the next tick, and one watching the historical kind starts. The mechanism a re-kinding needs is
+therefore live, and the question "does the law notice?" is already answered by rung 7's work.
+
+*Left to design:* the naming and shape of the historical kind (one `was-<kind>` per active kind, or
+a single `past` kind carrying the former kind as a property), and whether "delete the active
+variant" means removing the edge from the graph or removing it from what the active kind matches.
+
+### (c) May a Person sever a primary Relation?
+
+> This should be resolved by the same constitutive ownership and stakeholder framework used for the
+> second person framework.
+
+*In the tree already (Opus 5):* `ourverse/SECOND_PERSON_FRAMEWORK.md` §1 already splits exactly this
+way — **constitutive** properties are closed by default (Body, Soul, anything constitutive of a
+Person), while **authored/incidental** state is evaluated by a stakes framework comparing the
+level-tier of the reader against that of the property. `Singular::_stakeholders` records who moved
+what, by which law, when. So severance is not a new permission: a primary Relation between two
+Persons is constitutive and closed by default; other primaries answer to stakes.
+
+*Left to design:* the tier a primary Relation sits at, and what the Relations console's **Break**
+button means under it (§5 lists it as one of the four paths that erase a Relation outright today).
+
+### (d) What does the primary keep about a re-kinded sub-Relation?
+
+> Record of its existence and a mathematical model of its past (OntoMath).
+
+Not a log. A **record that it existed** plus **a closed-form model of how it behaved** — which is
+exactly what `mathematics/ONTOMATH_FRAMEWORK.md` §6 already argues for the world's past generally:
+integrate the authored rate, do not replay a history of events. A relation's past becomes a
+Person-readable mathematical object rather than a tape.
+
+*In the tree already (Opus 5):* `Relation::events` (`std::vector<RelationEvent>`: timestamp,
+description, `deltaWeight`) is a log, and a registered property. It is the closest thing today and
+it is the shape this answer moves away from — worth noting, since `deltaWeight` also depends on
+`weight`, which Zach is leaning toward removing (§9.2 of `law/FORMATION_RETE.md`).
+
+*Left to design:* which quantity the model is OF, once weight's future is settled.
 
 ## 7. For whoever builds the first rung (Jules especially)
 
 Everything you need to know:
 - **Don't add new ways to erase a Relation.** Every existing one (§5) is a place this principle is
   broken today. Adding a fifth makes the migration larger.
-- **Don't remove the four erase paths yet either.** Until §6(a) and §6(c) are answered, nothing
-  says what they should do instead, and chess, Go and Formations depend on them.
+- **Don't remove the four erase paths yet either.** §6(a) and §6(c) are answered in principle, but
+  the design choices under them are not made, and chess, Go and Formations depend on those paths.
+- **A sub-Relation leaving the active set is a KIND CHANGE, not a deletion** (§6b). The mechanism
+  exists and already announces itself: `Relation::setTypeLexeme` and a write to the `type` property
+  both re-validate the endpoints' Rete facts (2026-09-15, Formation Rete rung 4's follow-up), so a
+  law watching the active kind stops seeing it on the next tick.
+- **Constitutiveness is authored on the relation KIND**, through the Lexeme
+  (`relation.constitutiveOpcode`, `Relation::evaluateConstitutive`). That is where a sub-Relation's
+  membership in its primary belongs — not in a C++ field on Relation.
 - **Derived state is not a Relation.** Retracting a Rete fact, rebuilding an index or clearing a
   cache about an edge is fine and does not touch this principle.
 - **No new class for "SubRelation" or "PrimaryRelation".** A Relation is a Singular and can relate

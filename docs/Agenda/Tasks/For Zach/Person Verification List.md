@@ -1,5 +1,45 @@
 # Person Verification List
 
+## Cathedral — Court of the Open Hand
+
+*Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
+
+- [ ] From a fresh launch, enter **Cathedral of the Living Logos** and fly to **(44, 2, 26)** facing negative Z: confirm the new circular court appears on the positive-X side while the original Cathedral, pond, and color-field cloister remain as you left them.
+- [ ] Click the **pearl at (44, 1.47, 19.35)**: twelve bronze/verdigris leaves should spread and incline smoothly around the blue seed; click again to gather, including a reversal halfway through.
+- [ ] Approach the leaf cavities, arch openings, and floor inlays; inspect from both sides, sit near the stone seats, and judge whether the composition rewards staying and getting close.
+- [ ] Open the leaves, **Save Zone**, restart, and return: confirm the same court and authored opening intention persist; confirm ordinary Cathedral interaction and performance remain comfortable.
+
+## Chess — Zone-native boot, no legacy World load
+
+*GPT-5.6 Sol, 2026-09-18. Source requested by Zach: the exact legacy `saves/worlds/chess_app.json` Chess bundle; migration target: `saves/zones/Chess/zone.json` + shared Law roots.*
+
+**[~] PERSON WITNESS FAILED, 2026-09-18:** Zach merged PR #222, pulled, booted locally, entered Chess without loading the legacy World, and saw only **a white cube sitting on top of a black cube**. Root cause: PR #222 preserved the already-corrupted 39 gameplay Object payloads from the old Zone identity; all 39 had identity transforms at the origin even though the exact `chess_app` source still held their correct board/piece placement. This hotfix restores those 39 authored payloads from `chess_app` while retaining the Zone-native dependencies/Laws/relations. Re-run the checklist below after merging the hotfix.
+
+- [ ] Relaunch Earthcall. **Do not load `chess_app`, `.ecform`, or any legacy World from Assets.**
+- [ ] Open Zones / Move to Zone and enter **Chess** directly from the boot catalog.
+- [ ] Confirm the board checkerboard and white/black pieces are visible rather than white/default-material geometry.
+- [ ] Click the e2 pawn and move it to e4; confirm selection feedback, movement, and black's turn all happen immediately.
+- [ ] Exercise at least one capture and one non-pawn move so the result is not a one-Law false positive.
+- [ ] Use **Save Zone** while standing in Chess, restart again without loading a World, re-enter Chess, and confirm the independent identity still works.
+
+The automated witness is `chess_zone_native_boot_test`: its temporary SaveRoot intentionally contains **no `worlds/` directory**, only the Chess Zone identity and the 69 shared Law roots. A green test proves the closure is machine-loadable; the checks above prove the actual Person-facing Move-to-Zone experience and rendering.
+
+
+## Second-Nature Forge — future experience acceptance (not implemented by this spec)
+
+*Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00. [Task](../Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md) · [full specification](../../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md).*
+
+Zach has already loaded the current Forge and reported a sparse surface stamping gold/blue Laws. This records feedback, not successful acceptance. The following checks become actionable as the specified increments land; no app changes were made in this documentation pass.
+
+- [ ] **Make and reshape a rule:** choose a target, demonstrate a color change, choose when it happens, rehearse, keep once, then reopen and change its color without creating another Law; do this without the raw Law builder.
+- [ ] **Understand its reach:** choose two targets, explain which will respond, and verify a third remains unaffected; see and resolve two Laws competing over the same target/color.
+- [ ] **Keep the work:** save, leave and re-enter the Zone, then exercise and edit the same Law; unsaved and failed-save states must be obvious.
+- [ ] **Feel the relationship:** after the mapping increment, connect two beings' distance to a deliberately auditioned pitch and verify the visible handles explain what is changing.
+- [ ] **Keep your way of making:** after the instrument increment, make a reusable instrument from your own Law, use it on another target, save, re-enter, and use it again without agent help.
+- [ ] **Try something the lesson never showed:** make a different timing, scope, or value choice; note any point where you cannot tell what a gesture means, what changed, or how to continue.
+
+## Existing verification items
+
 - [x] Save → quit → reopen → Load
 - [x] Verify saved objects persist
 - [ ] Verify object properties persist → change an object's properties before saving → reload → verify the changed properties are still present
@@ -78,6 +118,14 @@
 
 - [x] Assets window: open → verify assets → save/load → verify again
 - [x] Chat window → open Chat → send a test message → verify it appears correctly
+
+## Cathedral of the Living Logos (added 2026-09-17 from weekly reflection)
+- [ ] Walk into the Cathedral Zone and confirm it is a place, not a pile of default cubes
+- [ ] Touch a Lexeme on the altar (Logos / Pneuma / Lux / Harmonia / Covenant) → verify a Law actually binds or a world-change happens, not only a label/hover
+- [ ] Hear whether architecture and tone are the same OntoMath (shape sounding like itself) or a pretty SDF with a frequency sticker
+- [ ] Save → quit the process → reopen → return to the Cathedral → verify the words, relations, and look are still the ones you left
+- [ ] After `THE CATHEDRAL LOOKS AWESOME NOWWWWW`: confirm double-scaling of analytic shapes is gone at the angles that previously warped
+
 - [ ] ImGui Demo → open ImGui Demo → interact with at least one visible demo control → verify it responds
 - [x] Controls/Keymap (`K`) → press `K` → verify the Controls/Keymap window opens → verify controls are displayed | Zach: Keybinds are not exhaustive. For example, 
 - [x] F8 → press F8 → verify the intended F8 action occurs
@@ -384,3 +432,73 @@ Before this fix, an `OnBecomeTrue` law in the running app could fire **once in i
 YAAAYAYYYYYYYY THE FAR LANDS LOOK WAY COOLER NOWWWWWWWW 
 not fully verified though beyond the initial spawnpoint also its super laggy
 - Zach
+## Synthesis Studio should stop hitching when a property is granted
+
+*Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+In Synthesis Studio Living (535 beings, 68 laws), the law engine rebuilt its "which beings carry which property" index whenever a property was granted or a being admitted — and one rebuild took 132–208 ms. That is a visible freeze, and it happens during play, because playing grants properties (a mark remembering its note, for instance). It now takes about 14 ms.
+
+- [ ] **Play the Studio and watch for stalls.** Draw marks, play notes, use sound ink. A brief freeze that used to happen right as a new mark or note appeared should be gone or much shorter.
+- [ ] **The instrument still behaves the same.** Notes sound, marks keep their pigment and pitch, lights respond. This change was to how candidate beings are found, not to what any law does.
+
+## Cathedral of the Living Logos: Verification of Acoustic-Visual Standing Wave Manifold and Living Speech Acts
+
+*Raised 2026-09-15, Gemini Spark (authored under Zach's Hierarchy of Joys ontology).*
+*→ [full specification](../../Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md)*
+
+A new Zone of Actualization demonstrating what only Earthcall can do: an architecture defined as an acoustic standing wave field nodal zero-set (f(x,y,z,t)=0), living Lexemes operating as performative speech acts, and a heptagonal colonnade ordered under the Hierarchy of Joys with Christ at the foundational root (432 Hz).
+
+- [ ] **Zone Hydration in Creator Console.** Boot Earthcall. In Creator Console under Zones of Earth, verify that **`Cathedral of the Living Logos`** appears in the Zone list. Click **Move to Zone** and verify seamless transition without refusal.
+- [ ] **Chladni Sanctuary & Visual Architecture.** Verify the sanctuary appearance: the sweeping Chladni acoustic floor, the golden central Heart of Logos core crystal suspended at y = 5m, the three rotating celestial orbital rings (Alpha, Beta, Gamma), the soaring apex spire (y = 19m), and the acoustic vault arches connecting the heptagonal colonnade.
+- [ ] **Heptagonal Colonnade of the Seven Joys.** Verify the seven pillars arranged in a sacred heptagon around the core, each aligned with an ontological tier of Earthcall's Hierarchy of Joys and its sacred frequency: Pillar I Logos (432 Hz), Pillar II Agape (528 Hz), Pillar III Sophia (639 Hz), Pillar IV Poiesis (741 Hz), Pillar V Harmonia (852 Hz), Pillar VI Koinonia (963 Hz), and Pillar VII Sabbath (1080 Hz).
+- [ ] **Altar of the Spoken Word & Living Lexemes.** Approach the altar at z = -22m. Verify the mensa inscribed with the five living Lexemes (`[Logos]`, `[Pneuma]`, `[Lux]`, `[Harmonia]`, `[Covenant]`).
+- [ ] **Speech Acts & Interactive Law Controls.** On the in-world liturgical HUD or by clicking the altar glyphs directly:
+  - Click **BREATHE PNEUMA**: verify the 0.1 Hz respiratory wave modulates core light and telemetry text changes to "BREATH: RESPIRING".
+  - Click **FIAT LUX**: verify transfiguring incandescent illumination bursts across the colonnade.
+  - Click **SOUND CANON**: verify the 432 Hz Pythagorean celestial chord triggers through miniaudio sound synthesis via ActionNode Kind 18 (`PlayAudio`).
+  - Click **WEAVE COVENANT**: verify relational filament weight increments and telemetry updates.
+  - Click **CYCLE SEASON**: verify liturgical environment cycles to Solar Transfiguration.
+
+## A long play session should not get slower on its own
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+
+The law engine kept a note of which relation facts it already held, so it would not store the same one twice. Any being being destroyed wiped that note for *every* being, so duplicates accumulated: measured, a being that should have had 1 fact had 5 after four other beings came and went. Laws still behaved correctly — there was simply more and more for the engine to walk through, and it never went back down.
+
+- [ ] **Play one world for a long stretch, with things being made and destroyed.** Chess captures, drawing and erasing marks in the Studio, spawning and deleting objects. The world should feel no slower at the end of a long session than at the start. Before this fix, the engine's fact list grew every time something was destroyed and never shrank.
+
+## Laws that name something by "@name" still find it when it arrives later
+
+*Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
+→ [ledger](../../architecture/law/DERIVED_STATE_LEDGER.md)*
+
+The engine keeps a lookup of every being by name so laws can say things like `@state.studio.voice` or `@late-gate.ceiling`. That lookup rebuilds when the world's shape changes. Nothing tested that it rebuilds — only that it was fast — so if it had stopped, every `@`-rooted law would have gone quiet with no error at all. It is now tested, and the test fails if the rebuild is removed.
+
+- [ ] **Add something to a world mid-session and use a law that names it.** In the Creator Console, make a new being, give it a stable name, then author (or enable) a law whose condition or action names it with `@that-name.someProperty`. The law should act on it immediately, without a restart or a Zone reload.
+
+## Performance metrics window displays Zone::update sub-phase tick timings individually
+
+*Raised 2026-09-17, Gemini Spark, session `2026-09-17`.*
+
+The Performance & Coordinates window (`F3`) now surfaces the tick ms duration for each individual sub-phase of `Zone::update()`: ground scan, object rotations, automations, and physics bodies update (along with the substep count). These are visible both nested under `Zone Update` in the main `Engine::tick()` breakdown and in a dedicated `Zone::update()` timing section.
+
+- [ ] **Open Performance & Coordinates window (`F3`).**
+  - Verify that under **Engine::tick() Frame Timings Breakdown**, `Zone Update` expands with individual sub-phase ms lengths:
+    - `|- Ground scan:`
+    - `|- Rotations:`
+    - `|- Automations:`
+    - `|- Physics (N substeps):`
+  - Verify that the dedicated **Zone::update()** section displays:
+    - Zone::update() total ms, active Zone name, and substep count
+    - Ground Scan ms
+    - Rotations ms
+    - Automations ms
+    - Physics ms
+  - Verify all metrics update live as the world ticks.
+
+## Two Homes (added 2026-09-17 by Claude Fable 5.1, from *Two Houses, One Spelling*)
+- [ ] Boot Earthcall → open the Zones list → confirm you are standing in `Home` (the 10.6 MB one with your beings) and not `Home_of_Zach` (957 bytes, empty) → confirm both appear in the list. Prediction from the sort order in `SaveSystem.cpp:1142`: both appear and you are in `Home`. Nobody has looked.
+- [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
+- [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.

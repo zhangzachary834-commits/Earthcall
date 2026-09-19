@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <memory>
+#include "Singularity/OntoMath/ScalarForm.hpp"
 
 // ---------------------------------------------------------------------------
 // RenderMaterial is the flat, GPU-facing view of a Material being. The ontology
@@ -30,6 +32,10 @@ struct RenderMaterial {
     int albedoHeight = 0;
     bool doubleSided = false;   // open surfaces (Bezier patches): light both faces.
                                 // GL → two-sided light model; WebGPU → cull none.
+    
+    // OntoMath color bounds expression (if authored)
+    std::shared_ptr<OntoMath::Piecewise> colorExpr;
+    uint32_t colorRevision = 0;
 };
 
 // One face's albedo — the paint the Face Brush writes — described BOTH ways,

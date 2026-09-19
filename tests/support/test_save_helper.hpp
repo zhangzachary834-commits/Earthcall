@@ -4,13 +4,32 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <glm/glm.hpp>
 #include <cmath>
+#include <chrono>
 #include <string>
 #include <filesystem>
 #include <iostream>
+
+
+struct TempSaveRoot {
+    std::filesystem::path path;
+    TempSaveRoot() {
+        path = std::filesystem::temp_directory_path() /
+               ("earthcall-test-save-" +
+                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(path);
+        SaveSystem::setSaveRoot(path.string());
+    }
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ignored;
+        std::filesystem::remove_all(path, ignored);
+    }
+};
 
 inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawManager& testLawManager, Person& testPlayer,
                            const std::string& filepathOverride = "") {
@@ -76,8 +95,12 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
 
     std::string filepath = filepathOverride;
     if (filepath.empty()) {
-        std::filesystem::create_directories("saves/tests");
-        filepath = "saves/tests/" + test_name + ".json";
+        std::filesystem::path root = SaveSystem::saveRoot().empty()
+            ? std::filesystem::path("saves")
+            : std::filesystem::path(SaveSystem::saveRoot());
+        std::filesystem::path testsFolder = root / "tests";
+        std::filesystem::create_directories(testsFolder);
+        filepath = (testsFolder / (test_name + ".json")).string();
     } else {
         std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
     }

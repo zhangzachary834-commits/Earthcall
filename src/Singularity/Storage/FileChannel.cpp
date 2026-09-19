@@ -4,8 +4,9 @@
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "json.hpp"
 
+#ifndef __EMSCRIPTEN__
 #include <openssl/sha.h>
-
+#endif
 #include <algorithm>
 #include <atomic>
 #include <cctype>
@@ -115,6 +116,7 @@ std::string FileChannel::hexDecode(const std::string& input) {
 }
 
 std::string FileChannel::computeSha256(const std::string& data) {
+#ifndef __EMSCRIPTEN__
     unsigned char hash[SHA256_DIGEST_LENGTH];
     SHA256(reinterpret_cast<const unsigned char*>(data.data()), data.size(), hash);
     static const char hexDigits[] = "0123456789abcdef";
@@ -125,6 +127,9 @@ std::string FileChannel::computeSha256(const std::string& data) {
         out.push_back(hexDigits[hash[i] & 0x0F]);
     }
     return out;
+#else
+    throw std::runtime_error("computeSha256 refused: no OpenSSL in WASM build");
+#endif
 }
 
 std::string FileChannel::detectMimeType(const std::string& path, const std::string& content) {

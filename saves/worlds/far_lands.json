@@ -499,6 +499,102 @@
       }
     },
     {
+      "objectID": "category.farlands.skyway",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Far Lands Celestial Skyway"
+        }
+      }
+    },
+    {
+      "objectID": "category.farlands.farcrest",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "materialId": "",
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Far Lands High Sanctum"
+        }
+      }
+    },
+    {
       "objectID": "category.control",
       "shapeKind": 12,
       "geometryType": 12,
@@ -673,6 +769,7 @@
               240.0,
               2000.0
             ],
+            "fieldCellSize": 25.0,
             "field": {
               "op": 0,
               "prim": 7,
@@ -896,7 +993,7 @@
                                     "scalarForm": {
                                       "terms": [
                                         {
-                                          "c": 65.0,
+                                          "c": 68.0,
                                           "factors": {}
                                         }
                                       ]
@@ -985,7 +1082,7 @@
                                     "scalarForm": {
                                       "terms": [
                                         {
-                                          "c": 30.0,
+                                          "c": 32.0,
                                           "factors": {}
                                         }
                                       ]
@@ -1082,7 +1179,7 @@
                                         "scalarForm": {
                                           "terms": [
                                             {
-                                              "c": 65.0,
+                                              "c": 68.0,
                                               "factors": {}
                                             }
                                           ]
@@ -1171,7 +1268,7 @@
                                         "scalarForm": {
                                           "terms": [
                                             {
-                                              "c": 30.0,
+                                              "c": 32.0,
                                               "factors": {}
                                             }
                                           ]
@@ -1265,7 +1362,7 @@
                                         "scalarForm": {
                                           "terms": [
                                             {
-                                              "c": 24.0,
+                                              "c": 26.0,
                                               "factors": {}
                                             }
                                           ]
@@ -1354,7 +1451,7 @@
                                         "scalarForm": {
                                           "terms": [
                                             {
-                                              "c": 7.0,
+                                              "c": 8.0,
                                               "factors": {}
                                             }
                                           ]
@@ -2564,6 +2661,14 @@
               "acoustic.waveType": {
                 "t": "string",
                 "v": "crystal"
+              },
+              "livingSingularity": {
+                "t": "bool",
+                "v": true
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -2644,6 +2749,14 @@
               "displayName": {
                 "t": "string",
                 "v": "Singularity Orbital Gyroscope"
+              },
+              "livingSingularity": {
+                "t": "bool",
+                "v": true
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -2652,7 +2765,7 @@
             "shapeKind": 2,
             "geometryType": 2,
             "shapeParams": [
-              0.18,
+              0.2,
               0.0,
               0.0,
               0.0,
@@ -2665,17 +2778,17 @@
               0.0
             ],
             "transform": [
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               3.8,
@@ -2724,6 +2837,22 @@
               "displayName": {
                 "t": "string",
                 "v": "Harmonic Satellite (mote_n)"
+              },
+              "livingSatellite": {
+                "t": "bool",
+                "v": true
+              },
+              "orbitRadius": {
+                "t": "double",
+                "v": 2.4
+              },
+              "orbitPhase": {
+                "t": "double",
+                "v": 0.0
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -2732,7 +2861,7 @@
             "shapeKind": 2,
             "geometryType": 2,
             "shapeParams": [
-              0.18,
+              0.2,
               0.0,
               0.0,
               0.0,
@@ -2745,17 +2874,17 @@
               0.0
             ],
             "transform": [
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               3.8,
@@ -2804,6 +2933,22 @@
               "displayName": {
                 "t": "string",
                 "v": "Harmonic Satellite (mote_s)"
+              },
+              "livingSatellite": {
+                "t": "bool",
+                "v": true
+              },
+              "orbitRadius": {
+                "t": "double",
+                "v": 2.4
+              },
+              "orbitPhase": {
+                "t": "double",
+                "v": 3.141592653589793
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -2812,7 +2957,7 @@
             "shapeKind": 2,
             "geometryType": 2,
             "shapeParams": [
-              0.18,
+              0.2,
               0.0,
               0.0,
               0.0,
@@ -2825,17 +2970,17 @@
               0.0
             ],
             "transform": [
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               2.4,
               3.8,
@@ -2884,6 +3029,22 @@
               "displayName": {
                 "t": "string",
                 "v": "Harmonic Satellite (mote_e)"
+              },
+              "livingSatellite": {
+                "t": "bool",
+                "v": true
+              },
+              "orbitRadius": {
+                "t": "double",
+                "v": 2.4
+              },
+              "orbitPhase": {
+                "t": "double",
+                "v": 1.5707963267948966
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -2892,7 +3053,7 @@
             "shapeKind": 2,
             "geometryType": 2,
             "shapeParams": [
-              0.18,
+              0.2,
               0.0,
               0.0,
               0.0,
@@ -2905,17 +3066,17 @@
               0.0
             ],
             "transform": [
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               0.0,
               0.0,
               0.0,
-              0.36,
+              0.4,
               0.0,
               -2.4,
               3.8,
@@ -2964,6 +3125,22 @@
               "displayName": {
                 "t": "string",
                 "v": "Harmonic Satellite (mote_w)"
+              },
+              "livingSatellite": {
+                "t": "bool",
+                "v": true
+              },
+              "orbitRadius": {
+                "t": "double",
+                "v": 2.4
+              },
+              "orbitPhase": {
+                "t": "double",
+                "v": 4.71238898038469
+              },
+              "baseY": {
+                "t": "double",
+                "v": 3.8
               }
             }
           },
@@ -3448,6 +3625,1478 @@
             }
           },
           {
+            "objectID": "object.farlands.skyway.step1",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.8,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.6,
+              0.0,
+              0.0,
+              4.5,
+              -40.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              4.5,
+              -40.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step1)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step2",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.7,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.4,
+              0.0,
+              3.5,
+              11.0,
+              -52.0,
+              1.0
+            ],
+            "center": [
+              3.5,
+              11.0,
+              -52.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step2)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step3",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.7,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.4,
+              0.0,
+              -3.5,
+              19.0,
+              -65.0,
+              1.0
+            ],
+            "center": [
+              -3.5,
+              19.0,
+              -65.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step3)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step5",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.7,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.4,
+              0.0,
+              4.0,
+              39.0,
+              -96.0,
+              1.0
+            ],
+            "center": [
+              4.0,
+              39.0,
+              -96.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step5)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step6",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.7,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.4,
+              0.0,
+              -4.0,
+              50.0,
+              -110.0,
+              1.0
+            ],
+            "center": [
+              -4.0,
+              50.0,
+              -110.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step6)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step7",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.8,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              3.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              3.6,
+              0.0,
+              0.0,
+              61.0,
+              -124.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              61.0,
+              -124.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step7)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.step8",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              2.0,
+              0.0,
+              0.0,
+              0.25,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              4.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.0,
+              0.0,
+              0.0,
+              68.0,
+              -134.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              68.0,
+              -134.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ],
+              [
+                0.15,
+                0.18,
+                0.25
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Celestial Skyway Disk (step8)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.midstation",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              4.5,
+              0.0,
+              0.0,
+              0.3,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              9.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              9.0,
+              0.0,
+              0.0,
+              29.0,
+              -80.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              29.0,
+              -80.0
+            ],
+            "materialId": "material.farlands.platform",
+            "faceColors": [
+              [
+                0.18,
+                0.22,
+                0.3
+              ],
+              [
+                0.18,
+                0.22,
+                0.3
+              ],
+              [
+                0.18,
+                0.22,
+                0.3
+              ],
+              [
+                0.18,
+                0.22,
+                0.3
+              ],
+              [
+                0.18,
+                0.22,
+                0.3
+              ],
+              [
+                0.18,
+                0.22,
+                0.3
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Skyway Midpoint Haven"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.skyway.mid_ring",
+            "shapeKind": 8,
+            "geometryType": 8,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              4.2,
+              0.12,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              29.3,
+              -80.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              29.3,
+              -80.0
+            ],
+            "materialId": "material.farlands.beacon",
+            "faceColors": [
+              [
+                0.3,
+                0.9,
+                1.0
+              ],
+              [
+                0.3,
+                0.9,
+                1.0
+              ],
+              [
+                0.3,
+                0.9,
+                1.0
+              ],
+              [
+                0.3,
+                0.9,
+                1.0
+              ],
+              [
+                0.3,
+                0.9,
+                1.0
+              ],
+              [
+                0.3,
+                0.9,
+                1.0
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Midway Runic Ring"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.dais",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              8.0,
+              0.0,
+              0.0,
+              0.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              16.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              16.0,
+              0.0,
+              0.0,
+              72.0,
+              -142.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              72.0,
+              -142.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.08,
+                0.09,
+                0.14
+              ],
+              [
+                0.08,
+                0.09,
+                0.14
+              ],
+              [
+                0.08,
+                0.09,
+                0.14
+              ],
+              [
+                0.08,
+                0.09,
+                0.14
+              ],
+              [
+                0.08,
+                0.09,
+                0.14
+              ],
+              [
+                0.08,
+                0.09,
+                0.14
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Far Crest High Sanctum Terrace"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.oculus",
+            "shapeKind": 8,
+            "geometryType": 8,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              7.5,
+              0.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              -1.0,
+              0.0,
+              0.0,
+              0.0,
+              82.0,
+              -145.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              82.0,
+              -145.0
+            ],
+            "materialId": "material.farlands.gold",
+            "faceColors": [
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "The Oculus of Infinity"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.siphon",
+            "shapeKind": 2,
+            "geometryType": 2,
+            "shapeParams": [
+              3.2,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              6.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              6.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              6.4,
+              0.0,
+              0.0,
+              82.0,
+              -145.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              82.0,
+              -145.0
+            ],
+            "materialId": "material.farlands.amethyst",
+            "faceColors": [
+              [
+                0.85,
+                0.3,
+                1.0
+              ],
+              [
+                0.85,
+                0.3,
+                1.0
+              ],
+              [
+                0.85,
+                0.3,
+                1.0
+              ],
+              [
+                0.85,
+                0.3,
+                1.0
+              ],
+              [
+                0.85,
+                0.3,
+                1.0
+              ],
+              [
+                0.85,
+                0.3,
+                1.0
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Singularity Siphon Hyper-Core"
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-oculus-pulse"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 108.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.9
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "sine"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.pillar_left",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [
+              0.8,
+              0.8,
+              0.8,
+              8.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              16.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.6,
+              0.0,
+              -9.5,
+              80.0,
+              -145.0,
+              1.0
+            ],
+            "center": [
+              -9.5,
+              80.0,
+              -145.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Pillar of Eternity (left)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.pillar_right",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [
+              0.8,
+              0.8,
+              0.8,
+              8.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.2,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1.6,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              16.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.6,
+              0.0,
+              9.5,
+              80.0,
+              -145.0,
+              1.0
+            ],
+            "center": [
+              9.5,
+              80.0,
+              -145.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ],
+              [
+                0.1,
+                0.12,
+                0.16
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Pillar of Eternity (right)"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.farcrest.altar",
+            "shapeKind": 3,
+            "geometryType": 3,
+            "shapeParams": [
+              1.2,
+              0.0,
+              0.0,
+              0.5,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              2.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.4,
+              0.0,
+              0.0,
+              72.8,
+              -138.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              72.8,
+              -138.0
+            ],
+            "materialId": "material.farlands.gold",
+            "faceColors": [
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ],
+              [
+                0.95,
+                0.78,
+                0.32
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "High Altar of the Void"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.babel_spire",
+            "shapeKind": 9,
+            "geometryType": 9,
+            "shapeParams": [
+              7.0,
+              7.0,
+              7.0,
+              32.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.8,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              14.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              64.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              14.0,
+              0.0,
+              80.0,
+              42.0,
+              80.0,
+              1.0
+            ],
+            "center": [
+              80.0,
+              42.0,
+              80.0
+            ],
+            "materialId": "material.farlands.obsidian",
+            "faceColors": [
+              [
+                0.07,
+                0.08,
+                0.12
+              ],
+              [
+                0.07,
+                0.08,
+                0.12
+              ],
+              [
+                0.07,
+                0.08,
+                0.12
+              ],
+              [
+                0.07,
+                0.08,
+                0.12
+              ],
+              [
+                0.07,
+                0.08,
+                0.12
+              ],
+              [
+                0.07,
+                0.08,
+                0.12
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Corner Obelisk of Babel"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.corner_resonator",
+            "shapeKind": 2,
+            "geometryType": 2,
+            "shapeParams": [
+              1.4,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              2.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.8,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              2.8,
+              0.0,
+              80.0,
+              16.0,
+              68.0,
+              1.0
+            ],
+            "center": [
+              80.0,
+              16.0,
+              68.0
+            ],
+            "materialId": "material.farlands.emerald",
+            "faceColors": [
+              [
+                0.2,
+                0.95,
+                0.6
+              ],
+              [
+                0.2,
+                0.95,
+                0.6
+              ],
+              [
+                0.2,
+                0.95,
+                0.6
+              ],
+              [
+                0.2,
+                0.95,
+                0.6
+              ],
+              [
+                0.2,
+                0.95,
+                0.6
+              ],
+              [
+                0.2,
+                0.95,
+                0.6
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Babel Corner Resonator"
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-corner-pulse"
+              },
+              "acoustic.frequency": {
+                "t": "double",
+                "v": 360.0
+              },
+              "acoustic.amplitude": {
+                "t": "double",
+                "v": 0.7
+              },
+              "acoustic.waveType": {
+                "t": "string",
+                "v": "triangle"
+              }
+            }
+          },
+          {
+            "objectID": "object.farlands.horizon_arch",
+            "shapeKind": 0,
+            "geometryType": 0,
+            "shapeParams": [
+              14.0,
+              4.0,
+              6.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              28.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              8.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              12.0,
+              0.0,
+              65.0,
+              52.0,
+              35.0,
+              1.0
+            ],
+            "center": [
+              65.0,
+              52.0,
+              35.0
+            ],
+            "materialId": "material.farlands.rock",
+            "faceColors": [
+              [
+                0.14,
+                0.16,
+                0.2
+              ],
+              [
+                0.14,
+                0.16,
+                0.2
+              ],
+              [
+                0.14,
+                0.16,
+                0.2
+              ],
+              [
+                0.14,
+                0.16,
+                0.2
+              ],
+              [
+                0.14,
+                0.16,
+                0.2
+              ],
+              [
+                0.14,
+                0.16,
+                0.2
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Floating Arch of the Horizon"
+              }
+            }
+          },
+          {
             "objectID": "object.farlands.sky_alpha",
             "shapeKind": 0,
             "geometryType": 0,
@@ -3478,13 +5127,13 @@
               12.0,
               0.0,
               0.0,
-              52.0,
+              56.0,
               -75.0,
               1.0
             ],
             "center": [
               0.0,
-              52.0,
+              56.0,
               -75.0
             ],
             "materialId": "material.farlands.obsidian",
@@ -3558,13 +5207,13 @@
               30.0,
               0.0,
               75.0,
-              60.0,
+              62.0,
               65.0,
               1.0
             ],
             "center": [
               75.0,
-              60.0,
+              62.0,
               65.0
             ],
             "materialId": "material.farlands.obsidian",
@@ -3820,7 +5469,7 @@
               0.0
             ],
             "x2D": 32.0,
-            "y2D": 28.0,
+            "y2D": 26.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -3919,7 +5568,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 58.0,
+            "y2D": 54.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4018,7 +5667,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 78.0,
+            "y2D": 74.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4117,7 +5766,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 106.0,
+            "y2D": 100.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4216,7 +5865,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 124.0,
+            "y2D": 118.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4315,7 +5964,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 142.0,
+            "y2D": 136.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4414,7 +6063,7 @@
               0.0
             ],
             "x2D": 34.0,
-            "y2D": 160.0,
+            "y2D": 154.0,
             "zOrder2D": 30,
             "materialId": "",
             "faceColors": [
@@ -4487,7 +6136,7 @@
               0.0,
               0.0,
               1220.0,
-              56.0
+              88.0
             ],
             "transform": [
               1.0,
@@ -4513,7 +6162,7 @@
               0.0
             ],
             "x2D": 30.0,
-            "y2D": 640.0,
+            "y2D": 605.0,
             "zOrder2D": 20,
             "materialId": "",
             "faceColors": [
@@ -4559,7 +6208,7 @@
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 56.0
+                "v": 88.0
               },
               "pickPriority": {
                 "t": "double",
@@ -4568,7 +6217,7 @@
             }
           },
           {
-            "objectID": "hud.btn.pulse",
+            "objectID": "hud.btn.warp.sanctuary",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -4581,8 +6230,8 @@
               0.0,
               0.0,
               0.0,
-              150.0,
-              36.0
+              170.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -4608,70 +6257,70 @@
               0.0
             ],
             "x2D": 45.0,
-            "y2D": 650.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ],
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ],
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ],
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ],
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ],
               [
-                0.16,
-                0.48,
-                0.55
+                0.18,
+                0.35,
+                0.42
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ PULSE CORE ]"
+                "v": "[ WARP: SANCTUARY ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ PULSE CORE ]"
+                "v": "[ WARP: SANCTUARY ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 150.0
+                "v": 170.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
-                "v": "farlands-pulse"
+                "v": "farlands-warp-sanctuary"
               },
               "label.size2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 11.0
               }
             }
           },
           {
-            "objectID": "hud.btn.chord",
+            "objectID": "hud.btn.warp.overlook",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -4684,8 +6333,8 @@
               0.0,
               0.0,
               0.0,
-              165.0,
-              36.0
+              170.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -4710,71 +6359,71 @@
               0.0,
               0.0
             ],
-            "x2D": 205.0,
-            "y2D": 650.0,
+            "x2D": 225.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ],
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ],
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ],
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ],
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ],
               [
-                0.42,
-                0.24,
-                0.56
+                0.22,
+                0.38,
+                0.48
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ HARMONIC CHORD ]"
+                "v": "[ WARP: OVERLOOK ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ HARMONIC CHORD ]"
+                "v": "[ WARP: OVERLOOK ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 165.0
+                "v": 170.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
-                "v": "farlands-chord"
+                "v": "farlands-warp-overlook"
               },
               "label.size2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 11.0
               }
             }
           },
           {
-            "objectID": "hud.btn.north",
+            "objectID": "hud.btn.warp.skyway",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -4787,8 +6436,8 @@
               0.0,
               0.0,
               0.0,
-              140.0,
-              36.0
+              170.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -4813,71 +6462,71 @@
               0.0,
               0.0
             ],
-            "x2D": 380.0,
-            "y2D": 650.0,
+            "x2D": 405.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ],
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ],
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ],
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ],
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ],
               [
-                0.35,
-                0.2,
-                0.5
+                0.25,
+                0.42,
+                0.55
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ NORTH: 528Hz ]"
+                "v": "[ WARP: SKYWAY MID ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ NORTH: 528Hz ]"
+                "v": "[ WARP: SKYWAY MID ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 140.0
+                "v": 170.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
-                "v": "farlands-pillar-north"
+                "v": "farlands-warp-skyway"
               },
               "label.size2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 11.0
               }
             }
           },
           {
-            "objectID": "hud.btn.south",
+            "objectID": "hud.btn.warp.farcrest",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -4890,8 +6539,8 @@
               0.0,
               0.0,
               0.0,
-              140.0,
-              36.0
+              175.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -4916,71 +6565,71 @@
               0.0,
               0.0
             ],
-            "x2D": 530.0,
-            "y2D": 650.0,
+            "x2D": 585.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ],
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ],
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ],
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ],
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ],
               [
-                0.18,
-                0.32,
-                0.52
+                0.45,
+                0.22,
+                0.58
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ SOUTH: 396Hz ]"
+                "v": "[ WARP: FAR CREST ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ SOUTH: 396Hz ]"
+                "v": "[ WARP: FAR CREST ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 140.0
+                "v": 175.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
-                "v": "farlands-pillar-south"
+                "v": "farlands-warp-farcrest"
               },
               "label.size2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 11.0
               }
             }
           },
           {
-            "objectID": "hud.btn.east",
+            "objectID": "hud.btn.warp.babel",
             "shapeKind": 12,
             "geometryType": 12,
             "shapeParams": [
@@ -4993,8 +6642,8 @@
               0.0,
               0.0,
               0.0,
-              140.0,
-              36.0
+              180.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -5019,169 +6668,66 @@
               0.0,
               0.0
             ],
-            "x2D": 680.0,
-            "y2D": 650.0,
+            "x2D": 770.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ],
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ],
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ],
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ],
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ],
               [
-                0.18,
-                0.45,
-                0.32
+                0.5,
+                0.32,
+                0.2
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ EAST: 639Hz ]"
+                "v": "[ WARP: BABEL SPIRE ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ EAST: 639Hz ]"
+                "v": "[ WARP: BABEL SPIRE ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 140.0
+                "v": 180.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
-                "v": "farlands-pillar-east"
+                "v": "farlands-warp-babel"
               },
               "label.size2D": {
                 "t": "double",
-                "v": 12.0
-              }
-            }
-          },
-          {
-            "objectID": "hud.btn.west",
-            "shapeKind": 12,
-            "geometryType": 12,
-            "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              140.0,
-              36.0
-            ],
-            "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0
-            ],
-            "center": [
-              0.0,
-              0.0,
-              0.0
-            ],
-            "x2D": 830.0,
-            "y2D": 650.0,
-            "zOrder2D": 35,
-            "materialId": "",
-            "faceColors": [
-              [
-                0.52,
-                0.35,
-                0.18
-              ],
-              [
-                0.52,
-                0.35,
-                0.18
-              ],
-              [
-                0.52,
-                0.35,
-                0.18
-              ],
-              [
-                0.52,
-                0.35,
-                0.18
-              ],
-              [
-                0.52,
-                0.35,
-                0.18
-              ],
-              [
-                0.52,
-                0.35,
-                0.18
-              ]
-            ],
-            "authoredProperties": {
-              "displayName": {
-                "t": "string",
-                "v": "[ WEST: 741Hz ]"
-              },
-              "label2D": {
-                "t": "string",
-                "v": "[ WEST: 741Hz ]"
-              },
-              "shape.width2D": {
-                "t": "double",
-                "v": 140.0
-              },
-              "shape.height2D": {
-                "t": "double",
-                "v": 36.0
-              },
-              "buttonRole": {
-                "t": "string",
-                "v": "farlands-pillar-west"
-              },
-              "label.size2D": {
-                "t": "double",
-                "v": 12.0
+                "v": 11.0
               }
             }
           },
@@ -5199,8 +6745,8 @@
               0.0,
               0.0,
               0.0,
-              240.0,
-              36.0
+              170.0,
+              32.0
             ],
             "transform": [
               1.0,
@@ -5225,58 +6771,58 @@
               0.0,
               0.0
             ],
-            "x2D": 980.0,
-            "y2D": 650.0,
+            "x2D": 960.0,
+            "y2D": 615.0,
             "zOrder2D": 35,
             "materialId": "",
             "faceColors": [
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ],
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ],
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ],
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ],
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ],
               [
-                0.45,
-                0.38,
-                0.2
+                0.42,
+                0.35,
+                0.18
               ]
             ],
             "authoredProperties": {
               "displayName": {
                 "t": "string",
-                "v": "[ ATMOSPHERE: AURORA / VOID ]"
+                "v": "[ AURORA / VOID ]"
               },
               "label2D": {
                 "t": "string",
-                "v": "[ ATMOSPHERE: AURORA / VOID ]"
+                "v": "[ AURORA / VOID ]"
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 240.0
+                "v": 170.0
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 36.0
+                "v": 32.0
               },
               "buttonRole": {
                 "t": "string",
@@ -5284,7 +6830,831 @@
               },
               "label.size2D": {
                 "t": "double",
+                "v": 11.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.pulse",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              140.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 45.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.16,
+                0.48,
+                0.55
+              ],
+              [
+                0.16,
+                0.48,
+                0.55
+              ],
+              [
+                0.16,
+                0.48,
+                0.55
+              ],
+              [
+                0.16,
+                0.48,
+                0.55
+              ],
+              [
+                0.16,
+                0.48,
+                0.55
+              ],
+              [
+                0.16,
+                0.48,
+                0.55
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ PULSE CORE ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ PULSE CORE ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 140.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-pulse"
+              },
+              "label.size2D": {
+                "t": "double",
                 "v": 12.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.chord",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              155.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 195.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.42,
+                0.24,
+                0.56
+              ],
+              [
+                0.42,
+                0.24,
+                0.56
+              ],
+              [
+                0.42,
+                0.24,
+                0.56
+              ],
+              [
+                0.42,
+                0.24,
+                0.56
+              ],
+              [
+                0.42,
+                0.24,
+                0.56
+              ],
+              [
+                0.42,
+                0.24,
+                0.56
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ HARMONIC CHORD ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ HARMONIC CHORD ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 155.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-chord"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 12.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.oculus",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              145.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 360.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.52,
+                0.18,
+                0.48
+              ],
+              [
+                0.52,
+                0.18,
+                0.48
+              ],
+              [
+                0.52,
+                0.18,
+                0.48
+              ],
+              [
+                0.52,
+                0.18,
+                0.48
+              ],
+              [
+                0.52,
+                0.18,
+                0.48
+              ],
+              [
+                0.52,
+                0.18,
+                0.48
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ OCULUS: 108Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ OCULUS: 108Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 145.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-oculus-pulse"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 12.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.north",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              130.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 515.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.35,
+                0.2,
+                0.5
+              ],
+              [
+                0.35,
+                0.2,
+                0.5
+              ],
+              [
+                0.35,
+                0.2,
+                0.5
+              ],
+              [
+                0.35,
+                0.2,
+                0.5
+              ],
+              [
+                0.35,
+                0.2,
+                0.5
+              ],
+              [
+                0.35,
+                0.2,
+                0.5
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ NORTH: 528Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ NORTH: 528Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 130.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-pillar-north"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 11.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.south",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              130.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 655.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.18,
+                0.32,
+                0.52
+              ],
+              [
+                0.18,
+                0.32,
+                0.52
+              ],
+              [
+                0.18,
+                0.32,
+                0.52
+              ],
+              [
+                0.18,
+                0.32,
+                0.52
+              ],
+              [
+                0.18,
+                0.32,
+                0.52
+              ],
+              [
+                0.18,
+                0.32,
+                0.52
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ SOUTH: 396Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ SOUTH: 396Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 130.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-pillar-south"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 11.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.east",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              130.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 795.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.18,
+                0.45,
+                0.32
+              ],
+              [
+                0.18,
+                0.45,
+                0.32
+              ],
+              [
+                0.18,
+                0.45,
+                0.32
+              ],
+              [
+                0.18,
+                0.45,
+                0.32
+              ],
+              [
+                0.18,
+                0.45,
+                0.32
+              ],
+              [
+                0.18,
+                0.45,
+                0.32
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ EAST: 639Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ EAST: 639Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 130.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-pillar-east"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 11.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.west",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              130.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 935.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.52,
+                0.35,
+                0.18
+              ],
+              [
+                0.52,
+                0.35,
+                0.18
+              ],
+              [
+                0.52,
+                0.35,
+                0.18
+              ],
+              [
+                0.52,
+                0.35,
+                0.18
+              ],
+              [
+                0.52,
+                0.35,
+                0.18
+              ],
+              [
+                0.52,
+                0.35,
+                0.18
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ WEST: 741Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ WEST: 741Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 130.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-pillar-west"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 11.0
+              }
+            }
+          },
+          {
+            "objectID": "hud.btn.corner",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              135.0,
+              34.0
+            ],
+            "transform": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "x2D": 1075.0,
+            "y2D": 653.0,
+            "zOrder2D": 35,
+            "materialId": "",
+            "faceColors": [
+              [
+                0.22,
+                0.45,
+                0.42
+              ],
+              [
+                0.22,
+                0.45,
+                0.42
+              ],
+              [
+                0.22,
+                0.45,
+                0.42
+              ],
+              [
+                0.22,
+                0.45,
+                0.42
+              ],
+              [
+                0.22,
+                0.45,
+                0.42
+              ],
+              [
+                0.22,
+                0.45,
+                0.42
+              ]
+            ],
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "[ BABEL: 360Hz ]"
+              },
+              "label2D": {
+                "t": "string",
+                "v": "[ BABEL: 360Hz ]"
+              },
+              "shape.width2D": {
+                "t": "double",
+                "v": 135.0
+              },
+              "shape.height2D": {
+                "t": "double",
+                "v": 34.0
+              },
+              "buttonRole": {
+                "t": "string",
+                "v": "farlands-corner-pulse"
+              },
+              "label.size2D": {
+                "t": "double",
+                "v": 11.0
               }
             }
           }
@@ -5336,6 +7706,34 @@
         {
           "type": "subcategory-of",
           "entityA": "category.farlands.overlook",
+          "entityB": "category.farlands",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.farlands.skyway",
+          "entityB": "category.farlands",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "subcategory-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "subcategory-of",
+          "entityA": "category.farlands.farcrest",
           "entityB": "category.farlands",
           "directed": true,
           "weight": 1.0,
@@ -5629,6 +8027,314 @@
         },
         {
           "type": "instance-of",
+          "entityA": "object.farlands.skyway.step1",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step2",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step3",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step5",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step6",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step7",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.step8",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.skyway.midstation",
+          "entityB": "category.farlands.skyway",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.dais",
+          "entityB": "category.farlands.farcrest",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.oculus",
+          "entityB": "category.farlands.farcrest",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.siphon",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.pillar_left",
+          "entityB": "category.farlands.farcrest",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.pillar_right",
+          "entityB": "category.farlands.farcrest",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.farcrest.altar",
+          "entityB": "category.farlands.farcrest",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.babel_spire",
+          "entityB": "category.farlands.monolith",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "object.farlands.corner_resonator",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.warp.sanctuary",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.warp.overlook",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.warp.skyway",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.warp.farcrest",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.warp.babel",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.theme",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
           "entityA": "hud.btn.pulse",
           "entityB": "category.control.button",
           "directed": true,
@@ -5644,6 +8350,20 @@
         {
           "type": "instance-of",
           "entityA": "hud.btn.chord",
+          "entityB": "category.control.button",
+          "directed": true,
+          "weight": 1.0,
+          "events": [
+            {
+              "description": "instance-of",
+              "deltaWeight": 1.0,
+              "timestamp": 1787395000
+            }
+          ]
+        },
+        {
+          "type": "instance-of",
+          "entityA": "hud.btn.oculus",
           "entityB": "category.control.button",
           "directed": true,
           "weight": 1.0,
@@ -5713,7 +8433,7 @@
         },
         {
           "type": "instance-of",
-          "entityA": "hud.btn.theme",
+          "entityA": "hud.btn.corner",
           "entityB": "category.control.button",
           "directed": true,
           "weight": 1.0,
@@ -5742,11 +8462,20 @@
     "formationMembers": [
       "law-farlands-pulse",
       "law-farlands-chord",
+      "law-farlands-oculus",
       "law-farlands-north",
       "law-farlands-south",
       "law-farlands-east",
       "law-farlands-west",
-      "law-farlands-theme-toggle"
+      "law-farlands-corner",
+      "law-farlands-theme-toggle",
+      "law-farlands-warp-sanctuary",
+      "law-farlands-warp-overlook",
+      "law-farlands-warp-skyway",
+      "law-farlands-warp-farcrest",
+      "law-farlands-warp-babel",
+      "law-farlands-living-core",
+      "law-farlands-living-satellites"
     ],
     "laws": [
       {
@@ -5921,6 +8650,106 @@
           {
             "type": "authored-by",
             "entityA": "law-farlands-chord",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-oculus",
+        "name": "Far Lands: Unleash Oculus Deep Singularity Roar",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-oculus-pulse"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "sine"
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 8,
+              "path": "@state.farlands.pulseCount",
+              "bindings": {
+                "c": "@state.farlands.pulseCount"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "c": 1.0
+                          }
+                        },
+                        {
+                          "c": 1.0,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.resonance.label2D",
+              "operand": {
+                "t": "string",
+                "v": "RESONANCE: OCULUS 108 Hz SUB-BASS SIPHON"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-oculus-sounded",
+              "publishSubject": "object.farlands.farcrest.siphon",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-oculus",
             "entityB": "author.gemini-spark",
             "directed": true,
             "weight": 1.0,
@@ -6204,6 +9033,73 @@
         "applicationLog": []
       },
       {
+        "id": "law-farlands-corner",
+        "name": "Far Lands: Sound Babel Corner Harmonic",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-corner-pulse"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "triangle"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.resonance.label2D",
+              "operand": {
+                "t": "string",
+                "v": "RESONANCE: BABEL TOWER (360 Hz - PENTATONIC)"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-corner-sounded",
+              "publishSubject": "object.farlands.corner_resonator",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-corner",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
         "id": "law-farlands-theme-toggle",
         "name": "Far Lands: Toggle Atmosphere Between Aurora & Void",
         "enabled": true,
@@ -6296,6 +9192,674 @@
           }
         ],
         "applicationLog": []
+      },
+      {
+        "id": "law-farlands-warp-sanctuary",
+        "name": "Far Lands: Warp Teleport to Sanctuary Origin Observatory",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-warp-sanctuary"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@person.cameraPos",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 3.5,
+                "z": 6.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@person.position",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 3.5,
+                "z": 6.0
+              }
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.sector.label2D",
+              "operand": {
+                "t": "string",
+                "v": "SECTOR: ORIGIN OBSERVATORY SANCTUARY [0.0, 0.0]"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-warped-sanctuary",
+              "publishSubject": "Person",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-warp-sanctuary",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-warp-overlook",
+        "name": "Far Lands: Warp Teleport to North Edge Vista Catwalk",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-warp-overlook"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@person.cameraPos",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 3.5,
+                "z": -27.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@person.position",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 3.5,
+                "z": -27.0
+              }
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.sector.label2D",
+              "operand": {
+                "t": "string",
+                "v": "SECTOR: NORTH EDGE OVERLOOK [-28m ABYSS]"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-warped-overlook",
+              "publishSubject": "Person",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-warp-overlook",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-warp-skyway",
+        "name": "Far Lands: Warp Teleport to Celestial Skyway Midstation",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-warp-skyway"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@person.cameraPos",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 32.0,
+                "z": -80.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@person.position",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 32.0,
+                "z": -80.0
+              }
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.sector.label2D",
+              "operand": {
+                "t": "string",
+                "v": "SECTOR: CELESTIAL SKYWAY MIDSTATION [+29m ELEVATION]"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-warped-skyway",
+              "publishSubject": "Person",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-warp-skyway",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-warp-farcrest",
+        "name": "Far Lands: Warp Teleport to Far Crest High Precipice Sanctum",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-warp-farcrest"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@person.cameraPos",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 75.0,
+                "z": -135.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@person.position",
+              "operand": {
+                "t": "vec3",
+                "x": 0.0,
+                "y": 75.0,
+                "z": -135.0
+              }
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.sector.label2D",
+              "operand": {
+                "t": "string",
+                "v": "SECTOR: FAR CREST HIGH SANCTUM [+72m SUMMIT]"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-warped-farcrest",
+              "publishSubject": "Person",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-warp-farcrest",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-warp-babel",
+        "name": "Far Lands: Warp Teleport to Corner Babel Monolith Summit",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "buttonRole",
+          "op": 0,
+          "operand": {
+            "t": "string",
+            "v": "farlands-warp-babel"
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 0,
+              "path": "@person.cameraPos",
+              "operand": {
+                "t": "vec3",
+                "x": 80.0,
+                "y": 82.0,
+                "z": 80.0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "@person.position",
+              "operand": {
+                "t": "vec3",
+                "x": 80.0,
+                "y": 82.0,
+                "z": 80.0
+              }
+            },
+            {
+              "kind": 18,
+              "path": "acoustic.frequency",
+              "input": "acoustic.amplitude",
+              "propertyName": "crystal"
+            },
+            {
+              "kind": 0,
+              "path": "@hud.telemetry.sector.label2D",
+              "operand": {
+                "t": "string",
+                "v": "SECTOR: BABEL SPIRE SUMMIT [+80m SKY REACH]"
+              }
+            },
+            {
+              "kind": 10,
+              "eventType": "farlands-warped-babel",
+              "publishSubject": "Person",
+              "publishObject": ""
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-warp-babel",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-living-core",
+        "name": "Far Lands: Singularity Core Harmonic Breathing",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "livingSingularity",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "y": "baseY",
+                "t": "time"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "y": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.35,
+                          "factors": {},
+                          "trans": [
+                            {
+                              "kind": 0,
+                              "var": "t",
+                              "scale": 0.75,
+                              "shift": 0.0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-living-core",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
+      },
+      {
+        "id": "law-farlands-living-satellites",
+        "name": "Far Lands: Orbiting Harmonic Satellites Dynamic Path",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 1,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "author.gemini-spark"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "conditionModel": {
+          "kind": 0,
+          "path": "livingSatellite",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        "actionModel": {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.x",
+              "bindings": {
+                "r": "orbitRadius",
+                "p": "orbitPhase",
+                "t": "time"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          },
+                          "trans": [
+                            {
+                              "kind": 1,
+                              "var": "t",
+                              "scale": 0.8,
+                              "shift": 0.0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.z",
+              "bindings": {
+                "r": "orbitRadius",
+                "p": "orbitPhase",
+                "t": "time"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "r": 1.0
+                          },
+                          "trans": [
+                            {
+                              "kind": 0,
+                              "var": "t",
+                              "scale": 0.8,
+                              "shift": 0.0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "y": "baseY",
+                "t": "time",
+                "p": "orbitPhase"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "y": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.25,
+                          "factors": {},
+                          "trans": [
+                            {
+                              "kind": 0,
+                              "var": "t",
+                              "scale": 1.6,
+                              "shift": 0.0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "provenance": [
+          {
+            "type": "authored-by",
+            "entityA": "law-farlands-living-satellites",
+            "entityB": "author.gemini-spark",
+            "directed": true,
+            "weight": 1.0,
+            "events": [
+              {
+                "description": "authored-by",
+                "deltaWeight": 1.0,
+                "timestamp": 1787395000
+              }
+            ]
+          }
+        ],
+        "applicationLog": []
       }
     ],
     "triggers": {
@@ -6303,6 +9867,9 @@
         "control-activated"
       ],
       "law-farlands-chord": [
+        "control-activated"
+      ],
+      "law-farlands-oculus": [
         "control-activated"
       ],
       "law-farlands-north": [
@@ -6317,7 +9884,25 @@
       "law-farlands-west": [
         "control-activated"
       ],
+      "law-farlands-corner": [
+        "control-activated"
+      ],
       "law-farlands-theme-toggle": [
+        "control-activated"
+      ],
+      "law-farlands-warp-sanctuary": [
+        "control-activated"
+      ],
+      "law-farlands-warp-overlook": [
+        "control-activated"
+      ],
+      "law-farlands-warp-skyway": [
+        "control-activated"
+      ],
+      "law-farlands-warp-farcrest": [
+        "control-activated"
+      ],
+      "law-farlands-warp-babel": [
         "control-activated"
       ]
     }

@@ -4,7 +4,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <iomanip>
 #include <limits>
+#include <set>
+#include <sstream>
+#include <tuple>
 
 namespace Prophetic {
 
@@ -31,6 +36,30 @@ Interval boolAsInterval(bool maybeTrue, bool maybeFalse) {
     if (maybeTrue) return Interval(1.0f);
     if (maybeFalse) return Interval(0.0f);
     return Interval(1.0f, 0.0f);   // empty
+}
+
+// Stable authored-branch provenance. These ids are DERIVED from the authored
+// node text rather than persisted as runtime state: recompilation may rebuild
+// closures and vectors, but the same authored branch has the same canonical
+// JSON and therefore the same id across recompile and save/load.
+std::string stableBranchId(const char* prefix, const nlohmann::json& authored) {
+    const std::string text = authored.dump();
+    std::uint64_t hash = 1469598103934665603ull; // FNV-1a 64
+    for (const unsigned char ch : text) {
+        hash ^= static_cast<std::uint64_t>(ch);
+        hash *= 1099511628211ull;
+    }
+    std::ostringstream out;
+    out << prefix << '-' << std::hex << std::setw(16) << std::setfill('0') << hash;
+    return out.str();
+}
+
+std::string actionBranchId(const ActionNode& node) {
+    return stableBranchId("a", node.toJson());
+}
+
+std::string conditionBranchId(const ConditionNode& node) {
+    return stableBranchId("c", node.toJson());
 }
 
 } // namespace
@@ -295,13 +324,15 @@ Range rangeOfCurve(const CurveModel& curve) {
 // ---------------------------------------------------------------------------
 
 void analyzeAction(const ActionNode& node, LawFacts& out) {
+    const std::string branchId = actionBranchId(node);
     const auto structural = [&](const char* why) {
         out.opaqueWrites = true;
         out.notes.push_back(std::string("opaque write: ") + why);
     };
     const auto emit = [&](const PropertyPath& path, Range range, const char* via) {
         if (path.empty()) return;
-        out.writes.push_back(WriteEffect{out.lawId, path.toString(), std::move(range), via});
+        out.writes.push_back(
+            WriteEffect{out.lawId, branchId, path.toString(), std::move(range), via});
     };
 
     switch (node.kind) {
@@ -339,7 +370,7 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         case ActionNode::Kind::AddProperty:
             // The leaf is granted on whoever `path` names; the opening value
             // is what lands in it.
-            out.writes.push_back(WriteEffect{out.lawId, node.propertyName,
+            out.writes.push_back(WriteEffect{out.lawId, branchId, node.propertyName,
                                              Range::ofValue(node.operand), "AddProperty"});
             break;
 
@@ -376,6 +407,198 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
 
     for (const auto& child : node.children) analyzeAction(child, out);
 }
+
+namespace {
+
+// A Law's condition is an invariant pre-state for every firing: if the Law
+// fires, its subject satisfied these demands immediately before the action.
+// This is the sound seed for current-value-dependent writes. It is deliberately
+// exact-path only: pathsMayAlias() is a MAY-alias relation and may never be
+// used to narrow a value.
+using AbstractState = std::map<std::string, Range>;
+
+bool asNumericInterval(const Range& range, Interval& out) {
+    if (range.kind == Range::Kind::Number) {
+        out = range.number;
+        return true;
+    }
+    if (range.kind == Range::Kind::Boolean) {
+        out = boolAsInterval(range.maybeTrue, range.maybeFalse);
+        return !out.empty();
+    }
+    return false;
+}
+
+Range stateRange(const AbstractState& state, const PropertyPath& path) {
+    const auto it = state.find(path.toString());
+    return it == state.end() ? Range::top() : it->second;
+}
+
+void writeState(AbstractState& state, const PropertyPath& path, const Range& range) {
+    if (!path.empty()) state[path.toString()] = range;
+}
+
+std::map<std::string, Interval> bindingBounds(
+    const MathBindings& bindings, const AbstractState& state) {
+    std::map<std::string, Interval> out;
+    for (const auto& [variable, path] : bindings) {
+        Interval iv;
+        if (asNumericInterval(stateRange(state, path), iv)) out.emplace(variable, iv);
+    }
+    return out;
+}
+
+Range affineCurrentWrite(const ActionNode& node, const Range& current) {
+    Interval lhs;
+    if (!asNumericInterval(current, lhs)) return Range::top();
+
+    double rhsValue = 0.0;
+    if (!propertyValueToNumber(node.operand, rhsValue)) return Range::top();
+    const Interval rhs(static_cast<float>(rhsValue));
+
+    switch (node.kind) {
+        case ActionNode::Kind::Add:
+            return Range::fromInterval(lhs + rhs);
+        case ActionNode::Kind::Scale:
+            return Range::fromInterval(lhs * rhs);
+        case ActionNode::Kind::Lerp: {
+            const float f = static_cast<float>(node.factor);
+            return Range::fromInterval(lhs * Interval(1.0f - f) + rhs * Interval(f));
+        }
+        default:
+            return Range::top();
+    }
+}
+
+Range flowCurrentWrite(const ActionNode& node, const AbstractState& state) {
+    Interval current;
+    if (!asNumericInterval(stateRange(state, node.path), current)) return Range::top();
+
+    const Range rateRange = rangeOfPiecewise(node.mapFunction,
+                                             bindingBounds(node.bindings, state));
+    Interval rate;
+    if (!asNumericInterval(rateRange, rate)) return Range::top();
+
+    // A zero rate is an identity regardless of the engine's frame delta.
+    if (rate.lo == 0.0f && rate.hi == 0.0f) {
+        return Range::fromInterval(current);
+    }
+
+    // dt is part of Flow's semantics but is not an implicit engine promise to
+    // Prophetic Rete. Only authored text may bound it. If the Law did not
+    // constrain time.delta, the honest result stays Top.
+    const auto dtIt = state.find("time.delta");
+    if (dtIt == state.end()) return Range::top();
+    Interval dt;
+    if (!asNumericInterval(dtIt->second, dt)) return Range::top();
+
+    return Range::fromInterval(current + rate * dt);
+}
+
+// Context-sensitive action interpretation. analyzeAction() above remains the
+// context-free public primitive (therefore unguarded Add/Scale/Lerp/Flow are
+// still Top). A whole Law has more information: its condition is a pre-state,
+// and an ordered Sequence may establish a value before a later action reads it.
+//
+// For the supported current-dependent transforms the transfer is monotone over
+// interval inclusion. Applying it to the ENTIRE authored guard therefore
+// already yields a sound post-fixpoint for repeated firings: any later firing
+// must re-enter through that same guard, a subset of the pre-state already
+// analyzed. This is the widening fixpoint without pretending the open world is
+// closed. First Movers / foreign channels can still supply any unguarded
+// starting value, so those cases correctly remain Top.
+void analyzeActionWithState(const ActionNode& node, LawFacts& out, AbstractState& state) {
+    const std::string branchId = actionBranchId(node);
+    const auto emit = [&](const PropertyPath& path, Range range, const char* via) {
+        if (path.empty()) return;
+        out.writes.push_back(
+            WriteEffect{out.lawId, branchId, path.toString(), range, via});
+        writeState(state, path, range);
+    };
+
+    switch (node.kind) {
+        case ActionNode::Kind::Set:
+            emit(node.path, Range::ofValue(node.operand), "Set");
+            return;
+
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+            emit(node.path, affineCurrentWrite(node, stateRange(state, node.path)),
+                 ActionNode::kindName(node.kind));
+            return;
+
+        case ActionNode::Kind::Drive:
+            emit(node.path, rangeOfCurve(node.curve), "Drive");
+            return;
+
+        case ActionNode::Kind::Map:
+            emit(node.path,
+                 rangeOfPiecewise(node.mapFunction, bindingBounds(node.bindings, state)),
+                 "Map");
+            return;
+
+        case ActionNode::Kind::Flow:
+            emit(node.path, flowCurrentWrite(node, state), "Flow");
+            return;
+
+        case ActionNode::Kind::AddProperty: {
+            const Range opening = Range::ofValue(node.operand);
+            out.writes.push_back(
+                WriteEffect{out.lawId, branchId, node.propertyName, opening, "AddProperty"});
+            state[node.propertyName] = opening;
+            return;
+        }
+
+        case ActionNode::Kind::Sequence:
+            for (const auto& child : node.children) {
+                analyzeActionWithState(child, out, state);
+            }
+            return;
+
+        case ActionNode::Kind::Parallel: {
+            // Siblings are conceptually simultaneous. No sibling may borrow
+            // another sibling's write as its pre-state. For whatever follows
+            // the Parallel block, join all possible sibling outputs per path.
+            const AbstractState incoming = state;
+            std::map<std::string, Range> parallelWrites;
+            for (const auto& child : node.children) {
+                AbstractState childState = incoming;
+                const std::size_t before = out.writes.size();
+                analyzeActionWithState(child, out, childState);
+                for (std::size_t i = before; i < out.writes.size(); ++i) {
+                    const WriteEffect& effect = out.writes[i];
+                    auto it = parallelWrites.find(effect.path);
+                    if (it == parallelWrites.end()) parallelWrites.emplace(effect.path, effect.range);
+                    else it->second = it->second.joined(effect.range);
+                }
+            }
+            for (const auto& [path, range] : parallelWrites) state[path] = range;
+            return;
+        }
+
+        default:
+            // Structural / modality actions retain the existing fail-open
+            // analysis. Their children (Create/Synthesize) act in a different
+            // subject scope, so none of those writes may seed this subject's
+            // sequential abstract state.
+            analyzeAction(node, out);
+            return;
+    }
+}
+
+AbstractState conditionPreState(const LawFacts& facts) {
+    AbstractState state;
+    for (const auto& read : facts.reads) {
+        if (read.aboutInstances || read.satisfying.isTop()) continue;
+        auto it = state.find(read.path);
+        if (it == state.end()) state.emplace(read.path, read.satisfying);
+        else it->second = it->second.met(read.satisfying);
+    }
+    return state;
+}
+
+} // namespace
 
 // ---------------------------------------------------------------------------
 // Reading a condition tree: what does this law read, and what would satisfy it?
@@ -453,9 +676,10 @@ Interval zoneWindow(const ConditionNode& node) {
 DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQuantifier);
 
 // Record every demand in a map as a read on the law, then hand it back.
-void fileDemands(const DemandMap& demands, LawFacts& out, bool insideQuantifier) {
+void fileDemands(const DemandMap& demands, LawFacts& out, bool insideQuantifier,
+                 const std::string& branchId) {
     for (const auto& [path, range] : demands) {
-        out.reads.push_back(ReadDemand{out.lawId, path, range, insideQuantifier});
+        out.reads.push_back(ReadDemand{out.lawId, branchId, path, range, insideQuantifier});
     }
 }
 
@@ -504,7 +728,7 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
         case ConditionNode::Kind::ForAll: {
             for (const auto& child : node.children) {
                 DemandMap inner = walkCondition(child, out, true);
-                fileDemands(inner, out, true);
+                fileDemands(inner, out, true, conditionBranchId(child));
             }
             return {};
         }
@@ -619,18 +843,75 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
         node.kind == ConditionNode::Kind::ForAll;
     if (!alreadyRecursed) {
         for (const auto& child : node.children) {
-            fileDemands(walkCondition(child, out, insideQuantifier), out, insideQuantifier);
+            fileDemands(walkCondition(child, out, insideQuantifier), out, insideQuantifier,
+                        conditionBranchId(child));
         }
     }
 
     return demands;
 }
 
+// Preserve leaf/local branch provenance separately from the effective demand
+// algebra above. Any(A, B) may make a path unconstrained for the whole Any
+// expression, while A itself is still exactly the frontier a write can make
+// relevant. This walk never narrows execution; it only constructs a
+// conservative relevance graph.
+void collectBranchReads(const ConditionNode& node, LawFacts& out,
+                        bool insideQuantifier, bool forceTop = false) {
+    const std::string branchId = conditionBranchId(node);
+    const auto emit = [&](const PropertyPath& path, Range range) {
+        if (path.empty()) return;
+        if (forceTop) range = Range::top();
+        out.branchReads.push_back(
+            ReadDemand{out.lawId, branchId, path.toString(), std::move(range), insideQuantifier});
+    };
+
+    switch (node.kind) {
+        case ConditionNode::Kind::Compare:
+            emit(node.path, satisfyingRange(node));
+            if (!node.operandPath.empty()) emit(node.operandPath, Range::top());
+            break;
+        case ConditionNode::Kind::InRegion:
+            emit(node.probe.empty() ? PropertyPath::parse("position") : node.probe, Range::top());
+            break;
+        case ConditionNode::Kind::Zone:
+            for (const auto& [var, path] : node.bindings) {
+                (void)var;
+                emit(path, Range::top());
+            }
+            break;
+        case ConditionNode::Kind::ForAny:
+        case ConditionNode::Kind::ForAll:
+            for (const auto& child : node.children) {
+                collectBranchReads(child, out, true, forceTop);
+            }
+            return;
+        case ConditionNode::Kind::Not:
+            for (const auto& child : node.children) {
+                collectBranchReads(child, out, insideQuantifier, true);
+            }
+            return;
+        case ConditionNode::Kind::All:
+        case ConditionNode::Kind::Any:
+            for (const auto& child : node.children) {
+                collectBranchReads(child, out, insideQuantifier, forceTop);
+            }
+            return;
+        default:
+            break;
+    }
+
+    for (const auto& child : node.children) {
+        collectBranchReads(child, out, insideQuantifier, forceTop);
+    }
+}
+
 } // namespace
 
 void analyzeCondition(const ConditionNode& node, LawFacts& out, bool insideQuantifier) {
     DemandMap demands = walkCondition(node, out, insideQuantifier);
-    fileDemands(demands, out, insideQuantifier);
+    fileDemands(demands, out, insideQuantifier, conditionBranchId(node));
+    collectBranchReads(node, out, insideQuantifier);
 }
 
 // ---------------------------------------------------------------------------
@@ -653,7 +934,8 @@ LawFacts analyzeLaw(const Law& law) {
     }
 
     if (const ActionModel* action = law.actionModel()) {
-        analyzeAction(*action, facts);
+        AbstractState state = conditionPreState(facts);
+        analyzeActionWithState(*action, facts, state);
     }
 
     // A First Mover actuates in C++ — that is what makes it a first mover.
@@ -698,6 +980,17 @@ std::vector<std::string> normalizedPaths(const std::string& dotted) {
     return out;
 }
 
+bool pathsMayAlias(const std::string& a, const std::string& b) {
+    const auto aa = normalizedPaths(a);
+    const auto bb = normalizedPaths(b);
+    for (const auto& left : aa) {
+        for (const auto& right : bb) {
+            if (left == right) return true;
+        }
+    }
+    return false;
+}
+
 bool namesWorldReading(const std::string& dotted) {
     return dotted.rfind("@world", 0) == 0;
 }
@@ -728,7 +1021,9 @@ void Index::clear() {
     _readRoots.clear();
     _writeRanges.clear();
     _unreachable.clear();
+    _relevanceEdges.clear();
     _complete = true;
+    _relevanceComplete = true;
 }
 
 void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
@@ -739,8 +1034,14 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     for (const auto& law : laws) {
         if (!law) continue;
         LawFacts facts = analyzeLaw(*law);
-        if (facts.opaqueReads) _complete = false;
-        if (facts.opaqueWrites) anyOpaqueWrite = true;
+        if (facts.opaqueReads) {
+            _complete = false;
+            _relevanceComplete = false;
+        }
+        if (facts.opaqueWrites) {
+            anyOpaqueWrite = true;
+            _relevanceComplete = false;
+        }
         _readNames.insert(facts.readNames.begin(), facts.readNames.end());
         _readRoots.insert(facts.readRoots.begin(), facts.readRoots.end());
 
@@ -759,10 +1060,42 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
         _facts.push_back(std::move(facts));
     }
 
+    // Pairwise Prophetic relevance graph. This is the modern descendant of
+    // the old "ActionNode -> Beta back-pointer" idea: prove which authored
+    // write branches can possibly feed which authored read branches, but do
+    // NOT yet reify the result into a Person's world or use it to narrow the
+    // hot path. Opacity invalidates the graph globally; callers then fall back
+    // to a lower complete Formation-Rete tier.
+    _relevanceComplete = _complete && !anyOpaqueWrite;
+    if (_relevanceComplete) {
+        std::set<std::tuple<std::string, std::string, std::string, std::string,
+                            std::string, bool>> seen;
+        for (const auto& writerFacts : _facts) {
+            for (const auto& write : writerFacts.writes) {
+                for (const auto& readerFacts : _facts) {
+                    for (const auto& read : readerFacts.branchReads) {
+                        if (!pathsMayAlias(write.path, read.path)) continue;
+                        if (!write.range.mayIntersect(read.satisfying)) continue;
+                        const auto key = std::make_tuple(
+                            write.lawId, write.branchId, read.lawId, read.branchId,
+                            read.path, read.aboutInstances);
+                        if (!seen.insert(key).second) continue;
+                        _relevanceEdges.push_back(RelevanceEdge{
+                            write.lawId, write.branchId,
+                            read.lawId, read.branchId,
+                            read.path, read.aboutInstances});
+                    }
+                }
+            }
+        }
+    }
+
     // Pass 3, across laws: a demand every authored writer misses. Only asked
-    // where the whole register was legible — one opaque write anywhere and
-    // the union above is not the union of everything laws can do.
-    if (anyOpaqueWrite) return;
+    // where the whole register was legible. The architecture document has
+    // always promised BOTH halves of that guard; enforcing _complete here
+    // closes the case where one opaque read used to coexist with a cross-law
+    // "no lawful driver" finding.
+    if (anyOpaqueWrite || !_complete) return;
 
     for (const auto& facts : _facts) {
         for (const auto& demand : facts.reads) {
@@ -815,6 +1148,7 @@ Range Index::writeRangeOf(const std::string& path) const {
 nlohmann::json Index::toJson() const {
     nlohmann::json j;
     j["complete"] = _complete;
+    j["relevanceComplete"] = _relevanceComplete;
     j["lawCount"] = _facts.size();
 
     j["readNames"] = nlohmann::json::array();
@@ -835,16 +1169,38 @@ nlohmann::json Index::toJson() const {
         lj["opaqueWrites"] = facts.opaqueWrites;
         lj["writes"] = nlohmann::json::array();
         for (const auto& w : facts.writes) {
-            lj["writes"].push_back({{"path", w.path}, {"via", w.via}, {"range", w.range.print()}});
+            lj["writes"].push_back({{"branchId", w.branchId},
+                                     {"path", w.path},
+                                     {"via", w.via},
+                                     {"range", w.range.print()}});
         }
         lj["reads"] = nlohmann::json::array();
         for (const auto& r : facts.reads) {
-            lj["reads"].push_back({{"path", r.path},
+            lj["reads"].push_back({{"branchId", r.branchId},
+                                   {"path", r.path},
                                    {"satisfying", r.satisfying.print()},
                                    {"aboutInstances", r.aboutInstances}});
         }
+        lj["branchReads"] = nlohmann::json::array();
+        for (const auto& r : facts.branchReads) {
+            lj["branchReads"].push_back({{"branchId", r.branchId},
+                                         {"path", r.path},
+                                         {"satisfying", r.satisfying.print()},
+                                         {"aboutInstances", r.aboutInstances}});
+        }
         lj["notes"] = facts.notes;
         j["laws"].push_back(std::move(lj));
+    }
+
+    j["relevanceEdges"] = nlohmann::json::array();
+    for (const auto& edge : _relevanceEdges) {
+        j["relevanceEdges"].push_back({
+            {"writerLawId", edge.writerLawId},
+            {"writerBranchId", edge.writerBranchId},
+            {"readerLawId", edge.readerLawId},
+            {"readerBranchId", edge.readerBranchId},
+            {"path", edge.path},
+            {"aboutInstances", edge.aboutInstances}});
     }
 
     j["unreachable"] = nlohmann::json::array();

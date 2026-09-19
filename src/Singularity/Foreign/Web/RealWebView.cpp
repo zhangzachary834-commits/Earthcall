@@ -21,6 +21,7 @@
 @property (nonatomic, strong) WKWebViewConfiguration* config;
 @property (nonatomic, strong) WKUserContentController* userContentController;
 @property (nonatomic, copy) void (^messageHandler)(NSString* message);
+@property (nonatomic, copy) void (^domMirrorHandler)(NSString* message);
 @property (nonatomic, copy) void (^loadHandler)(BOOL loaded);
 @end
 
@@ -28,8 +29,14 @@
 
 - (void)userContentController:(WKUserContentController *)userContentController 
       didReceiveScriptMessage:(WKScriptMessage *)message {
-    if (self.messageHandler) {
-        self.messageHandler(message.body);
+    if ([message.name isEqualToString:@"domMirror"]) {
+        if (self.domMirrorHandler) {
+            self.domMirrorHandler(message.body);
+        }
+    } else {
+        if (self.messageHandler) {
+            self.messageHandler(message.body);
+        }
     }
 }
 
@@ -101,6 +108,15 @@ bool RealWebView::init() {
         bridge.messageHandler = ^(NSString* message) {
             if (weakSelf) {
                 weakSelf->_handleWebMessage([message UTF8String]);
+            }
+        };
+        
+        bridge.domMirrorHandler = ^(NSString* message) {
+            if (weakSelf) {
+                auto it = weakSelf->_jsHandlers.find("domMirror");
+                if (it != weakSelf->_jsHandlers.end()) {
+                    it->second([message UTF8String]);
+                }
             }
         };
         
@@ -780,6 +796,7 @@ void RealWebView::_handleWebMessage(const std::string& message) {
     if (_messageHandler) {
         _messageHandler(message);
     }
+    
 }
 
 // Brush System Handlers
@@ -1141,12 +1158,12 @@ void RealWebView::_handleUISetCursor(const nlohmann::json& data) {
     try {
         std::string cursorType = data["cursorType"];
         
-        std::cout << "🖱️ [INTEGRATION] Would set cursor: " << cursorType << std::endl;
+        std::cout << "🖱️ [INTEGRATION] Setting cursor: " << cursorType << std::endl;
         
-        // TODO: Integrate with Earthcall's cursor system
+        bool success = getEarthcallAPI().setCursorType(cursorType);
         nlohmann::json response = {
             {"type", "cursor_set"},
-            {"data", {{"cursorType", cursorType}, {"success", true}}}
+            {"data", {{"cursorType", cursorType}, {"success", success}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {

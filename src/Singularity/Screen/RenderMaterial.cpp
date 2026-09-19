@@ -13,6 +13,8 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
         rm.specular  = m->specular;
         rm.ambient   = m->ambient;
         rm.diffuse   = m->diffuse;
+        rm.colorExpr = m->colorExpr;
+        rm.colorRevision = m->getRevision();
     }
     rm.textureId    = albedo.handle;
     rm.albedoPixels = albedo.pixels;

@@ -6,6 +6,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
+#include "Relation/Traversal/SlowAdapter.hpp"
 #include "../Physics/Physics.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "../Zone/Zone.hpp"
@@ -386,6 +387,9 @@ public:
     // mode — the shape tools emit ConditionNodes instead of world objects).
 
     ApplicationResult applyTo(Singular& target);
+    // Same authority/jurisdiction/action/audit path as applyTo(), but used
+    // after Law-Direct has already proved/evaluated the live residual.
+    ApplicationResult applyToAfterConditions(Singular& target);
     std::vector<ApplicationRecord> applyToTargets();
 
     const std::vector<ApplicationRecord>& applicationLog() const { return _applicationLog; }
@@ -405,6 +409,7 @@ private:
     void initializeLawIdentity();
     // Stable, law-derived names for the three group Formations (see the .cpp).
     void nameGroupFormations();
+    ApplicationResult applyToImpl(Singular& target, bool conditionsAlreadySatisfied);
     ApplicationRecord makeRecord(Singular* target, ApplicationResult result) const;
     void publishAppliedEvent(Singular* target, ApplicationResult result) const;
 
@@ -954,10 +959,54 @@ private:
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
     // Apply, record, and start a drive session only if the law CHANGED
     // something (not merely if the action branch was reached).
-    Law::ApplicationResult applyAndMaybeDrive(Law& law, Singular& subject,
-                            std::vector<Law::ApplicationRecord>& records);
-    // Whom an untargeted law sweeps: the beings carrying its vocabulary.
+    Law::ApplicationResult applyAndMaybeDrive(
+        Law& law, Singular& subject,
+        std::vector<Law::ApplicationRecord>& records,
+        bool conditionsAlreadySatisfied = false);
+    // Evaluate through the highest current proof and report whether the
+    // Law-Direct residual (rather than the full authored condition) was used.
+    bool candidateConditionsSatisfied(
+        const Law& law, const Singular& subject, bool* usedLawDirect = nullptr) const;
+    // Whom an untargeted law sweeps: consume ONE already-selected sound route.
+    // Route selection is refreshed outside the per-candidate loop and cached by
+    // law id; steady-state selection is one unordered_map lookup.
     std::vector<Singular*> sweepSubjects(const Law& law) const;
+
+    enum class CandidateTier : std::uint8_t {
+        Sweep,
+        Vocabulary,
+        AdapterRoad,
+        LawDirect
+    };
+    struct CandidateRoute {
+        CandidateTier tier = CandidateTier::Sweep;
+        // Vocabulary tier: rarest required name chosen when the vocabulary
+        // index refreshes. Adapter tier reads the adapter's own current view.
+        std::string vocabularySeed;
+
+        // Law-Direct tier: concrete bearers learned from one current adapter
+        // road plus the residual condition after discharging that exact proved
+        // positive Related conjunct. Pure derived state; never serialized.
+        std::vector<Singular*> directSubjects;
+        ECA::ConditionPredicate directResidual;
+        std::string directRelationType;
+        std::string directOtherId;
+
+        // Currency of the LAW decision. World/graph currency is still checked
+        // by the selected structure itself before it is consumed.
+        std::uint64_t lawTextRevision = 0;
+        std::uint64_t conditionRevision = 0;
+        std::uint64_t structuralRevision = 0;
+        std::size_t relationGeneration = 0;
+        bool hasRelationGeneration = false;
+        std::uint64_t adapterRouteGeneration = 0;
+    };
+    mutable std::unordered_map<std::string, CandidateRoute> _candidateRoutes;
+    mutable std::uint64_t _candidateRouteRefreshCount = 0;
+    void refreshCandidateRoute(const Law& law) const;
+    void invalidateCandidateRoute(const std::string& lawId) const {
+        _candidateRoutes.erase(lawId);
+    }
 
     // ------------------------------------------------------------------
     // The vocabulary index — FORMATION_RETE.md §3.0, §8 rung 2.
@@ -1017,6 +1066,15 @@ private:
     // Deliberately a sentinel no real revision can equal, so the first tick
     // always builds rather than trusting an empty index.
     mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    // The Law::textRevision() `_indexedNames` was read off the register at.
+    // Collecting that name set is what every sweep used to pay for: a fresh
+    // unordered_set<std::string> built from EVERY law's requiredProperties(),
+    // once per law per tick, only to be compared against the cached one.
+    // Measured in Synthesis Studio Living (535 beings, 68 laws): 1.0 ms per
+    // sweep to choose 3 candidates, 83% of that world's law time. Required
+    // properties are derived in Law::recompile(), and every path that reaches
+    // it bumps the text revision, so this integer is a sound key for the set.
+    mutable uint64_t _vocabularyNamesRevision = std::numeric_limits<uint64_t>::max();
     // End-of-tick unmaking, once no pointer to a victim is still live.
     void reapUnmade();
     void releaseFromLaws(Singular* being);
@@ -1032,6 +1090,17 @@ private:
         std::size_t nodeId;
         bool isBeta;  // true = BetaNode, false = AlphaNode
     };
+public:
+    // How many Rete terminals a law compiled. Zero means it takes the SWEEP
+    // path, whatever else is true of it — which is the difference between a
+    // test that exercises the reactive branch and one that only believes it
+    // does (tests/law/rete_compile_test.cpp §C, tests/law/edge_reactive_path_test.cpp).
+    std::size_t terminalCountOf(const std::string& lawId) const {
+        auto it = _reteTerminals.find(lawId);
+        return it == _reteTerminals.end() ? 0 : it->second.size();
+    }
+
+private:
     std::unordered_map<std::string, std::vector<TerminalInfo>> _reteTerminals;
     // The Law::conditionRevision() each entry in _reteTerminals was built
     // from. Compiled terminals are derived state; this is what lets the tick
@@ -1096,7 +1165,77 @@ private:
     std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateToRevalidate;
     void queueRelationStateRevalidation(const Relation& relation, const std::string& relationType);
     void revalidateRelationStateFacts();
+    // THE SLOW ADAPTER (FORMATION_RETE.md §8 rungs 5-6; Zach, 2026-09-16:
+    // the mechanism that pre-loads a Law's Relations "is also supposed to be in
+    // the slow adapter rather than constantly rebuilt every frame").
+    //
+    // 2026-09-17 correction: the old code called _adapter.step() from tick(),
+    // which gave the adapter a private COUNTER but not a private CAUSE of work.
+    // The adapter is now serviced by serviceSlowAdapterClock() on a wall-time
+    // cadence separate from LawManager::tick(). The main thread still executes
+    // the work, but a Frame/Law tick does not itself constitute an adapter tick.
+    // One due maintenance slice is allowed per service call and missed periods
+    // are NOT replayed, so a stall cannot create a catch-up burst.
+    //
+    // Kernel-derived scheduler state below is intentionally not authored world
+    // state yet. It is the smallest substrate rung for the independent clock;
+    // exact policy becomes authorable under ADAPTIVE_COMPUTE_MOMENTS.md.
+    Relevance::SlowAdapter _adapter;
+    void syncAdapterRoutes(Law& law);
+    std::unordered_map<std::string, std::uint64_t> _adapterRouteRevision;
+    bool _useSlowAdapter = true;
+    // A/B and fail-safe switch for the terminal derived rung. Keeping the
+    // adapter ON while this is OFF reproduces the immediately-pre-Direct
+    // execution model in one executable, which makes perf comparisons honest.
+    bool _useLawDirect = true;
+    bool _slowAdapterClockPrimed = false;
+    double _slowAdapterNextAt = 0.0;
+    std::uint64_t _slowAdapterMaintenanceRuns = 0;
+    static constexpr double kSlowAdapterPeriodSeconds = 0.100; // bootstrap 10 Hz
+
+public:
+    // Whether sweepSubjects may read the adapter's pre-loaded roads.
+    void setUseSlowAdapter(bool use) {
+        if (use == _useSlowAdapter) return;
+        _useSlowAdapter = use;
+        _adapterRouteRevision.clear();
+        _slowAdapterClockPrimed = false;
+        _slowAdapterNextAt = 0.0;
+        _slowAdapterMaintenanceRuns = 0;
+        _candidateRoutes.clear();
+        if (!use) _adapter.clear();
+    }
+    bool usesSlowAdapter() const { return _useSlowAdapter; }
+
+    void setUseLawDirect(bool use) {
+        if (use == _useLawDirect) return;
+        _useLawDirect = use;
+        _candidateRoutes.clear();
+    }
+    bool usesLawDirect() const { return _useLawDirect; }
+
+    // SAME THREAD, INDEPENDENT CLOCK. The caller may poll this every frame, but
+    // the adapter advances only when wallSeconds reaches its own deadline.
+    // Returns roads touched by the admitted maintenance slice, or zero when the
+    // adapter was not due / is disabled / had nothing to do.
+    std::size_t serviceSlowAdapterClock(double wallSeconds);
+    double slowAdapterClockPeriodSeconds() const { return kSlowAdapterPeriodSeconds; }
+    std::uint64_t slowAdapterMaintenanceRuns() const { return _slowAdapterMaintenanceRuns; }
+
+    const Relevance::SlowAdapter& slowAdapter() const { return _adapter; }
+    Relevance::SlowAdapter& slowAdapter() { return _adapter; }
+
+    // Legibility for the tier contract: reports the selected derived route
+    // without exposing or mutating its candidate list. Useful to the Law/Perf
+    // UI and to parity tests; this is not authorable world state.
+    std::string candidateTierFor(const Law& law) const;
+    std::uint64_t candidateRouteRefreshCount() const {
+        return _candidateRouteRefreshCount;
+    }
+
+private:
     std::unordered_set<std::string> _seededSubjects;
+    std::unordered_set<const Singular*> _seededBeingPointers;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.

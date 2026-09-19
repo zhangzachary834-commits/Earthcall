@@ -1,0 +1,93 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-logos-breath",
+  "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "path": "@state.logos.breathActive",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.logos.pulseRate",
+          "operand": {
+            "t": "float",
+            "v": 2.4
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.logos.telemetry.breath.textString",
+          "operand": {
+            "t": "string",
+            "v": "BREATH: RESPIRING (PNEUMA HARMONIC ACTIVE)"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@logos.resonator.core.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 5.5
+          }
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionMode": "any",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "hud.btn.pneuma"
+        },
+        {
+          "kind": 8,
+          "otherId": "glyph.lexeme.pneuma"
+        }
+      ],
+      "kind": 4
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-logos-breath",
+    "name": "Logos: Breath of Life (Pneuma Respiration)",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-logos-breath",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

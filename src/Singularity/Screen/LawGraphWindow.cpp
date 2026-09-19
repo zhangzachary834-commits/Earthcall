@@ -1833,33 +1833,240 @@ bool actionKindPalette(ActionNode& node) {
     return changed;
 }
 
-bool editActionNode(ActionNode& node) {
+Singular* resolveCandidateSubject(const Law* currentLaw) {
+    if (g.testSubject) return g.testSubject;
+    if (currentLaw) {
+        const auto& targets = currentLaw->targets().getMembers();
+        if (!targets.empty() && targets.front()) {
+            return targets.front();
+        }
+    }
+    return nullptr;
+}
+
+bool evaluateLivePath(const PropertyPath& path, const Law* currentLaw, PropertyValue& out) {
+    if (path.empty()) return false;
+    Singular* candidate = resolveCandidateSubject(currentLaw);
+    if (candidate && lawGetValue(*candidate, path, out)) {
+        return true;
+    }
+    if (isTimePath(path)) {
+        return lawGetTime(path, out);
+    }
+    std::size_t startIndex = 0;
+    static Object fallbackSubject;
+    Singular* root = resolveLawRoot(candidate ? *candidate : fallbackSubject, path, startIndex);
+    if (root) {
+        return path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok;
+    }
+    return false;
+}
+
+void showLiveValueBadge(const PropertyPath& path, const Law* currentLaw, const char* expectedType = nullptr) {
+    if (path.empty()) {
+        ImGui::TextDisabled("  (no path bound)");
+        return;
+    }
+    PropertyValue val;
+    const bool hasVal = evaluateLivePath(path, currentLaw, val);
+    if (!hasVal) {
+        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "  Live: (no read / inactive)");
+        return;
+    }
+
+    double num = 0.0;
+    if (propertyValueToNumber(val, num)) {
+        if (expectedType && std::strcmp(expectedType, "int") == 0) {
+            int intVal = static_cast<int>(num);
+            ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %d", intVal);
+            if (intVal < 0) {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "(miss / no face hit)");
+            }
+        } else {
+            ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %.4f", num);
+            if (expectedType && std::strcmp(expectedType, "uv") == 0) {
+                if (num < 0.0 || num > 1.0) {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "(! outside [0, 1])");
+                }
+            }
+        }
+    } else if (std::holds_alternative<glm::vec3>(val)) {
+        glm::vec3 v = std::get<glm::vec3>(val);
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: RGB(%.3f, %.3f, %.3f)", v.r, v.g, v.b);
+        ImGui::SameLine();
+        ImGui::ColorButton("##swatch", ImVec4(v.r, v.g, v.b, 1.0f), ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(16.0f, 14.0f));
+    } else if (std::holds_alternative<bool>(val)) {
+        bool b = std::get<bool>(val);
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %s", b ? "true" : "false");
+    } else if (std::holds_alternative<std::string>(val)) {
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: \"%s\"", std::get<std::string>(val).c_str());
+    } else {
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Live: %s", propertyTypeName(val));
+    }
+}
+
+Singular* resolveTokenLive(const std::string& token, const Law* currentLaw) {
+    Singular* candidate = resolveCandidateSubject(currentLaw);
+    if (token.empty()) return candidate;
+    if (token == "@event.subject") {
+        return Universe::instance().hasApplicationEvent()
+                   ? Universe::instance().applicationEventSubject() : nullptr;
+    }
+    if (token == "@event.object") {
+        return Universe::instance().hasApplicationEvent()
+                   ? Universe::instance().applicationEventObject() : nullptr;
+    }
+    const std::string id = (!token.empty() && token[0] == '@') ? token.substr(1) : token;
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == id) return being;
+    }
+    return nullptr;
+}
+
+void showLiveTokenBadge(const char* caption, const std::string& token, const Law* currentLaw) {
+    (void)caption;
+    Singular* being = resolveTokenLive(token, currentLaw);
+    if (token.empty()) {
+        if (being) {
+            ImGui::TextDisabled("  ↳ Defaults to Subject: %s (%s)",
+                                being->getIdentifier().c_str(), singularRuntimeType(*being));
+        } else {
+            ImGui::TextDisabled("  ↳ Defaults to Law's subject (none in context)");
+        }
+        return;
+    }
+    if (being) {
+        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                           "  ↳ Resolves: %s (%s)",
+                           being->getIdentifier().c_str(), singularRuntimeType(*being));
+    } else {
+        ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f),
+                           "  ↳ Token '%s' not currently found in Universe", token.c_str());
+    }
+}
+
+bool editOperandValue(const char* label, PropertyValue& operand, const PropertyPath& targetPath, const Law* currentLaw) {
+    bool changed = false;
+
+    // Detect current type: 0: Number, 1: Text, 2: Toggle, 3: Vector / Color
+    int currentType = 0;
+    if (std::holds_alternative<std::string>(operand)) currentType = 1;
+    else if (std::holds_alternative<bool>(operand)) currentType = 2;
+    else if (std::holds_alternative<glm::vec3>(operand)) currentType = 3;
+    else if (std::holds_alternative<double>(operand) ||
+             std::holds_alternative<int>(operand) ||
+             std::holds_alternative<float>(operand)) currentType = 0;
+    else {
+        PropertyValue liveVal;
+        if (evaluateLivePath(targetPath, currentLaw, liveVal)) {
+            if (std::holds_alternative<std::string>(liveVal)) currentType = 1;
+            else if (std::holds_alternative<bool>(liveVal)) currentType = 2;
+            else if (std::holds_alternative<glm::vec3>(liveVal)) currentType = 3;
+        }
+    }
+
+    fieldCaption(label, "Choose data type and authored value for this operand.");
+    ImGui::PushID(label);
+
+    static const char* typeNames[] = {"Number", "Text", "Toggle", "Vector / Color"};
+    for (int t = 0; t < 4; ++t) {
+        if (t) ImGui::SameLine();
+        const bool active = (currentType == t);
+        if (active) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.45f, 0.70f, 1.0f));
+        if (ImGui::SmallButton(typeNames[t])) {
+            if (t == 0 && currentType != 0) { operand = PropertyValue(0.0); changed = true; }
+            else if (t == 1 && currentType != 1) { operand = PropertyValue(std::string("")); changed = true; }
+            else if (t == 2 && currentType != 2) { operand = PropertyValue(true); changed = true; }
+            else if (t == 3 && currentType != 3) { operand = PropertyValue(glm::vec3(0.0f)); changed = true; }
+            currentType = t;
+        }
+        if (active) ImGui::PopStyleColor();
+    }
+
+    if (currentType == 0) {
+        double val = numericOr(operand, 0.0);
+        if (doubleField("##num_val", val)) {
+            operand = PropertyValue(val);
+            changed = true;
+        }
+    } else if (currentType == 1) {
+        char textBuf[256];
+        std::string s = std::holds_alternative<std::string>(operand) ? std::get<std::string>(operand) : "";
+        copyToBuf(textBuf, sizeof(textBuf), s);
+        if (textField("##text_val", textBuf, sizeof(textBuf), "Enter text string…")) {
+            operand = PropertyValue(std::string(textBuf));
+            changed = true;
+        }
+    } else if (currentType == 2) {
+        bool b = std::holds_alternative<bool>(operand) ? std::get<bool>(operand) : false;
+        if (ImGui::Checkbox("True / Enabled##bool_val", &b)) {
+            operand = PropertyValue(b);
+            changed = true;
+        }
+    } else if (currentType == 3) {
+        glm::vec3 v = std::holds_alternative<glm::vec3>(operand) ? std::get<glm::vec3>(operand) : glm::vec3(0.0f);
+        ImGui::SetNextItemWidth(-1.0f);
+        if (ImGui::DragFloat3("##vec_val", &v.x, 0.05f)) {
+            operand = PropertyValue(v);
+            changed = true;
+        }
+        const std::string pathStr = targetPath.toString();
+        if (pathStr.find("color") != std::string::npos || pathStr.find("Color") != std::string::npos) {
+            if (ImGui::ColorEdit3("Color Swatch##color_swatch", &v.r)) {
+                operand = PropertyValue(v);
+                changed = true;
+            }
+        }
+    }
+
+    ImGui::PopID();
+    return changed;
+}
+
+bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
     bool changed = false;
     if (actionKindPalette(node)) changed = true;
 
     switch (node.kind) {
 
-        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Set: {
+            ImGui::TextDisabled("property := value. Sets any supported property type (number, text, toggle, vector).");
+            ImGui::Spacing();
+
+            fieldCaption("Target Property Path", "The property to assign.");
+            if (pathPicker("Property", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, nullptr);
+            ImGui::Spacing();
+
+            if (editOperandValue("Assigned Value", node.operand, node.path, currentLaw)) {
+                changed = true;
+            }
+            break;
+        }
+
         case ActionNode::Kind::Add:
         case ActionNode::Kind::Scale:
         case ActionNode::Kind::Lerp: {
-            const char* what = node.kind == ActionNode::Kind::Set   ? "property := value"
-                               : node.kind == ActionNode::Kind::Add ? "property += value"
-                               : node.kind == ActionNode::Kind::Scale
-                                   ? "property *= value"
-                                   : "property blends toward value";
-            ImGui::TextDisabled("%s. Component paths (position.y) take numbers.", what);
-            ImGui::TextDisabled("For authored functions (OntoMath: multivariate, piecewise,");
-            ImGui::TextDisabled("calculus-exact) switch Action type to \"map\" or \"flow\".");
+            const char* what = node.kind == ActionNode::Kind::Add   ? "property += value (numeric or vector)"
+                               : node.kind == ActionNode::Kind::Scale ? "property *= value (numeric or vector)"
+                               : "property blends toward value (numeric or vector)";
+            ImGui::TextDisabled("%s.", what);
+            ImGui::TextDisabled("Supports scalar numbers and whole 3D vectors.");
+            ImGui::Spacing();
+
+            fieldCaption("Target Property Path", "The property to mutate.");
             if (pathPicker("Property", node.path)) changed = true;
-            warnIfWholeVector(node.path);
-            double value = numericOr(node.operand, 0.0);
-            if (doubleField("Value", value)) {
-                node.operand = PropertyValue(value);
+            showLiveValueBadge(node.path, currentLaw, nullptr);
+            ImGui::Spacing();
+
+            if (editOperandValue("Operand Value", node.operand, node.path, currentLaw)) {
                 changed = true;
             }
             if (node.kind == ActionNode::Kind::Lerp) {
                 double factor = node.factor;
+                fieldCaption("Blend Factor", "0 keeps current value; 1 reaches operand value.");
                 if (doubleField("Blend factor", factor,
                                 "0 keeps the old value; 1 reaches the authored value")) {
                     node.factor = factor;
@@ -1871,8 +2078,18 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::Drive: {
             ImGui::TextDisabled("property := curve(input) — a single-input curve.");
             ImGui::TextDisabled("For multivariate or piecewise math, use map.");
+            ImGui::Spacing();
+
+            fieldCaption("Target Property Path", "The numeric or scalar component property to drive.");
             if (pathPicker("Property", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, "number");
+            ImGui::Spacing();
+
+            fieldCaption("Curve Input Path", "The independent variable x (e.g. time.sinceApplied, or an object position).");
             if (pathPicker("Input", node.input)) changed = true;
+            showLiveValueBadge(node.input, currentLaw, "number");
+            ImGui::Spacing();
+
             static const char* forms[] = {"constant", "polynomial", "sinusoid"};
             int form = static_cast<int>(node.curve.form);
             if (comboField("Curve form", form, forms, 3)) {
@@ -1897,6 +2114,17 @@ bool editActionNode(ActionNode& node) {
                 if (doubleField("Frequency", freq)) { node.curve.frequency = freq; changed = true; }
                 if (doubleField("Phase", phase)) { node.curve.phase = phase; changed = true; }
                 if (doubleField("Bias", bias)) { node.curve.bias = bias; changed = true; }
+            }
+
+            // Live Drive Evaluation
+            PropertyValue inVal;
+            double inNum = 0.0;
+            if (evaluateLivePath(node.input, currentLaw, inVal) && propertyValueToNumber(inVal, inNum)) {
+                double outNum = node.curve.evaluate(inNum);
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                   "  Live Evaluation: curve(x=%.4f) = %.4f", inNum, outNum);
+            } else {
+                ImGui::TextDisabled("  Live Evaluation: (input currently undefined or unreadable)");
             }
             break;
         }
@@ -1936,8 +2164,11 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("MINT an event: the law authors vocabulary instead of");
             ImGui::TextDisabled("only consuming it. Other laws can bind this as their");
             ImGui::TextDisabled("trigger. Cascades stay under the anti-Babel ceiling.");
+            ImGui::Spacing();
+
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.eventType);
+            fieldCaption("Past-Tense Event Name", "Name of the event minted onto the EventBus (noun-verbed).");
             if (textField("Event name", typeBuf, sizeof(typeBuf),
                           "Name the past-tense event being published…")) {
                 node.eventType = typeBuf;
@@ -1946,10 +2177,28 @@ bool editActionNode(ActionNode& node) {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("any name — new event kinds are minted by naming them");
             }
+            if (ImGui::CollapsingHeader("Common Engine Event Presets")) {
+                for (int i = 0; i < kEngineEventCount; ++i) {
+                    if (ImGui::SmallButton(kEngineEvents[i].type)) {
+                        node.eventType = kEngineEvents[i].type;
+                        changed = true;
+                    }
+                    ImGui::SameLine();
+                    ImGui::TextDisabled("— %s", kEngineEvents[i].meaning);
+                }
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Event Subject Token", "The primary being this event is about (empty = Law's subject).");
             if (singularTokenPicker("Event subject", node.publishSubject,
                                     "The Law's subject")) changed = true;
+            showLiveTokenBadge("Subject", node.publishSubject, currentLaw);
+            ImGui::Spacing();
+
+            fieldCaption("Event Object Token", "Secondary participant (e.g. other collider or destination zone).");
             if (singularTokenPicker("Event object", node.publishObject,
                                     "None")) changed = true;
+            showLiveTokenBadge("Object", node.publishObject, currentLaw);
             break;
         }
         case ActionNode::Kind::Sequence:
@@ -1957,31 +2206,106 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("Runs its %zu step(s) %s.", node.children.size(),
                                 node.kind == ActionNode::Kind::Sequence ? "in order"
                                                                         : "together");
-            if (ImGui::Button("+ set step")) {
-                ActionNode child;
-                child.kind = ActionNode::Kind::Set;
-                seedActionKind(child);
+            ImGui::Spacing();
+            if (ImGui::Button("+ Set")) {
+                ActionNode child; child.kind = ActionNode::Kind::Set; seedActionKind(child);
                 child.operand = PropertyValue(0.0);
-                node.children.push_back(std::move(child));
-                changed = true;
+                node.children.push_back(std::move(child)); changed = true;
             }
             ImGui::SameLine();
-            if (ImGui::Button("+ map step")) {
-                ActionNode child;
-                child.kind = ActionNode::Kind::Map;
-                seedActionKind(child);
-                node.children.push_back(std::move(child));
-                changed = true;
+            if (ImGui::Button("+ Map")) {
+                ActionNode child; child.kind = ActionNode::Kind::Map; seedActionKind(child);
+                node.children.push_back(std::move(child)); changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ Drive")) {
+                ActionNode child; child.kind = ActionNode::Kind::Drive; seedActionKind(child);
+                node.children.push_back(std::move(child)); changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ Flow")) {
+                ActionNode child; child.kind = ActionNode::Kind::Flow; seedActionKind(child);
+                node.children.push_back(std::move(child)); changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ Publish")) {
+                ActionNode child; child.kind = ActionNode::Kind::Publish; seedActionKind(child);
+                node.children.push_back(std::move(child)); changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ More…")) {
+                ImGui::OpenPopup("seq_par_add_child_popup");
+            }
+            if (ImGui::BeginPopup("seq_par_add_child_popup")) {
+                if (ImGui::MenuItem("WritePixel")) {
+                    ActionNode child; child.kind = ActionNode::Kind::WritePixel; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("PlayAudio")) {
+                    ActionNode child; child.kind = ActionNode::Kind::PlayAudio; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("AddProperty")) {
+                    ActionNode child; child.kind = ActionNode::Kind::AddProperty; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("AddRelation")) {
+                    ActionNode child; child.kind = ActionNode::Kind::AddRelation; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Create (newborn)")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Create; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Destroy")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Destroy; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Nested Sequence")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Sequence; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Nested Parallel")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Parallel; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                ImGui::EndPopup();
             }
             break;
         }
         case ActionNode::Kind::Spawn: {
             ImGui::TextDisabled("Births the concept's objects into the law's target Zone.");
             ImGui::TextDisabled("Bind the law to an event whose SUBJECT is the Zone.");
+            ImGui::Spacing();
+
+            fieldCaption("Captured Object Concept", "The archetype or captured template being instantiated.");
             if (conceptPicker(node.conceptId)) changed = true;
-            if (pathPicker("Parent Path", node.spawnParentPath)) {
+            ImGui::Spacing();
+
+            fieldCaption("Placement Path", "Transform (mat4) or position (vec3) where concept objects manifest. If omitted, uses event subject position.");
+            if (pathPicker("Placement path", node.spawnPlacementPath)) changed = true;
+            showLiveValueBadge(node.spawnPlacementPath, currentLaw, "vector");
+            ImGui::TextDisabled("Placement presets:");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Pointer World##spawn_preset")) {
+                node.spawnPlacementPath = PropertyPath::parse("@interaction-channel.pointerWorld");
                 changed = true;
             }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Subject Position##spawn_preset")) {
+                node.spawnPlacementPath = PropertyPath::parse("position");
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Clear (Event Subject)##spawn_preset")) {
+                node.spawnPlacementPath.segments.clear();
+                changed = true;
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Parent Path", "Optional container object or identifier where spawned objects become children.");
+            if (pathPicker("Parent Path", node.spawnParentPath)) changed = true;
+            showLiveValueBadge(node.spawnParentPath, currentLaw, "text");
             break;
         }
 
@@ -1992,6 +2316,8 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled("Mint a new Object of the chosen shape and place it in the Zone.");
             ImGui::TextDisabled("Children run WITH THE NEWBORN AS SUBJECT — Set, Map, AddProperty");
             ImGui::TextDisabled("all shape the thing being born.");
+            ImGui::Spacing();
+
             static const char* shapeNames[] = {
                 "Cube", "Polyhedron", "Sphere", "Cylinder", "Cone",
                 "Ellipsoid", "Ovoid", "Paraboloid", "Torus", "RoundedBox",
@@ -2009,12 +2335,30 @@ bool editActionNode(ActionNode& node) {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Object type label (optional) — conditions can select \"all things of type X\"");
             }
+            ImGui::Spacing();
+
+            fieldCaption("Placement Path", "Initial position (vec3) or transform (mat4) for the newborn.");
             if (pathPicker("Placement", node.spawnPlacementPath)) changed = true;
+            showLiveValueBadge(node.spawnPlacementPath, currentLaw, "vector");
+            ImGui::Spacing();
+
+            fieldCaption("Parent Container Path", "Optional container object id or reference to adopt the newborn.");
             if (pathPicker("Parent", node.spawnParentPath)) changed = true;
+            showLiveValueBadge(node.spawnParentPath, currentLaw, "text");
+            ImGui::Spacing();
+
+            fieldCaption("Dynamic Shape Override Path", "Optional property path reading a runtime ShapeKind integer.");
             if (pathPicker("Shape override", node.spawnShapeKindPath)) changed = true;
+            showLiveValueBadge(node.spawnShapeKindPath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("Dynamic Color Override Path", "Optional property path reading a runtime vec3 color.");
             if (pathPicker("Color override", node.spawnColorPath)) changed = true;
+            showLiveValueBadge(node.spawnColorPath, currentLaw, "color");
+            ImGui::Spacing();
+
             ImGui::TextDisabled("Steps that shape the newborn:");
-            if (ImGui::Button("+ set step##create")) {
+            if (ImGui::Button("+ Set##create")) {
                 ActionNode child;
                 child.kind = ActionNode::Kind::Set;
                 seedActionKind(child);
@@ -2023,12 +2367,54 @@ bool editActionNode(ActionNode& node) {
                 changed = true;
             }
             ImGui::SameLine();
-            if (ImGui::Button("+ map step##create")) {
+            if (ImGui::Button("+ Map##create")) {
                 ActionNode child;
                 child.kind = ActionNode::Kind::Map;
                 seedActionKind(child);
                 node.children.push_back(std::move(child));
                 changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ AddProperty##create")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::AddProperty;
+                seedActionKind(child);
+                child.propertyName = "customProperty";
+                child.operand = PropertyValue(1.0);
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ AddRelation##create")) {
+                ActionNode child;
+                child.kind = ActionNode::Kind::AddRelation;
+                seedActionKind(child);
+                child.propertyName = "instance-of";
+                node.children.push_back(std::move(child));
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("+ More…##create")) {
+                ImGui::OpenPopup("create_add_child_popup");
+            }
+            if (ImGui::BeginPopup("create_add_child_popup")) {
+                if (ImGui::MenuItem("Add Drive step")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Drive; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Add Flow step")) {
+                    ActionNode child; child.kind = ActionNode::Kind::Flow; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Add AddElement step")) {
+                    ActionNode child; child.kind = ActionNode::Kind::AddElement; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                if (ImGui::MenuItem("Add WritePixel step")) {
+                    ActionNode child; child.kind = ActionNode::Kind::WritePixel; seedActionKind(child);
+                    node.children.push_back(std::move(child)); changed = true;
+                }
+                ImGui::EndPopup();
             }
             break;
         }
@@ -2036,17 +2422,33 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::AddProperty: {
             ImGui::TextDisabled("Grant a being a property it did not have. Refused where it");
             ImGui::TextDisabled("would shadow a first-mover (registered) name.");
+            ImGui::Spacing();
+
+            fieldCaption("Owner Path", "The being that receives the property (empty = Law's subject).");
             if (pathPicker("Owner", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, "text");
+            ImGui::Spacing();
+
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            fieldCaption("Property Identifier", "The unique name of the new property on the being.");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
                           "Name the authored property…")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
-            double value = numericOr(node.operand, 0.0);
-            if (doubleField("Initial value", value)) {
-                node.operand = PropertyValue(value);
+            if (!node.propertyName.empty()) {
+                for (const auto& opt : knownPathOptions()) {
+                    if (opt.path == node.propertyName) {
+                        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f),
+                                           "  ⚠️ Shadows registered property '%s'! Grant will be refused.", opt.path.c_str());
+                        break;
+                    }
+                }
+            }
+            ImGui::Spacing();
+
+            if (editOperandValue("Initial Value", node.operand, PropertyPath::parse(node.propertyName), currentLaw)) {
                 changed = true;
             }
             break;
@@ -2055,9 +2457,16 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::RemoveProperty: {
             ImGui::TextDisabled("Take a granted property back. Authored properties are erased;");
             ImGui::TextDisabled("first-mover properties are cleared to empty.");
+            ImGui::Spacing();
+
+            fieldCaption("Owner Path", "The being whose property is removed (empty = Law's subject).");
             if (pathPicker("Owner", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, "text");
+            ImGui::Spacing();
+
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            fieldCaption("Property Name to Remove", "Authored properties will be deleted; registered slots cleared.");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
                           "Name the property to remove…")) {
                 node.propertyName = nameBuf;
@@ -2072,18 +2481,61 @@ bool editActionNode(ActionNode& node) {
             ImGui::TextDisabled(adding
                 ? "Compose: put a being inside another's element Formation."
                 : "Decompose: take a being out of a container. The element keeps living.");
+            ImGui::Spacing();
+
+            fieldCaption("Container Token", "The being whose element Formation holds the element (empty = Law's subject).");
             if (singularTokenPicker("Container", node.containerToken,
                                     "The Law's subject")) changed = true;
+            Singular* cBeing = resolveTokenLive(node.containerToken, currentLaw);
+            if (cBeing) {
+                if (dynamic_cast<Object*>(cBeing)) {
+                    ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                       "  ↳ Container: %s (Object holds elements)", cBeing->getIdentifier().c_str());
+                } else {
+                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f),
+                                       "  ↳ ⚠️ Container '%s' is not an Object; element operations will refuse.",
+                                       cBeing->getIdentifier().c_str());
+                }
+            } else {
+                ImGui::TextDisabled("  ↳ Container: (unresolved)");
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Element Token", "The being placed into / removed from the container.");
             if (singularTokenPicker("Element", node.elementToken,
                                     "The Law's subject")) changed = true;
+            Singular* eBeing = resolveTokenLive(node.elementToken, currentLaw);
+            if (eBeing) {
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                   "  ↳ Element: %s (%s)", eBeing->getIdentifier().c_str(), singularRuntimeType(*eBeing));
+            } else {
+                ImGui::TextDisabled("  ↳ Element: (unresolved)");
+            }
             break;
         }
 
         case ActionNode::Kind::Destroy: {
             ImGui::TextDisabled("Remove an Object from the Zone — the delete tool as law-text.");
             ImGui::TextDisabled("Every element Formation that held it releases it first.");
+            ImGui::Spacing();
+
+            fieldCaption("Victim Token", "The Object to unmake (empty = Law's subject).");
             if (singularTokenPicker("Victim", node.elementToken,
                                     "The Law's subject")) changed = true;
+            Singular* victim = resolveTokenLive(node.elementToken, currentLaw);
+            if (victim) {
+                if (dynamic_cast<Object*>(victim)) {
+                    ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                       "  ↳ Target Object: %s (valid for unmaking)", victim->getIdentifier().c_str());
+                } else {
+                    ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f),
+                                       "  ↳ ⚠️ Warning: '%s' is a %s, not an Object. Destroy will refuse at runtime.",
+                                       victim->getIdentifier().c_str(), singularRuntimeType(*victim));
+                }
+            } else {
+                ImGui::TextDisabled("  ↳ Target: (no victim resolved in context)");
+            }
+            ImGui::TextDisabled("On destroy: releases from all element Formations and publishes 'object-destroyed'.");
             break;
         }
 
@@ -2111,79 +2563,264 @@ bool editActionNode(ActionNode& node) {
 
         case ActionNode::Kind::PlayAudio: {
             ImGui::TextDisabled("Trigger the procedural audio synthesizer via properties.");
+            ImGui::Spacing();
+
+            fieldCaption("Frequency Path", "Numeric frequency in Hz (e.g. 440.0 for A4, or an acoustic property).");
             if (pathPicker("Frequency path", node.path)) changed = true;
+            showLiveValueBadge(node.path, currentLaw, "number");
+            ImGui::Spacing();
+
+            fieldCaption("Amplitude Path", "Numeric volume/amplitude in [0.0, 1.0].");
             if (pathPicker("Amplitude path", node.input)) changed = true;
+            showLiveValueBadge(node.input, currentLaw, "number");
+            ImGui::Spacing();
+
             char waveBuf[64];
             copyToBuf(waveBuf, sizeof(waveBuf), node.propertyName);
+            fieldCaption("Wave Type", "Oscillator waveform: sine, square, sawtooth, triangle, noise.");
             if (textField("Wave type", waveBuf, sizeof(waveBuf),
                           "sine, square, sawtooth…")) {
                 node.propertyName = waveBuf;
                 changed = true;
             }
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("material/waveType string (e.g. sine, square, sawtooth)");
+            ImGui::TextDisabled("Presets:");
+            ImGui::SameLine();
+            const char* presets[] = {"sine", "square", "sawtooth", "triangle", "noise"};
+            for (int i = 0; i < 5; ++i) {
+                if (i) ImGui::SameLine();
+                if (ImGui::SmallButton(presets[i])) {
+                    node.propertyName = presets[i];
+                    changed = true;
+                }
             }
+            ImGui::TextDisabled("On play: publishes past-tense 'audio-synthesized' event.");
             break;
         }
 
         case ActionNode::Kind::WritePixel: {
             ImGui::TextDisabled("Replace one surface sample through the Screen channel.");
             ImGui::TextDisabled("Every operand is a PropertyPath; no shape or palette meaning is fixed here.");
+            ImGui::Spacing();
+
+            // Target Context Banner
+            Singular* candidate = resolveCandidateSubject(currentLaw);
+            Object* targetObj = dynamic_cast<Object*>(candidate);
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "SURFACE & TARGET CONTEXT");
+            if (targetObj) {
+                ImGui::Text("  Target Object: %s", targetObj->getIdentifier().c_str());
+                auto mat = targetObj->ownMaterial();
+                if (mat && !mat->faceTextures.empty()) {
+                    ImGui::Text("  Material: %s (CoW isolated, %zu face(s))",
+                                mat->getIdentifier().c_str(), mat->faceTextures.size());
+                } else {
+                    ImGui::TextDisabled("  Material: %s (no raster face textures)", targetObj->materialId().c_str());
+                }
+            } else if (candidate) {
+                ImGui::Text("  Target: %s (non-Object; requires textured surface)", candidate->getIdentifier().c_str());
+            } else {
+                ImGui::TextDisabled("  Target: (select an object in world or assign law target)");
+            }
+
+            const bool sinkBound = static_cast<bool>(pixelWriteSink());
+            if (sinkBound) {
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f), "  Screen Sink: Active");
+            } else {
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "  Screen Sink: Not bound (headless/offscreen)");
+            }
+            ImGui::Spacing();
+
+            // 4 Properties with captions & live readouts
+            fieldCaption("Face Index Path", "Specifies which polygon/face of the geometry to write. 0 for 2D canvas, >= 0 for 3D meshes, -1 for miss.");
             if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            showLiveValueBadge(node.pixelFacePath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("Normalized U Coordinate Path", "Local horizontal coordinate in [0.0, 1.0]. Typically @interaction-channel.hoveredU.");
             if (pathPicker("U path", node.pixelUPath)) changed = true;
+            showLiveValueBadge(node.pixelUPath, currentLaw, "uv");
+            ImGui::Spacing();
+
+            fieldCaption("Normalized V Coordinate Path", "Local vertical coordinate in [0.0, 1.0]. Typically @interaction-channel.hoveredV.");
             if (pathPicker("V path", node.pixelVPath)) changed = true;
+            showLiveValueBadge(node.pixelVPath, currentLaw, "uv");
+            ImGui::Spacing();
+
+            fieldCaption("Sample Color Path", "RGB color to write (must resolve to vec3). E.g. canvas paintColor or @creation-channel.activeColor.");
             if (pathPicker("Color path", node.pixelColorPath)) changed = true;
+            showLiveValueBadge(node.pixelColorPath, currentLaw, "color");
+            ImGui::Spacing();
+
+            // Discrete Texel Calculation (Live Projection)
+            PropertyValue faceVal, uVal, vVal;
+            double faceNum = 0.0, uNum = 0.0, vNum = 0.0;
+            const bool hasFace = evaluateLivePath(node.pixelFacePath, currentLaw, faceVal) && propertyValueToNumber(faceVal, faceNum);
+            const bool hasU = evaluateLivePath(node.pixelUPath, currentLaw, uVal) && propertyValueToNumber(uVal, uNum);
+            const bool hasV = evaluateLivePath(node.pixelVPath, currentLaw, vVal) && propertyValueToNumber(vVal, vNum);
+
+            if (targetObj) {
+                auto mat = targetObj->ownMaterial();
+                int faceIdx = hasFace ? static_cast<int>(faceNum) : 0;
+                if (mat && faceIdx >= 0 && faceIdx < static_cast<int>(mat->faceTextures.size())) {
+                    const auto& ft = mat->faceTextures[faceIdx];
+                    ImGui::TextColored(kHeaderColor, "TEXEL RESOLUTION & ADDRESSING");
+                    ImGui::Text("  Face %d resolution: %d × %d texels", faceIdx, ft.width, ft.height);
+                    if (hasU && hasV && faceIdx >= 0) {
+                        int tx = std::clamp(static_cast<int>(std::floor(uNum * ft.width)), 0, ft.width - 1);
+                        int ty = std::clamp(static_cast<int>(std::floor(vNum * ft.height)), 0, ft.height - 1);
+                        ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                           "  Target Texel Address: (x: %d, y: %d)", tx, ty);
+                    } else {
+                        ImGui::TextDisabled("  Target Texel Address: (hover over canvas to calculate)");
+                    }
+                    ImGui::Spacing();
+                }
+            }
+
+            // Quick Presets
+            ImGui::TextDisabled("Quick bindings:");
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Canvas paintColor##preset")) {
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+                node.pixelUPath = PropertyPath::parse("@interaction-channel.hoveredU");
+                node.pixelVPath = PropertyPath::parse("@interaction-channel.hoveredV");
+                node.pixelColorPath = PropertyPath::parse("paintColor");
+                changed = true;
+            }
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Console activeColor##preset")) {
+                node.pixelFacePath = PropertyPath::parse("@interaction-channel.hoveredFace");
+                node.pixelUPath = PropertyPath::parse("@interaction-channel.hoveredU");
+                node.pixelVPath = PropertyPath::parse("@interaction-channel.hoveredV");
+                node.pixelColorPath = PropertyPath::parse("@creation-channel.activeColor");
+                changed = true;
+            }
+
+            // Recent Execution Activity
+            int writeCount = 0;
+            std::string lastTarget;
+            for (const auto& entry : g.actionNodeFeed) {
+                if (entry.actionName == "WritePixel") {
+                    writeCount += entry.count;
+                    if (lastTarget.empty()) lastTarget = entry.targetId;
+                }
+            }
+            if (writeCount > 0) {
+                ImGui::TextColored(ImVec4(0.38f, 0.88f, 0.56f, 1.0f),
+                                   "Recent Activity: %d write(s) on target '%s'",
+                                   writeCount, lastTarget.c_str());
+            }
+
+            ImGui::TextDisabled("On write: publishes past-tense 'surface-pixel-written' event.");
+            ImGui::TextDisabled("For mathematical regions/brushes, see Action: Elevate pixel set.");
             break;
         }
 
         case ActionNode::Kind::ElevatePixels: {
             ImGui::TextDisabled("Elevate the selector's defined set over local (u,v) as one Property.");
             ImGui::TextDisabled("No region kind is preset: OntoMath alone defines membership.");
+            ImGui::Spacing();
+
             char nameBuf[128];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
+            fieldCaption("Elevated Property Identifier", "The name of the new Property granted to the subject (e.g. selectedPixels).");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
                           "Name the elevated pixel set…")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
+            if (!node.propertyName.empty()) {
+                ImGui::TextDisabled("  ↳ Grants Property: '%s' (row-major list<vec3>)", node.propertyName.c_str());
+                ImGui::TextDisabled("  ↳ Persists Selection: 'surface.selection.%s'", node.propertyName.c_str());
+            }
+            ImGui::Spacing();
+
+            fieldCaption("Face Index Path", "Which surface face to evaluate over. Typically 0 for 2D or @interaction-channel.hoveredFace.");
             if (pathPicker("Face path", node.pixelFacePath)) changed = true;
+            showLiveValueBadge(node.pixelFacePath, currentLaw, "int");
+            ImGui::Spacing();
+
+            fieldCaption("OntoMath Defined Set Selector (u, v)", "Membership condition: evaluated at each texel center with local u, v in [0.0, 1.0]. Defined values are included.");
             const MathBindings localCoordinates{
                 {"u", PropertyPath::parse("u")},
                 {"v", PropertyPath::parse("v")},
             };
             if (editPiecewise(node.mapFunction, localCoordinates)) changed = true;
+
+            Singular* candidate = resolveCandidateSubject(currentLaw);
+            Object* targetObj = dynamic_cast<Object*>(candidate);
+            if (targetObj) {
+                auto mat = targetObj->ownMaterial();
+                if (mat && !mat->faceTextures.empty()) {
+                    const auto& ft = mat->faceTextures[0];
+                    ImGui::TextDisabled("Target grid: %d × %d texels (%d potential samples)",
+                                        ft.width, ft.height, ft.width * ft.height);
+                }
+            }
             break;
         }
 
         case ActionNode::Kind::AuthorZone: {
             ImGui::TextDisabled("Mint a Zone into saves/zones/<id>/, owned by a Person, Relationship, or Community. Not a widget — this is the law text.");
+            ImGui::Spacing();
+
             char idBuf[128];
             copyToBuf(idBuf, sizeof(idBuf), node.createType);
+            fieldCaption("Zone Identifier", "Unique, stable identifier used for saves/zones/<id>/.");
             if (textField("Zone identifier", idBuf, sizeof(idBuf),
                           "Stable identifier for the new Zone…")) {
                 node.createType = idBuf;
                 changed = true;
             }
+            ImGui::Spacing();
+
             char kindBuf[64];
             copyToBuf(kindBuf, sizeof(kindBuf), node.propertyName);
+            fieldCaption("Authored Zone Kind", "home, community-home, community-zone…");
             if (textField("Authored kind", kindBuf, sizeof(kindBuf),
                           "home, community-home, community-zone…")) {
                 node.propertyName = kindBuf;
                 changed = true;
             }
+            ImGui::TextDisabled("Kind presets:");
+            ImGui::SameLine();
+            static const char* zoneKindPresets[] = {"home", "community-home", "community-zone"};
+            for (int i = 0; i < 3; ++i) {
+                if (i) ImGui::SameLine();
+                if (ImGui::SmallButton(zoneKindPresets[i])) {
+                    node.propertyName = zoneKindPresets[i];
+                    changed = true;
+                }
+            }
+            ImGui::Spacing();
+
             char ownerBuf[128];
             copyToBuf(ownerBuf, sizeof(ownerBuf), node.elementToken);
+            fieldCaption("Zone Owner Token", "Empty means the Law's subject; or @person-id, @community-id.");
             if (textField("Owner", ownerBuf, sizeof(ownerBuf),
                           "Empty means the Law's subject…")) {
                 node.elementToken = ownerBuf;
                 changed = true;
             }
+            showLiveTokenBadge("Owner", node.elementToken, currentLaw);
+            ImGui::Spacing();
+
             char ownerKindBuf[64];
             copyToBuf(ownerKindBuf, sizeof(ownerKindBuf), node.containerToken);
+            fieldCaption("Owner Kind", "person, relationship, community…");
             if (textField("Owner kind", ownerKindBuf, sizeof(ownerKindBuf),
                           "person, relationship, community…")) {
                 node.containerToken = ownerKindBuf;
                 changed = true;
+            }
+            ImGui::TextDisabled("Owner presets:");
+            ImGui::SameLine();
+            static const char* ownerKindPresets[] = {"person", "relationship", "community"};
+            for (int i = 0; i < 3; ++i) {
+                if (i) ImGui::SameLine();
+                if (ImGui::SmallButton(ownerKindPresets[i])) {
+                    node.containerToken = ownerKindPresets[i];
+                    changed = true;
+                }
             }
             break;
         }
@@ -2191,19 +2828,49 @@ bool editActionNode(ActionNode& node) {
         case ActionNode::Kind::AddRelation: {
             ImGui::TextDisabled("Mint a first-class Relation between two beings in the active Zone.");
             ImGui::TextDisabled("Relations are never empty: this is authoring an interaction, not a slot.");
+            ImGui::Spacing();
+
+            fieldCaption("Source Being Token", "Empty means the Law's subject, or @event.subject, @event.object, or specific @being-id.");
             if (singularTokenPicker("Source", node.containerToken,
                                     "The Law's subject")) changed = true;
+            showLiveTokenBadge("Source", node.containerToken, currentLaw);
+            ImGui::Spacing();
+
+            fieldCaption("Target Being Token", "Empty means the Law's subject, or @event.subject, @event.object, or specific @being-id.");
             if (singularTokenPicker("Target", node.elementToken,
                                     "The Law's subject")) changed = true;
+            showLiveTokenBadge("Target", node.elementToken, currentLaw);
+            ImGui::Spacing();
+
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.propertyName);
+            fieldCaption("Ontology Relation Type Tag", "Canonical relationship type (e.g. instance-of, abstracted-from, contains).");
             if (textField("Relation type", typeBuf, sizeof(typeBuf),
                           "Name the relationship being authored…")) {
                 node.propertyName = typeBuf;
                 changed = true;
             }
+            ImGui::TextDisabled("Ontology presets:");
+            ImGui::SameLine();
+            static const char* relPresets[] = {
+                "instance-of", "contains", "abstracted-from", "authored-by",
+                "interacts-with", "governs", "connected-to"
+            };
+            for (int i = 0; i < 7; ++i) {
+                if (i == 4) {
+                    ImGui::NewLine();
+                    ImGui::TextDisabled("                 ");
+                    ImGui::SameLine();
+                } else if (i > 0) {
+                    ImGui::SameLine();
+                }
+                if (ImGui::SmallButton(relPresets[i])) {
+                    node.propertyName = relPresets[i];
+                    changed = true;
+                }
+            }
             if (node.propertyName.empty()) {
-                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "No relation type authored — this action will refuse to fire.");
+                ImGui::TextColored(ImVec4(0.9f, 0.6f, 0.2f, 1.0f), "⚠️ No relation type authored — this action will refuse to fire.");
             }
             break;
         }
@@ -3540,7 +4207,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
     } else if (card.kind == LawCard::Kind::Action && law->hasActionModel()) {
         ActionModel model = *law->actionModel();
         if (ActionNode* node = actionAt(model, card.modelPath)) {
-            if (editActionNode(*node)) law->setActionModel(std::move(model));
+            if (editActionNode(*node, law)) law->setActionModel(std::move(model));
         }
         if (!card.modelPath.empty()) {
             ActionModel again = *law->actionModel();

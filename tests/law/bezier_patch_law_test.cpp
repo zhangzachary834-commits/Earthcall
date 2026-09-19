@@ -16,13 +16,16 @@
 #include "Person/Person.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -31,6 +34,7 @@
 #include "test_save_helper.hpp"
 
 namespace {
+
 
 int g_checks = 0;
 int g_failures = 0;
@@ -54,6 +58,8 @@ bool nearVec3(const glm::vec3& a, const glm::vec3& b, float eps = 1e-4f) {
 } // namespace
 
 int main() {
+    TempSaveRoot tempSaveRoot;
+
     std::cout << "============================================================" << std::endl;
     std::cout << "Running Bezier Patch & Complex SDF Law Generation Test..." << std::endl;
     std::cout << "============================================================" << std::endl;

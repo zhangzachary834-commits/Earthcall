@@ -1,0 +1,91 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-logos-pillar-pulse",
+  "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "bindings": {
+            "p": "@state.logos.pulseRate",
+            "t": "time"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 4.5,
+                      "factors": {}
+                    },
+                    {
+                      "c": 1.2,
+                      "factors": {
+                        "p": 1.0
+                      },
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "scale": 1.618,
+                          "shift": 0.0,
+                          "var": "t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "light.intensity"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "Zach"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 0,
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      },
+      "path": "isResonatorCore"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-logos-pillar-pulse",
+    "name": "Logos: Respiration of the Sacred Core",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-logos-pillar-pulse",
+        "entityB": "Zach",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}

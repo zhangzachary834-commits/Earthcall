@@ -24,6 +24,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>
@@ -209,6 +210,87 @@ int main() {
         mgr.tick();
         assert(nearf(filletOf(carrier), 0.0) && nearf(filletOf(bystander), 0.0) &&
                "a law whose vocabulary nobody carries reaches nobody");
+
+        ghostLaw->setEnabled(false);
+
+        // --------------------------------------------------------------
+        // H. THE INDEX AND THE FILTER MUST AGREE, being by being.
+        //    The index is a summary of `beingCarriesProperty`, the same
+        //    predicate `Law::couldApplyTo` decides with. Rung 7's follow-up
+        //    (2026-09-15) rewrote how that summary is built — one walk of each
+        //    being's own property names instead of one lookup per indexed name,
+        //    after a rebuild was measured at 132-208 ms in Synthesis Studio
+        //    Living. A rewrite of the summary can disagree with the predicate
+        //    in exactly two ways: propose beings the filter rejects (waste), or
+        //    omit beings it would accept (a silently deaf law). So the oracle
+        //    here is `couldApplyTo` itself, asked of every being.
+        //
+        //    The names below are chosen to exercise each membership rule:
+        //    a DOTTED child (`shape` matched by `shape.fillet`), an authored
+        //    dynamic name (`beacon`), and a name nobody carries.
+        // --------------------------------------------------------------
+        {
+            Object plain;      resetFillet(plain);
+            Object authored;   resetFillet(authored);
+            authored.setDynamicProperty("beacon", PropertyValue(1.0));
+            Singularity::Language::Lexeme word("probe");   // carries no `shape.*`
+            population.push_back(&plain);
+            population.push_back(&authored);
+            population.push_back(&word);
+            Universe::instance().bumpStructuralRevision();   // what Zone::addObject does
+
+            // Every probe compares against a QUALIFIED root, which
+            // compileToRete refuses to index ("a qualified root addresses
+            // someone else"). So these laws have no Rete terminals and take the
+            // SWEEP path — which is the path the vocabulary index feeds, and
+            // the only way a test can reach it.
+            Object floorBeing;  floorBeing.setObjectID("state.probe");
+            floorBeing.setDynamicProperty("floor", PropertyValue(-1.0));
+            population.push_back(&floorBeing);
+            Universe::instance().bumpStructuralRevision();
+
+            struct Probe { const char* name; ConditionNode condition; };
+            std::vector<Probe> probes;
+            probes.push_back({"dotted root",
+                ConditionNode::comparePaths("shape.fillet", ConditionNode::Op::Gt, "@state.probe.floor")});
+            probes.push_back({"authored name",
+                ConditionNode::comparePaths("beacon", ConditionNode::Op::Gt, "@state.probe.floor")});
+            probes.push_back({"nobody carries it",
+                ConditionNode::comparePaths("nobody-carries-this", ConditionNode::Op::Gt, "@state.probe.floor")});
+
+            for (auto& probe : probes) {
+                for (Singular* being : population) {
+                    if (auto* o = dynamic_cast<Object*>(being)) resetFillet(*o);
+                }
+                auto law = mgr.createLaw(std::string("agreement-") + probe.name, {&author});
+                law->setActivation(Law::Activation::WhileTrue);
+                law->setConditionModel(probe.condition);
+                law->setActionModel(ActionNode::set("shape.fillet", PropertyValue(0.75f)));
+                mgr.tick();
+                for (Singular* being : population) {
+                    auto* obj = dynamic_cast<Object*>(being);
+                    if (!obj || obj == &author) continue;
+                    const bool reached = nearf(filletOf(*obj), 0.75);
+                    const bool filterAccepts = law->couldApplyTo(*being);
+                    const bool conditionHolds = law->conditionsSatisfied(*being);
+                    // The filter WIDENS on purpose, so `accepts && !reached` is
+                    // fine (the condition decided). These two are the failures:
+                    // reaching past the filter, and missing a being that holds.
+                    if (reached && !filterAccepts) {
+                        std::fprintf(stderr, "FAILED %s: %s was reached though the filter rejects it\n",
+                                     probe.name, being->getIdentifier().c_str());
+                        assert(false && "the sweep reached a being couldApplyTo rejects");
+                    }
+                    if (conditionHolds && !reached) {
+                        std::fprintf(stderr, "FAILED %s: %s satisfies the condition and was NOT reached\n",
+                                     probe.name, being->getIdentifier().c_str());
+                        assert(false && "the vocabulary index omitted a being whose condition holds");
+                    }
+                }
+                law->setEnabled(false);
+            }
+            population.resize(population.size() - 4);
+        }
 
         Universe::instance().setProvider(nullptr);
     }

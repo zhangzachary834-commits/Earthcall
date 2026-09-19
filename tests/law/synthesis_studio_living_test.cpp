@@ -175,7 +175,7 @@ int main() {
     }
     canvasFrame(0.5,-970,false);
     // Real world save plus the actual Law and Object deserializers.
-    const auto saved=scratch.path / "worlds/roundtrip.json";
+    const auto saved=scratch.path / "worlds/roundtrip.ecform";
     h.zones.saveState(saved.string(),h.ctx);
     check(std::filesystem::exists(saved),"real SaveContext writes the new edition");
     auto serialized=h.lawManager.toJson();
@@ -186,7 +186,7 @@ int main() {
     nlohmann::json objectJson=*state;
     from_json(objectJson,decoded);
     check(near(number(decoded,"bloom"),number(*state,"bloom")),"expression survives actual Object serialization");
-    std::ifstream savedFile(saved);nlohmann::json savedJson;savedFile>>savedJson;
+    std::ifstream savedFile(scratch.path / "worlds/roundtrip.ecform");nlohmann::json savedJson;savedFile>>savedJson;
     check(savedJson.dump().find("studio.author.astra")!=std::string::npos,"saved world retains the new author's identity");
     registerAudioSink(nullptr);
     std::printf("Living Studio: %d failures\n",failures);

@@ -1,0 +1,29 @@
+{
+  "protocolVersion": 1,
+  "pageSessionId": "page-session.hostile99",
+  "sequenceBase": 0,
+  "url": "https://example.com/hostile?q=test\"'`&foo=<bar>",
+  "rootNodeToken": "node.root",
+  "nodes": [
+    {
+      "nodeToken": "node.root",
+      "nodeType": "element",
+      "symbol": "div",
+      "parentToken": "",
+      "siblingIndex": 0,
+      "attributes": [
+        {"name": "data-payload", "value": "{\\\"quotes\\\": \\\"value with 'single' and \\\"double\\\" and `backticks`\\\"}"},
+        {"name": "data-injection", "value": "<script>alert('pwned');</script> && rm -rf /"}
+      ]
+    },
+    {
+      "nodeToken": "node.text.hostile",
+      "nodeType": "text",
+      "symbol": "#text",
+      "parentToken": "node.root",
+      "siblingIndex": 0,
+      "textContent": "Line 1 with `backtick` and \"quotes\"\nLine 2 with \ttabs\nLine 3 with Unicode: 🌍 Earthcall 敬畏耶和华 🌟 ${eval(malicious)}",
+      "attributes": []
+    }
+  ]
+}

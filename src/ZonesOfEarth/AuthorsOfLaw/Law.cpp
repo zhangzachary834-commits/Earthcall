@@ -1,4 +1,5 @@
 #include "Law.hpp"
+#include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Universe.hpp"
@@ -378,6 +379,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
 }
 
 Law::ApplicationResult Law::applyTo(Singular& target) {
+    return applyToImpl(target, false);
+}
+
+Law::ApplicationResult Law::applyToAfterConditions(Singular& target) {
+    return applyToImpl(target, true);
+}
+
+Law::ApplicationResult Law::applyToImpl(
+    Singular& target, bool conditionsAlreadySatisfied) {
     ApplicationResult result = ApplicationResult::Applied;
     ActionNode::Trace trace;
 
@@ -441,7 +451,7 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         result = ApplicationResult::AuthorityDenied;
     } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
         result = ApplicationResult::AuthorityDenied;
-    } else if (!conditionsSatisfied(target)) {
+    } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
         ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
             {"lawId", getIdentifier()},
@@ -1117,15 +1127,33 @@ bool ReteNetwork::retractRelationStateFact(const Singular* subject,
 }
 
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
-    _relationStateIndex.clear();
     std::unordered_set<std::string> removedIds;
+    // Only THIS subject's entries leave the relation-state index. It used to be
+    // cleared wholesale, which made `hasRelationStateFact` answer "no" for every
+    // being in the world after any one being's facts were retracted — so the
+    // next seed, relation-formed handler or back-seed stacked a DUPLICATE edge
+    // fact into every alpha memory that matched, for beings that had nothing to
+    // do with the retraction. That guard exists precisely to stop "a standing
+    // per-tick propagation tax and, over a session of relations forming and
+    // dissolving, unbounded" growth (see hasRelationStateFact) — and clearing
+    // the index quietly switched it off. Guarded by
+    // tests/law/relation_state_index_test.cpp.
+    // Collected from the facts actually removed, so this costs what the removal
+    // costs — not a walk of the whole index asking every subject its name, which
+    // is what the first version of this fix did (and which allocates a string
+    // per entry on a path that runs for every destroyed being).
+    std::unordered_set<const Singular*> removedSubjects;
     _facts.erase(std::remove_if(_facts.begin(), _facts.end(), [&](const FactPtr& fact) {
         if (fact->isState && fact->subjectId == subjectId) {
             removedIds.insert(fact->id);
+            if (fact->type == "relation-state" && fact->subject) {
+                removedSubjects.insert(fact->subject);
+            }
             return true;
         }
         return false;
     }), _facts.end());
+    for (const Singular* subject : removedSubjects) _relationStateIndex.erase(subject);
 
     if (removedIds.empty()) return;
 
@@ -1741,6 +1769,9 @@ LawManager::~LawManager() {
 }
 
 void LawManager::connectToEventBus() {
+    // The adapter listens to the graph's own announcements: see SlowAdapter.hpp
+    // for why a road that cannot hear `relation-formed` goes stale invisibly.
+    _adapter.observe();
     if (_connected) return;
     _connected = true;
     s_singularHookOwner = this;
@@ -1770,10 +1801,12 @@ void LawManager::connectToEventBus() {
         for (const std::string& subjectId : _rete.retractFactsAbout(being)) {
             _seededSubjects.erase(subjectId);
         }
+        _seededBeingPointers.erase(being);
         for (auto& law : _laws) {
             law->forgetSubject(being);
         }
         _relationStateToRevalidate.erase(being);
+        _adapter.forgetBeing(being);
         // …and every RELATION that held it lets go of the pointer, keeping the
         // name. Relations outlive their endpoints all the time (a Formation, a
         // provenance record, a test's own graph), and aId()/bId() call a
@@ -2000,18 +2033,12 @@ bool LawManager::propheticHears(const std::string& propertyName) const {
 }
 
 std::vector<Law::ApplicationRecord> LawManager::tick() {
-    static bool printed = false;
-    if (!printed) {
-        printed = true;
-        fprintf(stderr, "=== ALL LAWS IN LAWMANAGER ===\n");
-        for (const auto& law_ptr : _laws) {
-            fprintf(stderr, "ID: %s | NAME: %s | ACT: %d | SCOPE: %d\n", 
-                law_ptr->getIdentifier().c_str(), law_ptr->name().c_str(), 
-                (int)law_ptr->activation(), (int)law_ptr->scope());
-        }
-        fprintf(stderr, "==============================\n");
-    }
-
+    // (A one-shot dump of every registered law lived here from 698059e0, the
+    // same performance commit that lost the OnBecomeTrue edge check. It printed
+    // to stderr on the first tick of every process — every test run, every app
+    // launch — and said nothing anyone was reading. Removed 2026-09-16. What a
+    // Person or an agent needs from a law register is in the Law Author window
+    // and in LawAuditLogger, both of which can be asked rather than shouted.)
     auto T0 = glfwGetTime();
 
     syncProphetic();
@@ -2064,13 +2091,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
-                    if (!law->conditionsSatisfied(*being)) continue;
+                    bool usedDirect = false;
+                    if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
                     if (law->drives() &&
                         hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
                         restartDriveSession(*law, being->getIdentifier());
                     }
-                    applyAndMaybeDrive(*law, *being, records);
+                    applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
                 continue;
             }
@@ -2226,7 +2254,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
         for (Singular* subject : subjects) {
             if (!subject || Universe::instance().isUnmade(subject)) continue;
-            const bool holds = law->conditionsSatisfied(*subject);
+            bool usedDirect = false;
+            const bool holds = candidateConditionsSatisfied(*law, *subject, &usedDirect);
             const bool wasHolding = law->lastConditionState(subject);
             law->rememberConditionState(subject, holds);
 
@@ -2247,7 +2276,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
                 restartDriveSession(*law, subject->getIdentifier());
             }
-            applyAndMaybeDrive(*law, *subject, records);
+            applyAndMaybeDrive(*law, *subject, records, usedDirect);
         }
     }
     auto T3 = glfwGetTime();
@@ -2266,9 +2295,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     return records;
 }
 
-Law::ApplicationResult LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
-                                    std::vector<Law::ApplicationRecord>& records) {
-    const Law::ApplicationResult result = law.applyTo(subject);
+Law::ApplicationResult LawManager::applyAndMaybeDrive(
+    Law& law, Singular& subject,
+    std::vector<Law::ApplicationRecord>& records,
+    bool conditionsAlreadySatisfied) {
+    const Law::ApplicationResult result =
+        conditionsAlreadySatisfied ? law.applyToAfterConditions(subject)
+                                   : law.applyTo(subject);
     if (law.applicationLog().empty()) return result;
     const Law::ApplicationRecord& record = law.applicationLog().back();
     records.push_back(record);
@@ -2326,13 +2359,23 @@ bool LawManager::gatesHold(const Law& law) const {
 // omitted candidate is a law gone deaf (PROPHETIC_RETE.md §2) — so the check is
 // conservative in the safe direction and rebuilds when unsure.
 void LawManager::refreshVocabularyIndex() const {
+    const uint64_t revision = Universe::instance().structuralRevision();
+    const uint64_t textRevision = Law::textRevision();
+    // Nothing has moved: not the shape of the world, not a word of law text.
+    // Two integer compares, and this is the whole of a steady frame's sweep
+    // preparation. Before, the name set below was rebuilt on every call —
+    // see _vocabularyNamesRevision for what that cost.
+    if (revision == _vocabularyBuiltAt && textRevision == _vocabularyNamesRevision) return;
+
     std::unordered_set<std::string> wanted;
     for (const auto& law : _laws) {
         if (!law) continue;
         for (const std::string& name : law->requiredProperties()) wanted.insert(name);
     }
+    _vocabularyNamesRevision = textRevision;
 
-    const uint64_t revision = Universe::instance().structuralRevision();
+    // Law text moved but the vocabulary it names did not (an action edited, a
+    // law renamed): the index still describes the right names.
     if (revision == _vocabularyBuiltAt && wanted == _indexedNames) return;
 
     _vocabularyIndex.clear();
@@ -2340,24 +2383,205 @@ void LawManager::refreshVocabularyIndex() const {
     _vocabularyBuiltAt = revision;
     if (_indexedNames.empty()) return;
 
+    // Views into _indexedNames, so the walk below tests a property name and each
+    // of its dotted roots without allocating a string per test.
+    std::unordered_set<std::string_view> wantedViews;
+    wantedViews.reserve(_indexedNames.size());
+    for (const std::string& name : _indexedNames) wantedViews.insert(name);
+
+    // ONE PASS PER BEING, not one per (being, name).
+    //
+    // This loop used to call beingCarriesProperty for every indexed name, and
+    // that function walks listProperties() to catch dotted children (`shape`
+    // matching `shape.fillet`). So a rebuild materialised each being's whole
+    // property list once PER NAME. Measured in Synthesis Studio Living (535
+    // beings, 43 names): one rebuild cost 132-208 ms — a visible freeze on any
+    // tick that granted a property or admitted a being, since those are exactly
+    // what move structuralRevision. Now the list is walked ONCE per being, and
+    // each name it finds is tested against the indexed set.
+    //
+    // The membership rule is unchanged, and must stay that way: this index and
+    // Law::couldApplyTo have to agree, or the sweep proposes candidates the
+    // filter rejects (wasted work) or omits ones it would accept (a silently
+    // deaf law). Guarded by tests/law/vocabulary_index_test.cpp §H, which asks
+    // both invariants of every being: nothing reached that couldApplyTo
+    // rejects, and nothing whose condition holds left unreached.
     for (Singular* being : Universe::instance().beings()) {
         if (!being) continue;
-        for (const std::string& name : _indexedNames) {
-            if (beingCarriesProperty(*being, name)) {
-                _vocabularyIndex[name].push_back(being);
+        // Asked the other way round: what does THIS being carry that some law
+        // names? Looking each indexed name up on the being instead costs a
+        // linear scan of its property names per name (findProperty walks a
+        // parallel array) — the 43 scans per being this used to pay.
+        // listProperties() materialises every authored property's bridge, so
+        // this walk sees dynamic properties too, which is what keeps the
+        // membership rule identical to beingCarriesProperty's.
+        std::unordered_set<std::string_view> carried;
+        for (Property* prop : being->listProperties()) {
+            if (!prop) continue;
+            const std::string_view propName = prop->name();
+            auto hit = wantedViews.find(propName);
+            if (hit != wantedViews.end()) carried.insert(*hit);
+            // The dotted-child rule: a being carrying `shape.fillet` carries `shape`.
+            for (std::size_t dot = propName.find('.'); dot != std::string_view::npos;
+                 dot = propName.find('.', dot + 1)) {
+                auto root = wantedViews.find(propName.substr(0, dot));
+                if (root != wantedViews.end()) carried.insert(*root);
             }
+        }
+        for (const std::string_view name : carried) {
+            _vocabularyIndex[std::string(name)].push_back(being);
         }
     }
 }
 
-// Who a law sweeps when it has no targets Formation: not everyone, but
-// everyone who CARRIES ITS VOCABULARY (see Law::requiredProperties).
+// Choose the highest CURRENT SOUND candidate tier for one Law.
+//
+// The important split is temporal:
+//   refreshCandidateRoute() may inspect the structures that describe the Law;
+//   sweepSubjects() consumes ONE cached answer.
+//
+// So a steady frame pays one map lookup plus revision/generation comparisons,
+// not "try adapter, then scan all required properties, then fall back". The
+// selected tier can still iterate its RESULT set — O(matches) is the point —
+// but deciding WHICH structure to trust is O(1) per Law after refresh.
+//
+// Currency follows DERIVED_STATE_LEDGER.md: law text, world structure and the
+// relation graph are distinct signals. An adapter road is selected only when
+// its law condition revision matches, it is current, and it is STRICTLY
+// narrower than the lower vocabulary/sweep candidate set. Equal-width higher
+// tiers are refused: a higher label that buys no narrowing is pure overhead.
+void LawManager::refreshCandidateRoute(const Law& law) const {
+    const std::string lawId = law.getIdentifier();
+    const std::uint64_t textRevision = Law::textRevision();
+    const std::uint64_t structural = Universe::instance().structuralRevision();
+    const bool hasGraph = Universe::instance().hasRelationGeneration();
+    const std::size_t graph = hasGraph ? Universe::instance().relationGeneration() : 0;
+    const std::uint64_t adapterGeneration =
+        _useSlowAdapter ? _adapter.candidateGenerationFor(lawId) : 0;
+
+    auto existing = _candidateRoutes.find(lawId);
+    if (existing != _candidateRoutes.end()) {
+        const CandidateRoute& route = existing->second;
+        if (route.lawTextRevision == textRevision &&
+            route.conditionRevision == law.conditionRevision() &&
+            route.structuralRevision == structural &&
+            route.hasRelationGeneration == hasGraph &&
+            (!hasGraph || route.relationGeneration == graph) &&
+            route.adapterRouteGeneration == adapterGeneration) {
+            return;
+        }
+    }
+
+    ++_candidateRouteRefreshCount;
+    CandidateRoute chosen;
+    chosen.lawTextRevision = textRevision;
+    chosen.conditionRevision = law.conditionRevision();
+    chosen.structuralRevision = structural;
+    chosen.relationGeneration = graph;
+    chosen.hasRelationGeneration = hasGraph;
+    chosen.adapterRouteGeneration = adapterGeneration;
+
+    // Tier 0 floor: whole eligible world. We need only its CARDINALITY here,
+    // not the vector itself, to decide whether a higher tier is narrower.
+    std::size_t lowerCount = Universe::instance().beings().size();
+
+    // Tier 2 vocabulary route. Its "route" is simply the rarest required name.
+    // Pick it when the index is refreshed, not once per use of sweepSubjects.
+    const auto& required = law.requiredProperties();
+    if (!required.empty()) {
+        refreshVocabularyIndex();
+        chosen.tier = CandidateTier::Vocabulary;
+        const std::vector<Singular*>* seed = nullptr;
+        for (const std::string& name : required) {
+            auto it = _vocabularyIndex.find(name);
+            if (it == _vocabularyIndex.end()) {
+                // Proven empty is the narrowest possible vocabulary answer.
+                chosen.vocabularySeed = name;
+                lowerCount = 0;
+                seed = nullptr;
+                break;
+            }
+            if (!seed || it->second.size() < seed->size()) {
+                seed = &it->second;
+                chosen.vocabularySeed = name;
+            }
+        }
+        if (seed) lowerCount = seed->size();
+    }
+
+    // Higher retained-road tiers. AdapterRoad remains the discovery layer.
+    // A sound single positive conjunctive road can now GRADUATE into a direct
+    // Law -> concrete-bearer route and stop re-proving the same category edge
+    // on every event.
+    if (_useSlowAdapter) {
+        const auto routeRevision = _adapterRouteRevision.find(lawId);
+        const bool routesMatchLaw =
+            routeRevision != _adapterRouteRevision.end() &&
+            routeRevision->second == law.conditionRevision();
+
+        const std::vector<Singular*>* road = nullptr;
+        if (routesMatchLaw && _adapter.candidateViewFor(lawId, road) && road) {
+            bool madeDirect = false;
+            const ConditionModel* model = law.conditionModel();
+
+            if (_useLawDirect && model && law.conditionPredicateCount() == 1) {
+                std::vector<std::pair<std::string, std::string>> routes;
+                model->collectCategoryRoutes(routes);
+                if (routes.size() == 1) {
+                    std::vector<Singular*> direct;
+                    direct.reserve(road->size());
+                    for (Singular* being : *road) {
+                        if (!being || Universe::instance().isUnmade(being)) continue;
+                        // required-property membership is structural currency:
+                        // dynamic property insert/erase bumps structuralRevision.
+                        if (law.couldApplyTo(*being)) direct.push_back(being);
+                    }
+
+                    // Equal-width Direct is still useful: unlike an equal-width
+                    // AdapterRoad, it removes a proved condition conjunct.
+                    if (direct.size() <= lowerCount) {
+                        chosen.tier = CandidateTier::LawDirect;
+                        chosen.vocabularySeed.clear();
+                        chosen.directSubjects = std::move(direct);
+                        chosen.directRelationType = routes[0].first;
+                        chosen.directOtherId = routes[0].second;
+                        chosen.directResidual =
+                            model->compileAssumingCategoryRoute(
+                                chosen.directRelationType, chosen.directOtherId);
+                        madeDirect = true;
+                    }
+                }
+            }
+
+            if (!madeDirect && road->size() < lowerCount) {
+                chosen.tier = CandidateTier::AdapterRoad;
+                chosen.vocabularySeed.clear();
+            }
+        }
+    }
+
+    _candidateRoutes[lawId] = std::move(chosen);
+}
+
+std::string LawManager::candidateTierFor(const Law& law) const {
+    refreshCandidateRoute(law);
+    auto it = _candidateRoutes.find(law.getIdentifier());
+    if (it == _candidateRoutes.end()) return "sweep";
+    switch (it->second.tier) {
+        case CandidateTier::LawDirect:   return "law-direct";
+        case CandidateTier::AdapterRoad: return "adapter-road";
+        case CandidateTier::Vocabulary: return "vocabulary";
+        case CandidateTier::Sweep:       return "sweep";
+    }
+    return "sweep";
+}
+
+// Who a law sweeps when it has no targets Formation: consume one cached,
+// current route and let couldApplyTo / the condition remain the truth.
 std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     const auto& targets = law.targets().getMembers();
     if (!targets.empty()) {
-        // An explicit targets Formation is the author's own answer to "whom",
-        // and it overrides the derived filter — but a target that has since
-        // been unmade is still no one.
+        // An explicit targets Formation is the author's own answer to "whom".
         std::vector<Singular*> chosen;
         chosen.reserve(targets.size());
         for (Singular* target : targets) {
@@ -2366,39 +2590,89 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    const auto& required = law.requiredProperties();
-    if (required.empty()) return Universe::instance().beings();  // truly about everyone
-
-    // Self-guarding: an integer compare when tick() already refreshed, a full
-    // rebuild when this was reached some other way. Never a stale read.
-    refreshVocabularyIndex();
-
-    // Seed from the RAREST required name and filter that, instead of walking
-    // the world. Every required name must hold, so the smallest of their member
-    // lists is already a superset of the answer — and picking the smallest is
-    // the cheap, metric-free stand-in for §5's cost model, where fan-out is
-    // what an edge weight is supposed to measure. When §5 lands with a real
-    // value-per-cost ranking, this is the call site that grows it.
-    //
-    // A name absent from the index means NOBODY carries it, so the law has no
-    // subjects — the fast path for a law nothing can satisfy. That is a sound
-    // narrowing (provably IMPOSSIBLE, the only kind §3.0 permits), not a guess:
-    // the index was built with the same predicate couldApplyTo uses.
-    const std::vector<Singular*>* seed = nullptr;
-    for (const std::string& name : required) {
-        auto it = _vocabularyIndex.find(name);
-        if (it == _vocabularyIndex.end()) return {};
-        if (!seed || it->second.size() < seed->size()) seed = &it->second;
+    refreshCandidateRoute(law);
+    auto routeIt = _candidateRoutes.find(law.getIdentifier());
+    if (routeIt == _candidateRoutes.end()) {
+        // Defensive widening. A missing cache entry may cost a sweep; it must
+        // never cost a Law its subjects.
+        return Universe::instance().beings();
     }
-    if (!seed) return Universe::instance().beings();   // index not built yet
 
-    std::vector<Singular*> chosen;
-    chosen.reserve(seed->size());
-    for (Singular* being : *seed) {
-        // couldApplyTo still decides. The index only proposes.
-        if (being && law.couldApplyTo(*being)) chosen.push_back(being);
+    const CandidateRoute& route = routeIt->second;
+
+    if (route.tier == CandidateTier::LawDirect) {
+        std::vector<Singular*> chosen;
+        chosen.reserve(route.directSubjects.size());
+        for (Singular* being : route.directSubjects) {
+            if (being && !Universe::instance().isUnmade(being)) {
+                chosen.push_back(being);
+            }
+        }
+        return chosen;
     }
-    return chosen;
+
+    if (route.tier == CandidateTier::AdapterRoad) {
+        const std::vector<Singular*>* travelled = nullptr;
+        if (_adapter.candidateViewFor(law.getIdentifier(), travelled) && travelled) {
+            std::vector<Singular*> chosen;
+            chosen.reserve(travelled->size());
+            for (Singular* being : *travelled) {
+                if (!being || Universe::instance().isUnmade(being)) continue;
+                if (law.couldApplyTo(*being)) chosen.push_back(being);
+            }
+            return chosen;
+        }
+
+        // The road went stale between selection and consumption. Refuse it,
+        // invalidate the decision and immediately descend one rung.
+        invalidateCandidateRoute(law.getIdentifier());
+        refreshCandidateRoute(law);
+        routeIt = _candidateRoutes.find(law.getIdentifier());
+        if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
+    }
+
+    const CandidateRoute& fallback = routeIt->second;
+    if (fallback.tier == CandidateTier::Vocabulary) {
+        refreshVocabularyIndex();
+        auto seedIt = _vocabularyIndex.find(fallback.vocabularySeed);
+        if (seedIt == _vocabularyIndex.end()) return {};
+
+        std::vector<Singular*> chosen;
+        chosen.reserve(seedIt->second.size());
+        for (Singular* being : seedIt->second) {
+            if (!being || Universe::instance().isUnmade(being)) continue;
+            if (law.couldApplyTo(*being)) chosen.push_back(being);
+        }
+        return chosen;
+    }
+
+    // Tier 0: complete over-approximating floor.
+    return Universe::instance().beings();
+}
+
+bool LawManager::candidateConditionsSatisfied(
+    const Law& law, const Singular& subject, bool* usedLawDirect) const {
+    if (usedLawDirect) *usedLawDirect = false;
+
+    // A/B fidelity: Direct OFF is the immediately-pre-Direct executor, not
+    // "pre-Direct plus one new map/currency check per candidate".
+    if (!_useLawDirect) return law.conditionsSatisfied(subject);
+
+    // sweepSubjects() selected/refreshed the route immediately before the
+    // candidate loop. Consume that one decision; do not re-run route selection
+    // once per candidate and turn O(1)-per-Law planning into O(matches).
+    auto it = _candidateRoutes.find(law.getIdentifier());
+    if (it == _candidateRoutes.end() ||
+        it->second.tier != CandidateTier::LawDirect ||
+        !it->second.directResidual) {
+        return law.conditionsSatisfied(subject);
+    }
+
+    if (usedLawDirect) *usedLawDirect = true;
+    ECA::Event event;
+    event.type = "law-evaluate";
+    event.subject = const_cast<Singular*>(&subject);
+    return it->second.directResidual(event, subject);
 }
 
 // ---------------------------------------------------------------------------
@@ -2473,6 +2747,7 @@ void LawManager::releaseFromLaws(Singular* being) {
     // Forget that we introduced it to the network, so an id reused by a later
     // being is seeded afresh instead of being taken for one we already know.
     _seededSubjects.erase(id);
+    _seededBeingPointers.erase(being);
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&id](const DriveSession& s) { return s.subjectId == id; }),
@@ -2634,6 +2909,7 @@ bool LawManager::remove(const std::string& lawId) {
     std::shared_ptr<Law> removed = std::move(*it);
     _laws.erase(it);
     removed.reset();
+    _adapter.forgetLaw(lawId);
     Law::bumpTextRevision();
     return true;
 }
@@ -2677,9 +2953,17 @@ const std::vector<std::string>& LawManager::triggersOf(const std::string& lawId)
 
 void LawManager::seedStateFacts(Singular* being) {
     if (!being) return;
+    // Fast path: avoid virtual getIdentifier() and string allocations on every tick
+    // if this pointer is already known to have been seeded.
+    if (_seededBeingPointers.count(being)) return;
+
     const std::string subjectId = being->getIdentifier();
     if (subjectId.empty()) return;
-    if (!_seededSubjects.insert(subjectId).second) return;   // already known
+    if (!_seededSubjects.insert(subjectId).second) {
+        _seededBeingPointers.insert(being);
+        return;   // already known
+    }
+    _seededBeingPointers.insert(being);
 
     for (auto* prop : being->listProperties()) {
         if (!prop) continue;
@@ -2844,6 +3128,60 @@ void LawManager::revalidateRelationStateFacts() {
     }
 }
 
+// Hand the adapter the roads a law travels, when its TEXT changes rather than
+// per tick.
+//
+// Deliberately NOT inside compileConditionsToRete: that runs only for laws that
+// want Rete terminals (`activation() != OnEvent`), and the laws that actually
+// reach sweepSubjects — where the adapter is read — are OnEvent laws scoped to
+// Everyone. Hooking the compile path registered roads for exactly the laws that
+// never use them, and none for the ones that do. Found by
+// slow_adapter_parity_test, which measured the adapter serving nothing at all.
+void LawManager::syncAdapterRoutes(Law& law) {
+    if (!_useSlowAdapter) return;   // off means off: nothing noted, nothing walked
+    const std::string lawId = law.getIdentifier();
+    auto known = _adapterRouteRevision.find(lawId);
+    if (known != _adapterRouteRevision.end() && known->second == law.conditionRevision()) {
+        return;
+    }
+    _adapterRouteRevision[lawId] = law.conditionRevision();
+    if (!law.conditionModel()) {
+        _adapter.forgetLaw(lawId);
+        return;
+    }
+    std::vector<std::pair<std::string, std::string>> routes;
+    law.conditionModel()->collectCategoryRoutes(routes);
+    _adapter.noteLaw(lawId, routes);
+}
+
+std::size_t LawManager::serviceSlowAdapterClock(double wallSeconds) {
+    if (!_useSlowAdapter) return 0;
+
+    // Priming establishes this clock's own next Moment. In particular, enabling
+    // the adapter does NOT make the frame that enabled it perform maintenance.
+    if (!_slowAdapterClockPrimed) {
+        _slowAdapterClockPrimed = true;
+        _slowAdapterNextAt = wallSeconds + kSlowAdapterPeriodSeconds;
+        return 0;
+    }
+    if (wallSeconds < _slowAdapterNextAt) return 0;
+
+    // Never replay missed periods. A long foreground stall must not be followed
+    // by N maintenance slices in one frame; the slow clock resumes from now.
+    _slowAdapterNextAt = wallSeconds + kSlowAdapterPeriodSeconds;
+    ++_slowAdapterMaintenanceRuns;
+
+    // Route discovery belongs to the same slow temporal domain as route
+    // maintenance. A Law edited between maintenance Moments simply falls back
+    // to the complete sweep until this catches up (sweepSubjects verifies the
+    // condition revision before consulting the adapter).
+    for (const auto& law : _laws) {
+        if (law) syncAdapterRoutes(*law);
+    }
+
+    return _adapter.step(Relevance::SlowAdapter::Budget{});
+}
+
 void LawManager::syncReteCompilation(Law& law) {
     const std::string lawId = law.getIdentifier();
     const bool wantsRete =
@@ -2894,6 +3232,7 @@ void LawManager::compileConditionsToRete(Law& law) {
     // (no model, nothing compilable) are still a complete answer for THIS
     // revision, and re-deciding it every tick would be a standing tax.
     _compiledConditionRevision[lawId] = law.conditionRevision();
+
 
     // Unbind old terminals for this law (if recompiling).
     auto oldIt = _reteTerminals.find(lawId);
@@ -2946,7 +3285,9 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _reteTerminals.erase(law->getIdentifier());
         _compiledConditionRevision.erase(law->getIdentifier());
     }
+    std::vector<std::shared_ptr<Law>> oldLaws = std::move(_laws);
     _laws = std::move(firstMovers);
+    oldLaws.clear();
     _driveSessions.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();
@@ -3095,4 +3436,21 @@ nlohmann::json LawManager::toJson() const {
         {"firstMoverEnabled", firstMoverEnabled},
         {"maxChainRounds", _maxChainRounds}
     };
+}
+
+#include "MathBinding.hpp"
+void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out) {
+    if (out.index() == 15) {
+        const auto& dict = std::get<15>(out);
+        if (dict) {
+            auto itType = dict->elements.find("_type");
+            if (itType != dict->elements.end() && itType->second.index() == 7 && std::get<7>(itType->second) == "projection") {
+                auto itTarget = dict->elements.find("target");
+                if (itTarget != dict->elements.end() && itTarget->second.index() == 7) {
+                    root->readAuthoredPropertyProjectionColors(
+                        Earthcall::StringInterner::intern(std::get<7>(itTarget->second)), out);
+                }
+            }
+        }
+    }
 }

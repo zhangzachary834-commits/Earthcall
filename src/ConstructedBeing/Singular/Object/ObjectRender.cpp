@@ -8,6 +8,8 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
@@ -285,6 +287,24 @@ void Object::initFaceTextures() {
     mine->initFaceTextures(faces);
 }
 
+int Object::getTextureResolution() const {
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (mat) return mat->getTextureResolution();
+    return 64;
+}
+
+void Object::setTextureResolution(const int& res) {
+    if (res <= 0 || res > 4096) return;
+    auto mine = ownMaterial();
+    if (!mine) return;
+    const int faces = getFaces() > 0 ? getFaces() : 1;
+    if (mine->faceTextures.empty()) {
+        mine->initFaceTextures(faces, res, res);
+    } else {
+        mine->setTextureResolution(res);
+    }
+}
+
 void Object::setFaceColor(int faceIndex, float r, float g, float b) {
     if (faceIndex >= 0 && faceIndex < 6) {
         faceColors[faceIndex][0] = r;
@@ -512,7 +532,29 @@ bool Object::recognizesAuthoredPropertyProjection(Earthcall::StringId id) const 
     return selectionDefinition(*this, name, face, selector);
 }
 
+
 bool Object::readAuthoredPropertyProjection(Earthcall::StringId id,
+                                            PropertyValue& out) const {
+    const std::string name = Earthcall::StringInterner::resolve(id);
+    PixelAddress pixel;
+    int face = -1;
+    OntoMath::Piecewise selector;
+    const bool single = parsePixelAddress(name, pixel);
+    if (single) face = pixel.face;
+    else if (!selectionDefinition(*this, name, face, selector)) return false;
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (!mat || face < 0 || face >= static_cast<int>(mat->faceTextures.size())) return false;
+    const FaceTexture& ft = mat->faceTextures[static_cast<std::size_t>(face)];
+    
+    auto dict = std::make_shared<PropertyDict>();
+    dict->elements["_type"] = PropertyValue(std::string("projection"));
+    dict->elements["target"] = PropertyValue(name);
+    dict->elements["revision"] = PropertyValue(static_cast<double>(ft.revision));
+    out = PropertyValue(std::move(dict));
+    return true;
+}
+
+bool Object::readAuthoredPropertyProjectionColors(Earthcall::StringId id,
                                             PropertyValue& out) const {
     const std::string name = Earthcall::StringInterner::resolve(id);
     PixelAddress pixel;
@@ -561,7 +603,14 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     if (!mine) return false;
     const int faces = getFaces() > 0 ? getFaces() : 1;
     if (face < 0 || face >= faces) return false;
-    if (static_cast<int>(mine->faceTextures.size()) != faces) mine->initFaceTextures(faces);
+    if (static_cast<int>(mine->faceTextures.size()) != faces) {
+        int w = 0, h = 0;
+        if (!mine->faceTextures.empty()) {
+            w = mine->faceTextures[0].width;
+            h = mine->faceTextures[0].height;
+        }
+        mine->initFaceTextures(faces, w, h);
+    }
     FaceTexture& ft = mine->faceTextures[static_cast<std::size_t>(face)];
     std::vector<glm::ivec2> selected;
     if (single) {
@@ -603,7 +652,21 @@ void Object::drawSmoothModel() const {
     // RenderMode::Mesh opts a Law OUT of the exact analytic path even where
     // the backend supports it — trading exactness for the instanced draw
     // path only tessellated meshes get.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    
+    if (analytic) {
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
@@ -620,7 +683,20 @@ void Object::drawComplexModel() const {
     // The UV side mesh and N-gon disks are a drawing cache. Backends that
     // can march an SDF draw the primitive instead, same door as spheres.
     // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    if (analytic) {
         geom::SdfNode field;
         if (geom::sdfFromComplex(complexData, field)) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
@@ -660,7 +736,20 @@ void Object::drawFieldModel() const {
     // no tessellation seams, and the surface is exact at any zoom. Backends that
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    if (analytic) {
         // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
         // on first access after a revision bump, mirroring rebuildFieldMesh();
         // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.

@@ -240,3 +240,28 @@ This is deliberately **not** the completion of the reopened task. General Materi
 Category shared roots, Zone-scoped matter generations, a detached whole-closure
 transaction across every root kind, Save Zone isolation, and migration of the other
 authored app Laws remain open under the completion contract above.
+
+## 2026-09-18 — `chess_app` → independent Chess Zone boot
+
+**Authorized by Zach. Implemented by GPT-5.6 Sol.** Zach explicitly asked to migrate the Chess Zone whose legacy source is exactly `saves/worlds/chess_app.json` so Chess no longer requires loading the conglomerate World.
+
+The migration keeps the historical `chess_app.{json,ecform}` files untouched as compatibility/recovery artifacts and changes the ordinary source of truth instead:
+
+- `saves/zones/Chess/zone.json` keeps the newer serialized forms of the 39 board/piece/seat/promotion beings, restores the legacy bundle's complete persisted Relation graph, embeds the three Chess materials, and admits the formerly session-only extra-spatial dependency beings (Chess/category roots, `state.chess`, `object.chess.status`, `grok-4.6`, and `codex-gpt5`) exactly once.
+- The Zone names all 69 authored Chess Laws through `lawRefs`; each existing Law is copied unchanged from the legacy authored register into its own stable `saves/laws/<id>/law.json` root with its original `authors` and trigger set. The migration records GPT-5.6 Sol only in `injected_by`; it does **not** rewrite grok-4.6's or Codex's authorship.
+- `ZoneManager::switchTo` now repeats the idempotent persisted-Relation hydration pass immediately after the referenced Laws are committed. This is the Zone-native counterpart of the second pass legacy `loadState` already needed: Law→category edges cannot bind before those Law beings exist.
+- `scripts/author_chess.py` now emits the Zone identity + shared Law roots by default. Regenerating the legacy `chess_app` session requires explicit `--legacy-session`, preventing routine authoring from sliding Chess back behind a conglomerate-file dependency.
+- `tests/law/chess_zone_native_boot_test.cpp` constructs an isolated SaveRoot with **only** the Chess Zone and its named Law roots, never creates a `worlds/` directory, never calls `loadState`, moves to Chess through `switchTo`, verifies materials/relations/all 69 Laws, and executes e2-e4.
+
+Person-facing rendering/input acceptance is routed to [For Zach/Person Verification List.md](../../For%20Zach/Person%20Verification%20List.md); automated closure verification is not treated as a substitute for Zach seeing and playing the Zone in the real app.
+
+### 2026-09-18 Person witness correction — PR #222 booted as two cubes
+
+Zach merged PR #222, pulled it, fresh-booted Earthcall, and entered Chess through the intended Zone-only path. The result was **a white cube sitting on top of a black cube**, not a chessboard.
+
+The failure was in the migration data, not the new Law-root architecture. PR #222 deliberately preferred the then-current 39 gameplay Object payloads in `saves/zones/Chess/zone.json` over the legacy `chess_app` copies under the assumption that the Zone identity was the newer source. That assumption was wrong. Those 39 Zone payloads were descendants of the old transform-loss bug documented above: their transforms and centers had already collapsed to identity/origin, their 3D `shapeParams` had also picked up default 2D dimensions, and their fallback `faceColors` had reverted to legacy cube colors. The exact `saves/worlds/chess_app.json` source still carries the intended authored manifestation — board scale `8 × 0.28 × 8 @ y=-0.14`, e2 pawn at `(0.5, 0.22, -2.5)`, and 32 distinct piece placements.
+
+The hotfix restores the exact 39 board/piece/seat/HUD Object payloads from `chess_app` into the independent Zone identity while preserving the Zone-native closure added by PR #222: the additional dependency beings, three materials, 143 relations, and 69 `lawRefs`. The cold-boot regression is strengthened to assert manifestation before behavior: board scale/placement, e2 start position, 32 pieces present, and 32 distinct piece positions. `scripts/author_chess.py` now refuses to emit a collapsed native Chess Zone if those invariants fail.
+
+This is a direct correction of my PR #222 migration judgment: calling the older Zone payloads “newer serialized forms” confused chronological recency with semantic authority. Zach's live visual witness exposed what the previous headless test did not.
+

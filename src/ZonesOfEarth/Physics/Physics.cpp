@@ -139,7 +139,9 @@ namespace Physics {
                       float gravityAccel,
                       float airResistance,
                       float groundY) {
-        return; // STUBBED FOR PROFILING
+        
+        using ClockT = std::chrono::high_resolution_clock;
+        const auto tStart = ClockT::now();
         // Apply modular physics laws to all bodies before integration
         // We keep legacy gravity/air as fallback when no laws exist
         const auto& laws = getLaws();
@@ -265,15 +267,17 @@ namespace Physics {
         }
 
         // Auto-create bonds based on geometry rules (simple n^2 loop for now)
-        for(size_t i=0;i<objects.size();++i){
-            for(size_t j=i+1;j<objects.size();++j){
-                Object* oa = objects[i].get();
-                Object* ob = objects[j].get();
-                if(!oa||!ob) continue;
-                if(!getAutoBond(oa->getShapeKind(), ob->getShapeKind())) continue;
-                // check duplicate
-                bool exists=false; for(const auto& b : g_bonds){ if((b.a==oa&&b.b==ob)||(b.a==ob&&b.b==oa)){exists=true;break;} }
-                if(!exists) addBond(oa,ob,1.0f,10.0f);
+        if (!g_autoBondRules.empty()) {
+            for(size_t i=0;i<objects.size();++i){
+                for(size_t j=i+1;j<objects.size();++j){
+                    Object* oa = objects[i].get();
+                    Object* ob = objects[j].get();
+                    if(!oa||!ob) continue;
+                    if(!getAutoBond(oa->getShapeKind(), ob->getShapeKind())) continue;
+                    // check duplicate
+                    bool exists=false; for(const auto& b : g_bonds){ if((b.a==oa&&b.b==ob)||(b.a==ob&&b.b==oa)){exists=true;break;} }
+                    if(!exists) addBond(oa,ob,1.0f,10.0f);
+                }
             }
         }
 
@@ -467,6 +471,12 @@ namespace Physics {
                 a->updateCollisionZone(a->getTransform());
                 b->updateCollisionZone(b->getTransform());
             }
+        }
+        
+        const auto tEnd = ClockT::now();
+        double ms = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+        if (ms > 5.0) {
+            printf("updateBodies took %f ms\n", ms);
         }
 
         // Any pair touching last frame but absent from this frame's set has
@@ -892,5 +902,14 @@ namespace Physics {
 
     bool isCollisionEnabled(const LawManager* lm) {
         return checkFirstMoverLawEnabled(lm, "physics-collision");
+    }
+
+    bool hasAnyActivePhysics(const LawManager* lm) {
+        if (!g_laws.empty()) {
+            for (const auto& law : g_laws) {
+                if (law.enabled) return true;
+            }
+        }
+        return isGravityEnabled(lm) || isCollisionEnabled(lm);
     }
 }

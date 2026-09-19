@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 #include <cstdint>
 #include <string>
@@ -121,6 +122,37 @@ void faceTexturesFromJson(Material& m, const json& arr) {
         m.faceTextures.push_back(std::move(ft));
     }
 }
+class ColorExprBridge : public Property {
+public:
+    explicit ColorExprBridge(std::string name, Material* mat)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _mat(mat) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_mat || !_mat->colorExpr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_mat->colorExpr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_mat) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+        
+        _mat->colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(parsed));
+        _mat->bumpRevision();
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Material* _mat;
+};
+
 } // namespace
 
 void Material::buildProperties() {
@@ -136,6 +168,55 @@ void Material::buildProperties() {
         "ambient", this, &Material::ambient));
     registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "diffuse", this, &Material::diffuse));
+    registerProperty(std::make_unique<ColorExprBridge>(
+        "colorExpr", this));
+    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
+        "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
+    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
+        "textureWidth", this, &Material::getTextureWidth, &Material::setTextureWidth));
+    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
+        "textureHeight", this, &Material::getTextureHeight, &Material::setTextureHeight));
+}
+
+int Material::getTextureResolution() const {
+    if (!faceTextures.empty()) return faceTextures[0].width;
+    return textureResolution;
+}
+
+void Material::setTextureResolution(const int& res) {
+    if (res <= 0 || res > 4096) return;
+    textureResolution = res;
+    textureWidth = res;
+    textureHeight = res;
+    for (auto& ft : faceTextures) {
+        ft.resize(res, res);
+    }
+}
+
+int Material::getTextureWidth() const {
+    if (!faceTextures.empty()) return faceTextures[0].width;
+    return textureWidth;
+}
+
+void Material::setTextureWidth(const int& w) {
+    if (w <= 0 || w > 4096) return;
+    textureWidth = w;
+    for (auto& ft : faceTextures) {
+        ft.resize(w, ft.height);
+    }
+}
+
+int Material::getTextureHeight() const {
+    if (!faceTextures.empty()) return faceTextures[0].height;
+    return textureHeight;
+}
+
+void Material::setTextureHeight(const int& h) {
+    if (h <= 0 || h > 4096) return;
+    textureHeight = h;
+    for (auto& ft : faceTextures) {
+        ft.resize(ft.width, h);
+    }
 }
 
 json Material::toJson() const {
@@ -148,6 +229,12 @@ json Material::toJson() const {
         {"ambient", ambient},
         {"diffuse", diffuse},
     };
+    if (colorExpr) {
+        j["colorExpr"] = colorExpr->toJson();
+    }
+    if (textureResolution != 64) {
+        j["textureResolution"] = textureResolution;
+    }
     if (!faceTextures.empty()) {
         j["faceTextures"] = faceTexturesToJson(faceTextures);
     }
@@ -166,6 +253,14 @@ Material Material::fromJson(const json& j) {
     m.specular  = j.value("specular", 1.0f);
     m.ambient   = j.value("ambient", 0.2f);
     m.diffuse   = j.value("diffuse", 0.8f);
+    if (j.contains("colorExpr")) {
+        m.colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["colorExpr"]));
+    }
+    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
+        m.textureResolution = j["textureResolution"].get<int>();
+        m.textureWidth = m.textureResolution;
+        m.textureHeight = m.textureResolution;
+    }
     if (j.contains("faceTextures")) {
         faceTexturesFromJson(m, j["faceTextures"]);
     }
@@ -173,13 +268,20 @@ Material Material::fromJson(const json& j) {
 }
 
 void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeight) {
+    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
+    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
     if (faceTextures.size() == static_cast<size_t>(numFaces)) {
+        for (auto& ft : faceTextures) {
+            if (ft.width != w || ft.height != h) {
+                ft.resize(w, h);
+            }
+        }
         return; // Already initialised correctly
     }
     faceTextures.clear();
     for (int i = 0; i < numFaces; ++i) {
         FaceTexture tex;
-        tex.create(defaultWidth, defaultHeight); // Default white texture
+        tex.create(w, h); // Default white texture
         faceTextures.push_back(std::move(tex));
     }
 }
