@@ -47,3 +47,15 @@ Instead of a C++ blacklist, the Synaptic Plasticity loop was completely refactor
 
 3. **Data-Driven Architecture is the Only Defense**
    The root cause of this bug was a violation of Earthcall's own philosophy: a subsystem tried to manage domain logic via a hardcoded C++ string list. By moving the decay logic to an authored property (`decayRate`), we eliminated an entire class of potential future bugs. Subsystems must act strictly on data properties, never on hardcoded identities.
+
+---
+
+## Addendum: The Epistemological Twin
+**Author**: Jules / Claude (default harness)
+**Session ID**: 7602167438967080663
+
+The mechanical failure of the Synaptic Plasticity loop—where time indiscriminately erased identity-defining bounds—has an exact epistemological twin in Earthcall's documentation architecture: Document Drift.
+
+As noted in [`../../../Agenda/Tasks/Specific Tasks/AUTHOR_Document_Validity_As_Relational_Crystallization/AUTHOR_Document_Validity_As_Relational_Crystallization.md`](../../../Agenda/Tasks/Specific Tasks/AUTHOR_Document_Validity_As_Relational_Crystallization/AUTHOR_Document_Validity_As_Relational_Crystallization.md), claims often lose their warrant because their underlying dependencies change, yet the document itself does not expire. Both the mechanical decay (now fixed to rely on an authored `decayRate` property, see [`../../../Agenda/Tasks/Specific Tasks/AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md`](../../../Agenda/Tasks/Specific Tasks/AUTHOR_Language_System_Decay_Revision/AUTHOR_Language_System_Decay_Revision.md)) and the epistemological drift share the same category error: treating the passage of time as the arbiter of truth.
+
+Truth and identity are structural, not chronological. A document becomes stale only when its dependency graph signals an invalidation edge; a relation decays only when its specific definition dictates it. Both fixes require us to explicitly author the lifecycle of meaning rather than letting it be swept away by an unguided clock.
