@@ -486,6 +486,27 @@ const Zone* ZoneManager::findPrimaryHome(const Person& person) const {
     return matches.empty() ? nullptr : matches.front();
 }
 
+std::size_t ZoneManager::primaryHomeCount(const Person& person) const {
+    return primaryHomesForPerson(*this, person).size();
+}
+
+bool ZoneManager::enforcePrimaryHomeInvariant(Person& person) {
+    // Unique resolution and existential admission are deliberately different.
+    // ensureHomeZone() may return false when two existing primary Homes are
+    // ambiguous; that is still >= 1 Home and therefore satisfies this kernel
+    // invariant. What ordinary Earthcall may never admit is a Person for whom
+    // repair finishes with zero primary Homes.
+    (void)ensureHomeZone(person);
+    const std::size_t count = primaryHomeCount(person);
+    if (count > 0) return true;
+
+    std::cerr << "[zones] KERNEL INVARIANT VIOLATION: Person '"
+              << person.getIdentifier()
+              << "' has zero primary Homes after hydration/repair. "
+                 "Ordinary Person admission must stop here.\n";
+    return false;
+}
+
 bool ZoneManager::ensureHomeZone(Person& person) {
     const std::string personId = person.getIdentifier();
     if (personId.empty()) return false;
