@@ -89,6 +89,8 @@ public:
     // cryptographic SingularId does not create a new house. The string overload
     // remains for legacy/tests and refuses ambiguous duplicate primaries.
     bool ensureHomeZone(Person& person);
+    std::size_t primaryHomeCount(const Person& person) const;
+    bool enforcePrimaryHomeInvariant(Person& person);
     Zone* findPrimaryHome(Person& person);
     const Zone* findPrimaryHome(const Person& person) const;
     void ensureHomeZone(const std::string& personId);
