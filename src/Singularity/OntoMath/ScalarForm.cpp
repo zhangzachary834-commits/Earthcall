@@ -1909,8 +1909,27 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             auto a = children[0]->evalRange(vars);
             auto b = children[1]->evalRange(vars);
             if (!a || !b) return std::nullopt;
-            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar / b->scalar);
-            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Scalar) return RangeValue::makeVector(a->vec[0] / b->scalar, a->vec[1] / b->scalar, a->vec[2] / b->scalar);
+            if (b->kind != ValueKind::Scalar) return std::nullopt;
+
+            // Runtime Div is not ordinary division inside the degenerate band:
+            // |denominator| < kDegenerateDivisor returns authored zero. An
+            // interval touching that band therefore denotes a piecewise
+            // operation, and plain interval division can exclude the real 0
+            // result (e.g. [1,1] / [1e-8,2e-8]). Until we carry a union-of-
+            // intervals domain, fail open instead of manufacturing a finite
+            // theorem that zero-set culling could trust.
+            const float k = static_cast<float>(kDegenerateDivisor);
+            if (b->scalar.lo <= k && b->scalar.hi >= -k) {
+                if (a->kind == ValueKind::Vector) return retVecInf();
+                return retInf();
+            }
+
+            if (a->kind == ValueKind::Scalar)
+                return RangeValue::makeScalar(a->scalar / b->scalar);
+            if (a->kind == ValueKind::Vector)
+                return RangeValue::makeVector(a->vec[0] / b->scalar,
+                                              a->vec[1] / b->scalar,
+                                              a->vec[2] / b->scalar);
             return std::nullopt;
         }
         case Op::Abs: {
