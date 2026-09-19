@@ -687,6 +687,41 @@ SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
     return hierarchy;
 }
 
+SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
+                                   const glm::vec3& authoredExtent) {
+    SdfZeroSetProxy out;
+    const glm::vec3 authored = glm::abs(authoredExtent);
+    out.halfExtent = authored;
+
+    // An absent hierarchy is absence of knowledge, never proof of absence.
+    if (hierarchy.nodes.empty()) return out;
+
+    bool foundPossibleLeaf = false;
+    glm::vec3 maxAbs(0.0f);
+    for (const SdfRangeNode& node : hierarchy.nodes) {
+        if (node.childCount != 0 || node.provedNoZero) continue;
+        foundPossibleLeaf = true;
+        maxAbs = glm::max(maxAbs, glm::max(glm::abs(node.boxMin), glm::abs(node.boxMax)));
+    }
+
+    if (!foundPossibleLeaf) {
+        // Every terminal region was proved zero-free. The hierarchy partitions
+        // the authored extent, so there is no zero set to rasterize there.
+        out.hasPossibleZero = false;
+        out.halfExtent = glm::vec3(0.0f);
+        return out;
+    }
+
+    // Clamp to authored coverage: hierarchy boxes were built inside it, but the
+    // clamp makes the contract explicit and protects callers from malformed
+    // externally-constructed hierarchy data.
+    out.halfExtent = glm::min(maxAbs, authored);
+    out.tightened = out.halfExtent.x < authored.x ||
+                    out.halfExtent.y < authored.y ||
+                    out.halfExtent.z < authored.z;
+    return out;
+}
+
 // ---------------------------------------------------------------------------
 // Min/max heightfield grid (rendering-optimization Phase C). See Sdf.hpp.
 // ---------------------------------------------------------------------------
