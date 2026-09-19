@@ -13,28 +13,19 @@ namespace Execution {
 
 #ifndef EARTHCALL_ENABLE_LLVM
 
-class NullPropheticJIT : public PropheticJIT {
-public:
-    ~NullPropheticJIT() override = default;
-
-    NativeLawClosure compileUnguarded(
-        const class Law& /*law*/, 
-        const PropheticIndex& /*index*/) override
-    {
-        return nullptr;
-    }
-
-    void flushExecutableCache() override {
-        // No-op
-    }
-};
-
 bool PropheticJIT::isSupportedOnHost() {
     return false; // LLVM not linked in this build
 }
 
-std::unique_ptr<PropheticJIT> PropheticJIT::create() {
-    return std::make_unique<NullPropheticJIT>();
+PropheticJIT::NativeLawClosure PropheticJIT::compileUnguarded(
+    const class Law& /*law*/,
+    const PropheticIndex& /*index*/)
+{
+    return nullptr;
+}
+
+void PropheticJIT::flushExecutableCache() {
+    // No-op
 }
 
 #endif

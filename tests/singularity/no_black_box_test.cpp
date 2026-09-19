@@ -122,10 +122,6 @@ const WriteExemption kWriteExemptions[] = {
      "transform, and the getter re-derives Euler angles from the matrix. Not a "
      "black box — a law that writes this path does move the object — but a law "
      "that writes THEN reads gets a different number than it wrote."},
-    {"Object", "authoritativeAxis",
-     "WRITES, but normalizes: setAuthoritativeAxis normalizes the input vector "
-     "so writing a non-unit vector reads back as normalized. Not a black box — "
-     "the axis is updated — but raw unnormalized vectors do not round-trip identically."},
     {"Object", "face.*",
      "activeLayer clamps to [0, layers-1], and a probe object has exactly one "
      "layer, so 0 is the only legal value and no perturbation can round-trip. "
@@ -303,9 +299,9 @@ int main() {
     // touch the renderer is constructed.
     if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
     if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context\n"); glfwTerminate(); return 1; }
+    glfwMakeContextCurrent(window);
 
     std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)\n\n");
 
@@ -371,9 +367,6 @@ int main() {
         Body body("humanoid", "default");
         Person person(std::move(named), std::move(body), "default");
         auditReachability("Person", person, advertised);
-
-        Singularity::Language::Lexeme lexemeProbe("probe");
-        auditReachability("Lexeme", lexemeProbe, advertised);
     }
 
     std::printf("\nno_black_box_test: %d property writes probed, %d failures\n",

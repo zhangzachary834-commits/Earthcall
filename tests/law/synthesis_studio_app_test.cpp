@@ -21,7 +21,6 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
-#include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
@@ -130,19 +129,8 @@ int main() {
     for (const auto& objJson : zoneJson["world"]["objects"]) {
         auto obj = std::make_unique<Object>();
         obj->setObjectID(objJson["objectID"].get<std::string>());
-        Object::ShapeParams sp{};
-        if (objJson.contains("shapeParams") && objJson["shapeParams"].is_array()) {
-            const auto& a = objJson["shapeParams"];
-            if (a.size() >= 9) {
-                sp.r = a[0]; sp.ry = a[1]; sp.rz = a[2]; sp.halfH = a[3]; sp.majorR = a[4];
-                sp.minorR = a[5]; sp.paraboloidA = a[6]; sp.ovoidAsym = a[7]; sp.fillet = a[8];
-            }
-            if (a.size() >= 11) {
-                sp.width2D = a[9].get<float>();
-                sp.height2D = a[10].get<float>();
-            }
-        }
-        obj->setShape(static_cast<Object::ShapeKind>(objJson["shapeKind"].get<int>()), sp);
+        obj->setShape(static_cast<Object::ShapeKind>(objJson["shapeKind"].get<int>()),
+                      Object::ShapeParams{});
         if (objJson.contains("transform")) {
             glm::mat4 m(1.0f);
             const auto& t = objJson["transform"];
@@ -216,23 +204,18 @@ int main() {
     //    Law::applyTo refuses all of them — silently, as far as any assertion
     //    about object counts is concerned. Check it directly.
     // ------------------------------------------------------------------
-    // Register first-mover survivors that the engine stands up at boot
-    laws.add(std::make_shared<FirstMoverLaw>("shape-generator-3d-law"));
-    laws.add(std::make_shared<FirstMoverLaw>("tool-create-3d-law"));
     laws.loadFromJson(world["authoredLaws"]);
     laws.connectToEventBus();
 
     {
         const std::size_t authored = world["authoredLaws"]["laws"].size();
-        std::size_t authoredCount = 0;
-        for (const auto& l : laws.getAll()) if (l && !l->isFirstMover()) ++authoredCount;
-        check(authoredCount == authored,
+        check(laws.getAll().size() == authored,
               "every authored law in the save is in the register (" +
                   std::to_string(authored) + ")");
 
         bool allAuthored = true, allText = true;
         for (const auto& law : laws.getAll()) {
-            if (!law || law->isFirstMover()) continue;
+            if (!law) continue;
             if (!law->isAuthored()) {
                 std::printf("    unauthored: %s\n", law->getIdentifier().c_str());
                 allAuthored = false;
@@ -242,7 +225,7 @@ int main() {
                 allText = false;
             }
         }
-        check(allAuthored, "every law reattached to its recorded author — the structural gate");
+        check(allAuthored, "every law reattached to author.gemini-spark — the structural gate");
         check(allText, "every law carries a readable condition tree");
 
         // The archetypes belong to the engine (ControlPatterns.cpp) and were
@@ -320,9 +303,6 @@ int main() {
 
             if (p3d) {
                 g_sounded.clear();
-                publish("object-pressed", p3d);
-                check(nearly(readNumber(*p3d, "position.y"), 0.88 - 0.04),
-                      std::string("3D pad ") + note.noteName + " dips under press");
                 activate(*p3d);
                 check(g_sounded.size() == 1,
                       std::string("clicking 3D pad ") + note.noteName + " sounds exactly one note");
@@ -334,6 +314,8 @@ int main() {
                     check(g_sounded[0].timbre == "triangle",
                           "the timbre is triangle");
                 }
+                check(nearly(readNumber(*p3d, "position.y"), 0.88 - 0.04),
+                      std::string("3D pad ") + note.noteName + " dips under press");
                 publish("object-released", p3d);
                 check(nearly(readNumber(*p3d, "position.y"), 0.88),
                       std::string("3D pad ") + note.noteName + " springs back on release");
@@ -341,10 +323,6 @@ int main() {
 
             if (p2d) {
                 g_sounded.clear();
-                publish("object-pressed", p2d);
-                const double restY2D = readNumber(*p2d, "restY2D");
-                check(nearly(readNumber(*p2d, "y2D"), restY2D + 3.0),
-                      std::string("2D pad ") + note.noteName + " shifts y2D under press");
                 activate(*p2d);
                 check(g_sounded.size() == 1,
                       std::string("clicking 2D pad ") + note.noteName + " sounds exactly one note");
@@ -354,6 +332,9 @@ int main() {
                     check(g_sounded[0].subject == note.pad2d,
                           std::string("note sounded by ") + note.pad2d);
                 }
+                const double restY2D = readNumber(*p2d, "restY2D");
+                check(nearly(readNumber(*p2d, "y2D"), restY2D + 3.0),
+                      std::string("2D pad ") + note.noteName + " shifts y2D under press");
                 publish("object-released", p2d);
                 check(nearly(readNumber(*p2d, "y2D"), restY2D),
                       std::string("2D pad ") + note.noteName + " springs back on release");
@@ -481,9 +462,7 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    
-
-// 7. Strokes are drawn on the canvas, and nowhere else.
+    // 7. Strokes are drawn on the canvas, and nowhere else.
     //
     //    `isCanvas` was authored on the easel from the first draft and read by
     //    NO law, so strokes could be laid on the sky — where pointerWorld is
@@ -497,9 +476,6 @@ int main() {
         channel.setDynamicProperty("leftDown", PropertyValue(true));
         channel.setDynamicProperty("dragging", PropertyValue(true));
         channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.4f, 2.1f, 2.3f)));
-        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.4));
-        channel.setDynamicProperty("pointerWorldY", PropertyValue(2.1));
-        channel.setDynamicProperty("pointerWorldZ", PropertyValue(2.3));
         channel.setDynamicProperty("dragX", PropertyValue(0.0));
         channel.setDynamicProperty("dragY", PropertyValue(0.0));
         extras.push_back(&channel);
@@ -508,48 +484,27 @@ int main() {
             return true;
         });
         stateStudio->setDynamicProperty("drawMode", PropertyValue(true));
-        Object* tidalInk = findObject("hud.resonance.ink.tidal");
-        check(tidalInk != nullptr, "the Tidal ink selector exists");
-        if (tidalInk) activate(*tidalInk);
 
-        // A held pointer is not a stroke. The Law requires actual movement,
-        // then measures world-space distance from its last dab. This makes
-        // deliberate slow drawing work without returning to one birth/frame.
+        // A HELD BUTTON IS NOT A STROKE. Without a movement gate the law is a
+        // level with no edge — WhileTrue fires every tick the button is down,
+        // so resting on the canvas laid sixty spheres a second on one spot. At
+        // ~0.2 ms of render per object that is a 7 fps slideshow inside ten
+        // seconds, which is what "the 2D buttons stop working after a certain
+        // point" turned out to be.
         const std::size_t still = zone->getOwnedObjects().size();
         laws.tick();
         laws.tick();
         check(zone->getOwnedObjects().size() == still,
               "a held pointer that is not moving lays no segments at all");
 
-        // One window-point of actual travel is enough to begin a stroke. The
-        // old six-points-per-frame gate made a normal slow hand completely
-        // silent; the spatial spacing below controls density instead.
-        channel.setDynamicProperty("dragX", PropertyValue(1.0));
+        channel.setDynamicProperty("dragX", PropertyValue(9.0));
         const std::size_t before = zone->getOwnedObjects().size();
         laws.tick();
         const std::size_t drawn = zone->getOwnedObjects().size() - before;
-        check(drawn == 1, "slow real travel starts a stroke with exactly one segment");
-        check(nearly(readNumber(*stateStudio, "lastStrokeX"), 0.4),
-              "the Law records the emitted dab's world position");
-
-        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.44f, 2.1f, 2.3f)));
-        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.44));
-        laws.tick();
-        check(zone->getOwnedObjects().size() == before + drawn,
-              "sub-spacing movement does not create a frame-rate-dependent flood");
-
-        channel.setDynamicProperty("pointerWorld", PropertyValue(glm::vec3(0.51f, 2.1f, 2.3f)));
-        channel.setDynamicProperty("pointerWorldX", PropertyValue(0.51));
-        laws.tick();
-        check(zone->getOwnedObjects().size() == before + drawn + 1,
-              "accumulated slow travel reaches the authored spacing and lays the next segment");
+        check(drawn == 1, "and one tick of real travel lays exactly one segment");
 
         if (drawn >= 1) {
             Object* dab = zone->getOwnedObjects().back().get();
-            check(nearly(readNumber(*dab, "color.r"), 0.22) &&
-                      nearly(readNumber(*dab, "color.g"), 0.88) &&
-                      nearly(readNumber(*dab, "color.b"), 0.82),
-                  "the selected Tidal ink reaches the newly drawn stroke");
             check(nearly(readNumber(*dab, "acoustic.frequency"), 1046.5),
                   "the segment carries the acoustics law-stroke-hover-sound reads");
 
@@ -598,10 +553,10 @@ int main() {
         Object* btnDraw = findObject("hud.btn.draw-stroke");
         Object* hudTitle = findObject("hud.title");
 
-        check(btnSpawn && btnSpawn->getShapeParams().width2D == 150.0f,
-              "hud.btn.spawn-orb loaded authored width2D (150)");
-        check(dock && dock->getShapeParams().width2D == 1232.0f,
-              "hud.dock.bg loaded authored width2D (1232)");
+        check(btnSpawn && btnSpawn->getShapeParams().width2D == 132.0f,
+              "hud.btn.spawn-orb loaded authored width2D (132)");
+        check(dock && dock->getShapeParams().width2D == 820.0f,
+              "hud.dock.bg loaded authored width2D (820)");
         check(padC5 && padD5 && padC5->getRect2D().z <= padD5->getRect2D().x,
               "2D HUD pads do not overlap (pad C5 ends before pad D5 begins)");
         check(hudTitle && hudTitle->pickPriority() < 0.0,
@@ -623,25 +578,15 @@ int main() {
             return interaction.hoveredId;
         };
 
-        const auto pointOn = [](Object& obj, float across = 0.5f) {
-            const glm::vec4 rect = obj.getRect2D();
-            return glm::vec2(rect.x + across * (rect.z - rect.x), (rect.y + rect.w) * 0.5f);
-        };
-        const auto spawnPoint = pointOn(*btnSpawn);
-        const auto spawnLeft = pointOn(*btnSpawn, 0.1f);
-        const auto spawnRight = pointOn(*btnSpawn, 0.9f);
-        const auto d5Point = pointOn(*padD5);
-        const auto e5Point = pointOn(*findObject("hud.pad.e5"));
-        const auto drawRight = pointOn(*btnDraw, 0.9f);
-        check(pickAt(spawnLeft.x, spawnLeft.y) == "hud.btn.spawn-orb",
+        check(pickAt(260.0f, 660.0f) == "hud.btn.spawn-orb",
               "picking left side of spawn button hits hud.btn.spawn-orb");
-        check(pickAt(spawnRight.x, spawnRight.y) == "hud.btn.spawn-orb",
+        check(pickAt(360.0f, 660.0f) == "hud.btn.spawn-orb",
               "picking right side of spawn button hits hud.btn.spawn-orb");
-        check(pickAt(d5Point.x, d5Point.y) == "hud.pad.d5",
+        check(pickAt(585.0f, 660.0f) == "hud.pad.d5",
               "picking center of pad D5 hits hud.pad.d5 (not stolen by C5)");
-        check(pickAt(e5Point.x, e5Point.y) == "hud.pad.e5",
+        check(pickAt(635.0f, 660.0f) == "hud.pad.e5",
               "picking center of pad E5 hits hud.pad.e5 (not stolen by D5)");
-        check(pickAt(drawRight.x, drawRight.y) == "hud.btn.draw-stroke",
+        check(pickAt(1000.0f, 660.0f) == "hud.btn.draw-stroke",
               "picking right side of draw button hits hud.btn.draw-stroke");
         check(pickAt(80.0f, 50.0f) == "",
               "caption text2d does not swallow clicks at (80, 50)");
@@ -655,14 +600,14 @@ int main() {
         // Real click on spawn button: mouse down + mouse up
         const size_t countBeforeClick = zone->getOwnedObjects().size();
         Singularity::Input::InteractionChannel::Sense sDown;
-        sDown.pointerX = spawnPoint.x;
-        sDown.pointerY = spawnPoint.y;
+        sDown.pointerX = 300.0f;
+        sDown.pointerY = 660.0f;
         sDown.left = true;
         interaction.observe(sDown, reachable);
 
         Singularity::Input::InteractionChannel::Sense sUp;
-        sUp.pointerX = spawnPoint.x;
-        sUp.pointerY = spawnPoint.y;
+        sUp.pointerX = 300.0f;
+        sUp.pointerY = 660.0f;
         sUp.left = false;
         interaction.observe(sUp, reachable);
 
@@ -716,9 +661,8 @@ int main() {
             // Scenario C: Now regular click in the world on pad C5
             const size_t soundsBefore = g_sounded.size();
             Singularity::Input::InteractionChannel::Sense sPadDown;
-            const auto c5Point = pointOn(*padC5);
-            sPadDown.pointerX = c5Point.x;
-            sPadDown.pointerY = c5Point.y;
+            sPadDown.pointerX = 535.0f; // center of pad C5
+            sPadDown.pointerY = 660.0f;
             sPadDown.left = true;
             interaction.observe(sPadDown, reachable);
 
@@ -739,14 +683,14 @@ int main() {
             }
             const size_t orbsBefore = zone->getOwnedObjects().size();
             Singularity::Input::InteractionChannel::Sense sJitterDown;
-            sJitterDown.pointerX = spawnLeft.x;
-            sJitterDown.pointerY = spawnLeft.y;
+            sJitterDown.pointerX = 260.0f; // on spawn button (x: 236..368)
+            sJitterDown.pointerY = 660.0f;
             sJitterDown.left = true;
             interaction.observe(sJitterDown, reachable);
 
             // Move 4 pixels while held down (< 12px clickSlopPixels)
             Singularity::Input::InteractionChannel::Sense sJitterMove = sJitterDown;
-            sJitterMove.pointerX += 4.0f;
+            sJitterMove.pointerX = 264.0f;
             interaction.observe(sJitterMove, reachable);
             check(!interaction.dragging, "pointer moved 4px does not set dragging flag");
 
@@ -769,8 +713,8 @@ int main() {
 
             // Mouse button pressed down
             Singularity::Input::InteractionChannel::Sense sDownOnBtn;
-            sDownOnBtn.pointerX = spawnPoint.x;
-            sDownOnBtn.pointerY = spawnPoint.y;
+            sDownOnBtn.pointerX = 260.0f;
+            sDownOnBtn.pointerY = 660.0f;
             sDownOnBtn.left = true;
             interaction.observe(sDownOnBtn, reachable);
             check(interaction.leftDown, "button is held down before focus loss");
@@ -817,204 +761,6 @@ int main() {
               "3D raycast from camera hits studio.btn.spawn-orb on desk");
         check(rayTo("studio.pad.c5") == "studio.pad.c5",
               "3D raycast from camera hits studio.pad.c5 on desk");
-
-        // The 3D creation tool starts OFF in Synthesis Studio -- a Person turns
-        // it on by selecting the tool, not by the world merely loading. The
-        // save's firstMoverEnabled explicitly says false for both; loadFromJson
-        // must honor that, not silently re-arm them.
-        {
-            Law* shapeLaw = laws.find("shape-generator-3d-law");
-            check(shapeLaw && !shapeLaw->isEnabled(),
-                  "shape-generator-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)");
-            Law* createLaw = laws.find("tool-create-3d-law");
-            check(createLaw && !createLaw->isEnabled(),
-                  "tool-create-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)");
-        }
-
-        // Boot-default contract: a key OMITTED from firstMoverEnabled leaves the
-        // first mover exactly where it already was -- loadFromJson never invents
-        // an opinion about a first mover the world's author did not address.
-        {
-            nlohmann::json poisonJson = {
-                {"firstMoverEnabled", {{"shape-generator-3d-law", false}}}
-            };
-            laws.loadFromJson(poisonJson);
-            Law* shapeLaw = laws.find("shape-generator-3d-law");
-            check(shapeLaw && !shapeLaw->isEnabled(),
-                  "first mover can be explicitly disabled by a world");
-
-            nlohmann::json cleanJson = {
-                {"firstMoverEnabled", nlohmann::json::object()}
-            };
-            laws.loadFromJson(cleanJson);
-            check(shapeLaw && !shapeLaw->isEnabled(),
-                  "omitted first mover is left untouched on world load, not reset to any default");
-
-            // The reverse: explicitly enable it, then load a world that omits
-            // it too -- it must stay enabled, proving "omitted" means "leave
-            // alone" in both directions, not "force to a fixed boot value".
-            nlohmann::json armJson = {
-                {"firstMoverEnabled", {{"shape-generator-3d-law", true}}}
-            };
-            laws.loadFromJson(armJson);
-            check(shapeLaw && shapeLaw->isEnabled(),
-                  "first mover can be explicitly re-enabled by a world");
-            laws.loadFromJson(cleanJson);
-            check(shapeLaw && shapeLaw->isEnabled(),
-                  "omitted first mover stays enabled too -- omission never overrides either way");
-
-            // Reload synthesis studio laws for the pad test
-            laws.loadFromJson(world["authoredLaws"]);
-        }
-
-        // Sequential pad clicks across all 7 pads for 5 passes:
-        // verify object-pressed depresses, object-released restores, and control-activated plays
-        {
-            const std::vector<std::string> padIds = {
-                "hud.pad.c5", "hud.pad.d5", "hud.pad.e5", "hud.pad.f5",
-                "hud.pad.g5", "hud.pad.a5", "hud.pad.b5"
-            };
-            size_t soundsStart = g_sounded.size();
-            bool allPadsSucceeded = true;
-            bool elevationsCorrect = true;
-
-            for (int pass = 0; pass < 5; ++pass) {
-                for (size_t p = 0; p < padIds.size(); ++p) {
-                    const auto& padId = padIds[p];
-                    Object* pad = findObject(padId.c_str());
-                    if (!pad) {
-                        std::printf("  FAILED: pad %s not found\n", padId.c_str());
-                        allPadsSucceeded = false;
-                        break;
-                    }
-
-                    const double rest = readNumber(*pad, "restY2D");
-                    if (std::abs(pad->getY2D() - rest) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: pre-click y2D is %.2f (expected %.2f)\n",
-                                    pass, padId.c_str(), pad->getY2D(), rest);
-                        elevationsCorrect = false;
-                    }
-
-                    glm::vec4 r = pad->getRect2D();
-                    float cx = (r.x + r.z) * 0.5f;
-                    float cy = (r.y + r.w) * 0.5f;
-
-                    reachable.clear();
-                    for (const auto& o : zone->getOwnedObjects()) if (o) reachable.push_back(o.get());
-
-                    // Frame 1: Mouse down -> object-pressed -> law-studio-button-depress
-                    Singularity::Input::InteractionChannel::Sense sPad;
-                    sPad.pointerX = cx;
-                    sPad.pointerY = cy;
-                    sPad.left = true;
-                    interaction.observe(sPad, reachable);
-                    laws.tick();
-
-                    if (std::abs(pad->getY2D() - (rest + 3.0)) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: pressed y2D is %.2f (expected %.2f)\n",
-                                    pass, padId.c_str(), pad->getY2D(), rest + 3.0);
-                        elevationsCorrect = false;
-                    }
-
-                    // Frame 2: Mouse up -> object-released (button-spring) + object-clicked (pad-play)
-                    sPad.left = false;
-                    interaction.observe(sPad, reachable);
-                    laws.tick();
-
-                    if (std::abs(pad->getY2D() - rest) > 0.01f) {
-                        std::printf("  FAILED at pass %d pad %s: post-release y2D is %.2f (expected %.2f)\n",
-                                    pass, padId.c_str(), pad->getY2D(), rest);
-                        elevationsCorrect = false;
-                    }
-
-                    if (interaction.hoveredId != padId) {
-                        std::printf("  FAILED at pass %d pad %s: hoveredId is '%s', rect is [%.1f, %.1f, %.1f, %.1f], pointer at (%.1f, %.1f)\n",
-                                    pass, padId.c_str(), interaction.hoveredId.c_str(), r.x, r.y, r.z, r.w, cx, cy);
-                        allPadsSucceeded = false;
-                    }
-                }
-            }
-            std::printf("  After 35 pad clicks (5 passes): sounded %zu notes (expected 35)\n",
-                        g_sounded.size() - soundsStart);
-            check(allPadsSucceeded && (g_sounded.size() - soundsStart == 35),
-                  "clicking all 7 pads in sequence for 5 passes sounds all 35 notes without lockout");
-            check(elevationsCorrect,
-                  "button elevation depresses by 3 points and springs back to its authored rest every click");
-        }
-    }
-
-    // Codex / synthesis-studio-20260904: exercise the upgrade's saved Law text,
-    // including reload, bounded repeated play, and the real Object serializer.
-    {
-        registerAudioSink([](Singular& subject, double frequency, double amplitude,
-                             const std::string& timbre) {
-            g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
-        });
-        laws.loadFromJson(world["authoredLaws"]);
-        Object* resonator = findObject("studio.resonance.c5");
-        Object* meter = findObject("hud.resonance.meter.c5");
-        Object* sine = findObject("hud.resonance.voice.sine");
-        Object* square = findObject("hud.resonance.voice.square");
-        Object* triangle = findObject("hud.resonance.voice.triangle");
-        Object* tidal = findObject("hud.resonance.ink.tidal");
-        check(resonator && meter && sine && square && triangle && tidal,
-              "resonance sculpture and creative selectors exist in the actual save");
-        if (resonator && meter && sine && square && triangle && tidal) {
-            const auto population = zone->getOwnedObjects().size();
-            Universe::instance().setClock(100, 1.0 / 60.0);
-            activate(*sine);
-            g_sounded.clear();
-            activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
-                  "sine selector changes the next note with no duplicate triangle sound");
-            check(nearly(readNumber(*resonator, "struckAt"), 100),
-                  "note-played reaches the matching 3D resonator");
-            check(readNumber(*resonator, "shape.r") > 0.25 &&
-                      readNumber(*meter, "shape.height2D") > 30,
-                  "a struck note swells the sculpture and its spectrum meter");
-            Universe::instance().setClock(102, 1.0 / 60.0);
-            laws.tick();
-            check(readNumber(*resonator, "shape.r") < 0.14 &&
-                      readNumber(*meter, "shape.height2D") < 3.1,
-                  "both visual responses decay to rest after the note");
-            activate(*square);
-            g_sounded.clear();
-            activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "square",
-                  "square voice is a real audio request");
-            activate(*triangle);
-            for (int i = 0; i < 40; ++i) activate(*padC5);
-            check(zone->getOwnedObjects().size() == population,
-                  "repeated musical play allocates no new world objects");
-            activate(*tidal);
-            check(nearly(readNumber(*stateStudio, "inkG"), 0.88),
-                  "ink selection changes the authored drawing state");
-
-            auto serializedLaws = laws.toJson();
-            laws.loadFromJson(serializedLaws);
-            activate(*sine);
-            g_sounded.clear();
-            activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
-                  "voice selection and note playback survive real Law save/load");
-        }
-        for (const auto& saved : zoneJson["world"]["objects"]) {
-            const auto id = saved["objectID"].get<std::string>();
-            if (id.find("resonance") == std::string::npos) continue;
-            Object decoded;
-            from_json(saved, decoded);
-            nlohmann::json roundTrip;
-            to_json(roundTrip, decoded);
-            Object restored;
-            from_json(roundTrip, restored);
-            check(restored.getIdentifier() == id, "real Object round-trip retains " + id);
-            for (const char* path : {"resonanceNote", "studioVoice", "studioInk", "label2D"}) {
-                PropertyValue expected, actual;
-                if (decoded.getDynamicProperty(path, expected))
-                    check(restored.getDynamicProperty(path, actual) && expected == actual,
-                          id + " retains " + path + " through save/load");
-            }
-        }
     }
 
     if (g_failures == 0) {

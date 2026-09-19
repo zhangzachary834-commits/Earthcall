@@ -16,7 +16,6 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
     }
     rm.textureId    = albedo.handle;
     rm.albedoPixels = albedo.pixels;
-    rm.albedoWidth  = albedo.width;
-    rm.albedoHeight = albedo.height;
+    rm.albedoSize   = albedo.size;
     return rm;
 }

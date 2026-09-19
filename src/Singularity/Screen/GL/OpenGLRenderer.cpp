@@ -1,6 +1,6 @@
 #include "Singularity/Screen/GL/OpenGLRenderer.hpp"
 
-#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER) && !defined(EARTHCALL_WEBGPU)
+#if !defined(__EMSCRIPTEN__) && !defined(NO_OPENGL_RENDERER)
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp" // geom::SdfNode, tessellateSdf
 
@@ -329,45 +329,5 @@ void OpenGLRenderer::applyBeginFrame(uint32_t width, uint32_t height,
     glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
-
-bool OpenGLRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
-    if (!outRgba || width == 0 || height == 0) return false;
-    if (!glfwGetCurrentContext()) return false;
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height),
-                 GL_RGBA, GL_UNSIGNED_BYTE, outRgba);
-    std::vector<uint8_t> row(width * 4);
-    for (uint32_t y = 0; y < height / 2; ++y) {
-        uint8_t* top = outRgba + y * width * 4;
-        uint8_t* btm = outRgba + (height - 1 - y) * width * 4;
-        std::memcpy(row.data(), top, width * 4);
-        std::memcpy(top, btm, width * 4);
-        std::memcpy(btm, row.data(), width * 4);
-    }
-    return true;
-}
-
-#elif !defined(__EMSCRIPTEN__)
-
-// No-op fallback stubs for headless environments without OpenGL headers.
-void OpenGLRenderer::applyCamera(const glm::mat4&, const glm::mat4&, const glm::vec3&) {}
-void OpenGLRenderer::applyModel(const glm::mat4&) {}
-void OpenGLRenderer::drawMesh(const geom::TessMesh&, const RenderMaterial&) {}
-void OpenGLRenderer::drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) {}
-void OpenGLRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) {}
-void OpenGLRenderer::setWireframe(bool) {}
-void OpenGLRenderer::drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) {}
-void OpenGLRenderer::drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) {}
-void OpenGLRenderer::begin2D(uint32_t, uint32_t) {}
-void OpenGLRenderer::end2D() {}
-void OpenGLRenderer::drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) {}
-void OpenGLRenderer::drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) {}
-void OpenGLRenderer::drawImage2D(const uint8_t*, uint32_t, uint32_t, const glm::vec4&, const glm::vec4&) {}
-void OpenGLRenderer::applyLight() {}
-void OpenGLRenderer::applyLightingEnabled(bool) {}
-TextureHandle OpenGLRenderer::uploadTexture(TextureHandle, const uint8_t*, uint32_t, uint32_t) { return 0; }
-void OpenGLRenderer::releaseTexture(TextureHandle) {}
-void OpenGLRenderer::applyBeginFrame(uint32_t, uint32_t, const glm::vec4&) {}
-bool OpenGLRenderer::readPixels(uint8_t*, uint32_t, uint32_t) { return false; }
 
 #endif

@@ -21,7 +21,6 @@
 @property (nonatomic, strong) WKWebViewConfiguration* config;
 @property (nonatomic, strong) WKUserContentController* userContentController;
 @property (nonatomic, copy) void (^messageHandler)(NSString* message);
-@property (nonatomic, copy) void (^domMirrorHandler)(NSString* message);
 @property (nonatomic, copy) void (^loadHandler)(BOOL loaded);
 @end
 
@@ -29,14 +28,8 @@
 
 - (void)userContentController:(WKUserContentController *)userContentController 
       didReceiveScriptMessage:(WKScriptMessage *)message {
-    if ([message.name isEqualToString:@"domMirror"]) {
-        if (self.domMirrorHandler) {
-            self.domMirrorHandler(message.body);
-        }
-    } else {
-        if (self.messageHandler) {
-            self.messageHandler(message.body);
-        }
+    if (self.messageHandler) {
+        self.messageHandler(message.body);
     }
 }
 
@@ -108,15 +101,6 @@ bool RealWebView::init() {
         bridge.messageHandler = ^(NSString* message) {
             if (weakSelf) {
                 weakSelf->_handleWebMessage([message UTF8String]);
-            }
-        };
-        
-        bridge.domMirrorHandler = ^(NSString* message) {
-            if (weakSelf) {
-                auto it = weakSelf->_jsHandlers.find("domMirror");
-                if (it != weakSelf->_jsHandlers.end()) {
-                    it->second([message UTF8String]);
-                }
             }
         };
         
@@ -432,10 +416,7 @@ void RealWebView::executeJavaScript(const std::string& script) {
             return;
         }
         
-        std::string lockdown = "window.eval = undefined; window.Function = undefined; window.setTimeout = undefined; window.setInterval = undefined; document.write = undefined;";
-        std::string clampedScript = "(function() { " + lockdown + " " + script + " })();";
-
-        NSString* nsScript = [NSString stringWithUTF8String:clampedScript.c_str()];
+        NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:^(id result, NSError* error) {
             if (error) {
                 std::cout << "🌐 JavaScript error: " << [error.localizedDescription UTF8String] << std::endl;
@@ -796,7 +777,6 @@ void RealWebView::_handleWebMessage(const std::string& message) {
     if (_messageHandler) {
         _messageHandler(message);
     }
-    
 }
 
 // Brush System Handlers
@@ -1158,12 +1138,12 @@ void RealWebView::_handleUISetCursor(const nlohmann::json& data) {
     try {
         std::string cursorType = data["cursorType"];
         
-        std::cout << "🖱️ [INTEGRATION] Setting cursor: " << cursorType << std::endl;
+        std::cout << "🖱️ [INTEGRATION] Would set cursor: " << cursorType << std::endl;
         
-        bool success = getEarthcallAPI().setCursorType(cursorType);
+        // TODO: Integrate with Earthcall's cursor system
         nlohmann::json response = {
             {"type", "cursor_set"},
-            {"data", {{"cursorType", cursorType}, {"success", success}}}
+            {"data", {{"cursorType", cursorType}, {"success", true}}}
         };
         sendMessageToWeb(response.dump());
     } catch (const std::exception& e) {

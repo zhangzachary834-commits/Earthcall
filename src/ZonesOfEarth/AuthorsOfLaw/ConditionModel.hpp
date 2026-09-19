@@ -10,7 +10,6 @@
 #include <memory>
 #include <unordered_set>
 #include <string>
-#include <utility>
 #include <vector>
 
 // The law's condition as data (LAW_AND_CREATION_SYSTEM.md §2a): an expression
@@ -137,50 +136,8 @@ struct ConditionNode {
     // the O(1) path and leaves it correct on the sweep.
     bool readsQualifiedRoot() const;
 
-    // ------------------------------------------------------------------
-    // A GATE: a conjunct whose truth does not depend on the subject.
-    //
-    // `@studio.themeNight > 0` names ONE being (§1.1: the condition language
-    // has no free variable), so it is one truth about the world, identical for
-    // every subject you ask it about. Rung 1 established what follows: such a
-    // conjunct cannot NARROW a candidate set, because it says nothing about
-    // which subject. What it can do is decide the law all at once — when it is
-    // false, the correct candidate set is empty, and the engine should be able
-    // to say so once instead of discovering it one refusal per subject.
-    //
-    // Measured before building: a law behind a SHUT gate cost 278 ms/tick at
-    // 480 beings and fitted k = 1.67 against population, while firing nothing.
-    //
-    // Two roots are deliberately NOT hoistable, and both would be wrong:
-    //   @event.*  resolves through Universe's application event, which is set
-    //             per application inside applyTo — outside one it reads unset.
-    //   @world.*  passes the SUBJECT to the channel reading
-    //             (`found->second(subject, out)` in lawGetValue), so it is not
-    //             subject-independent at all.
-    // ------------------------------------------------------------------
-    bool isHoistableGate() const;
-    // Every hoistable gate in this tree, in conjunction position. Only `All`
-    // is descended: a gate under `Any` is a DISJUNCT, and a false disjunct
-    // decides nothing — the other branch may still hold. Under `Not` its sense
-    // is inverted, which this does not attempt to reason about.
-    void collectHoistableGates(std::vector<const ConditionNode*>& out) const;
-
     // Every relation type this tree's Related conditions name.
     void collectRelationTypes(std::unordered_set<std::string>& out) const;
-
-    // The (relation kind, named far end) pairs this condition routes through:
-    // every `Related(type, otherId)` leaf where BOTH are literal. A far end
-    // written "@event.subject" names whoever the event is about, which is not a
-    // place in the graph the adapter can pre-load, so those are skipped.
-    //
-    // This is what lets a Law be connected to the Relations it travels through
-    // ahead of time, on the slow adapter's clock, instead of asking the graph
-    // every frame — FORMATION_RETE.md §3.2/§3.3, and Zach 2026-09-16: "The
-    // mechanism that creates Relations between Relations and pre-loads Law
-    // Relations to these Relation Formations is also supposed to be in the slow
-    // adapter rather than constantly rebuilt every frame."
-    void collectCategoryRoutes(
-        std::vector<std::pair<std::string, std::string>>& out) const;
 
     std::string describe() const;
 

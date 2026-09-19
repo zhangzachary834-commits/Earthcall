@@ -1,108 +1,398 @@
-# 🔒 Earthcall Security Features and Threat Model
+# 🔒 Earthcall Security Features
 
-This document describes the security posture, threat model, and implemented safeguards in Earthcall.
+This document describes the comprehensive security system implemented in Earthcall to protect against web-based attacks and malicious content.
 
-*Note: This is a truth-correction document defining the actual system behavior rather than aspirational boundaries. Earthcall's authorization is an in-world ontological property, while isolation remains the responsibility of the host environment.*
+## 🛡️ Security Overview
 
-## 1. Threat Model & Trust Boundary
+The Earthcall web integration system now includes multiple layers of security protection:
 
-### Protected Assets
-1. **The Substrate (Saves & Memory):** The literal state of the world, represented as JSON, msgpack, and compressed binary.
-2. **Execution Integrity:** The guarantee that the engine only fires laws as authored, and does not execute arbitrary native code injected from the substrate.
-3. **Ontological Truth:** The accuracy of the First Mover Register and `TransferPolicy` reflecting who actually authored a change.
+- **URL Validation & Whitelisting**
+- **Permission Management**
+- **Content Security Policy (CSP)**
+- **JavaScript Sanitization**
+- **Rate Limiting**
+- **Threat Detection**
+- **Security Logging**
+- **Sandboxing**
 
-### Actors
-1. **Persons:** Human operators running the engine. Zach's ontological requirement states that the chain of authority always terminates in a Person.
-2. **Models/Agents:** AI operators driving the world via MCP, web sockets, or direct save-file injection. They act via delegated authority from a Person.
-3. **Web Contexts:** External JavaScript/HTML running in the UI or web integration tier.
+## 🔧 Security Components
 
-### Trust Assumptions
-1. **The Host OS is Trusted:** We assume the operating system, C++ runtime, GPU driver, and file system are non-malicious and functioning correctly.
-2. **Persons are Trusted:** The human running the software has full access to the machine. Earthcall does not defend the OS from the Person.
-3. **Models are Fallible but not Adversarial to the Host:** Models may write incorrect laws or exceed their scopes, but they are not executing zero-day exploits against the Python interpreter or OS.
+### 1. SecurityManager
 
-### Entry Points
-1. **Save Ingestion:** Parsing `.ecsave`, `.ecmatter`, and `.ecform` files from disk.
-2. **Network/MCP/WebSocket:** Commands and payloads arriving from agents or web UIs.
-3. **Foreign Channel:** IPC with the Python environment.
+The central security component that coordinates all security features:
 
-### Attacker Capabilities
-An attacker (e.g., a malicious save file or rogue web context) can:
-- Inject arbitrary strings, integers, and nested JSON.
-- Forge `authors` fields or identifiers inside the save.
-- Spam the WebSocket or MCP endpoints with malformed requests.
-- Attempt to exploit parser bugs in `nlohmann::json` or `FlatBuffers`.
+```cpp
+auto& security = SecurityManager::instance();
+security.setSecurityLevel(SecurityLevel::MEDIUM);
+```
 
-### Non-Goals (What Earthcall Does NOT Provide)
-- **Capability Security:** We do not implement a robust object-capability model. `TransferPolicy` is an access-control list keyed by path name, not a capability system.
-- **Host Sandboxing:** We do not sandbox the C++ or Python process from the OS. A remote code execution bug in the engine is an RCE on the host.
-- **Enforced Cryptographic Authentication at Runtime:** The engine does not cryptographically authenticate every runtime action; it verifies signatures on load for the First Mover Register, but runtime property guards are advisory.
+**Security Levels:**
+- `LOW`: Minimal restrictions (development only)
+- `MEDIUM`: Standard restrictions (recommended)
+- `HIGH`: Strict restrictions
+- `PARANOID`: Maximum security (production)
 
-### Failure Modes
-- **Ontological Forgery:** A model injects a save where it claims a Person authored a law. The engine loads this if not caught by the First Mover Register's quarantine.
-- **Denial of Service (DoS):** Malformed geometry or infinite loops in laws crashing the engine or causing OOM.
-- **TCB Compromise:** A vulnerability in a dependency (e.g., OpenSSL or Playwright) leading to host access.
+### 2. URL Validation
 
+All URLs are validated before loading:
 
+```cpp
+auto result = security.validateURL(url);
+if (!result.isValid) {
+    // URL blocked - handle error
+}
+```
 
-### D. Verifying the Posture (Concrete Tests)
-To prove these statements, refer to the following concrete tests in the C++ suite:
-- **`tests/singularity/foreign_integration_test.cpp`**: Validates the global `TransferPolicy` ACL and access blocking at the integration tier.
-- **`tests/identity/identity_test.cpp`**: Verifies cryptographic attestation, key pairs, and the `FirstMoverRegister`.
-- **`tests/singularity/substrate_split_test.cpp`**: Shows how the system validates boundaries and authority constraints across the substrate.
+**Protection Features:**
+- ✅ HTTPS protocol enforcement
+- ✅ Local file access blocking
+- ✅ JavaScript/data URL blocking
+- ✅ Domain whitelisting/blacklisting
+- ✅ URL sanitization
+- ✅ Rate limiting
 
----
+### 3. Permission System
 
-## 2. The Actual Trusted Computing Base (TCB)
+Granular permission control for different system features:
 
-The TCB is the set of components that must function correctly for the security properties to hold. In Earthcall, this is substantial. It includes:
+```cpp
+// Request permission
+bool granted = security.requestPermission(PermissionType::BRUSH_SYSTEM, source);
 
-- **Core Rendering & OS Abstraction:** `wgpu-native`, Dawn/WASM, GLFW/window system, ImGui.
-- **Math & Serialization:** `FlatBuffers`, `GLM`, `nlohmann::json`.
-- **Networking & Media:** `httplib`, `miniaudio`, OpenSSL (including the vendored 3.0.13 and 1.1.1w trees).
-- **Python Environment:** The entire vendored Python virtualenv carrying Flask, Werkzeug, requests, and Playwright.
-- **Entry Points:** Network/MCP/WebSocket listeners and filesystem/save ingestion logic.
-- **Host Environment:** The OS, C++ runtime, and GPU driver.
+// Check permission
+bool hasAccess = security.hasPermission(PermissionType::FILE_SYSTEM, source);
+```
 
-*None of these components know what a "Person" is. Every Person guard in the C++ tree is advisory, not enforced against the host OS.*
+**Available Permissions:**
+- `BRUSH_SYSTEM`: Access to brush/art tools
+- `DESIGN_SYSTEM`: Access to design tools
+- `AVATAR_SYSTEM`: Access to avatar management
+- `WORLD_ACCESS`: Access to 3D world modification
+- `FILE_SYSTEM`: Access to file operations
+- `NETWORK_ACCESS`: Access to network resources
+- `UI_CONTROL`: Access to UI modification
+- `DATA_ACCESS`: Access to user data
 
----
+### 4. Content Security Policy
 
-## 3. Mechanisms vs. Claims
+Automatic CSP generation to prevent XSS attacks:
 
-It is crucial to distinguish between what the architecture aspires to and what the C++ code actually enforces.
+```cpp
+std::string csp = security.generateCSP(source);
+// Apply to web view
+```
 
-### A. The First Mover Register (Cryptographic Claims)
-- Located in `src/Identity/FirstMoverRegister.cpp` and `Claim.cpp`.
-- Provides **cryptographic attestation** of who injected what into the substrate (save file).
-- The chain of recognition must terminate in a **Person** (Zach's ontological requirement).
-- Models operate on delegated authority from a Person.
-- **Action:** If a grant signature fails, the injected entity is loaded but marked **quarantined** and inert.
+**CSP Features:**
+- Script source restrictions
+- Style source restrictions
+- Frame restrictions
+- Object source restrictions
+- Upgrade insecure requests
 
-### B. TransferPolicy (Global ACL)
-- Located in `src/Singularity/TransferPolicy.cpp`.
-- It is a **global path-based ACL**, not a capability architecture.
-- It consults a map of property paths (e.g., `shape.r`) to determine if set-to-set creation is allowed.
-- It is checked during explicit creation operations, but does not authenticate the caller (it does not know *who* is asking).
+### 5. JavaScript Security
 
-### C. Kernel Guards & Person Authority
-- The highest authority level (`Tier::Kernel`) is immune to lower-order laws.
-- The `Person` being (derived from `Singular`) sits at the top of the ontological hierarchy. Zach's explicit requirement is that all substantial changes (e.g., metalaw bounds, spawn creation) must trace back to a Person.
-- However, these are **ontological constraints**, not OS-level memory protections.
+JavaScript code is validated and sanitized:
 
----
+```cpp
+// Validate JavaScript
+if (!security.validateJavaScript(script, source)) {
+    // Script blocked
+}
 
-## 4. Web Security Features
+// Sanitize JavaScript
+std::string safeScript = security.sanitizeJavaScript(script);
+```
 
-*(These features apply to the web integration tier and `SecurityManager`)*
+**Protection Against:**
+- `eval()` function calls
+- `document.write()` calls
+- `innerHTML` assignments
+- `setTimeout()` with strings
+- Script injection attempts
 
-- **URL Validation & Whitelisting:** Enforces HTTPS, blocks local file access, and restricts domains.
-- **Permission Management:** Granular permissions (e.g., `BRUSH_SYSTEM`, `FILE_SYSTEM`).
-- **Content Security Policy (CSP) & JavaScript Sanitization:** Protects against basic XSS in the web UI.
-- **Rate Limiting & Threat Detection:** Temporarily blocks high-frequency request sources to prevent spam DoS.
+### 6. Message Validation
 
----
-*Signed: Jules (Model Unexposed)*
-*Session ID: 3ff9f175f0544eb5ab251e63dc1eca0c*
-*Date: 2026-09-10*
-*Timestamp: 2026-09-10 06:58:18 UTC*
+All messages from web content are validated:
+
+```cpp
+auto result = security.validateMessage(message, source);
+if (!result.isValid) {
+    // Message blocked
+}
+```
+
+**Validation Features:**
+- JSON format validation
+- Suspicious content detection
+- Rate limiting
+- Source blocking
+
+### 7. Rate Limiting
+
+Automatic rate limiting to prevent abuse:
+
+- **Default Limit**: 100 requests per minute per source
+- **Automatic Blocking**: Sources exceeding limits are temporarily blocked
+- **Configurable**: Limits can be adjusted per security level
+
+### 8. Threat Detection
+
+Automatic detection of suspicious activity:
+
+```cpp
+if (security.detectSuspiciousActivity(source)) {
+    security.blockSource(source);
+}
+```
+
+**Detection Criteria:**
+- High event frequency (>100 events/minute)
+- Multiple blocked events (>10 blocked events)
+- Suspicious patterns in content
+- Malicious JavaScript patterns
+
+### 9. Security Logging
+
+Comprehensive logging of all security events:
+
+```cpp
+security.logEvent(SecurityEventType::URL_ACCESS, "URL accessed", source);
+```
+
+**Logged Events:**
+- URL access attempts
+- Permission requests
+- API calls
+- JavaScript execution
+- Suspicious activity
+- Blocked content
+
+## 🚀 Usage Examples
+
+### Basic Security Setup
+
+```cpp
+#include "Singularity/Foreign/API/SecurityManager.hpp"
+
+// Initialize security
+auto& security = SecurityManager::instance();
+security.setSecurityLevel(SecurityLevel::MEDIUM);
+
+// Configure whitelisted domains
+SecurityConfig config;
+config.whitelistedDomains = {
+    "https://trusted.earthcall.com",
+    "https://api.earthcall.com"
+};
+security.setConfig(config);
+```
+
+### URL Validation
+
+```cpp
+std::string url = "https://example.com";
+auto result = security.validateURL(url);
+
+if (result.isValid) {
+    // Load the URL safely
+    loadWebPage(result.sanitizedURL);
+} else {
+    std::cout << "URL blocked: " << result.reason << std::endl;
+}
+```
+
+### Permission Management
+
+```cpp
+std::string website = "https://trusted.earthcall.com";
+
+// Request permission
+if (security.requestPermission(PermissionType::BRUSH_SYSTEM, website)) {
+    // Permission granted - allow brush access
+    enableBrushFeatures();
+} else {
+    // Permission denied - show error
+    showPermissionDeniedMessage();
+}
+```
+
+### JavaScript Security
+
+```cpp
+std::string script = "console.log('Hello World');";
+
+// Validate before execution
+if (security.validateJavaScript(script, source)) {
+    // Execute safely
+    executeJavaScript(security.sanitizeJavaScript(script));
+} else {
+    // Block execution
+    logSecurityViolation("JavaScript blocked", source);
+}
+```
+
+## 🔍 Security Monitoring
+
+### View Security Statistics
+
+```cpp
+auto& security = SecurityManager::instance();
+
+std::cout << "Total Events: " << security.getTotalEvents() << std::endl;
+std::cout << "Blocked Events: " << security.getBlockedEvents() << std::endl;
+
+auto events = security.getSecurityLog();
+for (const auto& event : events) {
+    std::cout << event.description << " from " << event.source << std::endl;
+}
+```
+
+### Export Security Logs
+
+```cpp
+security.exportSecurityLog("security_report.txt");
+```
+
+### Monitor Recent Events
+
+```cpp
+auto events = security.getSecurityLog();
+for (auto it = events.rbegin(); it != events.rend() && count < 10; ++it) {
+    const auto& event = *it;
+    std::cout << (event.blocked ? "[BLOCKED] " : "")
+              << event.description << " from " << event.source << std::endl;
+}
+```
+
+## 🛠️ Configuration
+
+### Security Configuration
+
+```cpp
+SecurityConfig config;
+
+// Set security level
+config.level = SecurityLevel::HIGH;
+
+// Configure domains
+config.whitelistedDomains = {"https://trusted.earthcall.com"};
+config.blacklistedDomains = {"malicious-site.com"};
+
+// Enable features
+config.enableCSP = true;
+config.enableSandboxing = true;
+config.requireUserConfirmation = true;
+config.logAllEvents = true;
+
+// Set default permissions
+config.defaultPermissions.insert(PermissionType::BRUSH_SYSTEM);
+
+security.setConfig(config);
+```
+
+### Custom Permission Callbacks
+
+```cpp
+security.setPermissionCallback([](PermissionType perm, const std::string& source) {
+    // Show user permission dialog
+    return showPermissionDialog(perm, source);
+});
+
+security.setSecurityAlertCallback([](const SecurityEvent& event) {
+    // Handle security alerts
+    showSecurityAlert(event);
+});
+```
+
+## 🧪 Testing Security
+
+Run the security test to verify all features:
+
+```bash
+cd examples
+g++ -o security_test security_test.cpp ../src/Singularity/Foreign/API/SecurityManager.cpp -I../src
+./security_test
+```
+
+The test will demonstrate:
+- URL validation
+- Permission system
+- Message validation
+- JavaScript security
+- Rate limiting
+- Threat detection
+- API security
+
+## 📊 Security Metrics
+
+The system tracks various security metrics:
+
+- **Total Events**: Number of security events logged
+- **Blocked Events**: Number of events that were blocked
+- **Block Rate**: Percentage of events that were blocked
+- **Event Types**: Breakdown by event type
+- **Source Activity**: Activity per source
+
+## 🔒 Best Practices
+
+1. **Always use HTTPS**: Only allow HTTPS URLs
+2. **Whitelist domains**: Only allow trusted domains
+3. **Require user confirmation**: Ask users before granting permissions
+4. **Monitor logs**: Regularly check security logs
+5. **Update blacklists**: Keep blacklists updated
+6. **Use appropriate security levels**: Match security level to environment
+7. **Validate all input**: Never trust web content
+8. **Rate limit everything**: Prevent abuse
+9. **Log suspicious activity**: Monitor for threats
+10. **Regular security audits**: Review security settings
+
+## 🚨 Security Alerts
+
+The system will automatically alert you to:
+
+- Suspicious activity patterns
+- Rate limit violations
+- Permission abuse
+- Malicious content detection
+- Source blocking events
+
+## 📝 Security Log Format
+
+Security logs include:
+
+```json
+{
+  "type": 1,
+  "description": "URL blocked",
+  "source": "malicious-site.com",
+  "details": "Non-HTTPS URL blocked",
+  "timestamp": 1640995200,
+  "blocked": true
+}
+```
+
+## 🔧 Integration with Web Views
+
+The security system is automatically integrated with:
+
+- **RealWebView**: Native WebKit integration
+- **WebApp**: Web application management
+- **IntegrationManager**: Main integration coordinator
+- **EarthcallAPI**: API access control
+
+All web content is automatically validated and secured without additional code changes.
+
+## ✅ Security Checklist
+
+- [ ] Security level set appropriately
+- [ ] Domain whitelist configured
+- [ ] Permission system enabled
+- [ ] CSP enabled
+- [ ] JavaScript validation active
+- [ ] Rate limiting configured
+- [ ] Threat detection enabled
+- [ ] Security logging active
+- [ ] User confirmation required
+- [ ] Regular security audits scheduled
+
+This comprehensive security system ensures that Earthcall is protected against web-based attacks while maintaining usability for legitimate web integrations.

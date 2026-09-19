@@ -686,9 +686,7 @@ PolyhedronData PolyhedronData::truncate(
             int v0 = face[i];
             int v1 = face[(i + 1) % face.size()];
             EdgeKey ek(v0, v1);
-
-            auto [it, inserted] = edgeNewVerts.try_emplace(ek);
-            if (inserted) {
+            if (edgeNewVerts.find(ek) == edgeNewVerts.end()) {
                 // Two new vertices along this edge
                 glm::vec3 pA = glm::mix(source.vertices[ek.a], source.vertices[ek.b], amount);
                 glm::vec3 pB = glm::mix(source.vertices[ek.b], source.vertices[ek.a], amount);
@@ -696,7 +694,7 @@ PolyhedronData PolyhedronData::truncate(
                 result.vertices.push_back(pA);
                 int idxB = static_cast<int>(result.vertices.size());
                 result.vertices.push_back(pB);
-                it->second = {idxA, idxB};
+                edgeNewVerts[ek] = {idxA, idxB};
             }
         }
     }

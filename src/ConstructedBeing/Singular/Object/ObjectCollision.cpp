@@ -17,10 +17,6 @@
 #include <unordered_map>
 #include <atomic>
 #include "Singularity/Screen/HighlightSystem.hpp"
-#include "Singularity/Screen/ScreenChannel.hpp"
-#include "ZonesOfEarth/Physics/Physics.hpp"
-
-
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -312,19 +308,22 @@ void Object::clearSmoothTessellationCache() {
 void Object::rebuildFieldMesh() const {
     if (!_fieldMeshDirty || !_hasField) return;
 
-    // Rung 4 Migration: The rendering optimization bounds are now Governed.
-    // We read them from ScreenChannel instead of hiding them as C++ constants.
-    int minRes = 24;
-    int maxRes = 128;
-    float maxCells = 2200000.0f;
-    
-    if (auto* laws = Physics::getLawManager()) {
-        if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
-            minRes = sc->fieldMeshMinRes;
-            maxRes = sc->fieldMeshMaxRes;
-            maxCells = static_cast<float>(sc->fieldMeshMaxCells);
-        }
-    }
+    // Resolution of the marching-tet grid this field is meshed over. The mesh is
+    // what COLLISION reads, so this number is how finely a Person's feet can feel
+    // the shape -- not a render setting.
+    //
+    // kMinRes is a PER-AXIS floor, and it is the whole point. A field box is
+    // routinely lopsided (the noise floor's is 1000 x 30 x 1000), and a budget
+    // enforced by one cbrt() scale over all three axes takes the same fraction off
+    // the thin axis as the fat ones -- which starves the axis that had least to
+    // give. That is not hypothetical: uniform scaling to a 125k budget put the
+    // noise floor at 160 x 4 x 160, i.e. FOUR samples across 60 units of height
+    // for terrain that swings +-40, and the collision surface became a plateau
+    // 15 units thick. Bugs.md #12 is a Person walking on exactly that: "an
+    // invisible rectangular platform hovering way above the valleys below."
+    static constexpr int   kMinRes   = 24;
+    static constexpr int   kMaxRes   = 128;
+    static constexpr float kMaxCells = 2200000.0f;  // ~kMaxRes^3, the old ceiling
 
     glm::ivec3 res;
     if (_fieldCellSize.has_value() && _fieldCellSize.value() > 0.0f) {
@@ -333,24 +332,24 @@ void Object::rebuildFieldMesh() const {
         // quietly meshing something other than what was asked for.
         glm::vec3 fRes = (2.0f * _fieldExtent) / _fieldCellSize.value();
         const float total = fRes.x * fRes.y * fRes.z;
-        if (total > maxCells) {
-            const float scale = std::cbrt(maxCells / total);
+        if (total > kMaxCells) {
+            const float scale = std::cbrt(kMaxCells / total);
             fprintf(stderr,
                     "[Kernel] Authored cellSize %.3f on field '%s' asks for %.0f cells, over the "
-                    "limit of %.0f. Clamping mesh resolution uniformly.\n",
-                    _fieldCellSize.value(), getIdentifier().c_str(), total, maxCells);
+                    "%.0f-cell budget; meshing at %.3f instead to prevent a window hang.\n",
+                    _fieldCellSize.value(), getIdentifier().c_str(), total, kMaxCells,
+                    _fieldCellSize.value() / scale);
             fRes *= scale;
         }
-        res = glm::ivec3(std::max(4, static_cast<int>(std::round(fRes.x))),
-                         std::max(4, static_cast<int>(std::round(fRes.y))),
-                         std::max(4, static_cast<int>(std::round(fRes.z))));
+        res = glm::ivec3(std::max(4, static_cast<int>(fRes.x)),
+                         std::max(4, static_cast<int>(fRes.y)),
+                         std::max(4, static_cast<int>(fRes.z)));
     } else {
         // Unauthored: one cell per 5 units of extent, floored and capped per axis.
         res = glm::ivec3(
-            std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), minRes, maxRes),
-            std::clamp(static_cast<int>(_fieldExtent.y / 5.0f), minRes, maxRes),
-            std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), minRes, maxRes)
-        );
+            std::clamp(static_cast<int>(_fieldExtent.x / 5.0f), kMinRes, kMaxRes),
+            std::clamp(static_cast<int>(_fieldExtent.y / 5.0f), kMinRes, kMaxRes),
+            std::clamp(static_cast<int>(_fieldExtent.z / 5.0f), kMinRes, kMaxRes));
     }
 
     _fieldMesh = geom::tessellateSdf(fieldData, _fieldExtent, res);

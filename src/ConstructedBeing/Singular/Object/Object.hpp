@@ -45,8 +45,9 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
-#include <iostream>
 
+// Forward declaration to break circular dependency
+class BodyPart;
 // Material includes FaceTexture, which includes Renderer.hpp; an Object only
 // ever holds its material by identifier, so the declaration is enough here.
 class Material;
@@ -160,6 +161,8 @@ private:
     std::string objectType;
     std::string objectID;
 
+    // BodyPart* part = nullptr; // MOVED to elementFormation or removed
+
     // The primitive shape this Object represents. Default is Cube for compatibility and easy testing.
     ShapeKind _shapeKind = ShapeKind::Cube;
 
@@ -230,7 +233,6 @@ private:
     // materials stay shared and the reference survives save/load. Resolved against
     // the global MaterialManager at draw time. Defaults to the always-present
     // material.default, so an object with no material assigned still renders.
-    mutable std::unordered_map<std::string, std::vector<glm::ivec2>> _regionCache;
     std::string _materialId = "material.default";
 
     // Cached local-space surface vertices for GJK support queries on the new
@@ -411,7 +413,7 @@ public:
     void setCenter(const glm::vec3& c) { center = c; }
     glm::vec3 getWorldCenter() const { return glm::vec3(getTransform() * glm::vec4(center, 1.0f)); }
 
-    glm::vec3 getAuthoritativeAxis() const { return authoritativeAxis; }
+    const glm::vec3& getAuthoritativeAxis() const { return authoritativeAxis; }
     void setAuthoritativeAxis(const glm::vec3& axis);
 
     glm::vec3 getRotationEulerDegrees() const { return rotationEulerDegrees; }
@@ -421,7 +423,7 @@ public:
     void addTargetRotationDegrees(const glm::vec3& deltaDegrees);
 
     float getRotationResponsiveness() const { return rotationResponsiveness; }
-    void setRotationResponsiveness(const float& responsiveness);
+    void setRotationResponsiveness(float responsiveness);
 
     bool hasPendingRotation() const;
     bool updateRotation(float dt);
@@ -486,7 +488,6 @@ public:
         _hasComplex = false;
         _hasField = false;
         _hasPatch = false;
-        _smoothMesh.reset();
         switch (k) {
             case ShapeKind::Cube:
             case ShapeKind::Polyhedron:
@@ -577,25 +578,10 @@ public:
     // Resize this object's own material's face textures to the face count its
     // current geometry actually has. Idempotent.
     void initFaceTextures();
-    int getTextureResolution() const;
-    void setTextureResolution(const int& res);
     // Fill one face with a colour, through the object's own material, and
     // record it in the object's own faceColors slot so the "color" property
     // reads back what was painted.
     void setFaceColor(int faceIndex, float r, float g, float b);
-    // Replace one UV-addressed sample on this Object's own material.  The
-    // copy-on-write boundary prevents a pixel act from repainting every Object
-    // that happened to share the same Material being.
-    bool writeSurfacePixel(int faceIndex, const glm::vec2& uv,
-                           const glm::vec3& color);
-    void endSurfaceStroke() {
-        _lastStrokeFace = -1;
-        _lastStrokeUV = glm::vec2(-1.0f, -1.0f);
-    }
-    bool elevateSurfaceRegionProperty(const std::string& propertyName,
-                                      int faceIndex,
-                                      const OntoMath::Piecewise& selector,
-                                      std::string& reason);
     const geom::SmoothSurfaceData& getSmoothData()  const { return smoothData; }
     const geom::ComplexShapeData&  getComplexData() const { return complexData; }
     const geom::SdfNode&           getFieldData()   const { return fieldData; }
@@ -626,62 +612,7 @@ public:
     // An SDF-defined shape (morph / boolean / implicit). `extent` is the half-size
     // of the region the field is meshed/marched over.
     void setFieldShape(const geom::SdfNode& f, const glm::vec3& extent = glm::vec3(1.0f)) {
-        geom::SdfNode incoming = f;
-
-        // Repair the exact malformed form produced by two historical hydration
-        // paths: they copied the expression STRING but not its executable RPN,
-        // and the law-spawn path even left prim=Sphere while attaching expr.
-        // An expression is mathematical truth, not decoration. If it is present
-        // on a leaf, normalize it into an Expr leaf and derive the executable
-        // program. A parse failure stays an Expr with an empty program (empty
-        // space) and is reported loudly; it must never masquerade as a sphere.
-        if (incoming.op == geom::SdfOp::Leaf &&
-            (!incoming.expr.empty() || incoming.mathNode || incoming.piecewise)) {
-            incoming.prim = geom::SdfPrim::Expr;
-        }
-        if (incoming.op == geom::SdfOp::Leaf &&
-            incoming.prim == geom::SdfPrim::Expr &&
-            !incoming.expr.empty() && !incoming.mathNode && !incoming.piecewise &&
-            incoming.rpn.empty()) {
-            incoming.rpn = geom::compileExpr(incoming.expr);
-            if (incoming.rpn.empty()) {
-                std::cerr << "[Object] setFieldShape: implicit expression could not be compiled; "
-                             "keeping it as an Expr shell instead of lying with a primitive.\n";
-            }
-        }
-
-        // .ecmatter historically stored only an SDF ROOT. For a boolean/morph
-        // tree that means the operator arrives with zero children; for an
-        // OntoMath/piecewise/convex leaf it can arrive without the semantic
-        // payload entirely. Semantic JSON is hydrated first, so accepting such
-        // a shell here used to overwrite a complete authored form with a
-        // lossy cache record. A structurally incomplete node may fill an empty
-        // legacy object, but it may never demote an already-complete field.
-        const bool incomingOperatorShell =
-            incoming.op != geom::SdfOp::Leaf && incoming.children.size() < 2;
-        const bool incomingExprShell =
-            incoming.op == geom::SdfOp::Leaf && incoming.prim == geom::SdfPrim::Expr &&
-            incoming.expr.empty() && !incoming.mathNode && !incoming.piecewise &&
-            incoming.rpn.empty();
-        const bool incomingConvexShell =
-            incoming.op == geom::SdfOp::Leaf && incoming.prim == geom::SdfPrim::Convex &&
-            incoming.planes.empty();
-        const bool existingComplete = _hasField &&
-            ((fieldData.op != geom::SdfOp::Leaf && fieldData.children.size() >= 2) ||
-             fieldData.mathNode || fieldData.piecewise || !fieldData.rpn.empty() ||
-             !fieldData.planes.empty());
-
-        if (existingComplete &&
-            (incomingOperatorShell || incomingExprShell || incomingConvexShell)) {
-            // The evaluation extent is part of the authored Field too. A
-            // rejected lossy replacement does not get to clip or expand the
-            // surviving mathematical form as a side effect.
-            std::cerr << "[Object] setFieldShape: refused a lossy field shell over an "
-                         "already-complete authored SDF; semantic shape and extent remain authoritative.\n";
-            return;
-        }
-
-        fieldData = incoming; _fieldExtent = extent;
+        fieldData = f; _fieldExtent = extent;
         _hasSmooth = _hasComplex = _hasPatch = false; _hasField = true;
         _shapeKind = ShapeKind::Field;
         rebuildGeometryCaches();
@@ -716,7 +647,7 @@ public:
         fieldData.children[1]->offset = off;
         rebuildGeometryCaches();
     }
-    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); _smoothMesh.reset(); }
+    void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); }
 
     // Polyhedron-specific methods
     void setPolyhedronData(const PolyhedronData& data);
@@ -747,7 +678,10 @@ public:
                                const std::vector<std::vector<int>>& faces);
 
     virtual ~Object();
- 
+
+    // Owning form part (non-null when this Object is a sub-object of a BodyPart)
+    // void setOwnerBodyPart(BodyPart* owner) { part = owner; }
+    // BodyPart* getOwnerBodyPart() const { return part; }
     // Singular interface implementation
     std::string getIdentifier() const override { return objectID; }
 
@@ -805,24 +739,11 @@ public:
     void setName(const std::string& name) { _name = name; }
     
     std::string getTextString() const { return _textString; }
-    bool readAuthoredPropertyProjectionColors(Earthcall::StringId id, PropertyValue& out) const override;
     void setTextString(const std::string& text) { _textString = text; }
 
     const std::string& getEntityName() const { return _entityName; }
 
 private:
-    // Authored elevation grammar:
-    //   surface.pixel.<face>.<x>.<y>                 -> vec3
-    // Named sets use an authored `surface.selection.<property-name>`
-    // definition whose OntoMath defined-set over local u/v selects samples;
-    // their property value is a row-major list<vec3>. Merely having that
-    // authored definition + property is what elevates the set.
-    bool readAuthoredPropertyProjection(Earthcall::StringId id,
-                                        PropertyValue& out) const override;
-    
-    bool recognizesAuthoredPropertyProjection(Earthcall::StringId id) const override;
-    bool writeAuthoredPropertyProjection(Earthcall::StringId id,
-                                         const PropertyValue& value) override;
     // Registers the first-mover properties (position/rotation/center/shape.*)
     // that make this Object legible to PropertyPath and the Law system.
     // Defined in Object.cpp.
@@ -850,10 +771,6 @@ private:
     mutable bool _isHovered = false;
     mutable glm::vec3 _hoverPoint{0.0f, 0.0f, 0.0f};
     mutable bool _wasHoveredLastFrame = false;
-
-    // Stroke state tracking for continuous raster painting
-    int _lastStrokeFace = -1;
-    glm::vec2 _lastStrokeUV{-1.0f, -1.0f};
 
     glm::vec3 center{0.0f, 0.0f, 0.0f};
     glm::vec3 authoritativeAxis{0.0f, 1.0f, 0.0f};

@@ -47,7 +47,7 @@ void PaintToolSurface::fillFaceColor(int faceIndex, float r, float g, float b) {
 void PaintToolSurface::paintFace(int faceIndex, const glm::vec2& uv, float r, float g, float b, float radius, float softness) {
     if (faceIndex < 0 || faceIndex >= static_cast<int>(_material.faceTextures.size())) return;
     FaceTexture& tex = _material.faceTextures[faceIndex];
-    int size = tex.width;
+    int size = tex.size;
     int cx = static_cast<int>(uv.x * size);
     // int cy = static_cast<int>((1.0f - uv.y) * size); // flip Y so UV origin at bottom-left
     int cy = static_cast<int>(uv.y * size);
@@ -109,7 +109,7 @@ void PaintToolSurface::paintFaceAdvanced(int faceIndex, const glm::vec2& uv, flo
         tex.strokeHistory[tex.activeLayer].push_back(point);
     }
     
-    int size = tex.width;
+    int size = tex.size;
     int cx = static_cast<int>(uv.x * size);
     // int cy = static_cast<int>((1.0f - uv.y) * size);
     int cy = static_cast<int>(uv.y * size);
@@ -188,7 +188,7 @@ void PaintToolSurface::smudgeFace(int faceIndex, const glm::vec2& uv, float radi
     if (faceIndex < 0 || faceIndex >= static_cast<int>(_material.faceTextures.size())) return;
     FaceTexture& tex = _material.faceTextures[faceIndex];
     
-    int size = tex.width;
+    int size = tex.size;
     int cx = static_cast<int>(uv.x * size);
     // int cy = static_cast<int>((1.0f - uv.y) * size);
     int cy = static_cast<int>(uv.y * size);
@@ -247,7 +247,7 @@ void PaintToolSurface::cloneFace(int faceIndex, const glm::vec2& destUV, const g
     if (faceIndex < 0 || faceIndex >= static_cast<int>(_material.faceTextures.size())) return;
     FaceTexture& tex = _material.faceTextures[faceIndex];
     
-    int size = tex.width;
+    int size = tex.size;
     int destX = static_cast<int>(destUV.x * size);
     // int destY = static_cast<int>((1.0f - destUV.y) * size);
     int destY = static_cast<int>(destUV.y * size);
@@ -297,7 +297,7 @@ void PaintToolSurface::airbrushFace(int faceIndex, const glm::vec2& uv, float r,
     if (faceIndex < 0 || faceIndex >= static_cast<int>(_material.faceTextures.size())) return;
     FaceTexture& tex = _material.faceTextures[faceIndex];
     
-    int size = tex.width;
+    int size = tex.size;
     int cx = static_cast<int>(uv.x * size);
     // int cy = static_cast<int>((1.0f - uv.y) * size);
     int cy = static_cast<int>(uv.y * size);

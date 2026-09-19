@@ -1,62 +1,12 @@
 import os
-from flask import Blueprint, jsonify, request, current_app, make_response
+from flask import Blueprint, jsonify, request, current_app
 from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-def _portfolio_allowed_origins():
-    configured = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
-    if configured.strip():
-        return {origin.strip() for origin in configured.split(",") if origin.strip()}
-    return {
-        "https://zhangzachary834-commits.github.io",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5005",
-        "http://127.0.0.1:5005",
-    }
-
-def _portfolio_origin_allowed(origin):
-    return not origin or origin in _portfolio_allowed_origins()
-
-def _portfolio_json(payload, status=200):
-    response = make_response(jsonify(payload), status)
-    origin = request.headers.get("Origin", "")
-    if origin and _portfolio_origin_allowed(origin):
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Vary"] = "Origin"
-        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-        if request.headers.get("Access-Control-Request-Private-Network") == "true":
-            response.headers["Access-Control-Allow-Private-Network"] = "true"
-    return response
-
 def get_bridge():
     """Access the shared CppBridge instance from current_app or module."""
     return current_app.config.get('CPP_BRIDGE')
-
-@api_bp.route('/portfolio/live', methods=['GET', 'OPTIONS'])
-def get_portfolio_live():
-    """Read-only live projection for Zachary's public portfolio."""
-    origin = request.headers.get("Origin", "")
-    if not _portfolio_origin_allowed(origin):
-        return _portfolio_json({"error": "Origin not allowed"}, 403)
-
-    if request.method == "OPTIONS":
-        return _portfolio_json({"status": "ok"})
-
-    bridge = get_bridge()
-    if not bridge:
-        return _portfolio_json({
-            "schema": "earthcall.portfolio.v1",
-            "connected": False,
-            "has_engine_snapshot": False,
-            "error": "Bridge not initialized",
-        }, 503)
-
-    return _portfolio_json(bridge.get_portfolio_state())
 
 @api_bp.route('/status', methods=['GET'])
 def get_status():

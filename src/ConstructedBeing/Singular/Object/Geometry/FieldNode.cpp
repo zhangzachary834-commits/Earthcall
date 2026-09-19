@@ -1,5 +1,4 @@
 #include "FieldNode.hpp"
-#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 namespace geom {
 
@@ -10,37 +9,27 @@ nlohmann::json FieldNode::toJson() const {
     j["scale"] = {scale.x, scale.y, scale.z};
     j["field"] = field->toJson();
     j["vectorField"] = vectorField->toJson();
-
-    // A FieldNode is a Singular, so properties a Person/Law grants it are
-    // first-order authored state just like authored Object properties. Keep
-    // them beside the mathematical ASTs instead of silently dropping them at
-    // the save boundary (the temporal form of Refusal #6's black box).
-    if (!dynamicProperties().empty()) {
-        nlohmann::json dyn = nlohmann::json::object();
-        for (const auto& entry : dynamicProperties()) {
-            PropertyValue live = entry.second;
-            getDynamicProperty(entry.first, live);
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
-        }
-        j["authoredProperties"] = std::move(dyn);
-    }
     return j;
 }
 
-void FieldNode::applyJson(const nlohmann::json& j) {
+std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {
+    auto node = std::make_shared<FieldNode>(j.value("id", "field_node"));
+
     if (j.contains("origin") && j["origin"].is_array() && j["origin"].size() == 3) {
-        origin = glm::vec3(j["origin"][0], j["origin"][1], j["origin"][2]);
+        node->origin = glm::vec3(j["origin"][0], j["origin"][1], j["origin"][2]);
     }
     if (j.contains("scale") && j["scale"].is_array() && j["scale"].size() == 3) {
-        scale = glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]);
+        node->scale = glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]);
     }
 
     if (j.contains("field")) {
-        // Keep the shared object stable: PropertyRefs may already point into
-        // it. Restore values, not the pointer.
+        // Since node->field is const shared_ptr, we can't reassign the pointer itself.
+        // We can either deserialize a new ScalarField and copy its values into node->field,
+        // or change the constructor to take the field.
+        // Copying values is safer to preserve the already-registered pointer in properties.
         auto newField = OntoMath::ScalarField::fromJson(j["field"]);
         if (newField) {
-            auto* mutField = const_cast<OntoMath::ScalarField*>(field.get());
+            auto mutField = const_cast<OntoMath::ScalarField*>(node->field.get());
             mutField->mode = newField->mode;
             mutField->baseDensity = newField->baseDensity;
             mutField->frequency = newField->frequency;
@@ -52,7 +41,7 @@ void FieldNode::applyJson(const nlohmann::json& j) {
     if (j.contains("vectorField")) {
         auto newVec = OntoMath::VectorField::fromJson(j["vectorField"]);
         if (newVec) {
-            auto* mutVec = const_cast<OntoMath::VectorField*>(vectorField.get());
+            auto mutVec = const_cast<OntoMath::VectorField*>(node->vectorField.get());
             mutVec->mode = newVec->mode;
             mutVec->baseFlowX = newVec->baseFlowX;
             mutVec->baseFlowY = newVec->baseFlowY;
@@ -62,18 +51,6 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             mutVec->astDefinition = newVec->astDefinition;
         }
     }
-
-    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
-        for (auto it = j["authoredProperties"].begin();
-             it != j["authoredProperties"].end(); ++it) {
-            setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
-        }
-    }
-}
-
-std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {
-    auto node = std::make_shared<FieldNode>(j.value("id", "field_node"));
-    node->applyJson(j);
     return node;
 }
 

@@ -163,7 +163,6 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Storage/MigrateSaves.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
-list(FILTER SRC_FILES EXCLUDE REGEX "src/terminal_entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "smoke_.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "scratch/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Legacy Depricated/.*")
@@ -182,11 +181,10 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     list(APPEND IMGUI_SOURCES ${IMGUI_DIR}/backends/imgui_impl_opengl2.cpp)
 endif()
 
-# Compile native WebKit integration sources as Objective-C++ on Apple.
+# Compile WebIntegration and RealWebView as Objective-C++ since they use macOS APIs on Apple
 if(APPLE)
     set_source_files_properties(src/Singularity/Foreign/Web/RealWebView.cpp PROPERTIES LANGUAGE OBJCXX)
     set_source_files_properties(src/Singularity/Foreign/Web/WebIntegration.cpp PROPERTIES LANGUAGE OBJCXX)
-    set_source_files_properties(src/Singularity/Foreign/Web/DomMirrorBridge.cpp PROPERTIES LANGUAGE OBJCXX)
 endif()
 
 # Object library for shared code
@@ -195,9 +193,6 @@ if(NOT EMSCRIPTEN AND OpenGL_FOUND)
     target_link_libraries(earthcall_core PUBLIC OpenGL::GL)
 else()
     target_compile_definitions(earthcall_core PUBLIC NO_OPENGL_RENDERER GLFW_INCLUDE_NONE)
-endif()
-if(NOT APPLE AND NOT EXISTS "/usr/include/GL/gl.h")
-    target_compile_definitions(earthcall_core PUBLIC GLFW_INCLUDE_NONE)
 endif()
 if (NOT EMSCRIPTEN)
     target_link_libraries(earthcall_core PUBLIC
@@ -240,10 +235,6 @@ if(NOT EMSCRIPTEN)
     add_executable(earthcall src/entry.cpp)
     target_link_libraries(earthcall PRIVATE earthcall_core)
 
-    # --- Terminal Executable ---
-    add_executable(earthcall_terminal src/terminal_entry.cpp)
-    target_link_libraries(earthcall_terminal PRIVATE earthcall_core)
-
     # --- wgpu-native (vendored) ---
     set(WGPU_NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wgpu)
     include_directories(${WGPU_NATIVE_DIR}/include)
@@ -275,7 +266,7 @@ if(NOT EMSCRIPTEN)
 
     add_executable(earthcall_webgpu src/entry.cpp ${WEBGPU_APP_SOURCES} ${IMGUI_WEBGPU_SOURCES})
     target_include_directories(earthcall_webgpu PRIVATE ${WGPU_NATIVE_DIR}/include)
-    target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU GLFW_INCLUDE_NONE)
+    target_compile_definitions(earthcall_webgpu PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
 
     if(APPLE)
         target_link_libraries(earthcall_webgpu PRIVATE
@@ -296,17 +287,6 @@ if(NOT EMSCRIPTEN)
             ZLIB::ZLIB
             OpenSSL::SSL
             OpenSSL::Crypto
-        )
-    else()
-        target_link_libraries(earthcall_webgpu PRIVATE
-            $<$<BOOL:${OPENGL_FOUND}>:OpenGL::GL>
-            ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
-            ${GLFW_LIB}
-            ZLIB::ZLIB
-            OpenSSL::SSL
-            OpenSSL::Crypto
-            ${CMAKE_DL_LIBS}
-            Threads::Threads
         )
     endif()
 
@@ -351,7 +331,7 @@ if(NOT EMSCRIPTEN)
             add_executable(${TEST_NAME} ${TEST_SOURCE} ${WEBGPU_TEST_EXTRA_SRCS})
             target_include_directories(${TEST_NAME} PRIVATE ${WGPU_NATIVE_DIR}/include)
             target_compile_definitions(${TEST_NAME} PRIVATE EARTHCALL_WEBGPU IMGUI_IMPL_WEBGPU_BACKEND_WGPU)
-            if(APPLE AND EXISTS "${WGPU_NATIVE_DIR}/lib/libwgpu_native.a")
+            if(APPLE)
                 target_link_libraries(${TEST_NAME} PRIVATE
                     earthcall_core
                     ${WGPU_NATIVE_DIR}/lib/libwgpu_native.a
@@ -373,21 +353,20 @@ if(NOT EMSCRIPTEN)
                     OpenGL::GL
                 )
             else()
-                set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_LIBRARIES} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
             endif()
         else()
             add_executable(${TEST_NAME} ${TEST_SOURCE})
             # uuid (non-Apple only, and NOTFOUND-guarded) already comes in
             # transitively via earthcall_core's PUBLIC link libraries above.
-            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
+            target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY} ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         endif()
 
         # Shared fixtures (test_save_helper.hpp, test_harness.hpp). Source files live under
         # tests/<region>/; ctest target names stay NAME_WE of the .cpp.
         target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/tests ${CMAKE_SOURCE_DIR}/tests/support)
         target_compile_options(${TEST_NAME} PRIVATE -UNDEBUG)
-        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS OR (NOT APPLE AND (${TEST_NAME} MATCHES "webgpu_.*" OR ${TEST_NAME} STREQUAL "gpu_mastery_test")))
+        if (${TEST_NAME} IN_LIST PENDING_FEATURE_TESTS)
             set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
         else()
             list(APPEND ALL_ACTIVE_TEST_TARGETS ${TEST_NAME})
@@ -400,19 +379,7 @@ if(NOT EMSCRIPTEN)
         # equivalent fixture is optional and skips when absent; this one is the
         # test's actual subject, so it must resolve), so it needs the source
         # root as its CWD like the `lag` custom target above already gets.
-        # The same applies to every test whose SUBJECT is an authored save read
-        # by a bare "saves/..." path. Both Living Studio tests failed under
-        # ctest and passed from the source root, and they failed QUIETLY:
-        # synthesis_studio_living_test returns 1 before its first tick, and
-        # synthesis_studio_full_store_boot_test reports that it could not
-        # discover the Zone. A measurement pass on 2026-09-15 read that silence
-        # as "this world never sweeps" and drew a wrong conclusion from it.
-        # Add a test here when its fixture is an authored save it must find,
-        # rather than one it creates in a temp SaveRoot.
-        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
-            ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
-            ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
-            ${TEST_NAME} STREQUAL "person_home_migration_boot_test")
+        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         endif()
@@ -422,19 +389,8 @@ if(NOT EMSCRIPTEN)
         # ctest give it the box to itself. (It survives contention either way
         # — it detects a moving machine and stops enforcing its timings — but
         # a run where nothing is enforced is a run that checked nothing.)
-        #
-        # The Formation Rete scaling probes are the same kind of measurement and
-        # need the same courtesy: they compare a law's cost against a control
-        # arm and assert the RATIO, which contention can skew because the arms
-        # run one after another. Both passed alone and failed inside a parallel
-        # ctest run on 2026-09-16 (category_membership 1.2x alone against a 4x
-        # guard; quantifier_scaling 0.619 alone against a 0.65 guard, 0.72 under
-        # a concurrent build — measured with the change under test stubbed out,
-        # so it was the machine, not the change).
         if (${TEST_NAME} STREQUAL "frame_lag_test" OR
-            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test" OR
-            ${TEST_NAME} STREQUAL "category_membership_scaling_test" OR
-            ${TEST_NAME} STREQUAL "quantifier_scaling_test")
+            ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 RUN_SERIAL TRUE
                 TIMEOUT 300

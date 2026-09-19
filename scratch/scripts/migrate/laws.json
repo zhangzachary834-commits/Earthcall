@@ -1,0 +1,110 @@
+[
+  {
+    "actionDescriptions": [
+      "d(velocity)/dt = [MathNode]"
+    ],
+    "actionModel": {
+      "bindings": {},
+      "function": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": -9.81,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ],
+              "op": 2
+            }
+          }
+        ]
+      },
+      "kind": 9,
+      "path": "velocity"
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [],
+    "conditionDescriptions": [],
+    "conditionMode": "all",
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": false,
+    "id": "law-1",
+    "name": "physics: gravity",
+    "provenance": [],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  {
+    "actionDescriptions": [
+      "d(position)/dt = [MathNode]"
+    ],
+    "actionModel": {
+      "bindings": {
+        "v": "velocity"
+      },
+      "function": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 1,
+              "var": "v"
+            }
+          }
+        ]
+      },
+      "kind": 9,
+      "path": "position"
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [],
+    "conditionDescriptions": [],
+    "conditionMode": "all",
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": false,
+    "id": "law-2",
+    "name": "physics: kinematics",
+    "provenance": [],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  }
+]

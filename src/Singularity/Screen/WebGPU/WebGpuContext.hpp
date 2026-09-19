@@ -25,9 +25,6 @@ struct WindowContext {
     WGPUQueue    queue    = nullptr;
     WGPUSurface  surface  = nullptr;
     void*        metalLayer = nullptr; // CAMetalLayer*, retained by the window's view
-    // Kernel diagnostic capability negotiated when the device was created. It
-    // is deliberately separate from any authored screen-channel property.
-    bool timestampQueries = false;
 
     bool valid() const { return device && queue && surface; }
 };

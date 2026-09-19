@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Singular.hpp"
-#include "Time/Event/Event.hpp"
 #include "Time/Moment/Moment.hpp"
 
 #include <functional>
@@ -11,7 +10,7 @@
 /*
  * Event-Condition-Action (ECA) loop
  *
- *   Event     -> something that happened (the trigger: a distinguished Moment in Time)
+ *   Event     -> something that happened (the trigger)
  *   Condition -> test that must pass before acting
  *   Action    -> effect applied when conditions pass
  *
@@ -22,8 +21,12 @@
  */
 namespace ECA {
 
-// An Event in ECA is the distinguished Moment from the Time ontology.
-using Event = ::Event;
+struct Event {
+    std::string type;
+    Singular* subject = nullptr;
+    Singular* object = nullptr;
+    Moment timestamp{};
+};
 
 using ConditionPredicate = std::function<bool(const Event&, const Singular&)>;
 using ActionExecutor = std::function<void(const Event&, Singular&)>;

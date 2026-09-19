@@ -39,11 +39,10 @@ exact algebra attached, and the compilation is mechanical once you know which of
 four kinds of iteration your loop actually is.*
 
 **The corollary that saves the most time:** *every bound in this machine is deliberate.*
-`LawManager::_maxChainRounds` currently defaults to 5 and is exposed as authorable,
-serialized policy; `kMaxCallDepth = 32`; a fold is one pass. The anti-Babel doctrine is
-that the machine has explicit bounds, not that every bound's numeric value is immutable
-C++. If an algorithm only works by silently enlarging a jurisdiction's chain budget,
-that is still a signal that it may belong in a different kind of iteration (§3).
+`kMaxChainRounds = 8`, `kMaxCallDepth = 32`, a fold's single pass — these are the
+anti-Babel ceilings, not limitations to engineer around. An algorithm that needs to
+exceed one of them is telling you it belongs in a different kind of iteration (§3), not
+that the ceiling is wrong.
 
 ---
 
@@ -165,7 +164,7 @@ termination condition, and a different meaning.
 |---|---|---|---|---|
 | **I** | **over data** | `Fold`, `ForAny`/`ForAll`, `Scope::Everyone` | one pass over beings | the pass ends (always) |
 | **II** | **within an expression** | `FunctionCall` recursion | `kMaxCallDepth = 32` | a base-case guard fires, or the ceiling returns `nullopt` |
-| **III** | **within a tick** | event cascade — a law's `Publish` waking another law | `LawManager::maxChainRounds()` (default 5; authorable/serialized) | no law is dirty, or the configured bound |
+| **III** | **within a tick** | event cascade — a law's `Publish` waking another law | `kMaxChainRounds = 8` | no law is dirty, or the ceiling |
 | **IV** | **across ticks** | drives / `Activation::WhileTrue` | **unbounded in time** | the authored `Piecewise` domain stops containing `t` |
 
 ### I — Iteration over data: `Fold`
@@ -215,17 +214,16 @@ event fires in the *next round of the same tick*:
 
 ```cpp
 // LawManager::tick()
-for (int round = 0; round < _maxChainRounds && _dirty; ++round) {
+for (int round = 0; round < kMaxChainRounds && _dirty; ++round) {
     // Facts asserted before this round are consumed by it; facts asserted
     // DURING it (laws firing events from applyTo) survive into the next
-    // round — that's how law chains resolve, bounded by _maxChainRounds.
+    // round — that's how law chains resolve, bounded by kMaxChainRounds.
 ```
 
-The current default is five rounds, but the numeric limit is authorable policy rather
-than a phantom `kMaxChainRounds` constant. This remains a bounded fixpoint, a
-constraint-propagation sweep, or one step of a breadth-first traversal. `law_loop_test.cpp`
-asserts against `mgr.maxChainRounds()`, so the regression follows the configured bound
-instead of baking one historical number into the test.
+Eight rounds. This is your bounded fixpoint, your constraint-propagation sweep, your
+one-step-of-BFS. It is deliberately too small to hide an unbounded loop in, and
+`law_loop_test.cpp` exercises exactly this ("law-chains-law within a tick bounded by
+kMaxChainRounds — the first anti-Babel ceiling in code").
 
 ### IV — Continuation across ticks: the drive
 
@@ -264,7 +262,7 @@ makes the new trigger a new `t = 0`. Pick deliberately; this is your re-entrancy
 ```
 Does the loop range over BEINGS?                    → I   (Fold / ForAny / Everyone)
 Is it a pure mathematical recurrence, ≤32 deep?     → II  (FunctionCall)
-Is it bounded propagation that must settle NOW?     → III (Publish cascade; current maxChainRounds policy)
+Is it a bounded propagation that must settle NOW?   → III (Publish cascade, ≤8)
 Does it need many steps, or convergence, or time?   → IV  (drive; domain = duration)
 ```
 
@@ -289,9 +287,9 @@ differentiable, and inspectable. Only what genuinely needs to *change the world*
 an `ActionNode`.
 
 **4. Name the termination.** For kind IV, the `Piecewise` domain. For II, the base-case
-guard. For III, the fact that the currently authored chain-round bound is enough. **If you
-cannot name it, you have not finished designing the algorithm** — and the substrate will
-not let you paper over it, which is a feature.
+guard. For III, the fact that eight rounds is enough. **If you cannot name it, you have
+not finished designing the algorithm** — and the substrate will not let you paper over it,
+which is a feature.
 
 **5. Write the law(s).** `FIRST_MOVER_AUTHORING.md` §4d for the JSON. One responsibility
 per law; chain by `Publish` rather than by growing one action tree.
@@ -446,11 +444,10 @@ law "expand":  trigger  "frontier-advanced"
                                     Publish "frontier-advanced" (subject = this being) ]
 ```
 
-Each `Publish` wakes the next layer. Within one tick you get at most the currently
-authored `maxChainRounds()` budget — five layers under the present default — and then the
-tick ends and the next one continues, because `visited`/`dist` are real properties of real
-beings and survive the tick boundary. A graph of any depth traverses correctly; with the
-default unchanged it takes about `⌈depth/5⌉` ticks.
+Each `Publish` wakes the next layer. Within one tick you get **8 layers** — `kMaxChainRounds`
+— and then the tick ends and the next one continues, because `visited`/`dist` are real
+properties of real beings and survive the tick boundary. A graph of any depth traverses
+correctly; it simply takes `⌈depth/8⌉` ticks.
 
 **And you get something C++ BFS does not:** the traversal is inspectable mid-flight
 (every `dist` is a legible property), auditable (every application is an
@@ -479,7 +476,7 @@ The substrate has a performance model, and it is not the one your intuition assu
 | Rete matching | **incremental** | that is what the network is *for*; bind triggers rather than polling with `WhileTrue` |
 | `WhileTrue` law | evaluated **every tick, forever** | the most expensive thing you can write casually |
 | `FunctionCall` | O(depth), ≤ 32 | exact-algebra evaluation, no allocation per frame |
-| event cascade | ≤ configured `maxChainRounds()` rounds/tick (default 5) | bounded by construction; exact value is authored policy |
+| event cascade | ≤ 8 rounds/tick | bounded by construction |
 
 **Three rules that follow:**
 
@@ -502,7 +499,7 @@ possible will produce something that silently does not work.
 
 | Not expressible | Why | Do instead |
 |---|---|---|
-| an unbounded loop inside one application | `LawManager` enforces the configured `maxChainRounds()` budget (default 5), and no looping `ActionNode` exists | kind IV — spread it across ticks (§5f) |
+| an unbounded loop inside one application | `kMaxChainRounds = 8`, and no looping `ActionNode` exists | kind IV — spread it across ticks (§5f) |
 | recursion deeper than 32 | `kMaxCallDepth`, returns `nullopt` | restructure as kind IV, or carry more per frame |
 | a local mutable array / scratch buffer | there is no local scope but `Create`'s children | make the elements **beings** in a `Formation`; that *is* the array, and it is inspectable |
 | arbitrary pointer chasing | no raw references | `Relation` — first-class, weighted, with an event timeline |
@@ -515,10 +512,10 @@ possible will produce something that silently does not work.
 
 Worth stating carefully, because the answer is interesting and an agent will want it.
 
-**Each tick terminates under the configured bounds.** Chain rounds are limited by the
-current `maxChainRounds()` policy, call depth is capped at 32, folds are single passes,
-and sweeps are finite. That gives the per-tick language a deliberately bounded shape;
-the chain budget's numeric value is governable rather than a fixed kernel constant.
+**Each tick terminates.** Chain rounds ≤ 8, call depth ≤ 32, folds are single passes,
+sweeps are finite. There is no way to write a law that hangs a tick. That makes the
+per-tick language **total** — a strong and deliberate property, and the reason the
+anti-Babel ceilings are where they are.
 
 **Across ticks, the ingredients of general computation are present:** unbounded state
 (`Create` and `AddProperty` grow the world without limit), conditional branching, and
@@ -528,9 +525,8 @@ still computes the right answer.
 
 So: **bounded per tick, general over time.** I am claiming the ingredients, not
 presenting a proof. The practical consequence is the one that matters — *if your
-algorithm needs more steps than the currently authored tick budget allows, prefer to
-spread it across ticks and keep its state in the world rather than smuggling an unbounded
-loop into one cascade.*
+algorithm needs more steps than a tick allows, the answer is always to spread it across
+ticks and keep its state in the world*, never to seek a bigger ceiling.
 
 ---
 
@@ -545,33 +541,6 @@ it is not a *Decide*:
   world. §4 of the migration framework: *"Disable the gravity law and the player floats"*
   is intelligible; *"disable the ground-constraint law and the player falls through the
   floor forever with no way back"* is not. Those stay at R3/R4 permanently.
-
-{ Zach: I'd nuance the part on "collision testing." Collision is still fundamentally an algorithm operating on a 
-representational artifact, not native machine substrate. In a strictly ontocomputing and doctrinal sense, it is Decide. 
-While it's genuinely faster than trying to brute force pure property 
-lookups. Authorable Decide-phases can actually help optimize the narrow phase further when specific contours are mapped.
-
-However, in practice with conventional computer today, it's more complicated, because the way computers work mean specific 
-mathematics have distinct mathematical channels that are both universal and work best with collision. 
-There is a legitimate sense in which the overlap of mathematical clouds 
-can be conceptualized as a sense capacity because collision is constant every frame that sprawls over two 
-entire field's gradients. 
-
-There's two paths I can think of. First, and closest to how collision is already calculated:
-a universal collision algorithm hardcoded in cpp. However, my version would not be a hardcoded property 
-of phyiscal/visual 3D Singulars (in the spirit of Refusal 1, 3, 7), 
-but rather as a universal OntoMath bound-overlap framework that generalizes beyond physics, 
-with the specific variables of it being authorable. This would be Sense, but where Decide authors the specifc form.
-
-Second, PropertyPaths when compiling to bytecode/JIT can achieve speeds 
-like cpp, particularly JIT. Then it would be Decide operating over property paths. 
-
-The common through-line of both is authored direction
-of a native and fast substrate that organizes the part closest to metal—and a kind of organization that is fundamentally
-common among the Singularity mathematical substrate itself. 
-
-But see this is why I'm dreaming of a Earthcall-native OS/hardware so we don't have to fight awkward distinctions like 
-these, and we can collapse the distinction between math and "math channels." }
 
 A tight inner numeric kernel that is genuinely hot and genuinely *sensing* or *acting* is
 first-mover code. But note what the migration framework insists on: even then, its
@@ -591,7 +560,7 @@ reason to keep the *decision* there.
 | one law with a 40-node `Sequence` | a function body pretending to be a law | split; chain with `Publish`; one responsibility each |
 | `conditionDescriptions` written, no `conditionModel` | reads as behavior, is not | `FIRST_MOVER_AUTHORING.md` §4d |
 | a scratch property on an unrelated being | state with no owner | give it a being of its own (`NEW_KIND_FRAMEWORK.md` K0–K2) |
-| raising `maxChainRounds` merely to hide an unbounded within-tick loop | the loop is in the wrong kind; changing jurisdictional policy is not a substitute for termination | §3 — it is kind IV |
+| asking to raise `kMaxChainRounds` | the loop is in the wrong kind | §3 — it is kind IV |
 | `value = n · call f(n-1)` | a call-valued piece ignores its expression; the multiply is silently lost and you get the identity | accumulator-passing form — §5c |
 | treating empty-fold `nullopt` as 0 | silent wrong answers on an empty world | branch on definedness; the distinction is deliberate |
 | a C++ helper "just for the math" | the algebra is already exact and differentiable | `ScalarForm` — and you get `f'` free |
@@ -618,17 +587,7 @@ still hiding in the engine: not what things *are*, but what happens *to* them. A
 algorithm is a decision procedure, and decisions are the one thing this architecture has
 consistently refused to let C++ keep.
 
-The doctrine is the presence and visibility of bounds, not one magic chain-round number.
-Chain rounds are Person-authorable policy (default 5 today), recursive calls are presently
-bounded at 32, and folds are one pass; each says the same sentence: *computation in
-Earthcall is bounded, visible, and answerable to a Person.* A process that needs more
-within-tick propagation can author a jurisdictional budget deliberately, but a process
-that is fundamentally unbounded belongs across ticks where its state is visible.
-
-
-## Addendum: Jules Integration Reflection
-*(Added by Jules, GPT-4o-2024-11-20, session 15173623694285152243)*
-
-Earthcall’s conception of "Laws" transcends traditional programming logic, reimagining system rules as an authorable physics engine driven by the EventBus. This directly correlates with the principles outlined in [FIRST_MOVER_AUTHORING.md](FIRST_MOVER_AUTHORING.md) and [NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md).
-
-By connecting Algorithms as Law to these foundational documents, we can see that replacing von Neumann control flow with declarative Laws is not just an optimization; it is a profound shift toward transparent, user-authored world-building. This architecture demands that Laws be inspectable, modifyable, and fundamentally intertwined with the ontological state of the environment, ensuring the world remains fluid and continuously evolving.
+The ceilings are the doctrine in numbers. Eight rounds, thirty-two frames, one pass — each
+one says the same sentence: *computation in Earthcall is bounded, visible, and answerable
+to a Person.* An algorithm that cannot be written under those limits is not being
+obstructed. It is being asked to become the kind of process a world can hold.

@@ -16,8 +16,7 @@
 
 namespace OntoMath {
 
-thread_local uint32_t t_astEvaluations{0};
-std::atomic<uint32_t> g_astEvaluationsTotal{0};
+std::atomic<uint32_t> g_astEvaluations{0};
 
 
 namespace {
@@ -1340,9 +1339,11 @@ std::map<std::string, PropertyValue> varsAtPoint(
 } // namespace
 
 std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject) const {
-    t_astEvaluations++;
-    if ((t_astEvaluations & 1023) == 0) {
-        g_astEvaluationsTotal.fetch_add(1024, std::memory_order_relaxed);
+    thread_local uint32_t t_localCount = 0;
+    t_localCount++;
+    if (t_localCount >= 1024) {
+        g_astEvaluations.fetch_add(t_localCount, std::memory_order_relaxed);
+        t_localCount = 0;
     }
     switch(op) {
         case Op::ScalarLeaf: {

@@ -1,13 +1,10 @@
 #include "Relation.hpp"
-#include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
-#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include <iostream>
-#include <mutex>
-#include <unordered_map>
+#include <cstring>
+#include <cstdio>
 
 // Specific Implementation Vision: Recursive, custom tool creation
 // With a combination of the basic tools here, with a Formation system comprised of relations between things, people can create their own tools on top of that.
@@ -17,68 +14,61 @@
 
 using json = nlohmann::json;
 
-// The endpoint register behind Relation::mayBeEndpoint (see Relation.hpp,
-// struct Endpoint). Leaked on purpose: Relations and Singulars are destroyed
-// during static teardown, after any ordinary static would already be gone.
-// Mutex-guarded because Singular destructors run on whatever thread frees them.
 namespace {
-struct EndpointRegister {
-    std::mutex mutex;
-    std::unordered_map<const Singular*, std::size_t> counts;
-};
-EndpointRegister& endpointRegister() {
-    static auto* reg = new EndpointRegister();
-    return *reg;
-}
-} // namespace
-
-void Relation::retainEndpoint(const Singular* being) {
-    if (!being) return;
-    auto& reg = endpointRegister();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    ++reg.counts[being];
+std::vector<float> mat4ToVector(const glm::mat4& matrix) {
+    std::vector<float> values(16);
+    const float* raw = glm::value_ptr(matrix);
+    for (int i = 0; i < 16; ++i) values[i] = raw[i];
+    return values;
 }
 
-void Relation::releaseEndpoint(const Singular* being) {
-    if (!being) return;
-    auto& reg = endpointRegister();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    auto it = reg.counts.find(being);
-    if (it == reg.counts.end()) return;
-    if (--it->second == 0) reg.counts.erase(it);
-}
-
-bool Relation::mayBeEndpoint(const Singular* being) {
-    if (!being) return false;
-    auto& reg = endpointRegister();
-    std::lock_guard<std::mutex> lock(reg.mutex);
-    return reg.counts.count(being) != 0;
-}
-
-namespace {
-bool readIntProperty(Singular* being, const char* name, int& out) {
-    if (!being || !name) return false;
-    Property* property = being->findProperty(name);
-    if (property) {
-        const PropertyValue value = property->value();
-        if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
-        if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
+glm::mat4 vectorToMat4(const std::vector<float>& values) {
+    glm::mat4 matrix(1.0f);
+    if (values.size() == 16) {
+        std::memcpy(glm::value_ptr(matrix), values.data(), sizeof(float) * 16);
     }
-    PropertyValue value;
-    if (!being->getDynamicProperty(name, value)) return false;
-    if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
-    if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
-    return false;
+    return matrix;
 }
 } // namespace
+
+json Relation::AttachmentData::toJson() const {
+    return json{
+        {"enabled", enabled},
+        {"localOffset", mat4ToVector(localOffset)},
+        {"parentAnchor", {parentAnchor.x, parentAnchor.y, parentAnchor.z}},
+        {"childAnchor", {childAnchor.x, childAnchor.y, childAnchor.z}},
+        {"inheritTranslation", inheritTranslation},
+        {"inheritRotation", inheritRotation},
+        {"inheritScale", inheritScale}
+    };
+}
+
+Relation::AttachmentData Relation::AttachmentData::fromJson(const json& j) {
+    AttachmentData data;
+    data.enabled = j.value("enabled", false);
+    data.localOffset = vectorToMat4(j.value("localOffset", std::vector<float>{}));
+    if (j.contains("parentAnchor") && j["parentAnchor"].is_array() && j["parentAnchor"].size() >= 3) {
+        data.parentAnchor = glm::vec3(j["parentAnchor"][0].get<float>(),
+                                      j["parentAnchor"][1].get<float>(),
+                                      j["parentAnchor"][2].get<float>());
+    }
+    if (j.contains("childAnchor") && j["childAnchor"].is_array() && j["childAnchor"].size() >= 3) {
+        data.childAnchor = glm::vec3(j["childAnchor"][0].get<float>(),
+                                     j["childAnchor"][1].get<float>(),
+                                     j["childAnchor"][2].get<float>());
+    }
+    data.inheritTranslation = j.value("inheritTranslation", true);
+    data.inheritRotation = j.value("inheritRotation", true);
+    data.inheritScale = j.value("inheritScale", true);
+    return data;
+}
 
 Relation::Relation(const std::string& type,
                    Singular& aBeing,
                    Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(type), directed(directed) {
-    bind(&aBeing, &bBeing);
+    : type(type), directed(directed), _a(&aBeing), _b(&bBeing) {
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 
@@ -87,76 +77,14 @@ Relation::Relation(const std::string& type,
                    const Singular& bBeing,
                    bool directed,
                    float initialWeight)
-    : type(type), directed(directed) {
-    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
+    : type(type), directed(directed),
+      _a(const_cast<Singular*>(&aBeing)),
+      _b(const_cast<Singular*>(&bBeing)) {
     if (initialWeight != -1.0f) setWeight(initialWeight);
-}
-
-Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
-                   Singular& aBeing,
-                   Singular& bBeing,
-                   bool directed,
-                   float initialWeight)
-    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
-    bind(&aBeing, &bBeing);
-    if (initialWeight != -1.0f) setWeight(initialWeight);
-}
-
-Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
-                   const Singular& aBeing,
-                   const Singular& bBeing,
-                   bool directed,
-                   float initialWeight)
-    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
-    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
-    if (initialWeight != -1.0f) setWeight(initialWeight);
-}
-
-void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
-    _typeLexeme = lexeme;
-    if (_typeLexeme) {
-        const std::string previous = type;
-        type = _typeLexeme->getIdentifier();
-        // Announced like any write to the `type` property: a Relation's kind
-        // changing in place moves its endpoints' edge facts in the Rete
-        // (LawManager::_relationStateToRevalidate). Silent before 2026-09-14.
-        if (type != previous) Singular::notifyPropertyChanged(this, "type");
-    }
-}
-
-std::string Relation::typeLabel() const {
-    return _typeLexeme ? _typeLexeme->getSymbol() : type;
-}
-
-Relation::ConstitutiveStatus Relation::evaluateConstitutive() const {
-    if (!_typeLexeme) return ConstitutiveStatus::NotApplicable;
-
-    int rawOpcode = static_cast<int>(ConstitutiveOpcode::None);
-    if (!readIntProperty(_typeLexeme, kConstitutiveOpcodeProperty, rawOpcode) ||
-        rawOpcode == static_cast<int>(ConstitutiveOpcode::None)) {
-        return ConstitutiveStatus::NotApplicable;
-    }
-
-    switch (static_cast<ConstitutiveOpcode>(rawOpcode)) {
-        case ConstitutiveOpcode::None:
-            return ConstitutiveStatus::NotApplicable;
-        case ConstitutiveOpcode::CppInheritance: {
-            if (!a() || !b()) return ConstitutiveStatus::Invalid;
-            int rawKind = -1;
-            if (!readIntProperty(b(), kCppBeingKindProperty, rawKind)) {
-                return ConstitutiveStatus::Invalid;
-            }
-            const auto kind = static_cast<ConditionNode::BeingKind>(rawKind);
-            return ConditionNode::matchesKind(*a(), kind)
-                       ? ConstitutiveStatus::Holds
-                       : ConstitutiveStatus::Violated;
-        }
-    }
-    return ConstitutiveStatus::Invalid;
 }
 
 void Relation::describe() const {
-    std::cout << "Relation [" << typeLabel() << "] "
+    std::cout << "Relation [" << type << "] "
               << (directed ? "from " : "between ")
               << aId() << (directed ? " -> " : " and ") << bId()
               << " (strength=" << getWeight() << ")"
@@ -164,11 +92,11 @@ void Relation::describe() const {
 }
 
 bool Relation::involves(const Singular* being) const {
-    return being && (a() == being || b() == being);
+    return being && (_a == being || _b == being);
 }
 
 bool Relation::involves(const Singular& being) const {
-    return a() == &being || b() == &being;
+    return _a == &being || _b == &being;
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -178,9 +106,9 @@ bool Relation::involves(const std::string& identifier) const {
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
     if (directed) {
-        return a() == &aBeing && b() == &bBeing;
+        return _a == &aBeing && _b == &bBeing;
     }
-    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
+    return (_a == &aBeing && _b == &bBeing) || (_a == &bBeing && _b == &aBeing);
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
@@ -192,11 +120,50 @@ bool Relation::isBetween(const std::string& a, const std::string& b) const {
 }
 
 json Relation::toJson() const {
-    return relationToJson(*this);
+    json evArr = json::array();
+    for(const auto& ev : events) evArr.push_back(ev.toJson());
+
+    return json{{"type", type},
+                {"entityA", aId()},
+                {"entityB", bId()},
+                {"directed", directed},
+                {"weight", getWeight()},
+                {"events", evArr},
+                {"attachment", attachment.toJson()}};
 }
 
 Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resolve) {
-    return relationFromJson(j, resolve);
+    Relation r;
+    r.type = j.at("type").get<std::string>();
+    r.directed = j.value("directed", false);
+    r.setWeight(j.value("weight", 1.0f));
+
+    if(j.contains("events") && j["events"].is_array()){
+        for(const auto& item : j["events"]) {
+            r.events.push_back(RelationEvent::fromJson(item));
+        }
+    }
+    if (j.contains("attachment")) {
+        r.attachment = AttachmentData::fromJson(j["attachment"]);
+    }
+
+    r._savedA = j.value("entityA", std::string{});
+    r._savedB = j.value("entityB", std::string{});
+    if (resolve) {
+        r._a = r._savedA.empty() ? nullptr : resolve(r._savedA);
+        r._b = r._savedB.empty() ? nullptr : resolve(r._savedB);
+        if (r._a) r._savedA.clear();
+        if (r._b) r._savedB.clear();
+        if ((!j.value("entityA", std::string{}).empty() && !r._a) ||
+            (!j.value("entityB", std::string{}).empty() && !r._b)) {
+            std::fprintf(stderr,
+                "Relation::fromJson: unbound endpoint(s) type='%s' a='%s' b='%s'. "
+                "Identifier properties kept; the relation holds no being until bind.\n",
+                r.type.c_str(), j.value("entityA", std::string{}).c_str(),
+                j.value("entityB", std::string{}).c_str());
+        }
+    }
+    return r;
 }
 
 // A Relation is a legible Singular: type/weight/directed are governable

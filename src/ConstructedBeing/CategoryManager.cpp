@@ -1,44 +1,7 @@
 #include "CategoryManager.hpp"
-#include "Person/PersonDatabase.hpp"
-#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization.hpp"
 
 #include <algorithm>
-#include <iostream>
-
-namespace {
-// Canonical authored categories live in the category.* namespace. Older
-// generator saves also smuggled author referents through the categories bag;
-// keep those compatibility records loadable for now, but never let the bag
-// counterfeit a real Person ID.
-//
-// IMPORTANT: a display name is NOT Person identity. Two beings are allowed to
-// be called "Zach". Refusing an Object because a profile filename/display name
-// happens to match it would punish ontologically pure authorial intent based on
-// lexical coincidence. Only the authenticated Person identifier serialized in
-// the profile has enough provenance to reserve Person identity here.
-bool shadowsRegisteredPersonIdentity(const std::string& identifier) {
-    if (identifier.empty() || identifier.rfind("category.", 0) == 0) return false;
-
-    for (const auto& profilePath : PersonDatabase::getInstance().getAllRegisteredPersons()) {
-        const nlohmann::json profile = SaveSystem::readSaveData(profilePath);
-        if (!profile.is_object()) continue;
-        const auto it = profile.find("personId");
-        if (it != profile.end() && it->is_string() && it->get<std::string>() == identifier) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool refusePersonAsCategoryObject(const std::string& identifier) {
-    if (!shadowsRegisteredPersonIdentity(identifier)) return false;
-    std::cerr << "[CategoryManager] REFUSED category Object '" << identifier
-              << "': that identifier is an authenticated Person identity. "
-              << "Persons are not Objects; a display-name collision alone is allowed.\n";
-    return true;
-}
-} // namespace
 
 // A category is a BEING, and a being is addressed by its identifier. The slug
 // IS the name here ("category.tool.brush"), so law text can name it: an
@@ -46,7 +9,6 @@ bool refusePersonAsCategoryObject(const std::string& identifier) {
 // `setObjectID` is what `getIdentifier()` reports.
 std::shared_ptr<Object> CategoryManager::create(const std::string& name) {
     if (auto existing = get(name)) return existing;
-    if (refusePersonAsCategoryObject(name)) return nullptr;
     auto cat = std::make_shared<Object>(name);
     cat->setName(name);
     cat->setPhysicalObject(0);   // a classification is extra-spatial
@@ -55,9 +17,7 @@ std::shared_ptr<Object> CategoryManager::create(const std::string& name) {
 }
 
 void CategoryManager::add(const std::shared_ptr<Object>& cat) {
-    if (!cat) return;
-    if (refusePersonAsCategoryObject(cat->getIdentifier())) return;
-    if (!get(cat->getIdentifier())) {
+    if (cat && !get(cat->getIdentifier())) {
         _categories.push_back(cat);
     }
 }
@@ -111,9 +71,6 @@ void CategoryManager::loadFromJson(const nlohmann::json& j) {
             }
             auto cat = std::make_shared<Object>(id);
             from_json(elem, *cat);
-            // Check the deserialized identifier too: compatibility inputs may
-            // spell identity through a field older than the two probes above.
-            if (refusePersonAsCategoryObject(cat->getIdentifier())) continue;
             // Classification is extra-spatial. from_json rebuilds an Object
             // whose physical bit defaults to true, so a loaded category
             // would otherwise re-enter the world as a cube.

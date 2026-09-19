@@ -80,7 +80,7 @@ int main() {
         assert(obj.materialId() == "material.clay");
 
         // 4. Unknown multi-segment paths fail cleanly — no crash, nullptr/false.
-        assert(PropertyPath::parse("nonexistent.thing").resolve(obj).owner == nullptr);
+        assert(PropertyPath::parse("nonexistent.thing").resolve(obj) == nullptr);
         // Setting a single-segment nonexistent property creates a dynamic property
         assert(PropertyPath::parse("nonexistent").setValue(obj, PropertyValue(1)) == PropertyPath::PathResult::Ok);
         PropertyValue unused;

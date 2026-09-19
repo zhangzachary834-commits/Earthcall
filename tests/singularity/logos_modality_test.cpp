@@ -106,20 +106,15 @@ void testParserBindsLexemes() {
     auto parsed = SyntacticParser::parse("Arthur picked up the sword", zone);
     assert(parsed.size() == 1);
     assert(parsed[0]);
-    assert(parsed[0]->type == "lexeme.has_inventory");
-    assert(parsed[0]->typeLabel() == "has_inventory");
-    assert(parsed[0]->getTypeLexeme() == hasInventory.get());
+    assert(parsed[0]->type == "has_inventory");
     assert(parsed[0]->a() == arthur.get());
     assert(parsed[0]->b() == sword.get());
     assert(dynamic_cast<Lexeme*>(parsed[0]->a()) != nullptr);
     assert(dynamic_cast<Lexeme*>(parsed[0]->b()) != nullptr);
 
     // A Relation cannot be constructed from leftover name-strings; identity
-    // is the two Singulars + its grounded kind being. JSON keeps readable
-    // labels but also writes those identifiers.
+    // is the two Singulars. JSON still writes those identifiers.
     auto saved = parsed[0]->toJson();
-    assert(saved["type"] == "has_inventory");
-    assert(saved["typeId"] == "lexeme.has_inventory");
     assert(saved["entityA"] == "lexeme.arthur");
     assert(saved["entityB"] == "lexeme.sword");
     auto rebound = Relation::fromJson(saved, [&](const std::string& id) -> Singular* {
@@ -127,8 +122,6 @@ void testParserBindsLexemes() {
     });
     assert(rebound.a() == arthur.get());
     assert(rebound.b() == sword.get());
-    assert(rebound.getTypeLexeme() == hasInventory.get());
-    assert(rebound.type == "lexeme.has_inventory");
 
     std::cout << "✓ SyntacticParser Lexeme-binding tests passed." << std::endl;
 }

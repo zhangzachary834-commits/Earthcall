@@ -1,6 +1,5 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
-#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 #include <cstdint>
 #include <string>
@@ -86,8 +85,7 @@ json faceTexturesToJson(const std::vector<FaceTexture>& textures) {
     json arr = json::array();
     for (const auto& ft : textures) {
         json ftj;
-        ftj["width"] = ft.width;
-        ftj["height"] = ft.height;
+        ftj["size"] = ft.size;
         if (ft.useLayers) ft.compositeLayers();
         ftj["pixelsB64"] = base64Encode(ft.pixels);
         arr.push_back(std::move(ftj));
@@ -101,20 +99,14 @@ void faceTexturesFromJson(Material& m, const json& arr) {
     m.faceTextures.reserve(arr.size());
     for (const auto& ftj : arr) {
         FaceTexture ft;
-        int width = ftj.value("width", 64);
-        int height = ftj.value("height", 64);
-        if (ftj.contains("size")) {
-            width = ftj.value("size", 64);
-            height = width;
-        }
-        if (width <= 0 || width > 4096 || height <= 0 || height > 4096) continue;
-        ft.width = width;
-        ft.height = height;
+        const int size = ftj.value("size", 64);
+        if (size <= 0 || size > 4096) continue;
+        ft.size = size;
         const std::string b64 = ftj.value("pixelsB64", std::string());
         std::vector<uint8_t> data = base64Decode(b64);
-        const size_t expected = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
+        const size_t expected = static_cast<size_t>(size) * static_cast<size_t>(size) * 4;
         if (data.size() != expected) {
-            ft.create(width, height, 0xFFFFFFFFu);
+            ft.create(0xFFFFFFFFu);
         } else {
             ft.pixels = std::move(data);
             ft.updateWholeGPU();
@@ -137,53 +129,6 @@ void Material::buildProperties() {
         "ambient", this, &Material::ambient));
     registerProperty(std::make_unique<PropertyRef<Material, float>>(
         "diffuse", this, &Material::diffuse));
-    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
-        "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
-    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
-        "textureWidth", this, &Material::getTextureWidth, &Material::setTextureWidth));
-    registerProperty(std::make_unique<ComputedProperty<Material, int>>(
-        "textureHeight", this, &Material::getTextureHeight, &Material::setTextureHeight));
-}
-
-int Material::getTextureResolution() const {
-    if (!faceTextures.empty()) return faceTextures[0].width;
-    return textureResolution;
-}
-
-void Material::setTextureResolution(const int& res) {
-    if (res <= 0 || res > 4096) return;
-    textureResolution = res;
-    textureWidth = res;
-    textureHeight = res;
-    for (auto& ft : faceTextures) {
-        ft.resize(res, res);
-    }
-}
-
-int Material::getTextureWidth() const {
-    if (!faceTextures.empty()) return faceTextures[0].width;
-    return textureWidth;
-}
-
-void Material::setTextureWidth(const int& w) {
-    if (w <= 0 || w > 4096) return;
-    textureWidth = w;
-    for (auto& ft : faceTextures) {
-        ft.resize(w, ft.height);
-    }
-}
-
-int Material::getTextureHeight() const {
-    if (!faceTextures.empty()) return faceTextures[0].height;
-    return textureHeight;
-}
-
-void Material::setTextureHeight(const int& h) {
-    if (h <= 0 || h > 4096) return;
-    textureHeight = h;
-    for (auto& ft : faceTextures) {
-        ft.resize(ft.width, h);
-    }
 }
 
 json Material::toJson() const {
@@ -196,9 +141,6 @@ json Material::toJson() const {
         {"ambient", ambient},
         {"diffuse", diffuse},
     };
-    if (textureResolution != 64) {
-        j["textureResolution"] = textureResolution;
-    }
     if (!faceTextures.empty()) {
         j["faceTextures"] = faceTexturesToJson(faceTextures);
     }
@@ -217,32 +159,20 @@ Material Material::fromJson(const json& j) {
     m.specular  = j.value("specular", 1.0f);
     m.ambient   = j.value("ambient", 0.2f);
     m.diffuse   = j.value("diffuse", 0.8f);
-    if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
-        m.textureResolution = j["textureResolution"].get<int>();
-        m.textureWidth = m.textureResolution;
-        m.textureHeight = m.textureResolution;
-    }
     if (j.contains("faceTextures")) {
         faceTexturesFromJson(m, j["faceTextures"]);
     }
     return m;
 }
 
-void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeight) {
-    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
-    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
+void Material::initFaceTextures(int numFaces) {
     if (faceTextures.size() == static_cast<size_t>(numFaces)) {
-        for (auto& ft : faceTextures) {
-            if (ft.width != w || ft.height != h) {
-                ft.resize(w, h);
-            }
-        }
         return; // Already initialised correctly
     }
     faceTextures.clear();
     for (int i = 0; i < numFaces; ++i) {
         FaceTexture tex;
-        tex.create(w, h); // Default white texture
+        tex.create(); // Default 64x64 white texture
         faceTextures.push_back(std::move(tex));
     }
 }

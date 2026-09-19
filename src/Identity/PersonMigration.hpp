@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-class Person;
-
 namespace Identity {
 
 // ---------------------------------------------------------------------------
@@ -55,18 +53,6 @@ struct MigrationReport {
 // already established as Persons by those fields or by the ledger.
 std::vector<std::string> discoverPersonNames(const nlohmann::json& save,
                                              const IdentityLedger& ledger);
-
-// Explicitly migrate one live legacy Person into cryptographic identity.
-// This is NEVER called implicitly by ordinary load. The caller must have made
-// the trust decision and supplied a passphrase. The key is sealed first;
-// the ledger mapping is then persisted; only after both succeed is the live
-// Person assigned the identity. A newly minted key is rolled back if the
-// ledger cannot be committed, so a failed migration does not strand a half-
-// migrated Person between two identities.
-std::optional<SingularId> migratePersonIdentity(::Person& person,
-                                                IdentityLedger& ledger,
-                                                KeyStore& keys,
-                                                const std::string& passphrase);
 
 // Rewrites `save` in place. Idempotent: a save already carrying the migration
 // marker is returned untouched with ran == false.

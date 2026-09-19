@@ -103,10 +103,6 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author);
 // so a Person can set it down. Sense/Act stay in Tool::*.
 void syncRegisterCreatorTools(LawManager& laws, Singular& author);
 
-// The ManualDistance arrow/PageUp/PageDown controls are first-mover Laws too:
-// InteractionChannel senses the held key; these Laws own the 0.1/frame nudge.
-void syncRegisterManualDistanceKeyLaws(LawManager& laws, Singular& author);
-
 // Stable identifier for the first-mover law that owns this active3DMode
 // string ("Create", "Select", ...). Empty when no tool is armed.
 const char* creatorToolLawIdForMode(const std::string& active3DMode);

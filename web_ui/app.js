@@ -10,31 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if we are running under Emscripten (WASM Mode)
     const isWasmMode = typeof Module !== 'undefined' && Module.Earthcall_EmitUtterance;
     
-    const defaultPlaceholder = inputField.placeholder;
-
     function setStatus(text, isConnected) {
         statusText.innerText = text;
-
-        const wasDisconnected = !statusContainer.classList.contains('connected') && statusContainer.classList.contains('disconnected');
-        const isConnecting = !isConnected && text.includes("Connecting");
-
-        statusContainer.classList.remove('connected', 'disconnected', 'connecting');
-
         if (isConnected) {
             statusContainer.classList.add('connected');
-        } else if (isConnecting) {
-            statusContainer.classList.add('connecting');
         } else {
-            statusContainer.classList.add('disconnected');
-        }
-
-        inputField.disabled = !isConnected;
-        inputField.placeholder = isConnected ? defaultPlaceholder : "Connecting to engine...";
-
-        inputField.dispatchEvent(new Event('input'));
-
-        if (isConnected && wasDisconnected) {
-            inputField.focus();
+            statusContainer.classList.remove('connected');
         }
     }
     
@@ -88,48 +69,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         inputField.value = '';
-        inputField.dispatchEvent(new Event('input'));
-        inputField.focus();
     }
     
-    const form = document.getElementById('logos-interface');
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        if (emitBtn.getAttribute('aria-disabled') === 'true') {
-            return;
-        }
-        emitUtterance();
-    });
+    emitBtn.addEventListener('click', emitUtterance);
 
-    inputField.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            inputField.value = '';
-            inputField.dispatchEvent(new Event('input'));
-            inputField.blur();
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
+    inputField.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            if (document.activeElement === document.body || document.activeElement === document.getElementById('earthcall-canvas')) {
-                e.preventDefault();
-                inputField.focus();
-            }
+            emitUtterance();
         }
-    });
-
-    inputField.addEventListener('input', () => {
-        const isEmpty = inputField.value.trim() === '';
-        const isDisabled = inputField.disabled;
-
-        emitBtn.setAttribute('aria-disabled', String(isEmpty || isDisabled));
-
-        if (isDisabled) {
-            emitBtn.title = "Engine disconnected";
-        } else {
-            emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
-        }
-
-
     });
 });

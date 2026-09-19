@@ -1,6 +1,4 @@
 #include "ScreenChannel.hpp"
-#include "Singularity/Screen/ScreenRecorder.hpp"
-#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Screen/Renderer.hpp"
@@ -12,37 +10,9 @@ namespace Screen {
 ScreenChannel::ScreenChannel() = default;
 
 void ScreenChannel::syncRegister(LawManager& laws) {
-    // Idempotent-by-replacement, including after a test/channel teardown.
-    // ActionModel sees only this sink; Object and texture storage stay below
-    // the Screen boundary.
-    registerPixelWriteSink([](Singular& subject, int face, double u, double v,
-                              const glm::vec3& color, std::string& reason) {
-        auto* object = dynamic_cast<Object*>(&subject);
-        if (!object) {
-            reason = "pixel target is not an Object";
-            return false;
-        }
-        if (!object->writeSurfacePixel(face, glm::vec2(u, v), color)) {
-            reason = "face or UV is outside the target's paintable surface";
-            return false;
-        }
-        return true;
-    });
-    registerPixelPropertySink([](Singular& subject, const std::string& propertyName,
-                                 int face, const OntoMath::Piecewise& selector,
-                                 std::string& reason) {
-        auto* object = dynamic_cast<Object*>(&subject);
-        if (!object) {
-            reason = "pixel-property target is not an Object";
-            return false;
-        }
-        return object->elevateSurfaceRegionProperty(propertyName, face, selector, reason);
-    });
-
-    if (!find(laws)) {
-        auto channel = std::make_shared<ScreenChannel>();
-        laws.add(channel);
-    }
+    if (find(laws)) return;
+    auto channel = std::make_shared<ScreenChannel>();
+    laws.add(channel);
 }
 
 ScreenChannel* ScreenChannel::find(LawManager& laws) {
@@ -100,61 +70,6 @@ void ScreenChannel::buildProperties() {
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
-
-    // Illumination placement is first-order authored state. These names are
-    // deliberately under `light.*` instead of inventing a C++ Light kind: the
-    // Screen modality is the first-mover bridge to GPU illumination today, and
-    // later FieldNodes/OntoMath can drive these same properties through Laws.
-    // The picker probes this registry, so these paths become authorable without
-    // a second hand-maintained vocabulary.
-    boolean("light.cameraRelative", &ScreenChannel::lightCameraRelative);
-    vector3("light.position", &ScreenChannel::lightPosition);
-    vector3("light.cameraOffset", &ScreenChannel::lightCameraOffset);
-
-    const auto readOnlyBool = [this](const char* name, bool (ScreenChannel::*getter)() const) {
-        registerProperty(
-            std::make_unique<ComputedProperty<ScreenChannel, bool>>(name, this, getter));
-    };
-    const auto intRef = [this](const char* name, int ScreenChannel::*member) {
-        registerProperty(std::make_unique<PropertyRef<ScreenChannel, int>>(name, this, member));
-    };
-    const auto doubleRef = [this](const char* name, double ScreenChannel::*member) {
-        registerProperty(std::make_unique<PropertyRef<ScreenChannel, double>>(name, this, member));
-    };
-
-    intRef("fieldMeshMinRes", &ScreenChannel::fieldMeshMinRes);
-    intRef("screen.fieldMeshMinRes", &ScreenChannel::fieldMeshMinRes);
-    intRef("fieldMeshMaxRes", &ScreenChannel::fieldMeshMaxRes);
-    intRef("screen.fieldMeshMaxRes", &ScreenChannel::fieldMeshMaxRes);
-    doubleRef("fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
-    doubleRef("screen.fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
-
-    boolean("recording", &ScreenChannel::recording);
-    boolean("screen.recording", &ScreenChannel::recording);
-    boolean("snapshot", &ScreenChannel::snapshotTrigger);
-    boolean("screen.snapshot", &ScreenChannel::snapshotTrigger);
-    readOnlyBool("hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
-    readOnlyBool("screen.hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
-    readOnlyBool("hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
-    readOnlyBool("screen.hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
-    readOnlyBool("rendersImplicitExactly", &ScreenChannel::getRendersImplicitExactly);
-    readOnlyBool("screen.rendersImplicitExactly", &ScreenChannel::getRendersImplicitExactly);
-}
-
-bool ScreenChannel::getRendersImplicitExactly() const {
-    PropertyValue v;
-    if (getDynamicProperty("rendersImplicitExactly", v)) {
-        if (const bool* b = std::get_if<bool>(&v)) return *b;
-    }
-    return currentRenderer().rendersImplicitExactly();
-}
-
-bool ScreenChannel::getHasScreenCapturePermission() const {
-    return ScreenRecorder::hasScreenCapturePermission();
-}
-
-bool ScreenChannel::getHasAccessibilityPermission() const {
-    return ScreenRecorder::hasAccessibilityPermission();
 }
 
 } // namespace Screen

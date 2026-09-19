@@ -1,6 +1,4 @@
 #include "Identity/FirstMoverRegister.hpp"
-#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
-#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -99,17 +97,6 @@ FirstMover FirstMover::fromJson(const nlohmann::json& j) {
     if (grantIt != j.end()) m.grant = Claim::fromJson(*grantIt);
 
     return m;
-}
-
-void FirstMover::buildProperties() {
-    registerProperty(std::make_unique<ComputedProperty<FirstMover, std::string>>(
-        "id", this, &FirstMover::propId, nullptr));
-    registerProperty(std::make_unique<PropertyRef<FirstMover, std::string>>(
-        "displayName", this, &FirstMover::displayName));
-    registerProperty(std::make_unique<ComputedProperty<FirstMover, std::string>>(
-        "kind", this, &FirstMover::propKind, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<FirstMover, std::string>>(
-        "grantedBy", this, &FirstMover::propGrantedBy, nullptr));
 }
 
 // --- FirstMoverRegister ----------------------------------------------------

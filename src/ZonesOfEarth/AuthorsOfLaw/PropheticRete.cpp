@@ -4,12 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstdint>
-#include <iomanip>
 #include <limits>
-#include <set>
-#include <sstream>
-#include <tuple>
 
 namespace Prophetic {
 
@@ -36,30 +31,6 @@ Interval boolAsInterval(bool maybeTrue, bool maybeFalse) {
     if (maybeTrue) return Interval(1.0f);
     if (maybeFalse) return Interval(0.0f);
     return Interval(1.0f, 0.0f);   // empty
-}
-
-// Stable authored-branch provenance. These ids are DERIVED from the authored
-// node text rather than persisted as runtime state: recompilation may rebuild
-// closures and vectors, but the same authored branch has the same canonical
-// JSON and therefore the same id across recompile and save/load.
-std::string stableBranchId(const char* prefix, const nlohmann::json& authored) {
-    const std::string text = authored.dump();
-    std::uint64_t hash = 1469598103934665603ull; // FNV-1a 64
-    for (const unsigned char ch : text) {
-        hash ^= static_cast<std::uint64_t>(ch);
-        hash *= 1099511628211ull;
-    }
-    std::ostringstream out;
-    out << prefix << '-' << std::hex << std::setw(16) << std::setfill('0') << hash;
-    return out.str();
-}
-
-std::string actionBranchId(const ActionNode& node) {
-    return stableBranchId("a", node.toJson());
-}
-
-std::string conditionBranchId(const ConditionNode& node) {
-    return stableBranchId("c", node.toJson());
 }
 
 } // namespace
@@ -324,15 +295,13 @@ Range rangeOfCurve(const CurveModel& curve) {
 // ---------------------------------------------------------------------------
 
 void analyzeAction(const ActionNode& node, LawFacts& out) {
-    const std::string branchId = actionBranchId(node);
     const auto structural = [&](const char* why) {
         out.opaqueWrites = true;
         out.notes.push_back(std::string("opaque write: ") + why);
     };
     const auto emit = [&](const PropertyPath& path, Range range, const char* via) {
         if (path.empty()) return;
-        out.writes.push_back(
-            WriteEffect{out.lawId, branchId, path.toString(), std::move(range), via});
+        out.writes.push_back(WriteEffect{out.lawId, path.toString(), std::move(range), via});
     };
 
     switch (node.kind) {
@@ -370,7 +339,7 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         case ActionNode::Kind::AddProperty:
             // The leaf is granted on whoever `path` names; the opening value
             // is what lands in it.
-            out.writes.push_back(WriteEffect{out.lawId, branchId, node.propertyName,
+            out.writes.push_back(WriteEffect{out.lawId, node.propertyName,
                                              Range::ofValue(node.operand), "AddProperty"});
             break;
 
@@ -399,10 +368,6 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         case ActionNode::Kind::AuthorZone:  structural("AuthorZone mints a Zone"); break;
         case ActionNode::Kind::AddRelation: structural("AddRelation mints a Relation"); break;
         case ActionNode::Kind::PlayAudio:   break;   // reaches a channel, writes no property
-        case ActionNode::Kind::WritePixel:  break;   // reaches Screen; elevated samples announce separately
-        case ActionNode::Kind::ElevatePixels:
-            structural("ElevatePixels grants a surface Property");
-            break;
     }
 
     for (const auto& child : node.children) analyzeAction(child, out);
@@ -484,10 +449,9 @@ Interval zoneWindow(const ConditionNode& node) {
 DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQuantifier);
 
 // Record every demand in a map as a read on the law, then hand it back.
-void fileDemands(const DemandMap& demands, LawFacts& out, bool insideQuantifier,
-                 const std::string& branchId) {
+void fileDemands(const DemandMap& demands, LawFacts& out, bool insideQuantifier) {
     for (const auto& [path, range] : demands) {
-        out.reads.push_back(ReadDemand{out.lawId, branchId, path, range, insideQuantifier});
+        out.reads.push_back(ReadDemand{out.lawId, path, range, insideQuantifier});
     }
 }
 
@@ -536,7 +500,7 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
         case ConditionNode::Kind::ForAll: {
             for (const auto& child : node.children) {
                 DemandMap inner = walkCondition(child, out, true);
-                fileDemands(inner, out, true, conditionBranchId(child));
+                fileDemands(inner, out, true);
             }
             return {};
         }
@@ -593,40 +557,9 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
             out.opaqueReads = true;
             note("opaque read: Overlaps consults the collision test");
             break;
-        // A TYPED Related is legible, and must be: marking it opaque made the
-        // whole index incomplete, which turned LawManager::propheticHears off
-        // for EVERY property write in the world. One category-scoped law
-        // ("every instance-of category.target") then sent each unrelated write
-        // (position.z) through markFactDirty -> evaluateDirty -> retractFact,
-        // a linear walk of every fact. Measured 2026-09-14 at 400 beings: 6.5
-        // ms/tick against 0.63 for the same law reading a property — and the
-        // relation endpoint index (rung 4) could not touch it, because the
-        // cost was never in walking relations.
-        //
-        // What it hears, exactly (FORMATION_RETE.md §8 rung 4):
-        //   - graph changes arrive as relation-state facts, asserted by the
-        //     relation-formed handler and the back-seed — never through the
-        //     property-change callback this filter gates;
-        //   - its Rete node (ConditionNode::compileToRete) wakes on a state
-        //     fact only when the fact's attribute ROOT is the relation type,
-        //     so a write to "<type>" or "<type>.<x>" is heard, by root;
-        //   - the Relation's own fields the predicate reads, by name.
-        // The subject's identifier is not listed, following IsKind/Identity
-        // below: it names the being, and no write to it wakes this node.
-        //
-        // An UNTYPED Related has no attribute filter — its node re-runs on
-        // every state fact — so it stays opaque. Guarded by
-        // tests/law/related_prophetic_legibility_test.cpp.
         case ConditionNode::Kind::Related:
-            if (node.relationType.empty()) {
-                out.opaqueReads = true;
-                note("opaque read: an untyped Related wakes on every state fact");
-                break;
-            }
-            out.readRoots.insert(node.relationType);
-            for (const char* field : {"type", "directed", "entityA", "entityB"}) {
-                out.readNames.insert(field);
-            }
+            out.opaqueReads = true;
+            note("opaque read: Related consults the relation graph");
             break;
 
         // A kind this build does not know. It never holds — but it also never
@@ -651,75 +584,18 @@ DemandMap walkCondition(const ConditionNode& node, LawFacts& out, bool insideQua
         node.kind == ConditionNode::Kind::ForAll;
     if (!alreadyRecursed) {
         for (const auto& child : node.children) {
-            fileDemands(walkCondition(child, out, insideQuantifier), out, insideQuantifier,
-                        conditionBranchId(child));
+            fileDemands(walkCondition(child, out, insideQuantifier), out, insideQuantifier);
         }
     }
 
     return demands;
 }
 
-// Preserve leaf/local branch provenance separately from the effective demand
-// algebra above. Any(A, B) may make a path unconstrained for the whole Any
-// expression, while A itself is still exactly the frontier a write can make
-// relevant. This walk never narrows execution; it only constructs a
-// conservative relevance graph.
-void collectBranchReads(const ConditionNode& node, LawFacts& out,
-                        bool insideQuantifier, bool forceTop = false) {
-    const std::string branchId = conditionBranchId(node);
-    const auto emit = [&](const PropertyPath& path, Range range) {
-        if (path.empty()) return;
-        if (forceTop) range = Range::top();
-        out.branchReads.push_back(
-            ReadDemand{out.lawId, branchId, path.toString(), std::move(range), insideQuantifier});
-    };
-
-    switch (node.kind) {
-        case ConditionNode::Kind::Compare:
-            emit(node.path, satisfyingRange(node));
-            if (!node.operandPath.empty()) emit(node.operandPath, Range::top());
-            break;
-        case ConditionNode::Kind::InRegion:
-            emit(node.probe.empty() ? PropertyPath::parse("position") : node.probe, Range::top());
-            break;
-        case ConditionNode::Kind::Zone:
-            for (const auto& [var, path] : node.bindings) {
-                (void)var;
-                emit(path, Range::top());
-            }
-            break;
-        case ConditionNode::Kind::ForAny:
-        case ConditionNode::Kind::ForAll:
-            for (const auto& child : node.children) {
-                collectBranchReads(child, out, true, forceTop);
-            }
-            return;
-        case ConditionNode::Kind::Not:
-            for (const auto& child : node.children) {
-                collectBranchReads(child, out, insideQuantifier, true);
-            }
-            return;
-        case ConditionNode::Kind::All:
-        case ConditionNode::Kind::Any:
-            for (const auto& child : node.children) {
-                collectBranchReads(child, out, insideQuantifier, forceTop);
-            }
-            return;
-        default:
-            break;
-    }
-
-    for (const auto& child : node.children) {
-        collectBranchReads(child, out, insideQuantifier, forceTop);
-    }
-}
-
 } // namespace
 
 void analyzeCondition(const ConditionNode& node, LawFacts& out, bool insideQuantifier) {
     DemandMap demands = walkCondition(node, out, insideQuantifier);
-    fileDemands(demands, out, insideQuantifier, conditionBranchId(node));
-    collectBranchReads(node, out, insideQuantifier);
+    fileDemands(demands, out, insideQuantifier);
 }
 
 // ---------------------------------------------------------------------------
@@ -787,17 +663,6 @@ std::vector<std::string> normalizedPaths(const std::string& dotted) {
     return out;
 }
 
-bool pathsMayAlias(const std::string& a, const std::string& b) {
-    const auto aa = normalizedPaths(a);
-    const auto bb = normalizedPaths(b);
-    for (const auto& left : aa) {
-        for (const auto& right : bb) {
-            if (left == right) return true;
-        }
-    }
-    return false;
-}
-
 bool namesWorldReading(const std::string& dotted) {
     return dotted.rfind("@world", 0) == 0;
 }
@@ -825,12 +690,9 @@ void collectSelfImpossible(const ConditionNode& node, const std::string& lawId,
 void Index::clear() {
     _facts.clear();
     _readNames.clear();
-    _readRoots.clear();
     _writeRanges.clear();
     _unreachable.clear();
-    _relevanceEdges.clear();
     _complete = true;
-    _relevanceComplete = true;
 }
 
 void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
@@ -841,16 +703,9 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     for (const auto& law : laws) {
         if (!law) continue;
         LawFacts facts = analyzeLaw(*law);
-        if (facts.opaqueReads) {
-            _complete = false;
-            _relevanceComplete = false;
-        }
-        if (facts.opaqueWrites) {
-            anyOpaqueWrite = true;
-            _relevanceComplete = false;
-        }
+        if (facts.opaqueReads) _complete = false;
+        if (facts.opaqueWrites) anyOpaqueWrite = true;
         _readNames.insert(facts.readNames.begin(), facts.readNames.end());
-        _readRoots.insert(facts.readRoots.begin(), facts.readRoots.end());
 
         // Pass 1: the union of everything any law can put at each path.
         for (const auto& write : facts.writes) {
@@ -867,42 +722,10 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
         _facts.push_back(std::move(facts));
     }
 
-    // Pairwise Prophetic relevance graph. This is the modern descendant of
-    // the old "ActionNode -> Beta back-pointer" idea: prove which authored
-    // write branches can possibly feed which authored read branches, but do
-    // NOT yet reify the result into a Person's world or use it to narrow the
-    // hot path. Opacity invalidates the graph globally; callers then fall back
-    // to a lower complete Formation-Rete tier.
-    _relevanceComplete = _complete && !anyOpaqueWrite;
-    if (_relevanceComplete) {
-        std::set<std::tuple<std::string, std::string, std::string, std::string,
-                            std::string, bool>> seen;
-        for (const auto& writerFacts : _facts) {
-            for (const auto& write : writerFacts.writes) {
-                for (const auto& readerFacts : _facts) {
-                    for (const auto& read : readerFacts.branchReads) {
-                        if (!pathsMayAlias(write.path, read.path)) continue;
-                        if (!write.range.mayIntersect(read.satisfying)) continue;
-                        const auto key = std::make_tuple(
-                            write.lawId, write.branchId, read.lawId, read.branchId,
-                            read.path, read.aboutInstances);
-                        if (!seen.insert(key).second) continue;
-                        _relevanceEdges.push_back(RelevanceEdge{
-                            write.lawId, write.branchId,
-                            read.lawId, read.branchId,
-                            read.path, read.aboutInstances});
-                    }
-                }
-            }
-        }
-    }
-
     // Pass 3, across laws: a demand every authored writer misses. Only asked
-    // where the whole register was legible. The architecture document has
-    // always promised BOTH halves of that guard; enforcing _complete here
-    // closes the case where one opaque read used to coexist with a cross-law
-    // "no lawful driver" finding.
-    if (anyOpaqueWrite || !_complete) return;
+    // where the whole register was legible — one opaque write anywhere and
+    // the union above is not the union of everything laws can do.
+    if (anyOpaqueWrite) return;
 
     for (const auto& facts : _facts) {
         for (const auto& demand : facts.reads) {
@@ -933,11 +756,7 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
 
 bool Index::anyConditionReads(const std::string& propertyName) const {
     if (!_complete) return true;
-    if (_readNames.count(propertyName) != 0) return true;
-    if (_readRoots.empty()) return false;
-    const std::size_t dot = propertyName.find('.');
-    return _readRoots.count(dot == std::string::npos ? propertyName
-                                                     : propertyName.substr(0, dot)) != 0;
+    return _readNames.count(propertyName) != 0;
 }
 
 Range Index::writeRangeOf(const std::string& path) const {
@@ -955,7 +774,6 @@ Range Index::writeRangeOf(const std::string& path) const {
 nlohmann::json Index::toJson() const {
     nlohmann::json j;
     j["complete"] = _complete;
-    j["relevanceComplete"] = _relevanceComplete;
     j["lawCount"] = _facts.size();
 
     j["readNames"] = nlohmann::json::array();
@@ -976,38 +794,16 @@ nlohmann::json Index::toJson() const {
         lj["opaqueWrites"] = facts.opaqueWrites;
         lj["writes"] = nlohmann::json::array();
         for (const auto& w : facts.writes) {
-            lj["writes"].push_back({{"branchId", w.branchId},
-                                     {"path", w.path},
-                                     {"via", w.via},
-                                     {"range", w.range.print()}});
+            lj["writes"].push_back({{"path", w.path}, {"via", w.via}, {"range", w.range.print()}});
         }
         lj["reads"] = nlohmann::json::array();
         for (const auto& r : facts.reads) {
-            lj["reads"].push_back({{"branchId", r.branchId},
-                                   {"path", r.path},
+            lj["reads"].push_back({{"path", r.path},
                                    {"satisfying", r.satisfying.print()},
                                    {"aboutInstances", r.aboutInstances}});
         }
-        lj["branchReads"] = nlohmann::json::array();
-        for (const auto& r : facts.branchReads) {
-            lj["branchReads"].push_back({{"branchId", r.branchId},
-                                         {"path", r.path},
-                                         {"satisfying", r.satisfying.print()},
-                                         {"aboutInstances", r.aboutInstances}});
-        }
         lj["notes"] = facts.notes;
         j["laws"].push_back(std::move(lj));
-    }
-
-    j["relevanceEdges"] = nlohmann::json::array();
-    for (const auto& edge : _relevanceEdges) {
-        j["relevanceEdges"].push_back({
-            {"writerLawId", edge.writerLawId},
-            {"writerBranchId", edge.writerBranchId},
-            {"readerLawId", edge.readerLawId},
-            {"readerBranchId", edge.readerBranchId},
-            {"path", edge.path},
-            {"aboutInstances", edge.aboutInstances}});
     }
 
     j["unreachable"] = nlohmann::json::array();

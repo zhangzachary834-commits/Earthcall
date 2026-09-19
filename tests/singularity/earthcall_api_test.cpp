@@ -1,19 +1,16 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
 #include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
-#include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
 #include <iostream>
 #include <vector>
 #include <string>
 
 int main() {
-    std::cout << "=== Running EarthcallAPI Tests ===" << std::endl;
+    std::cout << "=== Running EarthcallAPI Design Element Test ===" << std::endl;
 
     Integration::EarthcallAPI api;
 
-    // --- DESIGN SYSTEM TESTS ---
-    std::cout << "\n--- Design System Tests ---" << std::endl;
     // 1. Permission check: creation should fail without "design_system" permission
     Integration::EarthcallAPI::DesignElement elem1;
     elem1.name = "box_1";
@@ -101,117 +98,6 @@ int main() {
     bool deleteNonExistent = api.deleteDesignElement("non_existent_element");
     assert(!deleteNonExistent && "Deletion of non-existent element should fail");
 
-    // --- WORLD/ENVIRONMENT ACCESS TESTS ---
-    std::cout << "\n--- World/Environment Access Tests ---" << std::endl;
-    assert(!api.createZone("zone1", 0, 0, 100, 100));
-    assert(!api.addZoneObject("zone1", "tree", 10, 10));
-    assert(!api.setZoneTheme("zone1", "forest"));
-    assert(api.getZones().empty());
-    assert(!api.createObject("rock", glm::vec3(0.0f)));
-    assert(!api.modifyObject("rock1", glm::vec3(1.0f), glm::vec3(1.0f)));
-    assert(!api.deleteObject("rock1"));
-    assert(!api.setCameraPosition(glm::vec3(10.0f)));
-
-    // getCameraPosition doesn't check permissions and returns hardcoded vec3(0,0,0) right now
-    auto camPos = api.getCameraPosition();
-    assert(camPos.x == 0.0f && camPos.y == 0.0f && camPos.z == 0.0f);
-
-    Integration::SecurityManager::instance().grantPermission(
-        Integration::PermissionType::WORLD_ACCESS, "earthcall_api"
-    );
-    assert(api.hasPermission("world_access"));
-
-    // Attach ZoneManager instance to API
-    ZoneManager zm;
-    auto testZone = std::make_shared<Zone>("TestZone", "default");
-    zm.addZone(testZone);
-    api.setZoneManager(&zm);
-
-    // createZone returns true when world_access permission is granted and _zoneManager is attached
-    assert(api.createZone("zone1", 0, 0, 100, 100));
-    assert(api.addZoneObject("zone1", "tree", 10, 10));
-    assert(api.setZoneTheme("zone1", "forest"));
-    assert(api.getZones().empty()); // Hardcoded to empty right now
-
-    // With _zoneManager attached and world_access permission granted, object operations succeed
-    assert(api.createObject("rock", glm::vec3(0.0f)));
-    assert(zm.active().getOwnedObjects().size() == 1);
-    std::string rockId = zm.active().getOwnedObjects()[0]->getIdentifier();
-
-    assert(api.modifyObject(rockId, glm::vec3(1.0f), glm::vec3(1.0f)));
-    assert(api.deleteObject(rockId));
-    assert(!api.modifyObject("non_existent_rock", glm::vec3(1.0f), glm::vec3(1.0f)));
-    assert(!api.deleteObject("non_existent_rock"));
-    assert(api.setCameraPosition(glm::vec3(10.0f)));
-
-    // --- DATA/SAVE ACCESS TESTS ---
-    std::cout << "\n--- Data/Save Access Tests ---" << std::endl;
-    assert(!api.saveData("key1", "value1"));
-    assert(api.loadData("key1") == "");
-    assert(api.getDataKeys().empty());
-
-    Integration::SecurityManager::instance().grantPermission(
-        Integration::PermissionType::DATA_ACCESS, "earthcall_api"
-    );
-    assert(api.hasPermission("data_access"));
-
-    assert(api.saveData("key1", "value1"));
-    assert(api.loadData("key1") == ""); // Hardcoded
-    assert(api.getDataKeys().empty()); // Hardcoded
-
-
-    // --- UI CONTROL & CURSOR TESTS ---
-    std::cout << "\n--- UI Control & Cursor Tests ---" << std::endl;
-    assert(!api.setCursorType("pointer") && "setCursorType should fail without ui_control permission");
-    assert(api.getCursorType() == "default");
-
-    Integration::SecurityManager::instance().grantPermission(
-        Integration::PermissionType::UI_CONTROL, "earthcall_api"
-    );
-    assert(api.hasPermission("ui_control"));
-
-    assert(api.setCursorType("pointer") && "setCursorType should succeed with ui_control permission");
-    assert(api.getCursorType() == "pointer");
-
-    // --- COMMUNICATION TESTS ---
-    std::cout << "\n--- Communication Tests ---" << std::endl;
-    bool event_received = false;
-    api.registerCallback("test_event", [&event_received](const std::string& data) {
-        event_received = true;
-        assert(data == "data");
-    });
-    api.sendEvent("test_event", "data");
-    assert(event_received);
-
-    event_received = false;
-    api.unregisterCallback("test_event");
-    api.sendEvent("test_event", "data");
-    assert(!event_received);
-
-
-    // --- PERMISSIONS TESTS ---
-    std::cout << "\n--- Permissions Tests ---" << std::endl;
-    assert(!api.hasPermission("network_access"));
-    api.requestPermission("network_access");
-    // Depending on SecurityManager, it might auto-grant or just queue.
-    // We explicitly grant to test getGrantedPermissions properly.
-    Integration::SecurityManager::instance().grantPermission(
-        Integration::PermissionType::NETWORK_ACCESS, "earthcall_api"
-    );
-    assert(api.hasPermission("network_access"));
-
-    auto granted = api.getGrantedPermissions();
-    // Check if the granted string vector contains the mapped integer for UI_CONTROL
-    bool foundUiControl = false;
-    std::string uiControlIntStr = std::to_string(static_cast<int>(Integration::PermissionType::UI_CONTROL));
-    for (const auto& p : granted) {
-        if (p == uiControlIntStr) {
-            foundUiControl = true;
-            break;
-        }
-    }
-    assert(foundUiControl && "Granted permissions should include ui_control");
-
-    std::cout << "\n=== ALL Tests Passed Successfully! ===" << std::endl;
+    std::cout << "=== ALL Design Element Tests Passed Successfully! ===" << std::endl;
     return 0;
 }

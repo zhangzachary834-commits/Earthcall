@@ -4,28 +4,6 @@
 #include <imgui.h>
 #endif
 
-namespace {
-// Shell navigation is not world input. These keys open/close Earthcall's
-// first-mover surfaces and should remain available while a panel merely has
-// keyboard focus. Letter shortcuts still defer to an active text editor so
-// typing "home" into Chat does not close Chat on the H.
-bool isShellToggleShortcut(int key) {
-    switch (key) {
-        case GLFW_KEY_M:              // main menu
-        case GLFW_KEY_H:              // chat
-        case GLFW_KEY_K:              // keymap
-        case GLFW_KEY_F3:             // performance metrics
-        case GLFW_KEY_F8:             // creator console
-        case GLFW_KEY_F9:             // singular set-to-set creation
-        case GLFW_KEY_F10:            // IDE mode
-        case GLFW_KEY_GRAVE_ACCENT:   // developer tools
-            return true;
-        default:
-            return false;
-    }
-}
-}
-
 KeyboardHandler::KeyboardHandler() {
     _isEnabled = true;
 }
@@ -48,38 +26,27 @@ void KeyboardHandler::update() {
 void KeyboardHandler::handleKeyPress(int key) {
     if (!_isEnabled) return;
 
+    // Check if ImGui wants to capture keyboard (safe to call outside NewFrame/Render)
     bool imguiWantsKeyboard = false;
-    bool imguiWantsTextInput = false;
 #if !defined(IMGUI_DISABLE) && !defined(HEADLESS)
-    // Tests and non-window utilities may construct KeyboardHandler without an
-    // ImGui context. The input layer should still be usable there.
-    if (ImGui::GetCurrentContext()) {
-        const ImGuiIO& io = ImGui::GetIO();
-        imguiWantsKeyboard = io.WantCaptureKeyboard;
-        imguiWantsTextInput = io.WantTextInput;
-    }
+    imguiWantsKeyboard = ImGui::GetIO().WantCaptureKeyboard;
 #endif
 
-    const bool escape = key == GLFW_KEY_ESCAPE;
-    const bool shellToggle = isShellToggleShortcut(key);
-    const bool letterShellToggle = key == GLFW_KEY_M || key == GLFW_KEY_H || key == GLFW_KEY_K;
-
-    // Distinguish "a shell window owns keyboard navigation" from "the Person
-    // is typing text". The old code blocked H/K/M whenever ImGui captured the
-    // keyboard, so Chat could be opened with H and then refuse the same H used
-    // to close it. Function-key shell toggles remain globally reachable as
-    // before; letter toggles remain reachable unless a text field actually
-    // wants characters.
-    if (imguiWantsKeyboard) {
-        const bool mayPassShell = shellToggle && (!letterShellToggle || !imguiWantsTextInput);
-        if (!escape && !mayPassShell) return;
+    // Escape, F8 (Creator Console), and Grave Accent (Dev Tools) can always bypass ImGui capture
+    if (imguiWantsKeyboard &&
+        key != GLFW_KEY_ESCAPE &&
+        key != GLFW_KEY_F8 &&
+        key != GLFW_KEY_F9 &&
+        key != GLFW_KEY_GRAVE_ACCENT) {
+        return;
     }
 
-    // A toggle has to be able to undo itself. Previously M opened the menu,
-    // then `_menuOpen` blocked M before its toggle callback could close it.
-    // Other bindings still stay out of the custom menu; its own Menu input
-    // router owns those keys while it is open.
-    if (_menuOpen && key != GLFW_KEY_ESCAPE && key != GLFW_KEY_M) {
+    // Check _menuOpen logic inside the keybind itself, or just allow the callbacks to decide.
+    // wait, previously, most keys (except Esc) checked `!_menuOpen`!
+    // Since we don't have access to _menuOpen directly in handleKeyPress, we shouldn't worry about it,
+    // the callbacks themselves can check if the menu is open! Wait, they don't right now.
+    // Actually, KeyboardHandler has `_menuOpen`!
+    if (_menuOpen && key != GLFW_KEY_ESCAPE) {
         return;
     }
 

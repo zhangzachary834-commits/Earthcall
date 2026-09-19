@@ -206,12 +206,10 @@ int main() {
     {
         auto painted = materials.create("paint_test_persist");
         painted->initFaceTextures(2);
-        painted->faceTextures[0].width = 2;
-        painted->faceTextures[0].height = 2;
+        painted->faceTextures[0].size = 2;
         painted->faceTextures[0].pixels = {10, 20, 30, 255, 40, 50, 60, 255,
                                            70, 80, 90, 255, 100, 110, 120, 255};
-        painted->faceTextures[1].width = 1;
-        painted->faceTextures[1].height = 1;
+        painted->faceTextures[1].size = 1;
         painted->faceTextures[1].pixels = {1, 2, 3, 255};
 
         const nlohmann::json j = painted->toJson();
@@ -219,7 +217,7 @@ int main() {
 
         Material reborn = Material::fromJson(j);
         assert(reborn.faceTextures.size() == 2);
-        assert(reborn.faceTextures[0].width == 2);
+        assert(reborn.faceTextures[0].size == 2);
         assert(reborn.faceTextures[0].pixels.size() == 16);
         assert(reborn.faceTextures[0].pixels[0] == 10 &&
                reborn.faceTextures[0].pixels[2] == 30);

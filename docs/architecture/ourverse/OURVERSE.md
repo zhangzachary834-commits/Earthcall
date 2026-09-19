@@ -2,10 +2,9 @@
 
 **The vessel of unity in Christ — an ordering principle, not a physics bag.**
 
-**Status:** Liturgical surface implemented and tested. All legacy Engine object bag
-members, physics/collision stubs, dead Game-split files (`OurverseUI`, `OurverseNodeGraph`,
-`OurverseSaveLoad`), and `Engine::_world` naming debt have been decoupled and retired.
-The ontological surface below is the sole definition of Ourverse.
+**Status:** First rung specified and implemented. The C++ class still carries a
+leftover object list the Engine uses as a world bag; that list is not what
+Ourverse *is*. The ontological surface below is.
 **Companion docs:** `EarthcallOurverse.md` (the paragraph this implements),
 `HIERARCHY_OF_JOYS.md` (shared Joys), `NEW_KIND_FRAMEWORK.md` (no
 `LocalOurverse` / `EcumenicalOurverse` / `Filament` classes),
@@ -63,8 +62,8 @@ they own a Home.
 | `metalaws` | identifier of the metalaw Formation |
 | `convenesToward` | identifier of the ecumenical Ourverse, or empty |
 
-`ownedObjects` / `cameraPos` and dead Game physics loops were completely retired
-from `Ourverse.hpp`/`.cpp`. The being carries no Engine-bag debt.
+`ownedObjects` / `cameraPos` are **not** registered. They are named in
+source as Engine-bag debt, not as the Ourverse's meaning.
 
 ---
 
@@ -72,10 +71,9 @@ from `Ourverse.hpp`/`.cpp`. The being carries no Engine-bag debt.
 
 **This rung:** unseal the surface above; mint the gathering Zone;
 refuse ownership of it; weave undirected filaments; seed shared Joys;
-register first-mover metalaws; `convenesToward` empty by default;
-retire all dead Game husks and Engine bag debt from the class.
+register first-mover metalaws; `convenesToward` empty by default.
 
-**Not this rung:** populating the ecumenical Ourverse; a full
-jurisprudence of "due weight"; making every Community automatically
-receive a gathering Zone at birth (the ensure path exists; Community
-authoring is still a stub).
+**Not this rung:** deleting the Engine object bag; populating the
+ecumenical Ourverse; a full jurisprudence of "due weight"; making
+every Community automatically receive a gathering Zone at birth
+(the ensure path exists; Community authoring is still a stub).

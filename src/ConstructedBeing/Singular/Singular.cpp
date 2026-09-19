@@ -173,11 +173,13 @@ public:
                 propertyValueToNumber(held, existing)) {
                 PropertyValue coerced;
                 if (coerceToHeldAlternative(held, incoming, coerced)) {
-                    return _owner->setDynamicProperty(_name, coerced);
+                    _owner->setDynamicProperty(_name, coerced);
+                    return true;
                 }
             }
         }
-        return _owner->setDynamicProperty(_name, v);
+        _owner->setDynamicProperty(_name, v);
+        return true;
     }
 };
 
@@ -298,24 +300,6 @@ std::vector<Property*> Singular::listProperties() {
     return out;
 }
 
-bool Singular::hasPropertyStartingWith(const std::string& prefix) {
-    if (!_propertiesBuilt) {
-        _propertiesBuilt = true;
-        buildProperties();
-        registerTelosProperty();
-    }
-    for (const auto& entry : _dynamicProperties) {
-        findProperty(entry.first);
-    }
-    for (auto& property : _propertyRegistry) {
-        if (!property) continue;
-        const std::string& propName = property->name();
-        if (propName.size() >= prefix.size() && propName.compare(0, prefix.size(), prefix) == 0) return true;
-    }
-    return false;
-}
-
-
 // ============================================================================
 // Dynamic properties (Person-authored via AddProperty)
 //
@@ -328,9 +312,6 @@ bool Singular::getDynamicProperty(const std::string& name, PropertyValue& out) c
 }
 
 bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) const {
-    if (recognizesAuthoredPropertyProjection(id)) {
-        return readAuthoredPropertyProjection(id, out);
-    }
     auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
         out = it->second;
@@ -339,25 +320,22 @@ bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) co
     return false;
 }
 
-bool Singular::setDynamicProperty(const std::string& name, const PropertyValue& v) {
-    return setDynamicProperty(Earthcall::StringInterner::intern(name), v);
+void Singular::setDynamicProperty(const std::string& name, const PropertyValue& v) {
+    setDynamicProperty(Earthcall::StringInterner::intern(name), v);
 }
 
-bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
-    const bool projected = recognizesAuthoredPropertyProjection(id);
-    if (projected && !writeAuthoredPropertyProjection(id, v)) return false;
-    PropertyValue stored = v;
+void Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
     auto existing = _dynamicProperties.find(id);
     if (existing == _dynamicProperties.end()) {
         Universe::instance().bumpStructuralRevision();
-    } else if (propertyValueUnchanged(existing->second, stored)) {
+    } else if (propertyValueUnchanged(existing->second, v)) {
         // A write that changed nothing is not a change, and must not wake the
         // change feed. See propertyValueUnchanged for why this matters more
         // than it looks: every WhileTrue law re-writes its result every tick.
-        existing->second = stored;
-        return true;
+        existing->second = v;
+        return;
     }
-    _dynamicProperties[id] = std::move(stored);
+    _dynamicProperties[id] = v;
     // An AUTHORED property is a property. It was invisible to the change feed
     // for the same reason every non-PropertyRef slot was: nobody announced it.
     // A law watching a name a Person granted must hear it move.
@@ -366,7 +344,6 @@ bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v
     // the callback signature is (Singular*, const std::string&) — changing
     // that signature is Phase 4 work (PropertyPath pre-calculation).
     notifyPropertyChanged(this, Earthcall::StringInterner::resolve(id));
-    return true;
 }
 
 bool Singular::hasDynamicProperty(const std::string& name) const {
@@ -407,29 +384,4 @@ const DataStructure* Singular::getDataStructure(const std::string& name) const {
 
 bool Singular::removeDataStructure(const std::string& name) {
     return _dataStructures.erase(name) > 0;
-}
-
-PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) {
-    if (recognizesAuthoredPropertyProjection(id)) {
-        PropertyValue proj;
-        if (readAuthoredPropertyProjection(id, proj)) {
-            _dynamicProperties[id] = std::move(proj);
-        }
-    }
-    auto it = _dynamicProperties.find(id);
-    return (it != _dynamicProperties.end()) ? &it->second : nullptr;
-}
-
-const PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) const {
-    // For const, we can't update the cache safely without making it mutable.
-    // However, readAuthoredPropertyProjection modifies _regionCache which IS mutable.
-    // We can cast away constness JUST for the cache update since it's logically const.
-    if (recognizesAuthoredPropertyProjection(id)) {
-        PropertyValue proj;
-        if (readAuthoredPropertyProjection(id, proj)) {
-            const_cast<Singular*>(this)->_dynamicProperties[id] = std::move(proj);
-        }
-    }
-    auto it = _dynamicProperties.find(id);
-    return (it != _dynamicProperties.end()) ? &it->second : nullptr;
 }
