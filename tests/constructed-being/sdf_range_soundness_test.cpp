@@ -77,6 +77,44 @@ int main() {
               "unproved ellipsoid range fails open instead of asserting 1-Lipschitz");
     }
 
+    // VectorConstruct requires scalar children at runtime. A vector
+    // child must not have its default scalar RangeValue slot mistaken for a
+    // finite number by abstract interpretation.
+    {
+        auto p = std::make_unique<OntoMath::MathNode>();
+        p->op = OntoMath::MathNode::Op::ValueLeaf;
+        p->variableName = OntoMath::kAmbientPointVar;
+
+        auto zeroY = std::make_unique<OntoMath::MathNode>();
+        zeroY->op = OntoMath::MathNode::Op::ScalarLeaf;
+        zeroY->scalarForm.terms.push_back(OntoMath::Term(0.0));
+        auto zeroZ = std::make_unique<OntoMath::MathNode>();
+        zeroZ->op = OntoMath::MathNode::Op::ScalarLeaf;
+        zeroZ->scalarForm.terms.push_back(OntoMath::Term(0.0));
+
+        OntoMath::MathNode malformed;
+        malformed.op = OntoMath::MathNode::Op::VectorConstruct;
+        malformed.children.push_back(std::move(p));
+        malformed.children.push_back(std::move(zeroY));
+        malformed.children.push_back(std::move(zeroZ));
+
+        std::map<std::string, OntoMath::MathNode::RangeValue> vars{
+            {OntoMath::kAmbientPointVar,
+             OntoMath::MathNode::RangeValue::makeVector(
+                 OntoMath::Interval(-1.0f, 1.0f),
+                 OntoMath::Interval(-2.0f, 2.0f),
+                 OntoMath::Interval(-3.0f, 3.0f))}
+        };
+        const auto range = malformed.evalRange(vars);
+        check(range && range->kind == OntoMath::ValueKind::Vector,
+              "malformed VectorConstruct range remains explicitly vector-valued");
+        if (range && range->kind == OntoMath::ValueKind::Vector) {
+            check(!std::isfinite(range->vec[0].lo) &&
+                      !std::isfinite(range->vec[0].hi),
+                  "vector-valued child makes VectorConstruct range fail open");
+        }
+    }
+
     // Guarded division: runtime returns 0 when |denominator| is below
     // kDegenerateDivisor. Ordinary interval division over a tiny positive
     // denominator would exclude that real zero and become an unsound proof.
