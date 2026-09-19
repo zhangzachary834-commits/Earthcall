@@ -67,7 +67,7 @@ struct BootedEngineHarness {
 
         // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
         Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-            if (zones.zones().empty()) return;
+            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
             auto active = zones.zones()[zones.currentIndex()];
             if (!active) return;
             beings.push_back(active.get());
@@ -90,7 +90,7 @@ struct BootedEngineHarness {
         });
 
         Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-            if (zones.zones().empty()) return;
+            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
             auto active = zones.zones()[zones.currentIndex()];
             if (!active) return;
             for (const auto& rel : active->formation().relations().getAll()) {
@@ -104,19 +104,19 @@ struct BootedEngineHarness {
         Universe::instance().setRelationsInvolvingProvider(
             [this](const Singular& being, std::vector<Relation*>& out) {
                 out.clear();
-                if (zones.zones().empty()) return;
+                if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
                 auto active = zones.zones()[zones.currentIndex()];
                 if (!active) return;
                 active->formation().relations().relationsInvolving(being, out);
             });
         Universe::instance().setRelationGenerationProvider([this]() -> std::size_t {
-            if (zones.zones().empty()) return 0;
+            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return 0;
             auto active = zones.zones()[zones.currentIndex()];
             return active ? active->formation().relations().generation() : 0;
         });
 
         Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
-            if (zones.zones().empty()) return;
+            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
             auto active = zones.zones()[zones.currentIndex()];
             if (active) {
                 active->formation().relations().add(std::move(relation));

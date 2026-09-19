@@ -171,7 +171,10 @@ public:
             retainEndpoint(s);
             releaseEndpoint(ptr);
             ptr = s;
-            if (ptr) savedId.clear();
+            if (ptr) {
+                savedId.clear();
+                cachedId = ptr->getIdentifier();
+            }
         }
 
         void forget(const Singular* s) {

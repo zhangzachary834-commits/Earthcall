@@ -189,15 +189,26 @@ void SlowAdapter::observe() {
 void SlowAdapter::forgetBeing(const Singular* being) {
     if (!being) return;
     for (auto& entry : _roads) {
-        auto& members = entry.second.members;
-        const auto it = std::find(members.begin(), members.end(), being);
-        if (it == members.end()) continue;
-        members.erase(it);
-        // The edges are raw pointers into a graph that is losing an endpoint,
-        // so this road is rebuilt rather than patched.
-        entry.second.built = false;
-        entry.second.edges.clear();
-        _pending.push_back(entry.first);
+        auto& road = entry.second;
+        bool involvesBeing = false;
+        auto mIt = std::find(road.members.begin(), road.members.end(), being);
+        if (mIt != road.members.end()) {
+            involvesBeing = true;
+        }
+        if (!involvesBeing) {
+            for (Relation* rel : road.edges) {
+                if (rel && (rel->a() == being || rel->b() == being)) {
+                    involvesBeing = true;
+                    break;
+                }
+            }
+        }
+        if (involvesBeing) {
+            road.built = false;
+            road.edges.clear();
+            road.members.clear();
+            _pending.push_back(entry.first);
+        }
     }
 }
 

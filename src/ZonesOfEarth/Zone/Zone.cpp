@@ -274,13 +274,13 @@ void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
     admit(_spatialRootObject.get());
     for (const auto& up : _objects) admit(up.get());
     for (auto* member : extraMembers) admit(member);
+    for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
+        if (lexeme) admit(lexeme.get());
+    }
 
     const std::vector<Singular*> current = _formation.getMembers();
     for (Singular* member : current) {
         if (!member || live.count(member) != 0) continue;
-        // Lexemes are language beings admitted into the Zone formation; they
-        // are not Zone objects and must survive the object-membership sweep.
-        if (dynamic_cast<Singularity::Language::Lexeme*>(member)) continue;
         _formation.removeMember(member);
     }
 }
