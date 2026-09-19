@@ -125,6 +125,10 @@ int main() {
     auto requiredRoad = eventLaw("required-road", ConditionNode::all({onTheRoad}), 1.0);
     eventLaw("either-way", ConditionNode::any({onTheRoad, blessed}), 10.0);
     eventLaw("off-the-road", ConditionNode::all({ConditionNode::negate(onTheRoad), blessed}), 100.0);
+    auto mixedPolarity = eventLaw(
+        "mixed-polarity",
+        ConditionNode::all({onTheRoad, ConditionNode::negate(onTheRoad)}),
+        1000.0);
 
     const auto ring = [&](int times) {
         for (int i = 0; i < times; ++i) {
@@ -183,6 +187,8 @@ int main() {
     mgr.setUseLawDirect(true);
     check(mgr.candidateTierFor(*requiredRoad) == "law-direct",
           "the same retained road crystallizes into Law-Direct");
+    check(mgr.candidateTierFor(*mixedPolarity) == "law-direct",
+          "positive conjunct can go Direct while the same route under Not stays live");
     const std::uint64_t promotedSelections = mgr.candidateRouteRefreshCount();
     for (int i = 0; i < 3; ++i) {
         adapterWall += mgr.slowAdapterClockPeriodSeconds();
