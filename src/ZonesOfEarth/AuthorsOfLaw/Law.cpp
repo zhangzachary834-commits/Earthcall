@@ -2653,7 +2653,14 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 bool LawManager::candidateConditionsSatisfied(
     const Law& law, const Singular& subject, bool* usedLawDirect) const {
     if (usedLawDirect) *usedLawDirect = false;
-    refreshCandidateRoute(law);
+
+    // A/B fidelity: Direct OFF is the immediately-pre-Direct executor, not
+    // "pre-Direct plus one new map/currency check per candidate".
+    if (!_useLawDirect) return law.conditionsSatisfied(subject);
+
+    // sweepSubjects() selected/refreshed the route immediately before the
+    // candidate loop. Consume that one decision; do not re-run route selection
+    // once per candidate and turn O(1)-per-Law planning into O(matches).
     auto it = _candidateRoutes.find(law.getIdentifier());
     if (it == _candidateRoutes.end() ||
         it->second.tier != CandidateTier::LawDirect ||
