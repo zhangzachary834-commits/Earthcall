@@ -188,7 +188,12 @@ private:
     glm::vec3               _fieldExtent{1.0f, 1.0f, 1.0f};
     std::optional<float>    _fieldCellSize = std::nullopt;
     mutable uint64_t        _memoIdBase = 0;
+    // Broad geometry revision remains the collision/tessellation invalidation
+    // witness. SDF rendering additionally distinguishes shader-shaping structure
+    // from numeric values so later compiler caches can invalidate precisely.
     mutable uint32_t        _fieldRevision = 0;
+    mutable uint32_t        _sdfStructureRevision = 0;
+    mutable uint32_t        _sdfParameterRevision = 0;
     // Cached render tessellations. Tessellating is O(slices*stacks) and allocates;
     // doing it in the draw path rebuilt every surface in the world every frame for
     // geometry that changes only when a Person edits it. Built once per change by
@@ -261,6 +266,8 @@ private:
     void rebuildFieldMesh() const;                 // lazily rebuild _fieldMesh
     void rebuildHeightGrid() const;                // lazily rebuild _heightGrid
     void rebuildRenderSdfCaches() const;           // lazily rebuild exact analytic render SDFs
+    void invalidateFieldParameterCaches();          // math values changed; topology did not
+    void invalidateFieldSamplingCaches();           // tessellation policy changed; math did not
     void rebuildGeometryCaches();
 
 public:
@@ -699,9 +706,9 @@ public:
 
     const glm::vec3& getFieldExtent() const { return _fieldExtent; }
     
-    void setFieldCellSize(std::optional<float> size) { 
-        _fieldCellSize = size; 
-        if (_hasField) rebuildGeometryCaches(); 
+    void setFieldCellSize(std::optional<float> size) {
+        _fieldCellSize = size;
+        if (_hasField) invalidateFieldSamplingCaches();
     }
     std::optional<float> getFieldCellSize() const { return _fieldCellSize; }
 
@@ -713,7 +720,7 @@ public:
     void setMorphParam(float t) {
         if (!isMorphField()) return;
         fieldData.t = glm::clamp(t, 0.0f, 1.0f);
-        rebuildGeometryCaches(); // re-tessellates the field and rebuilds the support cloud
+        invalidateFieldParameterCaches(); // value-only SDF edit; structure is unchanged
     }
 
     // A binary field (blend/boolean) — operand B can be moved in the scene.
@@ -724,7 +731,7 @@ public:
     void setFieldOperandBOffset(const glm::vec3& off) {
         if (!isBinaryField()) return;
         fieldData.children[1]->offset = off;
-        rebuildGeometryCaches();
+        invalidateFieldParameterCaches();
     }
     void clearTopologyModel() { _hasSmooth = false; _hasComplex = false; _hasField = false; _hasPatch = false; _supportCloud.clear(); _smoothMesh.reset(); }
 
@@ -799,6 +806,8 @@ public:
         return _memoIdBase + static_cast<uint64_t>(suffix) % kMemoIdStride;
     }
     uint32_t getFieldRevision() const { return _fieldRevision; }
+    uint32_t getSdfStructureRevision() const { return _sdfStructureRevision; }
+    uint32_t getSdfParameterRevision() const { return _sdfParameterRevision; }
     int getRelationships() const { return _composition.relationships; }
     void setRelationships(int r) { _composition.relationships = r; }
     int getComplexityLevel() const { return _composition.complexityLevel; }
