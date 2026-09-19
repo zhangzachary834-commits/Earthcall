@@ -25,6 +25,10 @@ class CppBridge:
         
         # In-memory cached snapshot of world state
         self.current_state: Dict[str, Any] = self._create_initial_state()
+        # True only after the C++ vessel has supplied an actual state_sync.
+        # The synthetic initial state is useful to the legacy Studio fallback,
+        # but must never be presented to observational clients as live truth.
+        self.has_engine_snapshot = False
         
         # Event callbacks
         self.on_state_sync_callbacks = []
@@ -177,6 +181,7 @@ class CppBridge:
                     self.current_state = data
                     self.current_state["engine_connected"] = True
                     self.current_state["last_sync_time"] = time.time()
+                    self.has_engine_snapshot = True
                 
                 for cb in list(self.on_state_sync_callbacks):
                     try:
@@ -382,6 +387,7 @@ class CppBridge:
         with self.lock:
             state = dict(self.current_state)
             connected = self.connected
+            has_engine_snapshot = self.has_engine_snapshot
             recent_events = [dict(evt) for evt in self.recent_events]
 
         object_keys = (
@@ -395,25 +401,30 @@ class CppBridge:
         )
 
         objects = []
-        for obj in state.get("objects", []):
-            if isinstance(obj, dict):
-                objects.append({k: obj[k] for k in object_keys if k in obj})
-
         laws = []
-        for law in state.get("laws", []):
-            if isinstance(law, dict):
-                laws.append({k: law[k] for k in law_keys if k in law})
+        active_zone = {"index": None, "name": "", "id": ""}
 
-        active_zone = {
-            "index": state.get("active_zone_index", 0),
-            "name": state.get("active_zone_name", ""),
-            "id": state.get("active_zone_id", ""),
-        }
+        if has_engine_snapshot:
+            for obj in state.get("objects", []):
+                if isinstance(obj, dict):
+                    objects.append({k: obj[k] for k in object_keys if k in obj})
+
+            for law in state.get("laws", []):
+                if isinstance(law, dict):
+                    laws.append({k: law[k] for k in law_keys if k in law})
+
+            active_zone = {
+                "index": state.get("active_zone_index", 0),
+                "name": state.get("active_zone_name", ""),
+                "id": state.get("active_zone_id", ""),
+            }
 
         return {
             "schema": "earthcall.portfolio.v1",
             "timestamp": state.get("timestamp", time.time()),
             "connected": connected,
+            "has_engine_snapshot": has_engine_snapshot,
+            "stale": has_engine_snapshot and not connected,
             "active_zone": active_zone,
             "objects": objects,
             "laws": laws,
