@@ -99,6 +99,10 @@ struct Range {
 // --------------------------------------------------------------------------
 struct WriteEffect {
     std::string lawId;
+    // Stable identity of the authored Action branch that emitted this effect.
+    // Derived deterministically from the authored node text, so it survives
+    // recompile and save/load without becoming persisted runtime state.
+    std::string branchId;
     std::string path;          // dotted, exactly as authored (referent prefix kept)
     Range range;               // what this action can put there
     std::string via;           // the ActionNode::Kind that writes it, for the report
@@ -112,6 +116,10 @@ struct WriteEffect {
 // --------------------------------------------------------------------------
 struct ReadDemand {
     std::string lawId;
+    // Stable identity of the authored Condition branch this demand belongs to.
+    // lawId + branchId is the provenance key; identical branch text in two Laws
+    // may intentionally share the same branchId without becoming the same branch.
+    std::string branchId;
     std::string path;
     Range satisfying;
     bool aboutInstances = false;   // read inside a ForAny/ForAll: about the
@@ -127,7 +135,14 @@ struct ReadDemand {
 struct LawFacts {
     std::string lawId;
     std::vector<WriteEffect> writes;
+    // Effective demands after All/Any/Not composition. Existing Pass-3
+    // impossibility reasoning consumes these.
     std::vector<ReadDemand> reads;
+    // Leaf/local demands retain exact branch provenance for the ahead-of-time
+    // relevance graph. They are deliberately separate from `reads`: an Any
+    // arm can be relevant to a write even when that path is unconstrained for
+    // the whole Any expression.
+    std::vector<ReadDemand> branchReads;
     // Every property NAME (not path) this law's conditions could cause to be
     // read, including every contiguous sub-run of each authored path's
     // segments — because a path resolves through nested Singulars and the
@@ -168,6 +183,18 @@ Range rangeOfCurve(const CurveModel& curve);
 // --------------------------------------------------------------------------
 class Index {
 public:
+    // One conservative ahead-of-time write -> read relevance edge. The graph
+    // is derived state only: it never writes Relations into a Person's world.
+    // aboutInstances keeps quantified-instance relevance distinct from the
+    // Law subject's own property space.
+    struct RelevanceEdge {
+        std::string writerLawId;
+        std::string writerBranchId;
+        std::string readerLawId;
+        std::string readerBranchId;
+        std::string path;
+        bool aboutInstances = false;
+    };
     // Rebuild from the whole law register. Cheap enough to call per frame
     // (it is a walk of the law TEXT, not of the world), but the caller is
     // expected to gate it on a revision — see LawManager::tick.
@@ -217,6 +244,14 @@ public:
     // Pass 3 intersects a condition's demand against. Top when unknown.
     Range writeRangeOf(const std::string& path) const;
 
+    // Step 2 of the Formation-Rete/Prophetic integration: the same
+    // possibility proof run pairwise instead of only against the union.
+    // IMPORTANT: callers may narrow with these edges only when
+    // relevanceComplete() is true. Opaque reads OR writes invalidate the
+    // graph globally; the correct fallback is the lower complete tier.
+    bool relevanceComplete() const { return _relevanceComplete; }
+    const std::vector<RelevanceEdge>& relevanceEdges() const { return _relevanceEdges; }
+
     const std::vector<LawFacts>& facts() const { return _facts; }
 
     // Counters, for the report and for the tests that guard the filter.
@@ -231,7 +266,9 @@ private:
     std::unordered_set<std::string> _readRoots;
     std::unordered_map<std::string, Range> _writeRanges;
     std::vector<Unreachable> _unreachable;
+    std::vector<RelevanceEdge> _relevanceEdges;
     bool _complete = true;
+    bool _relevanceComplete = true;
 };
 
 // Every contiguous sub-run of a dotted path's segments, joined by dots.
