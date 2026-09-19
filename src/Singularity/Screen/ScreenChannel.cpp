@@ -56,7 +56,9 @@ ScreenChannel* ScreenChannel::find(LawManager& laws) {
 
 void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
                                  double uBytes, int suballocs, int pipeSwitches,
-                                 int cachedMeshes) {
+                                 int cachedMeshes, int sdfCompiles,
+                                 int sdfCacheHits, int sdfCacheMisses,
+                                 double sdfWgslBytes, double sdfParamBytes) {
     drawCalls = dCalls;
     trianglesDrawn = tris;
     vramAllocatedBytes = vramBytes;
@@ -64,6 +66,11 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
     bufferSuballocations = suballocs;
     pipelineSwitches = pipeSwitches;
     cachedMeshesCount = cachedMeshes;
+    sdfProgramCompiles = sdfCompiles;
+    sdfProgramCacheHits = sdfCacheHits;
+    sdfProgramCacheMisses = sdfCacheMisses;
+    sdfWgslBytesGenerated = sdfWgslBytes;
+    sdfParameterBytesUploaded = sdfParamBytes;
 }
 
 void ScreenChannel::buildProperties() {
@@ -97,6 +104,11 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("bufferSuballocations", &ScreenChannel::getBufferSuballocations);
     readOnlyInt("pipelineSwitches", &ScreenChannel::getPipelineSwitches);
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
+    readOnlyInt("sdfProgramCompiles", &ScreenChannel::getSdfProgramCompiles);
+    readOnlyInt("sdfProgramCacheHits", &ScreenChannel::getSdfProgramCacheHits);
+    readOnlyInt("sdfProgramCacheMisses", &ScreenChannel::getSdfProgramCacheMisses);
+    readOnlyDouble("sdfWgslBytesGenerated", &ScreenChannel::getSdfWgslBytesGenerated);
+    readOnlyDouble("sdfParameterBytesUploaded", &ScreenChannel::getSdfParameterBytesUploaded);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
