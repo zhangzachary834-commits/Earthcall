@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, make_response
 from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -41,7 +41,7 @@ def get_portfolio_live():
         return jsonify({"error": "Origin not allowed"}), 403
 
     if request.method == "OPTIONS":
-        return _portfolio_cors_response(("", 204), origin)
+        return _portfolio_cors_response(make_response("", 204), origin)
 
     bridge = get_bridge()
     if not bridge:
