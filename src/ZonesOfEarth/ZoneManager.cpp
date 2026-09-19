@@ -554,16 +554,7 @@ const Zone* ZoneManager::findPrimaryHome(const std::string& personId) const {
         }
         found = zone.get();
     }
-    if (found) return found;
-    for (const auto& zone : _zones) {
-        if (!zone) continue;
-        if (zone->name() == "Home" && zone->owner() == personId
-            && !zone->isOurverseGathering() && !zone->isCommunityHome()
-            && !zone->isCommunityZone()) {
-            return zone.get();
-        }
-    }
-    return nullptr;
+    return found;
 }
 
 void ZoneManager::ensureHomeZone(const std::string& personId) {
