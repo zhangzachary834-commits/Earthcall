@@ -1,0 +1,92 @@
+{
+  "deletable": {
+    "Zach": true
+  },
+  "formationRelations": [],
+  "identifier": "Sun",
+  "lexemes": [],
+  "materials": [],
+  "name": "Sun",
+  "owner": "Zach",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "authoredProperties": {
+      "light.ambient": {
+        "t": "float",
+        "v": 0.2
+      },
+      "light.attenuation.constant": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.attenuation.linear": {
+        "t": "float",
+        "v": 0.0
+      },
+      "light.attenuation.quadratic": {
+        "t": "float",
+        "v": 0.0
+      },
+      "light.color": {
+        "t": "vec3",
+        "x": 1.0,
+        "y": 0.95,
+        "z": 0.8
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.8
+      },
+      "light.enabled": {
+        "t": "bool",
+        "v": true
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 1.0
+      }
+    },
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "sun.light-field",
+    "origin": [
+      0.0,
+      12.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "laws": [],
+    "objects": [],
+    "relations": []
+  }
+}

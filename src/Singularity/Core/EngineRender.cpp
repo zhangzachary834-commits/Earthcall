@@ -2,6 +2,7 @@
 #include "../Screen/Camera.hpp"
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -102,27 +103,31 @@ namespace Core {
 
         bool persistentLightPlaced = false;
         if (auto* root = zone.spatialRoot()) {
-            PropertyValue lightSourceValue;
-            if (root->getDynamicProperty("light.source", lightSourceValue)) {
-                if (const bool* isSource = std::get_if<bool>(&lightSourceValue);
-                    isSource && *isSource) {
-                    currentRenderer().setLight(root->origin,
-                                               currentRenderer().lightAmbient(),
-                                               currentRenderer().lightDiffuse(),
-                                               currentRenderer().lightSpecular());
-                    persistentLightPlaced = true;
-                }
+            Rendering::AuthorableLightState light;
+            if (Rendering::readAuthorableLight(*root, light)) {
+                currentRenderer().setLight(light.position,
+                                           Rendering::lightAmbientRadiance(light),
+                                           Rendering::lightDiffuseRadiance(light),
+                                           Rendering::lightSpecularRadiance(light));
+                currentRenderer().setLightingEnabled(light.enabled);
+                persistentLightPlaced = true;
             }
         }
 
-        if (!persistentLightPlaced && screenChannel) {
-            const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
-                ? _camera->pos + screenChannel->lightCameraOffset
-                : screenChannel->lightPosition;
-            currentRenderer().setLight(lightWorldPos,
-                                       currentRenderer().lightAmbient(),
-                                       currentRenderer().lightDiffuse(),
-                                       currentRenderer().lightSpecular());
+        if (!persistentLightPlaced) {
+            // A previously active authored Zone may have disabled illumination.
+            // No-source means the historical compatibility contract, so restore
+            // enabled state even when no ScreenChannel happens to be present.
+            currentRenderer().setLightingEnabled(true);
+            if (screenChannel) {
+                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                    ? _camera->pos + screenChannel->lightCameraOffset
+                    : screenChannel->lightPosition;
+                currentRenderer().setLight(lightWorldPos,
+                                           currentRenderer().lightAmbient(),
+                                           currentRenderer().lightDiffuse(),
+                                           currentRenderer().lightSpecular());
+            }
         }
 
         {
