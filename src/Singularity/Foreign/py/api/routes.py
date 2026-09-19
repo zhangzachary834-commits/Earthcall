@@ -4,9 +4,56 @@ from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+PORTFOLIO_ALLOWED_ORIGINS = {
+    "https://zhangzachary834-commits.github.io",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+}
+
+def _portfolio_origin_allowed(origin):
+    return not origin or origin in PORTFOLIO_ALLOWED_ORIGINS
+
+def _portfolio_cors_response(response, origin):
+    if origin and origin in PORTFOLIO_ALLOWED_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        # Chrome Private Network Access preflights for public HTTPS -> loopback.
+        response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
+
 def get_bridge():
     """Access the shared CppBridge instance from current_app or module."""
     return current_app.config.get('CPP_BRIDGE')
+
+@api_bp.route('/portfolio/live', methods=['GET', 'OPTIONS'])
+def get_portfolio_live():
+    """Read-only live projection for Zachary's public portfolio.
+
+    This route is intentionally observational. It exposes no mutation verb and
+    only answers approved web origins (plus origin-less local diagnostics).
+    """
+    origin = request.headers.get("Origin", "")
+    if not _portfolio_origin_allowed(origin):
+        return jsonify({"error": "Origin not allowed"}), 403
+
+    if request.method == "OPTIONS":
+        return _portfolio_cors_response(("", 204), origin)
+
+    bridge = get_bridge()
+    if not bridge:
+        response = jsonify({
+            "schema": "earthcall.portfolio.v1",
+            "connected": False,
+            "error": "Bridge not initialized",
+        })
+        response.status_code = 503
+        return _portfolio_cors_response(response, origin)
+
+    return _portfolio_cors_response(jsonify(bridge.get_portfolio_state()), origin)
 
 @api_bp.route('/status', methods=['GET'])
 def get_status():
