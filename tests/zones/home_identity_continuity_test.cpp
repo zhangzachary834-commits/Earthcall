@@ -81,8 +81,12 @@ int main() {
         });
 
         ZoneManager firstProcess;
-        check(firstProcess.ensureHomeZone(first),
-              "identity-aware ensureHomeZone establishes a primary Home");
+        check(firstProcess.primaryHomeCount(first) == 0,
+              "fresh Person begins with zero primary Homes before kernel repair");
+        check(firstProcess.enforcePrimaryHomeInvariant(first),
+              "kernel admission repairs zero primary Homes to at least one");
+        check(firstProcess.primaryHomeCount(first) == 1,
+              "kernel repair establishes exactly one primary Home from an empty store");
         Zone* home = firstProcess.findPrimaryHome(first);
         check(home != nullptr, "primary Home resolves through the Person");
         check(home && home->getIdentifier() == "Home",
@@ -133,8 +137,10 @@ int main() {
               "hydrated owned-by edge binds to the returned Person");
 
         const std::size_t before = returnedProcess.zones().size();
-        check(returnedProcess.ensureHomeZone(returned),
-              "ensureHomeZone accepts the hydrated identity relation");
+        check(returnedProcess.enforcePrimaryHomeInvariant(returned),
+              "fresh return satisfies the primary Home admission invariant");
+        check(returnedProcess.primaryHomeCount(returned) == 1,
+              "fresh return still has one primary Home");
         check(returnedProcess.zones().size() == before,
               "fresh return mints no duplicate Home");
         Universe::instance().setProvider({});
@@ -157,12 +163,96 @@ int main() {
         manager.addZone(b);
 
         const std::size_t before = manager.zones().size();
+        check(manager.primaryHomeCount(ambiguous) == 2,
+              "two primaries both count toward the existential Home invariant");
         check(manager.findPrimaryHome(ambiguous) == nullptr,
-              "two primaries refuse resolution instead of choosing by order");
-        check(!manager.ensureHomeZone(ambiguous),
-              "two primaries refuse ensureHomeZone");
+              "two primaries refuse unique resolution instead of choosing by order");
+        check(manager.enforcePrimaryHomeInvariant(ambiguous),
+              "duplicate primaries still satisfy at-least-one-Home admission");
         check(manager.zones().size() == before,
-              "duplicate-primary refusal never mints a third Home");
+              "duplicate-primary ambiguity never mints a third Home");
+    }
+
+    {
+        // An authoritative owned-by edge outranks the compatibility owner cache.
+        // A stale owner string must never trick the admission invariant.
+        std::array<uint8_t, 32> otherBytes{};
+        for (std::size_t i = 0; i < otherBytes.size(); ++i) {
+            otherBytes[i] = static_cast<uint8_t>(0x80 + i);
+        }
+        const Identity::SingularId otherIdentity =
+            Identity::SingularId::fromPublicKey(otherBytes);
+
+        Soul subjectSoul("Subject");
+        Body subjectBody("humanoid", "default");
+        Person subject(std::move(subjectSoul), std::move(subjectBody), "default");
+        subject.setPersonId(identity);
+
+        Soul otherSoul("Other");
+        Body otherBody("humanoid", "default");
+        Person other(std::move(otherSoul), std::move(otherBody), "default");
+        other.setPersonId(otherIdentity);
+
+        ZoneManager manager;
+        auto conflicted = std::make_shared<Home>("ConflictedPrimary", "strict");
+        conflicted->markPrimaryHome();
+        // Stale cache falsely names subject...
+        conflicted->setOwner(identity.toString(), Zone::kOwnerKindPerson);
+        // ...but relational truth explicitly names somebody else.
+        auto ownedByOther =
+            std::make_shared<Relation>("owned-by", *conflicted, other, true, 1.0f);
+        check(conflicted->getFormation().addRelation(ownedByOther),
+              "conflict fixture installs authoritative owned-by relation");
+        manager.addZone(conflicted);
+
+        check(manager.primaryHomeCount(subject) == 0,
+              "stale owner cache cannot overrule contradictory owned-by relation");
+        check(manager.enforcePrimaryHomeInvariant(subject),
+              "kernel repairs a Person whose stale cache previously faked Home ownership");
+        check(manager.primaryHomeCount(subject) == 1,
+              "repair leaves the Person with at least one relationally true primary Home");
+    }
+
+    {
+        // Hard-failure witness: the canonical unowned Home already carries an
+        // authoritative owned-by edge to somebody else. Repair is not allowed
+        // to steal it or mint around the conflict. The Person therefore still
+        // has zero primary Homes and ordinary admission must be refused.
+        std::array<uint8_t, 32> otherBytes{};
+        for (std::size_t i = 0; i < otherBytes.size(); ++i) {
+            otherBytes[i] = static_cast<uint8_t>(0x40 + i);
+        }
+        const Identity::SingularId otherIdentity =
+            Identity::SingularId::fromPublicKey(otherBytes);
+
+        Soul subjectSoul("Admission Subject");
+        Body subjectBody("humanoid", "default");
+        Person subject(std::move(subjectSoul), std::move(subjectBody), "default");
+        subject.setPersonId(identity);
+
+        Soul otherSoul("Canonical Home Owner");
+        Body otherBody("humanoid", "default");
+        Person other(std::move(otherSoul), std::move(otherBody), "default");
+        other.setPersonId(otherIdentity);
+
+        ZoneManager manager;
+        auto canonical = std::make_shared<Home>("Home", "strict");
+        canonical->markPrimaryHome();
+        auto ownedByOther =
+            std::make_shared<Relation>("owned-by", *canonical, other, true, 1.0f);
+        check(canonical->getFormation().addRelation(ownedByOther),
+              "hard-failure fixture installs another Person's owned-by edge");
+        manager.addZone(canonical);
+
+        const std::size_t before = manager.zones().size();
+        check(manager.primaryHomeCount(subject) == 0,
+              "another Person's canonical Home does not satisfy this Person's invariant");
+        check(!manager.enforcePrimaryHomeInvariant(subject),
+              "kernel refuses ordinary admission when repair still leaves zero primary Homes");
+        check(manager.primaryHomeCount(subject) == 0,
+              "failed repair leaves zero rather than fabricating ownership");
+        check(manager.zones().size() == before,
+              "failed repair does not mint around an ownership conflict");
     }
 
     Universe::instance().setProvider({});

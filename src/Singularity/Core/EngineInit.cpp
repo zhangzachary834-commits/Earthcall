@@ -67,7 +67,7 @@ extern CategoryManager categories;
 
 namespace Core {
 
-void Engine::initLogic() {
+bool Engine::initLogic() {
     // These were declared on Engine but never constructed anywhere in the
     // post-"Game" refactor: every line below that touches _lawManager,
     // _player, _camera, _mouseHandler or _keyboardHandler was one call away
@@ -316,9 +316,11 @@ void Engine::initLogic() {
     // The four kernel boot Zones already make mgr.active() valid for the
     // Universe provider while this hydration runs.
     mgr.hydrateFromZoneStore();
-    if (!mgr.ensureHomeZone(*_person)) {
-        std::cerr << "[Init] Primary Home continuity is unresolved; refusing to invent a "
-                     "replacement. See the preceding ownership diagnosis.\n";
+    if (!mgr.enforcePrimaryHomeInvariant(*_person)) {
+        std::cerr << "[Init] REFUSED ordinary Person admission: every Person must "
+                     "have at least one primary Home. Initialization will stop "
+                     "before the inhabited Earthcall state begins.\n";
+        return false;
     }
     _ourverse.ensureGatheringZone(mgr);
     if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
@@ -629,6 +631,8 @@ void Engine::initLogic() {
         Rendering::DockSlot::Bottom, &_showChatWindow, [this]() {
             if (_chat) _chat->renderContent();
         });
+
+    return true;
 }
 
 // ---------------------------------------------------------------------------

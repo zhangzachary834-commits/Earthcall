@@ -225,7 +225,12 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     Core::Audio::AudioSystem::instance().init();
     Core::Audio::AudioSystem::instance().setupAudioEventListeners();
 
-    initLogic();
+    if (!initLogic()) {
+        std::cerr << "[Engine] Logic initialization refused Person admission; "
+                     "shutting down the partial engine.\n";
+        shutdown();
+        return false;
+    }
 
     return true;
 }
