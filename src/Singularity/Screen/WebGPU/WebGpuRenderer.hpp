@@ -85,7 +85,8 @@ public:
                       const geom::FieldNode* fieldNode = nullptr,
                       uint64_t memoId = 0,
                       uint32_t memoRevision = 0,
-                      const geom::HeightGrid* heightGrid = nullptr) override;
+                      const geom::HeightGrid* heightGrid = nullptr,
+                      uint32_t memoParameterRevision = 0) override;
 
     // Governs whether drawImplicit's heightGrid argument is actually honoured
     // (rendering-optimization Phase C). Read from @screen-channel.
@@ -210,6 +211,7 @@ private:
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
+        uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
