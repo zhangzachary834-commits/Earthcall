@@ -6,6 +6,7 @@
 **Session ID:** `chatgpt-2026-09-18-sdf-pipeline-audit`  
 **Audited base:** `sync-from-earthcall-main` @ `724dd256aa0599caba63aa68c52352c52de6349f`  
 **Scope:** SDF/OntoMath calculation, WGSL generation, WebGPU raymarching, SDF batching, parameter upload, heightfield acceleration, and the CPU-side derived-state feeding those paths.
+**Mathematical companion:** [`2026-09-18_sdf_pipeline_mathematical_complexity_companion.md`](./2026-09-18_sdf_pipeline_mathematical_complexity_companion.md)
 
 ## Human direction and architectural context
 
