@@ -176,6 +176,19 @@ SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
                                       uint8_t maxDepth = 6,
                                       uint32_t maxNodes = 65536);
 
+// Conservative centred proxy for a hierarchy. Earthcall's current implicit
+// draw contract rasterizes a cube centred on the Object origin, so this first
+// activation rung unions all terminal cells that MAY contain zero, then expands
+// that union to a symmetric half-extent. It may be looser than the hierarchy,
+// but it can never exclude a hierarchy leaf that still carries possible truth.
+struct SdfZeroSetProxy {
+    bool hasPossibleZero = true;   // false only when every terminal cell is proved empty
+    bool tightened = false;        // true when halfExtent is strictly smaller on any axis
+    glm::vec3 halfExtent{0.0f};
+};
+SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
+                                   const glm::vec3& authoredExtent);
+
 // ---------------------------------------------------------------------------
 // Min/max heightfield grid — GPU ray-DDA skip acceleration (rendering-
 // optimization Phase C; see docs/plans/FRONTIER_MULTI_HUNDRED_FPS_SDF_ENGINE_
