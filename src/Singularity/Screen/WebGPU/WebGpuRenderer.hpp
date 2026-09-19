@@ -389,6 +389,10 @@ private:
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
+    // Maps retain their vectors across frames so capacity is reused. This list
+    // names only pipelines that actually received an instance this frame,
+    // avoiding an ever-growing scan of historical pipeline keys.
+    std::vector<const SdfPipeline*> _activeSdfPipelines;
     WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
     void flushSdfDraws();
 
