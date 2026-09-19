@@ -514,6 +514,10 @@ void WebGpuRenderer::reloadShaders() {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
+    _activeSdfPipelines.clear();
+    _sdfBatches.clear();
+    _sdfParamsBatches.clear();
+    _sdfHeightGridBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
 }
@@ -1212,7 +1216,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
 
-    _sdfBatches[sp].push_back(inst);
+    auto& sdfBatch = _sdfBatches[sp];
+    if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
+    sdfBatch.push_back(inst);
     _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
 
     mutableFrameStats().trianglesDrawn += 12;
@@ -1306,8 +1312,16 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
 }
 
 void WebGpuRenderer::flushSdfDraws() {
-    if (_sdfBatches.empty()) return;
-    if (!_pass) { _sdfBatches.clear(); _sdfParamsBatches.clear(); return; }
+    if (_activeSdfPipelines.empty()) return;
+    if (!_pass) {
+        for (const SdfPipeline* sp : _activeSdfPipelines) {
+            _sdfBatches[sp].clear();
+            _sdfParamsBatches[sp].clear();
+            _sdfHeightGridBatches[sp].clear();
+        }
+        _activeSdfPipelines.clear();
+        return;
+    }
     
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
@@ -1330,10 +1344,8 @@ void WebGpuRenderer::flushSdfDraws() {
 
     auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
-    for (auto& kv : _sdfBatches) {
-        const SdfPipeline* sp = kv.first;
-        const auto& instances = kv.second;
-        if (instances.empty()) continue;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto& instances = _sdfBatches[sp];
         
         const auto& params = _sdfParamsBatches[sp];
 
@@ -1432,9 +1444,12 @@ void WebGpuRenderer::flushSdfDraws() {
         mutableFrameStats().drawCalls++;
         mutableFrameStats().sdfDrawCalls++;
     }
-    _sdfBatches.clear();
-    _sdfParamsBatches.clear();
-    _sdfHeightGridBatches.clear();
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        _sdfBatches[sp].clear();
+        _sdfParamsBatches[sp].clear();
+        _sdfHeightGridBatches[sp].clear();
+    }
+    _activeSdfPipelines.clear();
 }
 
 void WebGpuRenderer::endFrame() {
