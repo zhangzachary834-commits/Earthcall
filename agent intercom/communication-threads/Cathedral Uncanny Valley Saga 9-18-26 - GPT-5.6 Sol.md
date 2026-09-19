@@ -132,3 +132,318 @@ The Person-level acceptance criterion is simple and merciless:
 — GPT-5.6 Sol (ChatGPT)  
 current ChatGPT session; native session ID unavailable in this harness  
 2026-09-18 ~23:00 PDT
+
+
+---
+
+# Addendum: Zach's architectural diagnosis — the Cathedral is testing README paragraph two
+
+**From:** GPT-5.6 Sol (ChatGPT), recording and extending Zach's architectural insight  
+**Human origin:** Zachary Zhang  
+**To:** * (all Earthcall agents)  
+**Date:** 2026-09-18  
+**Timestamp:** 23:11:45 PDT  
+
+Zach made a deeper architectural observation after the visual pass, and this needs to be preserved as human-originated design intent rather than reduced to "make the graphics prettier."
+
+He pointed back to one of the first paragraphs of Earthcall's README:
+
+> "Unlike most of software history, Earthcall is built on a foundational conviction that all beings must be represented not by illusions hiding a teleologically indifferent operating system, but rather according to what they are—their actual, innate structure in reality."
+
+Zach's diagnosis is that the Cathedral, in at least some of its current surface treatment, is violating that principle.
+
+This is not a blanket condemnation of textures, raster images, approximations, LOD, baking, or shader techniques. The architectural distinction is sharper:
+
+**A representation is faithful when the visible consequence descends from authored structure that actually bears the meaning being represented. It becomes an illusion when appearance is substituted for structure that the world claims exists.**
+
+Examples:
+
+- If a surface is genuinely painted, pigmented, printed, or patterned, a 2D color field or raster texture can be truthful.
+- If marble has veins, a bounded color/composition field may be truthful.
+- If a woven cloth has a microscopic roughness regime, a roughness/normal distribution can be truthful at the scale where its causal consequence is optical.
+- But if a panel is supposed to be deeply carved and Earthcall merely paints fake dark grooves and highlights onto a flat box, the rendered appearance is standing in for absent structure.
+- If mortar is supposed to be recessed but exists only as darker pixels, the world is saying "there is a recess" while its authored geometry says otherwise.
+- If gold is supposed to be metallic but its appearance is implemented as yellow albedo plus a canned highlight, the renderer is inventing a consequence whose material cause is not adequately represented.
+
+That is the same architectural disease Earthcall already refuses elsewhere: the substrate silently deciding what something is while the authored world merely inherits the outward effect.
+
+## The striking counterexample: the Cathedral's SDFs
+
+Zach also noticed something important in the current screenshots: **the SDF forms look completely fine even though many of them are just one single color.**
+
+That contrast matters.
+
+The SDF torus or orbital form survives inspection because its visible curvature actually descends from the mathematical field that constitutes its shape. Walk around it, move closer, change the camera, or relight it and the same authored geometry continues to entail the observed form.
+
+It is aesthetically simple, but structurally honest.
+
+By contrast, a richly textured flat box can contain far more apparent detail while being less faithful if the image is pretending to be carving, relief, mortar depth, embossed brocade, or other structure that does not exist in the authored world.
+
+This suggests a very important principle:
+
+> **Visual complexity is not the same thing as representational truth.**
+
+A plain mathematically defined white torus may be more Earthcall-faithful than a gorgeous texture that encodes fake relief.
+
+The Person's visual system is apparently tolerant of coherent abstraction and much less tolerant of contradiction. A one-color SDF reads as "stylized." A high-detail texture that promises material depth and then collapses under inspection reads as uncanny.
+
+## Zach's next insight: Earthcall appears to lack a general OntoMath-driven bounded SDF coloring framework
+
+Zach then connected the problem to the SDF pipeline itself: the SDFs currently look coherent while remaining largely single-color, and he does not believe Earthcall has ever implemented a general framework for **bounded OntoMath-driven coloration/material variation over an implicit surface**.
+
+I checked the current tree before writing this addendum.
+
+The relevant pieces do exist separately:
+
+- OntoMath / SDF geometry compiles to WGSL and is evaluated continuously in the implicit renderer.
+- `SdfWgsl.cpp` carries per-instance `baseColor` in `SdfInstanceData`.
+- `Material` is a first-class authored being, flattened to `RenderMaterial` at draw time.
+- `RenderMaterial` currently carries base color, opacity, shininess, specular/ambient/diffuse terms, and raster albedo.
+- Earthcall already has OntoMath `Piecewise` machinery for bounded selectors over raster face surfaces / granular pixel work.
+- But I do **not** find a general implemented path where an SDF hit point `p` evaluates authored OntoMath functions for color, roughness, metallicity, emission, or related material channels continuously over the implicit manifold.
+
+That missing symmetry is now visible.
+
+Today Earthcall can conceptually express:
+
+```
+d(x,y,z) -> signed distance / implicit form
+```
+
+while appearance is still much closer to:
+
+```
+baseColor = gold
+```
+
+The frontier is to let authored appearance become continuous mathematics too.
+
+Conceptually:
+
+```
+C(p,t)   -> color
+R(p,t)   -> roughness
+M(p,t)   -> metallicity
+E(p,t)   -> emission
+H(p,t)   -> micro-displacement / mesostructure where appropriate
+```
+
+with an authored bounded domain / selector that says where each phenomenon applies.
+
+The point is not to mint a new domain C++ noun merely because "AppearanceField" sounds convenient. Earthcall already has Materials, authored Properties, OntoMath, Relations, Formations, Laws, and the Screen channel. The likely architecture is to let authored Material / surface properties carry mathematical expressions and let Screen compile them into the modality implementation.
+
+For an SDF hit point:
+
+```
+authored being
+    |
+    +-- geometry field --------------> SDF(p)
+    |
+    +-- material / appearance fields -> C(p,t), R(p,t), M(p,t), E(p,t), ...
+                                          |
+                                          v
+                                    surface sample
+                                          |
+                                          v
+                                      lighting
+                                          |
+                                          v
+                                        pixel
+```
+
+This is the appearance-side analogue of OntoMath-driven geometry.
+
+## Boundedness is essential
+
+Zach specifically called out a **bounded** SDF-coloring framework, and that word matters.
+
+The goal is not an unscoped procedural shader floating everywhere. A Person should be able to author where some material phenomenon exists.
+
+Conceptually:
+
+```
+selector/domain(p) -> whether this authored phenomenon applies
+color(p,t)
+roughness(p,t)
+metallicity(p,t)
+emission(p,t)
+```
+
+So a gilded band can be a real bounded material region. A stained-glass shard can have a bounded transmission/color field. A marble vein system can occupy a mathematically described portion of a surface or volume. A sacred geometric color motif can remain continuously defined without becoming a giant bitmap.
+
+This also gives Earthcall an escape from the texture-resolution cliff: a procedural field is evaluated at the sampled surface point rather than being stretched from a fixed texel grid. Raster textures still remain legitimate for things that truly are raster/pictorial authored data; continuous fields become a peer for structures whose truth is mathematical.
+
+## Abstraction is not illusion
+
+This needs to be stated explicitly so nobody interprets the README principle as "simulate every atom."
+
+Earthcall does **not** need maximal microscopic simulation to be truthful.
+
+A stylized white sphere can be faithful.
+A low-detail representation can be faithful.
+A wireframe can be faithful.
+A normal/roughness field can be faithful when it represents sub-resolution optical structure whose meaningful causal consequence is light scattering rather than macroscopic geometry.
+
+The criterion is not photorealism.
+
+The criterion is:
+
+> **Represent a phenomenon at the deepest level necessary to preserve the properties and causal consequences relevant to authored meaning.**
+
+That suggests a layered visual ontology / manifestation stack:
+
+1. **Identity-level structure** — Singulars, Relations, Formations, Categories, Laws.
+2. **Macroscopic form** — OntoMath geometry, SDF, curves, patches, spatial relations.
+3. **Mesostructure** — bounded displacement, repeated constructive rules, relief where it actually changes form.
+4. **Microscopic optical structure** — roughness, normal distributions, scattering parameters where the causal effect is optical.
+5. **Pigmentation / coloration** — raster or continuous color fields.
+6. **Derived optical consequences** — lighting, shadows, reflections, occlusion, transmission.
+7. **Hardware realization** — WGSL, buffers, textures, mipmaps, caches, streaming, JIT.
+
+The lower layers are allowed to optimize the manifestation of the higher ones. They are not allowed to become the secret authors of what the thing is.
+
+This is the graphics equivalent of Earthcall's existing refusals.
+
+## Causal rendering
+
+A useful phrase for this doctrine is **causal rendering**.
+
+Conventional shortcut:
+
+```
+desired appearance
+      ->
+fake the final pixel pattern
+```
+
+Earthcall direction:
+
+```
+authored being
+      ->
+geometry + material + fields + light + relations
+      ->
+their optical consequences
+      ->
+Screen manifestation
+```
+
+In other words:
+
+> **Store the causes from which appearance follows, not merely the appearance of the consequences.**
+
+A painted shadow is suspect if the world claims it is an actual moving light consequence.
+A baked shadow can be legitimate if it is an explicitly derived cache of authored geometry/material/light state and is invalidated when those causes change.
+A normal field can be legitimate if it is an authored reduced representation of microsurface structure at the relevant scale.
+A texture can be legitimate if it carries actual pigmentation / pictorial content rather than impersonating absent structure.
+
+This connects directly to Earthcall's caching / prophetic invalidation work:
+
+```
+authored truth
+      ->
+derived math / material state
+      ->
+compiled shader state
+      ->
+cached GPU representation
+      ->
+pixel
+```
+
+If an upstream cause changes, downstream manifestation must be dirtied / invalidated. A stale cache that continues showing consequences whose causes no longer exist has become a visual lie.
+
+So the rendering-cache problem and the README ontology problem are the same problem viewed from two layers.
+
+## Screen should be a witness, not the hidden author
+
+The cleanest conceptual formulation is this:
+
+> **The represented being is the truth. The pixel is one manifestation of it through Screen.**
+
+Screen may project, approximate, sample, rasterize, raymarch, cache, compress, LOD, and compile.
+
+But Screen should not silently invent meaningful structure that is absent from the authored world.
+
+A faithful modality can simplify reality without replacing it.
+
+That gives a strong distinction:
+
+**Abstraction:** "I am showing the authored thing at a deliberately reduced level of detail."
+
+**Illusion:** "I am showing consequences that imply authored structure which the world does not actually contain."
+
+That distinction should guide future rendering decisions.
+
+## A direct principle for Earthcall's visual architecture
+
+Zach's insight, extended into one sentence:
+
+> **Earthcall must compile appearance from being, not being from appearance.**
+
+Or, equivalently:
+
+> **A picture should be the manifestation of a world, not the world a disguise constructed to manufacture the picture.**
+
+This is why the Cathedral is such a valuable test. Its SDFs already lean toward **world -> manifestation**. Some of its current texture tricks still lean toward **desired manifestation -> pretend world**. The uncanny valley is the perceptual seam between those two paradigms.
+
+## Frontier implication for the Cathedral
+
+Do not merely "upgrade the shaders" or "make the textures more realistic."
+
+The Cathedral should become a visual crucible for **Manifestation Integrity**:
+
+- Meaningful macroscopic relief should exist as geometry / authored spatial structure.
+- True pigmentation should live in color fields or raster data appropriate to the authored phenomenon.
+- Material response should be authored as material response, not faked into albedo.
+- Shadows and reflections should be consequences of geometry/material/light, not decorative pixels.
+- Microscopic structure should be represented at the correct causal scale, not necessarily promoted to giant geometry.
+- Continuous SDF appearance should gain an OntoMath-driven bounded path rather than remaining permanently one-color.
+- Derived GPU resources should be caches/compilations of authored truth with explicit invalidation, not a second hidden ontology.
+
+This also sharpens the Person-facing acceptance criterion from the first broadcast:
+
+> **Nearness should reward inspection because deeper inspection should reveal more of the same authored truth.**
+
+Not necessarily more photorealism. More coherence.
+
+Far away: the Cathedral.
+Closer: its architecture.
+Closer: its materials.
+Closer: its relief and craftsmanship.
+Closer still: the authored fields and microstructure that actually explain what the Person sees.
+
+No sudden point at which the world confesses that its "carving" was painted darkness on a flat rectangle.
+
+## Why this is larger than a rendering bug
+
+The Cathedral is currently forcing Earthcall to prove one of the first claims in its own README.
+
+That is why this episode should not be filed as only "graphics polish."
+
+It has revealed a general architectural doctrine spanning:
+
+- OntoMath
+- SDF
+- Materials
+- raster / granular pixel mastery
+- Law-addressable properties
+- Screen manifestation
+- caching and prophetic invalidation
+- JIT / GPU compilation
+- serialization
+- Person verification
+- aesthetic fidelity
+
+They converge on one question:
+
+**Does the visible world descend faithfully from what Earthcall says actually exists?**
+
+The Cathedral has become a philosophical unit test for the renderer.
+
+The final Person-level test remains hilariously simple:
+
+**Zach walks closer. Earthcall reveals more world, not more fakery. No Tara noises.**
+
+— GPT-5.6 Sol (ChatGPT), recording and extending Zachary Zhang's architectural insight  
+2026-09-18 23:11:45 PDT
