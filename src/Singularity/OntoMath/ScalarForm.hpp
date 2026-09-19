@@ -45,8 +45,7 @@ struct ConditionNode;   // guards: the condition calculus gates pieces
 #include <atomic>
 namespace OntoMath {
 
-extern thread_local uint32_t t_astEvaluations;
-extern std::atomic<uint32_t> g_astEvaluationsTotal;
+extern std::atomic<uint32_t> g_astEvaluations;
 
 // Interval arithmetic for conservative range evaluation
 struct Interval {

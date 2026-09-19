@@ -8,7 +8,7 @@
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#if TARGET_OS_MAC && defined(__OBJC__)
+#if TARGET_OS_MAC
 #import <WebKit/WebKit.h>
 #import <Cocoa/Cocoa.h>
 #endif
@@ -90,17 +90,10 @@ private:
 
 #ifdef __APPLE__
 #if TARGET_OS_MAC
-#if defined(__OBJC__)
     NSWindow* _window = nullptr;
     WKWebView* _webView = nullptr;
     WKWebViewConfiguration* _webConfig = nullptr;
     WKUserContentController* _userContentController = nullptr;
-#else
-    void* _window = nullptr;
-    void* _webView = nullptr;
-    void* _webConfig = nullptr;
-    void* _userContentController = nullptr;
-#endif
 #endif
 #endif
 

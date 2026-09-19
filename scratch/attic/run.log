@@ -1,0 +1,21 @@
+🌟 Engine initialised.
+[Init] Checkpoint A: after ShadingSystem::init()
+[Init] Checkpoint B: zones added (5)
+[Init] Zone[0]: Player's Sanctuary | Q=1 D=1
+[Init] Zone[1]: Sanctum of Beginnings | Q=0 D=0
+[Init] Zone[2]: Temple of Echoes | Q=0 D=0
+[Init] Zone[3]: Cavern of Light | Q=0 D=0
+[Init] Zone[4]: Character Architect Forge | Q=0 D=0
+[Init] Menu reset before adding options
+[Init] Checkpoint B1: before menu addOption(Resume)
+[Menu] addOption begin: key=82, current options=0
+[Menu] addOption end: new options=1
+[Init] Checkpoint B2: after menu addOption(Resume)
+[Menu] addOption begin: key=81, current options=1
+[Menu] addOption end: new options=2
+[Init] Checkpoint B3: after menu addOption(Quit)
+[Init] Checkpoint C: baseline objects created
+[Init] Checkpoint D: callbacks registered
+🔥 Earthcall Game initialised.
+[Init] Checkpoint E: custom polyhedron generated
+[Init] Checkpoint F: preparing brush presets

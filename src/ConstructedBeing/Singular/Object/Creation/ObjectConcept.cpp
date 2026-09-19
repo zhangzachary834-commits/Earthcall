@@ -15,7 +15,6 @@
 #include <atomic>
 #include <cmath>
 #include <ctime>
-#include <iostream>
 #include <limits>
 
 namespace {
@@ -35,17 +34,6 @@ glm::mat4 mat4FromJson(const nlohmann::json& j) {
             for (int r = 0; r < 4; ++r) m[c][r] = j[i++].get<float>();
     }
     return m;
-}
-
-Object::ShapeKind checkedMemberShapeKind(int raw) {
-    constexpr int first = static_cast<int>(Object::ShapeKind::Cube);
-    constexpr int last = static_cast<int>(Object::ShapeKind::Text2D);
-    if (raw >= first && raw <= last) {
-        return static_cast<Object::ShapeKind>(raw);
-    }
-    std::cerr << "[ObjectConcept] invalid member ShapeKind ordinal " << raw
-              << " — refusing it and hydrating the member as Cube instead.\n";
-    return Object::ShapeKind::Cube;
 }
 
 } // namespace
@@ -85,20 +73,12 @@ PropertyMapping PropertyMapping::fromJson(const nlohmann::json& j) {
 // ---------------------------------------------------------------------------
 
 nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
-    // Keep the historical nine-slot `params` array exactly nine entries long:
-    // old Earthcall readers used `size() == 9`, so merely appending width/height
-    // would make a new save look parameter-less to them. The two later 2D
-    // dimensions are additive named fields instead. New readers also accept the
-    // brief 11-slot development form for compatibility with saves made while
-    // this repair branch was in flight.
     nlohmann::json j{
         {"kind", static_cast<int>(kind)},
         {"beingKind", static_cast<int>(beingKind)},
         {"hasGeometry", hasGeometry},
         {"params", {params.r, params.ry, params.rz, params.halfH, params.majorR,
                     params.minorR, params.paraboloidA, params.ovoidAsym, params.fillet}},
-        {"width2D", params.width2D},
-        {"height2D", params.height2D},
         {"relativeTransform", mat4ToJson(relativeTransform)}
     };
     if (hasField) {
@@ -128,11 +108,7 @@ nlohmann::json ObjectConcept::MemberTemplate::toJson() const {
 
 ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nlohmann::json& j) {
     MemberTemplate m;
-    int rawKind = static_cast<int>(Object::ShapeKind::Cube);
-    if (j.contains("kind") && j["kind"].is_number_integer()) {
-        rawKind = j["kind"].get<int>();
-    }
-    m.kind = checkedMemberShapeKind(rawKind);
+    m.kind = static_cast<Object::ShapeKind>(j.value("kind", 0));
     // Concepts written before members carried a kind were all Objects with
     // bodies — the old default, stated rather than assumed.
     m.beingKind = static_cast<ConditionNode::BeingKind>(
@@ -143,10 +119,7 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
             m.captured[it.key()] = propertyValueFromJson(it.value());
         }
     }
-    // The first nine slots are the stable legacy contract. During this repair
-    // branch an 11-slot development form briefly existed, so accept it too;
-    // additive named width2D/height2D fields then win when present.
-    if (j.contains("params") && j["params"].is_array() && j["params"].size() >= 9) {
+    if (j.contains("params") && j["params"].is_array() && j["params"].size() == 9) {
         const auto& p = j["params"];
         m.params.r = p[0].get<float>();
         m.params.ry = p[1].get<float>();
@@ -157,16 +130,6 @@ ObjectConcept::MemberTemplate ObjectConcept::MemberTemplate::fromJson(const nloh
         m.params.paraboloidA = p[6].get<float>();
         m.params.ovoidAsym = p[7].get<float>();
         m.params.fillet = p[8].get<float>();
-        if (p.size() >= 11) {
-            m.params.width2D = p[9].get<float>();
-            m.params.height2D = p[10].get<float>();
-        }
-    }
-    if (j.contains("width2D") && j["width2D"].is_number()) {
-        m.params.width2D = j["width2D"].get<float>();
-    }
-    if (j.contains("height2D") && j["height2D"].is_number()) {
-        m.params.height2D = j["height2D"].get<float>();
     }
     if (j.contains("field")) {
         m.hasField = true;
@@ -524,7 +487,10 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
         const MemberTemplate& member = _members[i];
         std::string refusal;
         if (!birthKind(member.beingKind, refusal)) {
-            ECA::Event refused("concept-member-refused", this, nullptr, std::time(nullptr));
+            ECA::Event refused;
+            refused.type = "concept-member-refused";
+            refused.subject = this;
+            refused.timestamp = std::time(nullptr);
             Core::EventBus::instance().publish(refused);
             continue;
         }
@@ -776,7 +742,10 @@ std::vector<std::unique_ptr<Object>> ObjectConcept::instantiate(
     // A birth can wake laws: the echo announces WHICH concept just
     // manifested (subject: the concept — the newborns' provenance names it).
     if (!newborns.empty()) {
-        ECA::Event echo("concept-instantiated", this, nullptr, std::time(nullptr));
+        ECA::Event echo;
+        echo.type = "concept-instantiated";
+        echo.subject = this;
+        echo.timestamp = std::time(nullptr);
         Core::EventBus::instance().publish(echo);
     }
     return newborns;
@@ -957,7 +926,10 @@ void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& concept) {
     _concepts.push_back(concept);
     _formation.addMember(concept.get());
 
-    ECA::Event echo("concept-registered", concept.get(), nullptr, std::time(nullptr));
+    ECA::Event echo;
+    echo.type = "concept-registered";
+    echo.subject = concept.get();
+    echo.timestamp = std::time(nullptr);
     Core::EventBus::instance().publish(echo);
 }
 

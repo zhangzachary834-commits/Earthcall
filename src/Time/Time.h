@@ -5,17 +5,11 @@
 #ifndef EARTHCALL_TIME_H
 #define EARTHCALL_TIME_H
 
-#include "Time/Moment/Moment.hpp"
-#include "Time/Event/Event.hpp"
 
 // Event should go here in the future too because Events are really just special Moments with specific properties or Formations of defining Singulars
 // ECA should use this instead. We don't want a separate "When" black box apart from Time/Moment/Event
 // Person Authored Events should also be here. No black boxes. 
 // - Zach
-//
-// Realized (2026-09-13): Event is elevated to the Time ontology as a "distinguished Moment"
-// (class Event : public Moment). ECA aliases Time::Event and laws listen to first-class
-// temporal events with full property transparency.
 
 // Placeholder for a first-order vessel of Time in Earthcall.
 // First rung written: docs/architecture/ontology/TIME_AND_MOMENT.md.

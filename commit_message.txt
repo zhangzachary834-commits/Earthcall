@@ -1,6 +1,0 @@
-🧹 [code health] Implement ExternalWindow setPosition
-
-🎯 **What:** Implemented the `setPosition` method for `ExternalWindow` using platform-specific APIs.
-💡 **Why:** To replace the TODO and ensure the window positioning works properly across platforms (Windows and MacOS), improving code health and maintainability.
-✅ **Verification:** Verified by checking relevant unit tests and testing build success.
-✨ **Result:** Window positioning works correctly, replacing placeholder code.

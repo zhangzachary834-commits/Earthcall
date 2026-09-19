@@ -30,7 +30,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
-#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
@@ -93,9 +92,9 @@ int main() {
     // Object construction reaches the renderer boundary; give it a context.
     if (!glfwInit()) { std::fprintf(stderr, "channel_paths_test: glfwInit failed\n"); return 1; }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "channel_paths_test", nullptr, nullptr);
     if (!window) { std::fprintf(stderr, "channel_paths_test: no GL context\n"); glfwTerminate(); return 1; }
+    glfwMakeContextCurrent(window);
 
     Object object;
     Law law("channel-paths-probe");
@@ -112,7 +111,6 @@ int main() {
     Formation formation;
     Soul soulProbe;
     Ourverse ourverse;
-    Singularity::Language::Lexeme lexemeProbe("probe");
 
     int skipped = 0;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
@@ -142,7 +140,6 @@ int main() {
         else if (groupIs(option.group, "Formation"))      check(option, formation);
         else if (groupIs(option.group, "Soul"))           check(option, soulProbe);
         else if (groupIs(option.group, "Ourverse"))       check(option, ourverse);
-        else if (groupIs(option.group, "Language — Lexeme")) check(option, lexemeProbe);
         else if (groupIs(option.group, "Time")) {
             // The world clock is not a property of any being — Singularity owns
             // time, and `time`, `time.delta`, `time.sinceApplied` are resolved

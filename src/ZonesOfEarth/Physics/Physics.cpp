@@ -139,9 +139,6 @@ namespace Physics {
                       float gravityAccel,
                       float airResistance,
                       float groundY) {
-        
-        using ClockT = std::chrono::high_resolution_clock;
-        const auto tStart = ClockT::now();
         // Apply modular physics laws to all bodies before integration
         // We keep legacy gravity/air as fallback when no laws exist
         const auto& laws = getLaws();
@@ -267,17 +264,15 @@ namespace Physics {
         }
 
         // Auto-create bonds based on geometry rules (simple n^2 loop for now)
-        if (!g_autoBondRules.empty()) {
-            for(size_t i=0;i<objects.size();++i){
-                for(size_t j=i+1;j<objects.size();++j){
-                    Object* oa = objects[i].get();
-                    Object* ob = objects[j].get();
-                    if(!oa||!ob) continue;
-                    if(!getAutoBond(oa->getShapeKind(), ob->getShapeKind())) continue;
-                    // check duplicate
-                    bool exists=false; for(const auto& b : g_bonds){ if((b.a==oa&&b.b==ob)||(b.a==ob&&b.b==oa)){exists=true;break;} }
-                    if(!exists) addBond(oa,ob,1.0f,10.0f);
-                }
+        for(size_t i=0;i<objects.size();++i){
+            for(size_t j=i+1;j<objects.size();++j){
+                Object* oa = objects[i].get();
+                Object* ob = objects[j].get();
+                if(!oa||!ob) continue;
+                if(!getAutoBond(oa->getShapeKind(), ob->getShapeKind())) continue;
+                // check duplicate
+                bool exists=false; for(const auto& b : g_bonds){ if((b.a==oa&&b.b==ob)||(b.a==ob&&b.b==oa)){exists=true;break;} }
+                if(!exists) addBond(oa,ob,1.0f,10.0f);
             }
         }
 
@@ -472,12 +467,6 @@ namespace Physics {
                 b->updateCollisionZone(b->getTransform());
             }
         }
-        
-        const auto tEnd = ClockT::now();
-        double ms = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
-        if (ms > 5.0) {
-            printf("updateBodies took %f ms\n", ms);
-        }
 
         // Any pair touching last frame but absent from this frame's set has
         // separated. Echo it so laws can express "while touching" (paired
@@ -506,14 +495,6 @@ namespace Physics {
         // Keep form mass synchronized with object's declared mass attribute (if present)
         float attributeMass = getObjectMass(obj, form.mass);
         if (attributeMass > 0.0f && std::isfinite(attributeMass)) form.mass = attributeMass;
-        if (obj && glm::length(form.centerOfMassOffset) == 0.0f && glm::length(obj->getCenter()) > 0.0f) {
-            form.centerOfMassOffset = obj->getCenter();
-        }
-        if (form.momentOfInertia <= 0.0f) {
-            float r = 0.5f;
-            if (obj && obj->getShapeParams().r > 0.0f) r = obj->getShapeParams().r;
-            form.momentOfInertia = std::max(0.01f, 0.4f * form.mass * r * r);
-        }
         return form;
     }
 
@@ -536,17 +517,8 @@ namespace Physics {
         form.accumulatedForce += force;
     }
 
-    void applyTorque(RigidForm& form, const glm::vec3& torque) {
-        form.accumulatedTorque += torque;
-    }
-
-    void clearTorque(RigidForm& form) {
-        form.accumulatedTorque = glm::vec3(0.0f);
-    }
-
     void clearForces(RigidForm& form) {
         form.accumulatedForce = glm::vec3(0.0f);
-        form.accumulatedTorque = glm::vec3(0.0f);
     }
 
     void integrate(RigidForm& form, glm::vec3& position, float deltaTime, float airResistance, float groundY) {
@@ -609,7 +581,6 @@ namespace Physics {
         // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
         auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
         g_physicsRegistry.add(rel);
-        Core::EventBus::instance().publish(Core::Event::Custom{rel});
     }
 
     void applyGravity(glm::vec3& position,
@@ -902,14 +873,5 @@ namespace Physics {
 
     bool isCollisionEnabled(const LawManager* lm) {
         return checkFirstMoverLawEnabled(lm, "physics-collision");
-    }
-
-    bool hasAnyActivePhysics(const LawManager* lm) {
-        if (!g_laws.empty()) {
-            for (const auto& law : g_laws) {
-                if (law.enabled) return true;
-            }
-        }
-        return isGravityEnabled(lm) || isCollisionEnabled(lm);
     }
 }

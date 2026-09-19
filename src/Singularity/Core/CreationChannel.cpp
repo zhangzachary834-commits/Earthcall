@@ -3,7 +3,6 @@
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
-#include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 #include <string>
@@ -168,6 +167,14 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
     law->ecaLoop().eventType = "onMouseClicked";
     law->addAuthor(author);
 
+    // THE ARMING GATE. The click is published globally from the GLFW mouse
+    // callback (EngineInit::registerCallbacks) for every left press outside
+    // ImGui, so this condition is the only thing between "the Person clicked"
+    // and "a cube is born".
+    //
+    // spawnLawArmed, NOT active3DMode == "Create". Create is the console
+    // 3D tool (Tool::ShapeGenerator3D). Sharing that string made the two
+    // paths untestable independently. Callers: CreationChannel::spawnLawArmed.
     law->setConditionModel(ConditionNode::compare(
         "spawnLawArmed", ConditionNode::Op::Eq, PropertyValue(true)));
 
@@ -177,6 +184,8 @@ std::shared_ptr<Law> createShapeGenerator3DLaw(Singular& author) {
     spawn.spawnShapeKindPath = PropertyPath::parse("activeShapeKind");
     law->setActionModel(spawn);
 
+    // ConceptRegistry::add is first-wins and silent, so this is a no-op when a
+    // world save has already brought its own concept-shape-3d.
     if (!ConceptRegistry::instance().find("concept-shape-3d")) {
         auto concept = std::make_shared<ObjectConcept>("Shape Generator 3D Cube");
         concept->setConceptId("concept-shape-3d");
@@ -198,6 +207,9 @@ struct CreatorToolSeed {
     const char* active3DMode;
 };
 
+// Console Create is the developer bypass (tool-create-3d-law), not the
+// spawn law. shape-generator-3d-law is registered separately and arms
+// on spawnLawArmed. Identifiers are slugs law text can address.
 constexpr CreatorToolSeed kCreatorTools[] = {
     {"tool-create-3d-law",     "Tool: Create 3D",          "Create"},
     {"tool-select-3d-law",     "Tool: Select 3D",          "Select"},
@@ -211,27 +223,12 @@ constexpr CreatorToolSeed kCreatorTools[] = {
     {"tool-graph-3d-law",      "Tool: Graph",              "Graph"},
 };
 
-struct ManualDistanceKeySeed {
-    const char* identifier;
-    const char* name;
-    int keyCode;
-    const char* offsetPath;
-    double delta;
-};
-
-constexpr ManualDistanceKeySeed kManualDistanceKeys[] = {
-    {"tool-manual-offset-right-law",    "Tool: Manual offset right",    GLFW_KEY_RIGHT,     "manualOffset.x",  0.1},
-    {"tool-manual-offset-left-law",     "Tool: Manual offset left",     GLFW_KEY_LEFT,      "manualOffset.x", -0.1},
-    {"tool-manual-offset-up-law",       "Tool: Manual offset up",       GLFW_KEY_PAGE_UP,   "manualOffset.y",  0.1},
-    {"tool-manual-offset-down-law",     "Tool: Manual offset down",     GLFW_KEY_PAGE_DOWN, "manualOffset.y", -0.1},
-    {"tool-manual-offset-forward-law",  "Tool: Manual offset forward",  GLFW_KEY_UP,        "manualOffset.z",  0.1},
-    {"tool-manual-offset-backward-law", "Tool: Manual offset backward", GLFW_KEY_DOWN,      "manualOffset.z", -0.1},
-};
-
 } // namespace
 
 const char* creatorToolLawIdForMode(const std::string& active3DMode) {
     if (active3DMode.empty()) return "";
+    // Console Clay button writes Mode3D::Sculpt ("Sculpt") or Clay ("Clay");
+    // one first mover offices both labels.
     if (active3DMode == "Clay") return "tool-sculpt-3d-law";
     for (const auto& seed : kCreatorTools) {
         if (active3DMode == seed.active3DMode) return seed.identifier;
@@ -240,6 +237,8 @@ const char* creatorToolLawIdForMode(const std::string& active3DMode) {
 }
 
 void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
+    // Spawn law is its own being (spawnLawArmed). Console Create is
+    // tool-create-3d-law in the table below — do not fold them together.
     if (!laws.find("shape-generator-3d-law")) {
         auto spawn = createShapeGenerator3DLaw(author);
         laws.add(spawn);
@@ -254,37 +253,6 @@ void syncRegisterCreatorTools(LawManager& laws, Singular& author) {
         law->setConditionModel(ConditionNode::compare(
             "active3DMode", ConditionNode::Op::Eq,
             PropertyValue(std::string(seed.active3DMode))));
-        laws.add(law);
-    }
-
-    syncRegisterManualDistanceKeyLaws(laws, author);
-}
-
-void syncRegisterManualDistanceKeyLaws(LawManager& laws, Singular& author) {
-    CreationChannel* channel = CreationChannel::find(laws);
-    if (!channel) return;
-
-    // GameUpdate's retired pre-law path nudged by 0.1 once per frame while a
-    // key was held. Keep the raw key level on InteractionChannel (Sense) and
-    // put the meaning here (Decide): six authored, named, set-down-able Laws.
-    for (const auto& seed : kManualDistanceKeys) {
-        if (laws.find(seed.identifier)) continue;
-        auto law = std::make_shared<FirstMoverLaw>(seed.name);
-        law->setLawIdentifier(seed.identifier);
-        law->addAuthor(author);
-        law->setActivation(Law::Activation::WhileTrue);
-        law->addTarget(*channel);
-        law->setConditionModel(ConditionNode::all({
-            ConditionNode::compare("placementMode", ConditionNode::Op::Eq,
-                                   PropertyValue(std::string("ManualDistance"))),
-            ConditionNode::compare("active3DMode", ConditionNode::Op::Eq,
-                                   PropertyValue(std::string("Create"))),
-            ConditionNode::compare("@interaction-channel.keyDown", ConditionNode::Op::Eq,
-                                   PropertyValue(true)),
-            ConditionNode::compare("@interaction-channel.lastKeyCode", ConditionNode::Op::Eq,
-                                   PropertyValue(seed.keyCode))
-        }));
-        law->setActionModel(ActionNode::add(seed.offsetPath, seed.delta));
         laws.add(law);
     }
 }

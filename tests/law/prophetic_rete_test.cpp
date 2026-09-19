@@ -82,9 +82,15 @@ int main() {
         std::fprintf(stderr, "prophetic_rete_test: glfwInit failed\n");
         return 1;
     }
-    // CPU-only test. LawManager::tick uses GLFW's timer, so initialize GLFW,
-    // but do not create a window/context: headless CI has no display and none
-    // of the Prophetic analysis below renders anything.
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "prophetic_rete_test", nullptr, nullptr);
+    if (!window) {
+        std::fprintf(stderr, "prophetic_rete_test: no GL context\n");
+        glfwTerminate();
+        return 1;
+    }
+    glfwMakeContextCurrent(window);
+
     // ======================================================================
     // A. The abstract value lattice.
     // ======================================================================
@@ -302,9 +308,8 @@ int main() {
             for (const auto& r : f.reads) assert(r.satisfying.isTop());
         }
 
-        // Overlaps consults machinery this walk cannot name, so the whole
-        // law's reads go opaque rather than half-enumerated. So does an
-        // UNTYPED Related, whose Rete node wakes on every state fact.
+        // Overlaps and Related consult machinery this walk cannot name, so
+        // the whole law's reads go opaque rather than half-enumerated.
         {
             Prophetic::LawFacts f;
             f.lawId = "toucher";
@@ -314,19 +319,8 @@ int main() {
         {
             Prophetic::LawFacts f;
             f.lawId = "related";
-            Prophetic::analyzeCondition(ConditionNode::related("", ""), f);
-            assert(f.opaqueReads);
-        }
-        // A TYPED Related is legible (2026-09-14, FORMATION_RETE.md §8 rung 4):
-        // it hears its relation type by root and the Relation's own fields by
-        // name. Behaviour guarded by related_prophetic_legibility_test.
-        {
-            Prophetic::LawFacts f;
-            f.lawId = "related-typed";
             Prophetic::analyzeCondition(ConditionNode::related("holds", ""), f);
-            assert(!f.opaqueReads);
-            assert(f.readRoots.count("holds"));
-            assert(f.readNames.count("type") && f.readNames.count("directed"));
+            assert(f.opaqueReads);
         }
 
         // A quantifier's inner reads are about the INSTANCES, and are filed as
@@ -543,122 +537,7 @@ int main() {
         std::puts("  G. prophecy OK");
     }
 
-
-    // ======================================================================
-    // H. Branch-stable provenance + the pairwise Prophetic relevance graph.
-    //    This is the modern descendant of the old ActionNode->Beta pointer:
-    //    preserve WHICH authored branch wrote/read, prove possible pairings
-    //    ahead of time, and leave runtime/reified routing to Formation Rete.
-    // ======================================================================
-    {
-        // Two Any arms must remain distinguishable even though the effective
-        // demand algebra correctly says neither path is required overall.
-        const ConditionNode condition = ConditionNode::any({
-            ConditionNode::compare("hp", ConditionNode::Op::Gt, PropertyValue(100.0)),
-            ConditionNode::compare("mood", ConditionNode::Op::Eq,
-                                   PropertyValue(std::string("bright")))
-        });
-        Prophetic::LawFacts conditionFacts;
-        conditionFacts.lawId = "reader";
-        Prophetic::analyzeCondition(condition, conditionFacts);
-        assert(conditionFacts.branchReads.size() == 2);
-
-        std::map<std::string, std::string> conditionIds;
-        for (const auto& r : conditionFacts.branchReads) conditionIds[r.path] = r.branchId;
-        assert(conditionIds.count("hp") && conditionIds.count("mood"));
-        assert(conditionIds["hp"] != conditionIds["mood"]);
-
-        // Stable means authored-text stable, not pointer/vector stable:
-        // recompilation and a save/load-shaped JSON round trip must preserve it.
-        const ConditionNode conditionRoundTrip = ConditionNode::fromJson(condition.toJson());
-        Prophetic::LawFacts conditionRoundTripFacts;
-        conditionRoundTripFacts.lawId = "reader";
-        Prophetic::analyzeCondition(conditionRoundTrip, conditionRoundTripFacts);
-        std::map<std::string, std::string> conditionRoundTripIds;
-        for (const auto& r : conditionRoundTripFacts.branchReads) {
-            conditionRoundTripIds[r.path] = r.branchId;
-        }
-        assert(conditionIds == conditionRoundTripIds);
-
-        const ActionNode action = ActionNode::sequence({
-            ActionNode::set("hp", PropertyValue(500.0)),
-            ActionNode::set("mood", PropertyValue(std::string("bright")))
-        });
-        Prophetic::LawFacts actionFacts;
-        actionFacts.lawId = "writer";
-        Prophetic::analyzeAction(action, actionFacts);
-        assert(actionFacts.writes.size() == 2);
-        assert(actionFacts.writes[0].branchId != actionFacts.writes[1].branchId);
-
-        const ActionNode actionRoundTrip = ActionNode::fromJson(action.toJson());
-        Prophetic::LawFacts actionRoundTripFacts;
-        actionRoundTripFacts.lawId = "writer";
-        Prophetic::analyzeAction(actionRoundTrip, actionRoundTripFacts);
-        assert(actionRoundTripFacts.writes.size() == actionFacts.writes.size());
-        for (std::size_t i = 0; i < actionFacts.writes.size(); ++i) {
-            assert(actionFacts.writes[i].path == actionRoundTripFacts.writes[i].path);
-            assert(actionFacts.writes[i].branchId == actionRoundTripFacts.writes[i].branchId);
-        }
-
-        // Pairwise proof: hp := 500 can feed hp > 100; hp := 1 provably cannot.
-        auto high = std::make_shared<Law>("high-writer");
-        high->setLawIdentifier("high-writer");
-        high->setActionModel(ActionNode::set("hp", PropertyValue(500.0)));
-
-        auto low = std::make_shared<Law>("low-writer");
-        low->setLawIdentifier("low-writer");
-        low->setActionModel(ActionNode::set("hp", PropertyValue(1.0)));
-
-        auto branchReader = std::make_shared<Law>("branch-reader");
-        branchReader->setLawIdentifier("branch-reader");
-        branchReader->setConditionModel(condition);
-
-        Prophetic::Index relevance;
-        relevance.rebuild({high, low, branchReader});
-        assert(relevance.relevanceComplete());
-
-        bool sawHighHp = false;
-        bool sawLowHp = false;
-        for (const auto& edge : relevance.relevanceEdges()) {
-            if (edge.readerLawId != "branch-reader" || edge.path != "hp") continue;
-            if (edge.writerLawId == "high-writer") sawHighHp = true;
-            if (edge.writerLawId == "low-writer") sawLowHp = true;
-        }
-        assert(sawHighHp);
-        assert(!sawLowHp);
-
-        // Opacity is GLOBAL, not local. One unreadable condition invalidates
-        // every relevance edge rather than inviting a dangerously partial graph.
-        auto opaqueReader = std::make_shared<Law>("opaque-reader");
-        opaqueReader->setLawIdentifier("opaque-reader");
-        opaqueReader->setConditionModel(ConditionNode::overlaps("@event.object"));
-
-        Prophetic::Index opaqueGraph;
-        opaqueGraph.rebuild({high, branchReader, opaqueReader});
-        assert(!opaqueGraph.relevanceComplete());
-        assert(opaqueGraph.relevanceEdges().empty());
-
-        // The same incompleteness must suppress cross-law "no lawful driver"
-        // findings. Before this pass only opaque WRITES were checked here,
-        // despite PROPHETIC_RETE.md requiring a complete index.
-        auto impossibleReader = std::make_shared<Law>("impossible-reader");
-        impossibleReader->setLawIdentifier("impossible-reader");
-        impossibleReader->setConditionModel(
-            ConditionNode::compare("hp", ConditionNode::Op::Gt, PropertyValue(100.0)));
-
-        Prophetic::Index incompleteFinding;
-        incompleteFinding.rebuild({low, impossibleReader, opaqueReader});
-        assert(!incompleteFinding.complete());
-        for (const auto& u : incompleteFinding.unreachable()) {
-            assert(u.selfImpossible);
-        }
-
-        const nlohmann::json report = relevance.toJson();
-        assert(report["relevanceComplete"] == true);
-        assert(!report["relevanceEdges"].empty());
-        std::puts("  H. branch provenance / relevance graph OK");
-    }
-
+    glfwDestroyWindow(window);
     glfwTerminate();
     std::puts("prophetic_rete_test: ALL OK");
     return 0;

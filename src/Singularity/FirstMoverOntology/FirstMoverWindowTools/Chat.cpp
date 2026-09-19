@@ -8,7 +8,14 @@ void Chat::addMessage(const std::string& sender, const std::string& text) {
     messages.push_back({sender, text, std::time(nullptr)});
 }
 
-void Chat::renderContent() {
+void Chat::renderUI(bool* p_open) {
+    ImGui::SetNextWindowBgAlpha(0.75f); // semi-transparent background
+    // Begin window
+    if (!ImGui::Begin("\xF0\x9F\x92\xAC Chat", p_open, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::End();
+        return;
+    }
+
     // Reserve space for messages plus input
     const float footerHeight = ImGui::GetFrameHeightWithSpacing();
     ImVec2 avail = ImGui::GetContentRegionAvail();
@@ -44,15 +51,6 @@ void Chat::renderContent() {
             inputBuffer[0] = '\0';
         }
     }
-}
 
-void Chat::renderUI(bool* p_open) {
-    ImGui::SetNextWindowBgAlpha(0.75f); // semi-transparent background
-    // Begin window
-    if (!ImGui::Begin("\xF0\x9F\x92\xAC Chat", p_open, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::End();
-        return;
-    }
-    renderContent();
     ImGui::End();
 }

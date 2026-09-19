@@ -2,7 +2,6 @@ import json
 import threading
 import time
 import os
-from collections import deque
 from typing import Dict, Any, Optional
 from websockets.sync.client import connect
 from websockets.exceptions import ConnectionClosed, WebSocketException
@@ -25,20 +24,10 @@ class CppBridge:
         
         # In-memory cached snapshot of world state
         self.current_state: Dict[str, Any] = self._create_initial_state()
-        # True only after the C++ vessel has supplied an actual state_sync.
-        # Synthetic fallback state remains useful to the legacy Studio, but
-        # observational clients must never present it as live engine truth.
-        self.has_engine_snapshot = False
         
         # Event callbacks
         self.on_state_sync_callbacks = []
         self.on_event_callbacks = []
-
-        # Bounded engine-event history for read-only observational clients
-        # (for example, the public portfolio's live Earthcall explorer).
-        # This cache never grants control; it is only a projection of events
-        # the C++ vessel already emitted through the bridge.
-        self.recent_events = deque(maxlen=50)
         
         # Statistics
         self.last_connected_time = None
@@ -181,7 +170,6 @@ class CppBridge:
                     self.current_state = data
                     self.current_state["engine_connected"] = True
                     self.current_state["last_sync_time"] = time.time()
-                    self.has_engine_snapshot = True
                 
                 for cb in list(self.on_state_sync_callbacks):
                     try:
@@ -190,11 +178,6 @@ class CppBridge:
                         print(f"[CppBridge] State callback error: {e}")
                         
             elif msg_type == "engine_event" or "event" in data:
-                event_record = dict(data)
-                event_record.setdefault("received_at", time.time())
-                with self.lock:
-                    self.recent_events.append(event_record)
-
                 for cb in list(self.on_event_callbacks):
                     try:
                         cb(data)
@@ -375,62 +358,4 @@ class CppBridge:
             "messages_sent": self.messages_sent,
             "messages_received": self.messages_received,
             "uptime": (time.time() - self.last_connected_time) if self.last_connected_time and self.connected else 0
-        }
-
-    def get_portfolio_state(self) -> Dict[str, Any]:
-        """Return a bounded, read-only projection of live Earthcall state.
-
-        This intentionally exposes only information suitable for a public
-        observational surface. Mutation stays on Earthcall's governed command
-        paths; the portfolio endpoint never forwards writes.
-        """
-        with self.lock:
-            state = dict(self.current_state)
-            connected = self.connected
-            has_engine_snapshot = self.has_engine_snapshot
-            recent_events = [dict(evt) for evt in self.recent_events]
-
-        object_keys = (
-            "id", "name", "type", "shapeKind", "spatialKind", "position",
-            "rotation", "dimensions", "materialId", "color", "renderMode",
-        )
-        law_keys = (
-            "identifier", "name", "enabled", "activation", "scope", "trigger",
-            "triggers", "conditionDescription", "actionDescription",
-            "requiredProperties", "conditionModel", "actionModel",
-        )
-
-        objects = []
-        laws = []
-        active_zone = {"index": None, "name": "", "id": ""}
-
-        if has_engine_snapshot:
-            for obj in state.get("objects", []):
-                if isinstance(obj, dict):
-                    objects.append({k: obj[k] for k in object_keys if k in obj})
-
-            for law in state.get("laws", []):
-                if isinstance(law, dict):
-                    laws.append({k: law[k] for k in law_keys if k in law})
-
-            active_zone = {
-                "index": state.get("active_zone_index", 0),
-                "name": state.get("active_zone_name", ""),
-                "id": state.get("active_zone_id", ""),
-            }
-
-        return {
-            "schema": "earthcall.portfolio.v1",
-            "timestamp": state.get("timestamp", time.time()),
-            "connected": connected,
-            "has_engine_snapshot": has_engine_snapshot,
-            "stale": has_engine_snapshot and not connected,
-            "active_zone": active_zone,
-            "objects": objects,
-            "laws": laws,
-            "recent_events": recent_events[-20:],
-            "bridge": {
-                "messages_received": self.messages_received,
-                "messages_sent": self.messages_sent,
-            },
         }

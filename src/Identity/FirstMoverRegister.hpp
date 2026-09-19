@@ -2,7 +2,6 @@
 
 #include "Identity/Claim.hpp"
 #include "Identity/SingularId.hpp"
-#include "ConstructedBeing/Singular/Singular.hpp"
 #include "json.hpp"
 
 #include <filesystem>
@@ -36,7 +35,7 @@ namespace Identity {
 //   * Scope cannot escape the save root, whatever the pattern says.
 // ---------------------------------------------------------------------------
 
-class FirstMover : public Singular {
+class FirstMover {
 public:
     enum class Kind { Person, Model };
 
@@ -59,25 +58,12 @@ public:
     // means the mover loads quarantined per 8c: present, listed, inert.
     Claim grant;
 
-    std::string getIdentifier() const override {
-        const std::string s = id.toString();
-        if (!s.empty()) return s;
-        return displayName.empty() ? "first-mover-unnamed" : displayName;
-    }
-
-    std::string propId() const { return id.toString(); }
-    std::string propKind() const { return kind == Kind::Person ? "person" : "model"; }
-    std::string propGrantedBy() const { return grantedBy.toString(); }
-
     // Rebuilds the exact subject bytes the grant must cover, so a scope cannot
     // be widened after the fact without invalidating the signature.
     std::string grantPredicate() const;
 
     nlohmann::json toJson() const;
     static FirstMover fromJson(const nlohmann::json& j);
-
-protected:
-    void buildProperties() override;
 };
 
 class FirstMoverRegister {

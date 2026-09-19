@@ -117,7 +117,7 @@ int main() {
     std::vector<unsigned char> green(4 * 4 * 4);           // 4×4 RGBA8, all green
     for (size_t i = 0; i < green.size(); i += 4) { green[i]=0; green[i+1]=255; green[i+2]=0; green[i+3]=255; }
     RenderMaterial painted; painted.baseColor = glm::vec3(1, 1, 1); painted.specular = 0;
-    painted.albedoPixels = green.data(); painted.albedoWidth = 4; painted.albedoHeight = 4;
+    painted.albedoPixels = green.data(); painted.albedoSize = 4;
     r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
     r.drawMesh(quadAt(0.0f), painted);
     r.endFrame();

@@ -29,9 +29,6 @@ public:
     // Broadcasts the current live world state snapshot to all connected clients.
     void broadcastStateSync();
 
-    // Drains and executes pending mutating actions on the engine's main thread.
-    void pollMainThread();
-
     // Checks if the server is running
     bool isRunning() const;
 

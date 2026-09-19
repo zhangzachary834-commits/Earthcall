@@ -1,6 +1,6 @@
 class ElementalToolHandler;
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
-#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/Menu.hpp"
+#include "Relation/Formation/Menu/Menu.hpp"
 #include <glm/glm.hpp>
 #pragma once
 
@@ -68,15 +68,6 @@ public:
     bool isMouseLeftPressedLast() const { return _mouseLeftPressedLast; }
     void setMouseLeftPressedLast(bool v) { _mouseLeftPressedLast = v; }
 
-    bool isMouseLeftJustPressed() const { return _mouseLeftJustPressed; }
-    void noteMouseLeftJustPressed() { _mouseLeftJustPressed = true; }
-    bool consumeMouseLeftJustPressed() {
-        const bool p = _mouseLeftJustPressed;
-        _mouseLeftJustPressed = false;
-        return p;
-    }
-    void clearMouseLeftJustPressed() { _mouseLeftJustPressed = false; }
-
     bool& devToolsWindowOpen() { return _devToolsWindowOpen; }
     bool& performanceMetricsWindowOpen() { return _performanceMetricsWindowOpen; }
         
@@ -87,8 +78,7 @@ public:
     template<typename T> bool is2DToolDragging(T type) const { return _is2DToolDragging; }
     bool getUseLegacy2DTools() const { return _useLegacy2DTools; }
     
-    Ourverse& getOurverse() { return _ourverse; }
-    Ourverse& getWorld() { return getOurverse(); }
+    Ourverse& getWorld() { return _world; }
     Menu& getMainMenu() { return _mainMenu; }
     
     void fuseObjects(Object* A, Object* B);
@@ -127,15 +117,9 @@ private:
     double _worldTime = 0.0;
 
     bool _mouseLeftPressedLast = false;
-    bool _mouseLeftJustPressed = false;
     bool _devToolsWindowOpen = false;
     bool _performanceMetricsWindowOpen = false;
     bool _creationConsoleOpen = false;
-    // Native mirror of fixture-creator-console-visibility-law.enabled.
-    // Writers: F8/menu/tool entry points, IDEDockManager's bool*, and the
-    // Engine::update fixture bridge. Readers: stepCreationTools, IDE docking,
-    // Creator Console rendering/previews. The fixture Law is the legible truth;
-    // this bit remains only because ImGui/docking requires a native bool*.
     bool _creatorConsoleOpen = false;
     bool _showKeymapWindow = false;
     bool _showChatWindow = false;
@@ -189,7 +173,7 @@ public:
     // Missing 2D state
     const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
     
-    Ourverse _ourverse;
+    Ourverse _world;
     int _patchCtrlIndex = 0;
     float _currentColor[4] = {1,1,1,1};
     struct DummyBrush { bool showCursor=false; bool cursorVisible=false; float previewSize=1.0f; }; DummyBrush _brush;
@@ -206,7 +190,6 @@ public:
     bool getUsePressureSimulation() const { return false; }
     void render();
     void renderNametags();
-    void renderKeymapContent();
     void onFramebufferSize(int width, int height);
     Menu _mainMenu;
     

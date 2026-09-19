@@ -51,7 +51,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
-#include "support/test_harness.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -597,16 +596,16 @@ void checkFrameShape() {
     // Every phase of this frame is specified to be linear in the population,
     // so 1.0 is the aspiration everywhere and 1.15 is the slack allowed for
     // cache effects and allocator behaviour at these sizes.
-    struct Phase { const char* key; const char* name; double PopulationCost::* field; double aspiration; };
+    struct Phase { const char* key; const char* name; double PopulationCost::* field; };
     const Phase phases[] = {
-        {"shape.exponent.frame",     "whole frame",         &PopulationCost::total, 1.60},
-        {"shape.exponent.zone",      "Zone::update",        &PopulationCost::zone, 1.15},
-        {"shape.exponent.z_ground",  "  groundScan",        &PopulationCost::groundScan, 1.15},
-        {"shape.exponent.z_rot",     "  rotation",          &PopulationCost::rotation, 1.15},
-        {"shape.exponent.z_auto",    "  automation",        &PopulationCost::automation, 1.60},
-        {"shape.exponent.z_phys",    "  physics",           &PopulationCost::physics, 1.15},
-        {"shape.exponent.relations", "formation relations", &PopulationCost::relations, 1.15},
-        {"shape.exponent.law",       "LawManager::tick",    &PopulationCost::law, 1.60},
+        {"shape.exponent.frame",     "whole frame",         &PopulationCost::total},
+        {"shape.exponent.zone",      "Zone::update",        &PopulationCost::zone},
+        {"shape.exponent.z_ground",  "  groundScan",        &PopulationCost::groundScan},
+        {"shape.exponent.z_rot",     "  rotation",          &PopulationCost::rotation},
+        {"shape.exponent.z_auto",    "  automation",        &PopulationCost::automation},
+        {"shape.exponent.z_phys",    "  physics",           &PopulationCost::physics},
+        {"shape.exponent.relations", "formation relations", &PopulationCost::relations},
+        {"shape.exponent.law",       "LawManager::tick",    &PopulationCost::law},
     };
 
     for (const Phase& phase : phases) {
@@ -623,7 +622,7 @@ void checkFrameShape() {
                         phase.name, dearest, static_cast<int>(populations.back()));
             continue;
         }
-        judgeExponent(phase.key, k, phase.aspiration,
+        judgeExponent(phase.key, k, 1.15,
                       std::string(phase.name) + " grows as n^k (linear 1.0, quadratic 2.0), k");
     }
 }
@@ -650,15 +649,6 @@ void checkFrameShape() {
 namespace {
 
 void checkQuiescence(Zone& zone, LawManager& lawManager, double& worldTime) {
-    printf("\n--- RUNNING QUIESCENCE ---\n");
-    for (int i=0; i<3; i++) {
-        double t0 = glfwGetTime();
-        lawManager.tick();
-        double t1 = glfwGetTime();
-        printf("Tick %d: %.3f ms\n", i, (t1-t0)*1000.0);
-    }
-    return;
-
     std::printf("\n2. QUIESCENCE — a world nobody is touching\n");
 
     const size_t populationBefore = zone.getOwnedObjects().size();
@@ -760,7 +750,7 @@ void checkSteadyFrame(Zone& zone, LawManager& lawManager, double& worldTime) {
     char msg[256];
     std::snprintf(msg, sizeof(msg),
                   "no drift: last quarter of the run costs %.2fx the first quarter", drift);
-    expectTimed(drift <= 2.5 || s.lastQuarterMedian <= 0.2 * std::max(1.0, gCalibration), msg);
+    expectTimed(drift <= 1.4 || s.lastQuarterMedian <= 0.2 * std::max(1.0, gCalibration), msg);
 }
 
 // ===========================================================================
@@ -778,79 +768,7 @@ void checkLoadTime(const std::string& filename, double loadMs, size_t objects) {
 
 } // namespace
 
-#include <GLFW/glfw3.h>
-
-
-// ===========================================================================
-// 5. BATCH MANIFESTATION — does region elevation and property mutation avoid
-//    Rete fact explosion and lag spikes?
-// ===========================================================================
-namespace {
-
-void checkBatchManifestation(Zone& zone, LawManager& lawManager, double& worldTime) {
-    std::printf("\n--- RUNNING BATCH MANIFESTATION ---\n");
-    
-    // 1. Create a macro image
-    auto macro = std::make_shared<Object>("image.test_batch");
-    auto mat = std::make_shared<Material>("material.test_batch");
-    mat->initFaceTextures(1);
-    // 256x256 image
-    mat->faceTextures[0].width = 256;
-    mat->faceTextures[0].height = 256;
-    mat->faceTextures[0].pixels.resize(256 * 256 * 4, 255);
-    macro->setMaterialId(mat->getIdentifier());
-    zone.addObject(macro);
-    // register material so resolveRenderMaterial doesn't fail if needed, though this is a headless test
-    // We can't directly add to materials here without accessing Universe, but Universe::instance().setProvider handles it.
-    
-    // 2. Elevate a large region
-    OntoMath::Piecewise selector;
-    selector.inputVariable = "u";
-    OntoMath::Piecewise::Piece regionPiece;
-    regionPiece.hasHi = true;
-    regionPiece.hi = 0.5;
-    regionPiece.includeHi = false;
-    regionPiece.mathNode = OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(1.0));
-    selector.pieces.push_back(regionPiece);
-    
-    std::string reason;
-    bool elevated = macro->elevateSurfaceRegionProperty("authored.left_half", 0, selector, reason);
-    if (!elevated) {
-        std::printf("FAIL: ElevatePixels failed: %s\n", reason.c_str());
-        gFailures++;
-        return;
-    }
-    lawManager.tick(); // Flush the creation and elevation events from the change feed!
-    
-    // 3. Mutate the region property many times
-    double maxMs = 0.0;
-    for (int i=0; i<10; i++) {
-        double t0 = glfwGetTime();
-        
-        PropertyValue color(glm::vec3(0.0f, static_cast<float>(i)/10.0f, 1.0f));
-        macro->setDynamicProperty("authored.left_half", color);
-        lawManager.tick();
-        
-        double t1 = glfwGetTime();
-        double ms = (t1 - t0) * 1000.0;
-        std::printf("Iteration %d: %.3f ms\n", i, ms);
-        if (i > 0 && ms > maxMs) maxMs = ms; // Skip first iteration for maxMs
-        else if (i == 0) maxMs = ms; // wait, let's just see what it prints
-    }
-    
-    std::printf("Max write-batch tick time: %.3f ms\n", maxMs);
-    if (maxMs > 5.0) { // Should easily be < 5.0 ms
-        std::printf("FAIL: Batch manifestation lag exceeds sub-frame bounds!\n");
-        gFailures++;
-    } else {
-        std::printf("PASS: Batch manifestation executes in sub-frame bounds.\n");
-    }
-}
-
-} // namespace
-
 int main(int argc, char** argv) {
-    glfwInit();
     // Line-buffered: this test prints as it goes and is the one test in the
     // suite long enough that a Person will want to watch it work.
     std::setvbuf(stdout, nullptr, _IOLBF, 0);
@@ -879,14 +797,13 @@ int main(int argc, char** argv) {
     }
     const bool defaultWorld = filename.empty();
     if (defaultWorld) filename = resolveRepoFile("saves/worlds/chess_app.json");
-    // This test pointed SaveSystem straight at the real saves/ tree with no
-    // backup/restore, the same unguarded shape found in
-    // zone_boot_hydration_relations_test 2026-09-09 (it had corrupted the
-    // real saves/zones/Chess/zone.json — 4,076 lines grew to 8,792 — from
-    // being run directly, repeatedly, outside ctest). Guarding this one too
-    // rather than waiting to find it the same way; lives for the rest of
-    // main() so it covers the loadState() call below.
-    TestSupport::RealSaveTreeGuard saveGuard(filename);
+    {
+        const auto p = std::filesystem::absolute(filename);
+        if (p.parent_path().filename() == "worlds" &&
+            p.parent_path().parent_path().filename() == "saves") {
+            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
+        }
+    }
 
     gCalibration = calibrate() / kReferenceCalibrationMs;
     loadBaseline();
@@ -983,7 +900,6 @@ int main(int argc, char** argv) {
 
     checkQuiescence(*active, lawManager, worldTime);
     checkSteadyFrame(*active, lawManager, worldTime);
-    checkBatchManifestation(*active, lawManager, worldTime);
     checkLoadTime(filename, loadMs, active->getOwnedObjects().size());
 
     // Was the machine steady while all of that was measured?

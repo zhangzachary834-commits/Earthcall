@@ -110,243 +110,167 @@ std::string PropertyPath::toString() const {
 // allocations, no string comparisons. When a Law fires on 500 targets,
 // this runs 500 times with ZERO heap allocations.
 // ============================================================================
-PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
-    ResolvedSlot slot;
-    if (segments.empty() || startIndex >= segments.size()) return slot;
+Property* PropertyPath::resolve(Singular& root, std::string* trailingComponent,
+                                Singular** owner, std::size_t startIndex) const {
+    if (trailingComponent) trailingComponent->clear();
+    if (owner) *owner = nullptr;
+    if (segments.empty()) return nullptr;
 
-    Singular* currentOwner = &root;
-    Property* currentRegistered = nullptr;
-    PropertyValue* currentDynamic = nullptr;
+    Singular* current = &root;
     std::size_t i = startIndex;
+    while (current && i < segments.size()) {
+        // Longest dotted-name match against this Singular's registry.
+        // Use pre-calculated StringIds for zero-allocation lookup.
+        Property* found = nullptr;
+        std::size_t consumed = 0;
 
-    while (i < segments.size()) {
-        if (currentOwner) {
-            Property* foundReg = nullptr;
-            std::size_t consumed = 0;
-            const auto& idsFromHere = _joinedIds[i];
-            
-            PropertyValue* foundDyn = nullptr;
-            for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
-                Earthcall::StringId id = idsFromHere[runLength - 1];
-                if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
-                    foundDyn = candidate;
-                    consumed = runLength;
-                }
+        // Scan the pre-calculated IDs for this starting index
+        const auto& idsFromHere = _joinedIds[i];
+        for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
+            Earthcall::StringId id = idsFromHere[runLength - 1];
+            if (Property* candidate = current->findProperty(id)) {
+                found = candidate;
+                consumed = runLength;
             }
-
-            if (!foundDyn) {
-                for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
-                    Earthcall::StringId id = idsFromHere[runLength - 1];
-                    if (Property* candidate = currentOwner->findProperty(id)) {
-                        foundReg = candidate;
-                        consumed = runLength;
-                    }
-                }
-            }
-
-            if (!foundReg && !foundDyn) return slot;
-
-            i += consumed;
-            slot.owner = currentOwner;
-            if (foundDyn) {
-                slot.dynamicKey = Earthcall::StringInterner::resolve(_joinedIds[i - consumed][consumed - 1]);
-            }
-            currentRegistered = foundReg;
-            currentDynamic = foundDyn;
-            currentOwner = nullptr;
-
-        } else if (currentDynamic) {
-            std::shared_ptr<PropertyDict>* pDict = std::get_if<std::shared_ptr<PropertyDict>>(currentDynamic);
-            if (pDict && *pDict) {
-                auto it = (*pDict)->elements.find(segments[i]);
-                if (it != (*pDict)->elements.end()) {
-                    currentDynamic = &it->second;
-                    currentRegistered = nullptr;
-                    i++;
-                } else {
-                    return slot;
-                }
-            } else {
-                std::shared_ptr<PropertyList>* pList = std::get_if<std::shared_ptr<PropertyList>>(currentDynamic);
-                if (pList && *pList) {
-                    try {
-                        std::size_t idx = std::stoull(segments[i]);
-                        if (idx < (*pList)->elements.size()) {
-                            currentDynamic = &(*pList)->elements[idx];
-                            currentRegistered = nullptr;
-                            i++;
-                        } else {
-                            return slot;
-                        }
-                    } catch (...) {
-                        return slot;
-                    }
-                } else {
-                    break;
-                }
-            }
-        } else {
-            return slot;
         }
 
-        if (i == segments.size()) {
-            slot.prop = currentRegistered;
-            slot.dynamicSlot = currentDynamic;
-            return slot;
+        if (!found) return nullptr;
+        i += consumed;
+
+        if (owner) *owner = current;
+        if (i == segments.size()) return found;
+
+        // Descend into a nested Singular.
+        if (Singular* next = found->asSingular()) {
+            current = next;
+            continue;
         }
 
-        PropertyValue val;
-        if (currentRegistered) {
-            if (Singular* next = currentRegistered->asSingular()) {
-                currentOwner = next;
-                currentRegistered = nullptr;
-                currentDynamic = nullptr;
-                continue;
-            }
-            val = currentRegistered->value();
-        } else if (currentDynamic) {
-            val = *currentDynamic;
-        }
-
-        if (Singular** nextSingular = std::get_if<Singular*>(&val)) {
-            if (*nextSingular) { currentOwner = *nextSingular; currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Object** nextObj = std::get_if<Object*>(&val)) {
-            if (*nextObj) { currentOwner = reinterpret_cast<Singular*>(*nextObj); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Relation** nextRel = std::get_if<Relation*>(&val)) {
-            if (*nextRel) { currentOwner = reinterpret_cast<Singular*>(*nextRel); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Formation** nextForm = std::get_if<Formation*>(&val)) {
-            if (*nextForm) { currentOwner = reinterpret_cast<Singular*>(*nextForm); currentRegistered = nullptr; currentDynamic = nullptr; }
-        }
-
-        if (i == segments.size() - 1 && std::holds_alternative<glm::vec3>(val)) {
+        // Trailing vec3 component ("position.y").
+        if (i == segments.size() - 1 && trailingComponent &&
+            std::holds_alternative<glm::vec3>(found->value())) {
             const std::string& c = segments[i];
             if (isVec3Component(c)) {
-                slot.prop = currentRegistered;
-                slot.dynamicSlot = currentDynamic;
-                slot.trailingComponent = c;
-                return slot;
+                *trailingComponent = c;
+                return found;
             }
         }
+        return nullptr;
     }
-    return slot;
+    return nullptr;
 }
 
 PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
-    ResolvedSlot slot = resolve(root, startIndex);
-    
-    if (!slot.prop && !slot.dynamicSlot) {
+    std::string component;
+    Property* property = resolve(root, &component, nullptr, startIndex);
+    if (!property) {
         if (segments.size() - startIndex == 1) {
-            if (root.getDynamicProperty(segments[startIndex], out)) return PathResult::Ok;
+            if (root.getDynamicProperty(segments[startIndex], out)) {
+                return PathResult::Ok;
+            }
         }
         return PathResult::NoSuchProperty;
     }
 
-    PropertyValue v;
-    if (slot.prop) v = slot.prop->value();
-    else if (slot.dynamicSlot) v = *slot.dynamicSlot;
-
-    if (slot.trailingComponent.empty()) {
+    PropertyValue v = property->value();
+    if (component.empty()) {
         out = std::move(v);
         return !std::holds_alternative<std::monostate>(out) ? PathResult::Ok : PathResult::NoSuchProperty;
     }
 
     glm::vec3* vec = std::get_if<glm::vec3>(&v);
     if (!vec) return PathResult::BadComponent;
-    out = PropertyValue(*componentOf(*vec, slot.trailingComponent));
+    out = PropertyValue(*componentOf(*vec, component));
     return PathResult::Ok;
 }
 
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
-    ResolvedSlot slot = resolve(root, startIndex);
+    std::string component;
+    Singular* owner = nullptr;
+    Property* property = resolve(root, &component, &owner, startIndex);
 
-    const auto announce = [&](PathResult result, Property* prop, Singular* on, const std::string& fallbackName = "") {
-        if (result == PathResult::Ok && on) {
-            Singular::notifyPropertyChanged(on, prop ? prop->name() : fallbackName);
+    // ------------------------------------------------------------------
+    // EVERY successful write announces itself, from here.
+    //
+    // PropertyRef::set was the only place in the engine that called
+    // notifyPropertyChanged — so a property backed by anything ELSE was
+    // invisible to the change feed the Rete's dirty tracking is built on.
+    // That is not a corner: Object's `position` and `rotation` live in the
+    // transform matrix and are ComputedProperty; shape parameters, face
+    // colours, patch controls and every Relation property go through
+    // hand-written Property bridges; authored properties live in the dynamic
+    // map. None of them ever marked a fact dirty. A WhileTrue law watching
+    // `position.y` therefore matched only beings that ALREADY satisfied it
+    // when the network first met them, and went permanently deaf to anything
+    // that moved afterwards — silently, because the law was still registered,
+    // still enabled, still compiled, and its alpha memory simply stayed empty.
+    //
+    // The fix belongs HERE rather than in each Property subclass: this is the
+    // one seam every path-addressed write passes through, whatever backs the
+    // slot, so a new bridge cannot forget to announce itself. PropertyRef
+    // keeps its own notify for typed set() calls that never touch a path; a
+    // duplicate notification is harmless (markFactDirty is idempotent).
+    //
+    // What this still does NOT catch, stated plainly: a direct C++ setter
+    // (`obj.setPosition(...)`) writes the transform without going through the
+    // property vocabulary at all. That was always outside the property layer's
+    // reach — it is the boundary, not an oversight — and the per-frame world
+    // seeding is what keeps such writes from being lost entirely.
+    // ------------------------------------------------------------------
+    const auto announce = [&](PathResult result, Property* prop, Singular* on) {
+        if (result == PathResult::Ok && prop && on) {
+            Singular::notifyPropertyChanged(on, prop->name());
         }
         return result;
     };
 
-        if (!slot.prop && !slot.dynamicSlot) {
+    if (!property) {
         if (segments.size() - startIndex == 1) {
             PropertyValue cur;
-            if (root.getDynamicProperty(segments[startIndex], cur) && propertyValuesEquivalent(cur, v)) {
+            if (root.getDynamicProperty(segments[startIndex], cur) &&
+                propertyValuesEquivalent(cur, v)) {
                 return PathResult::Unchanged;
             }
-            if (root.setDynamicProperty(segments[startIndex], v)) {
-                return PathResult::Ok; // setDynamicProperty already called notifyPropertyChanged
-            }
-            return PathResult::TypeMismatch;
+            root.setDynamicProperty(segments[startIndex], v);   // announces from there
+            return PathResult::Ok;
         }
         return PathResult::NoSuchProperty;
     }
 
-    if (slot.trailingComponent.empty()) {
-        PropertyValue currentVal = slot.prop ? slot.prop->value() : *slot.dynamicSlot;
-        if (propertyValuesEquivalent(currentVal, v)) return PathResult::Unchanged;
-        
-        if (slot.prop) {
-            if (slot.prop->setValue(v)) return announce(PathResult::Ok, slot.prop, slot.owner);
-            double n = 0.0;
-            PropertyValue coerced;
-            if (propertyValueToNumber(v, n) && coerceLike(currentVal, n, coerced)) {
-                if (propertyValuesEquivalent(currentVal, coerced)) return PathResult::Unchanged;
-                if (slot.prop->setValue(coerced)) return announce(PathResult::Ok, slot.prop, slot.owner);
+    if (component.empty()) {
+        if (propertyValuesEquivalent(property->value(), v)) return PathResult::Unchanged;
+        if (property->setValue(v)) return announce(PathResult::Ok, property, owner);
+        // Arithmetic coercion retry: match the alternative the slot holds.
+        double n = 0.0;
+        PropertyValue coerced;
+        if (propertyValueToNumber(v, n) && coerceLike(property->value(), n, coerced)) {
+            if (propertyValuesEquivalent(property->value(), coerced)) {
+                return PathResult::Unchanged;
             }
-            if (currentVal.index() != v.index()) return PathResult::TypeMismatch;
-            return PathResult::ReadOnly;
-                        } else if (slot.dynamicSlot) {
-            double n = 0.0;
-            PropertyValue coerced;
-            bool coerceSuccess = propertyValueToNumber(v, n) && coerceLike(*slot.dynamicSlot, n, coerced);
-            const PropertyValue& valToWrite = coerceSuccess ? coerced : v;
-
-            if (propertyValuesEquivalent(*slot.dynamicSlot, valToWrite)) return PathResult::Unchanged;
-
-            if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
-                if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), valToWrite)) {
-                    return PathResult::Ok;
-                }
-            } else {
-                *slot.dynamicSlot = valToWrite;
-                if (!slot.dynamicKey.empty()) {
-                    slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
-                }
-                return PathResult::Ok;
-            }
-            return PathResult::ReadOnly;
+            if (property->setValue(coerced)) return announce(PathResult::Ok, property, owner);
         }
+        // If setValue fails, we'll assume it's because the property rejected it, likely read-only or type mismatch.
+        // For now, if types could coerce, it's ReadOnly. If not, it's TypeMismatch.
+        if (property->value().index() != v.index()) return PathResult::TypeMismatch;
+        return PathResult::ReadOnly;
     }
 
-    // Component write
+    // Component write: read the whole vec3, mutate one lane, write back whole
+    // (so setters like Object::setPosition run their full side effects).
     double n = 0.0;
-    if (!propertyValueToNumber(v, n)) return PathResult::TypeMismatch;
-    
-    PropertyValue whole = slot.prop ? slot.prop->value() : *slot.dynamicSlot;
+    if (!propertyValueToNumber(v, n)) {
+        return PathResult::TypeMismatch;
+    }
+    PropertyValue whole = property->value();
     glm::vec3* vec = std::get_if<glm::vec3>(&whole);
-    if (!vec) return PathResult::BadComponent;
-    
-    float& lane = *componentOf(*vec, slot.trailingComponent);
+    if (!vec) {
+        return PathResult::BadComponent;
+    }
+    float& lane = *componentOf(*vec, component);
     if (std::fabs(static_cast<double>(lane) - n) <= 1e-6 * std::max(1.0, std::fabs(n))) {
         return PathResult::Unchanged;
     }
     lane = static_cast<float>(n);
-    
-    if (slot.prop) {
-        if (slot.prop->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, slot.prop, slot.owner);
-        return PathResult::ReadOnly;
-            } else if (slot.dynamicSlot) {
-        if (slot.dynamicSlot == slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey))) {
-            if (slot.owner->setDynamicProperty(Earthcall::StringInterner::intern(slot.dynamicKey), PropertyValue(*vec))) {
-                return PathResult::Ok;
-            }
-        } else {
-            *slot.dynamicSlot = PropertyValue(*vec);
-            if (!slot.dynamicKey.empty()) {
-                slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
-            }
-            return PathResult::Ok;
-        }
-        return PathResult::ReadOnly;
-    }
-    return PathResult::NoSuchProperty;
+    if (property->setValue(PropertyValue(*vec))) return announce(PathResult::Ok, property, owner);
+    return PathResult::ReadOnly;
 }

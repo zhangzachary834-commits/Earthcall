@@ -33,11 +33,30 @@ void emitNode(const ActionNode& node, NativeBytecodeVM::Bytecode& code) {
             code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
             break;
         }
+        case ActionNode::Kind::Lerp: {
+            Earthcall::StringId pathId = node.path.fullId();
+            uint32_t valIdx = code.constants.size();
+            code.constants.push_back(node.operand);
+            uint32_t factorIdx = code.constants.size();
+            code.constants.push_back(PropertyValue(node.factor));
+
+            // R[0] = loadProp
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadProp, 0, 0, pathId.value});
+            // R[1] = constant (target)
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 1, 0, valIdx});
+            // R[2] = constant (factor)
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 2, 0, factorIdx});
+            // R[0] = Lerp(R[0], R[1], R[2])
+            code.instructions.push_back({NativeBytecodeVM::Opcode::Lerp, 0, 1, 2});
+            // StoreProp
+            code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
+            break;
+        }
         case ActionNode::Kind::Scale: {
             Earthcall::StringId pathId = node.path.fullId();
             uint32_t valIdx = code.constants.size();
             code.constants.push_back(node.operand);
-            
+
             // R[0] = loadProp
             code.instructions.push_back({NativeBytecodeVM::Opcode::LoadProp, 0, 0, pathId.value});
             // R[1] = constant
@@ -48,20 +67,6 @@ void emitNode(const ActionNode& node, NativeBytecodeVM::Bytecode& code) {
             code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
             break;
         }
-        case ActionNode::Kind::Lerp: {
-            Earthcall::StringId pathId = node.path.fullId();
-            uint32_t targetIdx = code.constants.size();
-            code.constants.push_back(node.operand);
-            uint32_t factorIdx = code.constants.size();
-            code.constants.push_back(PropertyValue(node.factor));
-
-            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadProp, 0, 0, pathId.value});
-            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 1, 0, targetIdx});
-            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 2, 0, factorIdx});
-            code.instructions.push_back({NativeBytecodeVM::Opcode::Lerp, 0, 1, 2});
-            code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
-            break;
-        }
         case ActionNode::Kind::Sequence:
         case ActionNode::Kind::Parallel: {
             for (const auto& child : node.children) {
@@ -69,9 +74,27 @@ void emitNode(const ActionNode& node, NativeBytecodeVM::Bytecode& code) {
             }
             break;
         }
-        default:
+
+        case ActionNode::Kind::Drive:
+        case ActionNode::Kind::Spawn:
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow:
+        case ActionNode::Kind::Publish:
+        case ActionNode::Kind::Create:
+        case ActionNode::Kind::AddProperty:
+        case ActionNode::Kind::RemoveProperty:
+        case ActionNode::Kind::AddElement:
+        case ActionNode::Kind::RemoveElement:
+        case ActionNode::Kind::Destroy:
+        case ActionNode::Kind::Synthesize:
+        case ActionNode::Kind::PlayAudio:
+        case ActionNode::Kind::AuthorZone:
+        case ActionNode::Kind::AddRelation:
             // Unimplemented for now in Phase 1 (Bytecode compiler skeleton)
-            // Complex nodes fallback to C++ execution or NoOp
+            code.instructions.push_back({NativeBytecodeVM::Opcode::NoOp, 0, 0, 0});
+            break;
+
+        default:
             break;
     }
 }
@@ -124,84 +147,64 @@ bool NativeBytecodeVM::execute(const Bytecode& code, Singular& target) {
 
             case Opcode::Add: {
                 double lhs = 0.0, rhs = 0.0;
-                propertyValueToNumber(_registers[ip->src1], lhs);
-                propertyValueToNumber(_registers[ip->src2], rhs);
+                if (std::holds_alternative<double>(_registers[ip->src1])) {
+                    lhs = std::get<double>(_registers[ip->src1]);
+                }
+                if (std::holds_alternative<double>(_registers[ip->src2])) {
+                    rhs = std::get<double>(_registers[ip->src2]);
+                }
                 _registers[ip->dst] = PropertyValue(lhs + rhs);
-                break;
-            }
-
-            case Opcode::Lerp: {
-                double current = 0.0, targetValue = 0.0, blend = 0.0;
-                propertyValueToNumber(_registers[ip->dst], current);
-                propertyValueToNumber(_registers[ip->src1], targetValue);
-                propertyValueToNumber(_registers[ip->src2], blend);
-                _registers[ip->dst] = PropertyValue(current + (targetValue - current) * blend);
-                break;
-            }
-
-            case Opcode::Sub: {
-                double lhs = 0.0, rhs = 0.0;
-                propertyValueToNumber(_registers[ip->src1], lhs);
-                propertyValueToNumber(_registers[ip->src2], rhs);
-                _registers[ip->dst] = PropertyValue(lhs - rhs);
                 break;
             }
 
             case Opcode::Mul: {
                 double lhs = 0.0, rhs = 0.0;
-                propertyValueToNumber(_registers[ip->src1], lhs);
-                propertyValueToNumber(_registers[ip->src2], rhs);
+                if (std::holds_alternative<double>(_registers[ip->src1])) {
+                    lhs = std::get<double>(_registers[ip->src1]);
+                }
+                if (std::holds_alternative<double>(_registers[ip->src2])) {
+                    rhs = std::get<double>(_registers[ip->src2]);
+                }
                 _registers[ip->dst] = PropertyValue(lhs * rhs);
                 break;
             }
 
-            case Opcode::CmpEq: {
-                double lhs = 0.0, rhs = 0.0;
-                bool eq = false;
-                if (propertyValueToNumber(_registers[ip->src1], lhs) &&
-                    propertyValueToNumber(_registers[ip->src2], rhs)) {
-                    eq = (lhs == rhs);
-                } else {
-                    eq = propertyValueUnchanged(_registers[ip->src1], _registers[ip->src2]);
+            case Opcode::Lerp: {
+                double tgt = 0.0, current = 0.0, factor = 0.0;
+                if (std::holds_alternative<double>(_registers[ip->dst])) {
+                    current = std::get<double>(_registers[ip->dst]);
                 }
-                _registers[ip->dst] = PropertyValue(eq ? 1.0 : 0.0);
+                if (std::holds_alternative<double>(_registers[ip->src1])) {
+                    tgt = std::get<double>(_registers[ip->src1]);
+                }
+                if (std::holds_alternative<double>(_registers[ip->src2])) {
+                    factor = std::get<double>(_registers[ip->src2]);
+                }
+                _registers[ip->dst] = PropertyValue(current + (tgt - current) * factor);
                 break;
             }
 
-            case Opcode::CmpGt: {
-                double lhs = 0.0, rhs = 0.0;
-                propertyValueToNumber(_registers[ip->src1], lhs);
-                propertyValueToNumber(_registers[ip->src2], rhs);
-                _registers[ip->dst] = PropertyValue(lhs > rhs ? 1.0 : 0.0);
+            case Opcode::Drive:
+            case Opcode::Spawn:
+            case Opcode::Map:
+            case Opcode::Flow:
+            case Opcode::Publish:
+            case Opcode::Create:
+            case Opcode::AddProperty:
+            case Opcode::RemoveProperty:
+            case Opcode::AddElement:
+            case Opcode::RemoveElement:
+            case Opcode::Destroy:
+            case Opcode::PlayAudio:
+            case Opcode::AuthorZone:
+            case Opcode::AddRelation:
+            case Opcode::Synthesize:
+            case Opcode::Sub:
+            case Opcode::CmpEq:
+            case Opcode::CmpGt:
+            case Opcode::BranchFalse:
+            case Opcode::Jump:
                 break;
-            }
-
-            case Opcode::BranchFalse: {
-                bool isTrue = false;
-                if (std::holds_alternative<bool>(_registers[ip->src1])) {
-                    isTrue = std::get<bool>(_registers[ip->src1]);
-                } else {
-                    double val = 0.0;
-                    if (propertyValueToNumber(_registers[ip->src1], val)) {
-                        isTrue = (val != 0.0);
-                    }
-                }
-                if (!isTrue) {
-                    if (ip->src2 < code.instructions.size()) {
-                        ip = code.instructions.data() + ip->src2;
-                        continue;
-                    }
-                }
-                break;
-            }
-
-            case Opcode::Jump: {
-                if (ip->src2 < code.instructions.size()) {
-                    ip = code.instructions.data() + ip->src2;
-                    continue;
-                }
-                break;
-            }
 
             case Opcode::Halt:
                 return true;

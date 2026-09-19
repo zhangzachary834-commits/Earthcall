@@ -26,8 +26,7 @@ struct RenderMaterial {
     // FaceTexture CPU buffer. WebGPU can't use a GL id, so it uploads these. Non-
     // owning — valid only for the duration of the draw call. null = untextured.
     const unsigned char* albedoPixels = nullptr;
-    int albedoWidth = 0;
-    int albedoHeight = 0;
+    int albedoSize = 0;         // width == height == albedoSize (square RGBA8)
     bool doubleSided = false;   // open surfaces (Bezier patches): light both faces.
                                 // GL → two-sided light model; WebGPU → cull none.
 };
@@ -42,8 +41,7 @@ struct RenderMaterial {
 struct FaceAlbedo {
     unsigned int         handle = 0;
     const unsigned char* pixels = nullptr;
-    int                  width  = 0;
-    int                  height = 0;
+    int                  size   = 0; // width == height (square RGBA8)
 };
 
 // Resolve an Object's material identifier against the global MaterialManager and

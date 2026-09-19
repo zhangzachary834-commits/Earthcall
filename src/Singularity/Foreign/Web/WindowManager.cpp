@@ -60,15 +60,7 @@ void ExternalWindow::setTransparency(float alpha) {
 
 void ExternalWindow::setPosition(int x, int y) {
     std::cout << "🪟 Setting position to (" << x << ", " << y << ") for: " << _config.name << std::endl;
-#ifdef _WIN32
-    if (_hwnd) {
-        SetWindowPos(_hwnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE);
-    }
-#elif defined(__APPLE__)
-    if (_windowRef) {
-        std::cout << "🪟 Setting macOS window position for: " << _config.name << std::endl;
-    }
-#endif
+    // TODO: Actually set window position
 }
 
 void ExternalWindow::setSize(int width, int height) {

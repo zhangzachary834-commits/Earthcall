@@ -3,9 +3,6 @@
 #include "imgui.h"
 #include "GLFW/glfw3.h"
 
-#include "Singularity/Input/Interaction/InteractionChannel.hpp"
-
-
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -67,29 +64,16 @@ std::vector<TestSaveRow> scanTestSaves() {
 }
 } // namespace
 
-void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine) {
+void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* engine) {
     if (!window || !engine) return;
+    if (!open || !*open) return;
 
-    if (ImGui::CollapsingHeader("Interaction Diagnostics", ImGuiTreeNodeFlags_DefaultOpen)) {
-        if (engine && engine->getLawManager()) {
-            if (auto* chan = Singularity::Input::InteractionChannel::find(*engine->getLawManager())) {
-                ImGui::Text("Hovered ID: %s", chan->hoveredId.c_str());
-                ImGui::Text("Pressed ID: %s", chan->pressedId.c_str());
-                ImGui::Text("Left Down: %s", chan->leftDown ? "true" : "false");
-                ImGui::Text("Dragging: %s", chan->dragging ? "true" : "false");
-                ImGui::Text("_liveLeftDown: %s", chan->liveLeftDown() ? "true" : "false");
-                ImGui::Text("_pendingLeftEdges: %zu", chan->pendingLeftEdges().size());
-                ImGui::Text("WantCaptureMouse: %s", ImGui::GetIO().WantCaptureMouse ? "true" : "false");
+    // Placement sensing and the L-key that arms the shape-generator law
+    // used to live here, above the `*open` return. They now run in
+    // Rendering::stepCreationTools from Engine::update — this window is
+    // the test-save loader, not a first-mover step hiding in a render.
 
-                int rawState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-                ImGui::Text("glfwGetMouseButton (RAW): %s", rawState == GLFW_PRESS ? "PRESS" : "RELEASE");
-            } else {
-                ImGui::TextDisabled("InteractionChannel not found.");
-            }
-        }
-    }
-
-    if (ImGui::CollapsingHeader("Test World Saves")) {
+    if (ImGui::Begin("Developer: Test World Saves", open)) {
         static std::vector<TestSaveRow> testSaves;
         static bool scanned = false;
         if (!scanned) {
@@ -146,15 +130,6 @@ void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine) {
             ImGui::Separator();
             ImGui::TextWrapped("%s", report.c_str());
         }
-    }
-}
-
-void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* engine) {
-    if (!window || !engine) return;
-    if (!open || !*open) return;
-
-    if (ImGui::Begin("Developer Tools", open)) {
-        renderDeveloperToolsContent(window, engine);
     }
     ImGui::End();
 }

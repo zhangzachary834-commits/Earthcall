@@ -76,7 +76,7 @@ void AudioSystem::shutdown() {
         if (_state->hasMusic) {
             ma_sound_uninit(&_state->musicSound);
         }
-        for (const auto& instance : _state->activeSpatialSounds) {
+        for (auto instance : _state->activeSpatialSounds) {
             ma_sound_uninit(instance->sound);
             delete instance->sound;
             if (instance->waveform) {
@@ -92,7 +92,7 @@ void AudioSystem::shutdown() {
         }
         _state->activeSpatialSounds.clear();
 
-        for (const auto& instance : _state->activeEmitters) {
+        for (auto instance : _state->activeEmitters) {
             ma_sound_uninit(instance->sound);
             delete instance->sound;
             if (instance->waveform) {
@@ -266,7 +266,7 @@ void AudioSystem::tick() {
 
         // Find if we already have it
         SoundEmitterInstance* instance = nullptr;
-        for (const auto& inst : _state->activeEmitters) {
+        for (auto inst : _state->activeEmitters) {
             if (inst->subject == obj) {
                 instance = inst;
                 break;

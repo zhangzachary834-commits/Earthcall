@@ -40,4 +40,4 @@ fi
 echo
 echo "Earthcall WASM is available at http://localhost:8000/web_ui/wasm.html"
 echo "Keep this Terminal window open while using the app."
-exec python3 "$ROOT/scripts/serve_wasm.py" 8000 .
+exec python3 "$ROOT/scripts/serve_wasm.py" 8000 ..
