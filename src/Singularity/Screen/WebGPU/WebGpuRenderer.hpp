@@ -97,6 +97,7 @@ public:
     bool usesHeightGridDda() const override {
         return kHeightGridDdaTraversalVerified && _heightGridDdaEnabled;
     }
+    void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -219,6 +220,14 @@ private:
         // Derived solely from SDF tree structure. Compute it when this memo is
         // compiled rather than re-walking the AST for every draw of a static field.
         bool isProvenHeightfield = false;
+
+        // Parameter-dependent conservative spatial proof cache. It is derived
+        // substrate only; every unknown region remains represented by the proxy.
+        uint32_t rangeParameterRevision = 0xffffffff;
+        glm::vec3 rangeAuthoredExtent{0.0f};
+        geom::SdfRangeHierarchy rangeHierarchy;
+        geom::SdfZeroSetProxy rangeProxy;
+        bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
 
@@ -248,6 +257,12 @@ private:
     // Keep the verification latch next to the capability query so callers can
     // avoid building a grid that this build is forbidden to consume.
     static constexpr bool kHeightGridDdaTraversalVerified = false;
+
+    // First activation rung for the generic conservative range hierarchy.
+    // OFF by default until native on/off image/depth parity is witnessed.
+    bool _sdfRangeProxyEnabled = false;
+    static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
