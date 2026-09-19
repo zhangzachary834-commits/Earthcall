@@ -55,6 +55,19 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertNotIn("private_internal_field", projected["laws"][0])
 
 
+    def test_synthetic_fallback_is_not_exposed_as_live_world(self):
+        bridge = CppBridge()
+        bridge.connected = False
+
+        projected = bridge.get_portfolio_state()
+
+        self.assertFalse(projected["has_engine_snapshot"])
+        self.assertFalse(projected["connected"])
+        self.assertEqual(projected["objects"], [])
+        self.assertEqual(projected["laws"], [])
+        self.assertEqual(projected["active_zone"]["name"], "")
+
+
 class _FakeBridge:
     def get_portfolio_state(self):
         return {
