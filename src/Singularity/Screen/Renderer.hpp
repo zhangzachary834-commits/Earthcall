@@ -178,6 +178,11 @@ public:
     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
     // is honoured.
     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
+    // True only when this backend can actually consume a supplied HeightGrid in
+    // the current build/state. This is substrate capability, distinct from the
+    // authored enable bit: a quarantined optimization must not cause callers to
+    // build derived data that no renderer can use.
+    virtual bool usesHeightGridDda() const { return false; }
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 
