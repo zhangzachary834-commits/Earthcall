@@ -89,6 +89,11 @@ public:
     // cryptographic SingularId does not create a new house. The string overload
     // remains for legacy/tests and refuses ambiguous duplicate primaries.
     bool ensureHomeZone(Person& person);
+    // Kernel admission invariant: every live Person must have >= 1 primary
+    // Home. This is existential, not uniqueness: two primaries are an
+    // unresolved policy conflict, but still satisfy "at least one".
+    std::size_t primaryHomeCount(const Person& person) const;
+    bool enforcePrimaryHomeInvariant(Person& person);
     Zone* findPrimaryHome(Person& person);
     const Zone* findPrimaryHome(const Person& person) const;
     void ensureHomeZone(const std::string& personId);
