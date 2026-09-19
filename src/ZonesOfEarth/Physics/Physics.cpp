@@ -786,12 +786,26 @@ namespace Physics {
                 
                 // Also check if obj has an "in-category" relation to s
                 bool inCategory = false;
-                for (const auto* rel : Universe::instance().relations()) {
-                    if (rel && rel->type == "in-category" && 
-                        rel->aId() == obj.getIdentifier() &&
-                        rel->bId() == s) {
-                        inCategory = true;
-                        break;
+                std::vector<Relation*> edges;
+                if (!Universe::instance().relationsInvolving(obj, edges)) {
+                    edges = Universe::instance().relations();
+                }
+                const Singular* objPtr = &obj;
+                std::string objId;
+                bool haveObjId = false;
+                for (const auto* rel : edges) {
+                    if (rel && rel->type == "in-category") {
+                        bool aMatches = false;
+                        if (rel->a()) {
+                            aMatches = (rel->a() == objPtr);
+                        } else {
+                            if (!haveObjId) { objId = obj.getIdentifier(); haveObjId = true; }
+                            aMatches = (!objId.empty() && rel->aId() == objId);
+                        }
+                        if (aMatches && rel->bId() == s) {
+                            inCategory = true;
+                            break;
+                        }
                     }
                 }
                 if (inCategory) { ok = true; break; }

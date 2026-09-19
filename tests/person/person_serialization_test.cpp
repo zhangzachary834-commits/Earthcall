@@ -5,6 +5,7 @@
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
+#include "../support/test_save_helper.hpp"
 
 #include <cassert>
 #include <chrono>
