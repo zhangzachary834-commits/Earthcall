@@ -10,6 +10,8 @@ def _portfolio_allowed_origins():
         return {origin.strip() for origin in configured.split(",") if origin.strip()}
     return {
         "https://zhangzachary834-commits.github.io",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:5005",
@@ -27,31 +29,8 @@ def _portfolio_json(payload, status=200):
         response.headers["Vary"] = "Origin"
         response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-        # Chromium's Private Network Access preflight uses this header when a
-        # secure public page reaches an explicitly allowed loopback service.
         if request.headers.get("Access-Control-Request-Private-Network") == "true":
             response.headers["Access-Control-Allow-Private-Network"] = "true"
-    return response
-
-PORTFOLIO_ALLOWED_ORIGINS = {
-    "https://zhangzachary834-commits.github.io",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-}
-
-def _portfolio_origin_allowed(origin):
-    return not origin or origin in PORTFOLIO_ALLOWED_ORIGINS
-
-def _portfolio_cors_response(response, origin):
-    if origin and origin in PORTFOLIO_ALLOWED_ORIGINS:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Vary"] = "Origin"
-        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-        # Chrome Private Network Access preflights for public HTTPS -> loopback.
-        response.headers["Access-Control-Allow-Private-Network"] = "true"
     return response
 
 def get_bridge():
@@ -60,29 +39,24 @@ def get_bridge():
 
 @api_bp.route('/portfolio/live', methods=['GET', 'OPTIONS'])
 def get_portfolio_live():
-    """Read-only live projection for Zachary's public portfolio.
-
-    This route is intentionally observational. It exposes no mutation verb and
-    only answers approved web origins (plus origin-less local diagnostics).
-    """
+    """Read-only live projection for Zachary's public portfolio."""
     origin = request.headers.get("Origin", "")
     if not _portfolio_origin_allowed(origin):
-        return jsonify({"error": "Origin not allowed"}), 403
+        return _portfolio_json({"error": "Origin not allowed"}, 403)
 
     if request.method == "OPTIONS":
-        return _portfolio_cors_response(make_response("", 204), origin)
+        return _portfolio_json({"status": "ok"})
 
     bridge = get_bridge()
     if not bridge:
-        response = jsonify({
+        return _portfolio_json({
             "schema": "earthcall.portfolio.v1",
             "connected": False,
+            "has_engine_snapshot": False,
             "error": "Bridge not initialized",
-        })
-        response.status_code = 503
-        return _portfolio_cors_response(response, origin)
+        }, 503)
 
-    return _portfolio_cors_response(jsonify(bridge.get_portfolio_state()), origin)
+    return _portfolio_json(bridge.get_portfolio_state())
 
 @api_bp.route('/status', methods=['GET'])
 def get_status():
