@@ -1289,7 +1289,6 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
                                   root.prim == geom::SdfPrim::Expr &&
                                   root.mathNode &&
-                                  astContainsNoise(*root.mathNode) &&
                                   isDifferentiableAst(*root.mathNode));
 
     // Follow compile()'s exact traversal order so parameter indices remain a
@@ -1347,7 +1346,6 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
                                   root.prim == geom::SdfPrim::Expr &&
                                   root.mathNode &&
-                                  astContainsNoise(*root.mathNode) &&
                                   isDifferentiableAst(*root.mathNode));
 
     std::string evalGradFunc;
