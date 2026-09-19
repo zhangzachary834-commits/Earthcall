@@ -4,6 +4,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Person/Person.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <glm/glm.hpp>
@@ -76,8 +77,12 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
 
     std::string filepath = filepathOverride;
     if (filepath.empty()) {
-        std::filesystem::create_directories("saves/tests");
-        filepath = "saves/tests/" + test_name + ".json";
+        std::filesystem::path root = SaveSystem::saveRoot().empty()
+            ? std::filesystem::path("saves")
+            : std::filesystem::path(SaveSystem::saveRoot());
+        std::filesystem::path testsFolder = root / "tests";
+        std::filesystem::create_directories(testsFolder);
+        filepath = (testsFolder / (test_name + ".json")).string();
     } else {
         std::filesystem::create_directories(std::filesystem::path(filepath).parent_path());
     }
