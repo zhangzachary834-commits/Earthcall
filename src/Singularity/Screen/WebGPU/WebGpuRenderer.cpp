@@ -10,6 +10,7 @@
 #include <cstring>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -1045,11 +1046,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             prog = &memo->prog;
             sp = memo->sp;
             isProvenHeightfield = memo->isProvenHeightfield;
+            mutableFrameStats().sdfProgramCacheHits++;
             needsCompile = false;
         }
     }
     if (needsCompile) {
+        mutableFrameStats().sdfProgramCacheMisses++;
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
+        mutableFrameStats().sdfProgramCompiles++;
+        mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
             std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", localProg.error.c_str());
             return;
@@ -1297,7 +1302,9 @@ void WebGpuRenderer::flushSdfDraws() {
         
         const auto& params = _sdfParamsBatches[sp];
         
-        auto pAlloc = bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
+        const size_t paramBytes = params.size() * sizeof(float);
+        auto pAlloc = bufferPool().suballocateStorage(params.data(), paramBytes);
+        mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: Globals and Parameters
