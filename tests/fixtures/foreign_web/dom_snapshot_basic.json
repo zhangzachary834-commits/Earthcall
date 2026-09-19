@@ -1,0 +1,114 @@
+{
+  "protocolVersion": 1,
+  "pageSessionId": "page-session.a91f4b2c",
+  "sequenceBase": 0,
+  "url": "https://example.com/test-page",
+  "rootNodeToken": "node.1",
+  "nodes": [
+    {
+      "nodeToken": "node.1",
+      "nodeType": "element",
+      "symbol": "html",
+      "parentToken": "",
+      "siblingIndex": 0,
+      "attributes": [
+        {"name": "lang", "value": "en"}
+      ]
+    },
+    {
+      "nodeToken": "node.2",
+      "nodeType": "element",
+      "symbol": "head",
+      "parentToken": "node.1",
+      "siblingIndex": 0,
+      "attributes": []
+    },
+    {
+      "nodeToken": "node.3",
+      "nodeType": "element",
+      "symbol": "title",
+      "parentToken": "node.2",
+      "siblingIndex": 0,
+      "attributes": []
+    },
+    {
+      "nodeToken": "node.4",
+      "nodeType": "text",
+      "symbol": "#text",
+      "parentToken": "node.3",
+      "siblingIndex": 0,
+      "textContent": "Test Document Title",
+      "attributes": []
+    },
+    {
+      "nodeToken": "node.5",
+      "nodeType": "element",
+      "symbol": "body",
+      "parentToken": "node.1",
+      "siblingIndex": 1,
+      "attributes": [
+        {"name": "class", "value": "theme-light"}
+      ]
+    },
+    {
+      "nodeToken": "node.6",
+      "nodeType": "element",
+      "symbol": "div",
+      "parentToken": "node.5",
+      "siblingIndex": 0,
+      "attributes": [
+        {"name": "id", "value": "container-1"},
+        {"name": "class", "value": "search-container"}
+      ]
+    },
+    {
+      "nodeToken": "node.7",
+      "nodeType": "element",
+      "symbol": "div",
+      "parentToken": "node.5",
+      "siblingIndex": 1,
+      "attributes": [
+        {"name": "id", "value": "container-2"},
+        {"name": "class", "value": "search-container"}
+      ]
+    },
+    {
+      "nodeToken": "node.8",
+      "nodeType": "element",
+      "symbol": "a",
+      "parentToken": "node.6",
+      "siblingIndex": 0,
+      "attributes": [
+        {"name": "href", "value": "https://example.com/item/1"}
+      ]
+    },
+    {
+      "nodeToken": "node.9",
+      "nodeType": "text",
+      "symbol": "#text",
+      "parentToken": "node.8",
+      "siblingIndex": 0,
+      "textContent": "First Link Result",
+      "attributes": []
+    },
+    {
+      "nodeToken": "node.10",
+      "nodeType": "element",
+      "symbol": "span",
+      "parentToken": "node.7",
+      "siblingIndex": 0,
+      "attributes": [
+        {"name": "class", "value": "badge"}
+      ]
+    },
+    {
+      "nodeToken": "node.11",
+      "nodeType": "text",
+      "symbol": "#text",
+      "parentToken": "node.10",
+      "siblingIndex": 0,
+      "textContent": "Second Result Snippet",
+      "attributes": []
+    }
+  ]
+}

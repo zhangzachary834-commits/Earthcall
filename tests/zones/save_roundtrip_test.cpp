@@ -17,6 +17,7 @@
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/SessionSemanticRoots.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
@@ -121,9 +122,23 @@ int main() {
           "saveStateWithLog wrote a report and did not refuse");
 
     const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
-    const auto ecmatterPath = sandbox / "worlds" / "roundtrip_world.ecmatter";
+    const auto legacyEcformPath = sandbox / "worlds" / "legacy_player_body.ecform";
     check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
-    check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter");
+
+    // Invariant 4 (Sol, agent intercom "Basic Pixel Changer Zone Identity
+    // Bug 9-7-26", 2026-09-09): saveStateWithLog commits matter under a
+    // content-addressed generation name coupled to the .ecform's own
+    // "matterGeneration" metadata, not a fixed "<stem>.ecmatter" name.
+    std::filesystem::path ecmatterPath;
+    {
+        std::ifstream genIn(ecformPath);
+        nlohmann::json genJ;
+        genIn >> genJ;
+        const std::string snapshotId = genJ.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
+        check(!snapshotId.empty(), "Save As names a matterGeneration");
+        ecmatterPath = sandbox / "worlds" / ("roundtrip_world." + snapshotId + ".ecmatter");
+    }
+    check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter under its generation name");
     check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
           "Save As also writes the Sanctum identity under saves/zones/");
     check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
@@ -143,6 +158,23 @@ int main() {
         }
         check(zoneObjs == 3, "zone world JSON also keeps all three spawns");
         check(j.value("currentZone", 99) == 0, "saved currentZone is the Sanctum");
+        check(j.contains(kSemanticRootsKey) &&
+                  j[kSemanticRootsKey].contains("person") &&
+                  j[kSemanticRootsKey]["person"].contains("body"),
+              "new sessions write the semantic Person root envelope");
+        check(!j.contains("person"),
+              "current sessions do not duplicate the Person root at top level");
+        check(!j.contains("playerBody"),
+              "new sessions retire the duplicate legacy playerBody writer");
+
+        // Old files carry Body directly at the session root. The current
+        // reader must keep this bridge until every authored save predates it.
+        nlohmann::json legacy = j;
+        legacy["playerBody"] = legacy[kSemanticRootsKey]["person"]["body"];
+        legacy["playerBody"]["height"] = 2.75f;
+        legacy.erase(kSemanticRootsKey);
+        std::ofstream legacyOut(legacyEcformPath);
+        legacyOut << legacy.dump(2);
     }
 
     auto listed = SaveSystem::listWorlds(SaveSystem::SaveType::WORLD);
@@ -176,6 +208,11 @@ int main() {
           "Person.position matches camera after loadState so locomotion will not snap the view");
     check(glm::distance(camera.pos, glm::vec3(4.0f, 6.0f, 8.0f)) < 1e-3f,
           "camera returns to the saved viewpoint");
+
+    player.getBody().height = 1.0f;
+    mgr.loadState(legacyEcformPath.string(), ctx);
+    check(std::fabs(player.getBody().height - 2.75f) < 1e-3f,
+          "legacy playerBody remains readable after the writer retires");
 
     player.position() = glm::vec3(50.0f, 0.0f, 50.0f);
     mgr.loadState(ecformPath.string(), ctx);

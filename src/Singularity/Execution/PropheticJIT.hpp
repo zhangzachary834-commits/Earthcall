@@ -25,6 +25,9 @@ public:
     // Determines if the host platform supports JIT (W^X memory allocation).
     static bool isSupportedOnHost();
 
+    // Creates an instance of the Prophetic JIT compiler, or a null-safe stub if unsupported.
+    static std::unique_ptr<PropheticJIT> create();
+
     // Compiles a Law to machine code. This is an asynchronous or AOT process.
     // It queries the `index` to determine if Bailout Guards can be safely dropped.
     virtual NativeLawClosure compileUnguarded(

@@ -21,7 +21,6 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "Singularity/Storage/Schema/Earthcall_generated.h"
 
-#include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <cassert>
 #include <cmath>
@@ -108,7 +107,7 @@ Object reborn(const Object& src) {
             if (!ft.pixels.empty()) {
                 auto pix_vec = builder.CreateVector(ft.pixels);
                 fts.push_back(Earthcall::Schema::CreateFaceTexture(
-                    builder, static_cast<int>(f), ft.size, pix_vec));
+                    builder, static_cast<int>(f), ft.width, pix_vec));
             }
         }
     }
@@ -213,7 +212,7 @@ Object reborn(const Object& src) {
                     int sz = ft->size();
                     if (fIdx >= 0 && fIdx < static_cast<int>(outMat->faceTextures.size()) && sz > 0) {
                         auto& oft = outMat->faceTextures[fIdx];
-                        oft.size = sz;
+                        oft.width = sz;
                         oft.pixels.assign(ft->pixels()->begin(), ft->pixels()->end());
                         oft.updateWholeGPU();
                     }
@@ -238,11 +237,11 @@ Object reborn(const Object& src) {
 } // namespace
 
 int main() {
-    if (!glfwInit()) { std::fprintf(stderr, "object_roundtrip_test: glfwInit failed\n"); return 1; }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "object_roundtrip_test", nullptr, nullptr);
-    if (!window) { std::fprintf(stderr, "object_roundtrip_test: no GL context\n"); glfwTerminate(); return 1; }
-    glfwMakeContextCurrent(window);
+    // This witness asserts semantic Object/material state, not pixels on a
+    // framebuffer. FaceTexture keeps its CPU RGBA buffer authoritative and the
+    // OpenGL renderer already refuses texture uploads when no context exists,
+    // so requiring a hidden GLFW window made this otherwise-CPU test fail on
+    // the headless macOS CI runner before reaching any assertion.
 
     // ------------------------------------------------------------------
     // 1. Pose and placement: where the object is, which way it faces, and how
@@ -424,8 +423,6 @@ int main() {
         std::printf("  material reference survives by identifier OK\n");
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::printf("object_roundtrip_test: ALL OK\n");
     return 0;
 }

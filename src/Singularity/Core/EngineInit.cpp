@@ -1,4 +1,8 @@
 #include "Person/Person.hpp"
+#include "Person/PersonDatabase.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Identity/KeyStore.hpp"
+#include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 // GameInit.cpp – Game initialisation, GLFW callbacks
@@ -10,6 +14,7 @@
 #include "../../Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.hpp"
 #include "../../../imgui/backends/imgui_impl_glfw.h"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/ShadingSystem.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/AdvancedFacePaint.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
@@ -17,6 +22,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
+#include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -28,11 +34,25 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
+#include "Singularity/Storage/StreamChannel.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
+#include "Singularity/Screen/DeveloperToolsWindow.hpp"
+#include "Singularity/Screen/CreationWindow.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <glm/glm.hpp>
+#include <cstdlib>
 #include <iostream>
 #include "CreationChannel.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
@@ -62,10 +82,62 @@ void Engine::initLogic() {
     if (!_mouseHandler) _mouseHandler = std::make_unique<MouseHandler>();
     if (!_keyboardHandler) _keyboardHandler = std::make_unique<KeyboardHandler>();
     if (!_person) {
-        Soul soul("Player");
+        Soul soul("Person");
         Body body("humanoid", "default");
         _person = std::make_unique<Person>(std::move(soul), std::move(body), "default");
+
+        // Legacy single-Person installations predate authenticated profile
+        // selection. When exactly one local profile exists, restoring it is
+        // unambiguous and lets authored-by references resolve to that actual
+        // Person. Multiple profiles are never guessed between, and a profile
+        // claiming a cryptographic personId still requires the future login /
+        // signature path rather than being trusted merely because it is a
+        // file on disk.
+        const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
+        if (profiles.size() == 1) {
+            const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
+            if (profile.is_object() && !profile.contains("personId")) {
+                personFromJson(profile, *_person);
+                std::cout << "[Init] Restored sole legacy Person profile '"
+                          << _person->getDisplayName() << "' (not logged in).\n";
+            }
+        } else if (profiles.size() > 1) {
+            std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
+                         "Person is present.\n";
+        }
     }
+#ifndef __EMSCRIPTEN__
+    // Identity migration is an explicit trust act, never an ordinary-load side
+    // effect. Set EARTHCALL_MIGRATE_PERSON_IDENTITY=1 for a deliberate one-time
+    // migration and provide EARTHCALL_KEY_PASSPHRASE to seal the private key.
+    // The migration ledger is the proof that lets a keyed Person reclaim old
+    // name-addressed Homes without making "same spelling == same Person" true.
+    if (const char* requested = std::getenv("EARTHCALL_MIGRATE_PERSON_IDENTITY");
+        requested && std::string(requested) == "1") {
+        const char* passphrase = std::getenv("EARTHCALL_KEY_PASSPHRASE");
+        if (!passphrase || !*passphrase) {
+            std::cerr << "[Init] REFUSED explicit Person identity migration: "
+                         "EARTHCALL_KEY_PASSPHRASE is not set.\n";
+        } else {
+            Identity::IdentityLedger ledger;
+            (void)ledger.load(); // absence is normal on the first migration
+            Identity::KeyStore keys;
+            const bool alreadyKeyed = _person->hasIdentity();
+            auto migrated = Identity::migratePersonIdentity(
+                *_person, ledger, keys, passphrase);
+            if (!migrated) {
+                std::cerr << "[Init] Explicit Person identity migration failed; "
+                             "continuing as the pre-migration Person.\n";
+            } else if (!alreadyKeyed) {
+                PersonDatabase::getInstance().savePerson(*_person);
+                std::cout << "[Init] Person identity migration committed for '"
+                          << _person->getDisplayName() << "' as "
+                          << migrated->abbreviated() << ".\n";
+            }
+        }
+    }
+#endif
+
     if (!_chat) _chat = std::make_unique<Chat>();
     if (!_cursorTools) _cursorTools = std::make_unique<CursorTools>();
 
@@ -105,6 +177,24 @@ void Engine::initLogic() {
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
 
+    // Register first-mover FileChannel (native computer filesystem sense and act)
+    Singularity::Storage::FileChannel::syncRegister(*_lawManager);
+
+    // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
+    Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
+
+    // Register first-mover VirtualFileSystem (VFS uniform URI scheme and in-RAM files)
+    Singularity::Storage::VirtualFileSystem::syncRegister(*_lawManager);
+
+    // Register first-mover StreamChannel (FIFO named pipes, process streams, real-time pipes)
+    Singularity::Storage::StreamChannel::syncRegister(*_lawManager);
+
+    // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
+    Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Register first-mover AudioRecorder (microphone audio capture and streaming recording)
+    Singularity::Audio::AudioRecorder::syncRegister(*_lawManager);
+
     // Inject default physics laws (gravity and kinematics)
     for (const auto& law : Physics::createDefaultPhysicsLaws()) {
         law->setEnabled(!Physics::getLegacyEngineEnabled());
@@ -130,6 +220,13 @@ void Engine::initLogic() {
         // domain, which must be the one in front of the Person (the old
         // World bag was only the active world's).
         beings.push_back(&mgr.active());
+        // The Zone's continuous FieldNode is already a Singular and a member
+        // of its Formation. It must also enter the Universe working set or a
+        // named Law path such as @Sanctum_of_Beginnings_spatialRoot.origin
+        // can never resolve it: registered state that no Law can name is still
+        // a black box (Refusal #6). This is generic Field reachability, not a
+        // special Light type; light is merely the first consumer.
+        if (auto* field = mgr.active().spatialRoot()) beings.push_back(field);
         for (const auto& obj : mgr.active().getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
@@ -160,9 +257,12 @@ void Engine::initLogic() {
         beings.push_back(_person.get());
         // Other Zones: governance geography — laws quantify over them
         // (ForAny Zone ...) and address them by name (@Home.owner) even
-        // while unloaded. Active was already pushed as the Spawn womb.
+        // while unloaded. Their continuous field beings have the same right
+        // to named Law reachability; active was already pushed above.
         for (auto& zone : mgr.zones()) {
-            if (zone.get() != &mgr.active()) beings.push_back(zone.get());
+            if (zone.get() == &mgr.active()) continue;
+            beings.push_back(zone.get());
+            if (auto* field = zone->spatialRoot()) beings.push_back(field);
         }
     });
 
@@ -178,6 +278,23 @@ void Engine::initLogic() {
     Universe::instance().setRelationRegistrar([](std::shared_ptr<Relation> relation) {
         mgr.active().formation().relations().add(std::move(relation));
     });
+    // ...and an index over that same graph, so a `Related` condition finds a
+    // being's edges in O(degree) instead of walking every relation per candidate
+    // per tick (FORMATION_RETE.md §8 rung 4). Installed AFTER setRelationProvider,
+    // which clears it. Like the provider above it reads `mgr.active()` live, so a
+    // Zone switch needs no separate invalidation — each RelationManager keeps its
+    // own index current.
+    Universe::instance().setRelationsInvolvingProvider(
+        [](const Singular& being, std::vector<Relation*>& out) {
+            mgr.active().formation().relations().relationsInvolving(being, out);
+        });
+    // ...and how many times that graph has changed, so anything derived from it
+    // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
+    // ACTIVE Zone's manager, like the two providers above, so a Zone switch
+    // shows up as a different count.
+    Universe::instance().setRelationGenerationProvider([]() {
+        return mgr.active().formation().relations().generation();
+    });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
     ShadingSystem::init();
@@ -191,15 +308,20 @@ void Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Temple of Echoes", "default"));
     mgr.addZone(std::make_shared<Zone>("Cavern of Light", "default"));
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
-    mgr.ensureHomeZone(_person->getIdentifier());
     mgr.bindLive();
-    // Home (and every other identity-stable Zone) lives in
-    // saves/zones/<id>/, not inside a session/"world" file. Hydrate
-    // after minting the boot Zones so an empty Sanctum/Home is filled
-    // from the store rather than a second copy being born.
+    mgr.bindLawManager(_lawManager.get());
+    // Read the ground before asking whether a Home must be born. Previously
+    // ensureHomeZone ran first, so a persisted Home could not possibly answer
+    // the question and a name-twin could be minted before hydration saw disk.
+    // The four kernel boot Zones already make mgr.active() valid for the
+    // Universe provider while this hydration runs.
     mgr.hydrateFromZoneStore();
-    _world.ensureGatheringZone(mgr);
-    if (_lawManager) _world.registerMetalaws(*_lawManager);
+    if (!mgr.ensureHomeZone(*_person)) {
+        std::cerr << "[Init] Primary Home continuity is unresolved; refusing to invent a "
+                     "replacement. See the preceding ownership diagnosis.\n";
+    }
+    _ourverse.ensureGatheringZone(mgr);
+    if (_lawManager) _ourverse.registerMetalaws(*_lawManager);
 
     // Initialize elemental tool handler with zone manager
     _elementalToolHandler = std::make_unique<ElementalToolHandler>(&mgr);
@@ -223,23 +345,28 @@ void Engine::initLogic() {
     });
     printf("[Init] Checkpoint B2: after menu addOption(Resume)\n");
 
-    // Menu options answer or they are not on the menu. Dead Settings/Toolbar
-    // entries were deleted rather than shown empty. Placement/Selection
-    // inspectors point at the living Create3D console, not the pre-split ones.
-    _mainMenu.addOption("Quick Save", GLFW_KEY_S, [this]() {
-        SaveContext ctx;
-        ctx.camera = getCamera();
-        ctx.mouseHandler = getMouseHandler();
-        ctx.currentColor = Rendering::getCreatorConsoleState().currentColor;
-        ctx.person = getPerson();
-        ctx.lawManager = getLawManager();
-        ctx.worldTime = &_worldTime;
-        ctx.unpackForAuthoring = mgr.getSaveLoadState().unpackForAuthoring;
-        mgr.saveStateWithLog("", ctx);
+    // The normal persistence act is Zone-native. Legacy session import/export
+    // remains reachable here only under explicit names for migration/recovery.
+    // S must never route through saveStateWithLog: doing so would silently
+    // resurrect saves/worlds as the ordinary unit of authorship.
+    _mainMenu.addOption("Save Active Zone", GLFW_KEY_S, [this]() {
+        if (!mgr.persistActiveZone()) {
+            std::cerr << "[ZoneSave] Save Active Zone refused; active Zone remains live and no legacy session was written.\n";
+        }
     });
-    _mainMenu.addOption("Save As...", GLFW_KEY_A, [this]() { mgr.getSaveLoadState().showSaveWindow = true; });
-    _mainMenu.addOption("Load", GLFW_KEY_L, [this]() { mgr.updateSaveFiles(); mgr.getSaveLoadState().showLoadWindow = true; });
-    _mainMenu.addOption("Save Manager", GLFW_KEY_G, [this]() { mgr.getSaveLoadState().showManager = true; });
+    _mainMenu.addOption("Legacy Session Export...", GLFW_KEY_A, [this]() {
+        mgr.getSaveLoadState().showSaveWindow = true;
+        ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+        mgr.updateSaveFiles();
+        mgr.getSaveLoadState().showLoadWindow = true;
+        ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Legacy Session Manager", GLFW_KEY_G, [this]() {
+        mgr.getSaveLoadState().showManager = true;
+        ensureCursorUnlocked();
+    });
     _mainMenu.addOption("Toggle Chat", GLFW_KEY_H, [this]() {
         _showChatWindow = !_showChatWindow;
         if (_showChatWindow) ensureCursorUnlocked();
@@ -300,6 +427,10 @@ void Engine::initLogic() {
     _mainMenu.addOption("Controls / Keymap", GLFW_KEY_K, [this]() {
         _showKeymapWindow = !_showKeymapWindow;
         if (_showKeymapWindow) ensureCursorUnlocked();
+    });
+    _mainMenu.addOption("Toggle IDE Mode", GLFW_KEY_F10, [this]() {
+        Rendering::IDEDockManager::instance().toggleIDEMode();
+        ensureCursorUnlocked();
     });
     _mainMenu.addOption("Character Architect Forge", GLFW_KEY_C, [this]() {
         _creatorConsoleOpen = true;
@@ -377,14 +508,6 @@ void Engine::initLogic() {
             _creatorConsoleOpen = false;
             return;
         }
-        if (_devToolsWindowOpen) {
-            _devToolsWindowOpen = false;
-            return;
-        }
-        if (_performanceMetricsWindowOpen) {
-            _performanceMetricsWindowOpen = false;
-            return;
-        }
         _mouseHandler->toggleCursorLock(_window);
     });
     _keyboardHandler->bindKey(GLFW_KEY_GRAVE_ACCENT, "toggle_dev_tools", [this]() {
@@ -410,6 +533,10 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_K, "toggle_keymap", [this]() {
         _showKeymapWindow = !_showKeymapWindow;
         if (_showKeymapWindow) ensureCursorUnlocked();
+    });
+    _keyboardHandler->bindKey(GLFW_KEY_F10, "toggle_ide_mode", [this]() {
+        Rendering::IDEDockManager::instance().toggleIDEMode();
+        ensureCursorUnlocked();
     });
     _keyboardHandler->bindKey(GLFW_KEY_1, "perspective_first_person", [this]() { _currentPerspective = PerspectiveMode::FirstPerson; });
     _keyboardHandler->bindKey(GLFW_KEY_2, "perspective_second_person", [this]() { _currentPerspective = PerspectiveMode::SecondPerson; });
@@ -463,6 +590,45 @@ void Engine::initLogic() {
     _keyboardHandler->bindKey(GLFW_KEY_UP, "manual_offset_forward", [](){});
     _keyboardHandler->bindKey(GLFW_KEY_DOWN, "manual_offset_backward", [](){});
 
+    // --------------------------------------------------------------
+    // Register dockable windows with IDEDockManager
+    // --------------------------------------------------------------
+    auto& dockMgr = Rendering::IDEDockManager::instance();
+
+    dockMgr.registerWindow("creator_console", "Creator Console [F8]", "F8",
+        Rendering::DockSlot::Left, &_creatorConsoleOpen, [this]() {
+            Rendering::renderCreatorConsoleContent(
+                _person.get(),
+                Rendering::getCreatorConsoleState().selectedObject3D,
+                mgr, _window, this);
+        });
+
+    dockMgr.registerWindow("dev_tools", "Developer Tools [`]", "`",
+        Rendering::DockSlot::Left, &_devToolsWindowOpen, [this]() {
+            Rendering::renderDeveloperToolsContent(_window, this);
+        });
+
+    dockMgr.registerWindow("creation_console", "Singular Creation [F9]", "F9",
+        Rendering::DockSlot::Left, &_creationConsoleOpen, [this]() {
+            if (_person) {
+                Rendering::renderCreationContent(*_person, nullptr, mgr.active());
+            }
+        });
+
+    dockMgr.registerWindow("perf_metrics", "Performance & Coords [F3]", "F3",
+        Rendering::DockSlot::Right, &_performanceMetricsWindowOpen, [this]() {
+            Rendering::renderPerformanceMetricsContent(this);
+        });
+
+    dockMgr.registerWindow("keymap", "Controls / Keymap [K]", "K",
+        Rendering::DockSlot::Right, &_showKeymapWindow, [this]() {
+            renderKeymapContent();
+        });
+
+    dockMgr.registerWindow("chat", "Chat [H]", "H",
+        Rendering::DockSlot::Bottom, &_showChatWindow, [this]() {
+            if (_chat) _chat->renderContent();
+        });
 }
 
 // ---------------------------------------------------------------------------
@@ -496,10 +662,15 @@ void Engine::registerCallbacks() {
             // WantCaptureMouse: observe()'s own `blind` gate is what decides
             // whether a captured frame's edges mean anything, the same way a
             // polled level would have been gated.
-            if (button == GLFW_MOUSE_BUTTON_LEFT && self->getLawManager()) {
-                if (auto* interaction =
-                        Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
-                    interaction->noteMouseButton(action == GLFW_PRESS);
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                if (action == GLFW_PRESS) {
+                    self->noteMouseLeftJustPressed();
+                }
+                if (self->getLawManager()) {
+                    if (auto* interaction =
+                            Singularity::Input::InteractionChannel::find(*self->getLawManager())) {
+                        interaction->noteMouseButton(action == GLFW_PRESS);
+                    }
                 }
             }
 

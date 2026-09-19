@@ -1,0 +1,219 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-studio-slider-sync",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "bindings": {
+            "v": "controlValue"
+          },
+          "function": {
+            "input": "v",
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.2,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 0.2,
+                "includeHi": true
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 3.0,
+                "includeHi": true,
+                "includeLo": true,
+                "lo": 0.2
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "includeLo": true,
+                "lo": 3.0
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "controlValue"
+        },
+        {
+          "bindings": {
+            "v": "controlValue"
+          },
+          "function": {
+            "input": "v",
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.2,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 0.2,
+                "includeHi": true
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 3.0,
+                "includeHi": true,
+                "includeLo": true,
+                "lo": 0.2
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "includeLo": true,
+                "lo": 3.0
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.studio.pulseRate"
+        },
+        {
+          "bindings": {
+            "v": "controlValue"
+          },
+          "function": {
+            "input": "v",
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": -1.4000000000000001,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 0.2,
+                "includeHi": true
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "v": 1.0
+                      }
+                    },
+                    {
+                      "c": -1.6,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "hi": 3.0,
+                "includeHi": true,
+                "includeLo": true,
+                "lo": 0.2
+              },
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.4,
+                      "factors": {}
+                    }
+                  ]
+                },
+                "includeLo": true,
+                "lo": 3.0
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.x"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 2,
+      "otherId": "category.control.slider",
+      "relationType": "instance-of"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-studio-slider-sync",
+    "name": "Studio: Sync Pulse Rate from Slider Value",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-studio-slider-sync",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": []
+}

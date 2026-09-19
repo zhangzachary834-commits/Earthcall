@@ -1,11 +1,11 @@
 # Authored Categories
 
 **How a Person authors a *kind* — a category, a type, a taxonomy — as a rooted acyclic
-Formation of beings, instead of as a C++ class, an enum value, or a subsystem's private
+Singular–Relation DAG, instead of as a C++ class, an enum value, or a subsystem's private
 registry. And how that unifies with the Material framework the renderer already uses.**
 
-**Status:** The mechanism exists — Formations, typed Relations, the `Related` condition,
-and `Material` as a working shallow instance of the pattern. **§9a is now done** (materials
+**Status:** The mechanism exists — authored Singulars, typed Relations, the `Related`
+condition, and `Material` as a working shallow instance of the pattern. **§9a is now done** (materials
 are Law-reachable and Law-addressable; it took two fixes, both recorded there). §9b — a
 home for category beings — remains, and is specified.
 **Companion docs:** `NEW_KIND_FRAMEWORK.md` (which refuses new C++ kinds — this document
@@ -137,24 +137,29 @@ Mover principle expressed in the taxonomy, and §7 gives the check that enforces
 
 ---
 
-## 3. The Formation is the category
+## 3. Category and Formation are distinct
 
-The root being names the category; the **Formation** is what makes it one thing rather
-than a scattering of edges. `Formation : public Relation : public Singular`, it holds
-`members` (any `Singular*`) and its own `RelationManager`, and it has `getSubformations()`
-— so a category Formation can contain sub-Formations, which is the taxonomy again at the
-whole-object level.
+Zach corrected the earlier design here: a category does **not** become a Formation merely
+because it has a root and membership edges. A category is the raw authored
+Singular–Relation DAG described in §2. Its root Object names the category and carries its
+shared data; `instance-of` and `subcategory-of` Relations supply membership and taxonomy.
+That graph is already one authored structure. It does not need to be wrapped in a
+`Formation` to become real.
 
-Practically:
+Formationhood makes a stronger topological claim. Zach's criterion is:
 
-- the category's **Formation members** are the beings classified under it;
-- the category's **relations()** hold the `instance-of` and `subcategory-of` edges;
-- the **root** is the authored Object that the Formation is *about*.
+- at least three member Singulars;
+- at least two Relations participating in the structure; and
+- the topology cannot reduce to every meaningful route passing through one Singular.
+  If `A` is presented as a central hub for `B` and `C`, a direct `B`–`C` relation is the
+  minimum witness that the members form with one another rather than merely orbiting `A`.
 
-This is what the author's sentence means by *"the Object that is authored as the Category
-that holds the Material is the root Singular/node"* — the Formation has structure, and
-one distinguished node in it carries the kind's identity and its data. A Formation
-without a root is a set; a Formation with one is a category.
+A category DAG may happen to satisfy this criterion and may then also be authored as a
+Formation. Most category roots and simple taxonomies do not. In particular, the
+`subcategory-of` hierarchy remains acyclic; Earthcall must not manufacture a
+tri-Singular cycle merely to earn the word Formation. This distinction originates in
+Zach's 2026-09-07 clarification; Codex's extension is applying it explicitly to category
+serialization and the Law Library rather than inferring Formation membership.
 
 ---
 
@@ -316,7 +321,7 @@ the architecture.
 
 ## 7. Acyclicity — the check
 
-The constraint is not enforced anywhere today; `Formation` and `RelationManager` will both
+The constraint is not enforced anywhere today; `RelationManager` will
 accept a cycle without complaint. Until the check exists in code, it is the author's
 obligation, and it belongs on the write path for `subcategory-of` edges.
 
@@ -364,7 +369,8 @@ Categories are beings and Relations; they use the formats already documented in
   }
 }
 
-// zones[i].formationRelations[] — the taxonomy and the membership
+// zones[i].formationRelations[] — the taxonomy and the membership. This historical
+// field name stores Relations; it does not assert that the category DAG is a Formation.
 { "type": "subcategory-of", "entityA": "category.chair",
   "entityB": "category.furniture", "directed": true, "weight": 1.0 },
 { "type": "instance-of",    "entityA": "chair-0037",
@@ -516,3 +522,8 @@ quietly demonstrating that this works since the day appearance stopped being a g
 constant and became a being with a name.
 
 Everything in this document is that one move, applied to meaning instead of to light.
+
+---
+
+Formation/category distinction revised by Codex on Zach's authority, session
+`01a07a4c-2b09-7f62-b975-3a23084ddeaf`, 2026-09-07 00:44 PDT.

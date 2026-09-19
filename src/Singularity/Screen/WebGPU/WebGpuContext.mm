@@ -6,6 +6,8 @@
 
 #include "Singularity/Screen/WebGPU/WebGpuContext.hpp"
 
+#include <webgpu/wgpu.h>
+
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/CAMetalLayer.h>
 
@@ -47,7 +49,11 @@ WindowContext createWindowContext(GLFWwindow* win) {
     layer.pixelFormat = MTLPixelFormatBGRA8Unorm;   // must match kSurfaceFormat
     layer.contentsScale = nswin.backingScaleFactor; // Retina: drawable in pixels
     if (@available(macOS 10.13, *)) {
-        layer.displaySyncEnabled = NO;
+        // Present at the current display's cadence. Immediate presentation can
+        // report CPU-submitted frames faster than a 60 Hz panel can show them
+        // and, more importantly, exposes partially replaced frames as visual
+        // tearing. A high-refresh external display still receives its own rate.
+        layer.displaySyncEnabled = YES;
     }
     nswin.contentView.wantsLayer = YES;
     nswin.contentView.layer = layer;
@@ -77,17 +83,47 @@ WindowContext createWindowContext(GLFWwindow* win) {
     if (!ar.adapter) { std::fprintf(stderr, "[WebGPU] no compatible adapter\n"); return ctx; }
     ctx.adapter = ar.adapter;
 
+    // GPU timestamps are optional instrumentation. Suspend them while the
+    // native frame stream is being checked for temporal coherence: they change
+    // device feature negotiation, encoder contents, and callback processing,
+    // none of which is permitted to stand between a Person and a coherent
+    // visible frame. The ordinary device is the visual baseline.
+    constexpr bool kGpuTimestampInstrumentationEnabled = false;
+    WGPUDeviceDescriptor dd = {};
+    const WGPUFeatureName timestampFeatures[] = {
+        WGPUFeatureName_TimestampQuery,
+        static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
+    };
+    const bool canTimestamp = kGpuTimestampInstrumentationEnabled &&
+        wgpuAdapterHasFeature(ctx.adapter, WGPUFeatureName_TimestampQuery) &&
+        wgpuAdapterHasFeature(
+            ctx.adapter,
+            static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders));
+    if (canTimestamp) {
+        dd.requiredFeatureCount = 2;
+        dd.requiredFeatures = timestampFeatures;
+    }
+
+    const bool requestedTimestampQueries = dd.requiredFeatureCount != 0;
     DeviceResult dr;
     WGPURequestDeviceCallbackInfo dcb = {};
     dcb.mode = WGPUCallbackMode_AllowProcessEvents;
     dcb.callback = onDevice;
     dcb.userdata1 = &dr;
-    wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);
+    wgpuAdapterRequestDevice(ctx.adapter, dd.requiredFeatureCount ? &dd : nullptr, dcb);
     while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
+    const bool timestampRequestAccepted =
+        dd.requiredFeatureCount != 0 && dr.device != nullptr;
+    if (!dr.device && dd.requiredFeatureCount) {
+        dr = {};
+        wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);
+        while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
+    }
     if (!dr.device) { std::fprintf(stderr, "[WebGPU] device request failed\n"); return ctx; }
 
     ctx.device = dr.device;
     ctx.queue = wgpuDeviceGetQueue(ctx.device);
+    ctx.timestampQueries = requestedTimestampQueries && timestampRequestAccepted;
     return ctx;
 }
 
@@ -105,11 +141,14 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     cfg.usage = WGPUTextureUsage_RenderAttachment;
     cfg.width = width;
     cfg.height = height;
-    cfg.presentMode = WGPUPresentMode_Immediate; // vsync OFF
+    // FIFO is the compositor-safe WebGPU presentation mode. It prevents an
+    // in-progress CAMetalLayer drawable from being replaced mid-scanout; do not
+    // trade a coherent Person-visible frame for a higher submitted-FPS counter.
+    cfg.presentMode = WGPUPresentMode_Fifo;
     cfg.alphaMode = WGPUCompositeAlphaMode_Auto;
     wgpuSurfaceConfigure(ctx.surface, &cfg);
     if (@available(macOS 10.13, *)) {
-        layer.displaySyncEnabled = NO;
+        layer.displaySyncEnabled = YES;
     }
 }
 

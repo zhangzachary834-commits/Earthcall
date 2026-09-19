@@ -66179,7 +66179,7 @@
         }
       ],
       "name": "Home",
-      "owner": "Player",
+      "owner": "Zach",
       "parentZone": "",
       "primary": true,
       "qualities": {
@@ -69315,7 +69315,7 @@
       "identifier": "Chess",
       "lexemes": [],
       "name": "Chess",
-      "owner": "Player",
+      "owner": "Zach",
       "parentZone": "",
       "qualities": {
         "kind": "chess",

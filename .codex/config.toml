@@ -1,2 +1,9 @@
 [mcp_servers.clion]
 url = "http://127.0.0.1:64362/stream"
+
+[mcp_servers.earthcall]
+command = "node"
+args = ["/Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js"]
+
+[mcp_servers.earthcall.env]
+EARTHCALL_WS_URL = "ws://localhost:8080"

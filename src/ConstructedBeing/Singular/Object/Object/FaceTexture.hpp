@@ -13,8 +13,10 @@ struct FaceTexture {
     // const from the caller's view — the paint is the same, only its GPU copy
     // changes. 0 while unuploaded, or under a backend that keeps no handles.
     mutable TextureHandle id = 0;
-    mutable std::vector<uint8_t> pixels;     // RGBA8 buffer, size×size×4
-    int size = 64;
+    mutable uint64_t revision = 0;
+    mutable std::vector<uint8_t> pixels;     // RGBA8 buffer, width×height×4
+    int width = 64;
+    int height = 64;
 
     std::vector<std::vector<uint8_t>> layers;
     std::vector<float> layerOpacities;
@@ -32,7 +34,8 @@ struct FaceTexture {
     std::vector<std::vector<StrokePoint>> strokeHistory;
     std::vector<std::vector<StrokePoint>> undoStack;
 
-    void create(uint32_t initColorRGBA = 0xFFFFFFFFu);
+    void create(int w = 64, int h = 64, uint32_t initColorRGBA = 0xFFFFFFFFu);
+    void resize(int newWidth, int newHeight);
     void addLayer();
     void deleteLayer(int layerIndex);
     void setLayerOpacity(int layerIndex, float opacity);
@@ -43,6 +46,18 @@ struct FaceTexture {
     void compositeLayers() const;
     void blendLayer(int layerIndex) const;
     glm::vec4 blendPixels(const glm::vec4& src, const glm::vec4& dst, int blendMode, float opacity) const;
+
+    // Replace exactly one RGBA sample addressed in normalized face space.
+    // This is the indivisible storage operation beneath the Screen channel;
+    // brush radius, interpolation and gesture meaning remain authored above.
+    bool writePixel(const glm::vec2& uv, const glm::vec3& color);
+    bool writePixelWithRadius(const glm::vec2& uv, const glm::vec3& color, int radius = 1);
+    bool writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
+                   const glm::vec3& color, int radius = 1);
+    bool writeRegion(int x0, int y0, int x1, int y1,
+                     const std::vector<glm::vec3>& colors);
+    bool writeSamples(const std::vector<glm::ivec2>& coordinates,
+                      const std::vector<glm::vec3>& colors);
 
     void saveStrokeState();
     void undo();

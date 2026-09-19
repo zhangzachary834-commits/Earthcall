@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Singularity/Core/EventBus.hpp"
+#include "Singularity/Execution/ExecutionChannel.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 #include "Relation/RelationManager.hpp"
+#include "Relation/Traversal/SlowAdapter.hpp"
 #include "../Physics/Physics.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "../Zone/Zone.hpp"
@@ -16,6 +18,7 @@
 
 #include <ctime>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -176,19 +179,19 @@ public:
     void setRetrigger(Retrigger mode) { _retrigger = mode; }
 
     // Per-subject condition memory for edge detection (OnBecomeTrue).
-    bool lastConditionState(const std::string& subjectId) const {
-        auto it = _conditionMemory.find(subjectId);
+    bool lastConditionState(const Singular* subject) const {
+        auto it = _conditionMemory.find(subject);
         return it != _conditionMemory.end() && it->second;
     }
-    void rememberConditionState(const std::string& subjectId, bool state) {
-        _conditionMemory[subjectId] = state;
+    void rememberConditionState(const Singular* subject, bool state) {
+        _conditionMemory[subject] = state;
     }
     // Who the law believes it currently holds for. The reactive path learns
     // who ENTERED the match set from the network, but nothing tells it who
     // LEFT — so it reads its own memory and takes the difference. Release is
     // what re-arms the onset clock, and a release nobody notices is an onset
     // that never re-arms.
-    const std::unordered_map<std::string, bool>& conditionMemory() const {
+    const std::unordered_map<const Singular*, bool>& conditionMemory() const {
         return _conditionMemory;
     }
 
@@ -196,17 +199,21 @@ public:
     // last went false->true for that subject. This is the t=0 of
     // "time.sinceApplied" — the authored change-over-time clock. Runtime
     // state like _conditionMemory: never serialized; release re-arms it.
-    bool hasOnset(const std::string& subjectId) const {
-        return _onsetMemory.count(subjectId) != 0;
+    bool hasOnset(const Singular* subject) const {
+        return _onsetMemory.count(subject) != 0;
     }
-    double onsetFor(const std::string& subjectId) const {
-        auto it = _onsetMemory.find(subjectId);
+    double onsetFor(const Singular* subject) const {
+        auto it = _onsetMemory.find(subject);
         return it != _onsetMemory.end() ? it->second : 0.0;
     }
-    void rememberOnset(const std::string& subjectId, double worldTime) {
-        _onsetMemory[subjectId] = worldTime;
+    void rememberOnset(const Singular* subject, double worldTime) {
+        _onsetMemory[subject] = worldTime;
     }
-    void forgetOnset(const std::string& subjectId) { _onsetMemory.erase(subjectId); }
+    void forgetOnset(const Singular* subject) { _onsetMemory.erase(subject); }
+    void forgetSubject(const Singular* subject) {
+        _conditionMemory.erase(subject);
+        _onsetMemory.erase(subject);
+    }
 
     // First movers (engine-backed bridge laws) live in the register for
     // LEGIBILITY and GOVERNANCE, but their truth lives in the engine:
@@ -323,6 +330,8 @@ public:
     // is correct — it really is about all of them.
     // ------------------------------------------------------------------
     const std::vector<std::string>& requiredProperties() const { return _requiredProperties; }
+    const std::vector<ConditionPredicate>& compiledGates() const { return _compiledGates; }
+    bool writesQualifiedRoots() const { return _writesQualifiedRoots; }
     bool couldApplyTo(Singular& being) const;
 
     void setConditionModel(ConditionModel model);
@@ -427,8 +436,8 @@ private:
     std::shared_ptr<Zone> _jurisdiction;
     bool _drives = false;
     Retrigger _retrigger = Retrigger::Absorb;
-    std::unordered_map<std::string, bool> _conditionMemory;   // edge detection
-    std::unordered_map<std::string, double> _onsetMemory;     // t=0 per subject
+    std::unordered_map<const Singular*, bool> _conditionMemory;   // edge detection
+    std::unordered_map<const Singular*, double> _onsetMemory;     // t=0 per subject
     std::uint64_t _conditionRevision{0};                      // see conditionRevision()
     static std::uint64_t s_textRevision;                      // see textRevision()
     ConditionMode _conditionMode = ConditionMode::All;
@@ -446,6 +455,8 @@ private:
     std::vector<Action> _actions;
     std::vector<ApplicationRecord> _applicationLog;
     std::vector<std::string> _requiredProperties;   // derived at recompile()
+    std::vector<ConditionPredicate> _compiledGates;
+    bool _writesQualifiedRoots{false};
 };
 
 struct LawRegisteredEvent {
@@ -517,7 +528,15 @@ public:
     std::string assertFact(FactPtr fact);
     bool retractFact(const std::string& factId);
     void retractStateFactsBySubject(const std::string& subjectId);
-    void markFactDirty(const std::string& subjectId, const std::string& attribute);
+    // Returns whether any fact was actually marked. FALSE means the network
+    // holds no state fact for that (subject, attribute) at all — which is not
+    // "nothing changed", it is "the network has never heard of this property
+    // on this being". seedStateFacts snapshots a being's properties ONCE per
+    // being ever, so a property GRANTED at runtime had no fact to dirty and
+    // never got one: a WhileTrue law reading it stayed permanently deaf to
+    // that being, silently. Same family as the relation deafness rung 0 fixed.
+    // The scan was already linear over the fact list, so the answer is free.
+    bool markFactDirty(const std::string& subjectId, const std::string& attribute);
     void evaluateDirty();
     bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }
     // Drop every fact naming this being. Called when it is actually freed:
@@ -535,6 +554,22 @@ public:
     void retractFirst(std::size_t count);
     void clearFacts();
     const std::vector<FactPtr>& facts() const { return _facts; }
+
+    // Is a live relation-state fact already keyed on this being and type?
+    //
+    // assertFact does NOT deduplicate — it pushes a fact and an id every call —
+    // and three paths now assert edge facts (the first-tick seed, the
+    // relation-formed handler, and the back-seed when a relation type first
+    // enters play). Without this they stack duplicates into every alpha memory
+    // that matches, which is a standing per-tick propagation tax and, over a
+    // session of relations forming and dissolving, unbounded.
+    //
+    // Compares the SUBJECT POINTER, never dereferencing it: this is called on
+    // paths where a relation's far endpoint may already be destroyed.
+    bool hasRelationStateFact(const Singular* subject, const std::string& relationType) const;
+    // Retract the one relation-state fact keyed on (subject, relationType), if
+    // present. Pointer-compared, never dereferenced. Returns whether one went.
+    bool retractRelationStateFact(const Singular* subject, const std::string& relationType);
 
     // `source` defaults to Foreign deliberately: a caller that has not said
     // where its predicate came from has not earned the assumption that it can
@@ -573,7 +608,63 @@ public:
     // Fifty laws on "collision" is one predicate over the fact stream, not
     // fifty identical ones.
     std::size_t internTypeAlpha(const std::string& eventType);
+
+    // ------------------------------------------------------------------
+    // One node per DISTINCT authored condition, shared by every law that
+    // states it — the same bargain internTypeAlpha already makes for event
+    // types, extended to the path every authored leaf actually takes.
+    //
+    // Measured in the saved worlds: 70% of all condition leaves are textual
+    // duplicates (791 of 1124). chess_app.json states
+    // `instance-of category.chess.piece` in 76 separate laws and
+    // `onBoard == true` in 74. Each compiled its own node, and a node is not
+    // just a closure — it keeps a vector of every fact it has matched, and
+    // assertFact runs EVERY node's predicate against EVERY fact. So the
+    // duplication was paid twice: once in memory, and once per fact assertion
+    // in time.
+    //
+    // THE KEY IS THE WHOLE SERIALIZED LEAF, and that is not incidental.
+    // An analysis proposed keying on (path, op, const), which is incomplete —
+    // it omits operandPath, tolerance, lo/hi, relationType, otherId, probe,
+    // region and beingKind. Two different conditions sharing a key would bind
+    // one law to another's predicate, and if that predicate is the stricter of
+    // the two the law is NARROWED — silently deaf, the failure
+    // PROPHETIC_RETE.md §2 exists to forbid. The saves already contain the
+    // collision: chess states both `chessColor == <literal>` and
+    // `chessColor == @state.chess.turn`, identical under (path, op, const) and
+    // emphatically not the same condition.
+    //
+    // toJson() is complete by construction — it is the serialization contract,
+    // so two leaves that serialize identically ARE the same condition — and it
+    // fails safe: a kind that ever serialized incompletely would break saving
+    // long before it broke sharing.
+    //
+    // Only AUTHORED leaves. A Foreign closure cannot be reasoned about at all,
+    // and Interned type nodes already share through their own index.
+    std::size_t internAuthoredAlpha(const std::string& conditionKey,
+                                    const std::string& description,
+                                    AlphaPredicate predicate);
     std::size_t alphaNodeCount() const { return _alphaNodes.size(); }
+    std::size_t betaNodeCount() const { return _betaNodes.size(); }
+
+    // How many fact references all node memories are holding right now.
+    //
+    // The number the α-node-sharing question actually turns on. Node COUNT is
+    // cheap — a node is a closure and a description; what costs is that every
+    // bound node keeps a vector of every fact it has matched, so two laws with
+    // the same condition text keep two identical copies of the same match set.
+    //
+    // Exposed because it was not: alphaNodeCount(), PropheticCounters and
+    // TickTiming all existed with ZERO call sites anywhere in src/ — the same
+    // shape as Universe::structuralRevision(), which sat wrong and unnoticed
+    // until something finally read it. A counter nobody reads cannot be
+    // observed to be wrong.
+    std::size_t nodeMemoryFootprint() const {
+        std::size_t total = 0;
+        for (const auto& alpha : _alphaNodes) total += alpha.memory.size();
+        for (const auto& beta : _betaNodes) total += beta.memory.size();
+        return total;
+    }
 
     // ------------------------------------------------------------------
     // "Would anything act on a fact of this type?" — asked before an event
@@ -629,6 +720,9 @@ public:
 private:
     const AlphaNode* findAlpha(std::size_t id) const;
     AlphaNode* findAlpha(std::size_t id);
+    void propagateFact(const FactPtr& fact);
+    void detachFactConsequences(const FactPtr& fact);
+    void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
 
     // ------------------------------------------------------------------
     // Backfill. Propagation is incremental — assertFact maintains the
@@ -659,6 +753,33 @@ private:
     static ReteToken joinedToken(const ReteToken& left, const FactPtr& right);
 
     std::vector<FactPtr> _facts;
+    // Every being that has ever been a fact's subject or object, so
+    // retractFactsAbout can answer "this one has no facts" in O(1) instead of
+    // scanning the table. It fires on EVERY Singular destructor — including
+    // the `Moment` inside every transient `ECA::Event` — so that scan was the
+    // engine's real quadratic. A SUPERSET on purpose: see retractFactsAbout.
+    std::unordered_set<const Singular*> _factParticipants;
+    // Which relation types each being already has a relation-state fact for.
+    //
+    // DERIVED STATE, and its invalidation is declared here because the last
+    // time it was not, the answer was a linear scan that turned seeding into
+    // O(beings x relations x facts):
+    //   depends on  : the relation-state facts in _facts
+    //   maintained  : assertFact inserts; retractFactsAbout erases that being;
+    //                 every bulk retraction path clears outright
+    //   rebuilt     : never — maintained, not rebuilt
+    //
+    // It may UNDER-report ("no fact" when there is one), which costs one
+    // duplicate fact and nothing else. It must never OVER-report: that would
+    // skip asserting a fact that does not exist, and a missing relation-state
+    // fact is a deaf `Related` law — the defect rung 0 exists to fix. That
+    // asymmetry is why the bulk paths clear rather than try to be precise.
+    std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateIndex;
+    std::unordered_map<std::string, std::vector<FactPtr>> _stateFactsBySubjectAttr;
+    std::unordered_map<std::string, FactPtr> _factById;
+    std::unordered_map<std::string, std::vector<std::size_t>> _factAlphaNodes;
+    std::unordered_map<std::string, std::vector<std::size_t>> _factBetaNodes;
+    std::unordered_set<std::string> _agendaFactIds;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
     std::vector<BetaNode> _betaNodes;
@@ -668,6 +789,10 @@ private:
     std::unordered_map<std::size_t, std::vector<std::string>> _alphaLawBindings;
     std::unordered_map<std::size_t, std::vector<std::string>> _betaLawBindings;
     std::unordered_map<std::string, std::size_t> _typeAlphaIndex;   // event type -> node
+    // serialized condition leaf -> node. Entries may go stale when
+    // dropUnboundAlphaNodes removes a node nobody reads; node ids are never
+    // reused, so a stale entry resolves to nothing and is simply rebuilt.
+    std::unordered_map<std::string, std::size_t> _authoredAlphaIndex;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent
@@ -681,7 +806,9 @@ private:
 
 class FirstMoverLaw : public Law {
 public:
-    FirstMoverLaw(const std::string& name) : Law(name) {}
+    FirstMoverLaw(const std::string& name) : Law(name) {
+        setLawIdentifier(name);
+    }
     bool isFirstMover() const override { return true; }
 };
 
@@ -828,10 +955,106 @@ private:
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
     // Apply, record, and start a drive session only if the law CHANGED
     // something (not merely if the action branch was reached).
-    void applyAndMaybeDrive(Law& law, Singular& subject,
+    Law::ApplicationResult applyAndMaybeDrive(Law& law, Singular& subject,
                             std::vector<Law::ApplicationRecord>& records);
-    // Whom an untargeted law sweeps: the beings carrying its vocabulary.
+    // Whom an untargeted law sweeps: consume ONE already-selected sound route.
+    // Route selection is refreshed outside the per-candidate loop and cached by
+    // law id; steady-state selection is one unordered_map lookup.
     std::vector<Singular*> sweepSubjects(const Law& law) const;
+
+    enum class CandidateTier : std::uint8_t {
+        Sweep,
+        Vocabulary,
+        AdapterRoad
+    };
+    struct CandidateRoute {
+        CandidateTier tier = CandidateTier::Sweep;
+        // Vocabulary tier: rarest required name chosen when the vocabulary
+        // index refreshes. Adapter tier reads the adapter's own current view.
+        std::string vocabularySeed;
+        // Currency of the LAW decision. World/graph currency is still checked
+        // by the selected structure itself before it is consumed.
+        std::uint64_t lawTextRevision = 0;
+        std::uint64_t conditionRevision = 0;
+        std::uint64_t structuralRevision = 0;
+        std::size_t relationGeneration = 0;
+        bool hasRelationGeneration = false;
+        std::uint64_t adapterRouteGeneration = 0;
+    };
+    mutable std::unordered_map<std::string, CandidateRoute> _candidateRoutes;
+    mutable std::uint64_t _candidateRouteRefreshCount = 0;
+    void refreshCandidateRoute(const Law& law) const;
+    void invalidateCandidateRoute(const std::string& lawId) const {
+        _candidateRoutes.erase(lawId);
+    }
+
+    // ------------------------------------------------------------------
+    // The vocabulary index — FORMATION_RETE.md §3.0, §8 rung 2.
+    //
+    // sweepSubjects used to answer "whom is this law about" by rebuilding
+    // Universe::beings() — the provider allocates a fresh vector every call —
+    // and testing couldApplyTo against every being, once per sweeping law per
+    // tick. Measured at 1000 beings and 8 laws where only 8 beings could ever
+    // match: 7.6 ms/tick, fitting k = 0.82 against POPULATION with the
+    // matching set held constant. The sweep cost the whole world to find eight
+    // beings; ~99% of it could not have matched.
+    //
+    // §3.0 names what that filter really is: "a degenerate, implicit,
+    // unauthored category". This is that category made explicit — one entry per
+    // property NAME some law requires, holding the beings that carry it. Only
+    // names laws actually ask for are indexed, which is Magic Sets in miniature
+    // (§4C): the goal restricts what the engine bothers to know.
+    //
+    // NOT yet a Formation, and that is deliberate rather than unfinished.
+    // Reifying it as a rooted Category Formation is the other half of rung 2
+    // and it is blocked: per Zach's revised definition (§3.4) a purely
+    // branching taxonomy is not a Formation at all, and closing the loop needs
+    // concept-Singulars. Formation::addMember also walks the relation graph per
+    // member, which a per-structural-change rebuild cannot afford.
+    //
+    // Refusal 6: this is Kernel-tier DERIVED state — a pure function of
+    // (the world, the law set), reconstructible at any moment, holding no truth
+    // of its own — and it is named here rather than merely omitted.
+    // ------------------------------------------------------------------
+    // const, and the state below is mutable, ON PURPOSE. sweepSubjects is
+    // const and calls this itself, so the index cannot be read stale by a
+    // caller that forgot to refresh first — and a stale index does not merely
+    // give an old answer, it returns {} for a name it has not indexed yet,
+    // which is a law reaching nobody. Correctness must not depend on call
+    // order; tick() still calls it once up front so the per-law call is an
+    // integer compare rather than N passes over the world.
+    void refreshVocabularyIndex() const;
+
+    // Do this law's subject-independent gates hold right now?
+    //
+    // False means the law's candidate set is EMPTY this tick, whatever the
+    // population — so the subject loop can be skipped entirely instead of
+    // walking every being to be refused by each one. See
+    // ConditionNode::isHoistableGate for what qualifies and what deliberately
+    // does not.
+    //
+    // Returns true whenever it cannot prove otherwise: no gates, an unreadable
+    // referent, or an action that could move the gate mid-sweep. Widening is
+    // the safe direction; a wrong `false` here silences a law completely.
+    bool gatesHold(const Law& law) const;
+    // Members are RAW pointers, so this must be rebuilt whenever the world's
+    // shape changes. Universe::structuralRevision() is that signal, and
+    // Zone::removeObject had to be taught to bump it before this could be
+    // trusted — see the comment there.
+    mutable std::unordered_map<std::string, std::vector<Singular*>> _vocabularyIndex;
+    mutable std::unordered_set<std::string> _indexedNames;
+    // Deliberately a sentinel no real revision can equal, so the first tick
+    // always builds rather than trusting an empty index.
+    mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    // The Law::textRevision() `_indexedNames` was read off the register at.
+    // Collecting that name set is what every sweep used to pay for: a fresh
+    // unordered_set<std::string> built from EVERY law's requiredProperties(),
+    // once per law per tick, only to be compared against the cached one.
+    // Measured in Synthesis Studio Living (535 beings, 68 laws): 1.0 ms per
+    // sweep to choose 3 candidates, 83% of that world's law time. Required
+    // properties are derived in Law::recompile(), and every path that reaches
+    // it bumps the text revision, so this integer is a sound key for the set.
+    mutable uint64_t _vocabularyNamesRevision = std::numeric_limits<uint64_t>::max();
     // End-of-tick unmaking, once no pointer to a victim is still live.
     void reapUnmade();
     void releaseFromLaws(Singular* being);
@@ -847,6 +1070,17 @@ private:
         std::size_t nodeId;
         bool isBeta;  // true = BetaNode, false = AlphaNode
     };
+public:
+    // How many Rete terminals a law compiled. Zero means it takes the SWEEP
+    // path, whatever else is true of it — which is the difference between a
+    // test that exercises the reactive branch and one that only believes it
+    // does (tests/law/rete_compile_test.cpp §C, tests/law/edge_reactive_path_test.cpp).
+    std::size_t terminalCountOf(const std::string& lawId) const {
+        auto it = _reteTerminals.find(lawId);
+        return it == _reteTerminals.end() ? 0 : it->second.size();
+    }
+
+private:
     std::unordered_map<std::string, std::vector<TerminalInfo>> _reteTerminals;
     // The Law::conditionRevision() each entry in _reteTerminals was built
     // from. Compiled terminals are derived state; this is what lets the tick
@@ -874,7 +1108,103 @@ private:
     // connectToEventBus() is what keeps the facts current afterwards.
     // ------------------------------------------------------------------
     void seedStateFacts(Singular* being);
+    // One edge fact, asserted WITHOUT consulting _seededSubjects.
+    //
+    // That set guards the property snapshot above, which is genuinely
+    // once-per-being. Edge seeding was made to share the gate and should never
+    // have: a being's properties are a snapshot, its edges are a stream. Once
+    // the being was known, every relation formed afterwards was silently
+    // dropped — FORMATION_RETE.md §1.2(a), the defect that made every
+    // continuous `Related` law permanently deaf. Two concerns, now separated.
+    //
+    // `endpoint` is the being the fact is keyed on; the far end is never
+    // dereferenced (see seedStateFacts for why that matters).
+    void assertRelationStateFact(Singular* endpoint, const std::string& relationType);
+    // Catch up the edges that already existed when a relation type first
+    // enters the seeding vocabulary — the second shape of the same defect.
+    void backSeedRelationStateFacts(const std::unordered_set<std::string>& types);
+    // THE RETRACTION HALF of the edge-fact stream (2026-09-14, Claude Opus 5).
+    //
+    // Rung 0 asserted edge facts on relation-formed and left them behind on
+    // relation-destroyed, calling the stale fact a harmless widening: the live
+    // predicate answers false, so nothing false-fires. True for WhileTrue. NOT
+    // true for OnBecomeTrue: the stale fact keeps the subject in the terminal
+    // memory, the law's condition memory never releases it, and when the edge
+    // forms again there is no false->true edge — the law is silent on every
+    // re-formation. Found by related_prophetic_legibility_test.
+    //
+    // relation-destroyed (and a write to a Relation's `type`) queues both
+    // endpoints here. It cannot decide on the spot: EventBus::publish is
+    // synchronous and removeBetween publishes from INSIDE its remove_if, so the
+    // graph is mid-mutation. revalidateRelationStateFacts runs at the top of
+    // tick(), when the graph is whole, and retracts a fact only if NO edge of
+    // that type still involves the being — by pointer or kept identifier, in
+    // either direction, a superset of what any Related could match. So it
+    // narrows only where the predicate is proved false (PROPHETIC_RETE.md §2).
+    // The being-released callback erases a dying being from the queue.
+    std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateToRevalidate;
+    void queueRelationStateRevalidation(const Relation& relation, const std::string& relationType);
+    void revalidateRelationStateFacts();
+    // THE SLOW ADAPTER (FORMATION_RETE.md §8 rungs 5-6; Zach, 2026-09-16:
+    // the mechanism that pre-loads a Law's Relations "is also supposed to be in
+    // the slow adapter rather than constantly rebuilt every frame").
+    //
+    // 2026-09-17 correction: the old code called _adapter.step() from tick(),
+    // which gave the adapter a private COUNTER but not a private CAUSE of work.
+    // The adapter is now serviced by serviceSlowAdapterClock() on a wall-time
+    // cadence separate from LawManager::tick(). The main thread still executes
+    // the work, but a Frame/Law tick does not itself constitute an adapter tick.
+    // One due maintenance slice is allowed per service call and missed periods
+    // are NOT replayed, so a stall cannot create a catch-up burst.
+    //
+    // Kernel-derived scheduler state below is intentionally not authored world
+    // state yet. It is the smallest substrate rung for the independent clock;
+    // exact policy becomes authorable under ADAPTIVE_COMPUTE_MOMENTS.md.
+    Relevance::SlowAdapter _adapter;
+    void syncAdapterRoutes(Law& law);
+    std::unordered_map<std::string, std::uint64_t> _adapterRouteRevision;
+    bool _useSlowAdapter = true;
+    bool _slowAdapterClockPrimed = false;
+    double _slowAdapterNextAt = 0.0;
+    std::uint64_t _slowAdapterMaintenanceRuns = 0;
+    static constexpr double kSlowAdapterPeriodSeconds = 0.100; // bootstrap 10 Hz
+
+public:
+    // Whether sweepSubjects may read the adapter's pre-loaded roads.
+    void setUseSlowAdapter(bool use) {
+        if (use == _useSlowAdapter) return;
+        _useSlowAdapter = use;
+        _adapterRouteRevision.clear();
+        _slowAdapterClockPrimed = false;
+        _slowAdapterNextAt = 0.0;
+        _slowAdapterMaintenanceRuns = 0;
+        _candidateRoutes.clear();
+        if (!use) _adapter.clear();
+    }
+    bool usesSlowAdapter() const { return _useSlowAdapter; }
+
+    // SAME THREAD, INDEPENDENT CLOCK. The caller may poll this every frame, but
+    // the adapter advances only when wallSeconds reaches its own deadline.
+    // Returns roads touched by the admitted maintenance slice, or zero when the
+    // adapter was not due / is disabled / had nothing to do.
+    std::size_t serviceSlowAdapterClock(double wallSeconds);
+    double slowAdapterClockPeriodSeconds() const { return kSlowAdapterPeriodSeconds; }
+    std::uint64_t slowAdapterMaintenanceRuns() const { return _slowAdapterMaintenanceRuns; }
+
+    const Relevance::SlowAdapter& slowAdapter() const { return _adapter; }
+    Relevance::SlowAdapter& slowAdapter() { return _adapter; }
+
+    // Legibility for the tier contract: reports the selected derived route
+    // without exposing or mutating its candidate list. Useful to the Law/Perf
+    // UI and to parity tests; this is not authorable world state.
+    std::string candidateTierFor(const Law& law) const;
+    std::uint64_t candidateRouteRefreshCount() const {
+        return _candidateRouteRefreshCount;
+    }
+
+private:
     std::unordered_set<std::string> _seededSubjects;
+    std::unordered_set<const Singular*> _seededBeingPointers;
     // Relation types any registered law's condition names. Maintained by
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.
@@ -890,4 +1220,6 @@ private:
     std::uint64_t _propheticRevision = static_cast<std::uint64_t>(-1);
     mutable PropheticCounters _propheticCounters;
     int _maxChainRounds = 5;
+
+    Earthcall::Execution::ExecutionChannel _executionChannel;
 };

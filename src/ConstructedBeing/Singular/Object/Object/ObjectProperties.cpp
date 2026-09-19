@@ -312,19 +312,39 @@ private:
 // Motion state bridge: connects physics rigid form to property system
 class RigidFormBridge : public Property {
 public:
-    enum class Field { Velocity, Mass };
+    enum class Field { Velocity, Mass, AngularVelocity, CenterOfMass, MomentOfInertia };
     RigidFormBridge(std::string name, Object* owner, Field field)
         : _name(std::move(name)), _owner(owner), _field(field) {}
 
     std::string name() const override { return _name; }
     Earthcall::StringId nameId() const override { return Earthcall::StringInterner::intern(name()); }
     std::string typeName() const override {
-        return _field == Field::Velocity ? "vec3" : "float";
+        switch (_field) {
+            case Field::Velocity:
+            case Field::AngularVelocity:
+            case Field::CenterOfMass:
+                return "vec3";
+            case Field::Mass:
+            case Field::MomentOfInertia:
+                return "float";
+        }
+        return "float";
     }
     PropertyValue value() const override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
-        return _field == Field::Velocity ? PropertyValue(form.velocity)
-                                         : PropertyValue(form.mass);
+        switch (_field) {
+            case Field::Velocity:
+                return PropertyValue(form.velocity);
+            case Field::AngularVelocity:
+                return PropertyValue(form.angularVelocity);
+            case Field::CenterOfMass:
+                return PropertyValue(form.centerOfMassOffset);
+            case Field::Mass:
+                return PropertyValue(form.mass);
+            case Field::MomentOfInertia:
+                return PropertyValue(form.momentOfInertia);
+        }
+        return PropertyValue(0.0f);
     }
     bool setValue(const PropertyValue& v) override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
@@ -334,10 +354,31 @@ public:
             form.velocity = *vec;
             return true;
         }
-        double n = 0.0;
-        if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
-        form.mass = static_cast<float>(n);                            // is a lie
-        return true;
+        if (_field == Field::AngularVelocity) {
+            const auto* vec = std::get_if<glm::vec3>(&v);
+            if (!vec) return false;
+            form.angularVelocity = *vec;
+            return true;
+        }
+        if (_field == Field::CenterOfMass) {
+            const auto* vec = std::get_if<glm::vec3>(&v);
+            if (!vec) return false;
+            form.centerOfMassOffset = *vec;
+            return true;
+        }
+        if (_field == Field::Mass) {
+            double n = 0.0;
+            if (!propertyValueToNumber(v, n) || n <= 0.0) return false;   // massless
+            form.mass = static_cast<float>(n);                            // is a lie
+            return true;
+        }
+        if (_field == Field::MomentOfInertia) {
+            double n = 0.0;
+            if (!propertyValueToNumber(v, n) || n <= 0.0) return false;
+            form.momentOfInertia = static_cast<float>(n);
+            return true;
+        }
+        return false;
     }
 
 private:
@@ -359,7 +400,7 @@ private:
 // the material would repaint every other object naming the same one.
 class FacePropertyBridge : public Property {
 public:
-    enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize };
+    enum class Field { Color, LayerCount, ActiveLayer, UseLayers, LayerOpacity, BlendMode, TextureSize, Resolution };
 
     FacePropertyBridge(std::string name, Object* owner, int face, Field field)
         : _name(std::move(name)), _owner(owner), _face(face), _field(field) {}
@@ -402,7 +443,9 @@ public:
                 return PropertyValue(tex->blendModes[layer]);
             }
             case Field::TextureSize:
-                return PropertyValue(tex ? tex->size : 0);
+                return PropertyValue(tex ? tex->width : 0);
+            case Field::Resolution:
+                return PropertyValue(tex ? tex->width : 64);
         }
         return PropertyValue{};
     }
@@ -455,6 +498,24 @@ public:
             case Field::LayerCount:
             case Field::TextureSize:
                 return false;   // structure is made with tools, not assigned
+            case Field::Resolution: {
+                double n = 0.0;
+                if (!propertyValueToNumber(v, n) || n <= 0.0 || n > 4096.0) return false;
+                const int res = static_cast<int>(n);
+                if (tex) {
+                    tex->resize(res, res);
+                    return true;
+                }
+                auto mine = _owner->ownMaterial();
+                if (!mine) return false;
+                const int faces = _owner->getFaces() > 0 ? _owner->getFaces() : 1;
+                if (static_cast<int>(mine->faceTextures.size()) != faces) {
+                    mine->initFaceTextures(faces, res, res);
+                } else if (_face < static_cast<int>(mine->faceTextures.size())) {
+                    mine->faceTextures[static_cast<size_t>(_face)].resize(res, res);
+                }
+                return true;
+            }
         }
         return false;
     }
@@ -497,6 +558,12 @@ void Object::buildProperties() {
         "transform", this, &Object::getTransform, &Object::setTransform));
     registerProperty(std::make_unique<PropertyRef<Object, glm::vec3>>(
         "center", this, &Object::center));
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "authoritativeAxis", this, &Object::getAuthoritativeAxis, &Object::setAuthoritativeAxis));
+    registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
+        "targetRotation", this, &Object::getTargetRotationEulerDegrees, &Object::setTargetRotationEulerDegrees));
+    registerProperty(std::make_unique<ComputedProperty<Object, float>>(
+        "rotationResponsiveness", this, &Object::getRotationResponsiveness, &Object::setRotationResponsiveness));
     // A Law can reassign which Material being paints this object, by identifier.
     registerProperty(std::make_unique<PropertyRef<Object, std::string>>(
         "material", this, &Object::_materialId));
@@ -597,11 +664,17 @@ void Object::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "hoverPoint", this, &Object::getHoverPoint, nullptr));
     // Motion state: the rigid form's truth, addressable — collision RESPONSE
-    // becomes authorable law-text.
+    // and rotational dynamics become authorable law-text.
     registerProperty(std::make_unique<RigidFormBridge>(
         "velocity", this, RigidFormBridge::Field::Velocity));
     registerProperty(std::make_unique<RigidFormBridge>(
         "mass", this, RigidFormBridge::Field::Mass));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "angularVelocity", this, RigidFormBridge::Field::AngularVelocity));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "centerOfMass", this, RigidFormBridge::Field::CenterOfMass));
+    registerProperty(std::make_unique<RigidFormBridge>(
+        "momentOfInertia", this, RigidFormBridge::Field::MomentOfInertia));
     // The object's tint (uniform across faces when written; face 0 when read).
     registerProperty(std::make_unique<ComputedProperty<Object, glm::vec3>>(
         "color", this, &Object::propColor, &Object::propSetColor));
@@ -630,5 +703,8 @@ void Object::buildProperties() {
         addFace("layerOpacity", FacePropertyBridge::Field::LayerOpacity);
         addFace("blendMode", FacePropertyBridge::Field::BlendMode);
         addFace("textureSize", FacePropertyBridge::Field::TextureSize);
+        addFace("resolution", FacePropertyBridge::Field::Resolution);
     }
+    registerProperty(std::make_unique<ComputedProperty<Object, int>>(
+        "textureResolution", this, &Object::getTextureResolution, &Object::setTextureResolution));
 }

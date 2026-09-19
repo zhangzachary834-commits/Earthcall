@@ -1,0 +1,205 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-capture-en-passant",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "onBoard"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "capturedThisMove"
+        },
+        {
+          "bindings": {
+            "n": "@state.chess.nextCapturedSlot"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "n": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "capturedSlot"
+        },
+        {
+          "bindings": {
+            "c": "chessColor"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 5.6,
+                      "factors": {}
+                    },
+                    {
+                      "c": -11.2,
+                      "factors": {
+                        "c": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.x"
+        },
+        {
+          "bindings": {
+            "s": "capturedSlot"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "s": 1
+                      }
+                    },
+                    {
+                      "c": -3.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.z"
+        },
+        {
+          "bindings": {
+            "n": "@state.chess.nextCapturedSlot"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "n": 1
+                      }
+                    },
+                    {
+                      "c": 1,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.nextCapturedSlot"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.chess.piece",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "onBoard"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operandPath": "@state.chess.enPassantFile",
+          "path": "gridX"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operandPath": "@state.chess.enPassantVictimY",
+          "path": "gridY"
+        },
+        {
+          "kind": 0,
+          "op": 1,
+          "operandPath": "@state.chess.turn",
+          "path": "chessColor"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-capture-en-passant",
+    "name": "unmake-en-passant-victim",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-capture-en-passant",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "en-passant-captured"
+  ]
+}

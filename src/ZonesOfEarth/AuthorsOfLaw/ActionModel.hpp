@@ -47,6 +47,40 @@ inline AudioSink& audioSink() {
 // it can sound anything.
 inline void registerAudioSink(AudioSink sink) { audioSink() = std::move(sink); }
 
+// The Screen modality's smallest authored act: replace one sample on one
+// surface.  The Law engine knows neither Object nor texture storage; the
+// channel binds that foreign detail at boot, just as Audio binds PlayAudio.
+// A boolean plus reason keeps an absent/refused screen act from masquerading
+// as a successful Law application.
+using PixelWriteSink = std::function<bool(Singular& subject, int face,
+                                          double u, double v,
+                                          const glm::vec3& color,
+                                          std::string& reason)>;
+
+inline PixelWriteSink& pixelWriteSink() {
+    static PixelWriteSink sink;
+    return sink;
+}
+
+inline void registerPixelWriteSink(PixelWriteSink sink) {
+    pixelWriteSink() = std::move(sink);
+}
+
+using PixelPropertySink = std::function<bool(Singular& subject,
+                                             const std::string& propertyName,
+                                             int face,
+                                             const OntoMath::Piecewise& selector,
+                                             std::string& reason)>;
+
+inline PixelPropertySink& pixelPropertySink() {
+    static PixelPropertySink sink;
+    return sink;
+}
+
+inline void registerPixelPropertySink(PixelPropertySink sink) {
+    pixelPropertySink() = std::move(sink);
+}
+
 // The law's action as data (LAW_AND_CREATION_SYSTEM.md §2b): a mutation tree
 // over PropertyPaths, serializable and Person-authorable, compiled once into
 // the ECA::ActionExecutor slot.
@@ -141,7 +175,15 @@ struct ActionNode {
         // NOTE FROM ZACH: "Relations" cannot be created unless an actual interaction happens--there's no such thin gas an "empty" Relation.
         // That would be philosophically nonsensical. If a Law creates a Relation, it is creating an interaction.
         // The instrinsic structure of the Relation class itself needs to enforce this.
-        AddRelation = 20
+        AddRelation = 20,
+        // Replace one UV-addressed surface pixel through the Screen channel.
+        // This is a Sense-Act primitive, not a kind of in-world thing: its
+        // face/UV/color operands remain authored PropertyPaths.
+        WritePixel = 21,
+        // Elevate an OntoMath-selected set of surface samples into one named,
+        // enumerable, persisted Property.  The selector's defined set over
+        // local u/v is the region; no rectangle/category enum is introduced.
+        ElevatePixels = 22
     };
 
     struct ExecutedEvent {
@@ -286,6 +328,14 @@ struct ActionNode {
     std::string containerToken;
     std::string elementToken;
 
+    // WritePixel payload.  Coordinates and colour are readings rather than
+    // embedded choices, so the same act can listen to any authored pointer,
+    // sequencer, mathematics, or palette being.
+    PropertyPath pixelFacePath;
+    PropertyPath pixelUPath;
+    PropertyPath pixelVPath;
+    PropertyPath pixelColorPath;
+
     // Sequence / Parallel / Synthesize; Create runs these with its newborn
     // as subject. Thus a Synthesize tree is ordinary creation vocabulary
     // composed around one or more Create leaves, never an ObjectConcept
@@ -406,6 +456,10 @@ struct ActionNode {
     //   input: where to read the amplitude value
     //   propertyName: material/waveType string
     static ActionNode playAudio(const std::string& freqPath, const std::string& ampPath, const std::string& waveType = "");
+    static ActionNode writePixel(const std::string& facePath,
+                                 const std::string& uPath,
+                                 const std::string& vPath,
+                                 const std::string& colorPath);
     static ActionNode authorZone(const std::string& identifier,
                                  const std::string& kind = "",
                                  const std::string& ownerToken = "",

@@ -249,7 +249,6 @@ glm::vec3 MouseHandler::calculateCameraFront() const {
 void MouseHandler::onWindowFocus(int focused) {
     ImGuiIO& io = ImGui::GetIO();
     for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i) {
-        io.MouseDown[i] = false;
         io.AddMouseButtonEvent(i, false);
     }
     for (auto& [button, state] : _currentState.buttonStates) {

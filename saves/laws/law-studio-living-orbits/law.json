@@ -1,0 +1,187 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-orbits",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-orbits",
+    "name": "Studio: The constellation follows the expression field",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "livingSatellite",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "shape.r",
+          "bindings": {
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.025,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.045,
+                      "factors": {
+                        "e": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.x",
+          "bindings": {
+            "x": "orbitX",
+            "b": "@state.studio.bloom",
+            "t": "time",
+            "p": "orbitPhase"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "x": 1
+                      }
+                    },
+                    {
+                      "c": 0.14,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "t",
+                          "scale": 0.8,
+                          "shift": 0.0
+                        }
+                      ]
+                    },
+                    {
+                      "c": 0.28,
+                      "factors": {
+                        "b": 1
+                      },
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "p",
+                          "scale": 1.0,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "y": "orbitY",
+            "m": "@state.studio.motion",
+            "t": "time",
+            "p": "orbitPhase",
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "y": 1
+                      }
+                    },
+                    {
+                      "c": 0.15,
+                      "factors": {
+                        "e": 1
+                      }
+                    },
+                    {
+                      "c": 0.12,
+                      "factors": {
+                        "m": 1
+                      },
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "t",
+                          "scale": 1.4,
+                          "shift": 0.0
+                        }
+                      ]
+                    },
+                    {
+                      "c": 0.19,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "p",
+                          "scale": 1.0,
+                          "shift": 1.5707963267948966
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-orbits",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": []
+}

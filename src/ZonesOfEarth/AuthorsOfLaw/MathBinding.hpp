@@ -73,20 +73,40 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // down: LONGEST dotted-name match first, most specific wins. A being named
     // "material.clay" beats one named "material", and the segments it consumed
     // are not offered to the property lookup.
-    const std::vector<Singular*> beings = Universe::instance().beings();
-    std::string candidate = path.segments[0].substr(1);
+    
+    // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations
+    static uint64_t s_lastRevision = 0;
+    static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
+    static bool s_initialized = false;
+    
+    uint64_t currentRevision = Universe::instance().structuralRevision();
+    if (!s_initialized || s_lastRevision != currentRevision) {
+        s_beingMap.clear();
+        const std::vector<Singular*> beings = Universe::instance().beings();
+        for (Singular* being : beings) {
+            if (being) {
+                Earthcall::StringId key = Earthcall::StringInterner::intern("@" + being->getIdentifier());
+                s_beingMap[key] = being;
+            }
+        }
+        s_lastRevision = currentRevision;
+        s_initialized = true;
+    }
+
     Singular* best = nullptr;
     std::size_t bestConsumed = 0;
-    for (std::size_t n = 1; n <= path.segments.size(); ++n) {
-        if (n > 1) candidate += "." + path.segments[n - 1];
-        for (Singular* being : beings) {
-            if (being && being->getIdentifier() == candidate) {
-                best = being;
+    const auto& jIds = path.joinedIds();
+    if (!jIds.empty() && !jIds[0].empty()) {
+        const auto& idsFromHere = jIds[0];
+        for (std::size_t n = 1; n <= idsFromHere.size(); ++n) {
+            auto it = s_beingMap.find(idsFromHere[n - 1]);
+            if (it != s_beingMap.end()) {
+                best = it->second;
                 bestConsumed = n;
-                break;
             }
         }
     }
+    
     if (!best) return nullptr;   // the named being is not in the world: no value
     startIndex = bestConsumed;
     return best;
@@ -183,6 +203,8 @@ inline bool isWorldReadingPath(const PropertyPath& path) {
     return path.segments.size() >= 2 && path.segments[0] == "@world";
 }
 
+void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out);
+
 inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
     if (isTimePath(path)) return lawGetTime(path, out);
     if (isWorldReadingPath(path)) {
@@ -194,7 +216,11 @@ inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyVal
     }
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
-    return root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
+    bool ok = root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
+    if (ok && out.index() == 15) {
+        resolveSemanticTokenSlowPath(root, out);
+    }
+    return ok;
 }
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
@@ -210,16 +236,21 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPat
     return path.setValue(*root, v, startIndex);
 }
 
-inline std::optional<std::map<std::string, double>> readMathBindings(
+inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
     Singular& subject, const MathBindings& bindings) {
-    std::map<std::string, double> vars;
+    std::map<std::string, PropertyValue> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
-        double x = 0.0;
-        if (!lawGetValue(subject, entry.second, value) || !propertyValueToNumber(value, x)) {
+        if (!lawGetValue(subject, entry.second, value)) {
             return std::nullopt;
         }
-        vars[entry.first] = x;
+        
+        double x = 0.0;
+        if (propertyValueToNumber(value, x)) {
+            vars[entry.first] = PropertyValue(x);
+        } else {
+            vars[entry.first] = value;
+        }
     }
     return vars;
 }

@@ -11,6 +11,11 @@ struct FrameTimings {
     float creation_ms     = 0.f; // stepCreationTools
     float interaction_ms  = 0.f; // InteractionChannel::step
     float zone_ms         = 0.f; // Zone::update + applyFormationRelations
+    float zone_ground_ms  = 0.f; // Zone::update groundScan sub-phase
+    float zone_rot_ms     = 0.f; // Zone::update pending rotations sub-phase
+    float zone_auto_ms    = 0.f; // Zone::update automations sub-phase
+    float zone_phys_ms    = 0.f; // Zone::update physics bodies sub-phase
+    int   zone_substeps   = 0;   // Zone::update substeps count
     float laws_ms         = 0.f; // LawManager::tick (Rete agenda drain)
     float language_ms     = 0.f; // LanguageSystem::tick
     float audio_ms        = 0.f; // AudioSystem::tick
@@ -27,4 +32,5 @@ extern FrameTimings g_frameTimings;
 
 namespace Rendering {
     void renderPerformanceMetricsWindow(bool* open, Core::Engine* engine);
+    void renderPerformanceMetricsContent(Core::Engine* engine);
 }

@@ -26,7 +26,14 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 CORS(app)
 
 # Initialize SocketIO
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Read allowed origins from environment variable, split by comma, fallback to None (same-origin)
+cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS')
+if cors_origins_env:
+    allowed_origins = [origin.strip() for origin in cors_origins_env.split(',')]
+else:
+    allowed_origins = None
+
+socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading')
 
 # Initialize C++ Engine Bridge (WebSocket client to C++ Engine on port 8080)
 from bridge import CppBridge

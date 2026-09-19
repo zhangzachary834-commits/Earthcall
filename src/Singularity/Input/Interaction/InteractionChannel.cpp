@@ -2,6 +2,7 @@
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -12,6 +13,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <cmath>
 #include <ctime>
 #include <limits>
@@ -54,10 +56,17 @@ Object* InteractionChannel::findReachable(const std::vector<Object*>& reachable,
     return nullptr;
 }
 
-void InteractionChannel::publishEdge(const std::string& type, Object* subject) const {
-    if (!Universe::instance().anyoneHears(type)) return;
+void InteractionChannel::publishEdge(const std::string& type, Object* object) const {
+    if (!object) {
+        return;
+    }
+
+    if (!Universe::instance().anyoneHears(type)) {
+        return;
+    }
+
     ::Core::EventBus::instance().publish(
-        ECA::Event{type, subject, nullptr, std::time(nullptr)});
+        ECA::Event{type, object, nullptr, std::time(nullptr)});
 }
 
 // ---------------------------------------------------------------------------
@@ -162,16 +171,25 @@ void InteractionChannel::observe(const Sense& sense,
     if (!blind) {
         Object* hit2D = nullptr;
         double best2D = 0.0;
-        for (Object* obj : reachable) {
-            if (!obj || !obj->is2D()) continue;
-            const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
-            if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
-                sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
-                const double priority = obj->pickPriority();
-                if (priority < 0.0) continue;
-                if (!hit2D || priority > best2D) {
-                    best2D = priority;
-                    hit2D = obj;
+        Object* pressedObj = findReachable(reachable, pressedId);
+        if (leftDown && dragging && pressedObj && pressedObj->is2D()) {
+            // While dragging an active 2D control (slider, canvas, chromatic picker),
+            // maintain pointer capture so rapid movement or minor cursor drift
+            // does not drop the control or jump coordinates to background elements.
+            hit2D = pressedObj;
+            best2D = 1000.0;
+        } else {
+            for (Object* obj : reachable) {
+                if (!obj || !obj->is2D()) continue;
+                const glm::vec4 rect = obj->getRect2D(); // {x0, y0, x1, y1}
+                if (sense.pointerX >= rect.x && sense.pointerX <= rect.z &&
+                    sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
+                    const double priority = obj->pickPriority();
+                    if (priority < 0.0) continue;
+                    if (!hit2D || priority > best2D) {
+                        best2D = priority;
+                        hit2D = obj;
+                    }
                 }
             }
         }
@@ -187,12 +205,21 @@ void InteractionChannel::observe(const Sense& sense,
             surface.face = 0;
             surface.normal = glm::vec3(0.0f, 0.0f, 1.0f); // faces the camera
             surface.point = glm::vec3(sense.pointerX, sense.pointerY, 0.0f);
+            const glm::vec4 rect = hit2D->getRect2D();
+            const float width = rect.z - rect.x;
+            const float height = rect.w - rect.y;
+            bestUV.x = width > 0.0f
+                           ? std::clamp((sense.pointerX - rect.x) / width, 0.0f, 1.0f)
+                           : 0.0f;
+            bestUV.y = height > 0.0f
+                           ? std::clamp((sense.pointerY - rect.y) / height, 0.0f, 1.0f)
+                           : 0.0f;
         }
     }
 
     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);
 
-    // --- Levels -----------------------------------------------------------
+    // --- Hover edges -----------------------------------------------------------
     pointerX = sense.pointerX;
     pointerY = sense.pointerY;
     hoveredId = hit ? hit->getIdentifier() : std::string();
@@ -245,7 +272,10 @@ void InteractionChannel::observe(const Sense& sense,
         dragTotalX = 0.0f;
         dragTotalY = 0.0f;
         dragging = false;
-        if (hit) publishEdge("object-pressed", hit);
+        if (hit) {
+            hit->endSurfaceStroke();
+            publishEdge("object-pressed", hit);
+        }
 
         // Focus follows the press, and BOTH sides are edges: a press on
         // nothing unfocuses whoever held it. A focus that can only be gained
@@ -269,18 +299,28 @@ void InteractionChannel::observe(const Sense& sense,
         if (!dragging && travelled > clickSlopPixels) {
             dragging = true;
             publishEdge("object-drag-started", findReachable(reachable, pressedId));
+        } else if (dragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-dragged", findReachable(reachable, pressedId));
         }
     }
 
     if (leftReleasedNow) {
         Object* pressed = findReachable(reachable, pressedId);
-        if (pressed) publishEdge("object-released", pressed);
+        if (pressed) {
+            publishEdge("object-released", pressed);
+        }
         if (dragging) {
             publishEdge("object-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
             // A click is press and release on the SAME being, without travel.
             // Releasing somewhere else is a cancelled click or completed drag.
             publishEdge("object-clicked", pressed);
+        }
+        if (pressed) {
+            pressed->endSurfaceStroke();
+        }
+        if (hit && hit != pressed) {
+            hit->endSurfaceStroke();
         }
         pressedId.clear();
         dragging = false;
@@ -310,12 +350,17 @@ void InteractionChannel::observe(const Sense& sense,
         if (!rightDragging && travelled > clickSlopPixels) {
             rightDragging = true;
             publishEdge("object-right-drag-started", findReachable(reachable, rightPressedId));
+        } else if (rightDragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-right-dragged", findReachable(reachable, rightPressedId));
         }
     }
 
     if (rightReleasedNow) {
         Object* pressed = findReachable(reachable, rightPressedId);
-        if (pressed) publishEdge("object-right-released", pressed);
+        if (pressed) {
+            publishEdge("object-right-released", pressed);
+            pressed->endSurfaceStroke();
+        }
         if (rightDragging) {
             publishEdge("object-right-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
@@ -349,7 +394,26 @@ void InteractionChannel::observe(const Sense& sense,
         if (!middleDragging && travelled > clickSlopPixels) {
             middleDragging = true;
             publishEdge("object-middle-drag-started", findReachable(reachable, middlePressedId));
+        } else if (middleDragging && (dragX != 0.0f || dragY != 0.0f)) {
+            publishEdge("object-middle-dragged", findReachable(reachable, middlePressedId));
         }
+    }
+
+    if (middleReleasedNow) {
+        Object* pressed = findReachable(reachable, middlePressedId);
+        if (pressed) {
+            publishEdge("object-middle-released", pressed);
+            pressed->endSurfaceStroke();
+        }
+        if (middleDragging) {
+            publishEdge("object-middle-drag-ended", pressed);
+        } else if (pressed && pressed == hit) {
+            publishEdge("object-middle-clicked", pressed);
+        }
+        middlePressedId.clear();
+        middleDragging = false;
+        middleDragTotalX = 0.0f;
+        middleDragTotalY = 0.0f;
     }
 
     if (middleReleasedNow) {
@@ -423,13 +487,10 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
 
-    // Reconcile window focus & physical button state with callback latches:
-    // If window is not focused, inputs belong to other applications. Clear latches.
     const bool windowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0);
     if (!windowFocused) {
         _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-        _pendingFullClick = false;
+        _pendingLeftEdges.clear();
         sense.uiCaptured = true;
     } else {
         // If the physical mouse button is RELEASED according to the OS, and no
@@ -437,7 +498,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         // This heals any dropped GLFW_RELEASE events (e.g. window focus switch,
         // off-screen cursor release, or trackpad gesture drops).
         const bool physicalLeft = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
-        if (!physicalLeft && !_pressSeenSinceLastStep && !_pendingFullClick) {
+        if (!physicalLeft && _pendingLeftEdges.empty()) {
             _liveLeftDown = false;
         }
     }
@@ -524,21 +585,19 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         if (obj) reachable.push_back(obj.get());
     }
 
-    // A press and release that both landed since the last step() (one
-    // glfwPollEvents() batch) would otherwise vanish: sense.left already
-    // reads false (the button is back up by now), so a single observe()
-    // call would never see the press at all. Replay it as two frames —
-    // press, then release — before this frame's regular level. Consumed
-    // here regardless of `blind`: if the world is not listening this frame,
-    // observe() already degrades both calls to nothing, same as it would a
-    // single call.
-    if (_pendingFullClick) {
-        _pendingFullClick = false;
-        Sense pressSense = sense;
-        pressSense.left = true;
-        observe(pressSense, reachable);
+    // A rapid sequence of press/release callbacks that land inside one
+    // glfwPollEvents() batch would otherwise vanish. We replay every edge
+    // in order before observing the final frame state. Consumed here
+    // regardless of `blind`: if the world is not listening this frame,
+    // observe() already degrades both calls to nothing.
+    if (!_pendingLeftEdges.empty()) {
+        for (size_t i = 0; i < _pendingLeftEdges.size() - 1; ++i) {
+            Sense edgeSense = sense;
+            edgeSense.left = _pendingLeftEdges[i];
+            observe(edgeSense, reachable);
+        }
+        _pendingLeftEdges.clear();
     }
-    _pressSeenSinceLastStep = false;
 
     observe(sense, reachable);
 }
@@ -549,29 +608,14 @@ void InteractionChannel::noteScroll(float dx, float dy) {
 }
 
 void InteractionChannel::noteMouseButton(bool pressed) {
-    if (pressed) {
-        _liveLeftDown = true;
-        _pressSeenSinceLastStep = true;
-    } else {
-        // If a step() already ran while this press was live, that step()'s
-        // Sense.left = true replayed the press normally, and
-        // _pressSeenSinceLastStep was cleared at the end of it — this
-        // release is the ordinary next-frame edge, nothing pending. If no
-        // step() has run since the press (both callbacks landed inside one
-        // glfwPollEvents() batch), the whole gesture is about to vanish
-        // between two polls; latch it so step() can replay press-then-
-        // release itself instead of losing it.
-        if (_pressSeenSinceLastStep) _pendingFullClick = true;
-        _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-    }
+    _liveLeftDown = pressed;
+    _pendingLeftEdges.push_back(pressed);
 }
 
 void InteractionChannel::onWindowFocus(bool focused) {
     if (!focused) {
         _liveLeftDown = false;
-        _pressSeenSinceLastStep = false;
-        _pendingFullClick = false;
+        _pendingLeftEdges.clear();
         _prevLeft = false;
         _prevRight = false;
         _prevMiddle = false;
@@ -587,6 +631,11 @@ void InteractionChannel::onWindowFocus(bool focused) {
         dragTotalX = 0.0f;
         dragTotalY = 0.0f;
         hoveredId.clear();
+        for (Singular* being : Universe::instance().beings()) {
+            if (auto* obj = dynamic_cast<Object*>(being)) {
+                obj->endSurfaceStroke();
+            }
+        }
     }
 }
 
@@ -616,6 +665,16 @@ void InteractionChannel::buildProperties() {
     flt("pointerX", &InteractionChannel::pointerX);
     flt("pointerY", &InteractionChannel::pointerY);
     vector3("pointerWorld", &InteractionChannel::pointerWorld);
+    // Scalar projections make the sensed point available to scalar OntoMath
+    // without copying it into a second mutable channel state. Read-only is
+    // deliberate: a Law may reason from what the channel sensed, not tell the
+    // channel where the pointer was.
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldX", this, &InteractionChannel::propPointerWorldX, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldY", this, &InteractionChannel::propPointerWorldY, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerWorldZ", this, &InteractionChannel::propPointerWorldZ, nullptr));
     vector3("pointerNormal", &InteractionChannel::pointerNormal);
     flt("pointerDistance", &InteractionChannel::pointerDistance);
 

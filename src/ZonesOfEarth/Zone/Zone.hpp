@@ -61,10 +61,19 @@ public:
     void describe() const;
 
     const std::string& name() const { return _name; }
+    // Display is presentation-only and MAY diverge from identity (Zach,
+    // 2026-09-09: "Zone should absolutely have a real identifier/name
+    // split. It's a Singular."). A Zone constructed the ordinary way keeps
+    // _identifier == _name (every existing call site, unchanged); only a
+    // record whose JSON "name" and "identifier" fields actually differ
+    // ever calls this — see makeZoneFromJson. Never touches _identifier:
+    // renaming a Zone's display must never silently re-key its identity.
+    void setName(const std::string& displayName) { _name = displayName; }
     const Qualities& getQualities() const { return _qualities; }
     const Deletability& getDeletability() const { return _deletable; }
 
     std::string propName() const { return _name; }
+    std::string propIdentifier() const { return _identifier; }
     std::string scopeName() const;
 
     const std::string& owner() const { return _ownerId; }
@@ -122,6 +131,7 @@ public:
         int substeps = 0;
     };
     void update(float dt = 0.016f, UpdateTiming* out = nullptr);
+    const UpdateTiming& lastUpdateTiming() const { return _lastUpdateTiming; }
 
     const std::string& getParentZone() const { return _parentZoneName; }
     void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
@@ -137,11 +147,23 @@ public:
     virtual bool isDeletable(const std::string &person) const;
     const Deletability &deletability() const { return _deletable; }
 
+    // Every Zone already owns one continuous mathematical FieldNode and keeps
+    // it in the Zone Formation. It is world substrate, not an Object wrapper.
+    // Expose the existing being so persistence and rendering bridges can read
+    // its authored state without inventing a domain-specific C++ Light class.
+    geom::FieldNode* spatialRoot() { return _spatialRootObject.get(); }
+    const geom::FieldNode* spatialRoot() const { return _spatialRootObject.get(); }
+
 protected:
     void buildProperties() override;
 
 private:
     std::string _name;
+    // Stable identity, distinct from _name (display). Always initialized
+    // equal to the constructor's `name` argument — every pre-existing call
+    // site is unaffected — and diverges only when a JSON record's own
+    // "identifier"/"name" fields differ (makeZoneFromJson via setName()).
+    std::string _identifier;
     std::string _parentZoneName;
     Scope _scope;
     Qualities _qualities;
@@ -150,6 +172,8 @@ private:
     std::string _ownerId;
     std::vector<std::shared_ptr<Object>> _objects;
     float _accumulator = 0.0f;
+    // Kernel performance instrumentation — sub-phase tick telemetry beneath the Law system.
+    UpdateTiming _lastUpdateTiming;
     Formation _formation;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;
@@ -164,11 +188,11 @@ public:
     const Formation& joys() const { return _joys; }
     bool satisfiesJoyBounds() const { return _joys.satisfiesJoyBounds(); }
     std::string propJoys() const { return _joys.getIdentifier(); }
-    void load();
+    virtual void load();
     void unload();
     void syncFormationMembers(const std::vector<Singular*>& extraMembers = {});
     void applyFormationRelations();
 
-    // Singular interface
-    std::string getIdentifier() const override { return _name; }
+    // Singular interface. Identity, not display — see _identifier's comment.
+    std::string getIdentifier() const override { return _identifier; }
 };

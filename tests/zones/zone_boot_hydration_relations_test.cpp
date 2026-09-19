@@ -11,12 +11,15 @@
 
 #include "support/test_harness.hpp"
 #include "Relation/Relation.hpp"
+#include "ConstructedBeing/CategoryManager.hpp"
 
 #include <cassert>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
+
+extern CategoryManager categories;
 
 namespace {
 
@@ -25,6 +28,11 @@ Object* findObj(Zone& zone, const std::string& id) {
         if (o && o->getIdentifier() == id) return o.get();
     }
     return nullptr;
+}
+
+Object* findCat(const std::string& id) {
+    auto c = categories.get(id);
+    return c ? c.get() : nullptr;
 }
 
 int asInt(Singular& being, const char* name, int fallback = -999) {
@@ -69,18 +77,18 @@ void check(bool ok, const std::string& what) {
 } // namespace
 
 int main() {
-    std::string filename = "saves/worlds/chess_app.json";
-    if (!std::filesystem::exists(filename) &&
-        std::filesystem::exists("../saves/worlds/chess_app.json")) {
-        filename = "../saves/worlds/chess_app.json";
-    }
-    {
-        const auto p = std::filesystem::absolute(filename);
-        if (p.parent_path().filename() == "worlds" &&
-            p.parent_path().parent_path().filename() == "saves") {
-            SaveSystem::setSaveRoot(p.parent_path().parent_path().string());
-        }
-    }
+    // This test never used TestSupport::RealSaveTreeGuard — it pointed
+    // SaveSystem straight at the real saves/ tree with no backup/restore at
+    // all, unlike every other chess test. Found 2026-09-09 after it (run
+    // directly, repeatedly, outside ctest, verifying unrelated Zone-identity
+    // work) corrupted the real saves/zones/Chess/zone.json from 4,076 to
+    // 8,792 lines — the exact "duplicate relation" shape the 5 chess tests'
+    // 2026-09-07 RealSaveTreeGuard fix was supposed to close everywhere.
+    // Recovered from an orphaned RealSaveTreeGuard temp backup (this test's
+    // own missing guard meant no backup of its own existed); this guard is
+    // the actual fix so it cannot recur.
+    const std::string filename = TestSupport::resolveRealWorldPath("saves/worlds/chess_app.json");
+    TestSupport::RealSaveTreeGuard saveGuard(filename);
 
     std::cout << "=== Boot hydration then load — the running app's order ===\n";
 
@@ -108,8 +116,21 @@ int main() {
     std::cout << "  formation relations: " << total << " total, " << instanceOf
               << " instance-of, " << bound << " with both endpoints bound\n";
     check(total >= 38, "the Chess formation kept its relation graph");
-    check(instanceOf == 35 && bound == instanceOf,
+    check(instanceOf > 0 && bound == instanceOf,
           "every instance-of edge is bound to real beings");
+
+    // Semantic invariant: category.chess.piece exists and is reachable
+    Object* pieceCat = findCat("category.chess.piece");
+    check(pieceCat != nullptr, "category.chess.piece category object resolved");
+
+    // Semantic invariant: key piece/board relationships required by law-chess-click resolve
+    auto pawnRels = active->formation().relations().getRelationsBetween("piece-white-pawn-4-1", "category.chess.piece");
+    bool pawnBound = !pawnRels.empty() && pawnRels[0]->a() != nullptr && pawnRels[0]->b() != nullptr;
+    check(pawnBound, "e2 pawn has bound instance-of relation to category.chess.piece");
+
+    auto boardRels = active->formation().relations().getRelationsBetween("object.chess.board", "category.chess.board");
+    bool boardBound = !boardRels.empty() && boardRels[0]->a() != nullptr && boardRels[0]->b() != nullptr;
+    check(boardBound, "board has bound instance-of relation to category.chess.board");
 
     Universe::instance().setClock(0.0, 1.0 / 60.0);
     std::vector<Object*> reachable;

@@ -339,6 +339,28 @@ int main() {
                 check(glm::distance(readFirstVertexPos(gpu, buf3), glm::vec3(1.0f, 2.0f, 3.0f)) < 1e-4f,
                       "[4e] bumping revision after an in-place edit forces a re-upload");
             }
+
+            // --- 4f. Size change guard ---
+            // Verify that changing the size of a mesh forces a re-upload even if
+            // the id and revision remain unchanged.
+            {
+                GpuMeshCache cache;
+                cache.init(gpu.device, gpu.queue);
+                cache.beginFrame(1);
+
+                geom::TessMesh mesh;
+                geom::TessVertex v;
+                v.pos = glm::vec3(0.0f);
+                mesh.tris = {v, v, v};
+                WGPUBuffer buf1 = cache.getOrUpload(mesh);
+
+                mesh.tris.push_back(v);
+                mesh.tris.push_back(v);
+                mesh.tris.push_back(v); // Size changed, id/revision unchanged
+                WGPUBuffer buf2 = cache.getOrUpload(mesh);
+                check(buf2 != buf1,
+                      "[4f] changing mesh size (triangle count) forces a re-upload, invalidating the stale buffer");
+            }
         }
     }
 

@@ -235,6 +235,131 @@ int main() {
         check(cubeShared, "the original Home cube remains shared after the fork evolved");
     }
 
+    {
+        // Bug (2026-09-07): a Zone's identity-store snapshot is a moment in
+        // time, not a diff. The store used to win on the WHOLE object, so a
+        // field the World authored AFTER that snapshot was silently
+        // discarded in favour of the object's raw C++ default instead of
+        // the World's authored value. Fixed in ZoneSerialization.cpp
+        // (mergeZoneObjectsFromJson): the merge is per object, per field,
+        // not per whole object.
+        //
+        // `attributes` stands in for the missing field here (conditionally
+        // omitted from to_json when empty, so a fresh object genuinely has
+        // none to round-trip) — the original repro field, faceColors, is
+        // now unconditionally serialized (see to_json's own fix) and so can
+        // no longer come back empty from a live round trip; that fix is
+        // covered separately below by an actual store round trip.
+        ZoneManager mgr;
+
+        nlohmann::json staleWidget;
+        staleWidget["objectID"] = "widget";
+        staleWidget["shapeKind"] = 0;
+        staleWidget["authoredProperties"]["displayName"] = {{"t", "string"}, {"v", "Store Name"}};
+        nlohmann::json staleIdentity;
+        staleIdentity["identifier"] = "Sandbox";
+        staleIdentity["name"] = "Sandbox";
+        staleIdentity["world"]["objects"] = nlohmann::json::array({staleWidget});
+        SaveSystem::writeZoneIdentity("Sandbox", staleIdentity);
+
+        // The World, authored later: the same widget now carries an
+        // attribute the snapshot above never saw, plus a brand-new sibling
+        // object the store has never heard of.
+        nlohmann::json worldWidget;
+        worldWidget["objectID"] = "widget";
+        worldWidget["shapeKind"] = 0;
+        worldWidget["attributes"] = {{"mood", "cheerful"}};
+        worldWidget["authoredProperties"]["displayName"] = {{"t", "string"}, {"v", "World Name"}};
+        nlohmann::json newSibling;
+        newSibling["objectID"] = "new-sibling";
+        newSibling["shapeKind"] = 0;
+
+        nlohmann::json worldZone;
+        worldZone["identifier"] = "Sandbox";
+        worldZone["name"] = "Sandbox";
+        worldZone["world"]["objects"] = nlohmann::json::array({worldWidget, newSibling});
+        nlohmann::json worldJson;
+        worldJson["zones"] = nlohmann::json::array({worldZone});
+
+        const auto mergePath = sandbox / "worlds" / "merge_test.json";
+        {
+            std::ofstream out(mergePath);
+            out << worldJson.dump(2);
+        }
+
+        mgr.loadState(mergePath.string(), h.ctx);
+
+        std::shared_ptr<Object> widget;
+        for (auto& z : mgr.zones()) {
+            if (!z) continue;
+            for (auto& o : z->getOwnedObjects()) {
+                if (o && o->getIdentifier() == "widget") widget = o;
+            }
+        }
+        check(widget != nullptr, "the stale-snapshot widget still loads");
+        if (widget) {
+            check(widget->hasAttribute("mood") && widget->getAttribute("mood") == "cheerful",
+                  "a field the store never captured (attributes) falls through to the "
+                  "World's authored value instead of vanishing");
+            Property* nameProp = widget->findProperty("displayName");
+            check(nameProp && std::get<std::string>(nameProp->value()) == "Store Name",
+                  "a field the store DOES capture (displayName) still wins over the "
+                  "World's — a Person's in-session naming is not overwritten");
+        }
+        check(hasObject(mgr, "new-sibling"),
+              "an object the World added after the snapshot is admitted, not dropped");
+    }
+
+    {
+        // Bug (2026-09-07, second pass): the block above covers a Zone that
+        // is NOT live yet, but that is not the path a real Person hits.
+        // EngineInit's boot-time hydrateFromZoneStore() makes essentially
+        // every previously-saved Zone live BEFORE a Person ever clicks Load
+        // (see the comment at ZoneManager.cpp's findLive branch), so the
+        // merge fix above never actually fired for the Basic Pixel Changer
+        // canvas Zach was testing — it hit findLive instead.
+        //
+        // A merge was tried there too and reverted: re-running from_json on
+        // an object that has been live for any length of time is not safe
+        // (it corrupted Chess piece selection state in
+        // chess_click_geometry_test — see ZoneSerialization.cpp's comment).
+        // The actual fix is upstream of any merge: Object::to_json now
+        // serializes faceColors, so the identity store captures the right
+        // value on its very first write and boot hydration alone reproduces
+        // it correctly — no runtime merge needed on the findLive path at all.
+        //
+        // This proves that: write a Zone's identity the same way a real
+        // save does (zoneToJson, not hand-built JSON), hydrate a FRESH
+        // ZoneManager from the store exactly as EngineInit.cpp does at
+        // boot, and check the authored colour survived.
+        ZoneManager writer;
+        auto zone = std::make_shared<Zone>("ColorSandbox", "strict");
+        auto plate = std::make_shared<Object>("color-plate");
+        plate->setFaceColor(0, 0.2f, 0.6f, 0.9f);
+        zone->addObject(plate);
+        writer.addZone(zone);
+        writer.persistZones();
+
+        ZoneManager fresh;
+        fresh.hydrateFromZoneStore();
+        Object* loadedPlate = nullptr;
+        for (auto& z : fresh.zones()) {
+            if (!z) continue;
+            for (auto& o : z->getOwnedObjects()) {
+                if (o && o->getIdentifier() == "color-plate") loadedPlate = o.get();
+            }
+        }
+        check(loadedPlate != nullptr, "the plate survives a store round trip");
+        if (loadedPlate) {
+            check(std::fabs(loadedPlate->faceColors[0][0] - 0.2f) < 1e-4f &&
+                      std::fabs(loadedPlate->faceColors[0][1] - 0.6f) < 1e-4f &&
+                      std::fabs(loadedPlate->faceColors[0][2] - 0.9f) < 1e-4f,
+                  "faceColors now round-trips through the identity store (was silently "
+                  "regressing to the legacy cube-red default — the actual Basic Pixel "
+                  "Changer bug) because Object::to_json serializes it again");
+        }
+    }
+
     std::filesystem::remove_all(sandbox);
     SaveSystem::setSaveRoot("");
 

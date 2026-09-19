@@ -15,6 +15,7 @@ class MouseHandler;
 class Tool;
 class Person;
 class LawManager;
+class Ourverse;
 
 struct SaveContext {
     Core::Camera* camera       = nullptr;
@@ -22,6 +23,7 @@ struct SaveContext {
     float*        currentColor = nullptr;   // 3 floats
     Person*       person       = nullptr;
     LawManager*   lawManager   = nullptr;
+    Ourverse*     ourverse     = nullptr;      // semantic Ourverse root
     double*       worldTime    = nullptr;
     bool          unpackForAuthoring = false;
 };

@@ -96,7 +96,7 @@ void Object::addTargetRotationDegrees(const glm::vec3& deltaDegrees) {
     setTargetRotationEulerDegrees(targetRotationEulerDegrees + deltaDegrees);
 }
 
-void Object::setRotationResponsiveness(float responsiveness) {
+void Object::setRotationResponsiveness(const float& responsiveness) {
     rotationResponsiveness = std::max(0.1f, responsiveness);
 }
 

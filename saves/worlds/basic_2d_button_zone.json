@@ -1,0 +1,445 @@
+{
+  "saveFormat": "zone-identity-v1",
+  "injected_by": "Antigravity",
+  "authors": [
+    "Zach"
+  ],
+  "currentZoneId": "Basic2DButtonZone",
+  "zoneRefs": [
+    {
+      "identifier": "Basic2DButtonZone"
+    }
+  ],
+  "categories": [
+    {
+      "objectID": "Antigravity",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Antigravity"
+        }
+      }
+    },
+    {
+      "objectID": "Zach",
+      "shapeKind": 12,
+      "geometryType": 12,
+      "shapeParams": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "transform": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zachary Zhang"
+        }
+      }
+    }
+  ],
+  "zones": [
+    {
+      "identifier": "Basic2DButtonZone",
+      "name": "Basic2DButtonZone",
+      "owner": "Zach",
+      "world": {
+        "objects": [
+          {
+            "objectID": "my-2d-button",
+            "shapeKind": 12,
+            "geometryType": 12,
+            "shapeParams": [
+              1.0,
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              100.0,
+              50.0
+            ],
+            "x2D": 100.0,
+            "y2D": 100.0,
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              2,
+              0,
+              1
+            ],
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "faceColors": [
+              [
+                1,
+                0.5,
+                0
+              ],
+              [
+                1,
+                0.5,
+                0
+              ],
+              [
+                1,
+                0.5,
+                0
+              ],
+              [
+                1,
+                0.5,
+                0
+              ],
+              [
+                1,
+                0.5,
+                0
+              ],
+              [
+                1,
+                0.5,
+                0
+              ]
+            ],
+            "authoredProperties": {
+              "speedDir": {
+                "t": "float",
+                "v": 1.0
+              }
+            }
+          }
+        ]
+      },
+      "materials": [],
+      "formationRelations": []
+    }
+  ],
+  "authoredLaws": {
+    "laws": [
+      {
+        "id": "law-move-right",
+        "name": "Move Right",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Antigravity"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "my-2d-button"
+            },
+            {
+              "kind": 0,
+              "path": "speedDir",
+              "op": 5,
+              "operand": {
+                "t": "float",
+                "v": 0.0
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 1,
+          "path": "x2D",
+          "operand": {
+            "t": "float",
+            "v": 20.0
+          }
+        },
+        "provenance": [
+          {
+            "entityA": "law-move-right",
+            "entityB": "Antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": [],
+            "type": "authored-by"
+          }
+        ]
+      },
+      {
+        "id": "law-move-left",
+        "name": "Move Left",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Antigravity"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "my-2d-button"
+            },
+            {
+              "kind": 0,
+              "path": "speedDir",
+              "op": 2,
+              "operand": {
+                "t": "float",
+                "v": 0.0
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 1,
+          "path": "x2D",
+          "operand": {
+            "t": "float",
+            "v": -20.0
+          }
+        },
+        "provenance": [
+          {
+            "entityA": "law-move-left",
+            "entityB": "Antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": [],
+            "type": "authored-by"
+          }
+        ]
+      },
+      {
+        "id": "law-bounce-right",
+        "name": "Bounce Right",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Antigravity"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "my-2d-button"
+            },
+            {
+              "kind": 0,
+              "path": "x2D",
+              "op": 5,
+              "operand": {
+                "t": "float",
+                "v": 1100.0
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "speedDir",
+          "operand": {
+            "t": "float",
+            "v": -1.0
+          }
+        },
+        "provenance": [
+          {
+            "entityA": "law-bounce-right",
+            "entityB": "Antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": [],
+            "type": "authored-by"
+          }
+        ]
+      },
+      {
+        "id": "law-bounce-left",
+        "name": "Bounce Left",
+        "enabled": true,
+        "authority": 0,
+        "activation": 0,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+          "Antigravity"
+        ],
+        "conditionSubjects": [],
+        "targets": [],
+        "applicationLog": [],
+        "conditionModel": {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 8,
+              "otherId": "my-2d-button"
+            },
+            {
+              "kind": 0,
+              "path": "x2D",
+              "op": 3,
+              "operand": {
+                "t": "float",
+                "v": 100.0
+              }
+            }
+          ]
+        },
+        "actionModel": {
+          "kind": 0,
+          "path": "speedDir",
+          "operand": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "provenance": [
+          {
+            "entityA": "law-bounce-left",
+            "entityB": "Antigravity",
+            "directed": true,
+            "weight": 1.0,
+            "events": [],
+            "type": "authored-by"
+          }
+        ]
+      }
+    ],
+    "triggers": {
+      "law-move-right": [
+        "object-clicked"
+      ],
+      "law-move-left": [
+        "object-clicked"
+      ],
+      "law-bounce-right": [
+        "object-clicked"
+      ],
+      "law-bounce-left": [
+        "object-clicked"
+      ]
+    },
+    "formationMembers": [
+      "law-move-right",
+      "law-move-left",
+      "law-bounce-right",
+      "law-bounce-left"
+    ],
+    "rete": {
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": [],
+      "agenda": []
+    }
+  }
+}

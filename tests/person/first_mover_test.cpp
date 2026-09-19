@@ -122,6 +122,47 @@ static void testScopeWideningIsDetected() {
     std::cout << "  scope widening detected, entry quarantined not dropped OK\n";
 }
 
+static void testInvalidGrantGracefulRejection() {
+    // Tests that a grant with a syntactically invalid or cryptographically
+    // invalid signature is handled gracefully, quarantined, and refused,
+    // without throwing exceptions.
+    FirstMoverRegister reg;
+    const auto root = scratchRoot();
+    reg.setSaveRoot(root);
+
+    PrivateKey zach = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+
+    assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
+                         FirstMover::Kind::Model, "m", {"fixtures/**"}, 1000));
+
+    // Create scenarios with invalid signatures
+    nlohmann::json saved = reg.toJson();
+
+    auto checkRejection = [&](const std::string& badSignature) {
+        nlohmann::json badJson = saved;
+        badJson["movers"][0]["grant"]["signature"] = badSignature;
+
+        FirstMoverRegister reloaded;
+        reloaded.setSaveRoot(root);
+        reloaded.loadFromJson(badJson);
+
+        assert(reloaded.movers().size() == 1);
+        assert(reloaded.isQuarantined(model.id()));
+        assert(!reloaded.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
+
+        std::string explanation = reloaded.explain(model.id(), root / "fixtures" / "seed.ecsave");
+        assert(explanation.find("grant signature does not verify") != std::string::npos);
+    };
+
+    checkRejection(""); // Empty signature
+    checkRejection("not_base_64!"); // Malformed base64
+    checkRejection("aGVsbG8="); // Wrong length (too short)
+    checkRejection("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"); // Valid base64 but wrong decoded length (63 bytes)
+
+    std::cout << "  invalid grants gracefully rejected OK\n";
+}
+
 static void testForgedGrantRefused() {
     FirstMoverRegister reg;
     const auto root = scratchRoot();
@@ -383,6 +424,7 @@ int main() {
     testSelfAttestationRefused();
     testModelCannotRecognizeAnother();
     testScopeWideningIsDetected();
+    testInvalidGrantGracefulRejection();
     testForgedGrantRefused();
     testCannotEscapeSaveRoot();
     testEmptyScopeGrantsNothing();

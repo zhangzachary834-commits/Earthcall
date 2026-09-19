@@ -11,9 +11,7 @@
 class BrushSystem;
 class DesignSystem;
 
-namespace ZonesOfEarth {
-    class ZoneManager;
-}
+class ZoneManager;
 
 namespace Integration {
 
@@ -80,10 +78,12 @@ public:
     std::string loadData(const std::string& key);
     std::vector<std::string> getDataKeys();
 
-    // Communication
+    // Communication & UI Control
     void registerCallback(const std::string& event_type, std::function<void(const std::string&)> callback);
     void unregisterCallback(const std::string& event_type);
     void sendEvent(const std::string& event_type, const std::string& data);
+    bool setCursorType(const std::string& cursorType);
+    std::string getCursorType() const;
 
     // Permissions
     bool requestPermission(const std::string& permission);
@@ -93,7 +93,7 @@ public:
     // System Access Setters
     void setBrushSystem(BrushSystem* system) { _brushSystem = system; }
     void setDesignSystem(DesignSystem* system) { _designSystem = system; }
-    void setZoneManager(ZonesOfEarth::ZoneManager* manager) { _zoneManager = manager; }
+    void setZoneManager(ZoneManager* manager) { _zoneManager = manager; }
 
     // Lifecycle
     void update();
@@ -109,7 +109,7 @@ private:
     // System references
     BrushSystem* _brushSystem = nullptr;
     DesignSystem* _designSystem = nullptr;
-    ZonesOfEarth::ZoneManager* _zoneManager = nullptr;
+    ZoneManager* _zoneManager = nullptr;
 
     // Design Elements Storage
     std::map<std::string, DesignElementRecord> _designElements;
@@ -117,6 +117,9 @@ private:
     // Permissions
     std::vector<std::string> _grantedPermissions;
     std::map<std::string, std::function<void(const std::string&)>> _callbacks;
+
+    // UI Cursor state
+    std::string _currentCursorType = "default";
 
     // Internal methods
     bool _checkPermission(const std::string& permission) const;

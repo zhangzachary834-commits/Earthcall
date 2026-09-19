@@ -3,6 +3,12 @@
 #include "json.hpp" // nlohmann::json single-header
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <vector>
+
+namespace Singularity {
+namespace Language {
+class Lexeme;
+}
+}
 #include <ctime>
 #include <functional>
 #include <glm/glm.hpp>
@@ -28,10 +34,18 @@ struct RelationEvent {
 };
 
 // A Relation is a first-class Singular whose identity IS its two endpoints
-// and its type. Endpoints are Singular pointers, not name-strings: a string
-// is either an authored property or a hardcoded one (Lexeme::symbol is the
-// linguistic case). JSON still writes identifiers — that is serialization of
-// the pointer, not the ontology.
+// and its relation-kind identity. Endpoints are Singular pointers, not
+// name-strings: a string is either an authored property or a hardcoded one
+// (Lexeme::symbol is the linguistic case). JSON still writes identifiers —
+// that is serialization of identity, not the ontology.
+//
+// Relation kinds follow the same rule. A Lexeme-grounded Relation stores the
+// Lexeme's stable Singular identifier in `type`; its human-readable spelling
+// is available through typeLabel(). This deliberately lets two independently
+// authored Relation kinds share the same spelling without becoming the same
+// semantic relation. Legacy saves that only contain a type label remain
+// readable, but that label is compatibility identity until the Relation is
+// explicitly grounded in a kind-being.
 //
 // How to turn a saved identifier back into a being. Relation holds NON-OWNING
 // pointers, so deserialization cannot invent endpoints.
@@ -41,6 +55,8 @@ class Relation : public Singular {
 public:
     struct AttachmentData {
         bool enabled = false;
+
+        // WHAT IS THISSSSSSS?!?!?!??! - Zach
         glm::mat4 localOffset = glm::mat4(1.0f); // child relative to parent
         glm::vec3 parentAnchor = glm::vec3(0.0f);
         glm::vec3 childAnchor = glm::vec3(0.0f);
@@ -52,83 +68,156 @@ public:
         static AttachmentData fromJson(const nlohmann::json& j);
     };
 
+    // Kernel operations that an AUTHORED relation-kind being may choose as
+    // constitutive semantic substance. The opcode is machinery, not a domain
+    // kind: Persons still author which Relation kind carries it.
+    // APPEND-ONLY if persisted as authored numeric data.
+    enum class ConstitutiveOpcode {
+        None = 0,
+        CppInheritance = 1
+    };
+
+    enum class ConstitutiveStatus {
+        NotApplicable,
+        Holds,
+        Violated,
+        Invalid
+    };
+
+    static constexpr const char* kConstitutiveOpcodeProperty = "relation.constitutiveOpcode";
+    static constexpr const char* kCppBeingKindProperty = "cpp.beingKind";
+
     // ---------------------------------------------------------------------
     // Constructors
     // ---------------------------------------------------------------------
     Relation() = default;
 
-    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              Singular& aBeing,
              Singular& bBeing,
              bool directed = false,
              float initialWeight = -1.0f);
 
-    // const Singular& is accepted so existing call sites (physics, provenance)
-    // keep compiling. The stored pointer is non-owning identity, same as
-    // Formation members.
-    // BRUHHHHHHHHH WHO MADE THIS INTO "std::string" BRUHHHHHH ITS SUPPOSED TO BE A LEXEME
     Relation(const std::string& type,
              const Singular& aBeing,
              const Singular& bBeing,
              bool directed = false,
              float initialWeight = -1.0f);
 
+    // Lexeme-typed Relation constructors. The Lexeme is the semantic kind
+    // being; `type` stores its stable identifier, not its surface spelling.
+    Relation(Singularity::Language::Lexeme& typeLexeme,
+             Singular& aBeing,
+             Singular& bBeing,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
+    Relation(Singularity::Language::Lexeme& typeLexeme,
+             const Singular& aBeing,
+             const Singular& bBeing,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
+    Singularity::Language::Lexeme* getTypeLexeme() const { return _typeLexeme; }
+    void setTypeLexeme(Singularity::Language::Lexeme* lexeme);
+    bool hasGroundedType() const { return _typeLexeme != nullptr; }
+    std::string typeLabel() const;
+
+    // Evaluate an authored constitutive opcode, if the grounded Relation-kind
+    // carries one. CppInheritance reuses ConditionNode::matchesKind — the
+    // engine's existing dynamic_cast-based ontology checker. Endpoint B acts
+    // as an authored type descriptor by carrying `cpp.beingKind`.
+    ConstitutiveStatus evaluateConstitutive() const;
+
     // ---------------------------------------------------------------------
     // Endpoints — the beings this relation holds, not their names.
     // ---------------------------------------------------------------------
-    Singular* a() const { return _a; }
-    Singular* b() const { return _b; }
-    bool hasEndpoints() const { return _a && _b; }
+    // Every Endpoint counts the pointer it holds in one process-wide register,
+    // so Relation::mayBeEndpoint can answer "no relation anywhere holds this
+    // being" in O(1). RelationManager::forgetBeingEverywhere runs on EVERY
+    // Singular destructor — every transient ECA::Event is a Moment is a
+    // Singular — and used to walk every relation in every live manager (each
+    // Law's formations own one). Measured 2026-09-15 in the chess world: 39.5 µs
+    // of a 42 µs Moment lifetime, 92% of a Scope::Everyone event sweep's
+    // per-candidate cost. Same shape as ReteNetwork::_factParticipants.
+    //
+    // A SUPERSET on purpose: it counts endpoints of relations no manager owns
+    // too, so it can only answer "maybe" too often, never "no" wrongly. The
+    // counting lives in these special members and bind/forget, which are the
+    // only writes to `ptr` — keep it that way (Jules: if you add a path that
+    // sets `ptr`, go through bind()).
+    struct Endpoint {
+        Singular* ptr = nullptr;
+        std::string savedId;
+        mutable std::string cachedId;
 
-    // Identifier of an endpoint. Law-text and JSON address beings by these
-    // strings; the pointer is the relation's actual state. When the being is
-    // not in this world (provenance load, a dangling save), the registered
-    // identifier property still holds the saved name.
-    std::string aId() const {
-        if (!_a) return _savedA;
-        _cachedAId = _a->getIdentifier();
-        return _cachedAId;
-    }
-    std::string bId() const {
-        if (!_b) return _savedB;
-        _cachedBId = _b->getIdentifier();
-        return _cachedBId;
-    }
+        Endpoint() = default;
+        Endpoint(const Endpoint& o) : ptr(o.ptr), savedId(o.savedId), cachedId(o.cachedId) {
+            retainEndpoint(ptr);
+        }
+        Endpoint& operator=(const Endpoint& o) {
+            if (this != &o) {
+                retainEndpoint(o.ptr);
+                releaseEndpoint(ptr);
+                ptr = o.ptr;
+                savedId = o.savedId;
+                cachedId = o.cachedId;
+            }
+            return *this;
+        }
+        ~Endpoint() { releaseEndpoint(ptr); }
+
+        void bind(Singular* s) {
+            retainEndpoint(s);
+            releaseEndpoint(ptr);
+            ptr = s;
+            if (ptr) {
+                savedId.clear();
+                cachedId = ptr->getIdentifier();
+            }
+        }
+
+        void forget(const Singular* s) {
+            if (ptr && ptr == s) {
+                if (savedId.empty()) savedId = cachedId;
+                releaseEndpoint(ptr);
+                ptr = nullptr;
+            }
+        }
+
+        std::string id() const {
+            if (ptr) {
+                cachedId = ptr->getIdentifier();
+                return cachedId;
+            }
+            return savedId;
+        }
+
+        bool hasValue() const { return ptr != nullptr; }
+    };
+
+    // False only when no Endpoint of any live Relation holds this pointer.
+    // Pointer-compared; never dereferenced (callers may be mid-destruction).
+    static bool mayBeEndpoint(const Singular* being);
+    static void retainEndpoint(const Singular* being);
+    static void releaseEndpoint(const Singular* being);
+
+    Singular* a() const { return _endpointA.ptr; }
+    Singular* b() const { return _endpointB.ptr; }
+    bool hasEndpoints() const { return _endpointA.hasValue() && _endpointB.hasValue(); }
+
+    std::string aId() const { return _endpointA.id(); }
+    std::string bId() const { return _endpointB.id(); }
 
     void bind(Singular* aBeing, Singular* bBeing) {
-        _a = aBeing;
-        _b = bBeing;
-        if (_a) _savedA.clear();
-        if (_b) _savedB.clear();
+        _endpointA.bind(aBeing);
+        _endpointB.bind(bBeing);
     }
 
-    // An endpoint has left the world. Keep the NAME and drop the pointer.
-    //
-    // A Relation outlives the beings it holds — a Formation, a provenance
-    // record, or a test's own graph goes on owning it after a scoped Object
-    // is gone — and `aId()`/`bId()` call a VIRTUAL getIdentifier() through
-    // that pointer. Against a destroyed being that is `__cxa_pure_virtual`:
-    // an abort, from a read. Every relation query walks these
-    // (`isBetween`, `involves`), so one stale edge takes down whatever asks
-    // the graph a question, whenever it happens to ask.
-    //
-    // The saved id is exactly the right thing to fall back to: it is what a
-    // relation loaded from a save holds before its endpoints are resolved, so
-    // the "endpoint not in this world" state already existed and is already
-    // handled everywhere. This just returns a relation to it.
-    //
-    // Called from RelationManager::forgetBeingEverywhere.
     void forgetEndpoint(const Singular* being) {
         if (!being) return;
-        if (_a == being) {
-            if (_savedA.empty()) _savedA = _cachedAId;
-            _a = nullptr;
-        }
-        if (_b == being) {
-            if (_savedB.empty()) _savedB = _cachedBId;
-            _b = nullptr;
-        }
+        _endpointA.forget(being);
+        _endpointB.forget(being);
     }
 
 
@@ -153,11 +242,16 @@ public:
                              const RelationEndpointResolver& resolve = {});
     bool isAttachment() const { return type == "attachment" || attachment.enabled; }
 
-    // Singular interface
+    // Singular interface. `type` is already semantic identity for a grounded
+    // Relation, so two kind-beings with one spelling produce distinct Relation
+    // identities instead of colliding on the label.
     std::string getIdentifier() const override { return aId() + "-" + type + "-" + bId(); }
 
-    // `type` is a hardcoded string property: the semantic tag of the bond
-    // (attachment, instance-of, is_pos, …). It is not an endpoint.
+    // Canonical relation-kind identity. For Lexeme-grounded Relations this is
+    // the Lexeme's unique/stable Singular id. For legacy string-only Relations
+    // it remains the historical label until migration grounds the Relation in
+    // a kind-being. Do not parse semantic meaning from this string; resolve the
+    // kind-being and its properties when semantics matter.
     std::string type;
 
     static bool s_developerMode;
@@ -191,21 +285,12 @@ public:
     void setEventsList(const std::shared_ptr<PropertyList>& list);
 
 private:
-    // Non-owning. The beings live in a Zone / LanguageSystem / Formation.
-    // Registered to law as the identifier properties `entityA` / `entityB`
-    // (JSON and law-text still speak identifiers). The pointer is the
-    // in-memory handle of that same fact — not a second, ungoverned endpoint.
-    Singular* _a = nullptr;
-    Singular* _b = nullptr;
-    // Saved identifier when the being is absent from this world. Same fact
-    // as the registered `entityA` / `entityB` properties, not a second
-    // endpoint. Bind() clears these.
-    std::string _savedA;
-    std::string _savedB;
-    // Last-known names, kept so forgetEndpoint has something to fall back to
-    // when a being dies. Mutable because reading an id is a const operation.
-    mutable std::string _cachedAId;
-    mutable std::string _cachedBId;
+    friend Relation relationFromJson(const nlohmann::json& json,
+                                     const RelationEndpointResolver& resolve);
+
+    Endpoint _endpointA;
+    Endpoint _endpointB;
+    Singularity::Language::Lexeme* _typeLexeme = nullptr;
 
     void buildProperties() override;
     std::string propEntityA() const { return aId(); }

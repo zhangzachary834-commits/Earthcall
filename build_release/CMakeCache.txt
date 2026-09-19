@@ -20,8 +20,14 @@ APPKIT_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Li
 //Path to a library.
 AUDIOTOOLBOX_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/AudioToolbox.framework
 
+//Build websocketpp examples.
+BUILD_EXAMPLES:BOOL=OFF
+
 //Build shared libraries
 BUILD_SHARED_LIBS:BOOL=OFF
+
+//Build websocketpp tests.
+BUILD_TESTS:BOOL=OFF
 
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=CMAKE_ADDR2LINE-NOTFOUND
@@ -35,6 +41,9 @@ CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
+
+//Configurations
+CMAKE_CONFIGURATION_TYPES:STRING=Release;RelWithDebInfo;Debug
 
 //CXX compiler
 CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
@@ -95,6 +104,8 @@ CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=
 
 //Value Computed by CMake.
 CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release/CMakeFiles/pkgRedirects
+
+CMAKE_INCLUDE_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
 
 //User executables (bin)
 CMAKE_INSTALL_BINDIR:PATH=bin
@@ -215,6 +226,12 @@ CMAKE_OSX_DEPLOYMENT_TARGET:STRING=
 // inside the indicated SDK.
 CMAKE_OSX_SYSROOT:STRING=
 
+//Set minimum Policy Version for a project; for configuring third-party
+// projects without modifying their code.
+CMAKE_POLICY_VERSION_MINIMUM:UNINITIALIZED=3.5
+
+CMAKE_PREFIX_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps
+
 //Value Computed by CMake
 CMAKE_PROJECT_COMPAT_VERSION:STATIC=
 
@@ -319,6 +336,11 @@ COREAUDIO_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System
 //Path to a library.
 COREFOUNDATION_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework
 
+//Build websocketpp with CPP11 features enabled.
+ENABLE_CPP11:BOOL=ON
+
+ENABLE_TESTING:BOOL=OFF
+
 //Value Computed by CMake
 Earthcall_BINARY_DIR:STATIC=/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release
 
@@ -351,6 +373,10 @@ FETCHCONTENT_SOURCE_DIR_FLATBUFFERS:PATH=
 FETCHCONTENT_SOURCE_DIR_GLFW:PATH=
 
 //When not empty, overrides where to find pre-populated content
+// for vhacd
+FETCHCONTENT_SOURCE_DIR_VHACD:PATH=
+
+//When not empty, overrides where to find pre-populated content
 // for websocketpp
 FETCHCONTENT_SOURCE_DIR_WEBSOCKETPP:PATH=
 
@@ -365,6 +391,9 @@ FETCHCONTENT_UPDATES_DISCONNECTED_FLATBUFFERS:BOOL=OFF
 
 //Enables UPDATE_DISCONNECTED behavior just for population of glfw
 FETCHCONTENT_UPDATES_DISCONNECTED_GLFW:BOOL=OFF
+
+//Enables UPDATE_DISCONNECTED behavior just for population of vhacd
+FETCHCONTENT_UPDATES_DISCONNECTED_VHACD:BOOL=OFF
 
 //Enables UPDATE_DISCONNECTED behavior just for population of websocketpp
 FETCHCONTENT_UPDATES_DISCONNECTED_WEBSOCKETPP:BOOL=OFF
@@ -455,13 +484,10 @@ GIT_EXECUTABLE:FILEPATH=/usr/bin/git
 //Value Computed by CMake
 GLFW_BINARY_DIR:STATIC=/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release/_deps/glfw-build
 
-//Build the GLFW documentation
 GLFW_BUILD_DOCS:BOOL=OFF
 
-//Build the GLFW example programs
 GLFW_BUILD_EXAMPLES:BOOL=OFF
 
-//Build the GLFW test programs
 GLFW_BUILD_TESTS:BOOL=OFF
 
 //Generate installation target
@@ -478,6 +504,12 @@ GLFW_USE_OSMESA:BOOL=OFF
 
 //Assume the Vulkan loader is linked with the application
 GLFW_VULKAN_STATIC:BOOL=OFF
+
+//Installation directory for CMake files
+INSTALL_CMAKE_DIR:PATH=lib/cmake/websocketpp
+
+//Installation directory for header files
+INSTALL_INCLUDE_DIR:PATH=include
 
 //Path to a library.
 IOKIT_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework
@@ -518,11 +550,22 @@ PKG_CONFIG_EXECUTABLE:FILEPATH=PKG_CONFIG_EXECUTABLE-NOTFOUND
 //Path to a library.
 QUARTZCORE_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/QuartzCore.framework
 
+RANDR_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
 //Path to a library.
 SECURITY_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Security.framework
 
 //Path to a library.
+UUID_LIB:FILEPATH=UUID_LIB-NOTFOUND
+
+//Path to a library.
 WEBKIT_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/WebKit.framework
+
+XCURSOR_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
+XINERAMA_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
+XI_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
 
 //Path to a file.
 ZLIB_INCLUDE_DIR:PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
@@ -532,6 +575,15 @@ ZLIB_LIBRARY_DEBUG:FILEPATH=ZLIB_LIBRARY_DEBUG-NOTFOUND
 
 //Path to a library.
 ZLIB_LIBRARY_RELEASE:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libz.tbd
+
+//Value Computed by CMake
+websocketpp_BINARY_DIR:STATIC=/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release/_deps/websocketpp-build
+
+//Value Computed by CMake
+websocketpp_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+websocketpp_SOURCE_DIR:STATIC=/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release/_deps/websocketpp-src
 
 
 ########################
@@ -673,7 +725,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=5
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJCXX_COMPILER

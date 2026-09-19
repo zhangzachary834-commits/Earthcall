@@ -17,5 +17,6 @@ namespace Rendering {
 // a loaded "Tool: Shape Generator 3D" law (saves/tests/
 // shape_generator_3d_law.json) can fire through Law::applyTo.
 void renderDeveloperToolsWindow(bool* open, GLFWwindow* window, Core::Engine* engine);
+void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine);
 
 } // namespace Rendering

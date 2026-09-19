@@ -35,23 +35,23 @@ std::vector<std::string> SyntacticParser::tokenize(const std::string& input) {
 Lexeme* SyntacticParser::resolvePOS(Lexeme& lexeme, Zone& activeZone) {
     auto rels = activeZone.formation().relations().getRelationsOf(lexeme);
     for (const auto& r : rels) {
-        if (r && r->type == "is_pos" && r->a() == &lexeme) {
+        if (r && r->typeLabel() == "is_pos" && r->a() == &lexeme) {
             return dynamic_cast<Lexeme*>(r->b());
         }
     }
     return nullptr;
 }
 
-std::string SyntacticParser::resolveMeaning(Lexeme& verbPhrase, Zone& activeZone) {
+Lexeme* SyntacticParser::resolveMeaning(Lexeme& verbPhrase, Zone& activeZone) {
     auto rels = activeZone.formation().relations().getRelationsOf(verbPhrase);
     for (const auto& r : rels) {
-        if (r && r->type == "resolves_to" && r->a() == &verbPhrase) {
+        if (r && r->typeLabel() == "resolves_to" && r->a() == &verbPhrase) {
             if (auto* meaning = dynamic_cast<Lexeme*>(r->b())) {
-                return meaning->getSymbol();
+                return meaning;
             }
         }
     }
-    return verbPhrase.getSymbol();
+    return &verbPhrase;
 }
 
 std::vector<std::shared_ptr<Relation>> SyntacticParser::parse(const std::string& utterance, Zone& activeZone) {
@@ -94,10 +94,22 @@ std::vector<std::shared_ptr<Relation>> SyntacticParser::parse(const std::string&
                 if (!relationType.empty() && subject) {
                     auto phrase = language.resolve(relationType);
                     activeZone.addToFormation(phrase.get());
-                    const std::string canonical = resolveMeaning(*phrase, activeZone);
+                    Lexeme* meaning = resolveMeaning(*phrase, activeZone);
+                    if (!meaning) {
+                        subject = nullptr;
+                        relationType.clear();
+                        state = EXPECTING_SUBJECT;
+                        continue;
+                    }
+                    activeZone.addToFormation(meaning);
 
-                    auto rel = std::make_shared<Relation>(canonical, *subject, *lexeme, true);
+                    // Meaning stays a first-class being all the way into the
+                    // Relation. Do not collapse it back to its spelling here:
+                    // two Lexemes may say the same word while carrying distinct
+                    // authored semantic identities.
+                    auto rel = std::make_shared<Relation>(*meaning, *subject, *lexeme, true);
                     rel->setWeight(0.5f);
+                    rel->setDynamicProperty("decayRate", 0.02f);
                     results.push_back(rel);
 
                     subject = nullptr;

@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 #include <map>
@@ -19,6 +20,11 @@ namespace SaveSystem {
 namespace {
 std::string g_saveRoot;
 }
+
+#ifdef __EMSCRIPTEN__
+static void ensureIdbMounted();
+static void syncIdb();
+#endif
 
 void setSaveRoot(const std::string& absoluteSavesDir) {
     g_saveRoot = absoluteSavesDir;
@@ -162,7 +168,20 @@ std::string sanitizeLabel(const std::string& label) {
     // A name that is only dots still resolves to a directory entry rather than
     // a save, and an over-long one is rejected by the filesystem.
     if (safe.find_first_not_of('.') == std::string::npos) return "";
-    if (safe.size() > 128) safe.resize(128);
+    if (safe.size() > 128) {
+        size_t len = 128;
+        // Look at the first byte we are DROPPING (index 128).
+        // In UTF-8, continuation bytes always start with binary 10xxxxxx (0x80 to 0xBF).
+        // If it's a continuation byte, it means our cut severed a multi-byte character.
+        if ((safe[128] & 0xC0) == 0x80) {
+            // Step back through the kept string to remove the rest of the severed character
+            while (len > 0 && (safe[len - 1] & 0xC0) == 0x80) {
+                len--;
+            }
+            if (len > 0) len--; // Drop the leading byte of the severed character too
+        }
+        safe.resize(len);
+    }
 
     return safe;
 }
@@ -270,45 +289,41 @@ static bool permitted(const std::string& filename) {
 // IDBFS state tracking
 static bool s_idbMounted = false;
 
+EM_JS(void, mount_idb, (), {
+    // Check if IDBFS is already available
+    if (typeof FS !== 'undefined' && FS.filesystems && FS.filesystems.IDBFS) {
+        try {
+            // Mount /saves to IDBFS. Use try-catch for mkdir in case it exists.
+            try { FS.mkdir('/saves'); } catch (e) {}
+            FS.mount(IDBFS, { root: '/saves' }, '/saves');
+        } catch (e) {
+            console.error('IDBFS mount failed:', e);
+        }
+    }
+});
+
+EM_JS(void, sync_idb, (), {
+    if (typeof FS !== 'undefined' && FS.syncfs) {
+        try {
+            FS.syncfs(false, function(err) {
+                if (err) {
+                    console.error('IDBFS sync failed:', err);
+                }
+            });
+        } catch (e) {
+            console.error('IDBFS sync error:', e);
+        }
+    }
+});
+
 static void ensureIdbMounted() {
     if (s_idbMounted) return;
-    // Mount the saves directory to IDBFS for persistence
-    // IDBFS persists to IndexedDB and survives page reloads
-    EM_JS(void, mount_idb, (), {
-        // Check if IDBFS is already available
-        if (typeof FS !== 'undefined' && FS.filesystems && FS.filesystems.IDBFS) {
-            try {
-                // Mount /saves to IDBFS
-                FS.mkdir('/saves');
-                FS.mount(IDBFS, { root: '/saves' }, '/saves');
-                // Also mount the current directory if saves are there
-                FS.mkdir('.');
-                FS.mount(IDBFS, {}, '.');
-            } catch (e) {
-                console.error('IDBFS mount failed:', e);
-            }
-        }
-    });
+    mount_idb();
     s_idbMounted = true;
 }
 
 static void syncIdb() {
-    // Sync IDBFS to IndexedDB
-    EM_JS(void, sync_idb, (), {
-        if (typeof FS !== 'undefined' && FS.syncfs) {
-            try {
-                FS.syncfs(true, function(err) {
-                    if (err) {
-                        console.error('IDBFS sync failed:', err);
-                    } else {
-                        console.log('IDBFS synced successfully');
-                    }
-                });
-            } catch (e) {
-                console.error('IDBFS sync error:', e);
-            }
-        }
-    });
+    sync_idb();
 }
 
 // There is no IDBFS mount, no FS.syncfs, and no --preload-file anywhere in
@@ -943,8 +958,8 @@ nlohmann::json readZoneIdentity(const std::string& identifier) {
     return readSaveData(path);
 }
 
-std::vector<std::string> listZoneIdentities() {
-    std::vector<std::string> out;
+std::vector<IdentityRecord> listZoneIdentityRecords() {
+    std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::ZONE);
     if (folder.empty()) return out;
     std::error_code ec;
@@ -955,15 +970,99 @@ std::vector<std::string> listZoneIdentities() {
         if (!std::filesystem::exists(zoneFile, ec)) continue;
         if (std::filesystem::file_size(zoneFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(zoneFile.string());
-        std::string id;
-        if (j.is_object()) {
-            id = j.value("identifier", j.value("name", std::string{}));
-        }
-        if (id.empty()) id = entry.path().filename().string();
-        out.push_back(std::move(id));
+        out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }
-    std::sort(out.begin(), out.end());
+    std::sort(out.begin(), out.end(),
+              [](const IdentityRecord& a, const IdentityRecord& b) { return a.directoryKey < b.directoryKey; });
     return out;
+}
+
+std::vector<std::string> listZoneIdentities() {
+    std::vector<std::string> out;
+    for (auto& rec : listZoneIdentityRecords()) out.push_back(std::move(rec.directoryKey));
+    return out;
+}
+
+namespace {
+std::filesystem::path sharedIdentityRoot(const char* leaf) {
+    const std::filesystem::path root = g_saveRoot.empty()
+        ? std::filesystem::path("saves")
+        : std::filesystem::path(g_saveRoot);
+    return root / leaf;
+}
+} // namespace
+
+std::string lawDirectory(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    const std::filesystem::path dir = sharedIdentityRoot("laws") / safe;
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Failed to create Law directory "
+                  << dir.string() << ": " << ec.message() << "\n";
+        return "";
+    }
+    return dir.string();
+}
+
+std::string lawIdentityPath(const std::string& identifier) {
+    const std::string dir = lawDirectory(identifier);
+    return dir.empty() ? std::string{} : dir + "/law.json";
+}
+
+bool lawIdentityExists(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return false;
+    std::error_code ec;
+    const auto path = sharedIdentityRoot("laws") / safe / "law.json";
+    return std::filesystem::exists(path, ec) &&
+           std::filesystem::is_regular_file(path, ec) &&
+           std::filesystem::file_size(path, ec) > 0;
+}
+
+bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j) {
+    const std::string path = lawIdentityPath(identifier);
+    if (path.empty() || !permitted(path)) return false;
+
+    // A shared root must never be observed half-written. The temporary file
+    // is adjacent, so rename is one filesystem commit on supported hosts.
+    const std::filesystem::path finalPath(path);
+    const std::filesystem::path temporary =
+        finalPath.string() + ".tmp-" + timestamp() + "-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    {
+        std::ofstream out(temporary);
+        if (!out) {
+            std::cerr << "[SaveSystem] Failed to open Law identity temporary file: "
+                      << temporary.string() << "\n";
+            return false;
+        }
+        out << j.dump(2);
+        out.flush();
+        if (!out) {
+            std::error_code ignored;
+            std::filesystem::remove(temporary, ignored);
+            return false;
+        }
+    }
+    std::error_code ec;
+    std::filesystem::rename(temporary, finalPath, ec);
+    if (ec) {
+        const std::string renameError = ec.message();
+        std::error_code ignored;
+        std::filesystem::remove(temporary, ignored);
+        std::cerr << "[SaveSystem] Failed to commit Law identity " << path
+                  << ": " << renameError << "\n";
+        return false;
+    }
+    return true;
+}
+
+nlohmann::json readLawIdentity(const std::string& identifier) {
+    if (!lawIdentityExists(identifier)) return nlohmann::json();
+    const std::string safe = sanitizeLabel(identifier);
+    return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
 }
 
 std::string homeDirectory(const std::string& identifier) {
@@ -1027,8 +1126,8 @@ nlohmann::json readHomeIdentity(const std::string& identifier) {
     return readSaveData(path);
 }
 
-std::vector<std::string> listHomeIdentities() {
-    std::vector<std::string> out;
+std::vector<IdentityRecord> listHomeIdentityRecords() {
+    std::vector<IdentityRecord> out;
     std::string folder = ensureSaveTypeFolder(SaveType::HOME);
     if (folder.empty()) return out;
     std::error_code ec;
@@ -1039,14 +1138,16 @@ std::vector<std::string> listHomeIdentities() {
         if (!std::filesystem::exists(homeFile, ec)) continue;
         if (std::filesystem::file_size(homeFile, ec) == 0) continue;
         nlohmann::json j = readSaveData(homeFile.string());
-        std::string id;
-        if (j.is_object()) {
-            id = j.value("identifier", j.value("name", std::string{}));
-        }
-        if (id.empty()) id = entry.path().filename().string();
-        out.push_back(std::move(id));
+        out.push_back(IdentityRecord{entry.path().filename().string(), std::move(j)});
     }
-    std::sort(out.begin(), out.end());
+    std::sort(out.begin(), out.end(),
+              [](const IdentityRecord& a, const IdentityRecord& b) { return a.directoryKey < b.directoryKey; });
+    return out;
+}
+
+std::vector<std::string> listHomeIdentities() {
+    std::vector<std::string> out;
+    for (auto& rec : listHomeIdentityRecords()) out.push_back(std::move(rec.directoryKey));
     return out;
 }
 

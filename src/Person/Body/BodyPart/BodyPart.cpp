@@ -110,7 +110,6 @@ Object* BodyPart::addSubObject(ObjectTypes::ShapeKind kind, const glm::mat4& loc
     auto obj = std::make_unique<Object>(subId);
     obj->setShape(kind);
 
-    // obj->setOwnerBodyPart(this);
     glm::mat4 worldT = _transform * localOffset;
     obj->setTransform(worldT);
     for (int f = 0; f < 6; ++f) obj->setFaceColor(f, color[0], color[1], color[2]);
@@ -123,7 +122,6 @@ Object* BodyPart::addSubObject(ObjectTypes::ShapeKind kind, const glm::mat4& loc
 
 Object* BodyPart::addSubObject(std::unique_ptr<Object> obj, const glm::mat4& localOffset) {
     if (!obj) return nullptr;
-    // obj->setOwnerBodyPart(this);
     glm::mat4 worldT = _transform * localOffset;
     obj->setTransform(worldT);
     Object* raw = obj.get();

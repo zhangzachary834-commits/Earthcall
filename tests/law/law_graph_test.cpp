@@ -12,6 +12,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -144,6 +145,51 @@ int main() {
             if (property->name() == "enabled") sawEnabled = true;
         }
         assert(sawEnabled);
+
+        // ------------------------------------------------------------------
+        // 5. Reverse write index: grep for Laws without executing them.
+        // ------------------------------------------------------------------
+        ActionNode nested;
+        nested.kind = ActionNode::Kind::Sequence;
+        nested.children.push_back(ActionNode::set("position.x", PropertyValue(4.0)));
+        ActionNode parallel;
+        parallel.kind = ActionNode::Kind::Parallel;
+        parallel.children.push_back(ActionNode::map(
+            "color", OntoMath::Piecewise::continuous(
+                OntoMath::MathNode::fromLegacyExpression(OntoMath::ScalarForm::constant(1.0))), {}));
+        parallel.children.push_back(ActionNode::addProperty("", "studioInk",
+                                                            PropertyValue(std::string("blue"))));
+        nested.children.push_back(std::move(parallel));
+        ActionNode elevate;
+        elevate.kind = ActionNode::Kind::ElevatePixels;
+        elevate.propertyName = "selectedPixels";
+        nested.children.push_back(std::move(elevate));
+        ActionNode pixel;
+        pixel.kind = ActionNode::Kind::WritePixel;
+        nested.children.push_back(std::move(pixel));
+
+        const auto writes = Rendering::collectPropertyWrites(nested);
+        assert(writes.size() == 6);
+        const auto findWrite = [&](const std::string& path) {
+            return std::find_if(writes.begin(), writes.end(), [&](const auto& write) {
+                return write.path == path;
+            });
+        };
+        assert(findWrite("position.x") != writes.end());
+        assert(findWrite("position.x")->modelPath == std::vector<int>({0}));
+        assert(findWrite("color") != writes.end());
+        assert(findWrite("color")->modelPath == std::vector<int>({1, 0}));
+        assert(findWrite("studioInk") != writes.end());
+        assert(findWrite("selectedPixels") != writes.end());
+        assert(findWrite("surface.selection.selectedPixels") != writes.end());
+        assert(findWrite("surface.pixel.*") != writes.end());
+        assert(findWrite("surface.pixel.*")->wildcard);
+
+        // Inputs are reads, not writes: PlayAudio must never appear merely
+        // because it names frequency/amplitude PropertyPaths.
+        const auto audioWrites = Rendering::collectPropertyWrites(
+            ActionNode::playAudio("acoustic.frequency", "acoustic.amplitude", "sine"));
+        assert(audioWrites.empty());
 
         // Clearing models is a real state (used by the editor's remove buttons).
         Law bare("bare");

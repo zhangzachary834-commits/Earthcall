@@ -1,17 +1,12 @@
-// Rendering-optimization Phase C: the min/max heightfield grid DDA skip must
-// never change what a ray hits -- only how many field evaluations it costs to
-// find out. This is the falsifying measurement the addendums insist should
-// exist BEFORE a phase ships, aimed at the exact axis (camera angle/distance)
-// that hid Bugs.md #20: every prior verification matrix held the camera fixed
-// and stayed green through six regressions on other axes.
+// Rendering-optimization Phase C's native camera corpus. DDA traversal is
+// currently quarantined after this test exposed grazing-root losses, but the
+// cache/proxy boundary still needs an end-to-end guard: supplying a proved
+// linear-heightfield grid must never alter the generic exact renderer's pixels.
 //
-// The check: render the real authored Perlin-floor field from several camera
-// angles (straight down, grazing the horizon, 45 degrees down, and a close-up
-// oblique view) with the height grid ON and OFF, and require the rendered
-// pixels to be IDENTICAL. Not "similar" -- identical. A skip that is sound by
-// construction (see heightfield_predicate_test's soundness check) should never
-// move a single pixel; any difference here means either the CPU grid bound or
-// the WGSL DDA has a defect that could delete real geometry.
+// The cases deliberately cover straight-down, horizon, 45-degree, oblique,
+// near-parallel, and inside-proxy cameras -- the axes that prior fixed-camera
+// checks missed. A future DDA reintroduction must first make this exact
+// comparison pass while traversal is actually enabled.
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/Renderer.hpp"
@@ -40,6 +35,44 @@ void onMap(WGPUMapAsyncStatus, WGPUStringView, void* u, void*) {
     static_cast<MapR*>(u)->done = true;
 }
 
+using OntoMath::MathNode;
+
+std::unique_ptr<MathNode> leaf(const char* name) {
+    auto n = std::make_unique<MathNode>();
+    n->op = MathNode::Op::ValueLeaf;
+    n->variableName = name;
+    return n;
+}
+
+std::unique_ptr<MathNode> constant(double value) {
+    auto n = std::make_unique<MathNode>();
+    n->op = MathNode::Op::ScalarLeaf;
+    n->scalarForm = OntoMath::ScalarForm::constant(value);
+    return n;
+}
+
+std::unique_ptr<MathNode> unary(MathNode::Op op, std::unique_ptr<MathNode> a) {
+    auto n = std::make_unique<MathNode>();
+    n->op = op;
+    n->children.push_back(std::move(a));
+    return n;
+}
+
+std::unique_ptr<MathNode> binary(MathNode::Op op, std::unique_ptr<MathNode> a,
+                                 std::unique_ptr<MathNode> b) {
+    auto n = std::make_unique<MathNode>();
+    n->op = op;
+    n->children.push_back(std::move(a));
+    n->children.push_back(std::move(b));
+    return n;
+}
+
+std::unique_ptr<MathNode> component(std::unique_ptr<MathNode> a, const char* axis) {
+    auto n = unary(MathNode::Op::Component, std::move(a));
+    n->stringArg = axis;
+    return n;
+}
+
 } // namespace
 
 int main() {
@@ -66,18 +99,22 @@ int main() {
     rbd.size = rowStride * H;
     WGPUBuffer readback = wgpuDeviceCreateBuffer(gpu.device, &rbd);
 
-    // The real authored Perlin-floor field, lifted the same way
-    // scratch/probes/horizon_cost_probe.cpp does: y - 40*noise(p*0.008+offset)
-    // over [1000,30,1000], read verbatim from
-    // saves/zones/Perlin Noise Floor Zone/zone.json.
+    // A genuinely 2D linear heightfield with a compositionally derived bound.
+    // Perlin grids are deliberately refused until the exact implementation has
+    // a closed-form Lipschitz proof; a sampled margin may not delete geometry.
     geom::SdfNode field;
     field.op = geom::SdfOp::Leaf;
     field.prim = geom::SdfPrim::Expr;
-    field.mathNode = std::shared_ptr<OntoMath::MathNode>(
-        OntoMath::MathNode::fromJson(nlohmann::json::parse(std::string(
-            "{\"children\": [{\"op\": 1, \"var\": \"y\"}, {\"children\": [{\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 40.0, \"factors\": {}}]}}, {\"children\": [{\"children\": [{\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 0.008, \"factors\": {}}]}}, {\"children\": [{\"op\": 1, \"var\": \"p\"}, {\"children\": [{\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 100.0, \"factors\": {}}]}}, {\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 0.0, \"factors\": {}}]}}, {\"op\": 0, \"scalarForm\": {\"terms\": [{\"c\": 100.0, \"factors\": {}}]}}], \"op\": 2}], \"op\": 4}], \"op\": 6}], \"op\": 29}], \"op\": 6}], \"op\": 5}")))
-            .release());
-    const glm::vec3 extent(1000.f, 30.f, 1000.f);
+    auto height = binary(
+        MathNode::Op::Add,
+        binary(MathNode::Op::Scale, constant(0.02), component(leaf("p"), "x")),
+        binary(MathNode::Op::Scale, constant(0.01), component(leaf("p"), "z")));
+    field.mathNode = std::shared_ptr<MathNode>(
+        binary(MathNode::Op::Sub, leaf("y"), std::move(height)).release());
+    // This synthetic true heightfield has amplitude 40, so its test volume
+    // admits that complete vertical range. The saved y-dependent field keeps
+    // its authored extent and is covered separately by SDF parity.
+    const glm::vec3 extent(1000.f, 50.f, 1000.f);
 
     geom::HeightGrid heightGrid;
     {
@@ -89,21 +126,23 @@ int main() {
         }
     }
     if (heightGrid.dimX == 0) {
-        std::printf("FAIL: the real Perlin-floor field did not produce a height grid "
-                    "-- this test cannot exercise the DDA path at all\n");
+        std::printf("FAIL: the proved linear heightfield did not produce a height grid "
+                    "-- this test cannot exercise the cache/proxy boundary\n");
         return 1;
     }
     std::printf("height grid: %dx%d cells\n", heightGrid.dimX, heightGrid.dimZ);
 
-    auto readPixels = [&](bool gridOn, glm::vec3 eye, glm::vec3 target, float fovDeg) -> std::vector<unsigned char> {
+    auto readPixels = [&](bool passGridCache, glm::vec3 eye, glm::vec3 target,
+                          glm::vec3 up, float fovDeg) -> std::vector<unsigned char> {
         const glm::mat4 proj = glm::perspectiveZO(glm::radians(fovDeg), 1.0f, 0.1f, 3000.f);
-        const glm::mat4 viewM = glm::lookAt(eye, target, glm::vec3(0, 1, 0));
+        const glm::mat4 viewM = glm::lookAt(eye, target, up);
         RenderMaterial mat; mat.baseColor = glm::vec3(0.3f, 0.7f, 0.3f);
 
         r.setCamera(viewM, proj, eye);
         r.setModel(glm::mat4(1.0f));
         r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        r.drawImplicit(field, extent, mat, nullptr, 0, 0, gridOn ? &heightGrid : nullptr);
+        r.drawImplicit(field, extent, mat, nullptr, 0, 0,
+                       passGridCache ? &heightGrid : nullptr);
         r.endFrame();
         wgpuDevicePoll(gpu.device, true, nullptr);
 
@@ -132,18 +171,22 @@ int main() {
         return out;
     };
 
-    struct Case { const char* name; glm::vec3 eye, target; float fovDeg; };
+    struct Case { const char* name; glm::vec3 eye, target, up; float fovDeg; };
     const Case cases[] = {
-        {"looking straight down",   {0, 120, 0},    {0, 0, 0},     60.f},
-        {"grazing the horizon",     {0, 60, -900},  {0, 55, 900},  60.f},
-        {"45 degrees down",         {0, 120, -200}, {0, 0, 0},     60.f},
-        {"close oblique",           {50, 10, 50},   {0, -5, -50},  70.f},
-        {"near-parallel to ground", {0, 20, -300},  {0, 15, 300},  50.f},
+        {"looking straight down",   {0, 120, 0},    {0, 0, 0},     {0, 0, -1}, 60.f},
+        {"grazing the horizon",     {0, 60, -900},  {0, 55, 900},  {0, 1, 0},  60.f},
+        {"45 degrees down",         {0, 120, -200}, {0, 0, 0},     {0, 1, 0},  60.f},
+        {"close oblique",           {50, 10, 50},   {0, -5, -50},  {0, 1, 0},  70.f},
+        {"near-parallel to ground", {0, 20, -300},  {0, 15, 300},  {0, 1, 0},  50.f},
+        {"camera inside proxy",     {0, 0, 0},      {0, -5, 100},  {0, 1, 0},  70.f},
     };
 
     for (const Case& c : cases) {
-        auto pxOff = readPixels(false, c.eye, c.target, c.fovDeg);
-        auto pxOn  = readPixels(true,  c.eye, c.target, c.fovDeg);
+        // DDA traversal is quarantined after a native grazing-root mismatch.
+        // This remains an end-to-end guard that supplying an eligible cache
+        // cannot change proxy coverage or the generic exact result.
+        auto pxOff = readPixels(false, c.eye, c.target, c.up, c.fovDeg);
+        auto pxOn  = readPixels(true,  c.eye, c.target, c.up, c.fovDeg);
 
         size_t litOff = 0, litOn = 0, diffPixels = 0, maxChannelDiff = 0;
         for (size_t i = 0; i + 4 <= pxOff.size(); i += 4) {
@@ -162,15 +205,29 @@ int main() {
         // in this marcher), but must never be MISSING geometry: lit-pixel
         // coverage must not drop, and no pixel may flip from "hit" to "empty".
         bool anyHitBecameEmpty = false;
+        size_t firstMissingPixel = 0;
         for (size_t i = 0; i + 4 <= pxOff.size(); i += 4) {
             const bool onOff = pxOff[i] > 6 || pxOff[i+1] > 6 || pxOff[i+2] > 6;
             const bool onOn  = pxOn[i]  > 6 || pxOn[i+1]  > 6 || pxOn[i+2]  > 6;
-            if (onOff && !onOn) { anyHitBecameEmpty = true; break; }
+            if (onOff && !onOn) {
+                anyHitBecameEmpty = true;
+                firstMissingPixel = i / 4;
+                break;
+            }
         }
 
-        const bool ok = !anyHitBecameEmpty && litOn >= litOff;
+        // Every case is deliberately aimed through the field. An all-black
+        // pair cannot validate the cache/proxy boundary.
+        const bool ok = litOff > 0 && !anyHitBecameEmpty && litOn >= litOff;
         std::printf("  %-26s off=%5zu lit  on=%5zu lit  diffPixels=%5zu (max ch diff %zu)  %s\n",
                    c.name, litOff, litOn, diffPixels, maxChannelDiff, ok ? "ok" : "FAILED");
+        if (anyHitBecameEmpty) {
+            const size_t i = firstMissingPixel * 4;
+            std::printf("    first missing pixel (%zu,%zu): off=(%u,%u,%u,%u) on=(%u,%u,%u,%u)\n",
+                        firstMissingPixel % W, firstMissingPixel / W,
+                        pxOff[i], pxOff[i+1], pxOff[i+2], pxOff[i+3],
+                        pxOn[i], pxOn[i+1], pxOn[i+2], pxOn[i+3]);
+        }
         if (!ok) ++g_failures;
     }
 

@@ -521,8 +521,51 @@ void IntegrationManager::_renderWindowIntegrationUI() {
     
     // List registered windows
     ImGui::Text("Registered External Windows:");
-    // TODO: Get actual list from window manager
-    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No external windows registered yet");
+
+    const auto& windows = _windowManager.getAllWindows();
+    if (windows.empty()) {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "No external windows registered yet");
+    } else {
+        for (const auto& [name, window] : windows) {
+            ImGui::PushID(name.c_str());
+
+            // Window info
+            ImGui::Text("🪟 %s", name.c_str());
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "(%s)", window->getConfig().window_title.c_str());
+
+            // Status indicator
+            ImGui::SameLine();
+            if (window->isAttached()) {
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "● Attached");
+            } else {
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "○ Detached");
+            }
+
+            // Controls
+            if (ImGui::Button("Remove")) {
+                // Defer deletion to avoid iterator invalidation
+                ImGui::PopID();
+                unregisterExternalWindow(name);
+                break;
+            }
+
+            ImGui::SameLine();
+            if (window->isAttached()) {
+                if (ImGui::Button("Detach")) {
+                    // Detach implementation is internal to window shutdown currently,
+                    // this requires extending ExternalWindow if we want to detach without unregistering
+                }
+            } else {
+                if (ImGui::Button("Attach")) {
+                    window->findAndAttach();
+                }
+            }
+
+            ImGui::PopID();
+            ImGui::Separator();
+        }
+    }
 }
 
 void IntegrationManager::_renderSecuritySettings() {

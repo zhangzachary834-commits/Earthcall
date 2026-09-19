@@ -298,6 +298,37 @@ static void testKeyStoreDetectsTampering() {
     std::cout << "  key store detects header and ciphertext tampering OK\n";
 }
 
+static void testKeyStoreExceptionHandling() {
+    std::filesystem::path dir =
+        std::filesystem::temp_directory_path() / "earthcall_keystore_exception";
+    std::filesystem::remove_all(dir);
+    KeyStore store(dir);
+
+    PrivateKey key = PrivateKey::generate();
+    assert(store.store(key, "pass"));
+
+    std::filesystem::path file;
+    for (const auto& e : std::filesystem::directory_iterator(dir)) {
+        if (e.path().extension() == ".key") file = e.path();
+    }
+    assert(!file.empty());
+
+    // Write invalid JSON (like a bare string or malformed syntax that throws during parsing)
+    {
+        std::ofstream out(file, std::ios::trunc);
+        out << "{ invalid json syntax ";
+    }
+
+    // Now load it. It should catch std::exception and return nullopt
+    assert(!store.load(key.id(), "pass").has_value());
+
+    // Test list() exception handling similarly
+    assert(store.list().empty());
+
+    std::filesystem::remove_all(dir);
+    std::cout << "  key store gracefully handles exceptions on malformed files OK\n";
+}
+
 static void testKeyStoreNeverWritesIntoSaves() {
     // The default location must sit outside the repository, because saves/ is
     // tracked by git and anything under it is one commit from being published.
@@ -323,6 +354,7 @@ int main() {
     testKeyStoreRoundTrip();
     testKeyStoreRejectsWrongPassphrase();
     testKeyStoreDetectsTampering();
+    testKeyStoreExceptionHandling();
     testKeyStoreNeverWritesIntoSaves();
     std::cout << "identity_test: ALL OK\n";
     return 0;

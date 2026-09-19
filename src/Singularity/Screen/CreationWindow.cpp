@@ -163,13 +163,7 @@ glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) 
 
 } // namespace
 
-void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone) {
-    ImGui::SetNextWindowSize(ImVec2(560, 620), ImGuiCond_FirstUseEver);
-    if (!ImGui::Begin("Singular Set-to-Set Creation", open)) {
-        ImGui::End();
-        return;
-    }
-
+void renderCreationContent(Singular& author, Object* selected, Zone& zone) {
     // ----------------------------------------------------------------
     // The source set: which beings the new set derives FROM.
     // ----------------------------------------------------------------
@@ -397,6 +391,16 @@ void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& 
     ImGui::Separator();
     ImGui::TextDisabled("Concepts save/load with the world. A concept's id works in a "
                         "law's SPAWN action.");
+}
+
+void renderCreationWindow(bool* open, Singular& author, Object* selected, Zone& zone) {
+    if (!open || !*open) return;
+    ImGui::SetNextWindowSize(ImVec2(560, 620), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Singular Set-to-Set Creation", open)) {
+        ImGui::End();
+        return;
+    }
+    renderCreationContent(author, selected, zone);
     ImGui::End();
 }
 

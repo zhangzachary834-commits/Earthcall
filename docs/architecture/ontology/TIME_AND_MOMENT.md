@@ -144,3 +144,38 @@ number is wanted. This is the reason `src/Time/Duration/` is removed rather than
 - Nothing here schedules a future event or authors a calendar/appointment concept.
   That would be a Person-authored being over `Moment`s (a `Formation` of them, most
   likely), not a new C++ type — same shape as `HIERARCHY_OF_JOYS.md` §1.
+
+---
+
+## 5. `Event` — the distinguished Moment
+
+**"My definition of Event would be 'distinguished Moment'"** — Zach (2026-09-13).
+
+An `Event` (`src/Time/Event/Event.hpp`) inherits directly from `Moment`:
+`class Event : public Moment`. An Event does not *wrap* a Moment or carry a private
+timestamp member; it **is** a Moment elevated by distinction:
+
+1. **The transition edge:** A state or relational boundary was crossed (`noun-verbed`:
+   `jump-started`, `zone-entered`, `collision`).
+2. **The participants:** The beings (`subject`, optional `object`/relatum) present at the edge.
+3. **The author:** Who intended or authorized it ("Nothing enters the world without an author").
+
+```
+Rate           Continuous rate (dp/dt, world clock)          Universe::setClock
+Coordinate     Temporal extension (Instant or Interval)       Moment
+Distinction    Transition edge with participants and author  Event : public Moment
+```
+
+### Ontological and Architectural Standing
+- **Subordination of ECA:** `ECA::Event` is no longer a private, raw C++ trigger struct
+  in `AuthorsOfLaw/ECA.hpp`. ECA aliases `::Event` from the `Time` ontology. Laws listen
+  to events that occur in Time, rather than inventing a private trigger packet.
+- **No Black Box (Refusal #6):** Every property (`verb`, `type`, `subject`, `object`, `author`,
+  `start`, `end`, `kind`) is registered via `buildProperties()`. Laws and First Movers
+  can address and query past events directly through property paths.
+- **No Domain Classes (Refusal #1):** Ad-hoc C++ event structs (`ObjectHoverEnterEvent`,
+  `PersonJoinedEvent`) are superseded by `Event` with semantic past-tense verb slugs.
+- **Preserved Destructor Performance:** Inheriting from `Moment` (and thus `Singular`),
+  transient stack events take advantage of `LawManager::_factParticipants` for $O(1)$ fact
+  retraction, eliminating any destructor quadratic under load.
+

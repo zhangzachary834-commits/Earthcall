@@ -112,6 +112,7 @@ public:
     // Utility
     std::vector<std::string> getAttachedWindows() const;
     bool isAnyWindowOverlayed() const;
+    const std::map<std::string, std::unique_ptr<ExternalWindow>>& getAllWindows() const { return _windows; }
 
 private:
     WindowManager() = default;

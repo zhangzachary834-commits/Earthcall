@@ -3,7 +3,9 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 #include <imgui.h>
+#include <algorithm>
 
 namespace Rendering {
 
@@ -11,6 +13,56 @@ namespace Rendering {
 
     CreatorConsoleState& getCreatorConsoleState() {
         return g_consoleState;
+    }
+
+    void CreatorConsoleState::performUndo(ZoneManager& zoneMgr) {
+        if (undoStack.empty()) return;
+        HistoryRecord rec = std::move(undoStack.back());
+        undoStack.pop_back();
+
+        if (rec.type == HistoryActionType::Spawn) {
+            if (rec.object) {
+                zoneMgr.active().removeObject(rec.object.get());
+                if (selectedObject3D == rec.object.get()) {
+                    selectedObject3D = nullptr;
+                    HighlightSystem::setSelected(nullptr);
+                    HighlightSystem::setSelectedIds({});
+                }
+            }
+            redoStack.push_back(std::move(rec));
+        } else if (rec.type == HistoryActionType::Delete) {
+            if (rec.object) {
+                zoneMgr.active().addObject(rec.object);
+                selectedObject3D = rec.object.get();
+                HighlightSystem::setSelected(rec.object.get());
+            }
+            redoStack.push_back(std::move(rec));
+        }
+    }
+
+    void CreatorConsoleState::performRedo(ZoneManager& zoneMgr) {
+        if (redoStack.empty()) return;
+        HistoryRecord rec = std::move(redoStack.back());
+        redoStack.pop_back();
+
+        if (rec.type == HistoryActionType::Spawn) {
+            if (rec.object) {
+                zoneMgr.active().addObject(rec.object);
+                selectedObject3D = rec.object.get();
+                HighlightSystem::setSelected(rec.object.get());
+            }
+            undoStack.push_back(std::move(rec));
+        } else if (rec.type == HistoryActionType::Delete) {
+            if (rec.object) {
+                zoneMgr.active().removeObject(rec.object.get());
+                if (selectedObject3D == rec.object.get()) {
+                    selectedObject3D = nullptr;
+                    HighlightSystem::setSelected(nullptr);
+                    HighlightSystem::setSelectedIds({});
+                }
+            }
+            undoStack.push_back(std::move(rec));
+        }
     }
 
     void forgetStaleObjectHandles(ZoneManager& mgr, Person* player) {
@@ -39,6 +91,16 @@ namespace Rendering {
             }
             if (!still) s.selectedCharacterPart = nullptr;
         }
+
+        const auto pruneStack = [&](std::vector<HistoryRecord>& stack) {
+            stack.erase(std::remove_if(stack.begin(), stack.end(),
+                                       [&](const HistoryRecord& r) {
+                                           return r.object && !live(r.object.get());
+                                       }),
+                        stack.end());
+        };
+        pruneStack(s.undoStack);
+        pruneStack(s.redoStack);
     }
 
     void pushActiveButtonStyle(bool active, const ImVec4& color, const ImVec4& hoverColor) {
@@ -56,6 +118,20 @@ namespace Rendering {
 
     void sameLineEvery(int index, int perRow) {
         if ((index + 1) % perRow != 0) {
+            ImGui::SameLine();
+        }
+    }
+
+    float responsiveItemWidth(int columns, float minWidth) {
+        if (columns <= 1) return ImGui::GetContentRegionAvail().x;
+        const float avail = ImGui::GetContentRegionAvail().x;
+        const float spacing = ImGui::GetStyle().ItemSpacing.x;
+        float w = (avail - static_cast<float>(columns - 1) * spacing) / static_cast<float>(columns);
+        return (w > minWidth) ? w : minWidth;
+    }
+
+    void responsiveSameLine(int index, int columns) {
+        if (columns > 1 && ((index + 1) % columns != 0)) {
             ImGui::SameLine();
         }
     }

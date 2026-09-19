@@ -141,6 +141,22 @@ it?"*. Neither is a question. `Object::faceColors` was write-only for a month an
 `propSetColor` was an empty function for a month, both because nobody was going to use them
 *yet*.
 
+### 3a. Dense substrate, selective Property elevation
+
+Zach's pixel requirement makes the distinction precise: a raw texture may contain a
+million machine samples without a million permanently allocated Properties, but the
+program must be able to elevate any one sample—or a meaningful set—into the authored
+Property vocabulary. `surface.pixel.<face>.<x>.<y>` projects one texture sample as a live
+Property. `ElevatePixels` projects the defined set of an OntoMath expression over local
+`u` and `v` under any authored name. Both enumerate, persist, read, write, and participate
+in the change feed. The samples not elevated remain modality storage beneath Screen; this
+is virtualization of quantity, not accidental secrecy.
+
+Named regions must not smuggle ontology into preset bounds. Their membership is authored
+OntoMath, serialized in `surface.selection.<name>`, so the Screen substrate evaluates a
+Person's definition rather than deciding that the region is a rectangle, circle, brush,
+or tile.
+
 ---
 
 ## 4. The sealed register
@@ -278,3 +294,11 @@ because it does not know each property's legal domain. Every entry records what 
 The general form of all six is unchanged: **no subsystem may define what a thing IS.**
 Refusal 6 adds the corollary that a subsystem may not define what a thing's state *means*
 by keeping it where no law can look.
+
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 15173623694285152243)*
+
+Earthcall’s rejection of black boxes isn’t just an engineering preference; it’s an ontological commitment rooted in the belief that the system should be legible and authorable by its participants. This principle ties deeply to [ALGORITHMS_AS_LAW.md](../law/ALGORITHMS_AS_LAW.md) and [INTELLECTUAL_LINEAGE.md](../../core/Intellectual Lineage/INTELLECTUAL_LINEAGE.md).
+
+When we hide the state or purpose (telos) of a being inside private C++ member variables, we violate this principle. By integrating this understanding with the broader intellectual lineage, we realize that true End-to-End Coherence requires every structural aspect of the world to be explicitly authored and inspectable as Formations and Relations. This ensures that the engine remains a transparent substrate for expression rather than a closed, opaque box.

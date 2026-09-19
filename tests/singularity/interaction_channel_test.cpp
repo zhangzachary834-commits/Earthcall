@@ -478,6 +478,49 @@ int main() {
         check(channel.isEnabled(), "without disabling the channel — that is a Person's choice");
     }
 
+    // ------------------------------------------------------------------
+    // 15. Rapid release-and-repress in one frame does not drop the release.
+    // ------------------------------------------------------------------
+    {
+        g_recorder.clear();
+        channel.observe(look(0.0f, 0.0f), reachable);
+        
+        // Frame 1: Initial press
+        channel.noteMouseButton(true);
+        auto frame1 = look(0.0f, 0.0f);
+        frame1.left = channel.liveLeftDown();
+        channel.observe(frame1, reachable);
+        check(g_recorder.count("object-pressed", "control-a") == 1, "Frame 1 press published");
+        
+        // Frame 2: Rapid release and repress before step()
+        g_recorder.clear();
+        channel.noteMouseButton(false); // The release
+        channel.noteMouseButton(true);  // The repress
+        
+        auto frame2 = look(0.0f, 0.0f);
+        frame2.left = channel.liveLeftDown(); // true
+        
+        // Emulate step() logic for pending left edges
+        if (!channel.pendingLeftEdges().empty()) {
+            for (size_t i = 0; i < channel.pendingLeftEdges().size() - 1; ++i) {
+                InteractionChannel::Sense edgeSense = frame2;
+                edgeSense.left = channel.pendingLeftEdges()[i];
+                channel.observe(edgeSense, reachable);
+            }
+            channel.clearPendingLeftEdges();
+        }
+        
+        channel.observe(frame2, reachable);
+        
+        // The release MUST have been published!
+        check(g_recorder.count("object-released", "control-a") >= 1,
+              "Rapid release-and-repress MUST publish the release");
+        check(g_recorder.count("object-clicked", "control-a") >= 1,
+              "Rapid release-and-repress MUST publish the click");
+        check(g_recorder.count("object-pressed", "control-a") >= 1,
+              "Rapid release-and-repress MUST publish the new press");
+    }
+
     Universe::instance().setProvider(nullptr);
 
     if (g_failures) {

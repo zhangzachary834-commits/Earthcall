@@ -24,6 +24,14 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
   A check that does not exercise the live path is not end-to-end. It is a second office
   for the same claim, and this repository has already learned what that costs.
 
+- **Two-Path Testing Doctrine:** All tests must route through two distinct paths: one that
+  tests the mathematical/logical correctness in isolation, and another that simulates the
+  actual human-facing effect (e.g., a button being *actually responsive* to a click, not
+  just able to work in theory but unresponsive in the live/production environment). These
+  two paths are important so bugs can be immediately filtered to determine whether it is
+  a logic problem in the feature itself or an environment problem in the thing that hosts
+  the feature.
+
 - **The Integrity Check:** After finishing, ask: "does anything I changed have a caller, a
   consumer, or a test that now lies?" If yes, fix it before closing the session.
 
@@ -89,3 +97,9 @@ every session, on top of the refusals in `AGENTS.md` and the workshop rules in
 - **Bounds are doctrine, not limits.** `kMaxChainRounds` (now authorable via LawManager), `kMaxCallDepth = 32`, one pass
   per fold. If your design needs one raised, the design is in the wrong shape — see
   `docs/architecture/law/ALGORITHMS_AS_LAW.md` §3.
+
+---
+
+## Architectural Synthesis
+
+For a high-level view on how Earthcall's distinct architectural pillars (like serialization, rendering, and networking) synthesize into a single, cohesive doctrine of Legibility and Agency, see [Unified Architectural Synthesis](architecture/interrelations/UNIFIED_ARCHITECTURAL_SYNTHESIS.md).

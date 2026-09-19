@@ -258,6 +258,36 @@ int main() {
         cases.push_back({ "Expr(noise)", n, glm::mat4(1.0f), 10 });
     }
 
+    // Focused test: Expr(noise) with a NON-ZERO leaf offset, ensuring leaf-local
+    // point evaluation (lp = p - offset) and correct parameter slot alignment.
+    {
+        auto num = [](double c) {
+            return nlohmann::json{{"op", 0}, {"scalarForm", {{"terms",
+                     nlohmann::json::array({ {{"c", c}, {"factors", nlohmann::json::object()}} })}}}};
+        };
+        const nlohmann::json pv{{"op", 1}, {"var", "p"}};
+        nlohmann::json j = {
+            {"op", 5}, {"children", nlohmann::json::array({
+                nlohmann::json{{"op", 11}, {"children", nlohmann::json::array({ pv })}},
+                nlohmann::json{{"op", 4}, {"children", nlohmann::json::array({
+                    num(0.7),
+                    nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                        num(0.35),
+                        nlohmann::json{{"op", 29}, {"children", nlohmann::json::array({
+                            nlohmann::json{{"op", 6}, {"children", nlohmann::json::array({
+                                num(1.2), pv })}}
+                        })}}
+                    })}}
+                })}}
+            })}};
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->offset = glm::vec3(0.15f, -0.2f, 0.1f);
+        n->mathNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::fromJson(j).release());
+        cases.push_back({ "Expr(noise_offset)", n, glm::mat4(1.0f), 10 });
+    }
+
     // Every operator.
     auto a = leaf(geom::SdfPrim::Sphere, glm::vec3(0.6f), 0.0f, glm::vec3(-0.25f, 0, 0));
     auto b = leaf(geom::SdfPrim::Box,    glm::vec3(0.45f), 0.0f, glm::vec3( 0.25f, 0, 0));

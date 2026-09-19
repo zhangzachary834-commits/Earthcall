@@ -69,7 +69,6 @@ int main() {
     check(posEnabled.y < 10.0f, "object position Y fell when physics-gravity enabled");
 
     // Test collision enforcement helper with collision disabled vs enabled
-    glm::vec3 testPos(0.0f, 0.0f, 0.0f);
     auto obstacle = std::make_shared<Object>("obstacle");
     obstacle->setTransform(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(2.0f)));
     std::vector<std::shared_ptr<Object>> obstacleList = { obstacle };

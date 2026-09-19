@@ -179,6 +179,39 @@ int main() {
     check(faceBrushLaw && faceBrushLaw->isFirstMover() && faceBrushLaw->isEnabled(),
           "Face Brush first mover boots up and is enabled");
 
+    // ---- Click edge latch and reconciliation -------------------------------
+    // When a fast click/tap arrives inside glfwPollEvents, a callback notes
+    // the press edge. Tools consuming this edge must not drop the tap even
+    // if the button was already physically released before update() runs.
+    {
+        ImGuiContext* ctx = ImGui::CreateContext();
+        ImGui::SetCurrentContext(ctx);
+        ImGuiIO& io = ImGui::GetIO();
+        io.DisplaySize = ImVec2(800, 600);
+        unsigned char* pixels = nullptr;
+        int width = 0, height = 0;
+        io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+
+        // Frame 1: Mouse press arrives
+        io.AddMouseButtonEvent(0, true);
+        ImGui::NewFrame();
+        check(io.MouseDown[0] == true, "ImGui registers mouse down");
+        ImGui::Render();
+
+        // Frame 2: Physical mouse released without callback
+        // Reconcile BEFORE NewFrame:
+        const bool physicalDown = false;
+        if (!physicalDown && io.MouseDown[0]) {
+            io.AddMouseButtonEvent(0, false);
+        }
+        ImGui::NewFrame();
+        check(io.MouseDown[0] == false, "Reconciliation successfully clears stuck ImGui mouse down in NewFrame");
+        check(io.WantCaptureMouse == false, "WantCaptureMouse correctly drops to false when mouse is released outside UI");
+        ImGui::Render();
+
+        ImGui::DestroyContext(ctx);
+    }
+
     std::printf(g_failures == 0 ? "creation_tools_test: ALL OK\n"
                                 : "creation_tools_test: FAILURES\n");
     return g_failures > 0 ? 1 : 0;

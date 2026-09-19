@@ -35,7 +35,7 @@ bool PersonDatabase::loadPerson(const std::string& displayName, Person& outPerso
     std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
     if (folder.empty()) return false;
 
-    std::string filepath = folder + "/" + safeName + ".json";
+    std::string filepath = folder + "/" + safeName + ".ecform";
 
     if (!std::filesystem::exists(filepath)) {
         return false;

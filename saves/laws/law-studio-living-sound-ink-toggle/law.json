@@ -1,0 +1,73 @@
+{
+  "authors": [
+    "studio.author.astra"
+  ],
+  "identifier": "law-studio-living-sound-ink-toggle",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "id": "law-studio-living-sound-ink-toggle",
+    "name": "Studio: Choose whether notes become drawing ink",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "studio.author.astra"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "soundInkToggle",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 8,
+      "path": "@state.studio.soundInk",
+      "bindings": {
+        "v": "@state.studio.soundInk"
+      },
+      "function": {
+        "pieces": [
+          {
+            "expr": {
+              "terms": [
+                {
+                  "c": 1,
+                  "factors": {}
+                },
+                {
+                  "c": -1,
+                  "factors": {
+                    "v": 1
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-studio-living-sound-ink-toggle",
+        "entityB": "studio.author.astra",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "control-activated"
+  ]
+}

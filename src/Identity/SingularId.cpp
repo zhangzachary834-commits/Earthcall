@@ -49,8 +49,11 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
         for (const char* p = kAlphabet; *p; ++p) {
             if (*p == c) { pos = p; break; }
         }
-        if (!pos) return false; // reject rather than skip: silent tolerance
-                                // here would let two spellings of one id exist
+        if (!pos) {
+            out.clear();
+            return false; // reject rather than skip: silent tolerance
+                          // here would let two spellings of one id exist
+        }
         buffer = (buffer << 5) | static_cast<uint32_t>(pos - kAlphabet);
         bitsLeft += 5;
         if (bitsLeft >= 8) {
@@ -58,6 +61,26 @@ bool base32Decode(const std::string& text, std::vector<uint8_t>& out) {
             bitsLeft -= 8;
         }
     }
+
+    // Unpadded RFC 4648 Base32 can only end with 0-4 residual bits after
+    // complete bytes have been emitted. 5+ residual bits means the text has an
+    // impossible character count (for example a one-character encoding).
+    if (bitsLeft >= 5) {
+        out.clear();
+        return false;
+    }
+
+    // Canonical unpadded Base32 requires every unused low-order tail bit to be
+    // zero. Without this check, strings such as "my" and "mz" both decode to
+    // the byte 'f', allowing multiple textual spellings of one SingularId.
+    if (bitsLeft > 0) {
+        const uint32_t mask = (uint32_t{1} << bitsLeft) - 1u;
+        if ((buffer & mask) != 0) {
+            out.clear();
+            return false;
+        }
+    }
+
     return true;
 }
 

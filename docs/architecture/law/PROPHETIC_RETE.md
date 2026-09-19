@@ -105,6 +105,8 @@ ordinary comparison unprovable in either direction.
 | `Flow` | Top — a bounded *rate* is not a bounded *value*; Flow integrates |
 | `AddProperty` | the opening value |
 | `Create` / `Spawn` / `Synthesize` / `Destroy` / `AddElement` / `RemoveElement` / `RemoveProperty` / `Publish` / `AuthorZone` / `AddRelation` | **opaque** — these change the *fact base*, not a value in it |
+| `WritePixel` | no direct Property write — Screen announces every already-elevated sample/set it changes |
+| `ElevatePixels` | **opaque** — it changes the subject's Property vocabulary |
 | a `FirstMoverLaw` | **opaque** — it actuates in C++; that is what makes it a first mover |
 
 ### 3d. Read demands — what would satisfy a condition
@@ -170,7 +172,43 @@ Findings go to the audit log on every rebuild, and `Index::toJson()` renders the
 possibility space — read names, write ranges per path, per-law reads and writes with their
 reasons. Nothing here is a black box.
 
+### 3g. Branch provenance and the ahead-of-time relevance graph — 2026-09-18
+
+The Formation-Rete work of 2026-09-16 clarified what survived from the original §9
+"ActionNode → Beta back-pointer" idea. The destination is **not** a literal hidden Beta-node
+pointer anymore. Formation Rete supersedes the classical Beta cross-product as Earthcall's
+semantic join model. The enduring operation is:
+
+```text
+stable authored Action branch
+    -> Prophetic write/read possibility proof
+    -> conservative relevance edge
+    -> later Formation-Rete routing / crystallization
+```
+
+That first derived layer is now implemented in `Prophetic::Index`:
+
+- every `WriteEffect` and `ReadDemand` carries a deterministic branch id derived from the
+  authored node's canonical JSON, so recompilation and a save/load-shaped JSON round trip do
+  not change its provenance;
+- condition analysis keeps both the existing **effective demand** algebra and separate
+  branch-local reads, so `Any(A, B)` does not erase which arm a possible writer serves;
+- `Index::relevanceEdges()` runs the existing path normalization and range-disjointness proof
+  pairwise, retaining an edge only where the writer is not proved unable to meet the reader's
+  demand;
+- `aboutInstances` stays on the edge, so a quantifier's instance-side read is not silently
+  conflated with the Law subject;
+- opacity is global: if any read or write is not structurally legible,
+  `relevanceComplete() == false` and the derived graph is empty. A future consumer must fall
+  to a complete lower tier rather than trusting a partial graph.
+
+This graph is **derived state only**. It does not yet write Relations/Formations into a
+Person's world and it is not yet a hot-path narrowing decision. Those are Formation-Rete
+integration steps with separate authorship, save, currency, and fallback obligations.
+
 ---
+
+
 
 ## 4. The bug this uncovered
 
@@ -215,12 +253,13 @@ separate piece of work (see §6).
 
 Named so nobody mistakes the foundation for the whole design.
 
-**§9, ActionNode → Beta back-pointers.** Zach: *"the relevant action nodes get an innate
-pointer to the relevant beta-chain's evaluation criteria... it immediately links up the
-finished value to the relevant beta branches."* The index now computes exactly which
-(writing action, reading condition) pairs are live, which is the prerequisite. Installing the
-pointers and evaluating at write time — collapsing the assert/propagate/drain round trip into
-one step — is the next commit, and it is where the measured win lives.
+**The old §9 literal ActionNode → Beta back-pointer is superseded, not pending.**
+The 2026-09-16 Formation-Rete architecture keeps the intent — jump from a completed write
+toward only proved-relevant downstream work — but refuses the old literal destination.
+Branch-stable provenance and the conservative Prophetic relevance graph are now built (§3g).
+What remains is consuming that graph through Formation Rete's tier contract and, eventually,
+crystallizing direct `Law → Singular(+PropertyPath)` roads when their soundness, currency,
+authorship, and fallback witnesses exist.
 
 **§7 Pass 4, current-situation filtering.** The four-pass model's last pass ("would this
 branch fire in the situation we are *actually in*") is what the existing Rete already does.

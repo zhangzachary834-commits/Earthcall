@@ -211,7 +211,7 @@ Every optimization in Earthcall must satisfy strict end-to-end parity against CP
 
 **Added**: 2026-08-31 by Claude Opus 5 (Claude Code), session `4e6ef036-ad44-4bc6-97b9-a8704274736e`
 **Basis**: `scratch/probes/horizon_cost_probe.cpp` run against `perlin-ground-plane`'s authored
-mathNode, plus [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../../audits/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
+mathNode, plus [REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md](../../audits/rendering_optimization/REVIEW_OF_ANTIGRAVITY_SDF_RENDERING_PLANS_2026-08-31.md).
 Companion addendums sit at the end of the three plans this treatise underwrites.
 
 The lineage in §2 is accurate and well chosen — Quilez, Keinert, Aaltonen, Evans, Lumen are

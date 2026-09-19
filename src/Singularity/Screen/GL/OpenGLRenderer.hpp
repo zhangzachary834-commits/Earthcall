@@ -48,6 +48,7 @@ public:
     TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
                                 uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
+    bool readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) override;
 
 protected:
     void applyBeginFrame(uint32_t width, uint32_t height,

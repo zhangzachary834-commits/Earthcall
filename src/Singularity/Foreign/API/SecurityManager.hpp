@@ -143,7 +143,6 @@ public:
     
     // JavaScript security
     bool validateJavaScript(const std::string& script, const std::string& source);
-    std::string sanitizeJavaScript(const std::string& script);
     
     // Save/Load
     void saveSecurityData();
@@ -192,8 +191,8 @@ private:
     bool _isRateLimited(const std::string& source);
     
     // Pattern matching
-    std::vector<std::regex> _suspiciousPatterns;
-    std::vector<std::regex> _maliciousPatterns;
+    std::regex _suspiciousRegex;
+    std::regex _maliciousRegex;
     void _initializePatterns();
     
     // Rate limiting

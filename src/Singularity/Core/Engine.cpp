@@ -47,6 +47,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include <iostream>
@@ -88,7 +89,7 @@ std::filesystem::path findRepoRoot() {
         if (!ec) seeds.push_back(exe.parent_path());
     }
 #endif
-    for (auto dir : seeds) {
+    for (auto& dir : seeds) {
         for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
             if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
                 std::filesystem::is_directory(dir / "saves", ec)) {
@@ -162,6 +163,7 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     gpu.adapter  = _webgpu->ctx.adapter;
     gpu.device   = _webgpu->ctx.device;
     gpu.queue    = _webgpu->ctx.queue;
+    gpu.timestampQueries = _webgpu->ctx.timestampQueries;
     if (!_webgpu->renderer.init(gpu, wgpu::kSurfaceFormat)) {
         std::cerr << "⚠️  Failed to initialise WebGpuRenderer!" << std::endl;
         return false;
@@ -286,6 +288,10 @@ void Engine::tick(float dt) {
 
     glfwPollEvents();
 
+#ifndef __EMSCRIPTEN__
+    Singularity::Network::WebSocketServer::instance().pollMainThread();
+#endif
+
 #ifdef EARTHCALL_WEBGPU
     // A swapchain is sized: presenting against a stale size gives a suboptimal
     // or failed surface texture, so track the framebuffer and reconfigure.
@@ -305,6 +311,24 @@ void Engine::tick(float dt) {
     ImGui_ImplOpenGL2_NewFrame();
 #endif
     ImGui_ImplGlfw_NewFrame();
+
+    // Physical button reconciliation for Dear ImGui:
+    // On macOS / GLFW, focus transitions, popup windows, or rapid trackpad clicks can
+    // drop GLFW_RELEASE events. If io.MouseDown[i] remains true when the physical button
+    // is released, ImGui treats it as an active drag and holds io.WantCaptureMouse = true
+    // indefinitely across the entire screen, blinding world interaction and 3D tools.
+    // Dispatched before ImGui::NewFrame() so the queued release event is processed immediately.
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        const bool winFocused = (_window && glfwGetWindowAttrib(_window, GLFW_FOCUSED) != 0);
+        for (int i = 0; i < IM_ARRAYSIZE(io.MouseDown); ++i) {
+            const bool physicalDown = winFocused && (_window && glfwGetMouseButton(_window, i) == GLFW_PRESS);
+            if (!physicalDown && io.MouseDown[i]) {
+                io.AddMouseButtonEvent(i, false);
+            }
+        }
+    }
+
     ImGui::NewFrame();
 
     // 1. Process physical & logical simulation (populates input, locomotion, creation, interaction, zone)
@@ -344,6 +368,12 @@ void Engine::tick(float dt) {
     auto tLaws1 = clock::now();
     g_frameTimings.laws_ms = getMs(tLaws0, tLaws1);
 
+    // Slow Adapter maintenance has its OWN wall-time cadence. This call is a
+    // poll, not a frame tick: at 60 Hz, 144 Hz, or 240 Hz the adapter advances
+    // only when its independent deadline arrives. It remains on the main thread
+    // for this rung, so no graph-concurrency contract is introduced yet.
+    if (_lawManager) _lawManager->serviceSlowAdapterClock(glfwGetTime());
+
     // Interaction reticle
     if (_lawManager) {
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
@@ -360,61 +390,8 @@ void Engine::tick(float dt) {
     }
 
     // 5. ImGui Windows
-    Rendering::renderDeveloperToolsWindow(&_devToolsWindowOpen, _window, this);
-    Rendering::renderPerformanceMetricsWindow(&_performanceMetricsWindowOpen, this);
-
-    if (_creationConsoleOpen) {
-        Rendering::renderCreationWindow(&_creationConsoleOpen, *_person, nullptr, mgr.active());
-    }
-
-    if (_creatorConsoleOpen) {
-        Rendering::renderCreatorConsoleWindow(
-            &_creatorConsoleOpen, _person.get(),
-            Rendering::getCreatorConsoleState().selectedObject3D,
-            mgr, _window, this);
-    }
-
+    Rendering::IDEDockManager::instance().render(this, mgr, _window);
     Rendering::renderSaveLoadWindows(this);
-
-    if (_showKeymapWindow) {
-        ImGui::SetNextWindowSize(ImVec2(420, 420), ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("Controls / Keymap", &_showKeymapWindow,
-                         ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize)) {
-            ImGui::TextUnformatted("Core");
-            ImGui::Separator();
-            ImGui::BulletText("M: Toggle Main Menu");
-            ImGui::BulletText("Esc: Toggle Cursor Lock");
-            ImGui::BulletText("H: Toggle Chat");
-            ImGui::BulletText("K: Controls / Keymap");
-            ImGui::BulletText("`: Toggle Dev Tools");
-            ImGui::BulletText("F8: Creator Console");
-            ImGui::BulletText("F9: Singular Set-to-Set Creation");
-            ImGui::BulletText("C: Character Architect Forge Zone");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Saves");
-            ImGui::Separator();
-            ImGui::BulletText("S: Quick Save (from the menu)");
-            ImGui::BulletText("A: Save As...  L: Load  G: Save Manager");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Camera");
-            ImGui::Separator();
-            ImGui::BulletText("WASD: Move");
-            ImGui::BulletText("Space: Up");
-            ImGui::BulletText("Shift: Down");
-            ImGui::BulletText("V: Sprint");
-            ImGui::BulletText("Alt: Slow");
-            ImGui::Separator();
-            ImGui::TextUnformatted("Create");
-            ImGui::Separator();
-            ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
-            ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
-        }
-        ImGui::End();
-    }
-
-    if (_showChatWindow && _chat) {
-        _chat->renderUI(&_showChatWindow);
-    }
 
     if (_showImGuiDemo) {
         ImGui::ShowDemoWindow(&_showImGuiDemo);
@@ -575,4 +552,37 @@ float Engine::getFaceBrushUOffset() const {
 float Engine::getFaceBrushVOffset() const {
     return Rendering::getCreatorConsoleState().faceBrushVOffset;
 }
+
+void Engine::renderKeymapContent() {
+    ImGui::TextUnformatted("Core");
+    ImGui::Separator();
+    ImGui::BulletText("M: Toggle Main Menu");
+    ImGui::BulletText("Esc: Toggle Cursor Lock");
+    ImGui::BulletText("H: Toggle Chat");
+    ImGui::BulletText("K: Controls / Keymap");
+    ImGui::BulletText("`: Toggle Dev Tools");
+    ImGui::BulletText("F8: Creator Console");
+    ImGui::BulletText("F9: Singular Set-to-Set Creation");
+    ImGui::BulletText("F10: Toggle IDE Docking Mode (Sidebars/Bottom Bar)");
+    ImGui::BulletText("C: Character Architect Forge Zone");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Persistence");
+    ImGui::Separator();
+    ImGui::BulletText("S: Save Active Zone (from the menu)");
+    ImGui::BulletText("A: Legacy Session Export...  L: Legacy Session Import / Recovery  G: Legacy Session Manager");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Camera");
+    ImGui::Separator();
+    ImGui::BulletText("WASD: Move");
+    ImGui::BulletText("Space: Up");
+    ImGui::BulletText("Shift: Down");
+    ImGui::BulletText("V: Sprint");
+    ImGui::BulletText("Alt: Slow");
+    ImGui::Separator();
+    ImGui::TextUnformatted("Create");
+    ImGui::Separator();
+    ImGui::BulletText("L: Arm 3D create law (when the menu is closed)");
+    ImGui::BulletText("F4: 3D Create tab   F5: 3D Select tab");
+}
+
 }

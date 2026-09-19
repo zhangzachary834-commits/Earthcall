@@ -24,7 +24,7 @@ private:
     static std::vector<std::string> tokenize(const std::string& input);
 
     static Lexeme* resolvePOS(Lexeme& lexeme, Zone& activeZone);
-    static std::string resolveMeaning(Lexeme& verbPhrase, Zone& activeZone);
+    static Lexeme* resolveMeaning(Lexeme& verbPhrase, Zone& activeZone);
 };
 
 } // namespace Language

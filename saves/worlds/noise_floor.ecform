@@ -1,0 +1,229 @@
+{
+  "authoredLaws": {
+    "formationMembers": [],
+    "laws": [],
+    "rete": {
+      "agenda": [],
+      "alphaNodes": [],
+      "betaNodes": [],
+      "facts": []
+    },
+    "triggers": {}
+  },
+  "cameraFront": [
+    0,
+    0,
+    -1
+  ],
+  "cameraPos": [
+    0,
+    5,
+    5
+  ],
+  "cameraUp": [
+    0,
+    1,
+    0
+  ],
+  "concepts": {
+    "concepts": []
+  },
+  "currentZoneId": "NoiseFloorWorld",
+  "pitch": 0.0,
+  "playerBody": [
+    0,
+    5,
+    0
+  ],
+  "saveFormat": "zone-identity-v1",
+  "yaw": -90.0,
+  "zoneRefs": [
+    {
+      "identifier": "NoiseFloorWorld"
+    }
+  ],
+  "zones": [
+    {
+      "authors": "Zachary",
+      "being": "zone",
+      "formationRelations": [],
+      "identifier": "NoiseFloorWorld",
+      "injected_by": "Antigravity",
+      "lexemes": [],
+      "materials": [
+        {
+          "ambient": 0.3,
+          "baseColor": [
+            0.25,
+            0.75,
+            0.25
+          ],
+          "diffuse": 0.8,
+          "name": "grass",
+          "opacity": 1.0,
+          "shininess": 0.0,
+          "specular": 0.0
+        }
+      ],
+      "name": "Perlin Noise Floor Zone",
+      "owner": "Antigravity",
+      "parentZone": "",
+      "qualities": {},
+      "scope": "Local",
+      "world": {
+        "laws": [],
+        "objects": [
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Perlin Ground Plane"
+              }
+            },
+            "baseline": "ground",
+            "center": [
+              0,
+              -2,
+              0
+            ],
+            "field": {
+              "mathNode": {
+                "children": [
+                  {
+                    "op": 1,
+                    "var": "y"
+                  },
+                  {
+                    "children": [
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 40.0,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.008,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "op": 1,
+                                    "var": "p"
+                                  },
+                                  {
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 100.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 100.0,
+                                              "factors": {}
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "op": 2
+                                  }
+                                ],
+                                "op": 4
+                              }
+                            ],
+                            "op": 6
+                          }
+                        ],
+                        "op": 29
+                      }
+                    ],
+                    "op": 6
+                  }
+                ],
+                "op": 5
+              },
+              "op": 0,
+              "prim": 7
+            },
+            "fieldExtent": [
+              1000.0,
+              30.0,
+              1000.0
+            ],
+            "geometryType": 10,
+            "materialId": "material.grass",
+            "objectID": "perlin-ground-plane",
+            "shapeKind": 10,
+            "shapeParams": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -2,
+              0,
+              1
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

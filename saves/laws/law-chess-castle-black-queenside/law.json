@@ -1,0 +1,635 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-castle-black-queenside",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "actionModel": {
+      "children": [
+        {
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "gx": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.prevX"
+        },
+        {
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "gy": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.prevY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.chess.prevHasMoved"
+        },
+        {
+          "bindings": {
+            "hm": "hasMoved"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "hm": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.prevHasMoved"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": 4
+          },
+          "path": "@state.chess.castleMove"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "@state.chess.nextEnPassantFile"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "@state.chess.nextEnPassantTargetY"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "int",
+            "v": -1
+          },
+          "path": "@state.chess.nextEnPassantVictimY"
+        },
+        {
+          "bindings": {
+            "r": "@state.chess.repCount"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "r": 1
+                      }
+                    },
+                    {
+                      "c": 1,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "@state.chess.repCount"
+        },
+        {
+          "eventType": "castle-rook-step",
+          "kind": 10,
+          "publishObject": "",
+          "publishSubject": "state.chess"
+        },
+        {
+          "bindings": {
+            "tx": "@state.chess.targetX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "tx": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "gridX"
+        },
+        {
+          "bindings": {
+            "ty": "@state.chess.targetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "ty": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "gridY"
+        },
+        {
+          "bindings": {
+            "tx": "@state.chess.targetX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "tx": 1
+                      }
+                    },
+                    {
+                      "c": -3.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.x"
+        },
+        {
+          "bindings": {
+            "ty": "@state.chess.targetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "ty": 1
+                      }
+                    },
+                    {
+                      "c": -3.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.z"
+        },
+        {
+          "bindings": {
+            "ry": "restY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "ry": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "kind": 8,
+          "path": "position.y"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "isSelected"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "hasMoved"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.chess.selectionActive"
+        },
+        {
+          "eventType": "move-committed",
+          "kind": 10,
+          "publishObject": "",
+          "publishSubject": "state.chess"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 2,
+          "otherId": "category.chess.piece",
+          "relationType": "instance-of"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "isSelected"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "onBoard"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operandPath": "@state.chess.turn",
+          "path": "chessColor"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@state.chess.selectionActive"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@state.chess.gameOver"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 5
+          },
+          "path": "chessRole"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "path": "chessColor"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "hasMoved"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 4
+          },
+          "path": "gridX"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 7
+          },
+          "path": "gridY"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": -2
+          },
+          "path": "@state.chess.dx"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "path": "@state.chess.dy"
+        },
+        {
+          "beingKind": 1,
+          "children": [
+            {
+              "children": [
+                {
+                  "kind": 8,
+                  "otherId": "piece-black-rook-0-7"
+                },
+                {
+                  "kind": 0,
+                  "op": 0,
+                  "operand": {
+                    "t": "bool",
+                    "v": true
+                  },
+                  "path": "onBoard"
+                },
+                {
+                  "kind": 0,
+                  "op": 0,
+                  "operand": {
+                    "t": "bool",
+                    "v": false
+                  },
+                  "path": "hasMoved"
+                }
+              ],
+              "kind": 3
+            }
+          ],
+          "kind": 9
+        },
+        {
+          "children": [
+            {
+              "beingKind": 1,
+              "children": [
+                {
+                  "children": [
+                    {
+                      "kind": 2,
+                      "otherId": "category.chess.piece",
+                      "relationType": "instance-of"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      },
+                      "path": "onBoard"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 1
+                      },
+                      "path": "gridX"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 7
+                      },
+                      "path": "gridY"
+                    }
+                  ],
+                  "kind": 3
+                }
+              ],
+              "kind": 9
+            }
+          ],
+          "kind": 5
+        },
+        {
+          "children": [
+            {
+              "beingKind": 1,
+              "children": [
+                {
+                  "children": [
+                    {
+                      "kind": 2,
+                      "otherId": "category.chess.piece",
+                      "relationType": "instance-of"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      },
+                      "path": "onBoard"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 2
+                      },
+                      "path": "gridX"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 7
+                      },
+                      "path": "gridY"
+                    }
+                  ],
+                  "kind": 3
+                }
+              ],
+              "kind": 9
+            }
+          ],
+          "kind": 5
+        },
+        {
+          "children": [
+            {
+              "beingKind": 1,
+              "children": [
+                {
+                  "children": [
+                    {
+                      "kind": 2,
+                      "otherId": "category.chess.piece",
+                      "relationType": "instance-of"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      },
+                      "path": "onBoard"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 3
+                      },
+                      "path": "gridX"
+                    },
+                    {
+                      "kind": 0,
+                      "op": 0,
+                      "operand": {
+                        "t": "int",
+                        "v": 7
+                      },
+                      "path": "gridY"
+                    }
+                  ],
+                  "kind": 3
+                }
+              ],
+              "kind": 9
+            }
+          ],
+          "kind": 5
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-chess-castle-black-queenside",
+    "name": "castle-black-queenside",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-chess-castle-black-queenside",
+        "entityB": "grok-4.6",
+        "events": [
+          {
+            "deltaWeight": 1,
+            "description": "authored-by",
+            "timestamp": 1787390000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "square-clicked"
+  ]
+}

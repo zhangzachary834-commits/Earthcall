@@ -297,6 +297,24 @@ Sense and act at hardware the engine could not previously reach. Peer of
 A genuinely new geometric family (the enum is serialized as an int and is
 **APPEND-ONLY**). This is data, not a class: `ShapeParams` + the geom factory.
 
+**Architectural Doctrine Qualification (Zach):**
+`ShapeKind` is a parameterization substrate RESERVED FOR FIRST MOVERS (seed bootstrapping,
+engine tooling, foreign interop, and migration).
+1. **Never the load-bearing substrate:** `ShapeKind` must NEVER become the main
+   load-bearing substrate for Persons' world authoring. What things ARE in Earthcall is
+   authored in-world by Persons out of first-principles OntoMath (symbolic math, continuous
+   scalar/vector fields, implicit distance functions over $\mathbb{R}^2$ and $\mathbb{R}^3$),
+   Formations, and Laws—never carved into C++ enums (Refusals 1, 3, 7).
+2. **Total legibility from metal to Persons:** No shape kind or 2D/3D parameter admitted here
+   may be any less legible from the metal (GPU/shaders/buffers) to the program
+   (C++/PropertyBridge) and Persons (Law text and inspection) than any other Singular or its
+   fellow visual property-bearing Singulars. Every property carried by these shapes must be
+   registered, observable, and governable under the Law system (Refusal 6: No Black Box).
+3. **2D Carriers (`Shape2D` = 12, `Text2D` = 13):** These are low-level orthographic
+   screen-space carrier parameterizations. They are not domain UI categories. All future
+   enrichment of 2D form (curves, complex planar shapes, icons) must proceed through OntoMath
+   and Formations, not by carving further 2D shape kind enum entries into C++.
+
 - **Must not** encode what the shape is *for*. `Cylinder` is admitted; `RobotLink` is
   not — a link is a cylinder with a role, and role is Relation.
 
