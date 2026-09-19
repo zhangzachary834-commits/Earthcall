@@ -265,10 +265,25 @@ authorship, and fallback witnesses exist.
 branch fire in the situation we are *actually in*") is what the existing Rete already does.
 Passes 1–3 are the new ones, and they are what is here.
 
-**A fixpoint over the write graph.** `Add` / `Scale` / `Lerp` / `Flow` all answer Top today
-because they compose with a value the analysis never saw. A standard widening fixpoint over
-the write graph would bound many of them, and would turn "this law can only push health
-between 0 and 100" into a proof. This is the single highest-value refinement remaining.
+**Guard-aware write-state fixpoint — BUILT 2026-09-19.** The first high-value
+current-dependent rung is now implemented. Whole-Law analysis seeds an abstract pre-state from
+the Law's authored condition, then interprets ordered `Sequence` actions through that state.
+Consequently a Law guarded by `hp ∈ [0,95]` and applying `Add(+5)` now proves the write
+range `[5,100]`; guarded `Scale` and `Lerp` are affine interval images; a prior `Set` in
+the same `Sequence` can establish the exact state a later current-dependent action reads;
+`Parallel` siblings deliberately cannot borrow one another's outputs; `Map` inherits
+authored bounds through its bindings; and `Flow` narrows only when its target/rate inputs and
+`time.delta` are authored-bounded (zero-rate Flow is identity regardless of dt).
+
+The safety boundary is the open world: an unguarded current value may have come from a First
+Mover or foreign channel, so it remains `Top`. This is not a license to assume that the
+authored Law register is the only possible source of state.
+
+**General cross-Law widening closure remains a refinement.** The current rung uses each firing
+Law's invariant guard plus intra-`Sequence` state; it does not yet iterate mutually dependent
+writes across several Laws to a global least post-fixpoint. That broader solver should only
+narrow when its source-of-truth assumptions are explicit enough to remain sound in the
+presence of external/First-Mover writes.
 
 **⚑ AUTHOR — §16–19, Rete evaluation as Singulars, and the First Mover stratification.**
 Zach's question — *"what if Rete evaluation itself were Singulars exposed with
@@ -304,7 +319,7 @@ tessellator. Nothing further is done.
 | the wiring | `LawManager::syncProphetic` / `propheticHears` / `prophetic()` in `Law.{hpp,cpp}` |
 | alpha provenance | `ReteNetwork::AlphaSource`, `hasForeignBoundAlpha()` in `Law.{hpp,cpp}`; tagged in `ConditionModel.cpp` |
 | the change-feed fix | `PropertyPath::setValue` + `resolve`'s `owner` out-param; `Singular::setDynamicProperty` |
-| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section** |
+| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section; Section I is the guarded write-state/fixpoint witness** |
 
 ---
 

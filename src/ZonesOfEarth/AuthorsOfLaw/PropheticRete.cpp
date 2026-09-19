@@ -408,6 +408,198 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
     for (const auto& child : node.children) analyzeAction(child, out);
 }
 
+namespace {
+
+// A Law's condition is an invariant pre-state for every firing: if the Law
+// fires, its subject satisfied these demands immediately before the action.
+// This is the sound seed for current-value-dependent writes. It is deliberately
+// exact-path only: pathsMayAlias() is a MAY-alias relation and may never be
+// used to narrow a value.
+using AbstractState = std::map<std::string, Range>;
+
+bool asNumericInterval(const Range& range, Interval& out) {
+    if (range.kind == Range::Kind::Number) {
+        out = range.number;
+        return true;
+    }
+    if (range.kind == Range::Kind::Boolean) {
+        out = boolAsInterval(range.maybeTrue, range.maybeFalse);
+        return !out.empty();
+    }
+    return false;
+}
+
+Range stateRange(const AbstractState& state, const PropertyPath& path) {
+    const auto it = state.find(path.toString());
+    return it == state.end() ? Range::top() : it->second;
+}
+
+void writeState(AbstractState& state, const PropertyPath& path, const Range& range) {
+    if (!path.empty()) state[path.toString()] = range;
+}
+
+std::map<std::string, Interval> bindingBounds(
+    const MathBindings& bindings, const AbstractState& state) {
+    std::map<std::string, Interval> out;
+    for (const auto& [variable, path] : bindings) {
+        Interval iv;
+        if (asNumericInterval(stateRange(state, path), iv)) out.emplace(variable, iv);
+    }
+    return out;
+}
+
+Range affineCurrentWrite(const ActionNode& node, const Range& current) {
+    Interval lhs;
+    if (!asNumericInterval(current, lhs)) return Range::top();
+
+    double rhsValue = 0.0;
+    if (!propertyValueToNumber(node.operand, rhsValue)) return Range::top();
+    const Interval rhs(static_cast<float>(rhsValue));
+
+    switch (node.kind) {
+        case ActionNode::Kind::Add:
+            return Range::fromInterval(lhs + rhs);
+        case ActionNode::Kind::Scale:
+            return Range::fromInterval(lhs * rhs);
+        case ActionNode::Kind::Lerp: {
+            const float f = static_cast<float>(node.factor);
+            return Range::fromInterval(lhs * Interval(1.0f - f) + rhs * Interval(f));
+        }
+        default:
+            return Range::top();
+    }
+}
+
+Range flowCurrentWrite(const ActionNode& node, const AbstractState& state) {
+    Interval current;
+    if (!asNumericInterval(stateRange(state, node.path), current)) return Range::top();
+
+    const Range rateRange = rangeOfPiecewise(node.mapFunction,
+                                             bindingBounds(node.bindings, state));
+    Interval rate;
+    if (!asNumericInterval(rateRange, rate)) return Range::top();
+
+    // A zero rate is an identity regardless of the engine's frame delta.
+    if (rate.lo == 0.0f && rate.hi == 0.0f) {
+        return Range::fromInterval(current);
+    }
+
+    // dt is part of Flow's semantics but is not an implicit engine promise to
+    // Prophetic Rete. Only authored text may bound it. If the Law did not
+    // constrain time.delta, the honest result stays Top.
+    const auto dtIt = state.find("time.delta");
+    if (dtIt == state.end()) return Range::top();
+    Interval dt;
+    if (!asNumericInterval(dtIt->second, dt)) return Range::top();
+
+    return Range::fromInterval(current + rate * dt);
+}
+
+// Context-sensitive action interpretation. analyzeAction() above remains the
+// context-free public primitive (therefore unguarded Add/Scale/Lerp/Flow are
+// still Top). A whole Law has more information: its condition is a pre-state,
+// and an ordered Sequence may establish a value before a later action reads it.
+//
+// For the supported current-dependent transforms the transfer is monotone over
+// interval inclusion. Applying it to the ENTIRE authored guard therefore
+// already yields a sound post-fixpoint for repeated firings: any later firing
+// must re-enter through that same guard, a subset of the pre-state already
+// analyzed. This is the widening fixpoint without pretending the open world is
+// closed. First Movers / foreign channels can still supply any unguarded
+// starting value, so those cases correctly remain Top.
+void analyzeActionWithState(const ActionNode& node, LawFacts& out, AbstractState& state) {
+    const std::string branchId = actionBranchId(node);
+    const auto emit = [&](const PropertyPath& path, Range range, const char* via) {
+        if (path.empty()) return;
+        out.writes.push_back(
+            WriteEffect{out.lawId, branchId, path.toString(), range, via});
+        writeState(state, path, range);
+    };
+
+    switch (node.kind) {
+        case ActionNode::Kind::Set:
+            emit(node.path, Range::ofValue(node.operand), "Set");
+            return;
+
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+            emit(node.path, affineCurrentWrite(node, stateRange(state, node.path)),
+                 ActionNode::kindName(node.kind));
+            return;
+
+        case ActionNode::Kind::Drive:
+            emit(node.path, rangeOfCurve(node.curve), "Drive");
+            return;
+
+        case ActionNode::Kind::Map:
+            emit(node.path,
+                 rangeOfPiecewise(node.mapFunction, bindingBounds(node.bindings, state)),
+                 "Map");
+            return;
+
+        case ActionNode::Kind::Flow:
+            emit(node.path, flowCurrentWrite(node, state), "Flow");
+            return;
+
+        case ActionNode::Kind::AddProperty: {
+            const Range opening = Range::ofValue(node.operand);
+            out.writes.push_back(
+                WriteEffect{out.lawId, branchId, node.propertyName, opening, "AddProperty"});
+            state[node.propertyName] = opening;
+            return;
+        }
+
+        case ActionNode::Kind::Sequence:
+            for (const auto& child : node.children) {
+                analyzeActionWithState(child, out, state);
+            }
+            return;
+
+        case ActionNode::Kind::Parallel: {
+            // Siblings are conceptually simultaneous. No sibling may borrow
+            // another sibling's write as its pre-state. For whatever follows
+            // the Parallel block, join all possible sibling outputs per path.
+            const AbstractState incoming = state;
+            std::map<std::string, Range> parallelWrites;
+            for (const auto& child : node.children) {
+                AbstractState childState = incoming;
+                const std::size_t before = out.writes.size();
+                analyzeActionWithState(child, out, childState);
+                for (std::size_t i = before; i < out.writes.size(); ++i) {
+                    const WriteEffect& effect = out.writes[i];
+                    auto it = parallelWrites.find(effect.path);
+                    if (it == parallelWrites.end()) parallelWrites.emplace(effect.path, effect.range);
+                    else it->second = it->second.joined(effect.range);
+                }
+            }
+            for (const auto& [path, range] : parallelWrites) state[path] = range;
+            return;
+        }
+
+        default:
+            // Structural / modality actions retain the existing fail-open
+            // analysis. Their children (Create/Synthesize) act in a different
+            // subject scope, so none of those writes may seed this subject's
+            // sequential abstract state.
+            analyzeAction(node, out);
+            return;
+    }
+}
+
+AbstractState conditionPreState(const LawFacts& facts) {
+    AbstractState state;
+    for (const auto& read : facts.reads) {
+        if (read.aboutInstances || read.satisfying.isTop()) continue;
+        auto it = state.find(read.path);
+        if (it == state.end()) state.emplace(read.path, read.satisfying);
+        else it->second = it->second.met(read.satisfying);
+    }
+    return state;
+}
+
+} // namespace
+
 // ---------------------------------------------------------------------------
 // Reading a condition tree: what does this law read, and what would satisfy it?
 //
@@ -742,7 +934,8 @@ LawFacts analyzeLaw(const Law& law) {
     }
 
     if (const ActionModel* action = law.actionModel()) {
-        analyzeAction(*action, facts);
+        AbstractState state = conditionPreState(facts);
+        analyzeActionWithState(*action, facts, state);
     }
 
     // A First Mover actuates in C++ — that is what makes it a first mover.
