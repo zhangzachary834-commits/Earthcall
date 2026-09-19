@@ -16,6 +16,7 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
     def test_projection_is_read_only_and_bounded(self):
         bridge = CppBridge()
         bridge.connected = True
+        bridge.has_engine_snapshot = True
         bridge.current_state = {
             "timestamp": 123.0,
             "active_zone_index": 2,
@@ -46,11 +47,22 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
         self.assertEqual(projected["schema"], "earthcall.portfolio.v1")
         self.assertTrue(projected["connected"])
+        self.assertTrue(projected["has_engine_snapshot"])
         self.assertEqual(projected["active_zone"]["id"], "zone-law-garden")
         self.assertEqual(len(projected["recent_events"]), 20)
         self.assertEqual(projected["recent_events"][0]["index"], 10)
         self.assertNotIn("private_internal_field", projected["objects"][0])
         self.assertNotIn("private_internal_field", projected["laws"][0])
+
+
+    def test_fallback_seed_is_not_exposed_as_live_world(self):
+        bridge = CppBridge()
+        projected = bridge.get_portfolio_state()
+
+        self.assertFalse(projected["has_engine_snapshot"])
+        self.assertEqual(projected["objects"], [])
+        self.assertEqual(projected["laws"], [])
+        self.assertEqual(projected["active_zone"]["name"], "")
 
 
 class _FakeBridge:
