@@ -229,6 +229,48 @@ static void testLoadPersonDeserializationFailure() {
     std::cout << "  loadPerson deserialization failure handling OK\n";
 }
 
+static void testSaveAndLoadDistinctPersonsSameDisplayName() {
+    TestEnvironment env;
+    PersonDatabase& db = PersonDatabase::getInstance();
+
+    Person p1 = createDummyPerson("Alice");
+    Person p2 = createDummyPerson("Alice");
+
+    // Assign distinct cryptographic SingularIds
+    std::array<uint8_t, 32> k1{}, k2{};
+    k1[0] = 1;
+    k2[0] = 2;
+    p1.setPersonId(Identity::SingularId::fromPublicKey(k1));
+    p2.setPersonId(Identity::SingularId::fromPublicKey(k2));
+
+    assert(p1.getDisplayName() == "Alice");
+    assert(p2.getDisplayName() == "Alice");
+    assert(p1.getIdentifier() != p2.getIdentifier());
+
+    p1.position() = glm::vec3(10.0f, 0.0f, 0.0f);
+    p2.position() = glm::vec3(20.0f, 0.0f, 0.0f);
+
+    db.savePerson(p1);
+    db.savePerson(p2);
+
+    Person loaded1 = createDummyPerson("Temp");
+    Person loaded2 = createDummyPerson("Temp");
+
+    bool success1 = db.loadPerson(p1.getIdentifier(), loaded1);
+    bool success2 = db.loadPerson(p2.getIdentifier(), loaded2);
+
+    assert(success1);
+    assert(success2);
+    assert(loaded1.getDisplayName() == "Alice");
+    assert(loaded2.getDisplayName() == "Alice");
+    assert(loaded1.getIdentifier() == p1.getIdentifier());
+    assert(loaded2.getIdentifier() == p2.getIdentifier());
+    assert(loaded1.position().x == 10.0f);
+    assert(loaded2.position().x == 20.0f);
+
+    std::cout << "  savePerson and loadPerson distinct persons with same display name OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -243,6 +285,7 @@ int main() {
     testLoadPersonUnreadableFile();
     testLoadPersonInvalidJsonStructure();
     testLoadPersonDeserializationFailure();
+    testSaveAndLoadDistinctPersonsSameDisplayName();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
