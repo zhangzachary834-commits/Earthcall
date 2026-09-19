@@ -643,6 +643,33 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     return ft.writeSamples(selected, colors);
 }
 
+void Object::rebuildRenderSdfCaches() const {
+    if (!_renderSdfCachesDirty) return;
+
+    _smoothRenderSdf.reset();
+    _complexRenderSdf.reset();
+    _complexPatchRenderSdfs.clear();
+
+    if (_hasSmooth) {
+        _smoothRenderSdf = geom::sdfFromSmooth(smoothData);
+    } else if (_hasComplex) {
+        geom::SdfNode whole;
+        if (geom::sdfFromComplex(complexData, whole)) {
+            _complexRenderSdf = std::move(whole);
+        } else {
+            _complexPatchRenderSdfs.resize(complexData.patches.size());
+            for (size_t i = 0; i < complexData.patches.size(); ++i) {
+                const auto& patch = complexData.patches[i];
+                if (patch.type == geom::SurfacePatch::Type::Smooth) {
+                    _complexPatchRenderSdfs[i] = geom::sdfFromSmooth(patch.smooth);
+                }
+            }
+        }
+    }
+
+    _renderSdfCachesDirty = false;
+}
+
 void Object::drawSmoothModel() const {
     Renderer& r = currentRenderer();
     const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
@@ -667,11 +694,14 @@ void Object::drawSmoothModel() const {
     }
     
     if (analytic) {
+        rebuildRenderSdfCaches();
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
-        r.drawImplicit(geom::sdfFromSmooth(smoothData), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                       getMemoId(), getFieldRevision());
+        if (_smoothRenderSdf) {
+            r.drawImplicit(*_smoothRenderSdf, glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                           getMemoId(), getFieldRevision());
+        }
         return;
     }
     if (_smoothMesh) r.drawMesh(*_smoothMesh, mat);
@@ -697,10 +727,10 @@ void Object::drawComplexModel() const {
         }
     }
     if (analytic) {
-        geom::SdfNode field;
-        if (geom::sdfFromComplex(complexData, field)) {
+        rebuildRenderSdfCaches();
+        if (_complexRenderSdf) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
-            r.drawImplicit(field, glm::vec3(std::max(rExt, 0.6f)),
+            r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
                            getMemoId(), getFieldRevision());
             return;
@@ -711,8 +741,11 @@ void Object::drawComplexModel() const {
             if (patch.type == geom::SurfacePatch::Type::Smooth) {
                 const float extent = std::max(std::abs(patch.smooth.axes.x),
                     std::max(std::abs(patch.smooth.zTrim.x), std::abs(patch.smooth.zTrim.y))) + 0.25f;
-                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                               getMemoId(static_cast<int>(i) + 1), getFieldRevision());
+                if (i < _complexPatchRenderSdfs.size() && _complexPatchRenderSdfs[i]) {
+                    r.drawImplicit(*_complexPatchRenderSdfs[i],
+                                   glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                                   getMemoId(static_cast<int>(i) + 1), getFieldRevision());
+                }
             } else if (i < _complexMeshes.size()) {
                 r.drawMesh(_complexMeshes[i], mat);
             }
