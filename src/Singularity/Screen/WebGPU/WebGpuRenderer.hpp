@@ -93,6 +93,9 @@ public:
     // template as setWireframe -- disabled, every heightfield object simply
     // renders through the unmodified marcher, exactly as before this phase.
     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
+    bool usesHeightGridDda() const override {
+        return kHeightGridDdaTraversalVerified && _heightGridDdaEnabled;
+    }
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -225,6 +228,10 @@ private:
     // (Phase C). Defaults true so the optimization is live out of the box;
     // a Person can author @screen-channel.heightGridDdaEnabled = false.
     bool _heightGridDdaEnabled = true;
+    // Native Metal sweep still has an unresolved grazing-root hand-off mismatch.
+    // Keep the verification latch next to the capability query so callers can
+    // avoid building a grid that this build is forbidden to consume.
+    static constexpr bool kHeightGridDdaTraversalVerified = false;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
