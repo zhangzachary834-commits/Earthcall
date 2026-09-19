@@ -45,7 +45,7 @@ public:
 
     // Lifecycle -----------------------------------------------------------
     bool init(int argc = 0, char** argv = nullptr);
-    void initLogic();
+    bool initLogic();
     void run();
     void tick(float dt);
     void update(float dt);
