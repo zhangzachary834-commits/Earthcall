@@ -1,5 +1,14 @@
 # Person Verification List
 
+## Cathedral — Court of the Open Hand
+
+*Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
+
+- [ ] From a fresh launch, enter **Cathedral of the Living Logos** and fly to **(44, 2, 26)** facing negative Z: confirm the new circular court appears on the positive-X side while the original Cathedral, pond, and color-field cloister remain as you left them.
+- [ ] Click the **pearl at (44, 1.47, 19.35)**: twelve bronze/verdigris leaves should spread and incline smoothly around the blue seed; click again to gather, including a reversal halfway through.
+- [ ] Approach the leaf cavities, arch openings, and floor inlays; inspect from both sides, sit near the stone seats, and judge whether the composition rewards staying and getting close.
+- [ ] Open the leaves, **Save Zone**, restart, and return: confirm the same court and authored opening intention persist; confirm ordinary Cathedral interaction and performance remain comfortable.
+
 ## Chess — Zone-native boot, no legacy World load
 
 *GPT-5.6 Sol, 2026-09-18. Source requested by Zach: the exact legacy `saves/worlds/chess_app.json` Chess bundle; migration target: `saves/zones/Chess/zone.json` + shared Law roots.*

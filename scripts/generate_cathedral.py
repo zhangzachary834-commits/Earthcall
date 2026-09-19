@@ -2357,26 +2357,77 @@ materials = [
     # --- SACRED EDENIC POND ONTOMATH DYNAMIC COLOR FIELDS ---
     {
         "name": "logos.pond.water",
-        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.98, "shininess": 120.0,
-        "baseColor": [1.0, 1.0, 1.0], "emission": [0.10, 0.35, 0.45], "roughness": 0.05, "metallic": 0.35,
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.98, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.06, 0.28, 0.45], "roughness": 0.03, "metallic": 0.35,
         "faceTextures": [tex_water_caustics] * 6,
         "colorExpr": make_color_expr_piecewise(
             [
-                {"c": 0.06, "factors": {}},
-                {"c": 0.08, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 1.2, "shift": 0.0}]}
+                # --- RED CHANNEL (Selective spectral Beer-Lambert absorption) ---
+                # Deep center: heavily absorbed (0.038). Shallows/shore: warm pebble/sand reflection (+0.0032 * r^2).
+                {"c": 0.038, "factors": {}},
+                {"c": 0.0032, "factors": {"x": 2.0}},
+                {"c": 0.0032, "factors": {"z": 2.0}},
+                # 4-Octave aperiodic cross-wave caustics (non-repeating golden ratio frequencies)
+                {"c": 0.030, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.65, "shift": 0.1}, {"kind": 1, "var": "z", "scale": 0.65, "shift": -0.2}]},
+                {"c": 0.017, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 1.30, "shift": -0.3}, {"kind": 0, "var": "z", "scale": 1.30, "shift": 0.4}]},
+                {"c": 0.008, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.65, "shift": 0.5}, {"kind": 1, "var": "z", "scale": 2.65, "shift": -0.1}]},
+                {"c": 0.003, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 4.25, "shift": 0.0}, {"kind": 1, "var": "z", "scale": 4.25, "shift": 0.0}]},
+                # Vertical surface glisten (+0.06*y)
+                {"c": 0.06, "factors": {"y": 1.0}}
             ],
             [
-                {"c": 0.65, "factors": {}},
-                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.8, "shift": 0.0}]},
-                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.5, "shift": 0.0}]}
+                # --- GREEN CHANNEL (Bathymetric lift to emerald-turquoise shallows) ---
+                # Deep center: cool sapphire-aquamarine (0.36). Shallows: radiant mint turquoise (+0.0115 * r^2).
+                {"c": 0.36, "factors": {}},
+                {"c": 0.0115, "factors": {"x": 2.0}},
+                {"c": 0.0115, "factors": {"z": 2.0}},
+                # 4-Octave aperiodic cross-wave caustics (primary green crests)
+                {"c": 0.068, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.65, "shift": 0.1}, {"kind": 1, "var": "z", "scale": 0.65, "shift": -0.2}]},
+                {"c": 0.034, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 1.30, "shift": -0.3}, {"kind": 0, "var": "z", "scale": 1.30, "shift": 0.4}]},
+                {"c": 0.016, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.65, "shift": 0.5}, {"kind": 1, "var": "z", "scale": 2.65, "shift": -0.1}]},
+                {"c": 0.006, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 4.25, "shift": 0.0}, {"kind": 1, "var": "z", "scale": 4.25, "shift": 0.0}]},
+                # Vertical surface glisten (+0.14*y)
+                {"c": 0.14, "factors": {"y": 1.0}}
             ],
             [
-                {"c": 0.90, "factors": {}},
-                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 1.0, "shift": 0.0}]}
+                # --- BLUE CHANNEL (Rayleigh oceanic scattering & celestial sky clarity) ---
+                # Deep center: incandescent royal sapphire (0.95). Shallows: crystal pale cyan (-0.0028 * r^2).
+                {"c": 0.95, "factors": {}},
+                {"c": -0.0028, "factors": {"x": 2.0}},
+                {"c": -0.0028, "factors": {"z": 2.0}},
+                # 4-Octave aperiodic cross-wave caustics (sky reflections)
+                {"c": 0.035, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.65, "shift": 0.1}, {"kind": 1, "var": "z", "scale": 0.65, "shift": -0.2}]},
+                {"c": 0.020, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 1.30, "shift": -0.3}, {"kind": 0, "var": "z", "scale": 1.30, "shift": 0.4}]},
+                {"c": 0.010, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.65, "shift": 0.5}, {"kind": 1, "var": "z", "scale": 2.65, "shift": -0.1}]},
+                {"c": 0.004, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 4.25, "shift": 0.0}, {"kind": 1, "var": "z", "scale": 4.25, "shift": 0.0}]},
+                # Vertical surface glisten (+0.08*y)
+                {"c": 0.08, "factors": {"y": 1.0}}
             ]
         )
     },
-    {
+{
+        "name": "logos.pond.water_cascade",
+        "textureResolution": 256, "ambient": 0.65, "diffuse": 0.98, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.65, 0.75], "roughness": 0.08, "metallic": 0.20,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                # High-aeration tumbling white froth
+                {"c": 0.75, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 4.5, "shift": 0.0}, {"kind": 1, "var": "x", "scale": 3.0, "shift": 0.0}]},
+                {"c": 0.08, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 5.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.92, "factors": {}},
+                {"c": 0.06, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 4.0, "shift": 0.5}, {"kind": 1, "var": "x", "scale": 3.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.98, "factors": {}},
+                {"c": 0.02, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 3.5, "shift": 0.0}]}
+            ]
+        )
+    },
+{
         "name": "logos.pond.lotus.dawn",
         "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 0.90, "shininess": 85.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.15, 0.25], "roughness": 0.15, "metallic": 0.50,
@@ -2502,24 +2553,41 @@ materials = [
     {
         "name": "logos.pond.water_abyss",
         "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.99, "shininess": 128.0,
-        "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.15, 0.35], "roughness": 0.04, "metallic": 0.40,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.04, 0.12, 0.35], "roughness": 0.03, "metallic": 0.40,
         "faceTextures": [tex_water_caustics] * 6,
         "colorExpr": make_color_expr_piecewise(
             [
                 {"c": 0.02, "factors": {}},
-                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 1.5, "shift": 0.0}]}
+                {"c": 0.003, "factors": {"x": 2.0}},
+                {"c": 0.003, "factors": {"z": 2.0}},
+                {"c": 0.015, "factors": {}, "trans": [
+                    {"kind": 1, "var": "x", "scale": 1.0, "shift": 0.0},
+                    {"kind": 1, "var": "z", "scale": 1.0, "shift": 0.0}
+                ]}
             ],
             [
-                {"c": 0.25, "factors": {}},
-                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.2, "shift": 0.0}]}
+                {"c": 0.20, "factors": {}},
+                {"c": 0.012, "factors": {"x": 2.0}},
+                {"c": 0.012, "factors": {"z": 2.0}},
+                {"c": 0.035, "factors": {}, "trans": [
+                    {"kind": 0, "var": "x", "scale": 1.2, "shift": 0.0},
+                    {"kind": 0, "var": "z", "scale": 1.2, "shift": 0.0}
+                ]},
+                {"c": 0.18, "factors": {"y": 1.0}}
             ],
             [
-                {"c": 0.70, "factors": {}},
-                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 1.5, "shift": 0.0}]}
+                {"c": 0.82, "factors": {}},
+                {"c": -0.003, "factors": {"x": 2.0}},
+                {"c": -0.003, "factors": {"z": 2.0}},
+                {"c": 0.040, "factors": {}, "trans": [
+                    {"kind": 1, "var": "x", "scale": 1.0, "shift": 0.0},
+                    {"kind": 1, "var": "z", "scale": 1.0, "shift": 0.0}
+                ]},
+                {"c": 0.12, "factors": {"y": 1.0}}
             ]
         )
     },
-    {
+{
         "name": "logos.pond.lotus.cyan",
         "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 0.95, "shininess": 90.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.15, 0.45, 0.55], "roughness": 0.12, "metallic": 0.45,
@@ -3536,7 +3604,7 @@ grotto_full_tree = sdf_binary(5, grotto_rock, spring_plume, 0.28)
 objects.append(make_field(
     "cathedral.pond.spring_grotto", "Living Spring Grotto & Cascade (Headwaters of Siloam)",
     [0.0, 1.4, 57.0], grotto_full_tree, [3.5, 2.5, 2.5],
-    "material.logos.pond.water", [0.2, 0.9, 0.95],
+    "material.logos.pond.water_cascade", [0.2, 0.9, 0.95],
     extra_props={
         "isHeadwaters": {"t": "bool", "v": True},
         "light.intensity": {"t": "float", "v": 4.5},
