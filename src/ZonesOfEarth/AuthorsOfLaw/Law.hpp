@@ -957,8 +957,36 @@ private:
     // something (not merely if the action branch was reached).
     Law::ApplicationResult applyAndMaybeDrive(Law& law, Singular& subject,
                             std::vector<Law::ApplicationRecord>& records);
-    // Whom an untargeted law sweeps: the beings carrying its vocabulary.
+    // Whom an untargeted law sweeps: consume ONE already-selected sound route.
+    // Route selection is refreshed outside the per-candidate loop and cached by
+    // law id; steady-state selection is one unordered_map lookup.
     std::vector<Singular*> sweepSubjects(const Law& law) const;
+
+    enum class CandidateTier : std::uint8_t {
+        Sweep,
+        Vocabulary,
+        AdapterRoad
+    };
+    struct CandidateRoute {
+        CandidateTier tier = CandidateTier::Sweep;
+        // Vocabulary tier: rarest required name chosen when the vocabulary
+        // index refreshes. Adapter tier reads the adapter's own current view.
+        std::string vocabularySeed;
+        // Currency of the LAW decision. World/graph currency is still checked
+        // by the selected structure itself before it is consumed.
+        std::uint64_t lawTextRevision = 0;
+        std::uint64_t conditionRevision = 0;
+        std::uint64_t structuralRevision = 0;
+        std::size_t relationGeneration = 0;
+        bool hasRelationGeneration = false;
+        std::uint64_t adapterRouteGeneration = 0;
+    };
+    mutable std::unordered_map<std::string, CandidateRoute> _candidateRoutes;
+    mutable std::uint64_t _candidateRouteRefreshCount = 0;
+    void refreshCandidateRoute(const Law& law) const;
+    void invalidateCandidateRoute(const std::string& lawId) const {
+        _candidateRoutes.erase(lawId);
+    }
 
     // ------------------------------------------------------------------
     // The vocabulary index — FORMATION_RETE.md §3.0, §8 rung 2.
@@ -1150,6 +1178,7 @@ public:
         _slowAdapterClockPrimed = false;
         _slowAdapterNextAt = 0.0;
         _slowAdapterMaintenanceRuns = 0;
+        _candidateRoutes.clear();
         if (!use) _adapter.clear();
     }
     bool usesSlowAdapter() const { return _useSlowAdapter; }
@@ -1164,6 +1193,14 @@ public:
 
     const Relevance::SlowAdapter& slowAdapter() const { return _adapter; }
     Relevance::SlowAdapter& slowAdapter() { return _adapter; }
+
+    // Legibility for the tier contract: reports the selected derived route
+    // without exposing or mutating its candidate list. Useful to the Law/Perf
+    // UI and to parity tests; this is not authorable world state.
+    std::string candidateTierFor(const Law& law) const;
+    std::uint64_t candidateRouteRefreshCount() const {
+        return _candidateRouteRefreshCount;
+    }
 
 private:
     std::unordered_set<std::string> _seededSubjects;
