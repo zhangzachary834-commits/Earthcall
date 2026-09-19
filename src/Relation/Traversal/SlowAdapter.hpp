@@ -124,6 +124,22 @@ public:
     // current. False is not "no candidates": it is "ask the sweep".
     bool candidatesFor(const std::string& lawId, std::vector<Singular*>& out) const;
 
+    // O(1) hot-path VIEW for the current single-road case: one law-map lookup,
+    // one road-map lookup, then current()'s revision/generation checks. No copy,
+    // no union, no candidate walk. A law with multiple roads deliberately
+    // answers false here until route competition can rank/retain a precomputed
+    // union on the adapter's own clock; candidatesFor() remains the complete
+    // slow-path API for those laws.
+    bool candidateViewFor(const std::string& lawId,
+                          const std::vector<Singular*>*& out) const;
+
+    // O(1) stamp for the same single-road hot-path case. It changes when that
+    // road moves between unbuilt/built/capped states or is rebuilt under a new
+    // structural / relation-graph generation. A maintenance revisit under the
+    // SAME world does not change it, so LawManager does not reselect a tier
+    // merely because the slow clock ticked.
+    std::uint64_t candidateGenerationFor(const std::string& lawId) const;
+
     // True when every road this Law travels is built and current.
     bool ready(const std::string& lawId) const;
 
@@ -157,6 +173,9 @@ private:
         bool built = false;
         bool cappedOut = false;
         std::uint64_t lastVisited = 0;       // the revisit rate's clock
+        // Monotonic currency witness for candidateViewFor's eligibility state.
+        // Unlike a hash of generations, equality here is exact.
+        std::uint64_t currencyRevision = 0;
     };
 
     void build(const RouteKey& key, const Budget& budget);
@@ -168,6 +187,7 @@ private:
     std::unordered_map<std::string, std::vector<RouteKey>> _lawRoutes;
     std::deque<RouteKey> _pending;
     std::uint64_t _steps = 0;
+    std::uint64_t _currencyClock = 0;
 };
 
 }  // namespace Relevance
