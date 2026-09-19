@@ -1957,21 +1957,51 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             return std::nullopt;
         }
         case Op::Noise: {
-            // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it to
-            // tessellateSdf's subdivision, which DISCARDS any cell whose interval does
-            // not straddle zero. Claim a range the noise can leave and the marcher
-            // deletes cells that really do contain surface -- holes in the mesh a
-            // Person falls through, with nothing logged.
+            // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it
+            // to tessellation culling and the conservative zero-set hierarchy.
+            // Unknown/loose only costs speed; too narrow deletes authored geometry.
             //
-            // Op::Noise evaluates to glm::perlin, whose 3D form returns 2.2 * n, with
-            // n a fade-weighted convex blend of unit-gradient dot products. The
-            // classical supremum for N-dimensional classic Perlin is sqrt(N)/2, so
-            // |glm::perlin| <= 2.2 * sqrt(3)/2 = 1.905. It is NOT 1.0: sampling
-            // 8e6 random points measured [-1.127, +1.123], so the [-1, 1] this read
-            // for one campaign was already unsound at the values the noise floor
-            // actually reaches.
-            constexpr float kPerlinBound = 1.905255f;   // 2.2 * sqrt(3)/2
-            return RangeValue::makeScalar(Interval(-kPerlinBound, kPerlinBound));
+            // Start from the proved global amplitude enclosure, then tighten it
+            // when the child's possible vector values occupy a finite box. The
+            // shared kClassicPerlin3LipschitzBound proves that every value in that
+            // box lies within L*radius of the exact noise value at its centre.
+            // This is the first range rule here that gets TIGHTER as an octree cell
+            // shrinks, which is essential for useful spatial Prophetic skipping.
+            const Interval global(-kClassicPerlin3ValueBound,
+                                   kClassicPerlin3ValueBound);
+            if (children.size() != 1 || !children[0]) {
+                return RangeValue::makeScalar(global);
+            }
+            auto arg = children[0]->evalRange(vars);
+            if (!arg || arg->kind != ValueKind::Vector) {
+                return RangeValue::makeScalar(global);
+            }
+            for (int axis = 0; axis < 3; ++axis) {
+                if (!std::isfinite(arg->vec[axis].lo) ||
+                    !std::isfinite(arg->vec[axis].hi)) {
+                    return RangeValue::makeScalar(global);
+                }
+            }
+
+            const glm::vec3 centre(
+                0.5f * (arg->vec[0].lo + arg->vec[0].hi),
+                0.5f * (arg->vec[1].lo + arg->vec[1].hi),
+                0.5f * (arg->vec[2].lo + arg->vec[2].hi));
+            const glm::vec3 half(
+                0.5f * (arg->vec[0].hi - arg->vec[0].lo),
+                0.5f * (arg->vec[1].hi - arg->vec[1].lo),
+                0.5f * (arg->vec[2].hi - arg->vec[2].lo));
+            const float radius = glm::length(half);
+            const float centreValue = glm::perlin(centre);
+            if (!std::isfinite(radius) || !std::isfinite(centreValue)) {
+                return RangeValue::makeScalar(global);
+            }
+
+            const float slack = kClassicPerlin3LipschitzBound * radius;
+            const Interval local(centreValue - slack, centreValue + slack);
+            return RangeValue::makeScalar(
+                Interval(std::max(global.lo, local.lo),
+                         std::min(global.hi, local.hi)));
         }
         // Fallback for everything else
         default:
