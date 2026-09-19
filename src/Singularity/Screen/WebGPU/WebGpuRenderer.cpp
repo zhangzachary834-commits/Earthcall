@@ -1370,7 +1370,11 @@ void WebGpuRenderer::flushSdfDraws() {
             paramsChanged = std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
         }
 
-        WGPUBuffer paramBuffer = persistent.buffer;
+        // A failed grow leaves the previous buffer alive for accounting/later
+        // retry, but it is not large enough for this batch and must not be used.
+        const bool persistentUsable =
+            persistent.buffer && persistent.capacityBytes >= requiredBytes;
+        WGPUBuffer paramBuffer = persistentUsable ? persistent.buffer : nullptr;
         uint64_t paramOffset = 0;
         uint64_t paramBindingSize = requiredBytes;
 
