@@ -37,3 +37,6 @@
 ## 2024-11-28 - [Accessible Button Contrast Overlays]
 **Learning:** When layering semi-transparent backgrounds (like `.kbd-hint` over a primary `#emit-btn`), alpha-blended white (`rgba(255,255,255,0.15)`) on top of a light blue button background (`#4a90e2`) causes both the text and the hint background to fail WCAG AA contrast ratios (falling below 4.5:1).
 **Action:** Always verify contrast ratios for primary action buttons. Deepen the base button color (`#2563eb`) to provide sufficient contrast for white text, and use black with alpha (`rgba(0,0,0,0.2)`) instead of white for nested hint backgrounds to maintain legibility without blowing out the lightness.
+## 2025-01-20 - [Screen Reader Feedback on Form Submission]
+**Learning:** When a form submission simply clears the input field without navigating to a new page or displaying a persistent visual success message (like in a chat or command interface), screen reader users receive no auditory confirmation that their action succeeded. The typed text silently disappears, which can leave the user wondering if the submission worked or failed.
+**Action:** Always provide an `aria-live="polite"` visually hidden region (e.g., using a `.sr-only` class) and update its text content upon successful submission to explicitly announce the outcome (e.g., "Emitted: [word]") to assistive technologies.
