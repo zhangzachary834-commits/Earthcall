@@ -81,7 +81,7 @@ FORMATION_RETE).
 | `Prophetic::Index::_relevanceEdges`, `_relevanceComplete` | branch-local read demands + write effects derived from the whole authored Law register | rebuilt with `_prophetic` on `Law::textRevision()`; **globally invalid** (empty, incomplete) when any read or write is opaque | `prophetic_rete_test` §H — JSON-stable branch provenance, `Any` arms, disjoint pair omission, global-opacity fail-open |
 | `_relationStateToRevalidate` | endpoints of dissolved or retyped relations | queued by the event, drained at the top of the next `tick` | `reactive_departure_test` — **confirmed red** without the drain |
 | `_adapterRouteRevision`, `SlowAdapter` roads | each law's `Related(kind, category)` conjuncts; the relation graph | `law.conditionRevision()`; `structuralRevision()` **and** `Universe::relationGeneration()` | `slow_adapter_test` (10 cases), `slow_adapter_parity_test` — four mutations **confirmed red** |
-| `_candidateRoutes` | per-Law choice of highest sound/current candidate source (sweep, vocabulary seed, retained road) | `Law::textRevision()`, `law.conditionRevision()`, `Universe::structuralRevision()`, `Universe::relationGeneration()`, per-Law adapter-road currency stamp; toggling adapter clears the cache | `slow_adapter_parity_test` — steady-state no-reselection, narrower-road promotion, unchanged-maintenance stability, equal-width rejection, stale-road fallback |
+| `_candidateRoutes` | per-Law choice of highest sound/current candidate source (sweep, vocabulary seed, retained road, or derived **Law-Direct** bearers + residual condition) | `Law::textRevision()`, `law.conditionRevision()`, `Universe::structuralRevision()`, `Universe::relationGeneration()`, per-Law adapter-road currency stamp; toggling adapter/direct clears the cache | `slow_adapter_parity_test` + `law_direct_stress_test` — parity, stale fallback, direct promotion, relation-query elimination, dramatic A/B timing |
 | `_driveSessions` | laws that drive, and their onsets | ended when the drive's function goes undefined; cleared on world load | `tests/zones/time_flow_test.cpp` (a drive outliving its event, ending where its authored bounds end), `law_persistence_test` |
 
 ### On `Law`
@@ -166,3 +166,22 @@ To-do: `docs/Agenda/Tasks/To-do list.md`, the ⚑ AUTHOR bullet on a derived-sta
 *Written by Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`, 2026-09-16, from the
 proposal in `DERIVED_STATE_AND_THE_SILENCE_OF_LAWS_2026-09-10.md` §7 (Zach's To-Do item). Every row
 verified against the source that day; the "confirmed red" notes name mutations actually run.*
+
+
+## 2026-09-19 — Law-Direct derived execution and A/B witness
+
+A current single positive conjunctive Slow Adapter road may crystallize into concrete bearer pointers plus
+a residual predicate in which only that exact proved `Related(kind, other)` conjunct is discharged.
+Dynamic values remain live. `Any`, `Not`, quantifiers, multiple-road ambiguity, opaque condition
+closures, or stale currency fall downward.
+
+`LawManager::setUseLawDirect(false)` is an explicit derived-execution A/B switch. With Slow Adapter
+still enabled it reproduces the immediately-pre-Direct terminal ladder in the same executable. It is
+used by `law_direct_stress_test` and by the real authored-world perf probe; it is not authored world
+state.
+
+The stress witness is intentionally Chess-shaped and adversarial: 32 category members, 128 Laws,
+128 irrelevant category edges per member, and equal-width vocabulary/category candidate sets.
+Pre-Direct repeatedly re-proves membership; Direct proves once and evaluates the residual. The test
+requires semantic parity, >=98% graph-query/fan-out elimination, >=2x wall-time speedup, and rapid
+amortization of the one-time promotion cost.

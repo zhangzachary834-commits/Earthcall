@@ -112,6 +112,15 @@ struct ConditionNode {
     // Tree → closure, once. The tree remains the law's text.
     ECA::ConditionPredicate compile() const;
 
+    // Compile the live remainder after one exact POSITIVE conjunctive
+    // Related(kind, other) route has already been proved by current derived
+    // relevance state. The proof is consumed only at a matching Related leaf
+    // reached through All-conjunctions. Any / Not / quantifier subtrees compile
+    // normally, so a proof can never leak across logical polarity.
+    ECA::ConditionPredicate compileAssumingCategoryRoute(
+        const std::string& relationType,
+        const std::string& otherId) const;
+
     // Compiles this condition tree into the given ReteNetwork.
     // Returns a list of terminal node IDs (Alpha or Beta) that represent the satisfied conditions.
     std::vector<std::size_t> compileToRete(class ReteNetwork& rete,

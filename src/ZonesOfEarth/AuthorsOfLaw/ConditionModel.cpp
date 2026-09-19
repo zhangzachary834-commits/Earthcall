@@ -534,6 +534,36 @@ ECA::ConditionPredicate ConditionNode::compile() const {
     return [](const ECA::Event&, const Singular&) { return false; };
 }
 
+ECA::ConditionPredicate ConditionNode::compileAssumingCategoryRoute(
+    const std::string& provenRelationType,
+    const std::string& provenOtherId) const {
+    if (kind == Kind::Related &&
+        relationType == provenRelationType &&
+        otherId == provenOtherId) {
+        return [](const ECA::Event&, const Singular&) { return true; };
+    }
+
+    // Only conjunction can safely inherit a necessary positive proof. Any,
+    // Not, and quantifiers retain their authored semantics by compiling whole.
+    if (kind == Kind::All) {
+        std::vector<ECA::ConditionPredicate> residual;
+        residual.reserve(children.size());
+        for (const auto& child : children) {
+            residual.push_back(
+                child.compileAssumingCategoryRoute(provenRelationType, provenOtherId));
+        }
+        return [residual = std::move(residual)](
+                   const ECA::Event& event, const Singular& target) {
+            for (const auto& predicate : residual) {
+                if (predicate && !predicate(event, target)) return false;
+            }
+            return true;
+        };
+    }
+
+    return compile();
+}
+
 // A quantifier says nothing about the subject.
 //
 // Its compiled closure takes `const Singular&` UNNAMED (see Kind::ForAny in
