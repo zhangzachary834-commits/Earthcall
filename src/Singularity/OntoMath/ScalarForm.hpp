@@ -48,6 +48,28 @@ namespace OntoMath {
 extern thread_local uint32_t t_astEvaluations;
 extern std::atomic<uint32_t> g_astEvaluationsTotal;
 
+// Conservative contracts for the exact 3D classic Perlin implementation shared
+// by CPU glm::perlin and WebGPU cnoise3.
+//
+// VALUE: cnoise3 returns 2.2*n. The classical N-dimensional bound for the
+// fade-weighted unit-gradient construction is sqrt(N)/2, hence in 3D:
+//   |noise| <= 2.2*sqrt(3)/2 = 1.905255888...
+// Spell the float OUTWARD, never rounded down: range bounds are proofs used to
+// discard space.
+//
+// GRADIENT: after cnoise3's Taylor normalization every lattice gradient has
+// norm <= 1. The quintic fade f(t)=6t^5-15t^4+10t^3 has max |f'|=1.875.
+// For one coordinate, the interpolated gradient term contributes <=1 and the
+// fade-weight derivative multiplies a difference of two convex combinations of
+// corner dot-products, each bounded by sqrt(3):
+//   |dn/dx| <= 1 + 1.875*(2*sqrt(3)) = 1 + 3.75*sqrt(3).
+// Thus ||grad n||_2 <= sqrt(3)*(1 + 3.75*sqrt(3)); cnoise3 scales by 2.2:
+//   ||grad noise||_2 <= 28.5605117...
+// Again round outward. This is deliberately loose but proved; tighter future
+// bounds may replace it only with an equally conservative derivation.
+inline constexpr float kClassicPerlin3ValueBound = 1.905256f;
+inline constexpr float kClassicPerlin3LipschitzBound = 28.561f;
+
 // Interval arithmetic for conservative range evaluation
 struct Interval {
     float lo = 0.0f;
