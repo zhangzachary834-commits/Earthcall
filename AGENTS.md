@@ -137,6 +137,7 @@ widening the baseline.
 
 ## Non-negotiables
 
+- **NO BIG CHUNGUS retrieval.** Retrieval must be proportional to the epistemic need: search before fetch; prefer exact symbol/error queries and bounded file, CI-log, and workflow slices; never ingest an entire large artifact when a narrow read answers the question. Expand incrementally only when needed — especially through GitHub Connector, where giant reads waste context and can time out.
 - **Stable identifiers.** Law text addresses beings by name (`@physical-channel.enabled`).
   Generated ids (`law-7`) change between runs. Any being that law-text names must override
   `getIdentifier()` with a stable slug. Namespaced ids may contain dots
