@@ -48,6 +48,20 @@ void emitNode(const ActionNode& node, NativeBytecodeVM::Bytecode& code) {
             code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
             break;
         }
+        case ActionNode::Kind::Lerp: {
+            Earthcall::StringId pathId = node.path.fullId();
+            uint32_t targetIdx = code.constants.size();
+            code.constants.push_back(node.operand);
+            uint32_t factorIdx = code.constants.size();
+            code.constants.push_back(PropertyValue(node.factor));
+
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadProp, 0, 0, pathId.value});
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 1, 0, targetIdx});
+            code.instructions.push_back({NativeBytecodeVM::Opcode::LoadImm, 2, 0, factorIdx});
+            code.instructions.push_back({NativeBytecodeVM::Opcode::Lerp, 0, 1, 2});
+            code.instructions.push_back({NativeBytecodeVM::Opcode::StoreProp, 0, 0, pathId.value});
+            break;
+        }
         case ActionNode::Kind::Sequence:
         case ActionNode::Kind::Parallel: {
             for (const auto& child : node.children) {
@@ -113,6 +127,15 @@ bool NativeBytecodeVM::execute(const Bytecode& code, Singular& target) {
                 propertyValueToNumber(_registers[ip->src1], lhs);
                 propertyValueToNumber(_registers[ip->src2], rhs);
                 _registers[ip->dst] = PropertyValue(lhs + rhs);
+                break;
+            }
+
+            case Opcode::Lerp: {
+                double current = 0.0, targetValue = 0.0, blend = 0.0;
+                propertyValueToNumber(_registers[ip->dst], current);
+                propertyValueToNumber(_registers[ip->src1], targetValue);
+                propertyValueToNumber(_registers[ip->src2], blend);
+                _registers[ip->dst] = PropertyValue(current + (targetValue - current) * blend);
                 break;
             }
 

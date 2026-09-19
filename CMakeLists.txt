@@ -412,7 +412,8 @@ if(NOT EMSCRIPTEN)
         if (${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
-            ${TEST_NAME} STREQUAL "person_home_migration_boot_test")
+            ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
+            ${TEST_NAME} MATCHES "^foreign_web_dom_")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         endif()
