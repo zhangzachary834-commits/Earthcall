@@ -480,9 +480,11 @@ void Zone::update(float dt, UpdateTiming* out) {
         _lastUpdateTiming.rotationMs += std::chrono::duration<double, std::milli>(tRot1 - tRot0).count();
 
         const auto tAuto0 = ClockT::now();
-        for (const auto& up : _objects) {
-            if (up && up->hasAutomations()) {
-                up->updateAutomations(stepDt);
+        if (Physics::getLegacyEngineEnabled()) {
+            for (const auto& up : _objects) {
+                if (up && up->hasAutomations()) {
+                    up->updateAutomations(stepDt);
+                }
             }
         }
         const auto tAuto1 = ClockT::now();
