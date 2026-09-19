@@ -145,7 +145,8 @@ public:
                               const geom::FieldNode* fieldNode = nullptr,
                               uint64_t memoId = 0,
                               uint32_t memoRevision = 0,
-                              const geom::HeightGrid* heightGrid = nullptr) = 0;
+                              const geom::HeightGrid* heightGrid = nullptr,
+                              uint32_t memoParameterRevision = 0) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or
