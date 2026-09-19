@@ -1123,9 +1123,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the traversal until the full on/off camera corpus is exact. This is not a
     // performance regression for the saved Perlin floor: it is y-dependent and
     // was already ineligible for a grid.
-    constexpr bool kHeightGridDdaTraversalVerified = false;
-    const bool gridActive = kHeightGridDdaTraversalVerified &&
-                            _heightGridDdaEnabled && isProvenHeightfield &&
+    const bool gridActive = usesHeightGridDda() && isProvenHeightfield &&
                             hasConservativeHeightGrid &&
                             !heightGrid->cells.empty();
     // A grid's cell coordinates are authored over `extent` by Object::rebuildHeightGrid.
