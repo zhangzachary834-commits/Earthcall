@@ -125,7 +125,31 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
-    // 2. Analytic Perlin-gradient path: compile() traverses the root through
+    // 2. Analytic gradients are a property of supported mathematics, not of
+    //    Noise specifically. length(p)-r is differentiable by the same jet
+    //    machinery and must not fall back to finite differences.
+    // ---------------------------------------------------------------------
+    {
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(variable("p"));
+
+        auto radiusField = std::make_unique<OntoMath::MathNode>();
+        radiusField->op = OntoMath::MathNode::Op::Sub;
+        radiusField->children.push_back(std::move(length));
+        radiusField->children.push_back(number(0.75));
+
+        geom::SdfNode implicit = geom::makeImplicit(
+            std::shared_ptr<OntoMath::MathNode>(radiusField.release()));
+        const sdfwgsl::Program compiled = sdfwgsl::compile(implicit);
+
+        check(compiled.ok, "non-noise differentiable Expr compiles");
+        check(compiled.wgsl.find("fn sdfEvalGrad") != std::string::npos,
+              "non-noise differentiable Expr emits analytic value+gradient");
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. Analytic Perlin-gradient path: compile() traverses the root through
     //    emitMathNodeGrad instead of ordinary emitNode. collectParams() must
     //    preserve that special ordering exactly.
     // ---------------------------------------------------------------------
