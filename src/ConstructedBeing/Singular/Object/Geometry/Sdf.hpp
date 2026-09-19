@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cstdint>
 #include "SmoothSurface.hpp" // TessMesh
 #include "ComplexShape.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
@@ -131,6 +132,49 @@ bool sdfFromComplex(const ComplexShapeData& c, SdfNode& out);
 float evalSdf(const SdfNode& n, const glm::vec3& p);
 // Evaluate the conservative interval of the tree over a local-space AABB.
 OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const glm::vec3& boxMax);
+
+// ---------------------------------------------------------------------------
+// Conservative zero-set hierarchy.
+//
+// This is DERIVED rendering/geometry substrate, never authored identity. Each
+// node stores evalRange()'s theorem for one local-space AABB. A node may be
+// skipped by a future consumer only when `provedNoZero` is true. Infinite or
+// otherwise unknown bounds are explicit fail-open leaves and are never
+// subdivided merely to manufacture apparent knowledge.
+//
+// The first implementation is intentionally inert: buildRangeHierarchy() does
+// not alter tessellation or rendering. It exists so range soundness, usefulness,
+// node growth, and invalidation can be tested before any GPU ray is allowed to
+// trust it.
+struct SdfRangeNode {
+    glm::vec3 boxMin{0.0f};
+    glm::vec3 boxMax{0.0f};
+    float rangeLo = 0.0f;
+    float rangeHi = 0.0f;
+    uint32_t firstChild = 0;
+    uint8_t childCount = 0;     // 0 or 8
+    uint8_t depth = 0;
+    bool boundFinite = false;
+    bool provedNoZero = false;
+};
+
+struct SdfRangeHierarchy {
+    std::vector<SdfRangeNode> nodes;
+    uint32_t provedEmptyNodes = 0;
+    uint32_t ambiguousLeaves = 0;
+    uint32_t unknownLeaves = 0;
+    uint8_t maxDepthReached = 0;
+};
+
+// Build an adaptive octree over [-extent,+extent]. Finite cells that exclude
+// zero stop immediately as proved-empty; finite zero-straddling cells subdivide
+// until maxDepth; unknown/infinite cells stop as fail-open leaves. maxNodes is
+// a hard construction budget: reaching it also stops conservatively rather than
+// silently dropping child regions.
+SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
+                                      const glm::vec3& extent,
+                                      uint8_t maxDepth = 6,
+                                      uint32_t maxNodes = 65536);
 
 // ---------------------------------------------------------------------------
 // Min/max heightfield grid — GPU ray-DDA skip acceleration (rendering-
