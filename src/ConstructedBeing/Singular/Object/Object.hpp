@@ -202,6 +202,15 @@ private:
     // that is not a proven heightfield -- see geom::isHeightfieldExpr.
     mutable geom::HeightGrid _heightGrid;
     mutable bool             _heightGridDirty = true;
+
+    // Exact analytic SDFs derived from smooth/complex geometry. These are
+    // rendering substrate caches, not authored state: geometry mutation marks
+    // them dirty and the first analytic draw rebuilds them once.
+    mutable bool _renderSdfCachesDirty = true;
+    mutable std::optional<geom::SdfNode> _smoothRenderSdf;
+    mutable std::optional<geom::SdfNode> _complexRenderSdf;
+    mutable std::vector<std::optional<geom::SdfNode>> _complexPatchRenderSdfs;
+
     // Ray index over the two meshes that get picked against every frame. Built
     // with the mesh, discarded with it. Kernel substrate — derived entirely
     // from the TessMesh beside it, holds nothing a Law could ask about.
@@ -251,6 +260,7 @@ private:
     void rebuildPolyhedronMeshes() const;          // rebuild _polyhedronFaceMeshes
     void rebuildFieldMesh() const;                 // lazily rebuild _fieldMesh
     void rebuildHeightGrid() const;                // lazily rebuild _heightGrid
+    void rebuildRenderSdfCaches() const;           // lazily rebuild exact analytic render SDFs
     void rebuildGeometryCaches();
 
 public:
