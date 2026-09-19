@@ -498,7 +498,18 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
 }
 
+void WebGpuRenderer::releasePersistentSdfParams() {
+    for (auto& kv : _persistentSdfParams) {
+        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
+    }
+    _persistentSdfParams.clear();
+    _persistentSdfParamVramBytes = 0;
+}
+
 void WebGpuRenderer::reloadShaders() {
+    // Keys are SdfPipeline addresses, so release these before destroying the
+    // pipeline map whose node addresses identify the caches.
+    releasePersistentSdfParams();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
@@ -530,6 +541,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
+    releasePersistentSdfParams();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -1324,16 +1336,66 @@ void WebGpuRenderer::flushSdfDraws() {
         if (instances.empty()) continue;
         
         const auto& params = _sdfParamsBatches[sp];
-        
+
         const size_t paramBytes = params.size() * sizeof(float);
-        auto pAlloc = bufferPool().suballocateStorage(params.data(), paramBytes);
-        mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
+        auto& persistent = _persistentSdfParams[sp];
+
+        // Grow geometrically so a pipeline whose instance count fluctuates does
+        // not churn buffers. Buffer contents are compared byte-for-byte: NaNs,
+        // signed zero, and authored float bit patterns are all treated as data,
+        // not normalized by a semantic comparison.
+        const uint64_t requiredBytes = static_cast<uint64_t>(std::max<size_t>(paramBytes, sizeof(float)));
+        if (!persistent.buffer || persistent.capacityBytes < requiredBytes) {
+            uint64_t capacity = 256;
+            while (capacity < requiredBytes) capacity *= 2;
+
+            WGPUBufferDescriptor bd = {};
+            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+            bd.size = capacity;
+            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+            if (grown) {
+                if (persistent.buffer) {
+                    _persistentSdfParamVramBytes -= static_cast<size_t>(persistent.capacityBytes);
+                    wgpuBufferRelease(persistent.buffer);
+                }
+                persistent.buffer = grown;
+                persistent.capacityBytes = capacity;
+                persistent.mirror.clear();
+                _persistentSdfParamVramBytes += static_cast<size_t>(capacity);
+            }
+        }
+
+        bool paramsChanged = persistent.mirror.size() != params.size();
+        if (!paramsChanged && !params.empty()) {
+            paramsChanged = std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
+        }
+
+        WGPUBuffer paramBuffer = persistent.buffer;
+        uint64_t paramOffset = 0;
+        uint64_t paramBindingSize = requiredBytes;
+
+        if (paramBuffer) {
+            if (paramsChanged) {
+                wgpuQueueWriteBuffer(_queue, paramBuffer, 0, params.data(), paramBytes);
+                persistent.mirror = params;
+                mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
+            }
+        } else {
+            // Allocation failure must degrade to the already-correct frame ring,
+            // never to a missing parameter binding.
+            auto fallback = bufferPool().suballocateStorage(params.data(), paramBytes);
+            paramBuffer = fallback.buffer;
+            paramOffset = fallback.offset;
+            paramBindingSize = fallback.size;
+            mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
+        }
+
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: Globals and Parameters
         WGPUBindGroupEntry bge[2] = {};
         bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].buffer = pAlloc.buffer; bge[1].offset = pAlloc.offset; bge[1].size = pAlloc.size;
+        bge[1].binding = 1; bge[1].buffer = paramBuffer; bge[1].offset = paramOffset; bge[1].size = paramBindingSize;
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
@@ -1402,7 +1464,8 @@ void WebGpuRenderer::endFrame() {
     _encoder = nullptr;
 
     auto& fs = mutableFrameStats();
-    fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes();
+    fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
+                            _persistentSdfParamVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
