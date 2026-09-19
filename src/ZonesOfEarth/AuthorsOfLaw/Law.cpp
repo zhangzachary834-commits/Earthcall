@@ -1981,7 +1981,6 @@ void LawManager::reapUnmade() {
 void reapUnmadeBeings() {
     if (!Universe::instance().hasUnmakings()) return;
     std::vector<Singular*> victims = Universe::instance().takeUnmakings();
-    Universe::instance().bumpStructuralRevision();
 
     // Collect the Zones BEFORE any removal: beings() rebuilds from the
     // provider each call, and a Zone is not what we are freeing anyway.
@@ -2354,7 +2353,6 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         _compiledConditionRevision.erase(law->getIdentifier());
     }
     _laws = std::move(firstMovers);
-    Universe::instance().bumpStructuralRevision();
     _driveSessions.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();
