@@ -4,6 +4,8 @@
 
 *GPT-5.6 Sol, 2026-09-18. Source requested by Zach: the exact legacy `saves/worlds/chess_app.json` Chess bundle; migration target: `saves/zones/Chess/zone.json` + shared Law roots.*
 
+**[~] PERSON WITNESS FAILED, 2026-09-18:** Zach merged PR #222, pulled, booted locally, entered Chess without loading the legacy World, and saw only **a white cube sitting on top of a black cube**. Root cause: PR #222 preserved the already-corrupted 39 gameplay Object payloads from the old Zone identity; all 39 had identity transforms at the origin even though the exact `chess_app` source still held their correct board/piece placement. This hotfix restores those 39 authored payloads from `chess_app` while retaining the Zone-native dependencies/Laws/relations. Re-run the checklist below after merging the hotfix.
+
 - [ ] Relaunch Earthcall. **Do not load `chess_app`, `.ecform`, or any legacy World from Assets.**
 - [ ] Open Zones / Move to Zone and enter **Chess** directly from the boot catalog.
 - [ ] Confirm the board checkerboard and white/black pieces are visible rather than white/default-material geometry.
