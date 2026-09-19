@@ -51,11 +51,15 @@ extern std::atomic<uint32_t> g_astEvaluationsTotal;
 // Conservative contracts for the exact 3D classic Perlin implementation shared
 // by CPU glm::perlin and WebGPU cnoise3.
 //
-// VALUE: cnoise3 returns 2.2*n. The classical N-dimensional bound for the
-// fade-weighted unit-gradient construction is sqrt(N)/2, hence in 3D:
-//   |noise| <= 2.2*sqrt(3)/2 = 1.905255888...
-// Spell the float OUTWARD, never rounded down: range bounds are proofs used to
-// discard space.
+// VALUE: after Taylor normalization each lattice gradient has norm <= 1.
+// Inside one unit lattice cube, every corner displacement has norm <= sqrt(3),
+// so every corner dot-product lies in [-sqrt(3), +sqrt(3)]. Quintic
+// interpolation is a convex blend on each axis, so the complete unscaled
+// interpolation remains inside that interval. cnoise3/glm::perlin then scale by
+// 2.2:
+//   |noise| <= 2.2*sqrt(3) = 3.810511776...
+// This is deliberately looser than observed extrema. Sampling is corroboration,
+// not authority for a range bound that can discard authored geometry.
 //
 // GRADIENT: after cnoise3's Taylor normalization every lattice gradient has
 // norm <= 1. The quintic fade f(t)=6t^5-15t^4+10t^3 has max |f'|=1.875.
@@ -67,7 +71,7 @@ extern std::atomic<uint32_t> g_astEvaluationsTotal;
 //   ||grad noise||_2 <= 28.5605117...
 // Again round outward. This is deliberately loose but proved; tighter future
 // bounds may replace it only with an equally conservative derivation.
-inline constexpr float kClassicPerlin3ValueBound = 1.905256f;
+inline constexpr float kClassicPerlin3ValueBound = 3.810512f;
 inline constexpr float kClassicPerlin3LipschitzBound = 28.561f;
 
 // Interval arithmetic for conservative range evaluation
