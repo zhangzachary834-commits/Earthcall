@@ -612,6 +612,81 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
     }
 }
 
+SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
+                                      const glm::vec3& extent,
+                                      uint8_t maxDepth,
+                                      uint32_t maxNodes) {
+    SdfRangeHierarchy hierarchy;
+    if (maxNodes == 0) return hierarchy;
+
+    const glm::vec3 e = glm::abs(extent);
+    hierarchy.nodes.reserve(std::min<uint32_t>(maxNodes, 4096u));
+    hierarchy.nodes.push_back(SdfRangeNode{});
+    hierarchy.nodes[0].boxMin = -e;
+    hierarchy.nodes[0].boxMax = e;
+
+    auto refine = [&](auto& self, uint32_t nodeIndex, uint8_t depth) -> void {
+        // Never retain a reference across child insertion: vector growth may
+        // relocate the backing store. All writes go back through nodeIndex.
+        const glm::vec3 boxMin = hierarchy.nodes[nodeIndex].boxMin;
+        const glm::vec3 boxMax = hierarchy.nodes[nodeIndex].boxMax;
+        const OntoMath::Interval range = evalRange(n, boxMin, boxMax);
+        const bool finite = std::isfinite(range.lo) && std::isfinite(range.hi);
+        const bool excludesZero = finite && (range.lo > 0.0f || range.hi < 0.0f);
+
+        hierarchy.nodes[nodeIndex].rangeLo = range.lo;
+        hierarchy.nodes[nodeIndex].rangeHi = range.hi;
+        hierarchy.nodes[nodeIndex].boundFinite = finite;
+        hierarchy.nodes[nodeIndex].provedNoZero = excludesZero;
+        hierarchy.nodes[nodeIndex].depth = depth;
+        hierarchy.maxDepthReached = std::max(hierarchy.maxDepthReached, depth);
+
+        if (!finite) {
+            ++hierarchy.unknownLeaves;
+            return; // Fail open: subdivision cannot manufacture a proof.
+        }
+        if (excludesZero) {
+            ++hierarchy.provedEmptyNodes;
+            return;
+        }
+        if (depth >= maxDepth || hierarchy.nodes.size() + 8u > maxNodes) {
+            ++hierarchy.ambiguousLeaves;
+            return;
+        }
+
+        const glm::vec3 mid = 0.5f * (boxMin + boxMax);
+        const uint32_t firstChild = static_cast<uint32_t>(hierarchy.nodes.size());
+        hierarchy.nodes[nodeIndex].firstChild = firstChild;
+        hierarchy.nodes[nodeIndex].childCount = 8;
+
+        // Allocate all direct children contiguously before recursing. That makes
+        // firstChild..firstChild+7 a stable GPU-friendly adjacency contract even
+        // though each child's descendants append later.
+        for (uint32_t child = 0; child < 8; ++child) {
+            const bool hiX = (child & 1u) != 0;
+            const bool hiY = (child & 2u) != 0;
+            const bool hiZ = (child & 4u) != 0;
+
+            SdfRangeNode node;
+            node.boxMin = glm::vec3(hiX ? mid.x : boxMin.x,
+                                    hiY ? mid.y : boxMin.y,
+                                    hiZ ? mid.z : boxMin.z);
+            node.boxMax = glm::vec3(hiX ? boxMax.x : mid.x,
+                                    hiY ? boxMax.y : mid.y,
+                                    hiZ ? boxMax.z : mid.z);
+            node.depth = static_cast<uint8_t>(depth + 1);
+            hierarchy.nodes.push_back(node);
+        }
+
+        for (uint32_t child = 0; child < 8; ++child) {
+            self(self, firstChild + child, static_cast<uint8_t>(depth + 1));
+        }
+    };
+
+    refine(refine, 0u, 0u);
+    return hierarchy;
+}
+
 // ---------------------------------------------------------------------------
 // Min/max heightfield grid (rendering-optimization Phase C). See Sdf.hpp.
 // ---------------------------------------------------------------------------
