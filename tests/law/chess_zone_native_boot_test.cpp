@@ -202,6 +202,37 @@ int main() {
         check(state != nullptr, "Chess state being is present after Move to Zone");
         if (!board || !pawn || !state || !harness.interaction) return 1;
 
+        // Person-witness regression, 2026-09-18: the first Zone-native migration
+        // preserved a previously corrupted Chess Zone identity whose 39 visible
+        // gameplay beings had identity transforms. All pieces overlapped at the
+        // origin, rendering as effectively one white cube over one black cube,
+        // while pointer-driven tests could still mutate their logical grid state.
+        // A playable-law test is therefore insufficient: assert manifestation.
+        const glm::mat4& boardTransform = board->getTransform();
+        check(std::fabs(boardTransform[0][0] - 8.0f) < 1e-3f &&
+                  std::fabs(boardTransform[1][1] - 0.28f) < 1e-3f &&
+                  std::fabs(boardTransform[2][2] - 8.0f) < 1e-3f &&
+                  std::fabs(board->getPosition().y + 0.14f) < 1e-3f,
+              "board manifests as the authored 8 x 0.28 x 8 prism at y=-0.14");
+        check(std::fabs(pawn->getPosition().x - 0.5f) < 1e-3f &&
+                  std::fabs(pawn->getPosition().y - 0.22f) < 1e-3f &&
+                  std::fabs(pawn->getPosition().z + 2.5f) < 1e-3f,
+              "e2 pawn starts at its authored world position");
+
+        std::unordered_set<std::string> piecePositions;
+        std::size_t pieceCount = 0;
+        for (const auto& object : active->getOwnedObjects()) {
+            if (!object || object->getIdentifier().rfind("piece-", 0) != 0) continue;
+            ++pieceCount;
+            const glm::vec3 p = object->getPosition();
+            piecePositions.insert(std::to_string(std::lround(p.x * 1000.0f)) + ":" +
+                                  std::to_string(std::lround(p.y * 1000.0f)) + ":" +
+                                  std::to_string(std::lround(p.z * 1000.0f)));
+        }
+        check(pieceCount == 32, "all 32 Chess pieces are present");
+        check(piecePositions.size() == 32,
+              "all 32 Chess pieces occupy distinct authored positions before play");
+
         Universe::instance().setClock(0.0, 1.0 / 60.0);
         click(harness.interaction, harness.lawManager, pawn,
               glm::vec3(0.5f, 0.3f, -2.5f));

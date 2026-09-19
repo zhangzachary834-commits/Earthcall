@@ -2588,7 +2588,43 @@ def merge_law_categories(root, authored_session, authored_zone):
     print(f"Merged authored Law categories into {zone_path}")
 
 
+def validate_zone_native_manifestation(zone):
+    """Refuse to emit the 2026-09-18 'two cubes' collapsed Chess regression."""
+    objects = {item["objectID"]: item for item in zone["world"]["objects"]}
+    board = objects.get("object.chess.board")
+    pawn = objects.get("piece-white-pawn-4-1")
+    if board is None or pawn is None:
+        raise ValueError("Chess Zone is missing its board or e2 pawn")
+
+    board_t = board.get("transform", [])
+    pawn_t = pawn.get("transform", [])
+    board_ok = (
+        len(board_t) == 16 and
+        abs(board_t[0] - 8.0) < 1e-6 and
+        abs(board_t[5] - BOARD_DEPTH) < 1e-6 and
+        abs(board_t[10] - 8.0) < 1e-6 and
+        abs(board_t[13] + BOARD_DEPTH / 2.0) < 1e-6
+    )
+    pawn_ok = (
+        len(pawn_t) == 16 and
+        abs(pawn_t[12] - 0.5) < 1e-6 and
+        abs(pawn_t[13] - 0.22) < 1e-6 and
+        abs(pawn_t[14] + 2.5) < 1e-6
+    )
+    positions = {
+        tuple(item.get("center", []))
+        for item in zone["world"]["objects"]
+        if item["objectID"].startswith("piece-")
+    }
+    if not board_ok or not pawn_ok or len(positions) != 32:
+        raise ValueError(
+            "REFUSED collapsed Chess Zone: board/e2 pose or 32 distinct piece "
+            "placements are missing"
+        )
+
+
 def write_zone_native(root, session, zone):
+    validate_zone_native_manifestation(zone)
     zone_path = root / "saves" / "zones" / ZONE_ID / "zone.json"
     zone_path.parent.mkdir(parents=True, exist_ok=True)
     zone_path.write_text(json.dumps(zone, indent=2) + "\n")
