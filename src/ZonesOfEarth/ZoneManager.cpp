@@ -381,19 +381,6 @@ ZoneManager* ZoneManager::live() { return g_liveZones; }
 namespace {
 constexpr const char* kOwnedByRelation = "owned-by";
 
-bool relationNamesOwner(const Zone& zone, const Person& person) {
-    const std::string personId = person.getIdentifier();
-    for (const auto& relation : zone.getFormation().relations().getAll()) {
-        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
-        const bool startsAtZone = relation->a() == &zone
-            || relation->aId() == zone.getIdentifier();
-        if (!startsAtZone) continue;
-        if (relation->b() == &person) return true;
-        if (!personId.empty() && relation->bId() == personId) return true;
-    }
-    return false;
-}
-
 bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
     if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
         return false;
@@ -412,7 +399,23 @@ bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
 }
 
 bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
-    return relationNamesOwner(zone, person) || legacyOwnerNamesPerson(zone, person);
+    const std::string personId = person.getIdentifier();
+    bool hasOwnedBy = false;
+    for (const auto& relation : zone.getFormation().relations().getAll()) {
+        if (!relation || relation->type != kOwnedByRelation || !relation->directed) continue;
+        const bool startsAtZone = relation->a() == &zone
+            || relation->aId() == zone.getIdentifier();
+        if (!startsAtZone) continue;
+        hasOwnedBy = true;
+        if (relation->b() == &person) return true;
+        if (!personId.empty() && relation->bId() == personId) return true;
+    }
+
+    // Once the authoritative Relation exists, a stale compatibility owner
+    // string is never allowed to overrule it. The cache is consulted only for
+    // legacy Homes that have no owned-by Relation yet.
+    if (hasOwnedBy) return false;
+    return legacyOwnerNamesPerson(zone, person);
 }
 
 std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,
@@ -486,6 +489,27 @@ const Zone* ZoneManager::findPrimaryHome(const Person& person) const {
     return matches.empty() ? nullptr : matches.front();
 }
 
+std::size_t ZoneManager::primaryHomeCount(const Person& person) const {
+    return primaryHomesForPerson(*this, person).size();
+}
+
+bool ZoneManager::enforcePrimaryHomeInvariant(Person& person) {
+    // Unique resolution and existential admission are deliberately different.
+    // ensureHomeZone() may return false when two existing primary Homes are
+    // ambiguous; that is still >= 1 Home and satisfies this invariant. What
+    // ordinary Earthcall may never admit is a Person for whom repair finishes
+    // with zero primary Homes.
+    (void)ensureHomeZone(person);
+    const std::size_t count = primaryHomeCount(person);
+    if (count > 0) return true;
+
+    std::cerr << "[zones] KERNEL INVARIANT VIOLATION: Person '"
+              << person.getIdentifier()
+              << "' has zero primary Homes after hydration/repair. "
+                 "Ordinary Person admission must stop.\n";
+    return false;
+}
+
 bool ZoneManager::ensureHomeZone(Person& person) {
     const std::string personId = person.getIdentifier();
     if (personId.empty()) return false;
@@ -511,8 +535,9 @@ bool ZoneManager::ensureHomeZone(Person& person) {
         if (zone && zone->name() == "Home" && zone->owner().empty()
             && !zone->isOurverseGathering()) {
             zone->markPrimaryHome();
+            if (!bindOwnedBy(*zone, person)) return false;
             zone->setOwner(personId, Zone::kOwnerKindPerson);
-            return bindOwnedBy(*zone, person);
+            return true;
         }
     }
 
@@ -527,8 +552,8 @@ bool ZoneManager::ensureHomeZone(Person& person) {
                                         : std::string("Home_of_") + personId;
     auto home = std::make_shared<Home>(id, "strict");
     home->markPrimaryHome();
-    home->setOwner(personId, Zone::kOwnerKindPerson);
     if (!bindOwnedBy(*home, person)) return false;
+    home->setOwner(personId, Zone::kOwnerKindPerson);
     addZone(home);
     printf("[Init] Home established for '%s' (zone count now %zu)\n",
            personId.c_str(), _zones.size());
