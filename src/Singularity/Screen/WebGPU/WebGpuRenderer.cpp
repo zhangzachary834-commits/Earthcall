@@ -1026,7 +1026,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const geom::FieldNode* fieldNode,
                                   uint64_t memoId,
                                   uint32_t memoRevision,
-                                  const geom::HeightGrid* heightGrid) {
+                                  const geom::HeightGrid* heightGrid,
+                                  uint32_t memoParameterRevision) {
     if (!_pass) return;
 
     // Memoize WGSL generation and pipeline lookup. A cache hit must be an
@@ -1043,11 +1044,28 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
-            prog = &memo->prog;
-            sp = memo->sp;
-            isProvenHeightfield = memo->isProvenHeightfield;
-            mutableFrameStats().sdfProgramCacheHits++;
-            needsCompile = false;
+            // Structural cache hit. If only numeric field values changed,
+            // refresh the parameter block without rebuilding the WGSL module.
+            if (memo->parameterRevision != memoParameterRevision) {
+                sdfwgsl::ParameterBlock refreshed =
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get());
+                if (refreshed.ok && refreshed.values.size() == memo->prog.params.size()) {
+                    memo->prog.params = std::move(refreshed.values);
+                    memo->parameterRevision = memoParameterRevision;
+                } else {
+                    // A parameter-count mismatch means our claimed structural
+                    // identity is stale. Fail open to a full compile rather than
+                    // pairing old WGSL with a differently-shaped buffer layout.
+                    needsCompile = true;
+                }
+            }
+            if (!needsCompile) {
+                prog = &memo->prog;
+                sp = memo->sp;
+                isProvenHeightfield = memo->isProvenHeightfield;
+                mutableFrameStats().sdfProgramCacheHits++;
+                needsCompile = false;
+            }
         }
     }
     if (needsCompile) {
@@ -1068,6 +1086,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
         if (memo) {
             memo->revision = memoRevision;
+            memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
