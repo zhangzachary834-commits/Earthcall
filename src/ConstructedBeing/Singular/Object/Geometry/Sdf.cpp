@@ -848,12 +848,17 @@ std::optional<glm::vec3> estimateLipschitz(const OntoMath::MathNode& n) {
             return std::nullopt;
         }
         case Op::Noise: {
-            // The former value (6.0) was a sampled maximum with margin, not a
-            // closed-form bound on the exact glm::perlin implementation. A
-            // min/max grid uses this number to declare entire ray segments
-            // empty, so empirical corroboration is insufficient authority.
-            // Refuse acceleration until the implemented function has a proof.
-            return std::nullopt;
+            // Unlike the former empirical "6.0" margin, this constant is the
+            // shared closed-form bound derived from the exact classic-Perlin
+            // construction (ScalarForm.hpp). If q(p) is the Noise argument,
+            // |Noise(q1)-Noise(q2)| <= L*||q1-q2||_2 <= L*sum_i |dq_i|.
+            // estimateLipschitz(child) already conservatively sums vector
+            // component sensitivity per ambient axis, so scaling that result
+            // by L preserves the per-axis contract used by computeHeightGrid.
+            if (n.children.size() != 1 || !n.children[0]) return std::nullopt;
+            auto q = estimateLipschitz(*n.children[0]);
+            if (!q) return std::nullopt;
+            return OntoMath::kClassicPerlin3LipschitzBound * (*q);
         }
         default:
             return std::nullopt;
