@@ -77,6 +77,41 @@ int main() {
               "unproved ellipsoid range fails open instead of asserting 1-Lipschitz");
     }
 
+    // Classic Perlin: the global amplitude theorem remains the outer guard,
+    // but the proved Lipschitz constant should tighten a sufficiently small
+    // input AABB. Independently sample the exact CPU evaluator inside that box.
+    {
+        auto p = std::make_unique<OntoMath::MathNode>();
+        p->op = OntoMath::MathNode::Op::ValueLeaf;
+        p->variableName = OntoMath::kAmbientPointVar;
+
+        auto noise = std::make_shared<OntoMath::MathNode>();
+        noise->op = OntoMath::MathNode::Op::Noise;
+        noise->children.push_back(std::move(p));
+
+        const geom::SdfNode field = geom::makeImplicit(noise);
+        const glm::vec3 centre(0.23f, -0.37f, 0.41f);
+        const glm::vec3 half(0.001f);
+        const auto range = geom::evalRange(field, centre - half, centre + half);
+
+        check(std::isfinite(range.lo) && std::isfinite(range.hi),
+              "Perlin local range is finite");
+        check((range.hi - range.lo) <
+                  2.0f * OntoMath::kClassicPerlin3ValueBound,
+              "Perlin Lipschitz theorem tightens a small box below global amplitude");
+
+        for (int ix = 0; ix <= 4; ++ix) {
+            for (int iy = 0; iy <= 4; ++iy) {
+                for (int iz = 0; iz <= 4; ++iz) {
+                    const glm::vec3 t(ix / 4.0f, iy / 4.0f, iz / 4.0f);
+                    const glm::vec3 q = centre - half + t * (2.0f * half);
+                    check(contains(range, geom::evalSdf(field, q)),
+                          "tightened Perlin interval contains sampled exact value");
+                }
+            }
+        }
+    }
+
     // CSG must preserve fail-open knowledge: an unknown child may loosen the
     // result, but it must never become a false exclusion. Sample the combined
     // field to ensure its propagated interval remains conservative.
