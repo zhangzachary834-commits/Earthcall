@@ -552,7 +552,17 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
                 return retInf();
             }
             
-            // True distance leaves (1-Lipschitz)
+            // True-distance leaves are 1-Lipschitz, so center ± half-diagonal
+            // is a sound enclosure over the whole AABB. The ellipsoid helper is
+            // deliberately NOT in that set: sdEllipsoid() is the common fast
+            // approximation k0*(k0-1)/k1. For eccentric axes it is not globally
+            // 1-Lipschitz (indeed its near-origin directional behaviour can make
+            // the gradient arbitrarily larger than 1), so using center ± R as a
+            // proof can exclude values that really occur in the cell. evalRange()
+            // is consumed by tessellation culling and future zero-set skipping:
+            // unknown must fail open, never become an unsound finite theorem.
+            if (n.prim == SdfPrim::Ellipsoid) return retInf();
+
             float distAtCenter = evalSdf(n, c);
             return Interval(distAtCenter - R, distAtCenter + R);
         }
