@@ -4,6 +4,35 @@ from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+def _portfolio_allowed_origins():
+    configured = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
+    if configured.strip():
+        return {origin.strip() for origin in configured.split(",") if origin.strip()}
+    return {
+        "https://zhangzachary834-commits.github.io",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5005",
+        "http://127.0.0.1:5005",
+    }
+
+def _portfolio_origin_allowed(origin):
+    return not origin or origin in _portfolio_allowed_origins()
+
+def _portfolio_json(payload, status=200):
+    response = make_response(jsonify(payload), status)
+    origin = request.headers.get("Origin", "")
+    if origin and _portfolio_origin_allowed(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        # Chromium's Private Network Access preflight uses this header when a
+        # secure public page reaches an explicitly allowed loopback service.
+        if request.headers.get("Access-Control-Request-Private-Network") == "true":
+            response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
+
 PORTFOLIO_ALLOWED_ORIGINS = {
     "https://zhangzachary834-commits.github.io",
     "http://localhost:8000",
