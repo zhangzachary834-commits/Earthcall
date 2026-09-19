@@ -8,6 +8,8 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
@@ -632,9 +634,21 @@ void Object::drawSmoothModel() const {
     // RenderMode::Mesh opts a Law OUT of the exact analytic path even where
     // the backend supports it — trading exactness for the instanced draw
     // path only tessellated meshes get.
-    // Rung 4 Migration: The rendering optimization decision is now Governed.
-    // We strictly honor the authored _renderMode instead of hiding a backend capability check.
-    if (_renderMode == RenderMode::Analytic) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    
+    if (analytic) {
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
@@ -651,8 +665,20 @@ void Object::drawComplexModel() const {
     // The UV side mesh and N-gon disks are a drawing cache. Backends that
     // can march an SDF draw the primitive instead, same door as spheres.
     // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
-    // Rung 4 Migration: The rendering optimization decision is now Governed.
-    if (_renderMode == RenderMode::Analytic) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    if (analytic) {
         geom::SdfNode field;
         if (geom::sdfFromComplex(complexData, field)) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
@@ -692,8 +718,20 @@ void Object::drawFieldModel() const {
     // no tessellation seams, and the surface is exact at any zoom. Backends that
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
-    // Rung 4 Migration: The rendering optimization decision is now Governed.
-    if (_renderMode == RenderMode::Analytic) {
+    bool analytic = (_renderMode == RenderMode::Analytic);
+    if (_renderMode == RenderMode::Auto) {
+        if (auto* laws = Physics::getLawManager()) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
+                PropertyValue v;
+                if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
+                    if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
+                } else {
+                    analytic = r.rendersImplicitExactly();
+                }
+            }
+        }
+    }
+    if (analytic) {
         // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
         // on first access after a revision bump, mirroring rebuildFieldMesh();
         // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.
