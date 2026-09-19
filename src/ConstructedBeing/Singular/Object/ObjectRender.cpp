@@ -22,6 +22,7 @@
 #include <cmath>   // for mathematical functions
 #include <limits>  // for numeric_limits
 #include <optional>
+#include <utility>
 #include <map>
 #include <stdexcept>
 #include <unordered_set>
