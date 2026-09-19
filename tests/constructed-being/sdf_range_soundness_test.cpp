@@ -77,6 +77,38 @@ int main() {
               "unproved ellipsoid range fails open instead of asserting 1-Lipschitz");
     }
 
+    // Guarded division: runtime returns 0 when |denominator| is below
+    // kDegenerateDivisor. Ordinary interval division over a tiny positive
+    // denominator would exclude that real zero and become an unsound proof.
+    // The range path must therefore fail open across the guard band.
+    {
+        auto numerator = std::make_unique<OntoMath::MathNode>();
+        numerator->op = OntoMath::MathNode::Op::ScalarLeaf;
+        numerator->scalarForm.terms.push_back(OntoMath::Term(1.0));
+
+        auto denominator = std::make_unique<OntoMath::MathNode>();
+        denominator->op = OntoMath::MathNode::Op::ValueLeaf;
+        denominator->variableName = "x";
+
+        auto div = std::make_shared<OntoMath::MathNode>();
+        div->op = OntoMath::MathNode::Op::Div;
+        div->children.push_back(std::move(numerator));
+        div->children.push_back(std::move(denominator));
+
+        const geom::SdfNode field = geom::makeImplicit(div);
+        const float tiny = static_cast<float>(OntoMath::kDegenerateDivisor * 0.25);
+        const glm::vec3 lo(tiny, 0.0f, 0.0f);
+        const glm::vec3 hi(tiny * 2.0f, 0.0f, 0.0f);
+        const auto range = geom::evalRange(field, lo, hi);
+        const float exact = geom::evalSdf(field, glm::vec3(tiny, 0.0f, 0.0f));
+
+        check(exact == 0.0f, "degenerate Div runtime witness returns guarded zero");
+        check(contains(range, exact),
+              "degenerate Div range contains runtime guarded zero");
+        check(!std::isfinite(range.lo) && !std::isfinite(range.hi),
+              "degenerate Div range fails open across guard band");
+    }
+
     // Classic Perlin: the global amplitude theorem remains the outer guard,
     // but the proved Lipschitz constant should tighten a sufficiently small
     // input AABB. Independently sample the exact CPU evaluator inside that box.
