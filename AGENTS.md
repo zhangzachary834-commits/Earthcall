@@ -7,6 +7,7 @@ The engine here is not the order of truth in Earthcall—the ontology is, and th
 it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas).
 If you are using Github Connector, you can run tests and build using Github Actions. 
+**The Big Chungus Principle (logs/workflows): SEARCH before FETCH. Never inhale an entire CI log, workflow, giant file, or repo area when an exact test/job/symbol search plus bounded surrounding lines can answer the question. Find the failing job/test first, inspect only the relevant step/failure region, and expand incrementally; full-log reads are a last resort. 🐰**
 
 ---
 ## The Seven Refusals.
