@@ -2498,6 +2498,147 @@ materials = [
     }
 ,
 
+    # --- SACRED EDENIC POND NUANCED ONTOMATH DYNAMIC COLOR FIELDS ---
+    {
+        "name": "logos.pond.water_abyss",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.99, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.05, 0.15, 0.35], "roughness": 0.04, "metallic": 0.40,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.02, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 1.5, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.25, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.2, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.70, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 1.5, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.lotus.cyan",
+        "textureResolution": 256, "ambient": 0.50, "diffuse": 0.95, "specular": 0.95, "shininess": 90.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.15, 0.45, 0.55], "roughness": 0.12, "metallic": 0.45,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.12, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.12, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 2.0, "shift": 0.4}]}
+            ],
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 2.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.iris",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.90, "specular": 0.80, "shininess": 60.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.25, 0.08, 0.40], "roughness": 0.18, "metallic": 0.35,
+        "faceTextures": [tex_glass_amethyst] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.45, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 2.2, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.18, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 2.5, "shift": 0.5}]}
+            ],
+            [
+                {"c": 0.88, "factors": {}},
+                {"c": 0.12, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.koi",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 0.98, "shininess": 110.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.25, 0.05], "roughness": 0.08, "metallic": 0.65,
+        "faceTextures": [tex_amber] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 5.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.62, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 4.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.15, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 4.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.willow",
+        "textureResolution": 256, "ambient": 0.40, "diffuse": 0.88, "specular": 0.60, "shininess": 35.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.08, 0.20, 0.08], "roughness": 0.30, "metallic": 0.15,
+        "faceTextures": [tex_glass_emerald] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.28, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 1.2, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.78, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 1.5, "shift": 0.5}]}
+            ],
+            [
+                {"c": 0.35, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 1.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.lantern",
+        "textureResolution": 256, "ambient": 0.45, "diffuse": 0.88, "specular": 0.75, "shininess": 50.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.25, 0.10], "roughness": 0.25, "metallic": 0.30,
+        "faceTextures": [tex_alabaster] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.90, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 2.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.78, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 2.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 2.0, "shift": 0.0}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.pond.pebbles",
+        "textureResolution": 256, "ambient": 0.35, "diffuse": 0.85, "specular": 0.60, "shininess": 40.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.04, 0.06, 0.08], "roughness": 0.40, "metallic": 0.25,
+        "faceTextures": [tex_dark_stone] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.35, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 3.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.38, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 3.0, "shift": 0.0}]}
+            ],
+            [
+                {"c": 0.42, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 3.0, "shift": 0.0}]}
+            ]
+        )
+    },
     # --- ONTOMATH ADVANCED BOUNDED COLOR FIELDS ---
     {
         "name": "logos.bounds.stratified",
@@ -2826,13 +2967,46 @@ objects.append(make_field(
 
 
 # ==============================================================================
-# THE SACRED LIVING EDENIC POND OF LIVING WATERS (CORRECTED ROTATION & AXES)
-# Located in the West Forecourt of the Cathedral (Z = 45 to 58, X = -10 to 10)
-# All shapes correctly oriented: Water & Lilypads flat in XZ, Reeds & Lotuses growing in +Y!
+# THE SACRED LIVING EDENIC POND OF LIVING WATERS (MAGNUM OPUS NUANCED EXPANSION)
+# Located in the West Forecourt of the Cathedral (Z = 40 to 60, X = -10 to 10)
+# A multi-tiered botanical, hydrological, and spiritual living sanctuary.
 # ==============================================================================
 
-# 1. Multi-Lobed Living Water Lagoon Basin (Flat Ellipsoids in XZ, prim = 3)
-# Semi-axes: [rx, ry, rz] where ry is vertical thickness (0.35m), rx & rz are horizontal radii
+# ------------------------------------------------------------------------------
+# 1. HYDROLOGICAL BATHYMETRY: LAGOON, ABYSSAL SPRING, PEBBLE BED & BUBBLING UPWELLINGS
+# ------------------------------------------------------------------------------
+
+# A. Submerged Riverbed Pebble Mosaic (Contoured shoal beneath the water)
+pebble_bed_center = sdf_leaf(3, [7.5, 0.25, 8.2], offset=[0.0, -0.15, 0.0])
+pebble_bed_north  = sdf_leaf(3, [5.0, 0.20, 4.8], offset=[-4.2, -0.12, 2.5])
+pebble_bed_south  = sdf_leaf(3, [5.2, 0.20, 5.0], offset=[4.2, -0.12, -2.5])
+pebble_bed_tree = sdf_binary(5, pebble_bed_center, sdf_binary(5, pebble_bed_north, pebble_bed_south, 0.4), 0.45)
+objects.append(make_field(
+    "cathedral.pond.pebble_bed", "Submerged Jasper & Obsidian Riverbed Shoal",
+    [0.0, 0.05, 50.0], pebble_bed_tree, [11.0, 0.8, 11.0],
+    "material.logos.pond.pebbles", [0.40, 0.38, 0.35],
+    extra_props={
+        "isPondBed": {"t": "bool", "v": True},
+        "description": {"t": "string", "v": "Submerged river-worn jasper, obsidian, and quartz pebble bed under the lagoon"}
+    }
+))
+
+# B. Deep Abyssal Spring Basin (Deep subterranean well-spring where living water wells up)
+abyss_pool = sdf_leaf(3, [3.2, 0.50, 3.4], offset=[0.0, -0.25, 0.0])
+abyss_funnel = sdf_leaf(3, [1.8, 0.80, 1.8], offset=[0.0, -0.55, 0.0])
+abyss_tree = sdf_binary(5, abyss_pool, abyss_funnel, 0.25)
+objects.append(make_field(
+    "cathedral.pond.abyss", "Abyssal Well-Spring of Living Water (Deep Heart)",
+    [0.0, -0.05, 52.0], abyss_tree, [4.2, 1.4, 4.2],
+    "material.logos.pond.water_abyss", [0.05, 0.25, 0.85],
+    extra_props={
+        "isAbyssalWell": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.2},
+        "description": {"t": "string", "v": "Deep subterranean spring heart with internal deep sapphire luminescence"}
+    }
+))
+
+# C. Multi-Lobed Living Water Lagoon Basin (Flat Ellipsoids in XZ, prim = 3)
 pond_lobe_center = sdf_leaf(3, [6.8, 0.35, 7.5]) # Main deep lagoon
 pond_lobe_north  = sdf_leaf(3, [4.5, 0.30, 4.2], offset=[-4.2, 0.0, 2.5]) # North tranquil cove
 pond_lobe_south  = sdf_leaf(3, [4.8, 0.30, 4.5], offset=[4.2, 0.0, -2.5]) # South whispering cove
@@ -2853,7 +3027,49 @@ objects.append(make_field(
     }
 ))
 
-# 2. Sacred Blooming Lotus Blossoms & Water Lilies (Upright Petals growing in +Y)
+# D. Three Active Bubbling Spring Upwellings (Crystalline effervescent surface domes)
+def make_bubble_upwelling_tree(r=0.45, h=0.18):
+    dome1 = sdf_leaf(3, [r, h, r])
+    dome2 = sdf_leaf(3, [r * 0.65, h * 1.3, r * 0.65], offset=[0.0, 0.04, 0.0])
+    ring  = sdf_leaf(3, [r * 1.35, 0.04, r * 1.35], offset=[0.0, -0.04, 0.0])
+    return sdf_binary(5, sdf_binary(5, dome1, dome2, 0.1), ring, 0.12)
+
+objects.append(make_field(
+    "cathedral.pond.spring_bubble.1", "Bubbling Spring Upwelling (North Effervescence)",
+    [-1.5, 0.24, 53.2], make_bubble_upwelling_tree(0.55, 0.22), [1.2, 0.5, 1.2],
+    "material.logos.pond.water", [0.35, 0.95, 1.0],
+    extra_props={"light.intensity": {"t": "float", "v": 2.5}}
+))
+objects.append(make_field(
+    "cathedral.pond.spring_bubble.2", "Bubbling Spring Upwelling (South Geyser Fountain)",
+    [1.8, 0.24, 51.5], make_bubble_upwelling_tree(0.50, 0.20), [1.1, 0.5, 1.1],
+    "material.logos.pond.water", [0.35, 0.95, 1.0],
+    extra_props={"light.intensity": {"t": "float", "v": 2.4}}
+))
+objects.append(make_field(
+    "cathedral.pond.spring_bubble.3", "Bubbling Spring Upwelling (Grotto Plume Well)",
+    [0.0, 0.26, 55.2], make_bubble_upwelling_tree(0.65, 0.26), [1.3, 0.6, 1.3],
+    "material.logos.pond.water", [0.40, 0.98, 1.0],
+    extra_props={"light.intensity": {"t": "float", "v": 3.0}}
+))
+
+# E. Meandering Overflow Brooklet & Cascading Rill Channel (Z = 43 to 38)
+brook_pool_1 = sdf_leaf(3, [1.6, 0.22, 2.2], offset=[0.0, 0.0, 0.0])
+brook_pool_2 = sdf_leaf(3, [1.4, 0.20, 2.0], offset=[0.3, -0.06, -1.8])
+brook_weir_stone = sdf_leaf(2, [1.8, 0.16, 0.35], offset=[0.0, -0.02, -0.8], p0=0.08)
+brook_tree = sdf_binary(5, sdf_binary(5, brook_pool_1, brook_pool_2, 0.2), brook_weir_stone, 0.15)
+objects.append(make_field(
+    "cathedral.pond.brooklet.weir", "Meandering Outlet Brooklet & Stepped Weir Channel",
+    [0.0, 0.14, 40.8], brook_tree, [3.2, 0.8, 4.5],
+    "material.logos.pond.water", [0.20, 0.90, 0.95],
+    extra_props={"description": {"t": "string", "v": "Tranquil outlet brooklet carrying living water from the pond to the garden rills"}}
+))
+
+
+# ------------------------------------------------------------------------------
+# 2. BOTANICAL DIVERSITY: LOTUSES, WATER LILIES, IRISES, WILLOW, FERNS & DUCKWEED
+# ------------------------------------------------------------------------------
+
 def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
     # Central golden seed pod (flattened sphere)
     seed_pod = sdf_leaf(0, [0.32 * scale_r, 0.22 * scale_h, 0.32 * scale_r], offset=[0.0, 0.14 * scale_h, 0.0])
@@ -2900,7 +3116,20 @@ objects.append(make_field(
     }
 ))
 
-# C. Twin Water Lily Buds
+# C. The Nocturnal Cyan Star Lotus of Sophia (Third Major Sacred Blossom!)
+cyan_lotus_tree = make_lotus_flower_tree(1.25, 1.05)
+objects.append(make_field(
+    "cathedral.pond.lotus.cyan", "Nocturnal Cyan Star Lotus of Sophia",
+    [2.2, 0.38, 46.5], cyan_lotus_tree, [1.7, 1.1, 1.7],
+    "material.logos.pond.lotus.cyan", [0.15, 0.90, 0.98],
+    extra_props={
+        "isSacredRelic": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.9},
+        "description": {"t": "string", "v": "Mystical night-blooming cyan water lily with radiant celestial aquamarine luminescence"}
+    }
+))
+
+# D. Twin Water Lily Buds
 bud_n = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.north", "Northern Water Lily Bud",
@@ -2914,13 +3143,104 @@ objects.append(make_field(
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90]
 ))
 
-# 3. Floating Emerald Lily Pads (Flat discs in XZ, prim = 3)
+# E. Blue Flag Sacred Water Irises (Royal Purple & Golden Sunburst Nodal Shallows)
+def make_water_iris_colony_tree():
+    leaves = []
+    # 7 sword leaves radiating and arching in +Y
+    for i in range(7):
+        ang = i * (2.0 * math.pi / 7.0)
+        lx = 0.22 * math.cos(ang)
+        lz = 0.22 * math.sin(ang)
+        leaf_blade = sdf_leaf(3, [0.035, 0.75, 0.08], offset=[lx, 0.70, lz])
+        leaves.append(leaf_blade)
+    # 3 blooming iris flower heads with drooping falls and upright standards
+    flowers = []
+    f_offsets = [(-0.15, 1.25, 0.12), (0.16, 1.30, -0.10), (0.0, 1.40, 0.18)]
+    for fx, fy, fz in f_offsets:
+        throat = sdf_leaf(0, [0.08, 0.10, 0.08], offset=[fx, fy, fz])
+        falls = sdf_leaf(3, [0.12, 0.22, 0.12], offset=[fx, fy - 0.14, fz])
+        standards = sdf_leaf(3, [0.09, 0.25, 0.09], offset=[fx, fy + 0.16, fz])
+        fl = sdf_binary(5, throat, sdf_binary(5, falls, standards, 0.08), 0.1)
+        flowers.append(fl)
+    
+    t_leaves = leaves[0]
+    for l in leaves[1:]:
+        t_leaves = sdf_binary(5, t_leaves, l, 0.12)
+    t_fl = flowers[0]
+    for f in flowers[1:]:
+        t_fl = sdf_binary(5, t_fl, f, 0.1)
+    return sdf_binary(5, t_leaves, t_fl, 0.15)
+
+iris_tree = make_water_iris_colony_tree()
+objects.append(make_field(
+    "cathedral.pond.iris.north", "Northern Blue Flag Sacred Water Iris Colony",
+    [-4.0, 0.28, 46.2], iris_tree, [1.4, 2.0, 1.4],
+    "material.logos.pond.iris", [0.45, 0.20, 0.85],
+    extra_props={
+        "isFlora": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 1.8},
+        "description": {"t": "string", "v": "Blue Flag sacred water irises with velvet royal purple falls and radiant gold throat accents"}
+    }
+))
+objects.append(make_field(
+    "cathedral.pond.iris.south", "Southern Blue Flag Sacred Water Iris Colony",
+    [4.5, 0.28, 53.8], iris_tree, [1.4, 2.0, 1.4],
+    "material.logos.pond.iris", [0.45, 0.20, 0.85],
+    extra_props={
+        "isFlora": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 1.8},
+        "description": {"t": "string", "v": "Blue Flag sacred water irises flourishing in the southern marsh shallows"}
+    }
+))
+
+# F. Shoreline Maidenhair Fern Fronds (Draped over mossy boulders)
+def make_fern_mound_tree():
+    f1 = sdf_leaf(3, [0.85, 0.18, 0.45], offset=[0.0, 0.15, 0.0])
+    f2 = sdf_leaf(3, [0.65, 0.16, 0.55], offset=[-0.3, 0.22, 0.2])
+    f3 = sdf_leaf(3, [0.70, 0.14, 0.50], offset=[0.35, 0.18, -0.2])
+    f4 = sdf_leaf(3, [0.55, 0.12, 0.40], offset=[0.0, 0.28, 0.35])
+    return sdf_binary(5, sdf_binary(5, f1, f2, 0.15), sdf_binary(5, f3, f4, 0.15), 0.18)
+
+fern_tree = make_fern_mound_tree()
+objects.append(make_field(
+    "cathedral.pond.ferns.north", "Shoreline Maidenhair Fern Fronds (North Boulder)",
+    [-7.2, 0.85, 50.2], fern_tree, [1.8, 1.0, 1.8],
+    "material.logos.pond.reeds", [0.35, 0.88, 0.30]
+))
+objects.append(make_field(
+    "cathedral.pond.ferns.south", "Shoreline Maidenhair Fern Fronds (South Boulder)",
+    [6.9, 0.85, 48.8], fern_tree, [1.8, 1.0, 1.8],
+    "material.logos.pond.reeds", [0.35, 0.88, 0.30]
+))
+
+# G. The Ancient Weeping Water Willow (Overlooking the waterfall grotto at NW bluff)
+willow_trunk_base = sdf_leaf(3, [0.45, 1.8, 0.45], offset=[0.0, 1.2, 0.0])
+willow_branch_e   = sdf_leaf(3, [1.2, 0.35, 0.55], offset=[0.9, 2.4, 0.2])
+willow_branch_w   = sdf_leaf(3, [0.9, 0.30, 0.65], offset=[-0.8, 2.2, -0.3])
+willow_canopy_top = sdf_leaf(3, [2.8, 0.90, 2.6], offset=[0.3, 3.2, 0.1])
+willow_tendrils_1 = sdf_leaf(3, [2.4, 1.20, 2.2], offset=[0.5, 2.2, 0.2])
+willow_tendrils_2 = sdf_leaf(3, [1.8, 0.90, 1.8], offset=[-0.4, 1.8, -0.4])
+
+willow_wood = sdf_binary(5, willow_trunk_base, sdf_binary(5, willow_branch_e, willow_branch_w, 0.2), 0.25)
+willow_foliage = sdf_binary(5, willow_canopy_top, sdf_binary(5, willow_tendrils_1, willow_tendrils_2, 0.3), 0.35)
+willow_tree = sdf_binary(5, willow_wood, willow_foliage, 0.3)
+
+objects.append(make_field(
+    "cathedral.pond.willow", "Ancient Weeping Water Willow of Siloam",
+    [-5.8, 0.50, 56.5], willow_tree, [4.0, 4.5, 4.0],
+    "material.logos.pond.willow", [0.25, 0.75, 0.30],
+    extra_props={
+        "isAncientTree": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 1.6},
+        "description": {"t": "string", "v": "Ancient weeping water willow with trailing emerald tendrils dipping toward the water"}
+    }
+))
+
+# H. Floating Emerald Lily Pads (Flat discs in XZ, prim = 3)
 def make_lilypad_cluster(pads):
     tree = None
     for px, pz, pr in pads:
-        # Flat disc in XZ: semi-axes [pr, 0.025, pr]
         pad_disc = sdf_leaf(3, [pr, 0.025, pr], offset=[px, 0.0, pz])
-        # Small notch cut out at the perimeter
         notch = sdf_leaf(3, [pr * 0.30, 0.05, pr * 0.30], offset=[px, 0.0, pz + pr * 0.75])
         notched_pad = sdf_binary(4, pad_disc, notch)
         if tree is None:
@@ -2961,7 +3281,177 @@ objects.append(make_field(
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
-# 4. Mossy River Boulders & Natural Stepping Stones (Flat rounded stones in XZ)
+# I. Duckweed / Floating Water-Clover Micro-Clusters
+def make_duckweed_cluster():
+    clovers = []
+    offsets = [(-0.25, -0.20), (0.22, -0.15), (0.0, 0.22), (-0.18, 0.16), (0.24, 0.20), (-0.05, -0.05)]
+    for dx, dz in offsets:
+        c1 = sdf_leaf(3, [0.08, 0.015, 0.08], offset=[dx, 0.0, dz])
+        c2 = sdf_leaf(3, [0.06, 0.015, 0.06], offset=[dx + 0.04, 0.0, dz + 0.04])
+        clovers.append(sdf_binary(2, c1, c2))
+    tree = clovers[0]
+    for c in clovers[1:]:
+        tree = sdf_binary(2, tree, c)
+    return tree
+
+duckweed_tree = make_duckweed_cluster()
+objects.append(make_field(
+    "cathedral.pond.duckweed.1", "Floating Water-Clover Rosettes (North Inlet)",
+    [-1.2, 0.23, 47.5], duckweed_tree, [0.9, 0.1, 0.9],
+    "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
+))
+objects.append(make_field(
+    "cathedral.pond.duckweed.2", "Floating Water-Clover Rosettes (South Bay)",
+    [2.8, 0.23, 49.5], duckweed_tree, [0.9, 0.1, 0.9],
+    "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
+))
+objects.append(make_field(
+    "cathedral.pond.duckweed.3", "Floating Water-Clover Rosettes (Willow Cove)",
+    [-3.2, 0.23, 53.5], duckweed_tree, [0.9, 0.1, 0.9],
+    "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
+))
+
+
+# ------------------------------------------------------------------------------
+# 3. FAUNA & LIVING SPIRITS: CELESTIAL KOI, DRAGONFLIES & ELEMENTAL WISPS
+# ------------------------------------------------------------------------------
+
+# A. Streamlined Celestial Koi Fish (Anatomical Torpedo Body, Fins & Swept Caudal Tail)
+def make_koi_fish_tree(body_l=0.65, body_w=0.16, body_h=0.14, tail_tilt=0.12):
+    # Main hydrodynamic torso
+    torso = sdf_leaf(3, [body_w, body_h, body_l])
+    # Tapered head
+    head  = sdf_leaf(3, [body_w * 0.85, body_h * 0.85, body_l * 0.45], offset=[0.0, -0.02, body_l * 0.65])
+    # Flared caudal peduncle & tail fin
+    tail  = sdf_leaf(3, [body_w * 0.25, body_h * 1.4, body_l * 0.55], offset=[tail_tilt, 0.0, -body_l * 0.95])
+    # Dorsal ridge fin
+    dorsal = sdf_leaf(3, [body_w * 0.20, body_h * 0.8, body_l * 0.35], offset=[0.0, body_h * 0.85, -body_l * 0.1])
+    # Left & right pectoral fins
+    pec_l = sdf_leaf(3, [body_w * 0.8, body_h * 0.15, body_l * 0.35], offset=[body_w * 1.0, -body_h * 0.3, body_l * 0.25])
+    pec_r = sdf_leaf(3, [body_w * 0.8, body_h * 0.15, body_l * 0.35], offset=[-body_w * 1.0, -body_h * 0.3, body_l * 0.25])
+    
+    body_core = sdf_binary(5, torso, head, 0.12)
+    fins = sdf_binary(5, dorsal, sdf_binary(5, pec_l, pec_r, 0.08), 0.10)
+    return sdf_binary(5, body_core, sdf_binary(5, tail, fins, 0.10), 0.15)
+
+koi_swimming_1 = make_koi_fish_tree(0.70, 0.17, 0.15, 0.15)
+koi_swimming_2 = make_koi_fish_tree(0.60, 0.15, 0.13, -0.12)
+koi_swimming_3 = make_koi_fish_tree(0.65, 0.16, 0.14, 0.08)
+
+# Koi 1: Grand 24k Golden Kohaku (Near Grand Dawn Lotus)
+objects.append(make_field(
+    "cathedral.pond.koi.1", "Grand 24k Golden Kohaku Koi (Celestial Emperor)",
+    [-1.6, 0.10, 49.2], koi_swimming_1, [0.9, 0.5, 1.2],
+    "material.logos.pond.koi", [1.0, 0.75, 0.15],
+    rot_deg=[0.0, -35.0, 0.0],
+    extra_props={
+        "isFauna": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 1.8},
+        "description": {"t": "string", "v": "Grand golden Kohaku koi swimming gracefully beneath the Grand Lotus"}
+    }
+))
+
+# Koi 2: Scarlet & Pearl Tancho Koi (Near Alabaster Lotus)
+objects.append(make_field(
+    "cathedral.pond.koi.2", "Scarlet & Pearl Tancho Koi (Sun-Crown)",
+    [1.8, 0.09, 50.8], koi_swimming_2, [0.8, 0.45, 1.0],
+    "material.logos.pond.koi", [0.95, 0.85, 0.65],
+    rot_deg=[0.0, 45.0, 0.0],
+    extra_props={
+        "isFauna": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 1.6},
+        "description": {"t": "string", "v": "Scarlet-crowned Tancho koi gliding toward the Alabaster Lotus"}
+    }
+))
+
+# Koi 3: Celestial Cyan Shusui Koi (Circling the Abyssal Spring Heart)
+objects.append(make_field(
+    "cathedral.pond.koi.3", "Celestial Cyan Shusui Koi (Abyssal Guardian)",
+    [0.2, 0.06, 52.6], koi_swimming_3, [0.85, 0.48, 1.1],
+    "material.logos.pond.koi", [0.45, 0.85, 0.95],
+    rot_deg=[0.0, 110.0, 0.0],
+    extra_props={
+        "isFauna": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.0},
+        "description": {"t": "string", "v": "Iridescent Shusui koi patrolling the deep abyss spring"}
+    }
+))
+
+# Koi 4: Young Golden Fry (Near Stepping Stones)
+objects.append(make_field(
+    "cathedral.pond.koi.4", "Young Golden Fry Koi (Playful Dart)",
+    [-0.8, 0.12, 46.8], make_koi_fish_tree(0.42, 0.10, 0.09, -0.10), [0.6, 0.35, 0.7],
+    "material.logos.pond.koi", [1.0, 0.80, 0.20],
+    rot_deg=[0.0, -65.0, 0.0],
+    extra_props={"isFauna": {"t": "bool", "v": True}}
+))
+
+# Koi 5: Twin Golden Fry (Near Spring Cascade Inlet)
+objects.append(make_field(
+    "cathedral.pond.koi.5", "Twin Golden Fry Koi (Spring Explorer)",
+    [1.0, 0.10, 53.5], make_koi_fish_tree(0.45, 0.11, 0.10, 0.12), [0.6, 0.35, 0.7],
+    "material.logos.pond.koi", [1.0, 0.80, 0.20],
+    rot_deg=[0.0, 20.0, 0.0],
+    extra_props={"isFauna": {"t": "bool", "v": True}}
+))
+
+# B. Gossamer Emerald Dragonflies (Hovering Over Water Blossoms)
+def make_dragonfly_tree():
+    # Slender segmented needle body along Z
+    body = sdf_leaf(3, [0.025, 0.025, 0.25])
+    head = sdf_leaf(0, [0.04, 0.04, 0.04], offset=[0.0, 0.0, 0.26])
+    # 4 gossamer wings outstretched in X
+    w_fore_l = sdf_leaf(3, [0.30, 0.008, 0.06], offset=[0.32, 0.02, 0.10])
+    w_fore_r = sdf_leaf(3, [0.30, 0.008, 0.06], offset=[-0.32, 0.02, 0.10])
+    w_hind_l = sdf_leaf(3, [0.24, 0.008, 0.05], offset=[0.26, 0.02, -0.02])
+    w_hind_r = sdf_leaf(3, [0.24, 0.008, 0.05], offset=[-0.26, 0.02, -0.02])
+    wings = sdf_binary(2, sdf_binary(2, w_fore_l, w_fore_r), sdf_binary(2, w_hind_l, w_hind_r))
+    return sdf_binary(5, sdf_binary(5, body, head, 0.04), wings, 0.04)
+
+objects.append(make_field(
+    "cathedral.pond.dragonfly.1", "Gossamer Emerald Dragonfly (Spirit of Spring Air)",
+    [-4.2, 0.72, 52.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    "material.logos.pond.reeds", [0.35, 0.95, 0.45],
+    extra_props={"light.intensity": {"t": "float", "v": 1.4}}
+))
+objects.append(make_field(
+    "cathedral.pond.dragonfly.2", "Gossamer Celestial Dragonfly (Lotus Guardian)",
+    [-2.2, 0.75, 47.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    "material.logos.pond.reeds", [0.25, 0.85, 0.95],
+    extra_props={"light.intensity": {"t": "float", "v": 1.4}}
+))
+
+# C. Diversified Elemental Will-o'-the-Wisps (6 Unique Celestial Spirits)
+def make_wisp_tree():
+    wisp_core = sdf_leaf(0, [0.18, 0.18, 0.18])
+    wisp_halo = sdf_leaf(0, [0.28, 0.28, 0.28])
+    return sdf_binary(5, wisp_core, wisp_halo, 0.12)
+
+wisp_data = [
+    ("1", [-2.0, 0.85, 47.0], "Dawn Rose Wisp (Spirit of Eos)", [1.0, 0.85, 0.90], 3.2),
+    ("2", [1.2, 1.10, 49.5], "Celestial Azure Wisp (Spirit of Sophia)", [0.85, 0.95, 1.0], 3.0),
+    ("3", [-0.2, 0.95, 52.5], "Crystalline Cyan Wisp (Spirit of Pneuma)", [0.80, 0.98, 1.0], 3.4),
+    ("4", [3.5, 1.05, 51.0], "Viridian Eden Wisp (Spirit of Zoe)", [0.85, 1.0, 0.85], 2.8),
+    ("5", [-3.5, 1.25, 55.0], "Twilight Amethyst Wisp (Spirit of Mystery)", [0.95, 0.85, 1.0], 3.0),
+    ("6", [0.0, 1.65, 56.5], "Cascading Pearl Wisp (Spirit of the Headwaters)", [1.0, 1.0, 0.95], 3.8),
+]
+for wid, wpos, wname, wcol, wlight in wisp_data:
+    objects.append(make_field(
+        f"cathedral.pond.wisp.{wid}", wname,
+        wpos, make_wisp_tree(), [0.6, 0.6, 0.6],
+        "material.logos.pond.wisp", wcol,
+        extra_props={
+            "isWisp": {"t": "bool", "v": True},
+            "light.intensity": {"t": "float", "v": wlight}
+        }
+    ))
+
+
+# ------------------------------------------------------------------------------
+# 4. GEOLOGY & SHORELINE: MOSS BOULDERS, STEPPING STONES & SPRING GROTTO
+# ------------------------------------------------------------------------------
+
+# A. Natural Mossy Stepping Stones (Curving path connecting North & South shores)
 stepping_stone_coords = [
     ("1", [-1.8, 0.30, 45.5], [0.65, 0.16, 0.65]),
     ("2", [-0.4, 0.32, 47.8], [0.72, 0.18, 0.70]),
@@ -2978,7 +3468,7 @@ for sid, spos, sdims in stepping_stone_coords:
         "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
     ))
 
-# North and South Shoreline Boulder Mounds
+# B. North and South Shoreline Boulder Mounds
 boulder_n1 = sdf_leaf(2, [1.4, 0.5, 1.2], p0=0.20)
 boulder_n2 = sdf_leaf(3, [1.1, 0.6, 1.1], offset=[-0.6, 0.15, 0.4])
 boulder_n3 = sdf_leaf(3, [0.9, 0.45, 0.9], offset=[0.7, -0.08, -0.3])
@@ -2999,28 +3489,22 @@ objects.append(make_field(
     "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
 ))
 
-# 5. Bioluminescent Reed Thickets & Cattails (Vertical Stems growing along +Y)
+# C. Bioluminescent Reed Thickets & Cattails
 def make_reed_thicket_tree():
-    # 5 slender reed stems growing UP along +Y
     reeds = []
     offsets = [(-0.35, -0.25), (0.30, -0.20), (0.0, 0.25), (-0.28, 0.20), (0.32, 0.28)]
     for rx, rz in offsets:
-        # Vertical stem: semi-axes [0.03, 1.0, 0.03] at Y = 0.9
         stem = sdf_leaf(3, [0.03, 1.0, 0.03], offset=[rx, 0.9, rz])
-        # Velvet cattail head: semi-axes [0.07, 0.24, 0.07] near top
         cattail = sdf_leaf(3, [0.07, 0.24, 0.07], offset=[rx, 1.5, rz])
-        # Dewdrop pearl at the very tip
         pearl = sdf_leaf(0, [0.05, 0.05, 0.05], offset=[rx, 1.95, rz])
         reed_single = sdf_binary(5, stem, sdf_binary(5, cattail, pearl, 0.08), 0.1)
         reeds.append(reed_single)
-    
     tree = reeds[0]
     for r in reeds[1:]:
         tree = sdf_binary(5, tree, r, 0.15)
     return tree
 
 reed_thicket_tree = make_reed_thicket_tree()
-
 objects.append(make_field(
     "cathedral.pond.reeds.north", "Northern Bioluminescent Reed Thicket",
     [-5.2, 0.2, 48.5], reed_thicket_tree, [1.6, 2.2, 1.6],
@@ -3040,15 +3524,13 @@ objects.append(make_field(
     extra_props={"light.intensity": {"t": "float", "v": 1.5}}
 ))
 
-# 6. The Living Spring Grotto & Waterfall Cascade (Headwaters at West Shore)
+# D. The Living Spring Grotto & Waterfall Cascade (Headwaters at West Shore)
 grotto_mound = sdf_leaf(3, [2.4, 1.5, 1.8], offset=[0.0, 0.5, 0.0])
 grotto_cavern = sdf_leaf(3, [1.5, 1.0, 1.4], offset=[0.0, 0.2, -0.5])
 grotto_rock = sdf_binary(4, grotto_mound, grotto_cavern)
-
 spring_waterfall = sdf_leaf(3, [0.6, 0.8, 0.3], offset=[0.0, 0.0, -0.4])
 spring_basin_pool = sdf_leaf(3, [0.85, 0.2, 0.85], offset=[0.0, -0.6, -0.8])
 spring_plume = sdf_binary(5, spring_waterfall, spring_basin_pool, 0.22)
-
 grotto_full_tree = sdf_binary(5, grotto_rock, spring_plume, 0.28)
 
 objects.append(make_field(
@@ -3062,28 +3544,99 @@ objects.append(make_field(
     }
 ))
 
-# 7. Floating Bioluminescent Will-o'-the-Wisps (Fairies of Pneuma)
-def make_wisp_tree():
-    wisp_core = sdf_leaf(0, [0.18, 0.18, 0.18])
-    wisp_halo = sdf_leaf(0, [0.28, 0.28, 0.28])
-    return sdf_binary(5, wisp_core, wisp_halo, 0.12)
 
-wisp_coords = [
-    ("1", [-2.0, 0.85, 47.0]),
-    ("2", [1.2, 1.10, 49.5]),
-    ("3", [-0.2, 0.95, 52.5]),
-    ("4", [3.5, 1.05, 51.0])
-]
-for wid, wpos in wisp_coords:
-    objects.append(make_field(
-        f"cathedral.pond.wisp.{wid}", f"Bioluminescent Will-o'-the-Wisp {wid} (Spirit of Pneuma)",
-        wpos, make_wisp_tree(), [0.6, 0.6, 0.6],
-        "material.logos.pond.wisp", [0.9, 0.95, 1.0],
-        extra_props={
-            "isWisp": {"t": "bool", "v": True},
-            "light.intensity": {"t": "float", "v": 3.0}
-        }
-    ))
+# ------------------------------------------------------------------------------
+# 5. CONTEMPLATIVE ARCHITECTURE: MOON BRIDGE, WATER LANTERNS & PRAYER BENCH
+# ------------------------------------------------------------------------------
+
+# A. The Sacred Moon Bridge (Spanning the Outlet Brooklet at Z = 43.0, X = -2.6 to +2.6)
+# Allows a Person to walk across the water and gaze north across the lilies toward the Cathedral!
+objects.append(make_box(
+    "cathedral.pond.bridge.pier.west", "Moon Bridge West Alabaster Pier",
+    [-2.8, 0.35, 43.0], [0.8, 0.7, 1.4],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+objects.append(make_box(
+    "cathedral.pond.bridge.pier.east", "Moon Bridge East Alabaster Pier",
+    [2.8, 0.35, 43.0], [0.8, 0.7, 1.4],
+    "material.logos.alabaster", [0.94, 0.92, 0.88]
+))
+# Arched Bridge Deck Segments (Ascending from West and East to Apex)
+objects.append(make_box(
+    "cathedral.pond.bridge.deck.w", "Moon Bridge West Ramp",
+    [-1.6, 0.55, 43.0], [1.6, 0.16, 1.2],
+    "material.logos.wood", [0.55, 0.35, 0.20],
+    rot_deg=[0.0, 0.0, -12.0]
+))
+objects.append(make_box(
+    "cathedral.pond.bridge.deck.apex", "Moon Bridge Crown Platform",
+    [0.0, 0.78, 43.0], [1.6, 0.16, 1.2],
+    "material.logos.wood", [0.55, 0.35, 0.20]
+))
+objects.append(make_box(
+    "cathedral.pond.bridge.deck.e", "Moon Bridge East Ramp",
+    [1.6, 0.55, 43.0], [1.6, 0.16, 1.2],
+    "material.logos.wood", [0.55, 0.35, 0.20],
+    rot_deg=[0.0, 0.0, 12.0]
+))
+# Moon Bridge Balustrades (North & South Parapets)
+objects.append(make_box(
+    "cathedral.pond.bridge.rail.north", "Moon Bridge North Cedar Railing",
+    [0.0, 1.15, 43.55], [5.2, 0.55, 0.12],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+objects.append(make_box(
+    "cathedral.pond.bridge.rail.south", "Moon Bridge South Cedar Railing",
+    [0.0, 1.15, 42.45], [5.2, 0.55, 0.12],
+    "material.logos.gold", [1.0, 0.82, 0.28]
+))
+
+# B. Twin Ancient Alabaster Water Lanterns (Kasuga Stone Shrine Lanterns)
+def make_water_lantern_tree():
+    pedestal = sdf_leaf(2, [0.35, 0.45, 0.35], p0=0.08)
+    stem     = sdf_leaf(3, [0.18, 0.55, 0.18], offset=[0.0, 0.65, 0.0])
+    fire_box = sdf_leaf(2, [0.32, 0.32, 0.32], offset=[0.0, 1.25, 0.0], p0=0.04)
+    hearth   = sdf_leaf(0, [0.16, 0.16, 0.16], offset=[0.0, 1.25, 0.0])
+    roof     = sdf_leaf(3, [0.55, 0.18, 0.55], offset=[0.0, 1.55, 0.0])
+    finial   = sdf_leaf(0, [0.10, 0.15, 0.10], offset=[0.0, 1.80, 0.0])
+    structure = sdf_binary(5, pedestal, sdf_binary(5, stem, roof, 0.1), 0.15)
+    lamp = sdf_binary(5, structure, sdf_binary(5, fire_box, hearth, 0.08), 0.12)
+    return sdf_binary(5, lamp, finial, 0.08)
+
+lantern_tree = make_water_lantern_tree()
+objects.append(make_field(
+    "cathedral.pond.lantern.north", "Ancient Alabaster Water Lantern (North Shore)",
+    [-6.5, 1.15, 50.5], lantern_tree, [1.4, 2.2, 1.4],
+    "material.logos.pond.lantern", [0.95, 0.90, 0.82],
+    extra_props={
+        "isLantern": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.6},
+        "description": {"t": "string", "v": "Ancient carved alabaster water lantern casting warm golden light across the lily pads"}
+    }
+))
+objects.append(make_field(
+    "cathedral.pond.lantern.south", "Ancient Alabaster Water Lantern (South Shore)",
+    [6.2, 1.15, 48.5], lantern_tree, [1.4, 2.2, 1.4],
+    "material.logos.pond.lantern", [0.95, 0.90, 0.82],
+    extra_props={
+        "isLantern": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 2.6},
+        "description": {"t": "string", "v": "Ancient carved alabaster water lantern overlooking the southern lotus bay"}
+    }
+))
+
+# C. Carved Stone Contemplation Bench
+objects.append(make_box(
+    "cathedral.pond.bench.legs", "Contemplation Bench Limestone Supports",
+    [-3.5, 0.25, 43.5], [1.4, 0.40, 0.45],
+    "material.logos.alabaster", [0.92, 0.90, 0.86]
+))
+objects.append(make_box(
+    "cathedral.pond.bench.seat", "Contemplation Bench Cedar Planking",
+    [-3.5, 0.48, 43.5], [1.8, 0.08, 0.65],
+    "material.logos.wood", [0.55, 0.35, 0.20],
+    extra_props={"description": {"t": "string", "v": "Carved stone and cedar prayer bench overlooking the sacred lotus pond"}}
+))
 
 
 # ==============================================================================
