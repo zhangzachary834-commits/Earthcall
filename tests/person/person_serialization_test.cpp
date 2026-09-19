@@ -3,15 +3,33 @@
 
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 
 namespace {
+
+struct TempSaveRoot {
+    std::filesystem::path path;
+    TempSaveRoot() {
+        path = std::filesystem::temp_directory_path() /
+               ("earthcall-person-ser-test-" +
+                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(path);
+        SaveSystem::setSaveRoot(path.string());
+    }
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ignored;
+        std::filesystem::remove_all(path, ignored);
+    }
+};
 
 Person makePerson(const char* name) {
     Person person(Soul(name), Body("Humanoid", "Voxel"), "default");
@@ -26,6 +44,8 @@ bool near(float a, float b) {
 } // namespace
 
 int main() {
+    TempSaveRoot tempSaveRoot;
+
     Person original = makePerson("Phase 3 Person");
     original.position() = {1.25f, -2.5f, 3.75f};
     original.velocity() = {-4.0f, 5.5f, 6.25f};
@@ -49,9 +69,10 @@ int main() {
     assert(near(restored.velocity().z, 6.25f));
 
     // Test updatePriorPersonSerializations exception handling for malformed JSON
-    std::filesystem::create_directories("saves/test_malformed");
-    std::string malformedPath = "saves/test_malformed/corrupted.json";
-    std::string validPath = "saves/test_malformed/valid.json";
+    std::filesystem::path testDir = tempSaveRoot.path / "test_malformed";
+    std::filesystem::create_directories(testDir);
+    std::string malformedPath = (testDir / "corrupted.json").string();
+    std::string validPath = (testDir / "valid.json").string();
     {
         std::ofstream badFile(malformedPath);
         badFile << "{ malformed json: true, ";
@@ -72,7 +93,7 @@ int main() {
         assert(jGood["person"]["displayName"] == "NewName");
     }
 
-    std::filesystem::remove_all("saves/test_malformed");
+    std::filesystem::remove_all(testDir);
 
     std::puts("person_serialization_test: ALL OK");
     return 0;

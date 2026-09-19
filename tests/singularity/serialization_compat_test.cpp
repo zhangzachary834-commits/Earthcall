@@ -5,11 +5,30 @@
 
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <chrono>
 #include <cstdio>
 #include <filesystem>
 #include <iostream>
 
 using json = nlohmann::json;
+
+namespace {
+struct TempSaveRoot {
+    std::filesystem::path path;
+    TempSaveRoot() {
+        path = std::filesystem::temp_directory_path() /
+               ("earthcall-ser-compat-test-" +
+                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::filesystem::create_directories(path);
+        SaveSystem::setSaveRoot(path.string());
+    }
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ignored;
+        std::filesystem::remove_all(path, ignored);
+    }
+};
+} // namespace
 
 void test_msgpack_roundtrip() {
     json j;
@@ -108,6 +127,8 @@ void test_retired_condition_kind_survives_roundtrip() {
 }
 
 int main() {
+    TempSaveRoot tempSaveRoot;
+
     // Object's constructor touches GL, so the probe subject needs a context.
     if (!glfwInit()) {
         std::fprintf(stderr, "serialization_compat_test: glfwInit failed\n");
