@@ -379,6 +379,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
 }
 
 Law::ApplicationResult Law::applyTo(Singular& target) {
+    return applyToImpl(target, false);
+}
+
+Law::ApplicationResult Law::applyToAfterConditions(Singular& target) {
+    return applyToImpl(target, true);
+}
+
+Law::ApplicationResult Law::applyToImpl(
+    Singular& target, bool conditionsAlreadySatisfied) {
     ApplicationResult result = ApplicationResult::Applied;
     ActionNode::Trace trace;
 
@@ -442,7 +451,7 @@ Law::ApplicationResult Law::applyTo(Singular& target) {
         result = ApplicationResult::AuthorityDenied;
     } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
         result = ApplicationResult::AuthorityDenied;
-    } else if (!conditionsSatisfied(target)) {
+    } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
         ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
             {"lawId", getIdentifier()},
@@ -2082,13 +2091,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
-                    if (!law->conditionsSatisfied(*being)) continue;
+                    bool usedDirect = false;
+                    if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
                     if (law->drives() &&
                         hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
                         restartDriveSession(*law, being->getIdentifier());
                     }
-                    applyAndMaybeDrive(*law, *being, records);
+                    applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
                 continue;
             }
@@ -2244,7 +2254,8 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
 
         for (Singular* subject : subjects) {
             if (!subject || Universe::instance().isUnmade(subject)) continue;
-            const bool holds = law->conditionsSatisfied(*subject);
+            bool usedDirect = false;
+            const bool holds = candidateConditionsSatisfied(*law, *subject, &usedDirect);
             const bool wasHolding = law->lastConditionState(subject);
             law->rememberConditionState(subject, holds);
 
@@ -2265,7 +2276,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
                 restartDriveSession(*law, subject->getIdentifier());
             }
-            applyAndMaybeDrive(*law, *subject, records);
+            applyAndMaybeDrive(*law, *subject, records, usedDirect);
         }
     }
     auto T3 = glfwGetTime();
@@ -2284,9 +2295,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     return records;
 }
 
-Law::ApplicationResult LawManager::applyAndMaybeDrive(Law& law, Singular& subject,
-                                    std::vector<Law::ApplicationRecord>& records) {
-    const Law::ApplicationResult result = law.applyTo(subject);
+Law::ApplicationResult LawManager::applyAndMaybeDrive(
+    Law& law, Singular& subject,
+    std::vector<Law::ApplicationRecord>& records,
+    bool conditionsAlreadySatisfied) {
+    const Law::ApplicationResult result =
+        conditionsAlreadySatisfied ? law.applyToAfterConditions(subject)
+                                   : law.applyTo(subject);
     if (law.applicationLog().empty()) return result;
     const Law::ApplicationRecord& record = law.applicationLog().back();
     records.push_back(record);
@@ -2494,10 +2509,10 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
         if (seed) lowerCount = seed->size();
     }
 
-    // Higher retained-road tier. For now the O(1) view deliberately accepts
-    // only ONE road; multi-road union/ranking belongs to Step 4's route
-    // competition on the slow adapter clock. The route must also have been
-    // registered from THIS condition revision.
+    // Higher retained-road tiers. AdapterRoad remains the discovery layer.
+    // A sound single positive conjunctive road can now GRADUATE into a direct
+    // Law -> concrete-bearer route and stop re-proving the same category edge
+    // on every event.
     if (_useSlowAdapter) {
         const auto routeRevision = _adapterRouteRevision.find(lawId);
         const bool routesMatchLaw =
@@ -2505,10 +2520,43 @@ void LawManager::refreshCandidateRoute(const Law& law) const {
             routeRevision->second == law.conditionRevision();
 
         const std::vector<Singular*>* road = nullptr;
-        if (routesMatchLaw && _adapter.candidateViewFor(lawId, road) && road &&
-            road->size() < lowerCount) {
-            chosen.tier = CandidateTier::AdapterRoad;
-            chosen.vocabularySeed.clear();
+        if (routesMatchLaw && _adapter.candidateViewFor(lawId, road) && road) {
+            bool madeDirect = false;
+            const ConditionModel* model = law.conditionModel();
+
+            if (_useLawDirect && model && law.conditionPredicateCount() == 1) {
+                std::vector<std::pair<std::string, std::string>> routes;
+                model->collectCategoryRoutes(routes);
+                if (routes.size() == 1) {
+                    std::vector<Singular*> direct;
+                    direct.reserve(road->size());
+                    for (Singular* being : *road) {
+                        if (!being || Universe::instance().isUnmade(being)) continue;
+                        // required-property membership is structural currency:
+                        // dynamic property insert/erase bumps structuralRevision.
+                        if (law.couldApplyTo(*being)) direct.push_back(being);
+                    }
+
+                    // Equal-width Direct is still useful: unlike an equal-width
+                    // AdapterRoad, it removes a proved condition conjunct.
+                    if (direct.size() <= lowerCount) {
+                        chosen.tier = CandidateTier::LawDirect;
+                        chosen.vocabularySeed.clear();
+                        chosen.directSubjects = std::move(direct);
+                        chosen.directRelationType = routes[0].first;
+                        chosen.directOtherId = routes[0].second;
+                        chosen.directResidual =
+                            model->compileAssumingCategoryRoute(
+                                chosen.directRelationType, chosen.directOtherId);
+                        madeDirect = true;
+                    }
+                }
+            }
+
+            if (!madeDirect && road->size() < lowerCount) {
+                chosen.tier = CandidateTier::AdapterRoad;
+                chosen.vocabularySeed.clear();
+            }
         }
     }
 
@@ -2520,6 +2568,7 @@ std::string LawManager::candidateTierFor(const Law& law) const {
     auto it = _candidateRoutes.find(law.getIdentifier());
     if (it == _candidateRoutes.end()) return "sweep";
     switch (it->second.tier) {
+        case CandidateTier::LawDirect:   return "law-direct";
         case CandidateTier::AdapterRoad: return "adapter-road";
         case CandidateTier::Vocabulary: return "vocabulary";
         case CandidateTier::Sweep:       return "sweep";
@@ -2550,6 +2599,17 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     }
 
     const CandidateRoute& route = routeIt->second;
+
+    if (route.tier == CandidateTier::LawDirect) {
+        std::vector<Singular*> chosen;
+        chosen.reserve(route.directSubjects.size());
+        for (Singular* being : route.directSubjects) {
+            if (being && !Universe::instance().isUnmade(being)) {
+                chosen.push_back(being);
+            }
+        }
+        return chosen;
+    }
 
     if (route.tier == CandidateTier::AdapterRoad) {
         const std::vector<Singular*>* travelled = nullptr;
@@ -2588,6 +2648,31 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
 
     // Tier 0: complete over-approximating floor.
     return Universe::instance().beings();
+}
+
+bool LawManager::candidateConditionsSatisfied(
+    const Law& law, const Singular& subject, bool* usedLawDirect) const {
+    if (usedLawDirect) *usedLawDirect = false;
+
+    // A/B fidelity: Direct OFF is the immediately-pre-Direct executor, not
+    // "pre-Direct plus one new map/currency check per candidate".
+    if (!_useLawDirect) return law.conditionsSatisfied(subject);
+
+    // sweepSubjects() selected/refreshed the route immediately before the
+    // candidate loop. Consume that one decision; do not re-run route selection
+    // once per candidate and turn O(1)-per-Law planning into O(matches).
+    auto it = _candidateRoutes.find(law.getIdentifier());
+    if (it == _candidateRoutes.end() ||
+        it->second.tier != CandidateTier::LawDirect ||
+        !it->second.directResidual) {
+        return law.conditionsSatisfied(subject);
+    }
+
+    if (usedLawDirect) *usedLawDirect = true;
+    ECA::Event event;
+    event.type = "law-evaluate";
+    event.subject = const_cast<Singular*>(&subject);
+    return it->second.directResidual(event, subject);
 }
 
 // ---------------------------------------------------------------------------

@@ -89,8 +89,10 @@ int main() {
     Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
         for (const auto& r : graph.getAll()) if (r) out.push_back(r.get());
     });
+    std::uint64_t relationQueries = 0;
     Universe::instance().setRelationsInvolvingProvider(
         [&](const Singular& being, std::vector<Relation*>& out) {
+            ++relationQueries;
             graph.relationsInvolving(being, out);
         });
     Universe::instance().setRelationGenerationProvider([&]() { return graph.generation(); });
@@ -123,6 +125,10 @@ int main() {
     auto requiredRoad = eventLaw("required-road", ConditionNode::all({onTheRoad}), 1.0);
     eventLaw("either-way", ConditionNode::any({onTheRoad, blessed}), 10.0);
     eventLaw("off-the-road", ConditionNode::all({ConditionNode::negate(onTheRoad), blessed}), 100.0);
+    auto mixedPolarity = eventLaw(
+        "mixed-polarity",
+        ConditionNode::all({onTheRoad, ConditionNode::negate(onTheRoad)}),
+        1000.0);
 
     const auto ring = [&](int times) {
         for (int i = 0; i < times; ++i) {
@@ -149,8 +155,10 @@ int main() {
           "with no retained road, the Law selects the vocabulary tier");
     const std::uint64_t steadySelections = mgr.candidateRouteRefreshCount();
 
+    relationQueries = 0;
     reset();  ring(6);
     const std::string sweeping = snapshot(nullptr);
+    const std::uint64_t sweepingQueries = relationQueries;
     check(mgr.candidateRouteRefreshCount() == steadySelections,
           "steady frames reuse the cached tier instead of reselecting it");
 
@@ -158,6 +166,7 @@ int main() {
     // LawManager::tick(). Warm only through serviceSlowAdapterClock so this
     // parity test also guards the independent scheduling boundary.
     mgr.setUseSlowAdapter(true);
+    mgr.setUseLawDirect(false);
     double adapterWall = 0.0;
     mgr.serviceSlowAdapterClock(adapterWall); // prime only
     for (int i = 0; i < 4; ++i) {
@@ -169,18 +178,32 @@ int main() {
     check(mgr.slowAdapter().ready(requiredRoad->getIdentifier()),
           "and it has walked it");
     check(mgr.candidateTierFor(*requiredRoad) == "adapter-road",
-          "a current retained road is promoted only when it is narrower");
+          "with Direct disabled, the current retained road reproduces the pre-Direct tier");
+    relationQueries = 0;
+    reset(); ring(6);
+    const std::string preDirect = snapshot(nullptr);
+    const std::uint64_t preDirectQueries = relationQueries;
+
+    mgr.setUseLawDirect(true);
+    check(mgr.candidateTierFor(*requiredRoad) == "law-direct",
+          "the same retained road crystallizes into Law-Direct");
+    check(mgr.candidateTierFor(*mixedPolarity) == "law-direct",
+          "positive conjunct can go Direct while the same route under Not stays live");
     const std::uint64_t promotedSelections = mgr.candidateRouteRefreshCount();
     for (int i = 0; i < 3; ++i) {
         adapterWall += mgr.slowAdapterClockPeriodSeconds();
         mgr.serviceSlowAdapterClock(adapterWall);
-        check(mgr.candidateTierFor(*requiredRoad) == "adapter-road",
-              "an unchanged retained road remains selected across maintenance revisits");
+        check(mgr.candidateTierFor(*requiredRoad) == "law-direct",
+              "an unchanged direct route remains selected across maintenance revisits");
     }
     check(mgr.candidateRouteRefreshCount() == promotedSelections,
           "slow-clock revisits of an unchanged road do not churn tier selection");
+    relationQueries = 0;
     reset();  ring(6);
     const std::string travelling = snapshot(nullptr);
+    const std::uint64_t directQueries = relationQueries;
+    check(directQueries < preDirectQueries,
+          "Law-Direct performs fewer relation-graph queries than the immediately-pre-Direct tier");
 
     // Make the retained road exactly as wide as the lower vocabulary route.
     // Higher tier != better tier: equal fan-out must descend rather than pay
@@ -188,8 +211,8 @@ int main() {
     graph.add(std::make_shared<Relation>("instance-of", outsider, target, true));
     adapterWall += mgr.slowAdapterClockPeriodSeconds();
     mgr.serviceSlowAdapterClock(adapterWall);
-    check(mgr.candidateTierFor(*requiredRoad) == "vocabulary",
-          "an equal-width higher tier is rejected as pure overhead");
+    check(mgr.candidateTierFor(*requiredRoad) == "law-direct",
+          "equal-width Law-Direct remains useful because it removes proved condition work");
 
     // A member admitted mid-run, with the adapter ON: its road must be rebuilt,
     // not kept.
@@ -210,9 +233,14 @@ int main() {
     mgr.setUseSlowAdapter(false);  reset();  latecomer.setDynamicProperty("hits", PropertyValue(0.0));  ring(6);
     const std::string withLateSwept = snapshot(&latecomer);
 
-    std::printf("  adapter off: %s\n", sweeping.c_str());
-    std::printf("  adapter on : %s\n", travelling.c_str());
-    check(sweeping == travelling, "the same beings are reached, the same number of times");
+    std::printf("  adapter off       : %s (relation queries=%llu)\n", sweeping.c_str(),
+                static_cast<unsigned long long>(sweepingQueries));
+    std::printf("  adapter pre-direct: %s (relation queries=%llu)\n", preDirect.c_str(),
+                static_cast<unsigned long long>(preDirectQueries));
+    std::printf("  adapter + direct  : %s (relation queries=%llu)\n", travelling.c_str(),
+                static_cast<unsigned long long>(directQueries));
+    check(sweeping == preDirect && preDirect == travelling,
+          "all three tiers reach the same beings the same number of times");
 
     // Not vacuous: each law must actually have fired, or the comparison above is
     // two identical zeroes agreeing with each other.

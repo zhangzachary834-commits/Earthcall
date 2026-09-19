@@ -7,7 +7,7 @@
 // rendered GPU FPS.
 //
 // Usage:
-//   slow_adapter_zone_perf_test <world.json> --adapter=on|off [--frames=N]
+//   slow_adapter_zone_perf_test <world.json> --adapter=on|off --direct=on|off [--frames=N]
 //
 // Zach, 2026-09-17: measure the adapter across multiple real Zones after moving
 // it to an independent same-thread clock.
@@ -55,11 +55,14 @@ int main(int argc, char** argv) {
 
     std::string world = argv[1];
     bool adapter = true;
+    bool direct = true;
     int frames = 240;
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--adapter=on") adapter = true;
         else if (arg == "--adapter=off") adapter = false;
+        else if (arg == "--direct=on") direct = true;
+        else if (arg == "--direct=off") direct = false;
         else if (arg.rfind("--frames=", 0) == 0) frames = std::max(24, std::atoi(arg.c_str() + 9));
     }
 
@@ -73,6 +76,7 @@ int main(int argc, char** argv) {
     TestSupport::RealSaveTreeGuard saveGuard(world);
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
+    h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
 
     if (h.zones.zones().empty()) {
@@ -136,17 +140,30 @@ int main(int argc, char** argv) {
     const double maintenanceP95 = percentile(maint, 0.95);
     const double eqFps = median > 1e-9 ? 1000.0 / median : 0.0;
 
+    std::size_t tierDirect = 0, tierAdapter = 0, tierVocabulary = 0, tierSweep = 0;
+    for (const auto& law : h.lawManager.getAll()) {
+        if (!law) continue;
+        const std::string tier = h.lawManager.candidateTierFor(*law);
+        if (tier == "law-direct") ++tierDirect;
+        else if (tier == "adapter-road") ++tierAdapter;
+        else if (tier == "vocabulary") ++tierVocabulary;
+        else ++tierSweep;
+    }
+
     std::printf(
-        "ADAPTER_PERF world=%s zone=%s adapter=%s objects=%zu laws=%zu relations=%zu "
+        "ADAPTER_PERF world=%s zone=%s adapter=%s direct=%s objects=%zu laws=%zu relations=%zu "
         "frames=%d frame_median_ms=%.6f frame_p95_ms=%.6f sim_eq_fps=%.2f "
         "law_median_ms=%.6f maintenance_median_ms=%.6f maintenance_p95_ms=%.6f "
-        "maintenance_runs=%llu roads_known=%zu roads_pending=%zu\n",
+        "maintenance_runs=%llu roads_known=%zu roads_pending=%zu "
+        "tier_direct=%zu tier_adapter=%zu tier_vocabulary=%zu tier_sweep=%zu\n",
         world.c_str(), zone->getIdentifier().c_str(), adapter ? "on" : "off",
+        direct ? "on" : "off",
         zone->getOwnedObjects().size(), h.lawManager.getAll().size(),
         zone->formation().relations().getAll().size(), frames,
         median, p95, eqFps, lawMedian, maintenanceMedian, maintenanceP95,
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
-        h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending());
+        h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
+        tierDirect, tierAdapter, tierVocabulary, tierSweep);
 
     return 0;
 }

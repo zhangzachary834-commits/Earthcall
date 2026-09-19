@@ -435,7 +435,8 @@ if(NOT EMSCRIPTEN)
         if (${TEST_NAME} STREQUAL "frame_lag_test" OR
             ${TEST_NAME} STREQUAL "webgpu_micro_mastery_lag_test" OR
             ${TEST_NAME} STREQUAL "category_membership_scaling_test" OR
-            ${TEST_NAME} STREQUAL "quantifier_scaling_test")
+            ${TEST_NAME} STREQUAL "quantifier_scaling_test" OR
+            ${TEST_NAME} STREQUAL "law_direct_stress_test")
             set_tests_properties(${TEST_NAME} PROPERTIES
                 RUN_SERIAL TRUE
                 TIMEOUT 300

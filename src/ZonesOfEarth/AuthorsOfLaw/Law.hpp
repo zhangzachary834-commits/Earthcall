@@ -387,6 +387,9 @@ public:
     // mode — the shape tools emit ConditionNodes instead of world objects).
 
     ApplicationResult applyTo(Singular& target);
+    // Same authority/jurisdiction/action/audit path as applyTo(), but used
+    // after Law-Direct has already proved/evaluated the live residual.
+    ApplicationResult applyToAfterConditions(Singular& target);
     std::vector<ApplicationRecord> applyToTargets();
 
     const std::vector<ApplicationRecord>& applicationLog() const { return _applicationLog; }
@@ -406,6 +409,7 @@ private:
     void initializeLawIdentity();
     // Stable, law-derived names for the three group Formations (see the .cpp).
     void nameGroupFormations();
+    ApplicationResult applyToImpl(Singular& target, bool conditionsAlreadySatisfied);
     ApplicationRecord makeRecord(Singular* target, ApplicationResult result) const;
     void publishAppliedEvent(Singular* target, ApplicationResult result) const;
 
@@ -955,8 +959,14 @@ private:
     void runDriveSessions(std::vector<Law::ApplicationRecord>& records);
     // Apply, record, and start a drive session only if the law CHANGED
     // something (not merely if the action branch was reached).
-    Law::ApplicationResult applyAndMaybeDrive(Law& law, Singular& subject,
-                            std::vector<Law::ApplicationRecord>& records);
+    Law::ApplicationResult applyAndMaybeDrive(
+        Law& law, Singular& subject,
+        std::vector<Law::ApplicationRecord>& records,
+        bool conditionsAlreadySatisfied = false);
+    // Evaluate through the highest current proof and report whether the
+    // Law-Direct residual (rather than the full authored condition) was used.
+    bool candidateConditionsSatisfied(
+        const Law& law, const Singular& subject, bool* usedLawDirect = nullptr) const;
     // Whom an untargeted law sweeps: consume ONE already-selected sound route.
     // Route selection is refreshed outside the per-candidate loop and cached by
     // law id; steady-state selection is one unordered_map lookup.
@@ -965,13 +975,23 @@ private:
     enum class CandidateTier : std::uint8_t {
         Sweep,
         Vocabulary,
-        AdapterRoad
+        AdapterRoad,
+        LawDirect
     };
     struct CandidateRoute {
         CandidateTier tier = CandidateTier::Sweep;
         // Vocabulary tier: rarest required name chosen when the vocabulary
         // index refreshes. Adapter tier reads the adapter's own current view.
         std::string vocabularySeed;
+
+        // Law-Direct tier: concrete bearers learned from one current adapter
+        // road plus the residual condition after discharging that exact proved
+        // positive Related conjunct. Pure derived state; never serialized.
+        std::vector<Singular*> directSubjects;
+        ECA::ConditionPredicate directResidual;
+        std::string directRelationType;
+        std::string directOtherId;
+
         // Currency of the LAW decision. World/graph currency is still checked
         // by the selected structure itself before it is consumed.
         std::uint64_t lawTextRevision = 0;
@@ -1164,6 +1184,10 @@ private:
     void syncAdapterRoutes(Law& law);
     std::unordered_map<std::string, std::uint64_t> _adapterRouteRevision;
     bool _useSlowAdapter = true;
+    // A/B and fail-safe switch for the terminal derived rung. Keeping the
+    // adapter ON while this is OFF reproduces the immediately-pre-Direct
+    // execution model in one executable, which makes perf comparisons honest.
+    bool _useLawDirect = true;
     bool _slowAdapterClockPrimed = false;
     double _slowAdapterNextAt = 0.0;
     std::uint64_t _slowAdapterMaintenanceRuns = 0;
@@ -1182,6 +1206,13 @@ public:
         if (!use) _adapter.clear();
     }
     bool usesSlowAdapter() const { return _useSlowAdapter; }
+
+    void setUseLawDirect(bool use) {
+        if (use == _useLawDirect) return;
+        _useLawDirect = use;
+        _candidateRoutes.clear();
+    }
+    bool usesLawDirect() const { return _useLawDirect; }
 
     // SAME THREAD, INDEPENDENT CLOCK. The caller may poll this every frame, but
     // the adapter advances only when wallSeconds reaches its own deadline.

@@ -200,9 +200,26 @@ second type system needed.
 **Rule:** cost and telos stay distinct axes (`FORMATION_RETE.md` §5). One float carrying both would
 make cheap paths look holy.
 
-### Step 7 — Direct `Law → Singular(+PropertyPath)` crystallization *(Tier 6)*
+### ◐ Step 7 — Direct `Law → Singular(+PropertyPath)` crystallization *(Tier 6; first derived rung built 2026-09-19)*
 The terminal optimization: once the lower tiers prove a branch can only need a particular bearer and
 aspect, retain that edge and stop re-deriving it.
+
+**Built first executable rung:** a current single positive conjunctive Slow Adapter road can
+crystallize into `CandidateTier::LawDirect`: concrete bearer bindings plus a residual condition
+that omits only the exact already-proved `Related(kind, other)` conjunct. Dynamic values remain
+live; stale currency drops downward. The rung is Kernel-derived state and writes no persistent
+`routes-through` Relation into a Person's world.
+
+The implementation carries an explicit A/B switch so SlowAdapter=ON + Direct=OFF reproduces the
+immediately-pre-Direct engine in the same process. `law_direct_stress_test` deliberately amplifies
+the historical Chess shape (32 members, many category-scoped Laws, dense irrelevant relation
+fan-out) and measures both deterministic eliminated work and wall time. The authored-world probe
+also reports pre-Direct vs Direct timings for `chess_app`, Basic Pixel Changer, and Noise Floor.
+
+The remaining Tier-6 target is PropertyPath-qualified direct relevance and, only with appropriate
+authorship/standing, reified persistent relevance structure.
+
+The terminal target remains:
 **Ontology:** `Law → Singular`, qualified by a `PropertyPath`. **Never** `Law → Property-being` —
 Property is predication, not a being (`PROPERTY_AS_PREDICATION_NOT_BEING.md`); "Relations join
 beings, Properties disclose them".
