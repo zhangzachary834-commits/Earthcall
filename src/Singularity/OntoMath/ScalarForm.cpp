@@ -1865,6 +1865,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             auto y = children[1]->evalRange(vars);
             auto z = children[2]->evalRange(vars);
             if (!x || !y || !z) return std::nullopt;
+            // Runtime VectorConstruct coerces three SCALARS. Reading the
+            // default scalar slot of a vector RangeValue would fabricate a
+            // finite component (usually 0) for a tree runtime evaluation
+            // refuses. Range knowledge may be looser than runtime truth, never
+            // more confident than it.
+            if (x->kind != ValueKind::Scalar ||
+                y->kind != ValueKind::Scalar ||
+                z->kind != ValueKind::Scalar) {
+                return retVecInf();
+            }
             return RangeValue::makeVector(x->scalar, y->scalar, z->scalar);
         }
         case Op::Component: {
