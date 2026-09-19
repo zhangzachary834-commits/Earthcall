@@ -127,6 +127,11 @@ bool SlowAdapter::current(const Road& road) const {
 
 void SlowAdapter::build(const RouteKey& key, const Budget& budget) {
     Road& road = _roads[key];
+    const bool wasBuilt = road.built;
+    const bool wasCapped = road.cappedOut;
+    const std::uint64_t oldStructural = road.builtAtStructural;
+    const std::size_t oldGraph = road.builtAtGraph;
+
     road.members.clear();
     road.edges.clear();
     road.cappedOut = false;
@@ -161,10 +166,17 @@ void SlowAdapter::build(const RouteKey& key, const Budget& budget) {
         }
         if (road.members.size() >= budget.maxMembers) {
             road.cappedOut = true;
-            return;
+            break;
         }
         road.members.push_back(member);
         road.edges.push_back(edge);
+    }
+
+    // Exact per-road currency: routine revisits of an unchanged road remain
+    // invisible to the hot-path tier cache; eligibility-changing rebuilds do not.
+    if (!wasBuilt || oldStructural != road.builtAtStructural ||
+        oldGraph != road.builtAtGraph || wasCapped != road.cappedOut) {
+        road.currencyRevision = ++_currencyClock;
     }
 }
 
@@ -205,6 +217,7 @@ void SlowAdapter::forgetBeing(const Singular* being) {
         }
         if (involvesBeing) {
             road.built = false;
+            road.currencyRevision = ++_currencyClock;
             road.edges.clear();
             road.members.clear();
             _pending.push_back(entry.first);
@@ -261,6 +274,28 @@ bool SlowAdapter::ready(const std::string& lawId) const {
         if (road == _roads.end() || !current(road->second)) return false;
     }
     return true;
+}
+
+bool SlowAdapter::candidateViewFor(
+    const std::string& lawId, const std::vector<Singular*>*& out) const {
+    out = nullptr;
+    auto law = _lawRoutes.find(lawId);
+    if (law == _lawRoutes.end() || law->second.size() != 1) return false;
+
+    auto road = _roads.find(law->second.front());
+    if (road == _roads.end() || !current(road->second)) return false;
+
+    out = &road->second.members;
+    return true;
+}
+
+std::uint64_t SlowAdapter::candidateGenerationFor(const std::string& lawId) const {
+    auto law = _lawRoutes.find(lawId);
+    if (law == _lawRoutes.end() || law->second.size() != 1) return 0;
+
+    auto road = _roads.find(law->second.front());
+    if (road == _roads.end()) return 0;
+    return road->second.currencyRevision;
 }
 
 bool SlowAdapter::candidatesFor(const std::string& lawId, std::vector<Singular*>& out) const {
@@ -326,6 +361,8 @@ void SlowAdapter::clear() {
     _roads.clear();
     _lawRoutes.clear();
     _pending.clear();
+    _steps = 0;
+    _currencyClock = 0;
 }
 
 }  // namespace Relevance

@@ -120,7 +120,7 @@ int main() {
         mgr.bindTrigger(law->getIdentifier(), "the-bell");
         return law;
     };
-    eventLaw("required-road", ConditionNode::all({onTheRoad}), 1.0);
+    auto requiredRoad = eventLaw("required-road", ConditionNode::all({onTheRoad}), 1.0);
     eventLaw("either-way", ConditionNode::any({onTheRoad, blessed}), 10.0);
     eventLaw("off-the-road", ConditionNode::all({ConditionNode::negate(onTheRoad), blessed}), 100.0);
 
@@ -145,9 +145,14 @@ int main() {
     ring(1);
     check(mgr.slowAdapter().roadsKnown() == 0,
           "while the adapter is off it maintains nothing");
+    check(mgr.candidateTierFor(*requiredRoad) == "vocabulary",
+          "with no retained road, the Law selects the vocabulary tier");
+    const std::uint64_t steadySelections = mgr.candidateRouteRefreshCount();
 
     reset();  ring(6);
     const std::string sweeping = snapshot(nullptr);
+    check(mgr.candidateRouteRefreshCount() == steadySelections,
+          "steady frames reuse the cached tier instead of reselecting it");
 
     // Turning it on re-registers the laws' roads on the SLOW CLOCK, not in
     // LawManager::tick(). Warm only through serviceSlowAdapterClock so this
@@ -161,10 +166,30 @@ int main() {
     }
     check(mgr.slowAdapter().roadsKnown() == 1,
           "turned on, it knows the one road these laws travel (the Any and Not laws yield none)");
-    check(mgr.slowAdapter().ready("law-1"),
+    check(mgr.slowAdapter().ready(requiredRoad->getIdentifier()),
           "and it has walked it");
+    check(mgr.candidateTierFor(*requiredRoad) == "adapter-road",
+          "a current retained road is promoted only when it is narrower");
+    const std::uint64_t promotedSelections = mgr.candidateRouteRefreshCount();
+    for (int i = 0; i < 3; ++i) {
+        adapterWall += mgr.slowAdapterClockPeriodSeconds();
+        mgr.serviceSlowAdapterClock(adapterWall);
+        check(mgr.candidateTierFor(*requiredRoad) == "adapter-road",
+              "an unchanged retained road remains selected across maintenance revisits");
+    }
+    check(mgr.candidateRouteRefreshCount() == promotedSelections,
+          "slow-clock revisits of an unchanged road do not churn tier selection");
     reset();  ring(6);
     const std::string travelling = snapshot(nullptr);
+
+    // Make the retained road exactly as wide as the lower vocabulary route.
+    // Higher tier != better tier: equal fan-out must descend rather than pay
+    // route machinery for no narrowing.
+    graph.add(std::make_shared<Relation>("instance-of", outsider, target, true));
+    adapterWall += mgr.slowAdapterClockPeriodSeconds();
+    mgr.serviceSlowAdapterClock(adapterWall);
+    check(mgr.candidateTierFor(*requiredRoad) == "vocabulary",
+          "an equal-width higher tier is rejected as pure overhead");
 
     // A member admitted mid-run, with the adapter ON: its road must be rebuilt,
     // not kept.
@@ -174,8 +199,10 @@ int main() {
     population.push_back(&latecomer);
     graph.add(std::make_shared<Relation>("instance-of", latecomer, target, true));
     Universe::instance().bumpStructuralRevision();
-    // The stale road is safe immediately (candidatesFor refuses it), then the
-    // independent clock is allowed to catch up before the measured ON phase.
+    // The stale road is safe immediately: the tier query descends before the
+    // independent clock is allowed to catch up.
+    check(mgr.candidateTierFor(*requiredRoad) == "vocabulary",
+          "a stale retained road immediately falls to the lower complete tier");
     adapterWall += mgr.slowAdapterClockPeriodSeconds();
     mgr.serviceSlowAdapterClock(adapterWall);
     reset();  ring(6);

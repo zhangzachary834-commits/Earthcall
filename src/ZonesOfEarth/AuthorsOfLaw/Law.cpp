@@ -2419,14 +2419,120 @@ void LawManager::refreshVocabularyIndex() const {
     }
 }
 
-// Who a law sweeps when it has no targets Formation: not everyone, but
-// everyone who CARRIES ITS VOCABULARY (see Law::requiredProperties).
+// Choose the highest CURRENT SOUND candidate tier for one Law.
+//
+// The important split is temporal:
+//   refreshCandidateRoute() may inspect the structures that describe the Law;
+//   sweepSubjects() consumes ONE cached answer.
+//
+// So a steady frame pays one map lookup plus revision/generation comparisons,
+// not "try adapter, then scan all required properties, then fall back". The
+// selected tier can still iterate its RESULT set — O(matches) is the point —
+// but deciding WHICH structure to trust is O(1) per Law after refresh.
+//
+// Currency follows DERIVED_STATE_LEDGER.md: law text, world structure and the
+// relation graph are distinct signals. An adapter road is selected only when
+// its law condition revision matches, it is current, and it is STRICTLY
+// narrower than the lower vocabulary/sweep candidate set. Equal-width higher
+// tiers are refused: a higher label that buys no narrowing is pure overhead.
+void LawManager::refreshCandidateRoute(const Law& law) const {
+    const std::string lawId = law.getIdentifier();
+    const std::uint64_t textRevision = Law::textRevision();
+    const std::uint64_t structural = Universe::instance().structuralRevision();
+    const bool hasGraph = Universe::instance().hasRelationGeneration();
+    const std::size_t graph = hasGraph ? Universe::instance().relationGeneration() : 0;
+    const std::uint64_t adapterGeneration =
+        _useSlowAdapter ? _adapter.candidateGenerationFor(lawId) : 0;
+
+    auto existing = _candidateRoutes.find(lawId);
+    if (existing != _candidateRoutes.end()) {
+        const CandidateRoute& route = existing->second;
+        if (route.lawTextRevision == textRevision &&
+            route.conditionRevision == law.conditionRevision() &&
+            route.structuralRevision == structural &&
+            route.hasRelationGeneration == hasGraph &&
+            (!hasGraph || route.relationGeneration == graph) &&
+            route.adapterRouteGeneration == adapterGeneration) {
+            return;
+        }
+    }
+
+    ++_candidateRouteRefreshCount;
+    CandidateRoute chosen;
+    chosen.lawTextRevision = textRevision;
+    chosen.conditionRevision = law.conditionRevision();
+    chosen.structuralRevision = structural;
+    chosen.relationGeneration = graph;
+    chosen.hasRelationGeneration = hasGraph;
+    chosen.adapterRouteGeneration = adapterGeneration;
+
+    // Tier 0 floor: whole eligible world. We need only its CARDINALITY here,
+    // not the vector itself, to decide whether a higher tier is narrower.
+    std::size_t lowerCount = Universe::instance().beings().size();
+
+    // Tier 2 vocabulary route. Its "route" is simply the rarest required name.
+    // Pick it when the index is refreshed, not once per use of sweepSubjects.
+    const auto& required = law.requiredProperties();
+    if (!required.empty()) {
+        refreshVocabularyIndex();
+        chosen.tier = CandidateTier::Vocabulary;
+        const std::vector<Singular*>* seed = nullptr;
+        for (const std::string& name : required) {
+            auto it = _vocabularyIndex.find(name);
+            if (it == _vocabularyIndex.end()) {
+                // Proven empty is the narrowest possible vocabulary answer.
+                chosen.vocabularySeed = name;
+                lowerCount = 0;
+                seed = nullptr;
+                break;
+            }
+            if (!seed || it->second.size() < seed->size()) {
+                seed = &it->second;
+                chosen.vocabularySeed = name;
+            }
+        }
+        if (seed) lowerCount = seed->size();
+    }
+
+    // Higher retained-road tier. For now the O(1) view deliberately accepts
+    // only ONE road; multi-road union/ranking belongs to Step 4's route
+    // competition on the slow adapter clock. The route must also have been
+    // registered from THIS condition revision.
+    if (_useSlowAdapter) {
+        const auto routeRevision = _adapterRouteRevision.find(lawId);
+        const bool routesMatchLaw =
+            routeRevision != _adapterRouteRevision.end() &&
+            routeRevision->second == law.conditionRevision();
+
+        const std::vector<Singular*>* road = nullptr;
+        if (routesMatchLaw && _adapter.candidateViewFor(lawId, road) && road &&
+            road->size() < lowerCount) {
+            chosen.tier = CandidateTier::AdapterRoad;
+            chosen.vocabularySeed.clear();
+        }
+    }
+
+    _candidateRoutes[lawId] = std::move(chosen);
+}
+
+std::string LawManager::candidateTierFor(const Law& law) const {
+    refreshCandidateRoute(law);
+    auto it = _candidateRoutes.find(law.getIdentifier());
+    if (it == _candidateRoutes.end()) return "sweep";
+    switch (it->second.tier) {
+        case CandidateTier::AdapterRoad: return "adapter-road";
+        case CandidateTier::Vocabulary: return "vocabulary";
+        case CandidateTier::Sweep:       return "sweep";
+    }
+    return "sweep";
+}
+
+// Who a law sweeps when it has no targets Formation: consume one cached,
+// current route and let couldApplyTo / the condition remain the truth.
 std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
     const auto& targets = law.targets().getMembers();
     if (!targets.empty()) {
-        // An explicit targets Formation is the author's own answer to "whom",
-        // and it overrides the derived filter — but a target that has since
-        // been unmade is still no one.
+        // An explicit targets Formation is the author's own answer to "whom".
         std::vector<Singular*> chosen;
         chosen.reserve(targets.size());
         for (Singular* target : targets) {
@@ -2435,63 +2541,53 @@ std::vector<Singular*> LawManager::sweepSubjects(const Law& law) const {
         return chosen;
     }
 
-    // THE PRE-LOADED ROAD, when the adapter can show it is current. Its members
-    // are the beings the law's `Related` conjuncts hold of, walked on the slow
-    // clock instead of derived here. `couldApplyTo` still decides, exactly as it
-    // does for the vocabulary index below: the adapter only proposes.
-    if (_useSlowAdapter) {
-        // Law text can change between maintenance Moments. A road registered
-        // for an older condition revision is not allowed to answer even if the
-        // world/graph generations are current; fall back until the slow clock
-        // has synchronized this Law's routes.
-        const auto routeRevision = _adapterRouteRevision.find(law.getIdentifier());
-        const bool routesMatchLaw =
-            routeRevision != _adapterRouteRevision.end() &&
-            routeRevision->second == law.conditionRevision();
-        std::vector<Singular*> travelled;
-        if (routesMatchLaw && _adapter.candidatesFor(law.getIdentifier(), travelled)) {
+    refreshCandidateRoute(law);
+    auto routeIt = _candidateRoutes.find(law.getIdentifier());
+    if (routeIt == _candidateRoutes.end()) {
+        // Defensive widening. A missing cache entry may cost a sweep; it must
+        // never cost a Law its subjects.
+        return Universe::instance().beings();
+    }
+
+    const CandidateRoute& route = routeIt->second;
+
+    if (route.tier == CandidateTier::AdapterRoad) {
+        const std::vector<Singular*>* travelled = nullptr;
+        if (_adapter.candidateViewFor(law.getIdentifier(), travelled) && travelled) {
             std::vector<Singular*> chosen;
-            chosen.reserve(travelled.size());
-            for (Singular* being : travelled) {
-                if (being && law.couldApplyTo(*being)) chosen.push_back(being);
+            chosen.reserve(travelled->size());
+            for (Singular* being : *travelled) {
+                if (!being || Universe::instance().isUnmade(being)) continue;
+                if (law.couldApplyTo(*being)) chosen.push_back(being);
             }
             return chosen;
         }
+
+        // The road went stale between selection and consumption. Refuse it,
+        // invalidate the decision and immediately descend one rung.
+        invalidateCandidateRoute(law.getIdentifier());
+        refreshCandidateRoute(law);
+        routeIt = _candidateRoutes.find(law.getIdentifier());
+        if (routeIt == _candidateRoutes.end()) return Universe::instance().beings();
     }
 
-    const auto& required = law.requiredProperties();
-    if (required.empty()) return Universe::instance().beings();  // truly about everyone
+    const CandidateRoute& fallback = routeIt->second;
+    if (fallback.tier == CandidateTier::Vocabulary) {
+        refreshVocabularyIndex();
+        auto seedIt = _vocabularyIndex.find(fallback.vocabularySeed);
+        if (seedIt == _vocabularyIndex.end()) return {};
 
-    // Self-guarding: an integer compare when tick() already refreshed, a full
-    // rebuild when this was reached some other way. Never a stale read.
-    refreshVocabularyIndex();
-
-    // Seed from the RAREST required name and filter that, instead of walking
-    // the world. Every required name must hold, so the smallest of their member
-    // lists is already a superset of the answer — and picking the smallest is
-    // the cheap, metric-free stand-in for §5's cost model, where fan-out is
-    // what an edge weight is supposed to measure. When §5 lands with a real
-    // value-per-cost ranking, this is the call site that grows it.
-    //
-    // A name absent from the index means NOBODY carries it, so the law has no
-    // subjects — the fast path for a law nothing can satisfy. That is a sound
-    // narrowing (provably IMPOSSIBLE, the only kind §3.0 permits), not a guess:
-    // the index was built with the same predicate couldApplyTo uses.
-    const std::vector<Singular*>* seed = nullptr;
-    for (const std::string& name : required) {
-        auto it = _vocabularyIndex.find(name);
-        if (it == _vocabularyIndex.end()) return {};
-        if (!seed || it->second.size() < seed->size()) seed = &it->second;
+        std::vector<Singular*> chosen;
+        chosen.reserve(seedIt->second.size());
+        for (Singular* being : seedIt->second) {
+            if (!being || Universe::instance().isUnmade(being)) continue;
+            if (law.couldApplyTo(*being)) chosen.push_back(being);
+        }
+        return chosen;
     }
-    if (!seed) return Universe::instance().beings();   // index not built yet
 
-    std::vector<Singular*> chosen;
-    chosen.reserve(seed->size());
-    for (Singular* being : *seed) {
-        // couldApplyTo still decides. The index only proposes.
-        if (being && law.couldApplyTo(*being)) chosen.push_back(being);
-    }
-    return chosen;
+    // Tier 0: complete over-approximating floor.
+    return Universe::instance().beings();
 }
 
 // ---------------------------------------------------------------------------

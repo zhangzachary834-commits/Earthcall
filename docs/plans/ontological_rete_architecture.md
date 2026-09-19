@@ -109,18 +109,19 @@ regress. Nothing here may be built without its ledger row
 **The invariant every step serves:** use the highest tier whose soundness *and* currency are
 established; otherwise fall to the highest safe tier below. Refusing to answer is always correct.
 
-### Step 1 — Branch-stable provenance *(blocks steps 2, 6, 7)*
-`Prophetic::Index` keys everything on `lawId`: `WriteEffect{lawId, path, range, via}` and
-`ReadDemand{lawId, path, satisfying, aboutInstances}`. A law whose condition is
-`Any(A, B)` therefore collapses into one set of demands, so a relevance edge cannot say *which arm*
-it serves. Give `ConditionNode`/`ActionNode` a stable identity that survives recompilation
-(`Law::recompile()` rebuilds the predicates wholesale) and carry it on both records.
-**Test:** two laws differing only in one arm of an `Any` must produce distinguishable branch ids
-across a recompile and across a save/load round trip.
-**Trap:** the id must be derived from the authored text, not from pointer or vector position —
+### ✅ Step 1 — Branch-stable provenance *(built 2026-09-18; unblocks step 2)*
+Before 2026-09-18, `Prophetic::Index` keyed effects only on `lawId`, so a law whose
+condition was `Any(A, B)` could not say *which arm* a relevance edge served. It now carries
+`WriteEffect{lawId, branchId, ...}` and `ReadDemand{lawId, branchId, ...}`, with branch ids
+derived deterministically from the authored node text. The identity therefore survives
+`Law::recompile()` rebuilding executable predicates and survives the condition/action JSON
+round trip used by save/load.
+**Test:** two `Any` arms produce distinguishable branch ids, and those ids survive the JSON
+round trip; action branches receive the same witness.
+**Trap retained:** the id is derived from authored text, not pointer or vector position —
 `_conditionPredicates` is cleared and rebuilt on every edit.
 
-### Step 2 — The Prophetic relevance graph *(Tier 3–5 material; the join problem)*
+### ✅ Step 2 — The Prophetic relevance graph *(derived layer built 2026-09-18)*
 Zach, 2026-09-16: *the same abstract interpretation that filters the possibility landscape can
 construct an ahead-of-time graph of relevancy Relations.* Most of the proof machinery exists:
 `Index::writeRangeOf(path)` (union of every authored write, path-normalized across referent
@@ -139,19 +140,42 @@ when `Index::complete()` is false, not locally around the opaque law.
 **Test:** a law that writes into another's demand appears; one whose range is provably disjoint does
 not; one opaque law makes every edge fail open.
 
-### Step 3 — The tier query contract
-One call the hot path can make: *what is the highest current sound route for this Law?* Today
-`sweepSubjects` asks the adapter, then the vocabulary index, then falls back — hard-coded order.
-**Constraint, measured:** tier selection must be **O(1) per law**, never per candidate. The sweep's
-per-candidate cost is ~8.7 µs; anything consulting several structures per candidate loses to what it
-replaces. `SlowAdapter::candidatesFor` is the shape to keep: a map lookup plus two integer compares.
-**Constraint, measured:** a higher tier must be **narrower**, not merely higher. In chess the Tier-2
-road and the vocabulary index both return the same 32 candidates, and the adapter measured *slower*
-there. A tier that returns the tier-below's set is a pure loss.
-**Currency:** three signals exist and answer different questions — `Universe::structuralRevision()`
-(beings arriving, leaving, gaining properties), `Universe::relationGeneration()` (every write to the
-graph, including `loadFromJson`, which announces nothing), `Law::textRevision()`. See
-`DERIVED_STATE_LEDGER.md` §2.
+**Built 2026-09-18:** `Prophetic::Index::relevanceEdges()` now materializes this graph as
+derived C++ state, keyed by stable authored branch provenance and carrying `aboutInstances`.
+It is deliberately not yet reified as world Relations and has no narrowing authority on the
+hot path. `relevanceComplete()` is false and the graph is empty when either read or write
+analysis is opaque. `prophetic_rete_test` §H guards branch identity across JSON round trips,
+`Any`-arm distinction, pairwise disjointness, and global opacity. Step 3 now consumes these lower-tier structures through one cached query. The next bounded
+implementation is Step 4's route competition; reifying roads into a Person's world remains gated below.
+
+### ✅ Step 3 — The tier query contract *(built 2026-09-18)*
+The hot path now asks one question: *what is the highest current sound route already selected for
+this Law?* `LawManager::_candidateRoutes` stores that answer per Law. `sweepSubjects` no longer
+tries the adapter and then scans every required property name each time it runs; after currency
+checks it consumes one named source: complete sweep, vocabulary seed, or one current retained road.
+
+**Steady-state selection is O(1) per Law.** The cache key is checked with constant-time revision /
+generation comparisons. Expensive work is kept off the per-candidate loop: the vocabulary seed is
+chosen when the route decision refreshes; the adapter exposes a no-copy `candidateViewFor()` for
+the current single-road case. Multi-road union/ranking is deliberately deferred to Step 4 rather
+than sneaking O(number-of-roads) selection back into the frame path.
+
+**Higher must mean narrower.** A current adapter road is selected only when its candidate cardinality
+is strictly smaller than the lower vocabulary/sweep route. Equal-width roads fall back. This is the
+measured Chess lesson encoded as a contract rather than a special case.
+
+**Currency:** the decision records `Law::textRevision()`, the Law's
+`conditionRevision()`, `Universe::structuralRevision()`,
+`Universe::relationGeneration()`, and an O(1) per-Law adapter-road currency stamp. The last
+signal changes when that road moves between unbuilt/built/capped states or is rebuilt under a new
+world/graph generation; a maintenance revisit under the same world leaves it unchanged. This lets a
+Law promote upward when the independent clock finishes a road without making every slow-clock tick
+churn every Law's tier cache.
+
+**Test:** `slow_adapter_parity_test` now additionally proves steady frames do not reselect; a
+narrower current road promotes; unchanged slow-clock revisits do not churn the choice; an equal-width
+higher road is refused; and a stale road immediately falls to the lower complete tier while parity
+remains identical.
 
 ### Step 4 — Route competition in the slow adapter
 Zach, 2026-09-16: *where tiers overlap in subkinds the slow adapter has to judge which subkind is
