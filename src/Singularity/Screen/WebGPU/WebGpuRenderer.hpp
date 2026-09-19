@@ -211,6 +211,9 @@ private:
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
+        // Derived solely from SDF tree structure. Compute it when this memo is
+        // compiled rather than re-walking the AST for every draw of a static field.
+        bool isProvenHeightfield = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
