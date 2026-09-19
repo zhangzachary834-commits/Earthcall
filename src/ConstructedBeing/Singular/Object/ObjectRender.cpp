@@ -632,7 +632,9 @@ void Object::drawSmoothModel() const {
     // RenderMode::Mesh opts a Law OUT of the exact analytic path even where
     // the backend supports it — trading exactness for the instanced draw
     // path only tessellated meshes get.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    // Rung 4 Migration: The rendering optimization decision is now Governed.
+    // We strictly honor the authored _renderMode instead of hiding a backend capability check.
+    if (_renderMode == RenderMode::Analytic) {
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
@@ -649,7 +651,8 @@ void Object::drawComplexModel() const {
     // The UV side mesh and N-gon disks are a drawing cache. Backends that
     // can march an SDF draw the primitive instead, same door as spheres.
     // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    // Rung 4 Migration: The rendering optimization decision is now Governed.
+    if (_renderMode == RenderMode::Analytic) {
         geom::SdfNode field;
         if (geom::sdfFromComplex(complexData, field)) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
@@ -689,7 +692,8 @@ void Object::drawFieldModel() const {
     // no tessellation seams, and the surface is exact at any zoom. Backends that
     // cannot fall back to the cached mesh, which is why this asks rather than
     // always calling drawImplicit.
-    if (r.rendersImplicitExactly() && _renderMode != RenderMode::Mesh) {
+    // Rung 4 Migration: The rendering optimization decision is now Governed.
+    if (_renderMode == RenderMode::Analytic) {
         // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
         // on first access after a revision bump, mirroring rebuildFieldMesh();
         // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.

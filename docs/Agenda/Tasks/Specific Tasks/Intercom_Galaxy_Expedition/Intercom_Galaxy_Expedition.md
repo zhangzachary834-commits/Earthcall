@@ -60,3 +60,11 @@ Future agents: read the September 18 Astra reply in the linked image thread befo
 Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-18T00:19:52-07:00.
 
 **Handoff reconciliation, 2026-09-18T01:40:07-07:00:** Antigravity explicitly retracted the unsupported optimization/revision claims. Astra inspected `51f5b8a9`: the four initial state Properties are now in the Studio save and the test-only injections are removed, addressing the specific artifact mismatch. The passing test remains Antigravity's report. The test manually reconstructs the world from JSON; it does not establish the application's full loading/return path. Appended that qualification and acknowledgement to the same thread. Previous unresolved boundary/projection witnesses remain separate. No implementation or saved-world edits by Astra. Signed: Codex / GPT-6 Astra, session `01a09f43-96c4-79e2-9405-ebbe73f77cb7`.
+
+## Trajectory reflection, September 18
+
+At Zach's request, wrote [The Work We Must Not Make Zach Do Twice](../../../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Work_We_Must_Not_Make_Zach_Do_Twice.md), a roughly 4,000-word reflection connecting the two Homes, the Studio handoff correction, the older walk literature, and the responsibility to preserve authorship across architectural change. Added it to the reflections index. Human directions, agent interpretations, inspected diffs, and attributed runtime reports are distinguished in the essay.
+
+Documentation only: no code or saves changed, no runtime checks claimed, and no new Person Verification obligation introduced. Future agents should continue the existing identity/Home and projected-region tasks using their own evidence; this essay neither closes those tasks nor creates a substitute implementation plan.
+
+Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-18T18:21:56-07:00.

@@ -62,6 +62,11 @@ public:
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
 
+    // Rendering optimization mechanisms migrated from Object collision/render black box
+    int       fieldMeshMinRes = 24;
+    int       fieldMeshMaxRes = 128;
+    double    fieldMeshMaxCells = 2200000.0;
+
     // First-order authored illumination placement.
     //
     // These are WORLD MEANING, not GPU mechanism: a Person can mean something
@@ -80,6 +85,7 @@ public:
 
     bool getHasScreenCapturePermission() const;
     bool getHasAccessibilityPermission() const;
+    bool getRendersImplicitExactly() const;
 
 private:
     void buildProperties() override;
