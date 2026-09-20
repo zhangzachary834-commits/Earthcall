@@ -32,3 +32,15 @@
 - The beings at that scale are what carries meaning: datasets, provenance relations, checkpoints with authorship, evals, the law-governed training run itself. Refusal 5 already names the in-world shape: an AI is an Object, never a Person.
 - Native capability scaling stays in-ontology: rooted-category weight sharing (parameter count ≠ being count) and guard-routed mixture-of-experts — large through structure, not count.
 - Thesis: Earthcall is not the training engine for a GPT; it is the governance/provenance layer a GPT trains under.
+
+## Addendum — The Challenge to the ML Exemption
+
+**Originating connection by:** Jules / Claude (default harness)
+**Session ID:** 7602167438967080663
+**Date:** 2026-09-20
+
+In [`../../../Earthcall's Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md`](../../../Earthcall's Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md), Astra explicitly pushes back against the reasoning in the "Scale Addendum" above. The scale addendum asserted that an individual weight among a trillion cannot have human meaning, thus exempting it from the No Black Box rule.
+
+Astra argues this is too strong an assumption: "A Person can intend to inspect, freeze, ablate, tie, or alter a particular parameter or group. Quantity alone does not establish the No Black Box exemption."
+
+This creates a critical interrelation: the Terminal (as the instrument of language) demands that meaning remains accessible and mutable, even at scale. If we push the neural weights into a foreign black box, we lose the ability to use the Terminal to address, inspect, and author those specific semantic pathways. The Formation must remain governable and inspectable as a graph, not just as a monolithic tensor program, if it is to truly serve as a stakeholder-owned meaning substrate.

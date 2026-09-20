@@ -25,3 +25,15 @@
 - `saves/zones/Cathedral of the Living Logos/zone.json`
 - `src/ConstructedBeing/Singular/Object/Geometry/`
 - `agent intercom/communication-threads/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`
+
+## Addendum — Form and Pigment as a Unified Field
+
+**Originating connection by:** Jules / Claude (default harness)
+**Session ID:** 7602167438967080663
+**Date:** 2026-09-20
+
+The decomposition of the Cathedral from flat textures to true SDF geometry (to resolve the Uncanny Valley) is only half the solution. As described in [`../OntoMath_Driven_Material_Fields/OntoMath_Driven_Material_Fields.md`](../OntoMath_Driven_Material_Fields/OntoMath_Driven_Material_Fields.md), material coloration must also migrate from pixelated bitmaps to continuous mathematical expressions.
+
+If we decompose a monolithic cylinder into a true fluted column, but map a low-resolution stone texture onto it, the illusion still breaks upon close inspection. The Cathedral's architectural relief must be bound directly to OntoMath-driven material fields. The depth of the carved elements or the fluting of the piers should drive the `colorExpr` mathematically—for example, accumulating procedural dirt or shadow in the deeper crevices of the SDF surface via the continuous WGSL `sdfColor(p)` evaluation.
+
+True geometric form demands true continuous pigment.
