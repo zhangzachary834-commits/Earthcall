@@ -1,6 +1,7 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <cstdint>
 #include <string>
@@ -240,6 +241,7 @@ json Material::toJson() const {
     if (!faceTextures.empty()) {
         j["faceTextures"] = faceTexturesToJson(faceTextures);
     }
+    Singularity::Storage::writeSingularProperties(j, *this);
     return j;
 }
 
@@ -266,6 +268,7 @@ Material Material::fromJson(const json& j) {
     if (j.contains("faceTextures")) {
         faceTexturesFromJson(m, j["faceTextures"]);
     }
+    Singularity::Storage::readSingularProperties(j, m);
     return m;
 }
 
