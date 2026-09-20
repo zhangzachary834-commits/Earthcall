@@ -518,6 +518,9 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
 - [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.
 
+*   **Property Predication and Lexeme Serialization**: Please verify `docs/architecture/interrelations/PROPERTY_PREDICATION_AND_LEXEME_SERIALIZATION.md` accurately reflects the application of the property predication doctrine onto the semantic graph serialization.
+*   **Substrate Isomorphism and First Mover Reversal**: Please verify `docs/architecture/interrelations/SUBSTRATE_ISOMORPHISM_AND_FIRST_MOVER_REVERSAL.md` correctly captures how the decoupling of execution and representation lays the groundwork for eventually bootstrapping the C++ engine out of the compilation loop.
+*   
 ## Person / Object Identity Separation & Masquerading Refusal (added 2026-09-19)
 - [ ] Attempt to create or name an Object "Zach" (or any registered Person name) in the Creator Console / Singular Window: confirm the engine refuses the name and prevents an Object from masquerading as a Person. Headless guard `person_not_object_test.cpp` passes; Zach direct in-app witness pending.
 
