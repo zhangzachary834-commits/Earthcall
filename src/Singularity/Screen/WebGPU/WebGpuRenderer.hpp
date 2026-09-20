@@ -216,7 +216,11 @@ private:
         uint32_t revision = 0xffffffff;
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
+        // Full authored radiance content identity. A change here means at least
+        // the parameter block must be reconsidered; whether WGSL structure also
+        // changed is decided by radianceStructure below.
         uint64_t radianceRevision = 0xffffffffffffffffULL;
+        std::string radianceStructure;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         const OntoMath::Piecewise* radianceExprPtr = nullptr;
         sdfwgsl::Program prog;
