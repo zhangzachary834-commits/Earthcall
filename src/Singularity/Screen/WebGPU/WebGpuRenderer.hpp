@@ -217,8 +217,12 @@ private:
     // theorem in a std430/WGSL-friendly 16-byte-aligned layout. meta is:
     //   x = first child index (rebased to the batch buffer at draw time)
     //   y = child count (0 or 8)
-    //   z = provedNoZero (1 only when evalRange proved zero impossible)
+    //   z = provedPositiveOutside (1 only when evalRange proved f > 0)
     //   w = boundFinite (diagnostic/fail-open bit)
+    //
+    // A proved-negative cell is zero-free too, but it is INSIDE the surface:
+    // the baseline marcher must sample that sign to register a hit. Only
+    // proved-positive outside space is lawful to fast-forward through.
     struct SdfRangeGpuNode {
         glm::vec4 boxMin{0.0f};
         glm::vec4 boxMax{0.0f};
