@@ -295,6 +295,11 @@ private:
     // the same proof tree and skips proved-zero-free ray cells before exact SDF
     // evaluation. OFF remains the fail-open baseline and parity oracle.
     bool _sdfRangeProxyEnabled = false;
+    // Tightening the raster cube itself is independently quarantined after the
+    // native parity corpus found a one-pixel SmoothUnion@xform edge mismatch.
+    // The proof hierarchy may still build, cull a completely zero-free draw,
+    // and accelerate rays internally; only proxy-edge shrink is disabled.
+    static constexpr bool kSdfRangeRasterTighteningVerified = false;
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
     // A complete depth-5 octree contains at most
     // 1+8+64+512+4096+32768 = 37,449 nodes. Keep headroom so the real
