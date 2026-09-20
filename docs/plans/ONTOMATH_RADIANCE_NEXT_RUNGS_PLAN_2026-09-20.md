@@ -3,7 +3,7 @@
 **Date:** 2026-09-20  
 **Architectural direction:** Zach  
 **Written by:** GPT-5.6 Sol  
-**Status:** roadmap; Phase 2 is merged
+**Status:** roadmap; Phase 2 merged; Rung 3 implemented on `sol/ontomath-radiance-next-rungs-20260920` and awaiting final branch CI evidence
 
 ## Purpose
 
@@ -144,6 +144,20 @@ Goals:
 This rung changes no ontology. It only strengthens the live Person-facing proof of Phase 2.
 
 **Compatibility:** exact. Existing `rho(p)` unchanged.
+
+### Rung 3 implementation — 2026-09-20
+
+Implemented without widening or reinterpreting `rho`:
+
+- the production OntoMath -> WGSL emitter now exposes an exact scalar-expression layout identity, so numeric authored edits refresh parameter slots while operator/tree/variable edits regenerate WGSL;
+- the active radiance layout is inspected once per authored content revision and represented to per-Object SDF memos by a shared structural generation, avoiding an O(objects × AST) walk and duplicated structure strings;
+- unsupported authored radiance refuses before stale shader reuse, with read-only `@screen-channel.sdfProgramRefusals` and `@screen-channel.sdfLastProgramRefusal` telemetry;
+- the Sun Zone preserves the Phase-2 mesh cube as a control and adds two identical persisted Field/SDF sphere witnesses at camera-visible near/far positions;
+- the save-hydration witness proves the two SDFs share geometry/material and that the actual saved `rho` evaluates stronger at the near witness;
+- the CPU WGSL witness proves numeric edits preserve emitted structure/parameter layout, structural edits change it, and unsupported math refuses;
+- the native macOS `webgpu_object_test` now proves the real Object -> `drawFieldModel` -> `drawImplicit` path: a numeric `rho` edit changes pixels with zero shader compiles, records a cache hit, uploads refreshed GPU parameter bytes, a structural edit recompiles, and an unsupported edit produces an explicit refusal with no stale rendered answer.
+
+The native pixel witness is wired into the existing macOS SDF verification job. Final pass/fail evidence belongs to the branch CI run/PR; this document intentionally does not pre-claim a result.
 
 ---
 
