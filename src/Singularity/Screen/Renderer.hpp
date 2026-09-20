@@ -60,6 +60,12 @@ public:
         uint32_t sdfRangeHierarchyBuilds = 0;
         uint32_t sdfRangeProxyDraws = 0;
         uint32_t sdfRangeProxyCulledDraws = 0;
+        // Next spatial-Prophetic rung: draws that actually supplied a
+        // conservative hierarchy to the fragment marcher, plus proof-buffer
+        // bytes uploaded this frame. Stable scenes should upload zero after
+        // warmup while traversalDraws remains nonzero.
+        uint32_t sdfRangeTraversalDraws = 0;
+        size_t   sdfRangeNodeBytesUploaded = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
