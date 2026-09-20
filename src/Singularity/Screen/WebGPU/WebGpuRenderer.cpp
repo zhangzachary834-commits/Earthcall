@@ -1138,6 +1138,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeHierarchy = {};
             memo->rangeProxy = {};
             memo->rangeGpuNodes.clear();
+            memo->rangeHasPositiveSkip = false;
             memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
         } else {
@@ -1232,16 +1233,21 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             // indices stay memo-local here; batching rebases them into the shared
             // per-pipeline storage buffer without re-deriving any mathematics.
             memo->rangeGpuNodes.clear();
+            memo->rangeHasPositiveSkip = false;
             memo->rangeGpuNodes.reserve(memo->rangeHierarchy.nodes.size());
             for (const geom::SdfRangeNode& node : memo->rangeHierarchy.nodes) {
                 SdfRangeGpuNode packed;
                 packed.boxMin = glm::vec4(node.boxMin, 0.0f);
                 packed.boxMax = glm::vec4(node.boxMax, 0.0f);
+                const bool positiveSkip =
+                    geom::rangeNodeProvesPositiveOutside(node);
                 packed.meta = glm::uvec4(
                     node.firstChild,
                     static_cast<uint32_t>(node.childCount),
-                    geom::rangeNodeProvesPositiveOutside(node) ? 1u : 0u,
+                    positiveSkip ? 1u : 0u,
                     node.boundFinite ? 1u : 0u);
+                memo->rangeHasPositiveSkip =
+                    memo->rangeHasPositiveSkip || positiveSkip;
                 memo->rangeGpuNodes.push_back(packed);
             }
 
@@ -1285,7 +1291,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // nothing, so they remain on the exact baseline path. FieldNode draws remain
     // excluded because zero-set emptiness says nothing about volumetric density.
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
-        memo->rangeReady && memo->rangeHierarchy.provedEmptyNodes > 0 &&
+        memo->rangeReady && memo->rangeHasPositiveSkip &&
         !memo->rangeGpuNodes.empty()) {
         auto& rangeBatch = _sdfRangeNodeBatches[sp];
         const uint64_t base = static_cast<uint64_t>(rangeBatch.size());
