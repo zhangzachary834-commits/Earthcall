@@ -88,8 +88,11 @@ bool ourverseFromJson(Ourverse& ourverse,
         loadedAny = true;
     }
 
-    loadedAny = Singularity::Storage::readSingularProperties(
-                    json, ourverse, resolveMember)
-                || loadedAny;
+    const bool hasSemanticProperties =
+        json.contains("authoredProperties") ||
+        json.contains("registeredProperties") ||
+        json.contains("designatedZones");
+    Singularity::Storage::readSingularProperties(json, ourverse, resolveMember);
+    if (hasSemanticProperties) loadedAny = true;
     return loadedAny;
 }
