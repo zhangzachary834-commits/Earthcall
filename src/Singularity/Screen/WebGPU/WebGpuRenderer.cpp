@@ -1290,7 +1290,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // cell empty. Unknown-only trees would add traversal overhead while skipping
     // nothing, so they remain on the exact baseline path. FieldNode draws remain
     // excluded because zero-set emptiness says nothing about volumetric density.
+    const bool rangeTraversalMarcherVerified =
+        prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
+        rangeTraversalMarcherVerified &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
         !memo->rangeGpuNodes.empty()) {
         auto& rangeBatch = _sdfRangeNodeBatches[sp];
