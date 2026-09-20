@@ -269,6 +269,12 @@ int main() {
               "real-scale Perlin hierarchy respects complete-tree budget");
         check(h.nodes.size() <= 37449,
               "depth-5 octree never exceeds mathematical node maximum");
+        size_t positiveSkipNodes = 0;
+        for (const auto& node : h.nodes) {
+            if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipNodes;
+        }
+        check(positiveSkipNodes > 0,
+              "real-scale Perlin hierarchy contains positive outside cells to skip");
         verifyStructure(h);
         verifyProvedCellsBySampling(perlin, h);
     }
