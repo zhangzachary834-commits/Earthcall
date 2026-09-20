@@ -145,7 +145,7 @@ jobs:
             sdf_range_soundness_test \
             sdf_range_hierarchy_test \
             heightfield_predicate_test \
-            gpu_mastery_test \
+            channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
             webgpu_sdf_color_expr_test
@@ -159,7 +159,7 @@ jobs:
           ./build/sdf_range_soundness_test
           ./build/sdf_range_hierarchy_test
           ./build/heightfield_predicate_test
-          ./build/gpu_mastery_test
+          ./build/channel_paths_test
 
       - name: Run native WebGPU SDF parity witnesses
         shell: bash
