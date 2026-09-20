@@ -242,7 +242,13 @@ int main() {
 
     Relation relation("matrix-relation", refA, refB, true, 0.75f);
     seedSimple(relation, 3);
+    relation.setAttachmentEnabled(true);
     auto relationJson = relationToJson(relation);
+    check(!relationJson.contains("registeredProperties") ||
+              !relationJson["registeredProperties"].contains("attachment.enabled"),
+          "Relation canonical attachment is not duplicated into fallback envelope");
+    relationJson["registeredProperties"]["attachment.enabled"] =
+        propertyValueToJson(PropertyValue(false));
     Relation restoredRelation = relationFromJson(
         relationJson, [&](const std::string& id) -> Singular* {
             if (id == refA.getIdentifier()) return &refA;
@@ -250,6 +256,8 @@ int main() {
             return nullptr;
         });
     assertSimple(restoredRelation, 3, "Relation");
+    check(restoredRelation.getAttachmentEnabled(),
+          "Relation canonical attachment outranks stale fallback duplicate");
 
     Formation formation;
     formation.setIdentifier("formation.persistence-matrix");
