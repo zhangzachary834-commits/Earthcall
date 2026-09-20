@@ -129,6 +129,45 @@ void hydrateFieldPayload(const nlohmann::json& j, Object& obj) {
 
 } // namespace
 
+bool objectRegisteredPropertyNeedsEnvelope(const std::string& propertyName) {
+    // Canonical Object codec ownership. These values already have an
+    // authoritative field/payload elsewhere in this record (or in the paired
+    // Material/Matter substrate). Replaying a duplicate registeredProperties
+    // copy after canonical hydration creates two truths and lets stale values
+    // overwrite newer semantic records.
+    if (propertyName == "position" ||
+        propertyName == "rotation" ||
+        propertyName == "transform" ||
+        propertyName == "center" ||
+        propertyName == "authoritativeAxis" ||
+        propertyName == "targetRotation" ||
+        propertyName == "rotationResponsiveness" ||
+        propertyName == "material" ||
+        propertyName == "x2D" ||
+        propertyName == "y2D" ||
+        propertyName == "zOrder2D" ||
+        propertyName == "renderMode" ||
+        propertyName == "textString" ||
+        propertyName == "color" ||
+        propertyName == "textureResolution") {
+        return false;
+    }
+
+    const auto startsWith = [&](const char* prefix) {
+        return propertyName.rfind(prefix, 0) == 0;
+    };
+    if (startsWith("shape.") ||
+        startsWith("field.") ||
+        startsWith("patch.") ||
+        startsWith("face.")) {
+        return false;
+    }
+
+    // telos, physical, rigid-form dynamics, and future registered properties
+    // with no canonical codec home stay in the universal envelope.
+    return true;
+}
+
 // ------------------------------------------------------------------
 // Object (.ecform / Semantic Text Substrate)
 // ------------------------------------------------------------------
@@ -260,7 +299,8 @@ void to_json(nlohmann::json& j, const Object& obj){
     // Every writable/legible registered property and every authored property
     // gets the same base-Singular semantic envelope. Concrete fields above
     // remain for compatibility and self-describing Object authoring.
-    Singularity::Storage::writeSingularProperties(j, obj);
+    Singularity::Storage::writeSingularProperties(
+        j, obj, objectRegisteredPropertyNeedsEnvelope);
 
     if (!obj.stakeholders().empty()) {
         nlohmann::json shJson = nlohmann::json::array();
@@ -376,7 +416,8 @@ void from_json(const nlohmann::json& j, Object& obj){
 
     // Base Singular semantic state. Identity-valued values may defer until
     // the Zone/session graph has completed hydration.
-    Singularity::Storage::readSingularProperties(j, obj);
+    Singularity::Storage::readSingularProperties(
+        j, obj, {}, objectRegisteredPropertyNeedsEnvelope);
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {
             if (id.is_string()) obj.getPendingElementIds().push_back(id.get<std::string>());
