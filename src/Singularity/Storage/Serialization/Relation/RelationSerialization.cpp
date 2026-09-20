@@ -1,6 +1,7 @@
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -76,6 +77,7 @@ nlohmann::json relationToJson(const Relation& relation) {
     if (relation.hasGroundedType()) {
         out["typeId"] = relation.type;
     }
+    Singularity::Storage::writeSingularProperties(out, relation);
     return out;
 }
 
@@ -122,5 +124,7 @@ Relation relationFromJson(const nlohmann::json& json,
                 relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
         }
     }
+
+    Singularity::Storage::readSingularProperties(json, relation, resolve);
     return relation;
 }
