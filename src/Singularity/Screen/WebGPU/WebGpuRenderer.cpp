@@ -1061,26 +1061,54 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     const SdfPipeline* sp = nullptr;
     bool isProvenHeightfield = false;
     bool needsCompile = true;
+
+    // Radiance has the same structure/value split as geometry. The full content
+    // revision supplied by EngineRender tells us that authored rho changed, but
+    // only the production emitter can tell us whether that edit changes WGSL or
+    // merely the parameter buffer. Never infer structure from pointer identity.
+    const sdfwgsl::ScalarExpressionLayout radianceLayout =
+        sdfwgsl::inspectScalarExpression(radianceExpr());
+    auto recordProgramRefusal = [&](const std::string& why) {
+        auto& stats = mutableFrameStats();
+        ++stats.sdfProgramRefusals;
+        stats.sdfLastProgramRefusal = why;
+        std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", why.c_str());
+    };
+    if (!radianceLayout.ok) {
+        recordProgramRefusal("radiance: " + radianceLayout.error);
+        return;
+    }
+
     MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
         memo = &_programCache[memoId];
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
-            memo->radianceRevision == radianceRevision() &&
-            memo->colorExprPtr == mat.colorExpr.get() &&
-            memo->radianceExprPtr == radianceExpr()) {
+            memo->radianceStructure == radianceLayout.structure &&
+            memo->colorExprPtr == mat.colorExpr.get()) {
             // We have a structural hit unless parameter recollection proves that
             // the claimed structure identity is stale. Start on the cheap path;
-            // only fall back to compile on a refused/mismatched recollection.
+            // only fall back to compile on a mismatched recollection.
             needsCompile = false;
-            // Structural cache hit. If only numeric field values changed,
-            // refresh the parameter block without rebuilding the WGSL module.
-            if (memo->parameterRevision != memoParameterRevision) {
+
+            // Geometry parameters and radiance parameters share the same packed
+            // buffer. Either value-domain revision changing requires one exact
+            // recollection, but does NOT regenerate shader source.
+            const bool valuesChanged =
+                memo->parameterRevision != memoParameterRevision ||
+                memo->radianceRevision != radianceRevision();
+            if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr());
-                if (refreshed.ok && refreshed.values.size() == memo->prog.params.size()) {
+                if (!refreshed.ok) {
+                    recordProgramRefusal(refreshed.error);
+                    return;
+                }
+                if (refreshed.values.size() == memo->prog.params.size()) {
                     memo->prog.params = std::move(refreshed.values);
                     memo->parameterRevision = memoParameterRevision;
+                    memo->radianceRevision = radianceRevision();
+                    memo->radianceExprPtr = radianceExpr();
                 } else {
                     // A parameter-count mismatch means our claimed structural
                     // identity is stale. Fail open to a full compile rather than
@@ -1103,7 +1131,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
-            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", localProg.error.c_str());
+            recordProgramRefusal(localProg.error);
             return;
         }
         sp = sdfPipeline(localProg.wgsl);
@@ -1118,6 +1146,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
             memo->radianceRevision = radianceRevision();
+            memo->radianceStructure = radianceLayout.structure;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->radianceExprPtr = radianceExpr();
             memo->prog = std::move(localProg);
