@@ -363,25 +363,67 @@ static void reportCloudSyncResult(bool success, const std::string& filename) {
     }
 }
 
+static bool atomicWriteFile(const std::string& path,
+                           const std::function<bool(std::ostream&)>& writeCallback,
+                           bool isBinary = false) {
+    if (path.empty()) return false;
+    if (!permitted(path)) return false;
+
+    const std::filesystem::path finalPath(path);
+    const std::filesystem::path temporary =
+        finalPath.string() + ".tmp-" + timestamp() + "-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    std::ios_base::openmode mode = std::ios::out;
+    if (isBinary) mode |= std::ios::binary;
+
+    {
+        std::ofstream out(temporary, mode);
+        if (!out.is_open()) {
+            std::cerr << "[SaveSystem] Failed to open temporary file for writing: "
+                      << temporary.string() << "\n";
+            return false;
+        }
+        if (!writeCallback(out)) {
+            std::error_code ignored;
+            std::filesystem::remove(temporary, ignored);
+            return false;
+        }
+        out.flush();
+        if (!out) {
+            std::error_code ignored;
+            std::filesystem::remove(temporary, ignored);
+            return false;
+        }
+    }
+
+    std::error_code ec;
+    std::filesystem::rename(temporary, finalPath, ec);
+    if (ec) {
+        const std::string renameError = ec.message();
+        std::error_code ignored;
+        std::filesystem::remove(temporary, ignored);
+        std::cerr << "[SaveSystem] Failed to commit file " << path
+                  << ": " << renameError << "\n";
+        return false;
+    }
+    return true;
+}
+
 std::string writeSaveData(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ".ecform");
     if (filename.empty()) return "";
-    if (!permitted(filename)) return "";
 
-    std::ofstream out(filename);
-    if (!out.is_open()) {
-        std::cerr << "[SaveSystem] Failed to open file for writing: " << filename << "\n";
-        return "";
-    }
-    
-    out << j.dump(2);
-    out.flush();
-    const bool wroteOk = static_cast<bool>(out);
-    out.close();
-    if (!wroteOk) {
+    bool success = atomicWriteFile(filename, [&](std::ostream& out) {
+        out << j.dump(2);
+        return static_cast<bool>(out);
+    });
+
+    if (!success) {
         std::cerr << "[SaveSystem] Failed to write " << filename << "\n";
         return "";
     }
+
     std::error_code ec;
     if (!std::filesystem::exists(filename, ec) || std::filesystem::file_size(filename, ec) == 0) {
         std::cerr << "[SaveSystem] Write reported success but " << filename << " is missing or empty\n";
@@ -399,14 +441,7 @@ std::string writeSaveData(const nlohmann::json& j, const std::string& customLabe
 std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& customLabel, const std::string& ext, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ext);
     if (filename.empty()) return "";
-    if (!permitted(filename)) return "";
 
-    std::ofstream out(filename, std::ios::binary);
-    if (!out) {
-        std::cerr << "Failed to open " << filename << " for saving binary data.\n";
-        return filename;
-    }
-    
     std::vector<uint8_t> compressed;
     try {
         compressed = compressData(data);
@@ -414,8 +449,16 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
         std::cerr << "[SaveSystem] Failed to compress " << filename << ": " << e.what() << "\n";
         return "";
     }
-    out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
-    out.close();
+
+    bool success = atomicWriteFile(filename, [&](std::ostream& out) {
+        out.write(reinterpret_cast<const char*>(compressed.data()), compressed.size());
+        return static_cast<bool>(out);
+    }, true);
+
+    if (!success) {
+        std::cerr << "[SaveSystem] Failed to write binary " << filename << "\n";
+        return "";
+    }
 
 #ifdef __EMSCRIPTEN__
     ensureIdbMounted();
@@ -470,18 +513,13 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
 std::string writeMatterData(const std::vector<uint8_t>& data, const std::string& customLabel, SaveType type) {
     std::string filename = makeFilename(customLabel, type, ".ecmatter");
     if (filename.empty()) return "";
-    if (!permitted(filename)) return "";
 
-    std::ofstream out(filename, std::ios::binary);
-    if (!out.is_open()) {
-        std::cerr << "[SaveSystem] Failed to open " << filename << " for saving matter data.\n";
-        return "";
-    }
-    out.write(reinterpret_cast<const char*>(data.data()), data.size());
-    out.flush();
-    const bool wroteOk = static_cast<bool>(out);
-    out.close();
-    if (!wroteOk) {
+    bool success = atomicWriteFile(filename, [&](std::ostream& out) {
+        out.write(reinterpret_cast<const char*>(data.data()), data.size());
+        return static_cast<bool>(out);
+    }, true);
+
+    if (!success) {
         std::cerr << "[SaveSystem] Failed to write matter data to " << filename << "\n";
         return "";
     }
@@ -933,20 +971,10 @@ bool zoneIdentityExists(const std::string& identifier) {
 bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = zoneIdentityPath(identifier);
     if (path.empty()) return false;
-    if (!permitted(path)) return false;
-    std::ofstream out(path);
-    if (!out) {
-        std::cerr << "[SaveSystem] Failed to open zone identity for writing: "
-                  << path << "\n";
-        return false;
-    }
-    out << j.dump(2);
-    out.flush();
-    if (!out) {
-        std::cerr << "[SaveSystem] Failed to write zone identity: " << path << "\n";
-        return false;
-    }
-    return true;
+    return atomicWriteFile(path, [&](std::ostream& out) {
+        out << j.dump(2);
+        return static_cast<bool>(out);
+    });
 }
 
 nlohmann::json readZoneIdentity(const std::string& identifier) {
@@ -1023,40 +1051,11 @@ bool lawIdentityExists(const std::string& identifier) {
 
 bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = lawIdentityPath(identifier);
-    if (path.empty() || !permitted(path)) return false;
-
-    // A shared root must never be observed half-written. The temporary file
-    // is adjacent, so rename is one filesystem commit on supported hosts.
-    const std::filesystem::path finalPath(path);
-    const std::filesystem::path temporary =
-        finalPath.string() + ".tmp-" + timestamp() + "-" +
-        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
-    {
-        std::ofstream out(temporary);
-        if (!out) {
-            std::cerr << "[SaveSystem] Failed to open Law identity temporary file: "
-                      << temporary.string() << "\n";
-            return false;
-        }
+    if (path.empty()) return false;
+    return atomicWriteFile(path, [&](std::ostream& out) {
         out << j.dump(2);
-        out.flush();
-        if (!out) {
-            std::error_code ignored;
-            std::filesystem::remove(temporary, ignored);
-            return false;
-        }
-    }
-    std::error_code ec;
-    std::filesystem::rename(temporary, finalPath, ec);
-    if (ec) {
-        const std::string renameError = ec.message();
-        std::error_code ignored;
-        std::filesystem::remove(temporary, ignored);
-        std::cerr << "[SaveSystem] Failed to commit Law identity " << path
-                  << ": " << renameError << "\n";
-        return false;
-    }
-    return true;
+        return static_cast<bool>(out);
+    });
 }
 
 nlohmann::json readLawIdentity(const std::string& identifier) {
@@ -1101,20 +1100,10 @@ bool homeIdentityExists(const std::string& identifier) {
 bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     const std::string path = homeIdentityPath(identifier);
     if (path.empty()) return false;
-    if (!permitted(path)) return false;
-    std::ofstream out(path);
-    if (!out) {
-        std::cerr << "[SaveSystem] Failed to open home identity for writing: "
-                  << path << "\n";
-        return false;
-    }
-    out << j.dump(2);
-    out.flush();
-    if (!out) {
-        std::cerr << "[SaveSystem] Failed to write home identity: " << path << "\n";
-        return false;
-    }
-    return true;
+    return atomicWriteFile(path, [&](std::ostream& out) {
+        out << j.dump(2);
+        return static_cast<bool>(out);
+    });
 }
 
 nlohmann::json readHomeIdentity(const std::string& identifier) {

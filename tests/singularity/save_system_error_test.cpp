@@ -52,6 +52,42 @@ int main() {
     std::vector<uint8_t> parsedMatter = SaveSystem::readMatterData(badMatterPath);
     check(!parsedMatter.empty(), "Malformed .ecmatter returns raw uncompressed bytes as expected");
 
+    // Test 4: Atomic write-before-commit for writeSaveData (JSON)
+    nlohmann::json testWorld = {{"name", "AtomicWorld"}, {"version", 1}};
+    std::string writtenPath = SaveSystem::writeSaveData(testWorld, "atomic_world", SaveSystem::SaveType::WORLD);
+    check(!writtenPath.empty() && std::filesystem::exists(writtenPath), "writeSaveData creates atomic .ecform file");
+
+    nlohmann::json readWorld = SaveSystem::readSaveData(writtenPath);
+    check(readWorld.contains("version") && readWorld["version"] == 1, "writeSaveData contents match");
+
+    // Overwrite with updated version
+    testWorld["version"] = 2;
+    std::string updatedPath = SaveSystem::writeSaveData(testWorld, "atomic_world", SaveSystem::SaveType::WORLD);
+    nlohmann::json reloadedWorld = SaveSystem::readSaveData(updatedPath);
+    check(reloadedWorld.contains("version") && reloadedWorld["version"] == 2, "Atomic write cleanly overwrites existing save file");
+
+    // Test 5: Atomic write-before-commit for writeZoneIdentity and writeHomeIdentity
+    nlohmann::json zoneDoc = {{"identifier", "AtomicZone"}, {"active", true}};
+    check(SaveSystem::writeZoneIdentity("AtomicZone", zoneDoc), "writeZoneIdentity succeeds atomically");
+    nlohmann::json readZone = SaveSystem::readZoneIdentity("AtomicZone");
+    check(readZone.contains("active") && readZone["active"] == true, "readZoneIdentity matches written atomic zone document");
+
+    nlohmann::json homeDoc = {{"identifier", "AtomicHome"}, {"active", true}};
+    check(SaveSystem::writeHomeIdentity("AtomicHome", homeDoc), "writeHomeIdentity succeeds atomically");
+    nlohmann::json readHome = SaveSystem::readHomeIdentity("AtomicHome");
+    check(readHome.contains("active") && readHome["active"] == true, "readHomeIdentity matches written atomic home document");
+
+    // Verify no stray .tmp- files remain in sandbox
+    bool hasTempFiles = false;
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(sandbox, ec)) {
+        if (entry.path().filename().string().find(".tmp-") != std::string::npos) {
+            hasTempFiles = true;
+            break;
+        }
+    }
+    check(!hasTempFiles, "No temporary .tmp- files left behind after atomic write commits");
+
     // Cleanup
     std::filesystem::remove_all(sandbox);
     SaveSystem::setSaveRoot("");
