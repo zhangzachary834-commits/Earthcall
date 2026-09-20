@@ -209,18 +209,23 @@ int main() {
         const geom::SdfNode perlin =
             geom::makeImplicit(perlinFloorMath(/*amplitude=*/40.0,
                                                /*frequency=*/0.008));
+        // With the directly proved 2.2*sqrt(3) global amplitude bound,
+        // depth 3 is intentionally not yet strong enough to certify the outer
+        // y slabs for this +/-120 domain. At depth 4 the local Lipschitz bound
+        // over the 0.008-scaled argument becomes tighter than the global bound
+        // and the theorem can exclude those slabs without weakening safety.
         const auto h = geom::buildRangeHierarchy(
             perlin, glm::vec3(20.0f, 120.0f, 20.0f),
-            /*maxDepth=*/3, /*maxNodes=*/2000);
+            /*maxDepth=*/4, /*maxNodes=*/5000);
 
         check(h.nodes.size() > 1, "Perlin hierarchy subdivides finite range");
         check(h.provedEmptyNodes > 0,
-              "Perlin hierarchy proves outer vertical slabs empty");
+              "Perlin local Lipschitz hierarchy proves outer vertical slabs empty");
         check(h.ambiguousLeaves > 0,
               "Perlin hierarchy preserves unresolved terrain band");
         check(h.unknownLeaves == 0,
               "supported Perlin expression has finite conservative ranges");
-        check(h.nodes.size() <= 2000, "Perlin hierarchy obeys hard node budget");
+        check(h.nodes.size() <= 5000, "Perlin hierarchy obeys hard node budget");
         verifyStructure(h);
         verifyProvedCellsBySampling(perlin, h);
     }
