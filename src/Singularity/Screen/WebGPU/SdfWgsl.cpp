@@ -1298,7 +1298,17 @@ fn fs(in: VSOut) -> FSOut {
                 t = maxDist + 1.0;
                 break;
             }
+            let oldT = t;
             t = max(t, candidate.x);
+            if (t > oldT) {
+                // A proof-authorized spatial jump is not a marcher step. Any
+                // secant / over-relaxation history describes the old sample
+                // pair and must not be reused as though candidate_step bridged
+                // this larger distance.
+                prev_d = 1e10;
+                candidate_step = 0.0;
+                omega = select(1.0, 1.4, damping > 0.5);
+            }
             rangeCellExit = max(t, candidate.y);
             rangeCandidateActive = true;
             if (t > maxDist) { break; }
