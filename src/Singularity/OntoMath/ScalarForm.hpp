@@ -104,10 +104,19 @@ struct Interval {
         return Interval(roundDown(l), roundUp(h));
     }
     
+    bool exactZero() const { return lo == 0.0f && hi == 0.0f; }
+
     Interval operator+(const Interval& o) const {
+        // Preserve exact algebraic identities before directed widening. This is
+        // not an approximation: x+0 and 0+x are exactly x in real arithmetic,
+        // and Prophetic Rete relies on authored zero remaining a true singleton.
+        if (exactZero()) return o;
+        if (o.exactZero()) return *this;
         return outward(lo + o.lo, hi + o.hi);
     }
     Interval operator-(const Interval& o) const {
+        if (o.exactZero()) return *this;
+        if (exactZero()) return -o;
         return outward(lo - o.hi, hi - o.lo);
     }
     Interval operator-() const { return Interval(-hi, -lo); }
@@ -118,6 +127,10 @@ struct Interval {
     // with. The true product set contributes 0 at exactly those corners (every
     // finite element times the 0 endpoint is 0), so NaN corners read as 0.
     Interval operator*(const Interval& o) const {
+        // 0 multiplied by any real-valued interval is exactly 0, including an
+        // unbounded interval. Preserve that theorem instead of widening the
+        // representational 0 by one ULP.
+        if (exactZero() || o.exactZero()) return Interval(0.0f);
         const auto corner = [](float a, float b) {
             const float p = a * b;
             return std::isnan(p) ? 0.0f : p;
@@ -128,6 +141,7 @@ struct Interval {
     }
     Interval operator/(const Interval& o) const {
         if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
+        if (exactZero()) return Interval(0.0f);
         float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
         if (std::isnan(a) || std::isnan(b) || std::isnan(c) || std::isnan(d))
             return infinite();
