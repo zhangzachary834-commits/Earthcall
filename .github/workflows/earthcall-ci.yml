@@ -113,6 +113,62 @@ jobs:
           ctest --test-dir build --output-on-failure \
             -R '^(language_identity_reference_test|creation_tools_test|interaction_channel_test|creator_console_fixture_law_test|keyboard_shell_shortcuts_test|no_black_box_test|channel_paths_test|dynamic_property_reachability_test|relation_retry_lexeme_test|logos_modality_test|person_not_object_test|zone_native_save_isolation_test|perlin_zone_field_restore_test|object_roundtrip_test|object_serialization_test|matter_semantic_precedence_test|shape_hydration_integrity_test|synthesis_studio_zone_closure_test|chess_zone_native_boot_test|synthesis_studio_full_store_boot_test|second_nature_law_authoring_test|second_nature_law_forge_zone_test|prophetic_rete_test|home_identity_continuity_test|person_migration_test|person_home_migration_boot_test|body_part_test|person_database_test|person_serialization_test|person_display_name_identity_test|authorable_light_contract_test|law_file_tree_fossil_test)$'
 
+  sdf-range-proxy-verification:
+    name: SDF range-proxy verification (macOS)
+    runs-on: macos-14
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+
+      - name: Build SDF proof and GPU parity witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target \
+            sdf_revision_split_test \
+            sdf_wgsl_parameter_refresh_test \
+            sdf_range_soundness_test \
+            sdf_range_hierarchy_test \
+            heightfield_predicate_test \
+            channel_paths_test \
+            webgpu_sdf_parity_test \
+            webgpu_sdf_distance_test \
+            webgpu_sdf_color_expr_test
+
+      - name: Run CPU SDF proof witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/sdf_revision_split_test
+          ./build/sdf_wgsl_parameter_refresh_test
+          ./build/sdf_range_soundness_test
+          ./build/sdf_range_hierarchy_test
+          ./build/heightfield_predicate_test
+          ./build/channel_paths_test
+
+      - name: Run native WebGPU SDF parity witnesses
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/webgpu_sdf_parity_test
+          ./build/webgpu_sdf_distance_test
+          ./build/webgpu_sdf_color_expr_test
+
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
     runs-on: macos-14

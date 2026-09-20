@@ -47,7 +47,13 @@ public:
     // Update live metrics from the active Renderer at the end of each frame.
     void updateMetrics(int drawCalls, int trianglesDrawn, double vramBytes,
                        double uniformBytes, int suballocations, int pipelineSwitches,
-                       int cachedMeshes);
+                       int cachedMeshes, int sdfProgramCompiles = 0,
+                       int sdfProgramCacheHits = 0, int sdfProgramCacheMisses = 0,
+                       double sdfWgslBytesGenerated = 0.0,
+                       double sdfParameterBytesUploaded = 0.0,
+                       int sdfRangeHierarchyBuilds = 0,
+                       int sdfRangeProxyDraws = 0,
+                       int sdfRangeProxyCulledDraws = 0);
 
     int       drawCalls = 0;
     int       trianglesDrawn = 0;
@@ -56,8 +62,20 @@ public:
     int       bufferSuballocations = 0;
     int       pipelineSwitches = 0;
     int       cachedMeshesCount = 0;
+    int       sdfProgramCompiles = 0;
+    int       sdfProgramCacheHits = 0;
+    int       sdfProgramCacheMisses = 0;
+    double    sdfWgslBytesGenerated = 0.0;
+    double    sdfParameterBytesUploaded = 0.0;
+    int       sdfRangeHierarchyBuilds = 0;
+    int       sdfRangeProxyDraws = 0;
+    int       sdfRangeProxyCulledDraws = 0;
     bool      wireframe = false;
     bool      heightGridDdaEnabled = true;
+    // Conservative generic zero-set proxy. Kept off until native GPU parity
+    // corpus validates the activation rung; a Person/Law can explicitly enable
+    // it for measurement through this same authored ScreenChannel property.
+    bool      sdfRangeProxyEnabled = false;
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -109,6 +127,14 @@ private:
     int    getBufferSuballocations() const { return bufferSuballocations; }
     int    getPipelineSwitches() const { return pipelineSwitches; }
     int    getCachedMeshesCount() const { return cachedMeshesCount; }
+    int    getSdfProgramCompiles() const { return sdfProgramCompiles; }
+    int    getSdfProgramCacheHits() const { return sdfProgramCacheHits; }
+    int    getSdfProgramCacheMisses() const { return sdfProgramCacheMisses; }
+    double getSdfWgslBytesGenerated() const { return sdfWgslBytesGenerated; }
+    double getSdfParameterBytesUploaded() const { return sdfParameterBytesUploaded; }
+    int    getSdfRangeHierarchyBuilds() const { return sdfRangeHierarchyBuilds; }
+    int    getSdfRangeProxyDraws() const { return sdfRangeProxyDraws; }
+    int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
 
     std::string _name{"screen-channel"};
 };

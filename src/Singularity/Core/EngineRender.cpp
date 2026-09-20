@@ -136,6 +136,7 @@ namespace Core {
                 clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
                 currentRenderer().setWireframe(screenChannel->wireframe);
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
+                currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -222,7 +223,15 @@ namespace Core {
                                   static_cast<double>(stats.uniformBytesWritten),
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
-                                  static_cast<int>(stats.cachedMeshesCount));
+                                  static_cast<int>(stats.cachedMeshesCount),
+                                  static_cast<int>(stats.sdfProgramCompiles),
+                                  static_cast<int>(stats.sdfProgramCacheHits),
+                                  static_cast<int>(stats.sdfProgramCacheMisses),
+                                  static_cast<double>(stats.sdfWgslBytesGenerated),
+                                  static_cast<double>(stats.sdfParameterBytesUploaded),
+                                  static_cast<int>(stats.sdfRangeHierarchyBuilds),
+                                  static_cast<int>(stats.sdfRangeProxyDraws),
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 if (recorder->isRecording()) {

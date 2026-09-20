@@ -22,6 +22,7 @@
 #include <cmath>   // for mathematical functions
 #include <limits>  // for numeric_limits
 #include <optional>
+#include <utility>
 #include <map>
 #include <stdexcept>
 #include <unordered_set>
@@ -643,6 +644,33 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     return ft.writeSamples(selected, colors);
 }
 
+void Object::rebuildRenderSdfCaches() const {
+    if (!_renderSdfCachesDirty) return;
+
+    _smoothRenderSdf.reset();
+    _complexRenderSdf.reset();
+    _complexPatchRenderSdfs.clear();
+
+    if (_hasSmooth) {
+        _smoothRenderSdf = geom::sdfFromSmooth(smoothData);
+    } else if (_hasComplex) {
+        geom::SdfNode whole;
+        if (geom::sdfFromComplex(complexData, whole)) {
+            _complexRenderSdf = std::move(whole);
+        } else {
+            _complexPatchRenderSdfs.resize(complexData.patches.size());
+            for (size_t i = 0; i < complexData.patches.size(); ++i) {
+                const auto& patch = complexData.patches[i];
+                if (patch.type == geom::SurfacePatch::Type::Smooth) {
+                    _complexPatchRenderSdfs[i] = geom::sdfFromSmooth(patch.smooth);
+                }
+            }
+        }
+    }
+
+    _renderSdfCachesDirty = false;
+}
+
 void Object::drawSmoothModel() const {
     Renderer& r = currentRenderer();
     const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
@@ -667,11 +695,15 @@ void Object::drawSmoothModel() const {
     }
     
     if (analytic) {
+        rebuildRenderSdfCaches();
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
-        r.drawImplicit(geom::sdfFromSmooth(smoothData), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                       getMemoId(), getFieldRevision());
+        if (_smoothRenderSdf) {
+            r.drawImplicit(*_smoothRenderSdf, glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
+        }
         return;
     }
     if (_smoothMesh) r.drawMesh(*_smoothMesh, mat);
@@ -697,12 +729,13 @@ void Object::drawComplexModel() const {
         }
     }
     if (analytic) {
-        geom::SdfNode field;
-        if (geom::sdfFromComplex(complexData, field)) {
+        rebuildRenderSdfCaches();
+        if (_complexRenderSdf) {
             const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
-            r.drawImplicit(field, glm::vec3(std::max(rExt, 0.6f)),
+            r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
-                           getMemoId(), getFieldRevision());
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
             return;
         }
         for (size_t i = 0; i < complexData.patches.size(); ++i) {
@@ -711,8 +744,12 @@ void Object::drawComplexModel() const {
             if (patch.type == geom::SurfacePatch::Type::Smooth) {
                 const float extent = std::max(std::abs(patch.smooth.axes.x),
                     std::max(std::abs(patch.smooth.zTrim.x), std::abs(patch.smooth.zTrim.y))) + 0.25f;
-                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                               getMemoId(static_cast<int>(i) + 1), getFieldRevision());
+                if (i < _complexPatchRenderSdfs.size() && _complexPatchRenderSdfs[i]) {
+                    r.drawImplicit(*_complexPatchRenderSdfs[i],
+                                   glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                                   getMemoId(static_cast<int>(i) + 1), getSdfStructureRevision(), nullptr,
+                                   getSdfParameterRevision());
+                }
             } else if (i < _complexMeshes.size()) {
                 r.drawMesh(_complexMeshes[i], mat);
             }
@@ -750,12 +787,18 @@ void Object::drawFieldModel() const {
         }
     }
     if (analytic) {
-        // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
-        // on first access after a revision bump, mirroring rebuildFieldMesh();
-        // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.
-        const geom::HeightGrid& hg = getHeightGrid();
+        // HeightGrid is derived acceleration data, not field identity. Demand-
+        // build it only when the active backend can actually consume it; while
+        // WebGPU's grazing-root DDA hand-off is quarantined, constructing the
+        // grid here would have no downstream reader.
+        const geom::HeightGrid* hg = nullptr;
+        if (r.usesHeightGridDda()) {
+            const geom::HeightGrid& cached = getHeightGrid();
+            if (cached.dimX > 0) hg = &cached;
+        }
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
-                       getMemoId(), getFieldRevision(), hg.dimX > 0 ? &hg : nullptr);
+                       getMemoId(), getSdfStructureRevision(), hg,
+                       getSdfParameterRevision());
         return;
     }
     rebuildFieldMesh();
