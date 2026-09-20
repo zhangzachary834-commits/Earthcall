@@ -17,6 +17,8 @@ namespace Audio {
 
 namespace {
 
+AudioChannel* gAudioSinkOwner = nullptr;
+
 bool readString(Singular& being, const char* path, std::string& out) {
     PropertyValue value;
     if (!lawGetValue(being, PropertyPath::parse(path), value)) return false;
@@ -51,9 +53,13 @@ bool isLegacyWave(const std::string& timbre) {
 AudioChannel::AudioChannel() = default;
 
 AudioChannel::~AudioChannel() {
-    // The sink captures this channel. A torn-down test LawManager must not
-    // leave a static callback pointing into freed memory.
-    registerAudioSink(nullptr);
+    // Only the channel that actually installed the static sink may remove it.
+    // LawGraph/channel-path prototypes never bind and therefore cannot tear
+    // down the live engine channel merely by leaving scope.
+    if (gAudioSinkOwner == this) {
+        registerAudioSink(nullptr);
+        gAudioSinkOwner = nullptr;
+    }
 }
 
 void AudioChannel::syncRegister(LawManager& laws) {
@@ -78,6 +84,7 @@ AudioChannel* AudioChannel::find(LawManager& laws) {
 }
 
 void AudioChannel::bindSink() {
+    gAudioSinkOwner = this;
     registerAudioSinkChecked(
         [this](Singular& subject, double frequency, double amplitude,
                const std::string& timbre, std::string& reason) {
