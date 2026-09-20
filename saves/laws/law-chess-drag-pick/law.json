@@ -5,301 +5,99 @@
   "identifier": "law-chess-drag-pick",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
-      "children": [
-        {
-          "bindings": {
-            "ptrX": "@interaction-channel.pointerWorld.x"
-          },
-          "function": {
-            "input": "ptrX",
-            "pieces": [
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 0,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -4
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 1,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -3
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 2,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -2
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 3,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 0,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -1
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 4,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 0
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 5,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 1
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 6,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 2
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 7,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 4,
-                "includeHi": true,
-                "includeLo": true,
-                "lo": 3
-              }
-            ]
-          },
-          "kind": 8,
-          "path": "@state.chess.targetX"
-        },
-        {
-          "bindings": {
-            "ptrZ": "@interaction-channel.pointerWorld.z"
-          },
-          "function": {
-            "input": "ptrZ",
-            "pieces": [
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 0,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -4
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 1,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -3
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 2,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": -1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -2
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 3,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 0,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -1
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 4,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 0
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 5,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 1
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 6,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 2
-              },
-              {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 7,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 4,
-                "includeHi": true,
-                "includeLo": true,
-                "lo": 3
-              }
-            ]
-          },
-          "kind": 8,
-          "path": "@state.chess.targetY"
-        },
-        {
-          "eventType": "square-clicked",
-          "kind": 10,
-          "publishObject": "",
-          "publishSubject": ""
-        }
-      ],
-      "kind": 5
-    },
-    "activation": 0,
-    "applicationLog": [],
+    "id": "law-chess-drag-pick",
+    "name": "select-dragged-piece",
+    "enabled": true,
     "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
       "grok-4.6"
     ],
-    "conditionMode": "all",
+    "conditionSubjects": [],
+    "targets": [],
     "conditionModel": {
       "kind": 2,
-      "otherId": "category.chess.piece",
-      "relationType": "instance-of"
+      "relationType": "instance-of",
+      "otherId": "category.chess.piece"
     },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-drag-pick",
-    "name": "select-dragged-piece",
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@state.chess.targetX",
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.targetY",
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gy": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "square-clicked",
+          "publishSubject": "",
+          "publishObject": ""
+        }
+      ]
+    },
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-drag-pick",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "object-drag-started"

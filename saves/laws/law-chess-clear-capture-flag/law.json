@@ -5,64 +5,64 @@
   "identifier": "law-chess-clear-capture-flag",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
-      "kind": 0,
-      "operand": {
-        "t": "bool",
-        "v": false
-      },
-      "path": "capturedThisMove"
-    },
-    "activation": 0,
-    "applicationLog": [],
+    "id": "law-chess-clear-capture-flag",
+    "name": "clear-capture-flag-on-commit",
+    "enabled": true,
     "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
       "grok-4.6"
     ],
-    "conditionMode": "all",
+    "conditionSubjects": [],
+    "targets": [],
     "conditionModel": {
+      "kind": 3,
       "children": [
         {
           "kind": 2,
-          "otherId": "category.chess.piece",
-          "relationType": "instance-of"
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
         },
         {
           "kind": 0,
+          "path": "capturedThisMove",
           "op": 0,
           "operand": {
             "t": "bool",
             "v": true
-          },
-          "path": "capturedThisMove"
+          }
         }
-      ],
-      "kind": 3
+      ]
     },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-clear-capture-flag",
-    "name": "clear-capture-flag-on-commit",
+    "actionModel": {
+      "kind": 0,
+      "path": "capturedThisMove",
+      "operand": {
+        "t": "bool",
+        "v": false
+      }
+    },
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-clear-capture-flag",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "turn-changed"

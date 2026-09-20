@@ -540,28 +540,103 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
         case SdfOp::Leaf: {
             if (n.prim == SdfPrim::Expr) {
                 if (n.mathNode) {
+                    // evalLeaf evaluates authored Expr mathematics in LEAF-LOCAL
+                    // coordinates p = world - offset. Range analysis must bind the
+                    // same local box or a translated field can acquire a theorem
+                    // about the wrong region and incorrectly exclude its zero set.
+                    const glm::vec3 localMin = boxMin - n.offset;
+                    const glm::vec3 localMax = boxMax - n.offset;
                     std::map<std::string, MathNode::RangeValue> vars = {
-                        {kAmbientPointVar, MathNode::RangeValue::makeVector(Interval(boxMin.x, boxMax.x), Interval(boxMin.y, boxMax.y), Interval(boxMin.z, boxMax.z))},
-                        {"x", MathNode::RangeValue::makeScalar(Interval(boxMin.x, boxMax.x))},
-                        {"y", MathNode::RangeValue::makeScalar(Interval(boxMin.y, boxMax.y))},
-                        {"z", MathNode::RangeValue::makeScalar(Interval(boxMin.z, boxMax.z))}
+                        {kAmbientPointVar, MathNode::RangeValue::makeVector(Interval(localMin.x, localMax.x), Interval(localMin.y, localMax.y), Interval(localMin.z, localMax.z))},
+                        {"x", MathNode::RangeValue::makeScalar(Interval(localMin.x, localMax.x))},
+                        {"y", MathNode::RangeValue::makeScalar(Interval(localMin.y, localMax.y))},
+                        {"z", MathNode::RangeValue::makeScalar(Interval(localMin.z, localMax.z))}
                     };
                     auto r = n.mathNode->evalRange(vars);
                     if (r && r->kind == ValueKind::Scalar) return r->scalar;
                 }
                 return retInf();
             }
+
+            if (n.prim == SdfPrim::Convex) {
+                // Convex evaluates max(dot(normal, localP) - d). Plane normals
+                // are authored data and are not structurally guaranteed unit
+                // length, so the generic 1-Lipschitz primitive theorem is not
+                // lawful here. Bound every affine half-space exactly over the
+                // local AABB, then use the exact interval rule for max().
+                if (n.planes.empty()) return Interval(1e9f);
+                const glm::vec3 localMin = boxMin - n.offset;
+                const glm::vec3 localMax = boxMax - n.offset;
+                double maxLo = -std::numeric_limits<double>::infinity();
+                double maxHi = -std::numeric_limits<double>::infinity();
+                for (const glm::vec4& pl : n.planes) {
+                    double lo = -static_cast<double>(pl.w);
+                    double hi = -static_cast<double>(pl.w);
+                    for (int axis = 0; axis < 3; ++axis) {
+                        const double a = static_cast<double>(pl[axis]);
+                        const double x0 = static_cast<double>(localMin[axis]);
+                        const double x1 = static_cast<double>(localMax[axis]);
+                        if (a >= 0.0) {
+                            lo += a * x0;
+                            hi += a * x1;
+                        } else {
+                            lo += a * x1;
+                            hi += a * x0;
+                        }
+                    }
+                    maxLo = std::max(maxLo, lo);
+                    maxHi = std::max(maxHi, hi);
+                }
+                const float lo = std::nextafter(
+                    static_cast<float>(maxLo),
+                    -std::numeric_limits<float>::infinity());
+                const float hi = std::nextafter(
+                    static_cast<float>(maxHi),
+                    std::numeric_limits<float>::infinity());
+                return Interval(lo, hi);
+            }
             
-            // True distance leaves (1-Lipschitz)
-            float distAtCenter = evalSdf(n, c);
-            return Interval(distAtCenter - R, distAtCenter + R);
+            // Only primitives whose CURRENT implementation has a proved
+            // 1-Lipschitz contract may use center ± half-diagonal. Keep this as
+            // an explicit allowlist: adding a future SdfPrim must not silently
+            // inherit a theorem merely because it falls through this switch.
+            //
+            // Sphere/Box/RoundBox/Cylinder/Torus are exact distance constructions.
+            // The capped-cone helper is exact in its authored valid domain
+            // (non-negative radius, positive half-height); outside that domain its
+            // algebra can degenerate and range knowledge deliberately fails open.
+            bool oneLipschitz = false;
+            switch (n.prim) {
+                case SdfPrim::Sphere:
+                case SdfPrim::Box:
+                case SdfPrim::RoundBox:
+                case SdfPrim::Cylinder:
+                case SdfPrim::Torus:
+                    oneLipschitz = true;
+                    break;
+                case SdfPrim::Cone:
+                    oneLipschitz =
+                        std::isfinite(n.dims.x) && std::isfinite(n.dims.y) &&
+                        n.dims.x >= 0.0f && n.dims.y > 1e-5f;
+                    break;
+                case SdfPrim::Ellipsoid:
+                case SdfPrim::Expr:
+                case SdfPrim::Convex:
+                    break;
+            }
+            if (!oneLipschitz) return retInf();
+
+            const float distAtCenter = evalSdf(n, c);
+            if (!std::isfinite(distAtCenter)) return retInf();
+            return Interval::outward(distAtCenter - R, distAtCenter + R);
         }
         case SdfOp::Morph: {
             if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
             Interval a = evalRange(*n.children[0], boxMin, boxMax);
             Interval b = evalRange(*n.children[1], boxMin, boxMax);
             float t = glm::clamp(n.t, 0.0f, 1.0f);
-            return Interval(glm::mix(a.lo, b.lo, t), glm::mix(a.hi, b.hi, t));
+            return Interval::outward(glm::mix(a.lo, b.lo, t),
+                                     glm::mix(a.hi, b.hi, t));
         }
         case SdfOp::Union: {
             if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
@@ -595,11 +670,122 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
             // Max diff is k * 0.5 * 0.5 = k / 4.
             // But we can be looser: just min(lo_a, lo_b) - k, and min(hi_a, hi_b) for upper bound.
             float k = std::max(0.0001f, n.t); // use n.t as k
-            return Interval(std::min(a.lo, b.lo) - k, std::min(a.hi, b.hi));
+            return Interval::outward(std::min(a.lo, b.lo) - k,
+                                     std::min(a.hi, b.hi));
         }
         default:
             return retInf();
     }
+}
+
+SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
+                                      const glm::vec3& extent,
+                                      uint8_t maxDepth,
+                                      uint32_t maxNodes) {
+    SdfRangeHierarchy hierarchy;
+    if (maxNodes == 0) return hierarchy;
+
+    const glm::vec3 e = glm::abs(extent);
+    hierarchy.nodes.reserve(std::min<uint32_t>(maxNodes, 4096u));
+    hierarchy.nodes.push_back(SdfRangeNode{});
+    hierarchy.nodes[0].boxMin = -e;
+    hierarchy.nodes[0].boxMax = e;
+
+    auto refine = [&](auto& self, uint32_t nodeIndex, uint8_t depth) -> void {
+        // Never retain a reference across child insertion: vector growth may
+        // relocate the backing store. All writes go back through nodeIndex.
+        const glm::vec3 boxMin = hierarchy.nodes[nodeIndex].boxMin;
+        const glm::vec3 boxMax = hierarchy.nodes[nodeIndex].boxMax;
+        const OntoMath::Interval range = evalRange(n, boxMin, boxMax);
+        const bool finite = std::isfinite(range.lo) && std::isfinite(range.hi);
+        const bool excludesZero = finite && (range.lo > 0.0f || range.hi < 0.0f);
+
+        hierarchy.nodes[nodeIndex].rangeLo = range.lo;
+        hierarchy.nodes[nodeIndex].rangeHi = range.hi;
+        hierarchy.nodes[nodeIndex].boundFinite = finite;
+        hierarchy.nodes[nodeIndex].provedNoZero = excludesZero;
+        hierarchy.nodes[nodeIndex].depth = depth;
+        hierarchy.maxDepthReached = std::max(hierarchy.maxDepthReached, depth);
+
+        if (!finite) {
+            ++hierarchy.unknownLeaves;
+            return; // Fail open: subdivision cannot manufacture a proof.
+        }
+        if (excludesZero) {
+            ++hierarchy.provedEmptyNodes;
+            return;
+        }
+        if (depth >= maxDepth || hierarchy.nodes.size() + 8u > maxNodes) {
+            ++hierarchy.ambiguousLeaves;
+            return;
+        }
+
+        const glm::vec3 mid = 0.5f * (boxMin + boxMax);
+        const uint32_t firstChild = static_cast<uint32_t>(hierarchy.nodes.size());
+        hierarchy.nodes[nodeIndex].firstChild = firstChild;
+        hierarchy.nodes[nodeIndex].childCount = 8;
+
+        // Allocate all direct children contiguously before recursing. That makes
+        // firstChild..firstChild+7 a stable GPU-friendly adjacency contract even
+        // though each child's descendants append later.
+        for (uint32_t child = 0; child < 8; ++child) {
+            const bool hiX = (child & 1u) != 0;
+            const bool hiY = (child & 2u) != 0;
+            const bool hiZ = (child & 4u) != 0;
+
+            SdfRangeNode node;
+            node.boxMin = glm::vec3(hiX ? mid.x : boxMin.x,
+                                    hiY ? mid.y : boxMin.y,
+                                    hiZ ? mid.z : boxMin.z);
+            node.boxMax = glm::vec3(hiX ? boxMax.x : mid.x,
+                                    hiY ? boxMax.y : mid.y,
+                                    hiZ ? boxMax.z : mid.z);
+            node.depth = static_cast<uint8_t>(depth + 1);
+            hierarchy.nodes.push_back(node);
+        }
+
+        for (uint32_t child = 0; child < 8; ++child) {
+            self(self, firstChild + child, static_cast<uint8_t>(depth + 1));
+        }
+    };
+
+    refine(refine, 0u, 0u);
+    return hierarchy;
+}
+
+SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
+                                   const glm::vec3& authoredExtent) {
+    SdfZeroSetProxy out;
+    const glm::vec3 authored = glm::abs(authoredExtent);
+    out.halfExtent = authored;
+
+    // An absent hierarchy is absence of knowledge, never proof of absence.
+    if (hierarchy.nodes.empty()) return out;
+
+    bool foundPossibleLeaf = false;
+    glm::vec3 maxAbs(0.0f);
+    for (const SdfRangeNode& node : hierarchy.nodes) {
+        if (node.childCount != 0 || node.provedNoZero) continue;
+        foundPossibleLeaf = true;
+        maxAbs = glm::max(maxAbs, glm::max(glm::abs(node.boxMin), glm::abs(node.boxMax)));
+    }
+
+    if (!foundPossibleLeaf) {
+        // Every terminal region was proved zero-free. The hierarchy partitions
+        // the authored extent, so there is no zero set to rasterize there.
+        out.hasPossibleZero = false;
+        out.halfExtent = glm::vec3(0.0f);
+        return out;
+    }
+
+    // Clamp to authored coverage: hierarchy boxes were built inside it, but the
+    // clamp makes the contract explicit and protects callers from malformed
+    // externally-constructed hierarchy data.
+    out.halfExtent = glm::min(maxAbs, authored);
+    out.tightened = out.halfExtent.x < authored.x ||
+                    out.halfExtent.y < authored.y ||
+                    out.halfExtent.z < authored.z;
+    return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -763,12 +949,17 @@ std::optional<glm::vec3> estimateLipschitz(const OntoMath::MathNode& n) {
             return std::nullopt;
         }
         case Op::Noise: {
-            // The former value (6.0) was a sampled maximum with margin, not a
-            // closed-form bound on the exact glm::perlin implementation. A
-            // min/max grid uses this number to declare entire ray segments
-            // empty, so empirical corroboration is insufficient authority.
-            // Refuse acceleration until the implemented function has a proof.
-            return std::nullopt;
+            // Unlike the former empirical "6.0" margin, this constant is the
+            // shared closed-form bound derived from the exact classic-Perlin
+            // construction (ScalarForm.hpp). If q(p) is the Noise argument,
+            // |Noise(q1)-Noise(q2)| <= L*||q1-q2||_2 <= L*sum_i |dq_i|.
+            // estimateLipschitz(child) already conservatively sums vector
+            // component sensitivity per ambient axis, so scaling that result
+            // by L preserves the per-axis contract used by computeHeightGrid.
+            if (n.children.size() != 1 || !n.children[0]) return std::nullopt;
+            auto q = estimateLipschitz(*n.children[0]);
+            if (!q) return std::nullopt;
+            return OntoMath::kClassicPerlin3LipschitzBound * (*q);
         }
         default:
             return std::nullopt;

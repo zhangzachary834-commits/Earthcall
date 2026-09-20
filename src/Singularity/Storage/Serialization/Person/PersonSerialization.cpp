@@ -202,10 +202,28 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                 }
 
                 if (modified) {
-                    std::ofstream outFile(entry.path(), std::ios::trunc);
-                    if (outFile.is_open()) {
-                        outFile << j.dump(2);
-                        outFile.close();
+                    const auto finalPath = entry.path();
+                    const auto temporary = finalPath.string() + ".tmp-person-" +
+                                           std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+                    bool wroteOk = false;
+                    {
+                        std::ofstream outFile(temporary);
+                        if (outFile.is_open()) {
+                            outFile << j.dump(2);
+                            outFile.flush();
+                            wroteOk = static_cast<bool>(outFile);
+                        }
+                    }
+                    if (wroteOk) {
+                        std::error_code ec;
+                        std::filesystem::rename(temporary, finalPath, ec);
+                        if (ec) {
+                            std::error_code ignored;
+                            std::filesystem::remove(temporary, ignored);
+                        }
+                    } else {
+                        std::error_code ignored;
+                        std::filesystem::remove(temporary, ignored);
                     }
                 }
             } catch (...) {

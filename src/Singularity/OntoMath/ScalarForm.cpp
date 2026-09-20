@@ -95,21 +95,22 @@ Interval TransFactor::evalRange(const Interval& x) const {
             };
             if (sweeps(peak)) mx = 1.0;
             if (sweeps(peak + M_PI)) mn = -1.0;
-            return Interval(static_cast<float>(mn), static_cast<float>(mx));
+            return Interval::outward(static_cast<float>(mn), static_cast<float>(mx));
         }
         case Kind::Exp: {
             if (!arg.bounded()) {
                 // exp is monotone, so an unbounded side stays unbounded on
                 // that side only -- and exp is never negative.
-                return Interval(std::isfinite(arg.lo)
-                                    ? static_cast<float>(std::exp(arg.lo))
-                                    : 0.0f,
-                                std::isfinite(arg.hi)
-                                    ? static_cast<float>(std::exp(arg.hi))
-                                    : std::numeric_limits<float>::infinity());
+                const float lo = std::isfinite(arg.lo)
+                                     ? static_cast<float>(std::exp(arg.lo))
+                                     : 0.0f;
+                const float hi = std::isfinite(arg.hi)
+                                     ? static_cast<float>(std::exp(arg.hi))
+                                     : std::numeric_limits<float>::infinity();
+                return Interval::outward(lo, hi);
             }
-            return Interval(static_cast<float>(std::exp(arg.lo)),
-                            static_cast<float>(std::exp(arg.hi)));
+            return Interval::outward(static_cast<float>(std::exp(arg.lo)),
+                                     static_cast<float>(std::exp(arg.hi)));
         }
         case Kind::Ln: {
             // ln is undefined at or below zero. Where part of the argument's
@@ -124,7 +125,7 @@ Interval TransFactor::evalRange(const Interval& x) const {
             const float hi = std::isfinite(arg.hi)
                                  ? static_cast<float>(std::log(arg.hi))
                                  : std::numeric_limits<float>::infinity();
-            return Interval(lo, hi);
+            return Interval::outward(lo, hi);
         }
     }
     return Interval::infinite();
@@ -202,8 +203,8 @@ Interval powRange(const Interval& x, double e) {
     const auto endpoints = [&](double a, double b) {
         const double pa = std::pow(a, e), pb = std::pow(b, e);
         if (!std::isfinite(pa) && !std::isfinite(pb)) return Interval::infinite();
-        return Interval(static_cast<float>(std::min(pa, pb)),
-                        static_cast<float>(std::max(pa, pb)));
+        return Interval::outward(static_cast<float>(std::min(pa, pb)),
+                                 static_cast<float>(std::max(pa, pb)));
     };
     const bool spansZero = x.lo <= 0.0f && x.hi >= 0.0f;
     if (!spansZero) {
@@ -223,7 +224,7 @@ Interval powRange(const Interval& x, double e) {
     if (n % 2 == 0) {
         const double m = std::max(std::pow(std::fabs(static_cast<double>(x.lo)), e),
                                   std::pow(std::fabs(static_cast<double>(x.hi)), e));
-        return Interval(0.0f, static_cast<float>(m));
+        return Interval(0.0f, Interval::roundUp(static_cast<float>(m)));
     }
     return endpoints(x.lo, x.hi);
 }
@@ -1865,6 +1866,16 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             auto y = children[1]->evalRange(vars);
             auto z = children[2]->evalRange(vars);
             if (!x || !y || !z) return std::nullopt;
+            // Runtime VectorConstruct coerces three SCALARS. Reading the
+            // default scalar slot of a vector RangeValue would fabricate a
+            // finite component (usually 0) for a tree runtime evaluation
+            // refuses. Range knowledge may be looser than runtime truth, never
+            // more confident than it.
+            if (x->kind != ValueKind::Scalar ||
+                y->kind != ValueKind::Scalar ||
+                z->kind != ValueKind::Scalar) {
+                return retVecInf();
+            }
             return RangeValue::makeVector(x->scalar, y->scalar, z->scalar);
         }
         case Op::Component: {
@@ -1909,8 +1920,27 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             auto a = children[0]->evalRange(vars);
             auto b = children[1]->evalRange(vars);
             if (!a || !b) return std::nullopt;
-            if (a->kind == ValueKind::Scalar && b->kind == ValueKind::Scalar) return RangeValue::makeScalar(a->scalar / b->scalar);
-            if (a->kind == ValueKind::Vector && b->kind == ValueKind::Scalar) return RangeValue::makeVector(a->vec[0] / b->scalar, a->vec[1] / b->scalar, a->vec[2] / b->scalar);
+            if (b->kind != ValueKind::Scalar) return std::nullopt;
+
+            // Runtime Div is not ordinary division inside the degenerate band:
+            // |denominator| < kDegenerateDivisor returns authored zero. An
+            // interval touching that band therefore denotes a piecewise
+            // operation, and plain interval division can exclude the real 0
+            // result (e.g. [1,1] / [1e-8,2e-8]). Until we carry a union-of-
+            // intervals domain, fail open instead of manufacturing a finite
+            // theorem that zero-set culling could trust.
+            const float k = static_cast<float>(kDegenerateDivisor);
+            if (b->scalar.lo <= k && b->scalar.hi >= -k) {
+                if (a->kind == ValueKind::Vector) return retVecInf();
+                return retInf();
+            }
+
+            if (a->kind == ValueKind::Scalar)
+                return RangeValue::makeScalar(a->scalar / b->scalar);
+            if (a->kind == ValueKind::Vector)
+                return RangeValue::makeVector(a->vec[0] / b->scalar,
+                                              a->vec[1] / b->scalar,
+                                              a->vec[2] / b->scalar);
             return std::nullopt;
         }
         case Op::Abs: {
@@ -1957,21 +1987,54 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             return std::nullopt;
         }
         case Op::Noise: {
-            // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it to
-            // tessellateSdf's subdivision, which DISCARDS any cell whose interval does
-            // not straddle zero. Claim a range the noise can leave and the marcher
-            // deletes cells that really do contain surface -- holes in the mesh a
-            // Person falls through, with nothing logged.
+            // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it
+            // to tessellation culling and the conservative zero-set hierarchy.
+            // Unknown/loose only costs speed; too narrow deletes authored geometry.
             //
-            // Op::Noise evaluates to glm::perlin, whose 3D form returns 2.2 * n, with
-            // n a fade-weighted convex blend of unit-gradient dot products. The
-            // classical supremum for N-dimensional classic Perlin is sqrt(N)/2, so
-            // |glm::perlin| <= 2.2 * sqrt(3)/2 = 1.905. It is NOT 1.0: sampling
-            // 8e6 random points measured [-1.127, +1.123], so the [-1, 1] this read
-            // for one campaign was already unsound at the values the noise floor
-            // actually reaches.
-            constexpr float kPerlinBound = 1.905255f;   // 2.2 * sqrt(3)/2
-            return RangeValue::makeScalar(Interval(-kPerlinBound, kPerlinBound));
+            // Start from the proved global amplitude enclosure, then tighten it
+            // when the child's possible vector values occupy a finite box. The
+            // shared kClassicPerlin3LipschitzBound proves that every value in that
+            // box lies within L*radius of the exact noise value at its centre.
+            // This is the first range rule here that gets TIGHTER as an octree cell
+            // shrinks, which is essential for useful spatial Prophetic skipping.
+            const Interval global(-kClassicPerlin3ValueBound,
+                                   kClassicPerlin3ValueBound);
+            if (children.size() != 1 || !children[0]) {
+                return RangeValue::makeScalar(global);
+            }
+            auto arg = children[0]->evalRange(vars);
+            if (!arg || arg->kind != ValueKind::Vector) {
+                return RangeValue::makeScalar(global);
+            }
+            for (int axis = 0; axis < 3; ++axis) {
+                if (!std::isfinite(arg->vec[axis].lo) ||
+                    !std::isfinite(arg->vec[axis].hi)) {
+                    return RangeValue::makeScalar(global);
+                }
+            }
+
+            const glm::vec3 centre(
+                0.5f * (arg->vec[0].lo + arg->vec[0].hi),
+                0.5f * (arg->vec[1].lo + arg->vec[1].hi),
+                0.5f * (arg->vec[2].lo + arg->vec[2].hi));
+            const glm::vec3 half(
+                0.5f * (arg->vec[0].hi - arg->vec[0].lo),
+                0.5f * (arg->vec[1].hi - arg->vec[1].lo),
+                0.5f * (arg->vec[2].hi - arg->vec[2].lo));
+            const float radius = glm::length(half);
+            const float centreValue = glm::perlin(centre);
+            if (!std::isfinite(radius) || !std::isfinite(centreValue)) {
+                return RangeValue::makeScalar(global);
+            }
+
+            const float slack = kClassicPerlin3LipschitzBound * radius;
+            const Interval local = Interval::outward(centreValue - slack,
+                                                     centreValue + slack);
+            // Intersection of two already-conservative intervals needs no new
+            // arithmetic; choosing the tighter endpoints preserves enclosure.
+            return RangeValue::makeScalar(
+                Interval(std::max(global.lo, local.lo),
+                         std::min(global.hi, local.hi)));
         }
         // Fallback for everything else
         default:

@@ -9,6 +9,21 @@
 - [ ] Approach the leaf cavities, arch openings, and floor inlays; inspect from both sides, sit near the stone seats, and judge whether the composition rewards staying and getting close.
 - [ ] Open the leaves, **Save Zone**, restart, and return: confirm the same court and authored opening intention persist; confirm ordinary Cathedral interaction and performance remain comfortable.
 
+## Go — Zone-native boot, no legacy World load
+
+*Gemini Spark, 2026-09-19. Source requested by Zach: the exact legacy `saves/worlds/go_app.ecform` and `.ecmatter` bundle; migration target: `saves/zones/Go/zone.json` + `zone.ecmatter` + shared Law roots.*
+
+- [ ] Relaunch Earthcall. **Do not load `go_app`, `.ecform`, or any legacy World from Assets.**
+- [ ] Open Zones / Move to Zone and enter **Go** directly from the boot catalog.
+- [ ] Confirm the Goban wood grain, side textures, and 19x19 grid with 9 star points (hoshi) are visible rather than white/default untextured geometry.
+- [ ] Confirm the two stone bowls (black and white Goke), supply stones, and player seats are present and properly positioned.
+- [ ] Click the Tengen intersection (9, 9) at the board center: confirm a black stone is placed, the intersection state is no longer empty, and turn advances to white.
+- [ ] Click an adjacent intersection (e.g. (10, 10)): confirm a white stone is placed and turn advances back to black.
+- [ ] Use **Save Zone** while standing in Go, restart again without loading a World, re-enter Go, and confirm the independent identity and placement persist.
+
+The automated witness is `go_zone_native_boot_test`: its temporary SaveRoot intentionally contains **no `worlds/` directory**, only the Go Zone identity, its `.ecmatter` physical sidecar, and the 3 shared Law roots. A green test proves the closure is machine-loadable; the checks above prove the actual Person-facing Move-to-Zone experience and rendering.
+
+
 ## Chess — Zone-native boot, no legacy World load
 
 *GPT-5.6 Sol, 2026-09-18. Source requested by Zach: the exact legacy `saves/worlds/chess_app.json` Chess bundle; migration target: `saves/zones/Chess/zone.json` + shared Law roots.*
@@ -505,3 +520,9 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 *   **Property Predication and Lexeme Serialization**: Please verify `docs/architecture/interrelations/PROPERTY_PREDICATION_AND_LEXEME_SERIALIZATION.md` accurately reflects the application of the property predication doctrine onto the semantic graph serialization.
 *   **Substrate Isomorphism and First Mover Reversal**: Please verify `docs/architecture/interrelations/SUBSTRATE_ISOMORPHISM_AND_FIRST_MOVER_REVERSAL.md` correctly captures how the decoupling of execution and representation lays the groundwork for eventually bootstrapping the C++ engine out of the compilation loop.
+*   
+## Person / Object Identity Separation & Masquerading Refusal (added 2026-09-19)
+- [ ] Attempt to create or name an Object "Zach" (or any registered Person name) in the Creator Console / Singular Window: confirm the engine refuses the name and prevents an Object from masquerading as a Person. Headless guard `person_not_object_test.cpp` passes; Zach direct in-app witness pending.
+
+## Multi-Home Admission Invariant & Duplication Refusal (added 2026-09-19)
+- [ ] Boot Earthcall with an existing Home save: confirm admission guarantees at least one primary Home without minting duplicate homes (`Home_of_Zach_1`, etc.) or silently picking an ambiguous primary. Headless guard `home_identity_continuity_test.cpp` passes; Zach direct in-app witness pending.
