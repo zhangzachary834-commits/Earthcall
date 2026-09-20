@@ -1335,7 +1335,7 @@ fn fs(in: VSOut) -> FSOut {
 
             candidate_step = max(d, current_eps);
             if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
-                candidate_step = min(candidate_step, max(rangeCellExit - t, current_eps));
+                candidate_step = min(candidate_step, max(rangeCellExit - t, 0.0));
             }
             prev_d = d;
             t = t + candidate_step;
@@ -1362,7 +1362,7 @@ fn fs(in: VSOut) -> FSOut {
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
             if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
-                candidate_step = min(candidate_step, max(rangeCellExit - t, current_eps));
+                candidate_step = min(candidate_step, max(rangeCellExit - t, 0.0));
             }
             t = t + candidate_step;
         }
