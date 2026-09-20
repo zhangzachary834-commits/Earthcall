@@ -100,7 +100,8 @@ std::vector<float> renderForm(const OntoMath::Piecewise& form,
                               double seconds,
                               int sampleRate = 48000,
                               const std::map<std::string, double>& constants = {},
-                              SoundingReport* report = nullptr);
+                              SoundingReport* report = nullptr,
+                              double timeScale = 1.0);
 
 class AudioSystem {
 public:
@@ -113,6 +114,16 @@ public:
 
     void setupAudioEventListeners();
 
+    // First-mover governance is owned by Singularity::Audio::AudioChannel.
+    // AudioSystem is the substrate below that boundary.
+    void setOutputEnabled(bool enabled);
+    void setMasterGain(double gain);
+    bool outputEnabled() const { return _outputEnabled; }
+    double masterGain() const { return _masterGain; }
+    bool initialized() const { return _initialized; }
+    int actualSampleRate() const;
+    int activeVoiceCount() const;
+
     // Core functionality
     // Play a short sound effect (fire and forget)
     void playSound(const std::string& filepath);
@@ -121,7 +132,7 @@ public:
     void playSpatialSound(const std::string& filepath, const glm::vec3& position, float volume = 1.0f);
 
     // Play a procedural synthesized sound based on acoustic properties
-    void playProceduralCollisionSound(const glm::vec3& position, const glm::vec3& velocity, double frequency, double amplitude, const std::string& waveTypeStr);
+    bool playProceduralCollisionSound(const glm::vec3& position, const glm::vec3& velocity, double frequency, double amplitude, const std::string& waveTypeStr);
 
     // Sound an authored OntoMath model directly (see renderForm above): the
     // expression is the waveform. `position` spatializes it where a Being
@@ -132,7 +143,8 @@ public:
                   double seconds,
                   float volume = 1.0f,
                   const glm::vec3* position = nullptr,
-                  const std::map<std::string, double>& constants = {});
+                  const std::map<std::string, double>& constants = {},
+                  double timeScale = 1.0);
 
     // Play background music (looped)
     void playMusic(const std::string& filepath);
@@ -147,6 +159,11 @@ private:
     struct AudioState;
     AudioState* _state = nullptr;
     bool _initialized = false;
+
+    // Machine-output policy mirrored from AudioChannel. These are substrate
+    // latches, not authored world meaning; AudioChannel exposes/governs them.
+    bool _outputEnabled = true;
+    double _masterGain = 1.0;
 };
 
 } // namespace Audio
