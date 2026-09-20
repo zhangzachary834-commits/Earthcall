@@ -84,9 +84,32 @@ struct Interval {
     Interval(float l, float h) : lo(l), hi(h) {}
     
     static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
+
+    // Directed one-ULP widening for proof-bearing arithmetic. The hierarchy may
+    // use a finite interval to discard space, so round-to-nearest endpoints are
+    // not sufficient: an inward last-bit rounding must never turn "maybe zero"
+    // into "proved nonzero".
+    static float roundDown(float v) {
+        if (std::isnan(v)) return -std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, -std::numeric_limits<float>::infinity());
+    }
+    static float roundUp(float v) {
+        if (std::isnan(v)) return std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, std::numeric_limits<float>::infinity());
+    }
+    static Interval outward(float l, float h) {
+        if (std::isnan(l) || std::isnan(h)) return infinite();
+        return Interval(roundDown(l), roundUp(h));
+    }
     
-    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
-    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
+    Interval operator+(const Interval& o) const {
+        return outward(lo + o.lo, hi + o.hi);
+    }
+    Interval operator-(const Interval& o) const {
+        return outward(lo - o.hi, hi - o.lo);
+    }
     Interval operator-() const { return Interval(-hi, -lo); }
     // NaN-safe. The corner products of an interval containing an infinity
     // against one containing an exact zero give 0*inf = NaN, and std::min/max
@@ -101,12 +124,14 @@ struct Interval {
         };
         float a = corner(lo, o.lo), b = corner(lo, o.hi);
         float c = corner(hi, o.lo), d = corner(hi, o.hi);
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     Interval operator/(const Interval& o) const {
         if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
         float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        if (std::isnan(a) || std::isnan(b) || std::isnan(c) || std::isnan(d))
+            return infinite();
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     
     // Scale by scalar
