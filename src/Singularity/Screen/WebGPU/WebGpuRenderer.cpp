@@ -6,8 +6,10 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <set>
 #include <string>
 #include <utility>
