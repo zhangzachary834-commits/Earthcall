@@ -1105,6 +1105,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
         if (memo) {
+            const bool sdfStructureChanged = memo->revision != memoRevision;
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
@@ -1112,6 +1113,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
+            if (sdfStructureChanged) {
+                memo->rangeReady = false;
+                memo->rangeHierarchy = {};
+                memo->rangeProxy = {};
+                memo->rangeParameterRevision = 0xffffffff;
+            }
             prog = &memo->prog;
         } else {
             prog = &localProg;
@@ -1172,10 +1179,61 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                             !heightGrid->cells.empty();
     // A grid's cell coordinates are authored over `extent` by Object::rebuildHeightGrid.
     // Keep that exact interval for every proved heightfield, whether DDA traversal
-    // is enabled or disabled: toggling the skip may not quietly change the proxy
-    // coverage that the comparison is meant to judge. Other fields retain the
-    // small rasterization guard band for roots on an authored boundary.
-    const glm::vec3 proxyExtent = isProvenHeightfield ? extent : extent * 1.05f;
+    // is enabled or disabled. Other fields retain the historical 5% raster guard.
+    // The range hierarchy is built over THIS actual render domain, not merely the
+    // authored extent, so enabling it can never trim space the baseline marcher
+    // was previously allowed to inspect.
+    const glm::vec3 baselineProxyExtent =
+        glm::abs(isProvenHeightfield ? extent : extent * 1.05f);
+    glm::vec3 proxyExtent = baselineProxyExtent;
+
+    // First generic spatial-Prophetic activation rung. It is deliberately limited
+    // to surface-only draws: a FieldNode may carry volumetric density outside the
+    // SDF zero set, so zero-set proof is not permission to trim that volume.
+    //
+    // memoId==0 also fails open: without a stable revision identity there is no
+    // lawful cache boundary, and rebuilding an octree every frame would replace
+    // one bottleneck with another.
+    if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr) {
+        const bool extentChanged =
+            memo->rangeAuthoredExtent.x != baselineProxyExtent.x ||
+            memo->rangeAuthoredExtent.y != baselineProxyExtent.y ||
+            memo->rangeAuthoredExtent.z != baselineProxyExtent.z;
+        if (!memo->rangeReady ||
+            memo->rangeParameterRevision != memoParameterRevision ||
+            extentChanged) {
+            memo->rangeHierarchy = geom::buildRangeHierarchy(
+                field, baselineProxyExtent,
+                kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
+            memo->rangeProxy =
+                geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
+            memo->rangeParameterRevision = memoParameterRevision;
+            memo->rangeAuthoredExtent = baselineProxyExtent;
+            memo->rangeReady = true;
+            mutableFrameStats().sdfRangeHierarchyBuilds++;
+        }
+
+        if (!memo->rangeProxy.hasPossibleZero) {
+            // Every terminal cell in the complete authored render domain carries
+            // a finite proof excluding zero. There is no surface to rasterize.
+            mutableFrameStats().sdfRangeProxyCulledDraws++;
+            return;
+        }
+        if (memo->rangeProxy.tightened) {
+            // Preserve a one-ULP outward raster guard at the derived boundary.
+            // This is not a guessed world-space tolerance: it is the next
+            // representable float, clamped to the already-authoritative baseline
+            // proxy, solely to avoid losing a root that lies exactly on a cube face.
+            const float inf = std::numeric_limits<float>::infinity();
+            proxyExtent.x = std::min(baselineProxyExtent.x,
+                                     std::nextafter(memo->rangeProxy.halfExtent.x, inf));
+            proxyExtent.y = std::min(baselineProxyExtent.y,
+                                     std::nextafter(memo->rangeProxy.halfExtent.y, inf));
+            proxyExtent.z = std::min(baselineProxyExtent.z,
+                                     std::nextafter(memo->rangeProxy.halfExtent.z, inf));
+            mutableFrameStats().sdfRangeProxyDraws++;
+        }
+    }
     inst.extents = glm::vec4(proxyExtent, 0.0f);
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
