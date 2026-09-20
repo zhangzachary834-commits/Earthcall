@@ -211,6 +211,20 @@ private:
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout bgl = nullptr;
     };
+
+    // GPU storage representation of one conservative zero-set hierarchy node.
+    // This is Kernel substrate: it mirrors geom::SdfRangeNode's proved spatial
+    // theorem in a std430/WGSL-friendly 16-byte-aligned layout. meta is:
+    //   x = first child index (rebased to the batch buffer at draw time)
+    //   y = child count (0 or 8)
+    //   z = provedNoZero (1 only when evalRange proved zero impossible)
+    //   w = boundFinite (diagnostic/fail-open bit)
+    struct SdfRangeGpuNode {
+        glm::vec4 boxMin{0.0f};
+        glm::vec4 boxMax{0.0f};
+        glm::uvec4 meta{0u};
+    };
+
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
@@ -229,6 +243,9 @@ private:
         glm::vec3 rangeAuthoredExtent{0.0f};
         geom::SdfRangeHierarchy rangeHierarchy;
         geom::SdfZeroSetProxy rangeProxy;
+        // Packed once at the same revision boundary as rangeHierarchy. Child
+        // indices remain memo-local here and are rebased only while batching.
+        std::vector<SdfRangeGpuNode> rangeGpuNodes;
         bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
@@ -246,6 +263,18 @@ private:
     size_t _persistentSdfParamVramBytes = 0;
     void releasePersistentSdfParams();
 
+    // The range hierarchy is also static between SDF value revisions. Keep its
+    // packed node buffer resident so activating spatial Prophetic traversal does
+    // not replace field-evaluation debt with a per-frame hierarchy upload.
+    struct PersistentSdfRangeNodes {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<SdfRangeGpuNode> mirror;
+    };
+    std::unordered_map<const SdfPipeline*, PersistentSdfRangeNodes> _persistentSdfRangeNodes;
+    size_t _persistentSdfRangeNodeVramBytes = 0;
+    void releasePersistentSdfRangeNodes();
+
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
 
@@ -261,8 +290,10 @@ private:
     // avoid building a grid that this build is forbidden to consume.
     static constexpr bool kHeightGridDdaTraversalVerified = false;
 
-    // First activation rung for the generic conservative range hierarchy.
-    // OFF by default until native on/off image/depth parity is witnessed.
+    // Activation gate for the generic conservative range hierarchy. The first
+    // rung used it only to tighten the raster proxy; the next rung also uploads
+    // the same proof tree and skips proved-zero-free ray cells before exact SDF
+    // evaluation. OFF remains the fail-open baseline and parity oracle.
     bool _sdfRangeProxyEnabled = false;
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
     static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
@@ -403,15 +434,22 @@ private:
         uint32_t heightGridOffset = 0;
         uint32_t heightGridDimX = 0;
         uint32_t heightGridDimZ = 0;
+        // Conservative zero-set hierarchy. count==0 is the exact baseline.
+        // offset/count address the shared per-pipeline range-node buffer.
+        uint32_t rangeNodeOffset = 0;
+        uint32_t rangeNodeCount = 0;
+        uint32_t rangeTraversalEnabled = 0;
+        uint32_t rangeReserved = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
+    std::map<const SdfPipeline*, std::vector<SdfRangeGpuNode>> _sdfRangeNodeBatches;
     // Maps retain their vectors across frames so capacity is reused. This list
     // names only pipelines that actually received an instance this frame,
     // avoiding an ever-growing scan of historical pipeline keys.
     std::vector<const SdfPipeline*> _activeSdfPipelines;
-    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
+    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (0) + height cells (1) + range nodes (2)
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object
