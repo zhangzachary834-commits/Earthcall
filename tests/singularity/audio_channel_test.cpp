@@ -1,5 +1,6 @@
 #include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Audio/AudioSystem.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
@@ -129,7 +130,37 @@ int main() {
     assert(std::get<int>(unresolved) == 1);
 
     // ------------------------------------------------------------------
-    // 5. A sounding being may carry its own form; timbre identity is not
+    // 5. PlayAudio must preserve that refusal as causal truth. A refused
+    //    sound is NOT an audio-synthesized edge and NOT a successful action.
+    // ------------------------------------------------------------------
+    source.setDynamicProperty("acoustic.frequency", PropertyValue(440.0));
+    source.setDynamicProperty("acoustic.amplitude", PropertyValue(0.5));
+    int synthesizedEdges = 0;
+    Core::EventBus::instance().subscribe<ECA::Event>(
+        [&](const ECA::Event& event) {
+            if (event.type == "audio-synthesized") ++synthesizedEdges;
+        });
+
+    const ActionNode unresolvedAction = ActionNode::playAudio(
+        "acoustic.frequency", "acoustic.amplitude", "crystal-with-no-being");
+    const auto unresolvedExecutor = unresolvedAction.compile();
+    {
+        ActionNode::TraceScope trace;
+        unresolvedExecutor(ECA::Event{"audio-test", &source, nullptr, 0}, source);
+        assert(trace.trace().allFailed());
+        assert(trace.trace().failureCount() == 1);
+        assert(!trace.trace().nodes.empty());
+        assert(trace.trace().nodes.back().note.find("unresolved authored timbre") !=
+               std::string::npos);
+    }
+    assert(synthesizedEdges == 0);
+
+    assert(lawGetValue(*channel, PropertyPath::parse("unresolvedTimbres"),
+                       unresolved));
+    assert(std::get<int>(unresolved) == 2);
+
+    // ------------------------------------------------------------------
+    // 6. A sounding being may carry its own form; timbre identity is not
     //    compulsory when the authored structure is local.
     // ------------------------------------------------------------------
     source.setDynamicProperty(
