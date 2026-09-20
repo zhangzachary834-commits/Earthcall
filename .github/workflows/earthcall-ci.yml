@@ -228,7 +228,17 @@ jobs:
 
       - name: Measure 2880x1800 authored-Perlin OFF vs ON
         shell: bash
-        run: ./build-perf/webgpu_sdf_range_perf_test
+        run: |
+          set -euo pipefail
+          ./build-perf/webgpu_sdf_range_perf_test | tee sdf-range-perf.txt
+
+      - name: Publish authored-Perlin A/B result
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdf-range-perf
+          path: sdf-range-perf.txt
+          if-no-files-found: error
+          retention-days: 7
 
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
