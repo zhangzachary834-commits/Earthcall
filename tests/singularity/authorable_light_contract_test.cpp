@@ -95,6 +95,17 @@ int main() {
         if (in) in >> sun;
         check(sun.contains("spatialRoot"), "Sun save carries a spatial root");
 
+        const bool hasCanonicalAstKey =
+            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
+            sun["spatialRoot"]["field"].contains("astDefinition");
+        const bool hasIgnoredAstKey =
+            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
+            sun["spatialRoot"]["field"].contains("ast");
+        check(hasCanonicalAstKey,
+              "Sun save uses ScalarField's canonical astDefinition serialization key");
+        check(!hasIgnoredAstKey,
+              "Sun save does not use the ignored noncanonical ast key");
+
         geom::FieldNode hydrated("sun.light-field.test");
         if (sun.contains("spatialRoot")) hydrated.applyJson(sun["spatialRoot"]);
 

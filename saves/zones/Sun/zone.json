@@ -77,7 +77,7 @@
       "baseDensity": 1,
       "frequency": 1,
       "amplitude": 1,
-      "ast": {
+      "astDefinition": {
         "input": "x",
         "pieces": [
           {
