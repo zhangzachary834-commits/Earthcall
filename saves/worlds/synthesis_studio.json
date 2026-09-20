@@ -230,7 +230,7 @@
                   "kind": 12,
                   "operand": {
                     "t": "string",
-                    "v": "timbre.studio.triangle"
+                    "v": "triangle"
                   },
                   "propertyName": "acoustic.waveType"
                 },
@@ -1412,7 +1412,7 @@
                   "kind": 12,
                   "operand": {
                     "t": "string",
-                    "v": "timbre.studio.triangle"
+                    "v": "triangle"
                   },
                   "propertyName": "acoustic.waveType"
                 },
