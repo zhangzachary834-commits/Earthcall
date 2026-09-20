@@ -59,6 +59,7 @@
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
 #include "Singularity/Network/WebSocketServer.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include <memory>
 
 extern ZoneManager mgr;
@@ -310,6 +311,7 @@ bool Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.bindLive();
     mgr.bindLawManager(_lawManager.get());
+    Integration::getEarthcallAPI().setZoneManager(&mgr);
     // Read the ground before asking whether a Home must be born. Previously
     // ensureHomeZone ran first, so a persisted Home could not possibly answer
     // the question and a name-twin could be minted before hydration saw disk.
