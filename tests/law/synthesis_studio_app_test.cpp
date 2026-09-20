@@ -1012,8 +1012,9 @@ int main() {
             activate(*sine);
             g_sounded.clear();
             activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
-                  "voice selection and note playback survive real Law save/load");
+            check(g_sounded.size() == 1 &&
+                      g_sounded[0].timbre == "timbre.studio.sine",
+                  "authored timbre identity survives real Law save/load");
         }
         for (const auto& saved : zoneJson["world"]["objects"]) {
             const auto id = saved["objectID"].get<std::string>();
