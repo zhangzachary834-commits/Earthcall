@@ -205,7 +205,11 @@ int main() {
                 fail(counter.name, "Channel — Screen",
                      "must report the renderer-derived metric");
             }
-            if (p.setValue(screen, PropertyValue(999)) !=
+            const PropertyValue refusedWrite =
+                std::string(counter.name) == "sdfRangeNodeBytesUploaded"
+                    ? PropertyValue(999.0)
+                    : PropertyValue(999);
+            if (p.setValue(screen, refusedWrite) !=
                 PropertyPath::PathResult::ReadOnly) {
                 fail(counter.name, "Channel — Screen",
                      "derived renderer metric must remain read-only");
