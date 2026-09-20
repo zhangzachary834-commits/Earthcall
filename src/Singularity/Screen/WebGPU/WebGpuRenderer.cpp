@@ -1120,7 +1120,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->prog.params = std::move(refreshed.values);
                     memo->parameterRevision = memoParameterRevision;
                     memo->radianceRevision = radianceRevision();
-                    memo->radianceExprPtr = radianceExpr();
                 } else {
                     // A parameter-count mismatch means our claimed structural
                     // identity is stale. Fail open to a full compile rather than
@@ -1160,7 +1159,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
-            memo->radianceExprPtr = radianceExpr();
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
