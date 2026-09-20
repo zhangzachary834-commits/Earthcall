@@ -220,7 +220,7 @@ private:
         // the parameter block must be reconsidered; whether WGSL structure also
         // changed is decided by radianceStructure below.
         uint64_t radianceRevision = 0xffffffffffffffffULL;
-        std::string radianceStructure;
+        uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         const OntoMath::Piecewise* radianceExprPtr = nullptr;
         sdfwgsl::Program prog;
@@ -246,6 +246,7 @@ private:
     uint64_t _radianceLayoutRevision = 0xffffffffffffffffULL;
     const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
     sdfwgsl::ScalarExpressionLayout _radianceLayout;
+    uint64_t _radianceStructureRevision = 0;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
