@@ -180,6 +180,58 @@ int main() {
             check(channel->wireframe == true, "[2] wireframe writes back true");
         }
 
+        // Conservative SDF range proxy is Person/Law-governable and defaults
+        // OFF until native parity has validated the activation rung.
+        {
+            PropertyValue v;
+            auto res = PropertyPath::parse("sdfRangeProxyEnabled").getValue(*channel, v);
+            check(res == PropertyPath::PathResult::Ok,
+                  "[2] sdfRangeProxyEnabled resolves via PropertyPath");
+            check(std::holds_alternative<bool>(v) && !std::get<bool>(v),
+                  "[2] sdfRangeProxyEnabled defaults false before native parity");
+            auto setRes = PropertyPath::parse("sdfRangeProxyEnabled")
+                              .setValue(*channel, PropertyValue(true));
+            check(setRes == PropertyPath::PathResult::Ok,
+                  "[2] sdfRangeProxyEnabled is authorable");
+            check(channel->sdfRangeProxyEnabled,
+                  "[2] sdfRangeProxyEnabled writes through to channel state");
+        }
+
+        // Range-proxy counters are derived telemetry, never writable authored state.
+        channel->updateMetrics(42, 1200, kVramBytes, 65536.0, 15, 8, 4,
+                               1, 2, 3, 4096.0, 128.0,
+                               /*rangeBuilds=*/4,
+                               /*rangeProxyDraws=*/5,
+                               /*rangeProxyCulledDraws=*/6);
+        {
+            PropertyValue v;
+            auto res = PropertyPath::parse("sdfRangeHierarchyBuilds").getValue(*channel, v);
+            double n = 0.0;
+            propertyValueToNumber(v, n);
+            check(res == PropertyPath::PathResult::Ok && static_cast<int>(n) == 4,
+                  "[2] sdfRangeHierarchyBuilds reports renderer measurement");
+            auto setRes = PropertyPath::parse("sdfRangeHierarchyBuilds")
+                              .setValue(*channel, PropertyValue(999));
+            check(setRes == PropertyPath::PathResult::ReadOnly,
+                  "[2] sdfRangeHierarchyBuilds refuses authored writes");
+        }
+        {
+            PropertyValue v;
+            PropertyPath::parse("sdfRangeProxyDraws").getValue(*channel, v);
+            double n = 0.0;
+            propertyValueToNumber(v, n);
+            check(static_cast<int>(n) == 5,
+                  "[2] sdfRangeProxyDraws reports tightened proxy draws");
+        }
+        {
+            PropertyValue v;
+            PropertyPath::parse("sdfRangeProxyCulledDraws").getValue(*channel, v);
+            double n = 0.0;
+            propertyValueToNumber(v, n);
+            check(static_cast<int>(n) == 6,
+                  "[2] sdfRangeProxyCulledDraws reports proved-empty culls");
+        }
+
         // Read and write backgroundColor via PropertyPath
         {
             PropertyValue v;
