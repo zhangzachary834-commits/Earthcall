@@ -4162,27 +4162,12 @@ zone_doc = {
             "astDefinition": make_cathedral_radiance_ast()
         },
         "vectorField": {
-            "mode": "AST",
+            "amplitude": 0.6,
             "baseFlowX": 0.0,
             "baseFlowY": 0.25,
             "baseFlowZ": 0.0,
             "frequency": 1.0,
-            "amplitude": 0.6,
-            "astDefinition": make_color_expr_piecewise(
-                [
-                    {"c": 0.55, "factors": {}},
-                    {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35}, {"kind": 1, "var": "x", "scale": 0.45}]}
-                ],
-                [
-                    {"c": 0.60, "factors": {}},
-                    {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.40}, {"kind": 1, "var": "z", "scale": 0.50}]}
-                ],
-                [
-                    {"c": 0.75, "factors": {}},
-                    {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.30}, {"kind": 1, "var": "z", "scale": 0.35}]}
-                ],
-                "y"
-            )
+            "mode": "Procedural"
         }
     },
     "materials": materials,
