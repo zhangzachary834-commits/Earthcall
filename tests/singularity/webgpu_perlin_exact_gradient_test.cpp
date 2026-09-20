@@ -413,6 +413,14 @@ int main() {
             uint32_t  heightGridOffset = 0;
             uint32_t  heightGridDimX = 0;
             uint32_t  heightGridDimZ = 0;
+            // Keep this compute-only fixture ABI-identical to the renderer's
+            // SdfInstanceData. The gradient probe never traverses the hierarchy,
+            // so these remain zero, but WebGPU validates the full storage-struct
+            // minimum binding size before dispatch.
+            uint32_t  rangeNodeOffset = 0;
+            uint32_t  rangeNodeCount = 0;
+            uint32_t  rangeTraversalEnabled = 0;
+            uint32_t  rangeReserved = 0;
         } inst0;
 
         WGPUBufferDescriptor instDesc = {};
