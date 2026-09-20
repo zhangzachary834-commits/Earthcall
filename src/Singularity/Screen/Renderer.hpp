@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -52,6 +53,11 @@ public:
         uint32_t sdfProgramCompiles = 0;
         uint32_t sdfProgramCacheHits = 0;
         uint32_t sdfProgramCacheMisses = 0;
+        // Explicit compiler refusal is part of observable renderer truth. A
+        // Person-authored expression the GPU cannot honor must never disappear
+        // into stderr while the world silently keeps an old or fabricated answer.
+        uint32_t sdfProgramRefusals = 0;
+        std::string sdfLastProgramRefusal;
         size_t   sdfWgslBytesGenerated = 0;
         size_t   sdfParameterBytesUploaded = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
