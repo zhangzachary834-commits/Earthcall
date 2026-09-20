@@ -6,6 +6,8 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 
+#include <utility>
+
 namespace Singularity {
 namespace Screen {
 
