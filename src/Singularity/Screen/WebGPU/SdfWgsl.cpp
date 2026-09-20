@@ -51,7 +51,7 @@ struct SdfInstanceData {
 struct SdfRangeNode {
     boxMin: vec4<f32>,
     boxMax: vec4<f32>,
-    // x firstChild, y childCount, z provedNoZero, w boundFinite.
+    // x firstChild, y childCount, z provedPositiveOutside, w boundFinite.
     rangeInfo: vec4<u32>,
 };
 @group(1) @binding(2) var<storage, read> rangeNodes: array<SdfRangeNode>;
@@ -1089,8 +1089,10 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 }
 
 // Generic spatial-Prophetic traversal. Starting at tStart, descend the cached
-// octree to the leaf containing the current ray point. A provedNoZero leaf may
-// be crossed without evaluating the authored SDF; ambiguous/unknown leaves hand
+// octree to the leaf containing the current ray point. A proved-positive
+// OUTSIDE leaf may be crossed without evaluating the authored SDF. A
+// proved-negative leaf is deliberately NOT skipped: entering negative space is
+// the baseline marcher's surface-hit signal. Ambiguous/unknown leaves hand
 // back a candidate interval to the exact marcher unchanged.
 //
 // Boundary ownership is deliberately conservative. If a proved-empty leaf's
@@ -1135,8 +1137,10 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
 
             if (node.rangeInfo.z != 0u) {
-                // The CPU interval theorem proves f never crosses zero in this
-                // entire closed cell. Jump only to its exact ray exit.
+                // The CPU interval theorem proves f > 0 throughout this entire
+                // closed cell: outside space only. Jump to its exact ray exit.
+                // Negative zero-free cells are never tagged here because the
+                // exact marcher must observe d <= 0 to register the surface.
                 if (cell.y > t) {
                     t = min(cell.y, tMax);
                     skippedEmpty = true;
