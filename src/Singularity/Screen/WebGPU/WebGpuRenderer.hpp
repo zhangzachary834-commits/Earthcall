@@ -239,6 +239,14 @@ private:
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
 
+    // The active Zone radiance expression is shared across every SDF draw in a
+    // frame. Inspect its emitted structure once per authored content revision,
+    // not once per Object: thousands of surfaces must not mean thousands of
+    // redundant walks of the same source AST.
+    uint64_t _radianceLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
+    sdfwgsl::ScalarExpressionLayout _radianceLayout;
+
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
     // unchanged vector is not uploaded again. This is the first persistent-GPU
