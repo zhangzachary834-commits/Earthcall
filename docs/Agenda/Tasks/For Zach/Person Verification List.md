@@ -517,3 +517,9 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] Boot Earthcall → open the Zones list → confirm you are standing in `Home` (the 10.6 MB one with your beings) and not `Home_of_Zach` (957 bytes, empty) → confirm both appear in the list. Prediction from the sort order in `SaveSystem.cpp:1142`: both appear and you are in `Home`. Nobody has looked.
 - [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
 - [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.
+
+## Person / Object Identity Separation & Masquerading Refusal (added 2026-09-19)
+- [ ] Attempt to create or name an Object "Zach" (or any registered Person name) in the Creator Console / Singular Window: confirm the engine refuses the name and prevents an Object from masquerading as a Person. Headless guard `person_not_object_test.cpp` passes; Zach direct in-app witness pending.
+
+## Multi-Home Admission Invariant & Duplication Refusal (added 2026-09-19)
+- [ ] Boot Earthcall with an existing Home save: confirm admission guarantees at least one primary Home without minting duplicate homes (`Home_of_Zach_1`, etc.) or silently picking an ambiguous primary. Headless guard `home_identity_continuity_test.cpp` passes; Zach direct in-app witness pending.
