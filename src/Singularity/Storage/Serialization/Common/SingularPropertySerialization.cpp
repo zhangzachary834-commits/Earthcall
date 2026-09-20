@@ -84,23 +84,20 @@ bool applyAuthored(const std::string& name,
 void writeSingularProperties(nlohmann::json& j, const Singular& being) {
     nlohmann::json authored = nlohmann::json::object();
 
-    // Preserve unresolved future/identity values first. Resolved live state
-    // below overwrites the same key, so once a reference binds the raw staging
-    // value naturally disappears from persistence.
-    for (const auto& [id, raw] : being.pendingAuthoredPropertyJson()) {
-        authored[propertyName(id)] = raw;
-    }
+    // Resolved live state is written first. Any still-deferred raw value wins
+    // LAST: preserve-first means an unresolved future/identity payload may
+    // never be overwritten by a default/placeholder live value on re-save.
     for (const auto& [id, stored] : being.dynamicProperties()) {
         PropertyValue live = stored;
         being.getDynamicProperty(id, live);
         authored[propertyName(id)] = propertyValueToJson(live);
     }
+    for (const auto& [id, raw] : being.pendingAuthoredPropertyJson()) {
+        authored[propertyName(id)] = raw;
+    }
     if (!authored.empty()) j["authoredProperties"] = std::move(authored);
 
     nlohmann::json registered = nlohmann::json::object();
-    for (const auto& [id, raw] : being.pendingRegisteredPropertyJson()) {
-        registered[propertyName(id)] = raw;
-    }
 
     // listProperties lazily materializes the registry but changes no authored
     // semantic state. The registry cache is intentionally lazy in Singular.
@@ -112,6 +109,12 @@ void writeSingularProperties(nlohmann::json& j, const Singular& being) {
         PropertyValue value = property->value();
         if (std::holds_alternative<std::monostate>(value)) continue;
         registered[property->name()] = propertyValueToJson(value);
+    }
+    // Same preserve-first rule as authored state: if hydration could not yet
+    // bind a saved value, that exact payload outranks whatever default the
+    // current in-memory property happens to expose.
+    for (const auto& [id, raw] : being.pendingRegisteredPropertyJson()) {
+        registered[propertyName(id)] = raw;
     }
     if (!registered.empty()) j["registeredProperties"] = std::move(registered);
 
