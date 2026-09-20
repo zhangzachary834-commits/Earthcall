@@ -6,6 +6,7 @@
 #include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
+#include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -801,7 +802,8 @@ nlohmann::json ObjectConcept::toJson() const {
         {"relationTemplates", relationsJson},
         {"provenance", _provenance.toJson()}
     };
-    Singularity::Storage::writeSingularProperties(out, *this);
+    Singularity::Storage::writeSingularProperties(
+        out, *this, objectRegisteredPropertyNeedsEnvelope);
     return out;
 }
 
@@ -822,7 +824,7 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
                 if (being && being->getIdentifier() == id) return being;
             }
             return nullptr;
-        });
+        }, objectRegisteredPropertyNeedsEnvelope);
     if (j.contains("attributes") && j["attributes"].is_object()) {
         for (auto it = j["attributes"].begin(); it != j["attributes"].end(); ++it) {
             if (it.value().is_string()) {
