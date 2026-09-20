@@ -117,8 +117,10 @@ int main() {
                 {"z", PropertyValue(z)}
             };
             const auto value = hydrated.field->astDefinition.evaluate(vars);
-            if (!value || !std::holds_alternative<double>(*value)) return -1.0;
-            return std::get<double>(*value);
+            if (!value) return -1.0;
+            double numeric = -1.0;
+            if (!propertyValueToNumber(*value, numeric)) return -1.0;
+            return numeric;
         };
 
         const double nearSource = eval(0.0, 0.0, 0.0);
