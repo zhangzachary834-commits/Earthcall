@@ -2010,7 +2010,7 @@ std::optional<Interval> classicPerlin3LatticeRange(
     for (std::int64_t x = first[0]; x <= last[0]; ++x) {
         for (std::int64_t y = first[1]; y <= last[1]; ++y) {
             for (std::int64_t z = first[2]; z <= last[2]; ++z) {
-                const glm::vec3 cellLo(float(x), float(y), float(z));
+                const glm::vec3 cellLo{float(x), float(y), float(z)};
                 const glm::vec3 cellHi = cellLo + glm::vec3(1.0f);
                 const glm::vec3 subLo(
                     std::max(box[0].lo, cellLo.x),
