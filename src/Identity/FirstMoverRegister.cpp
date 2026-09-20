@@ -321,6 +321,19 @@ void FirstMoverRegister::loadFromJson(const nlohmann::json& j) {
         // refused entry in it. mayWrite() is what keeps it inert.
         if (m.id.canAuthenticate()) _movers.push_back(std::move(m));
     }
+
+    // All register members now exist. Resolve mover-to-mover authored
+    // Properties without depending on file order; references to beings outside
+    // the register remain preserve-first deferred for the broader world pass.
+    const auto resolveMover = [&](const std::string& identifier) -> Singular* {
+        for (auto& mover : _movers) {
+            if (mover.getIdentifier() == identifier) return &mover;
+        }
+        return nullptr;
+    };
+    for (auto& mover : _movers) {
+        Singularity::Storage::resolveDeferredSingularProperties(mover, resolveMover);
+    }
 }
 
 } // namespace Identity
