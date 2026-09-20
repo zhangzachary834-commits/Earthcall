@@ -25,6 +25,7 @@
 #endif
 
 #include "Singularity/Audio/AudioSystem.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Network/WebSocketServer.hpp"
@@ -347,6 +348,12 @@ void Engine::tick(float dt) {
 
     // 3. Audio & event modality
     auto tAudio0 = clock::now();
+    if (_lawManager) {
+        if (auto* audioChannel =
+                Singularity::Audio::AudioChannel::find(*_lawManager)) {
+            audioChannel->applyGovernance();
+        }
+    }
     Core::Audio::AudioSystem::instance().tick();
 #ifdef __EMSCRIPTEN__
     Core::EventBus::instance().tick();
