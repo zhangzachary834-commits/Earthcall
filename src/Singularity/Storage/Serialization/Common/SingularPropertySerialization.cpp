@@ -81,7 +81,10 @@ bool applyAuthored(const std::string& name,
 
 } // namespace
 
-void writeSingularProperties(nlohmann::json& j, const Singular& being) {
+void writeSingularProperties(
+    nlohmann::json& j,
+    const Singular& being,
+    const RegisteredPropertyPersistenceFilter& includeRegistered) {
     nlohmann::json authored = nlohmann::json::object();
 
     // Resolved live state is written first. Any still-deferred raw value wins
@@ -105,6 +108,7 @@ void writeSingularProperties(nlohmann::json& j, const Singular& being) {
     for (Property* property : mutableBeing.listProperties()) {
         if (!property || !property->isSemanticallyWritable()) continue;
         if (being.hasDynamicProperty(property->nameId())) continue;
+        if (includeRegistered && !includeRegistered(property->name())) continue;
 
         PropertyValue value = property->value();
         if (std::holds_alternative<std::monostate>(value)) continue;
@@ -114,7 +118,9 @@ void writeSingularProperties(nlohmann::json& j, const Singular& being) {
     // bind a saved value, that exact payload outranks whatever default the
     // current in-memory property happens to expose.
     for (const auto& [id, raw] : being.pendingRegisteredPropertyJson()) {
-        registered[propertyName(id)] = raw;
+        const std::string name = propertyName(id);
+        if (includeRegistered && !includeRegistered(name)) continue;
+        registered[name] = raw;
     }
     if (!registered.empty()) j["registeredProperties"] = std::move(registered);
 
@@ -123,15 +129,18 @@ void writeSingularProperties(nlohmann::json& j, const Singular& being) {
     }
 }
 
-bool readSingularProperties(const nlohmann::json& j,
-                            Singular& being,
-                            const PropertyReferenceResolver& resolve) {
+bool readSingularProperties(
+    const nlohmann::json& j,
+    Singular& being,
+    const PropertyReferenceResolver& resolve,
+    const RegisteredPropertyPersistenceFilter& includeRegistered) {
     bool complete = true;
 
     if (j.contains("registeredProperties") &&
         j["registeredProperties"].is_object()) {
         for (auto it = j["registeredProperties"].begin();
              it != j["registeredProperties"].end(); ++it) {
+            if (includeRegistered && !includeRegistered(it.key())) continue;
             if (!applyRegistered(it.key(), it.value(), being, resolve)) {
                 complete = false;
             }
