@@ -163,14 +163,24 @@ jobs:
           ./build/heightfield_predicate_test
           ./build/channel_paths_test
 
-      - name: Run native WebGPU SDF parity witnesses
+      # Keep each native witness in its own Actions step. Besides making
+      # failures actionable in GitHub's small step metadata, this prevents
+      # diagnosing one red check from requiring a multi-minute raw-log download.
+      - name: Verify generic WebGPU SDF parity
         shell: bash
-        run: |
-          set -euxo pipefail
-          ./build/webgpu_sdf_parity_test
-          ./build/webgpu_sdf_distance_test
-          ./build/webgpu_sdf_color_expr_test
-          ./build/webgpu_perlin_exact_gradient_test
+        run: ./build/webgpu_sdf_parity_test
+
+      - name: Verify WebGPU SDF distance parity
+        shell: bash
+        run: ./build/webgpu_sdf_distance_test
+
+      - name: Verify WebGPU authored-color parity
+        shell: bash
+        run: ./build/webgpu_sdf_color_expr_test
+
+      - name: Verify authored-Perlin gradient and traversal parity
+        shell: bash
+        run: ./build/webgpu_perlin_exact_gradient_test
 
       - name: Measure native authored-Perlin range traversal A/B
         shell: bash
