@@ -15,6 +15,7 @@
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
 #include <array>
