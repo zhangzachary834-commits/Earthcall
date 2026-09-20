@@ -81,6 +81,59 @@ int main() {
 
     std::filesystem::remove_all(testDir);
 
+    // Test that updatePriorPersonSerializations does NOT overwrite distinct Person records sharing identical display names
+    std::filesystem::path testIdentDir = tempSaveRoot.path / "test_identities";
+    std::filesystem::create_directories(testIdentDir);
+
+    std::array<uint8_t, 32> key1Bytes; key1Bytes.fill(0x11);
+    std::array<uint8_t, 32> key2Bytes; key2Bytes.fill(0x22);
+    Identity::SingularId id1 = Identity::SingularId::fromPublicKey(key1Bytes);
+    Identity::SingularId id2 = Identity::SingularId::fromPublicKey(key2Bytes);
+
+    std::string pathPerson1 = (testIdentDir / "person1_world.json").string();
+    std::string pathPerson2 = (testIdentDir / "person2_world.json").string();
+    {
+        nlohmann::json j1 = {
+            {"person", {
+                {"displayName", "Alice"},
+                {"soulName", "Alice"},
+                {"personId", id1.toString()}
+            }}
+        };
+        nlohmann::json j2 = {
+            {"person", {
+                {"displayName", "Alice"},
+                {"soulName", "Alice"},
+                {"personId", id2.toString()}
+            }}
+        };
+        std::ofstream f1(pathPerson1); f1 << j1.dump(2);
+        std::ofstream f2(pathPerson2); f2 << j2.dump(2);
+    }
+
+    Person alice1 = makePerson("AliceRenamed");
+    alice1.setPersonId(id1);
+
+    // Update prior serializations for alice1, renaming from "Alice" -> "AliceRenamed"
+    updatePriorPersonSerializations(alice1, "Alice");
+
+    {
+        std::ifstream check1(pathPerson1);
+        nlohmann::json j1Check;
+        check1 >> j1Check;
+        assert(j1Check["person"]["displayName"] == "AliceRenamed");
+
+        std::ifstream check2(pathPerson2);
+        nlohmann::json j2Check;
+        check2 >> j2Check;
+        // Person 2 has a distinct personId (id2), so despite matching display name "Alice",
+        // it MUST NOT be overwritten or collapsed!
+        assert(j2Check["person"]["displayName"] == "Alice");
+        assert(j2Check["person"]["personId"] == id2.toString());
+    }
+
+    std::filesystem::remove_all(testIdentDir);
+
     std::puts("person_serialization_test: ALL OK");
     return 0;
 }

@@ -122,12 +122,16 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                         std::string dName = pj.value("displayName", "");
                         std::string sName = pj.value("soulName", "");
                         bool match = false;
-                        if (person.hasIdentity() && pj.contains("personId") && pj["personId"].is_string()) {
-                            if (pj["personId"].get<std::string>() == person.personId().toString()) match = true;
-                        }
-                        if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
-                            sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
-                            oldName.empty()) {
+                        if (pj.contains("personId") && pj["personId"].is_string()) {
+                            // If the record has a personId, identity comparison MUST be decisive.
+                            // Spelling alone must never overrule cryptographic identity.
+                            if (person.hasIdentity() && pj["personId"].get<std::string>() == person.personId().toString()) {
+                                match = true;
+                            }
+                        } else if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
+                                   sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
+                                   oldName.empty()) {
+                            // Fallback string matching ONLY for legacy records lacking a personId.
                             match = true;
                         }
                         if (match) {
@@ -160,12 +164,16 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                     std::string dName = pj.value("displayName", "");
                     std::string sName = pj.value("soulName", "");
                     bool match = false;
-                    if (person.hasIdentity() && pj.contains("personId") && pj["personId"].is_string()) {
-                        if (pj["personId"].get<std::string>() == person.personId().toString()) match = true;
-                    }
-                    if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
-                        sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
-                        oldName.empty()) {
+                    if (pj.contains("personId") && pj["personId"].is_string()) {
+                        // If the record has a personId, identity comparison MUST be decisive.
+                        // Spelling alone must never overrule cryptographic identity.
+                        if (person.hasIdentity() && pj["personId"].get<std::string>() == person.personId().toString()) {
+                            match = true;
+                        }
+                    } else if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
+                               sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
+                               oldName.empty()) {
+                        // Fallback string matching ONLY for legacy records lacking a personId.
                         match = true;
                     }
                     if (match) {
