@@ -25,6 +25,10 @@ glm::mat4 vectorToMat4(const std::vector<float>& values) {
 
 } // namespace
 
+bool relationRegisteredPropertyNeedsEnvelope(const std::string& propertyName) {
+    return propertyName.rfind("attachment.", 0) != 0;
+}
+
 nlohmann::json Relation::AttachmentData::toJson() const {
     return nlohmann::json{
         {"enabled", enabled},
@@ -77,7 +81,8 @@ nlohmann::json relationToJson(const Relation& relation) {
     if (relation.hasGroundedType()) {
         out["typeId"] = relation.type;
     }
-    Singularity::Storage::writeSingularProperties(out, relation);
+    Singularity::Storage::writeSingularProperties(
+        out, relation, relationRegisteredPropertyNeedsEnvelope);
     return out;
 }
 
@@ -125,6 +130,7 @@ Relation relationFromJson(const nlohmann::json& json,
         }
     }
 
-    Singularity::Storage::readSingularProperties(json, relation, resolve);
+    Singularity::Storage::readSingularProperties(
+        json, relation, resolve, relationRegisteredPropertyNeedsEnvelope);
     return relation;
 }
