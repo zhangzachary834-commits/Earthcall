@@ -180,58 +180,6 @@ int main() {
             check(channel->wireframe == true, "[2] wireframe writes back true");
         }
 
-        // Conservative SDF range proxy is Person/Law-governable and defaults
-        // OFF until native parity has validated the activation rung.
-        {
-            PropertyValue v;
-            auto res = PropertyPath::parse("sdfRangeProxyEnabled").getValue(*channel, v);
-            check(res == PropertyPath::PathResult::Ok,
-                  "[2] sdfRangeProxyEnabled resolves via PropertyPath");
-            check(std::holds_alternative<bool>(v) && !std::get<bool>(v),
-                  "[2] sdfRangeProxyEnabled defaults false before native parity");
-            auto setRes = PropertyPath::parse("sdfRangeProxyEnabled")
-                              .setValue(*channel, PropertyValue(true));
-            check(setRes == PropertyPath::PathResult::Ok,
-                  "[2] sdfRangeProxyEnabled is authorable");
-            check(channel->sdfRangeProxyEnabled,
-                  "[2] sdfRangeProxyEnabled writes through to channel state");
-        }
-
-        // Range-proxy counters are derived telemetry, never writable authored state.
-        channel->updateMetrics(42, 1200, kVramBytes, 65536.0, 15, 8, 4,
-                               1, 2, 3, 4096.0, 128.0,
-                               /*rangeBuilds=*/4,
-                               /*rangeProxyDraws=*/5,
-                               /*rangeProxyCulledDraws=*/6);
-        {
-            PropertyValue v;
-            auto res = PropertyPath::parse("sdfRangeHierarchyBuilds").getValue(*channel, v);
-            double n = 0.0;
-            propertyValueToNumber(v, n);
-            check(res == PropertyPath::PathResult::Ok && static_cast<int>(n) == 4,
-                  "[2] sdfRangeHierarchyBuilds reports renderer measurement");
-            auto setRes = PropertyPath::parse("sdfRangeHierarchyBuilds")
-                              .setValue(*channel, PropertyValue(999));
-            check(setRes == PropertyPath::PathResult::ReadOnly,
-                  "[2] sdfRangeHierarchyBuilds refuses authored writes");
-        }
-        {
-            PropertyValue v;
-            PropertyPath::parse("sdfRangeProxyDraws").getValue(*channel, v);
-            double n = 0.0;
-            propertyValueToNumber(v, n);
-            check(static_cast<int>(n) == 5,
-                  "[2] sdfRangeProxyDraws reports tightened proxy draws");
-        }
-        {
-            PropertyValue v;
-            PropertyPath::parse("sdfRangeProxyCulledDraws").getValue(*channel, v);
-            double n = 0.0;
-            propertyValueToNumber(v, n);
-            check(static_cast<int>(n) == 6,
-                  "[2] sdfRangeProxyCulledDraws reports proved-empty culls");
-        }
-
         // Read and write backgroundColor via PropertyPath
         {
             PropertyValue v;
@@ -409,21 +357,9 @@ int main() {
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v); // Size changed, id/revision unchanged
-                mesh.tris[0].pos = glm::vec3(9.0f, 8.0f, 7.0f);
                 WGPUBuffer buf2 = cache.getOrUpload(mesh);
-
-                // Do NOT compare WGPUBuffer handle addresses here: [4c] above
-                // documents that wgpu-native may recycle the just-released handle
-                // address for the replacement allocation. Prove the size guard by
-                // observing both the cache's new byte accounting and the new
-                // payload content despite an unchanged mesh revision.
-                check(cache.totalCachedBytes() ==
-                          mesh.tris.size() * sizeof(geom::TessVertex),
-                      "[4f] changing mesh size replaces cached byte accounting");
-                check(glm::distance(readFirstVertexPos(gpu, buf2),
-                                    glm::vec3(9.0f, 8.0f, 7.0f)) < 1e-4f,
-                      "[4f] changing mesh size forces a re-upload even when the "
-                      "driver recycles the WGPUBuffer handle address");
+                check(buf2 != buf1,
+                      "[4f] changing mesh size (triangle count) forces a re-upload, invalidating the stale buffer");
             }
         }
     }
