@@ -23,6 +23,7 @@ from author_synthesis_studio import (
 
 REVISION = "resonance-3"
 MOVER = "studio.author.codex"
+AUDIO_MOVER = "studio.author.gpt-5.6-sol.audio-20260919"
 INK = (0.88, 0.93, 0.96)
 DIM = (0.46, 0.57, 0.64)
 TEAL = (0.30, 0.91, 0.78)
@@ -159,6 +160,21 @@ def upgrade(document):
     edges[:] = [e for e in edges if not (e.get("entityA") == MOVER and e.get("entityB") == MOVER)]
     edges.append(relation(MOVER, "Zach", "commissioned-by"))
 
+    if AUDIO_MOVER not in by_id:
+        audio_marker = {"objectID": AUDIO_MOVER, "shapeKind": 0, "geometryType": 0,
+            "shapeParams": [0.01] * 9, "transform": mat4_translate(0, -6.2, 0),
+            "center": [0, -6.2, 0], "materialId": "", "faceColors": colors(PANEL),
+            "authoredProperties": {
+                "displayName": pv("string", "GPT-5.6 Sol / Audio micromastery authoring"),
+                "onBehalfOf": pv("string", "Zach"),
+                "revision": pv("string", "authored-timbre-rung-1"),
+                "session": pv("string", "sol-audio-micromastery-2026-09-19")}}
+        objects.append(audio_marker)
+        by_id[AUDIO_MOVER] = audio_marker
+    commissioned = relation(AUDIO_MOVER, "Zach", "commissioned-by")
+    if not any(all(e.get(k) == commissioned[k] for k in ("type", "entityA", "entityB")) for e in edges):
+        edges.append(commissioned)
+
     # Starter timbres are ordinary authored beings whose acoustic.form is
     # OntoMath text. Their identity can be selected by Law without teaching
     # AudioSystem a new C++ word.
@@ -177,7 +193,9 @@ def upgrade(document):
                  "acoustic.duration": pv("double", 0.35),
                  "acoustic.role": pv("string", "timbre"),
              }})
-        edge = relation(timbre_id, MOVER)
+        edges[:] = [e for e in edges if not (
+            e.get("type") == "authored-by" and e.get("entityA") == timbre_id and e.get("entityB") == MOVER)]
+        edge = relation(timbre_id, AUDIO_MOVER)
         if not any(all(e.get(k) == edge[k] for k in ("type", "entityA", "entityB")) for e in edges):
             edges.append(edge)
 
