@@ -18,6 +18,7 @@
 // Consequence: `wgsl` is a complete cache key for the pipeline, and `params` is
 // per-instance data. Two spheres of different radii share one pipeline.
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -40,7 +41,7 @@ struct ParameterBlock {
 // hand-maintained AST classifier.
 struct ScalarExpressionLayout {
     std::string structure;
-    size_t parameterCount = 0;
+    std::size_t parameterCount = 0;
     bool ok = true;
     std::string error;
 };
@@ -102,7 +103,7 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* radianceExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
- // uses, but with its parameter numbering starting at zero. Equal structure means
+// uses, but with its parameter numbering starting at zero. Equal structure means
 // a value-only edit can refresh the shared parameter block without regenerating
 // WGSL; unequal structure means the shader source can have changed. Unsupported
 // mathematics refuses here for the same reason it refuses in compile().
