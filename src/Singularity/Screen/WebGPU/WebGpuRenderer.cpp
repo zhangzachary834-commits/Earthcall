@@ -1082,9 +1082,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     const sdfwgsl::ScalarExpressionLayout& radianceLayout = _radianceLayout;
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
+        const bool firstOfReason =
+            stats.sdfProgramRefusals == 0 || stats.sdfLastProgramRefusal != why;
         ++stats.sdfProgramRefusals;
         stats.sdfLastProgramRefusal = why;
-        std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", why.c_str());
+        if (firstOfReason) {
+            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", why.c_str());
+        }
     };
     if (!radianceLayout.ok) {
         recordProgramRefusal("radiance: " + radianceLayout.error);
