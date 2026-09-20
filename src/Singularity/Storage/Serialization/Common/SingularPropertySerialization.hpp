@@ -3,6 +3,9 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "json.hpp"
 
+#include <functional>
+#include <string>
+
 class Singular;
 
 namespace Singularity::Storage {
@@ -19,12 +22,19 @@ namespace Singularity::Storage {
 // Identity-valued PropertyValues are preserve-first/bind-later. If the
 // resolver cannot name the referenced Singular yet, raw JSON remains attached
 // as hydration-only pending state and is emitted unchanged by the next save.
-void writeSingularProperties(nlohmann::json& j, const Singular& being);
+using RegisteredPropertyPersistenceFilter =
+    std::function<bool(const std::string& propertyName)>;
+
+void writeSingularProperties(
+    nlohmann::json& j,
+    const Singular& being,
+    const RegisteredPropertyPersistenceFilter& includeRegistered = {});
 
 bool readSingularProperties(
     const nlohmann::json& j,
     Singular& being,
-    const PropertyReferenceResolver& resolve = {});
+    const PropertyReferenceResolver& resolve = {},
+    const RegisteredPropertyPersistenceFilter& includeRegistered = {});
 
 bool resolveDeferredSingularProperties(
     Singular& being,
