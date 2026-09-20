@@ -1,5 +1,15 @@
 # Person Verification List
 
+## Sun — authored OntoMath radiance field
+
+*GPT-5.6 Sol · 2026-09-19. Phase 2 continues Zach's instruction that light be an authored continuous FieldNode/OntoMath function rather than a shader-only noun.*
+
+- [ ] Fresh-launch Earthcall, enter **Sun** through the Zone flow, and confirm the Zone still loads normally with `sun.light-field` active and the witness object present.
+- [ ] Put a known **raymarched SDF/implicit surface** at two visibly different distances from the Sun source (or move the same one): confirm the nearer surface receives stronger diffuse/specular illumination than the farther one. Do **not** use the ordinary witness cube alone as proof unless its draw path is confirmed to be SDF.
+- [ ] Edit the Sun spatial root's authored `field.ast` falloff through the normal authoring/property path, then observe an SDF surface without restarting: confirm the visible falloff changes, proving AST-content invalidation reaches generated WGSL.
+- [ ] Toggle authored `light.enabled`: confirm SDF lighting turns off/on while the surface's authored material color remains visible.
+
+
 ## Cathedral — Court of the Open Hand
 
 *Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*

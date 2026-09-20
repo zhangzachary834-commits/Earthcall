@@ -22,6 +22,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <functional>
 
 extern ZoneManager mgr;
 
@@ -110,11 +111,27 @@ namespace Core {
                                            Rendering::lightDiffuseRadiance(light),
                                            Rendering::lightSpecularRadiance(light));
                 currentRenderer().setLightingEnabled(light.enabled);
+
+                // The radiant FieldNode's exact authored scalar AST is the
+                // spatial radiance function. Content identity, not pointer
+                // identity, governs invalidation when field.ast is edited.
+                if (root->field &&
+                    root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                    !root->field->astDefinition.pieces.empty()) {
+                    const std::string radianceJson = root->field->astDefinition.toJson().dump();
+                    const uint64_t radianceRevision =
+                        static_cast<uint64_t>(std::hash<std::string>{}(radianceJson));
+                    currentRenderer().setRadianceField(&root->field->astDefinition,
+                                                       radianceRevision);
+                } else {
+                    currentRenderer().setRadianceField(nullptr, 0);
+                }
                 persistentLightPlaced = true;
             }
         }
 
         if (!persistentLightPlaced) {
+            currentRenderer().setRadianceField(nullptr, 0);
             // A previously active authored Zone may have disabled illumination.
             // No-source means the historical compatibility contract, so restore
             // enabled state even when no ScreenChannel happens to be present.

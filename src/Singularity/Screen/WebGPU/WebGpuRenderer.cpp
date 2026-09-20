@@ -949,7 +949,11 @@ struct SdfGlobalUniforms {
     glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 limits;   // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
+    glm::vec4 lightAmbient;
+    glm::vec4 lightDiffuse;
+    glm::vec4 lightSpecular;
+    glm::vec4 lightControl; // x = lighting enabled (0 or 1)
+    glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
 };
 } // namespace
 
@@ -1062,7 +1066,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         memo = &_programCache[memoId];
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
-            memo->colorExprPtr == mat.colorExpr.get()) {
+            memo->radianceRevision == radianceRevision() &&
+            memo->colorExprPtr == mat.colorExpr.get() &&
+            memo->radianceExprPtr == radianceExpr()) {
             // We have a structural hit unless parameter recollection proves that
             // the claimed structure identity is stale. Start on the cheap path;
             // only fall back to compile on a refused/mismatched recollection.
@@ -1071,7 +1077,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             // refresh the parameter block without rebuilding the WGSL module.
             if (memo->parameterRevision != memoParameterRevision) {
                 sdfwgsl::ParameterBlock refreshed =
-                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get());
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr());
                 if (refreshed.ok && refreshed.values.size() == memo->prog.params.size()) {
                     memo->prog.params = std::move(refreshed.values);
                     memo->parameterRevision = memoParameterRevision;
@@ -1093,7 +1099,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
-        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1111,7 +1117,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
+            memo->radianceRevision = radianceRevision();
             memo->colorExprPtr = mat.colorExpr.get();
+            memo->radianceExprPtr = radianceExpr();
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
@@ -1392,6 +1400,10 @@ void WebGpuRenderer::flushSdfDraws() {
     u.invViewProj = glm::inverse(_viewProj);
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
+    u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
+    u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
+    u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
+    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
