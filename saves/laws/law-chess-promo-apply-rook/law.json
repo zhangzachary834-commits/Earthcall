@@ -5,124 +5,141 @@
   "identifier": "law-chess-promo-apply-rook",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
-      "children": [
-        {
-          "kind": 0,
-          "operand": {
-            "t": "int",
-            "v": 1
-          },
-          "path": "chessRole"
-        },
-        {
-          "kind": 0,
-          "operand": {
-            "t": "int",
-            "v": 0
-          },
-          "path": "shape.kind"
-        },
-        {
-          "kind": 0,
-          "operand": {
-            "t": "double",
-            "v": 0.36
-          },
-          "path": "restY"
-        },
-        {
-          "kind": 0,
-          "operand": {
-            "t": "double",
-            "v": 0.36
-          },
-          "path": "position.y"
-        },
-        {
-          "kind": 0,
-          "operand": {
-            "t": "bool",
-            "v": false
-          },
-          "path": "@state.chess.promoActive"
-        }
-      ],
-      "kind": 5
-    },
-    "activation": 0,
-    "applicationLog": [],
+    "id": "law-chess-promo-apply-rook",
+    "name": "apply-promotion-rook",
+    "enabled": true,
     "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
       "grok-4.6"
     ],
-    "conditionMode": "all",
+    "conditionSubjects": [],
+    "targets": [],
     "conditionModel": {
+      "kind": 3,
       "children": [
         {
           "kind": 2,
-          "otherId": "category.chess.piece",
-          "relationType": "instance-of"
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
         },
         {
           "kind": 0,
+          "path": "onBoard",
           "op": 0,
           "operand": {
             "t": "bool",
             "v": true
-          },
-          "path": "onBoard"
+          }
         },
         {
+          "kind": 0,
+          "path": "isPromoting",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 4,
           "children": [
             {
               "kind": 0,
+              "path": "gridY",
               "op": 0,
               "operand": {
                 "t": "int",
                 "v": 7
-              },
-              "path": "gridY"
+              }
             },
             {
               "kind": 0,
+              "path": "gridY",
               "op": 0,
               "operand": {
                 "t": "int",
                 "v": 0
-              },
-              "path": "gridY"
+              }
             }
-          ],
-          "kind": 4
+          ]
         }
-      ],
-      "kind": 3
+      ]
     },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-promo-apply-rook",
-    "name": "apply-promotion-rook",
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "chessRole",
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.kind",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "restY",
+          "operand": {
+            "t": "double",
+            "v": 0.36
+          }
+        },
+        {
+          "kind": 0,
+          "path": "position.y",
+          "operand": {
+            "t": "double",
+            "v": 0.36
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isPromoting",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.promoActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-promo-apply-rook",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "promo-select-rook"

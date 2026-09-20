@@ -240,12 +240,24 @@ int main(int argc, char** argv) {
     assert(promoRole == 4 && "Pawn on rank 7 promotes to Queen");
     assert(promoShape == 6 && "Pawn visually transforms to Ovoid (Queen)");
 
+    // Verify non-promoting pieces on back ranks (e.g. Black King on e8 = (4,7) and White King on e1 = (4,0))
+    Object* blackKing = findObj(*active, "piece-black-king-4-7");
+    Object* whiteKing = findObj(*active, "piece-white-king-4-0");
+    assert(blackKing && whiteKing);
+    assert(asInt(*blackKing, "gridY") == 7);
+    assert(asInt(*blackKing, "chessRole") == 5); // King
+    assert(asInt(*whiteKing, "gridY") == 0);
+    assert(asInt(*whiteKing, "chessRole") == 5); // King
+
     // Test visible option: click Knight promotion button
     Object* btnKnight = findObj(*active, "hud.chess.promo.knight");
     assert(btnKnight);
     click(harness.interaction, harness.lawManager, btnKnight, 480.0f, 0.0f, 24.0f);
     assert(asInt(*whitePawnH2, "chessRole") == 2);
     assert(asInt(*whitePawnH2, "shape.kind") == 5); // Ellipsoid
+    // Verify other back-rank pieces were NOT promoted
+    assert(asInt(*blackKing, "chessRole") == 5 && "Black King on rank 7 must NOT promote");
+    assert(asInt(*whiteKing, "chessRole") == 5 && "White King on rank 0 must NOT promote");
     std::cout << "  Underpromoted to Knight via HUD button verified!\n";
 
     // Click Queen button to switch to Queen
@@ -254,6 +266,9 @@ int main(int argc, char** argv) {
     click(harness.interaction, harness.lawManager, btnQueen, 340.0f, 0.0f, 24.0f);
     assert(asInt(*whitePawnH2, "chessRole") == 4);
     assert(asInt(*whitePawnH2, "shape.kind") == 6); // Ovoid
+    // Verify other back-rank pieces were STILL NOT promoted
+    assert(asInt(*blackKing, "chessRole") == 5 && "Black King on rank 7 must NOT promote");
+    assert(asInt(*whiteKing, "chessRole") == 5 && "White King on rank 0 must NOT promote");
     std::cout << "  Promoted back to Queen via HUD button verified!\n";
 
     // -------------------------------------------------------------

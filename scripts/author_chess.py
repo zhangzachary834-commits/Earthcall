@@ -1876,6 +1876,7 @@ def build_laws():
             set_path("shape.ovoidAsym", pv("double", 0.35)),
             set_path("restY", pv("double", 0.42)),
             set_path("position.y", pv("double", 0.42)),
+            set_path("isPromoting", pv("bool", True)),
             set_path("@state.chess.promoActive", pv("bool", True)),
         ),
     )
@@ -1898,8 +1899,18 @@ def build_laws():
             set_path("shape.ovoidAsym", pv("double", 0.35)),
             set_path("restY", pv("double", 0.42)),
             set_path("position.y", pv("double", 0.42)),
+            set_path("isPromoting", pv("bool", True)),
             set_path("@state.chess.promoActive", pv("bool", True)),
         ),
+    )
+
+    add_law(
+        "law-chess-promo-clear-flag",
+        "clear-promotion-flag-on-commit",
+        0,
+        ["turn-changed"],
+        all_of(IS_PIECE, compare("isPromoting", 0, pv("bool", True))),
+        set_path("isPromoting", pv("bool", False)),
     )
 
     # Promotion button selection laws
@@ -1920,6 +1931,7 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("isPromoting", 0, pv("bool", True)),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -1932,6 +1944,7 @@ def build_laws():
             set_path("shape.ovoidAsym", pv("double", 0.35)),
             set_path("restY", pv("double", 0.42)),
             set_path("position.y", pv("double", 0.42)),
+            set_path("isPromoting", pv("bool", False)),
             set_path("@state.chess.promoActive", pv("bool", False)),
         ),
     )
@@ -1953,6 +1966,7 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("isPromoting", 0, pv("bool", True)),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -1966,6 +1980,7 @@ def build_laws():
             set_path("shape.rz", pv("double", 0.32)),
             set_path("restY", pv("double", 0.32)),
             set_path("position.y", pv("double", 0.32)),
+            set_path("isPromoting", pv("bool", False)),
             set_path("@state.chess.promoActive", pv("bool", False)),
         ),
     )
@@ -1987,6 +2002,7 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("isPromoting", 0, pv("bool", True)),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -1997,6 +2013,7 @@ def build_laws():
             set_path("shape.kind", pv("int", 0)),  # Cube
             set_path("restY", pv("double", 0.36)),
             set_path("position.y", pv("double", 0.36)),
+            set_path("isPromoting", pv("bool", False)),
             set_path("@state.chess.promoActive", pv("bool", False)),
         ),
     )
@@ -2018,6 +2035,7 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("isPromoting", 0, pv("bool", True)),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -2030,6 +2048,7 @@ def build_laws():
             set_path("shape.halfH", pv("double", 0.40)),
             set_path("restY", pv("double", 0.40)),
             set_path("position.y", pv("double", 0.40)),
+            set_path("isPromoting", pv("bool", False)),
             set_path("@state.chess.promoActive", pv("bool", False)),
         ),
     )

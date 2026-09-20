@@ -2,11 +2,11 @@
   "authors": [
     "grok-4.6"
   ],
-  "identifier": "law-chess-king-unmade-is-mate",
+  "identifier": "law-chess-promo-clear-flag",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "id": "law-chess-king-unmade-is-mate",
-    "name": "game-over-if-king-unmade",
+    "id": "law-chess-promo-clear-flag",
+    "name": "clear-promotion-flag-on-commit",
     "enabled": true,
     "authority": 0,
     "activation": 0,
@@ -29,49 +29,27 @@
         },
         {
           "kind": 0,
-          "path": "chessRole",
-          "op": 0,
-          "operand": {
-            "t": "int",
-            "v": 5
-          }
-        },
-        {
-          "kind": 0,
-          "path": "onBoard",
+          "path": "isPromoting",
           "op": 0,
           "operand": {
             "t": "bool",
-            "v": false
+            "v": true
           }
         }
       ]
     },
     "actionModel": {
-      "kind": 5,
-      "children": [
-        {
-          "kind": 0,
-          "path": "@state.chess.gameOver",
-          "operand": {
-            "t": "bool",
-            "v": true
-          }
-        },
-        {
-          "kind": 0,
-          "path": "@state.chess.result",
-          "operand": {
-            "t": "int",
-            "v": 1
-          }
-        }
-      ]
+      "kind": 0,
+      "path": "isPromoting",
+      "operand": {
+        "t": "bool",
+        "v": false
+      }
     },
     "provenance": [
       {
         "type": "authored-by",
-        "entityA": "law-chess-king-unmade-is-mate",
+        "entityA": "law-chess-promo-clear-flag",
         "entityB": "grok-4.6",
         "directed": true,
         "weight": 1.0,
@@ -87,6 +65,6 @@
     "applicationLog": []
   },
   "triggers": [
-    "enemy-captured"
+    "turn-changed"
   ]
 }

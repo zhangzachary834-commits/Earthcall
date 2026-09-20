@@ -5,9 +5,31 @@
   "identifier": "law-chess-drag-pick",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
+    "id": "law-chess-drag-pick",
+    "name": "select-dragged-piece",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 2,
+      "relationType": "instance-of",
+      "otherId": "category.chess.piece"
+    },
     "actionModel": {
+      "kind": 5,
       "children": [
         {
+          "kind": 8,
+          "path": "@state.chess.targetX",
           "bindings": {
             "ptrX": "@interaction-channel.pointerWorld.x"
           },
@@ -15,123 +37,123 @@
             "input": "ptrX",
             "pieces": [
               {
+                "lo": -4.0,
+                "hi": -3.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 0,
+                      "c": 0.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -4
+                }
               },
               {
+                "lo": -3.0,
+                "hi": -2.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -3
+                }
               },
               {
+                "lo": -2.0,
+                "hi": -1.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 2,
+                      "c": 2.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -2
+                }
               },
               {
+                "lo": -1.0,
+                "hi": 0.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 3,
+                      "c": 3.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 0,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -1
+                }
               },
               {
+                "lo": 0.0,
+                "hi": 1.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 4,
+                      "c": 4.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 0
+                }
               },
               {
+                "lo": 1.0,
+                "hi": 2.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 5,
+                      "c": 5.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 1
+                }
               },
               {
+                "lo": 2.0,
+                "hi": 3.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 6,
+                      "c": 6.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 2
+                }
               },
               {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 7,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 4,
+                "lo": 3.0,
+                "hi": 4.0,
+                "includeLo": true,
                 "includeHi": true,
-                "includeLo": true,
-                "lo": 3
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
               }
             ]
-          },
-          "kind": 8,
-          "path": "@state.chess.targetX"
+          }
         },
         {
+          "kind": 8,
+          "path": "@state.chess.targetY",
           "bindings": {
             "ptrZ": "@interaction-channel.pointerWorld.z"
           },
@@ -139,167 +161,145 @@
             "input": "ptrZ",
             "pieces": [
               {
+                "lo": -4.0,
+                "hi": -3.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 0,
+                      "c": 0.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -4
+                }
               },
               {
+                "lo": -3.0,
+                "hi": -2.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -3
+                }
               },
               {
+                "lo": -2.0,
+                "hi": -1.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 2,
+                      "c": 2.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": -1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -2
+                }
               },
               {
+                "lo": -1.0,
+                "hi": 0.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 3,
+                      "c": 3.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 0,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": -1
+                }
               },
               {
+                "lo": 0.0,
+                "hi": 1.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 4,
+                      "c": 4.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 1,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 0
+                }
               },
               {
+                "lo": 1.0,
+                "hi": 2.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 5,
+                      "c": 5.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 2,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 1
+                }
               },
               {
+                "lo": 2.0,
+                "hi": 3.0,
+                "includeLo": true,
+                "includeHi": false,
                 "expr": {
                   "terms": [
                     {
-                      "c": 6,
+                      "c": 6.0,
                       "factors": {}
                     }
                   ]
-                },
-                "hi": 3,
-                "includeHi": false,
-                "includeLo": true,
-                "lo": 2
+                }
               },
               {
-                "expr": {
-                  "terms": [
-                    {
-                      "c": 7,
-                      "factors": {}
-                    }
-                  ]
-                },
-                "hi": 4,
+                "lo": 3.0,
+                "hi": 4.0,
+                "includeLo": true,
                 "includeHi": true,
-                "includeLo": true,
-                "lo": 3
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
               }
             ]
-          },
-          "kind": 8,
-          "path": "@state.chess.targetY"
+          }
         },
         {
-          "eventType": "square-clicked",
           "kind": 10,
-          "publishObject": "",
-          "publishSubject": ""
+          "eventType": "square-clicked",
+          "publishSubject": "",
+          "publishObject": ""
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "grok-4.6"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "kind": 2,
-      "otherId": "category.chess.piece",
-      "relationType": "instance-of"
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-drag-pick",
-    "name": "select-dragged-piece",
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-drag-pick",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "object-drag-started"

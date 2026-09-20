@@ -5,25 +5,79 @@
   "identifier": "law-chess-capture-en-passant",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
+    "id": "law-chess-capture-en-passant",
+    "name": "unmake-en-passant-victim",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
       "children": [
         {
-          "kind": 0,
-          "operand": {
-            "t": "bool",
-            "v": false
-          },
-          "path": "onBoard"
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
         },
         {
           "kind": 0,
+          "path": "onBoard",
+          "op": 0,
           "operand": {
             "t": "bool",
             "v": true
-          },
-          "path": "capturedThisMove"
+          }
         },
         {
+          "kind": 0,
+          "path": "gridX",
+          "op": 0,
+          "operandPath": "@state.chess.enPassantFile"
+        },
+        {
+          "kind": 0,
+          "path": "gridY",
+          "op": 0,
+          "operandPath": "@state.chess.enPassantVictimY"
+        },
+        {
+          "kind": 0,
+          "path": "chessColor",
+          "op": 1,
+          "operandPath": "@state.chess.turn"
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "onBoard",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "capturedThisMove",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 8,
+          "path": "capturedSlot",
           "bindings": {
             "n": "@state.chess.nextCapturedSlot"
           },
@@ -33,20 +87,20 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "n": 1
+                        "n": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "capturedSlot"
+          }
         },
         {
+          "kind": 8,
+          "path": "position.x",
           "bindings": {
             "c": "chessColor"
           },
@@ -62,18 +116,18 @@
                     {
                       "c": -11.2,
                       "factors": {
-                        "c": 1
+                        "c": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "position.x"
+          }
         },
         {
+          "kind": 8,
+          "path": "position.z",
           "bindings": {
             "s": "capturedSlot"
           },
@@ -83,9 +137,9 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "s": 1
+                        "s": 1.0
                       }
                     },
                     {
@@ -96,11 +150,11 @@
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "position.z"
+          }
         },
         {
+          "kind": 8,
+          "path": "@state.chess.nextCapturedSlot",
           "bindings": {
             "n": "@state.chess.nextCapturedSlot"
           },
@@ -110,94 +164,40 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "n": 1
+                        "n": 1.0
                       }
                     },
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {}
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "@state.chess.nextCapturedSlot"
+          }
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "grok-4.6"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "children": [
-        {
-          "kind": 2,
-          "otherId": "category.chess.piece",
-          "relationType": "instance-of"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operand": {
-            "t": "bool",
-            "v": true
-          },
-          "path": "onBoard"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.enPassantFile",
-          "path": "gridX"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.enPassantVictimY",
-          "path": "gridY"
-        },
-        {
-          "kind": 0,
-          "op": 1,
-          "operandPath": "@state.chess.turn",
-          "path": "chessColor"
-        }
-      ],
-      "kind": 3
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-capture-en-passant",
-    "name": "unmake-en-passant-victim",
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-capture-en-passant",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "en-passant-captured"

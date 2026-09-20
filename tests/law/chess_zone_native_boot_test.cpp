@@ -94,8 +94,8 @@ int main() {
     check(zoneJson.value("identifier", std::string{}) == "Chess",
           "identity is exactly Chess");
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&
-              zoneJson["lawRefs"].size() == 69,
-          "Chess names all 69 authored Law roots");
+              zoneJson["lawRefs"].size() == 70,
+          "Chess names all 70 authored Law roots");
     check(zoneJson.contains("materials") && zoneJson["materials"].is_array() &&
               zoneJson["materials"].size() == 3,
           "Chess carries its three visual materials in the Zone identity");
@@ -130,10 +130,10 @@ int main() {
         std::filesystem::copy_file(sourceLaw, targetLawDir / "law.json");
         ++copiedRoots;
     }
-    check(copiedRoots == 69, "all Chess Law roots copied into isolated SaveRoot");
+    check(copiedRoots == 70, "all Chess Law roots copied into isolated SaveRoot");
     check(!std::filesystem::exists(scratch.path / "worlds"),
           "isolated boot contains no legacy worlds directory");
-    if (copiedRoots != 69) return 1;
+    if (copiedRoots != 70) return 1;
 
     SaveSystem::setSaveRoot(scratch.path.string());
     {
@@ -166,7 +166,7 @@ int main() {
             if (refJson.is_string() &&
                 harness.lawManager.find(refJson.get<std::string>())) ++loadedRoots;
         }
-        check(loadedRoots == 69, "all 69 Zone-scoped Chess Laws are live");
+        check(loadedRoots == 70, "all 70 Zone-scoped Chess Laws are live");
 
         auto boardMaterial = materials.get("material.chess.board");
         check(boardMaterial != nullptr, "checkerboard material hydrated from Zone identity");
@@ -191,7 +191,7 @@ int main() {
             }
         }
         check(pieceMembership, "piece -> category relation bound during Zone-only boot");
-        check(categorizedLaws.size() == 69,
+        check(categorizedLaws.size() == 70,
               "deferred Law-category relations bind after Zone Law activation");
 
         Object* board = findObject(*active, "object.chess.board");

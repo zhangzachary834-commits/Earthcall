@@ -5,9 +5,63 @@
   "identifier": "law-chess-revert",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
+    "id": "law-chess-revert",
+    "name": "revert-move-if-in-check",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
       "children": [
         {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        {
+          "kind": 0,
+          "path": "gridX",
+          "op": 0,
+          "operandPath": "@state.chess.targetX"
+        },
+        {
+          "kind": 0,
+          "path": "gridY",
+          "op": 0,
+          "operandPath": "@state.chess.targetY"
+        },
+        {
+          "kind": 0,
+          "path": "chessColor",
+          "op": 0,
+          "operandPath": "@state.chess.turn"
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.inCheck",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "gridX",
           "bindings": {
             "v": "@state.chess.prevX"
           },
@@ -17,20 +71,20 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "v": 1
+                        "v": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "gridX"
+          }
         },
         {
+          "kind": 8,
+          "path": "gridY",
           "bindings": {
             "v": "@state.chess.prevY"
           },
@@ -40,20 +94,20 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "v": 1
+                        "v": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "gridY"
+          }
         },
         {
+          "kind": 8,
+          "path": "position.x",
           "bindings": {
             "v": "@state.chess.prevX"
           },
@@ -63,9 +117,9 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "v": 1
+                        "v": 1.0
                       }
                     },
                     {
@@ -76,11 +130,11 @@
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "position.x"
+          }
         },
         {
+          "kind": 8,
+          "path": "position.z",
           "bindings": {
             "v": "@state.chess.prevY"
           },
@@ -90,9 +144,9 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "v": 1
+                        "v": 1.0
                       }
                     },
                     {
@@ -103,11 +157,11 @@
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "position.z"
+          }
         },
         {
+          "kind": 8,
+          "path": "hasMoved",
           "bindings": {
             "v": "@state.chess.prevHasMoved"
           },
@@ -117,96 +171,42 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "v": 1
+                        "v": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "hasMoved"
+          }
         },
         {
-          "eventType": "move-reverted",
           "kind": 10,
-          "publishObject": "",
-          "publishSubject": "state.chess"
+          "eventType": "move-reverted",
+          "publishSubject": "state.chess",
+          "publishObject": ""
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "grok-4.6"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "children": [
-        {
-          "kind": 2,
-          "otherId": "category.chess.piece",
-          "relationType": "instance-of"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.targetX",
-          "path": "gridX"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.targetY",
-          "path": "gridY"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.turn",
-          "path": "chessColor"
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operand": {
-            "t": "bool",
-            "v": true
-          },
-          "path": "@state.chess.inCheck"
-        }
-      ],
-      "kind": 3
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-revert",
-    "name": "revert-move-if-in-check",
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-revert",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "check-evaluated"
