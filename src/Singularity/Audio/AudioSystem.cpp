@@ -396,8 +396,14 @@ bool AudioSystem::playProceduralCollisionSound(const glm::vec3& position,
     frequency *= dopplerFactor;
 
     // Legacy oscillator path has an explicit frequency, so hold it to the same
-    // body-boundary floor as authored forms.
-    if (frequency < kAudibleFloorHz) frequency = kAudibleFloorHz;
+    // Person-body boundary as authored forms. Refuse rather than silently
+    // changing the Person's mathematics into a different note.
+    if (frequency < kAudibleFloorHz) {
+        std::cerr << "AudioSystem: refused " << frequency
+                  << " Hz legacy oscillator below the " << kAudibleFloorHz
+                  << " Hz Person-body floor.\n";
+        return false;
+    }
     if (frequency > 20000.0) frequency = 20000.0;
     amplitude = std::clamp(amplitude, 0.0, 1.0);
 
