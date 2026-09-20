@@ -409,9 +409,21 @@ int main() {
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v); // Size changed, id/revision unchanged
+                mesh.tris[0].pos = glm::vec3(9.0f, 8.0f, 7.0f);
                 WGPUBuffer buf2 = cache.getOrUpload(mesh);
-                check(buf2 != buf1,
-                      "[4f] changing mesh size (triangle count) forces a re-upload, invalidating the stale buffer");
+
+                // Do NOT compare WGPUBuffer handle addresses here: [4c] above
+                // documents that wgpu-native may recycle the just-released handle
+                // address for the replacement allocation. Prove the size guard by
+                // observing both the cache's new byte accounting and the new
+                // payload content despite an unchanged mesh revision.
+                check(cache.totalCachedBytes() ==
+                          mesh.tris.size() * sizeof(geom::TessVertex),
+                      "[4f] changing mesh size replaces cached byte accounting");
+                check(glm::distance(readFirstVertexPos(gpu, buf2),
+                                    glm::vec3(9.0f, 8.0f, 7.0f)) < 1e-4f,
+                      "[4f] changing mesh size forces a re-upload even when the "
+                      "driver recycles the WGPUBuffer handle address");
             }
         }
     }
