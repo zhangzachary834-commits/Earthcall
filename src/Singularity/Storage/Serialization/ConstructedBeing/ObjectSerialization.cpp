@@ -1,5 +1,6 @@
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include <cstring>
@@ -256,16 +257,10 @@ void to_json(nlohmann::json& j, const Object& obj){
         j["textureResolution"] = texRes;
     }
 
-    // Properties a LAW granted this being (ActionNode::AddProperty).
-    if (!obj.dynamicProperties().empty()) {
-        nlohmann::json dyn = nlohmann::json::object();
-        for (const auto& entry : obj.dynamicProperties()) {
-            PropertyValue live = entry.second;
-            obj.getDynamicProperty(entry.first, live);
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
-        }
-        j["authoredProperties"] = std::move(dyn);
-    }
+    // Every writable/legible registered property and every authored property
+    // gets the same base-Singular semantic envelope. Concrete fields above
+    // remain for compatibility and self-describing Object authoring.
+    Singularity::Storage::writeSingularProperties(j, obj);
 
     if (!obj.stakeholders().empty()) {
         nlohmann::json shJson = nlohmann::json::array();
@@ -379,19 +374,9 @@ void from_json(const nlohmann::json& j, Object& obj){
         } catch (...) {}
     }
 
-    // Properties a law granted this being; and the composition it was part of,
-    // held by identifier until World::from_json can re-link it.
-    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
-        for (auto it = j["authoredProperties"].begin();
-             it != j["authoredProperties"].end(); ++it) {
-            const std::string& key = it.key();
-            PropertyValue val = propertyValueFromJson(it.value());
-            if (Property* prop = obj.findProperty(key)) {
-                prop->setValue(val);
-            }
-            obj.setDynamicProperty(key, val);
-        }
-    }
+    // Base Singular semantic state. Identity-valued values may defer until
+    // the Zone/session graph has completed hydration.
+    Singularity::Storage::readSingularProperties(j, obj);
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {
             if (id.is_string()) obj.getPendingElementIds().push_back(id.get<std::string>());
