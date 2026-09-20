@@ -90,7 +90,11 @@ public:
     PropertyValue value() const override {
         return PropertyValue(static_cast<int>(_owner->getShapeKind()));
     }
-    bool isSemanticallyWritable() const override { return true; }
+    bool isSemanticallyWritable() const override {
+        const auto kind = _owner->getShapeKind();
+        return kind != Object::ShapeKind::Field &&
+               kind != Object::ShapeKind::Patch;
+    }
     bool setValue(const PropertyValue& v) override {
         double n = 0.0;
         if (!propertyValueToNumber(v, n)) return false;
@@ -175,7 +179,9 @@ public:
         return PropertyValue(0.0f);
     }
 
-    bool isSemanticallyWritable() const override { return true; }
+    bool isSemanticallyWritable() const override {
+        return _field == Field::Expr || _owner->hasField();
+    }
 
     bool setValue(const PropertyValue& v) override {
         // The expression arm can CREATE the field; every other arm edits one
@@ -269,7 +275,9 @@ public:
     PropertyValue value() const override {
         return PropertyValue(_owner->getPatchControlLocal(_index));
     }
-    bool isSemanticallyWritable() const override { return true; }
+    bool isSemanticallyWritable() const override {
+        return _owner->hasPatch() && _index < _owner->getPatchControlCount();
+    }
     bool setValue(const PropertyValue& v) override {
         if (!_owner->hasPatch() || _index >= _owner->getPatchControlCount()) return false;
         const glm::vec3* vec = std::get_if<glm::vec3>(&v);
@@ -457,7 +465,9 @@ public:
     }
 
     bool isSemanticallyWritable() const override {
-        return _field != Field::LayerCount && _field != Field::TextureSize;
+        if (_field == Field::LayerCount || _field == Field::TextureSize) return false;
+        if (_field == Field::Color || _field == Field::Resolution) return true;
+        return texture() != nullptr;
     }
 
     bool setValue(const PropertyValue& v) override {
