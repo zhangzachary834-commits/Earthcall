@@ -2833,6 +2833,90 @@ materials = [
             ]
         )
     },
+    # --- ONTOMATH CELESTIAL LIGHT SHOW COLOR FIELDS ---
+    {
+        "name": "material.logos.colorfield.lightshow.aurora",
+        "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.55, 0.45, 0.85], "roughness": 0.08, "metallic": 0.90,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35}, {"kind": 1, "var": "x", "scale": 0.45}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.60}]}
+            ],
+            [
+                {"c": 0.60, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.40}, {"kind": 1, "var": "z", "scale": 0.50}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.70}]}
+            ],
+            [
+                {"c": 0.75, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.30}, {"kind": 1, "var": "z", "scale": 0.35}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.50}]}
+            ]
+        )
+    },
+    {
+        "name": "material.logos.colorfield.lightshow.prism",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 1.0, "shininess": 120.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.50, 0.70], "roughness": 0.10, "metallic": 0.85,
+        "faceTextures": [tex_rose_sapphire] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.22}, {"kind": 1, "var": "y", "scale": 0.15}]}
+            ],
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.40, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.28}, {"kind": 0, "var": "x", "scale": 0.20}]}
+            ],
+            [
+                {"c": 0.70, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.35}, {"kind": 1, "var": "y", "scale": 0.25}]}
+            ]
+        )
+    },
+    {
+        "name": "material.logos.colorfield.lightshow.shekinah",
+        "textureResolution": 256, "ambient": 0.65, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.75, 0.60, 0.25], "roughness": 0.08, "metallic": 0.95,
+        "faceTextures": [tex_filigree] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.90, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.50}]}
+            ],
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.60}, {"kind": 1, "var": "x", "scale": 0.40}]}
+            ],
+            [
+                {"c": 0.40, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.80}, {"kind": 1, "var": "z", "scale": 0.50}]}
+            ]
+        )
+    },
+    {
+        "name": "material.logos.colorfield.lightshow.aether",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.90, "specular": 0.95, "shininess": 96.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.20, 0.80, 0.90], "roughness": 0.12, "metallic": 0.80,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.20, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.40}, {"kind": 0, "var": "z", "scale": 0.40}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.50}, {"kind": 1, "var": "x", "scale": 0.30}]}
+            ],
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.30}]}
+            ]
+        )
+    },
     # --- ONTOMATH ADVANCED BOUNDED COLOR FIELDS ---
     {
         "name": "logos.bounds.stratified",
@@ -3159,6 +3243,78 @@ objects.append(make_field(
     }
 ))
 
+
+# ==============================================================================
+# CELESTIAL ONTOMATH LIGHT SHOW PHENOMENA (LUMINOUS AURORAS & SPECTRAL BEAMS)
+# Multi-octave continuous Color Field Gradients interacting with the Radiance Field
+# ==============================================================================
+
+# 1. Great Celestial Shekinah Aurora of the Logos (Suspended in Crossing Dome)
+aurora_ring_major = sdf_leaf(6, [5.5, 0.65, 0.0]) # Major torus ring
+aurora_orb_core = sdf_leaf(0, [3.2, 2.2, 3.2])   # Core radiant cloud
+aurora_halo_disc = sdf_leaf(3, [7.5, 0.45, 7.5]) # Spreading halo disc
+aurora_tree = sdf_binary(5, aurora_ring_major, sdf_binary(5, aurora_orb_core, aurora_halo_disc, 0.4), 0.45)
+
+objects.append(make_field(
+    "cathedral.lightshow.shekinah_aurora", "Great Celestial Shekinah Aurora of the Logos",
+    [0.0, 18.0, 0.0], aurora_tree, [8.0, 4.5, 8.0],
+    "material.logos.colorfield.lightshow.aurora", [0.85, 0.65, 1.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 7.5},
+        "description": {"t": "string", "v": "Floating celestial aurora borealis with multi-octave OntoMath spectral color gradient"}
+    }
+))
+
+# 2. Prismatic West Portal Sunbeam Cascade (Streaming from Rose Window into Nave)
+prism_beam_center = sdf_leaf(2, [1.8, 1.8, 8.5], p0=0.3)
+prism_beam_left   = sdf_leaf(2, [1.2, 1.2, 7.5], offset=[-2.5, -1.0, -1.0], p0=0.25)
+prism_beam_right  = sdf_leaf(2, [1.2, 1.2, 7.5], offset=[2.5, -1.0, -1.0], p0=0.25)
+prism_beams_tree = sdf_binary(5, prism_beam_center, sdf_binary(5, prism_beam_left, prism_beam_right, 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.lightshow.prismatic_shafts", "Prismatic West Portal Sunbeam Cascade",
+    [0.0, 13.0, 20.0], prism_beams_tree, [5.0, 4.5, 10.0],
+    "material.logos.colorfield.lightshow.prism", [0.75, 0.85, 1.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 6.5},
+        "description": {"t": "string", "v": "17-meter long prismatic sunbeam shafts with continuous spectral dispersion color field"}
+    }
+))
+
+# 3. Sacred Altar Shekinah Glory (Hovering above High Altar & Crucifix)
+shekinah_ring1 = sdf_leaf(6, [2.2, 0.28, 0.0])
+shekinah_ring2 = sdf_leaf(6, [1.6, 0.22, 0.0], offset=[0.0, 0.4, 0.0])
+shekinah_orb   = sdf_leaf(0, [1.2, 1.2, 1.2])
+shekinah_tree = sdf_binary(5, shekinah_ring1, sdf_binary(5, shekinah_ring2, shekinah_orb, 0.25), 0.3)
+
+objects.append(make_field(
+    "cathedral.lightshow.altar_shekinah", "Sacred Altar Transfiguration Glory",
+    [0.0, 5.2, -29.5], shekinah_tree, [3.2, 2.5, 3.2],
+    "material.logos.colorfield.lightshow.shekinah", [1.0, 0.88, 0.45],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.0},
+        "description": {"t": "string", "v": "Hovering transfiguration glory mandorla with gold-violet OntoMath color gradient"}
+    }
+))
+
+# 4. Edenic Lagoon Bioluminescent Well-Spring Aurora
+lagoon_mist_ring = sdf_leaf(6, [3.2, 0.35, 0.0])
+lagoon_mist_plume = sdf_leaf(3, [2.5, 1.2, 2.5], offset=[0.0, 0.5, 0.0])
+lagoon_aurora_tree = sdf_binary(5, lagoon_mist_ring, lagoon_mist_plume, 0.35)
+
+objects.append(make_field(
+    "cathedral.lightshow.lagoon_aurora", "Edenic Lagoon Bioluminescent Well-Spring Aurora",
+    [0.0, 1.8, 52.0], lagoon_aurora_tree, [4.5, 2.5, 4.5],
+    "material.logos.colorfield.lightshow.aether", [0.45, 0.95, 0.90],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 5.5},
+        "description": {"t": "string", "v": "Aquatic bioluminescent well-spring mist with seafoam-cyan OntoMath color field"}
+    }
+))
 
 # ==============================================================================
 # THE SACRED LIVING EDENIC POND OF LIVING WATERS (MAGNUM OPUS NUANCED EXPANSION)
@@ -4006,12 +4162,27 @@ zone_doc = {
             "astDefinition": make_cathedral_radiance_ast()
         },
         "vectorField": {
-            "amplitude": 0.6,
+            "mode": "AST",
             "baseFlowX": 0.0,
             "baseFlowY": 0.25,
             "baseFlowZ": 0.0,
             "frequency": 1.0,
-            "mode": "Procedural"
+            "amplitude": 0.6,
+            "astDefinition": make_color_expr_piecewise(
+                [
+                    {"c": 0.55, "factors": {}},
+                    {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35}, {"kind": 1, "var": "x", "scale": 0.45}]}
+                ],
+                [
+                    {"c": 0.60, "factors": {}},
+                    {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.40}, {"kind": 1, "var": "z", "scale": 0.50}]}
+                ],
+                [
+                    {"c": 0.75, "factors": {}},
+                    {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.30}, {"kind": 1, "var": "z", "scale": 0.35}]}
+                ],
+                "y"
+            )
         }
     },
     "materials": materials,
