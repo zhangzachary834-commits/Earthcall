@@ -327,6 +327,7 @@ int main() {
 
     int failures = 0;
     size_t rangeProxyAppliedCases = 0;
+    size_t rangeTraversalAppliedCases = 0;
     for (size_t caseIndex = 0; caseIndex < cases.size(); ++caseIndex) {
         const Case& c = cases[caseIndex];
         const uint64_t memoId = 1000u + static_cast<uint64_t>(caseIndex);
@@ -344,6 +345,7 @@ int main() {
             if (baseline[i] != accelerated[i]) ++proxyDiff;
         }
         if (proxyStats.sdfRangeProxyDraws > 0) ++rangeProxyAppliedCases;
+        if (proxyStats.sdfRangeTraversalDraws > 0) ++rangeTraversalAppliedCases;
 
         // Scale the tolerance with the silhouette's perimeter: disagreement is a
         // boundary phenomenon, so it grows with the edge, not the area. ~sqrt(area)
@@ -377,10 +379,10 @@ int main() {
                     baseline[(y - 1) * W + x] && baseline[(y + 1) * W + x] &&
                     baseline[y * W + x - 1] && baseline[y * W + x + 1]) ++holes;
 
-        // Range-proxy activation changes only where the raster proxy begins and
-        // ends. The field evaluator and marcher are identical, so its silhouette
-        // must be bit-for-bit identical to the disabled baseline. Any difference
-        // means a supposedly empty region carried visible authored truth.
+        // Range acceleration may now change both the raster proxy and where the
+        // marcher spends exact evaluations, but it may never change authored
+        // visible truth. OFF is the exact baseline oracle; ON must remain
+        // bit-for-bit identical in coverage.
         const bool proxyExact = proxyDiff == 0;
         const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) &&
                         (holes == 0) && proxyExact;
@@ -401,6 +403,10 @@ int main() {
     // comparison vacuously identical.
     if (rangeProxyAppliedCases == 0) {
         std::printf("  FAILED: range proxy never tightened any parity case\n");
+        ++failures;
+    }
+    if (rangeTraversalAppliedCases == 0) {
+        std::printf("  FAILED: GPU range traversal never activated in any parity case\n");
         ++failures;
     }
 
