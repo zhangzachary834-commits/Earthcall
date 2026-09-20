@@ -28,3 +28,21 @@ world.
 
 Witness: `tests/law/prophetic_rete_test.cpp` Section I. Post-recovery CI on corrected default
 passed the focused CPU suite after the PR #53 temporal-rollback containment rebase.
+
+
+## 2026-09-19 — unknown-variable frontier, first rung
+
+Following Zach's §20/§21 requirement that external/First-Mover influence remain explicit rather than
+silently guessed away, the relevance graph now preserves structurally known edges even when another
+source is opaque. Opaque writers are represented separately as
+`UnknownWriteSource{lawId, why, hasModeledWrites}`.
+
+This is deliberately a **knowledge/authority split**: `relevanceComplete()` remains false, so the
+partial graph cannot narrow runtime execution and Formation Rete must fall back exactly as before.
+The gain is epistemic rather than permissive: a model-backed `FirstMoverLaw` can now say both
+"this ActionModel definitely writes here" and "my C++ actuation may also do something Prophetic
+cannot enumerate" without erasing every known relation in the register.
+
+The next prerequisite for general cross-Law widening is path-granular unknown influence: First
+Mover/property provenance must establish what an opaque source can touch before any solver may use
+the absence of an unknown edge as evidence.
