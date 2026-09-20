@@ -261,10 +261,10 @@ int main() {
         auto rhoLeaf = scalarNode(1.0);
         OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoLeaf);
 
-        r.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
                    glm::vec3(0.2f), glm::vec3(0.8f), glm::vec3(1.0f));
-        r.setLightingEnabled(true);
-        r.setRadianceField(&rho, 1001);
+        renderer.setLightingEnabled(true);
+        renderer.setRadianceField(&rho, 1001);
 
         renderer.setModel(glm::mat4(1.0f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
@@ -278,7 +278,7 @@ int main() {
 
         // VALUE ONLY: same ScalarLeaf structure, new coefficient.
         rhoLeaf->scalarForm.terms[0].coefficient = 0.15;
-        r.setRadianceField(&rho, 1002);
+        renderer.setRadianceField(&rho, 1002);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -302,7 +302,7 @@ int main() {
         add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
         add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
         rho.pieces[0].mathNode = add;
-        r.setRadianceField(&rho, 1003);
+        renderer.setRadianceField(&rho, 1003);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -314,7 +314,7 @@ int main() {
         auto unsupported = std::make_shared<OntoMath::MathNode>();
         unsupported->op = OntoMath::MathNode::Op::Raycast;
         rho.pieces[0].mathNode = unsupported;
-        r.setRadianceField(&rho, 1004);
+        renderer.setRadianceField(&rho, 1004);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -328,7 +328,7 @@ int main() {
         assert(refusedPixel[0] < 12 && refusedPixel[1] < 12 && refusedPixel[2] < 12 &&
                "refused authored rho left stale rendered radiance on screen");
 
-        r.setRadianceField(nullptr, 0);
+        renderer.setRadianceField(nullptr, 0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
