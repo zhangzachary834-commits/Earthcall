@@ -109,6 +109,7 @@ int main() {
     for (const auto& mode: {std::string("solo"),std::string("fifth"),std::string("major"),std::string("minor")}) {
         click("hud.living.harmony."+mode);
         for(const char* voice:{"triangle","sine","square"}) {
+            const std::string timbre = std::string("timbre.studio.") + voice;
             click(std::string("hud.resonance.voice.")+voice);
             sounds.clear();click("hud.pad.c5");
             const size_t expected=mode=="solo"?1:mode=="fifth"?2:3;
@@ -118,7 +119,7 @@ int main() {
                 check(near(sounds[0].frequency,523.25),"harmony preserves its root pitch");
                 if(expected>1) check(near(sounds.back().frequency,523.25*std::pow(2,7.0/12)),"fifth interval is audible");
                 if(expected==3) check(near(sounds[1].frequency,523.25*std::pow(2,(mode=="minor"?3.0:4.0)/12)),"major/minor third differs musically");
-                for(const auto& n:sounds) check(n.voice==voice && n.amplitude>0 && n.amplitude<=0.31,"voice and bounded dynamics reach the audio channel");
+                for(const auto& n:sounds) check(n.voice==timbre && n.amplitude>0 && n.amplitude<=0.31,"authored timbre identity and bounded dynamics reach the audio channel");
             }
         }
     }
