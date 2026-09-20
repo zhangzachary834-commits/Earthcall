@@ -540,16 +540,60 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
         case SdfOp::Leaf: {
             if (n.prim == SdfPrim::Expr) {
                 if (n.mathNode) {
+                    // evalLeaf evaluates authored Expr mathematics in LEAF-LOCAL
+                    // coordinates p = world - offset. Range analysis must bind the
+                    // same local box or a translated field can acquire a theorem
+                    // about the wrong region and incorrectly exclude its zero set.
+                    const glm::vec3 localMin = boxMin - n.offset;
+                    const glm::vec3 localMax = boxMax - n.offset;
                     std::map<std::string, MathNode::RangeValue> vars = {
-                        {kAmbientPointVar, MathNode::RangeValue::makeVector(Interval(boxMin.x, boxMax.x), Interval(boxMin.y, boxMax.y), Interval(boxMin.z, boxMax.z))},
-                        {"x", MathNode::RangeValue::makeScalar(Interval(boxMin.x, boxMax.x))},
-                        {"y", MathNode::RangeValue::makeScalar(Interval(boxMin.y, boxMax.y))},
-                        {"z", MathNode::RangeValue::makeScalar(Interval(boxMin.z, boxMax.z))}
+                        {kAmbientPointVar, MathNode::RangeValue::makeVector(Interval(localMin.x, localMax.x), Interval(localMin.y, localMax.y), Interval(localMin.z, localMax.z))},
+                        {"x", MathNode::RangeValue::makeScalar(Interval(localMin.x, localMax.x))},
+                        {"y", MathNode::RangeValue::makeScalar(Interval(localMin.y, localMax.y))},
+                        {"z", MathNode::RangeValue::makeScalar(Interval(localMin.z, localMax.z))}
                     };
                     auto r = n.mathNode->evalRange(vars);
                     if (r && r->kind == ValueKind::Scalar) return r->scalar;
                 }
                 return retInf();
+            }
+
+            if (n.prim == SdfPrim::Convex) {
+                // Convex evaluates max(dot(normal, localP) - d). Plane normals
+                // are authored data and are not structurally guaranteed unit
+                // length, so the generic 1-Lipschitz primitive theorem is not
+                // lawful here. Bound every affine half-space exactly over the
+                // local AABB, then use the exact interval rule for max().
+                if (n.planes.empty()) return Interval(1e9f);
+                const glm::vec3 localMin = boxMin - n.offset;
+                const glm::vec3 localMax = boxMax - n.offset;
+                double maxLo = -std::numeric_limits<double>::infinity();
+                double maxHi = -std::numeric_limits<double>::infinity();
+                for (const glm::vec4& pl : n.planes) {
+                    double lo = -static_cast<double>(pl.w);
+                    double hi = -static_cast<double>(pl.w);
+                    for (int axis = 0; axis < 3; ++axis) {
+                        const double a = static_cast<double>(pl[axis]);
+                        const double x0 = static_cast<double>(localMin[axis]);
+                        const double x1 = static_cast<double>(localMax[axis]);
+                        if (a >= 0.0) {
+                            lo += a * x0;
+                            hi += a * x1;
+                        } else {
+                            lo += a * x1;
+                            hi += a * x0;
+                        }
+                    }
+                    maxLo = std::max(maxLo, lo);
+                    maxHi = std::max(maxHi, hi);
+                }
+                const float lo = std::nextafter(
+                    static_cast<float>(maxLo),
+                    -std::numeric_limits<float>::infinity());
+                const float hi = std::nextafter(
+                    static_cast<float>(maxHi),
+                    std::numeric_limits<float>::infinity());
+                return Interval(lo, hi);
             }
             
             // True-distance leaves are 1-Lipschitz, so center ± half-diagonal
@@ -559,8 +603,10 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
             // 1-Lipschitz (indeed its near-origin directional behaviour can make
             // the gradient arbitrarily larger than 1), so using center ± R as a
             // proof can exclude values that really occur in the cell. evalRange()
-            // is consumed by tessellation culling and future zero-set skipping:
+            // is consumed by tessellation culling and zero-set skipping:
             // unknown must fail open, never become an unsound finite theorem.
+            // Convex is handled above from its affine half-spaces because its
+            // authored normals need not be normalized.
             if (n.prim == SdfPrim::Ellipsoid) return retInf();
 
             float distAtCenter = evalSdf(n, c);
