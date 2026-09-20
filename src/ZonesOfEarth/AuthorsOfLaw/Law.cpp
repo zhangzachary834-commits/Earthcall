@@ -2383,11 +2383,14 @@ void LawManager::refreshVocabularyIndex() const {
     _vocabularyBuiltAt = revision;
     if (_indexedNames.empty()) return;
 
-    // Views into _indexedNames, so the walk below tests a property name and each
-    // of its dotted roots without allocating a string per test.
-    std::unordered_set<std::string_view> wantedViews;
-    wantedViews.reserve(_indexedNames.size());
-    for (const std::string& name : _indexedNames) wantedViews.insert(name);
+    // Pre-populate _vocabularyIndex for all _indexedNames so that vector addresses
+    // remain stable, and build a lookup map from string_view to target vector pointers.
+    // This avoids string allocations and map lookups inside the being iteration loop.
+    std::unordered_map<std::string_view, std::vector<Singular*>*> vectorMap;
+    vectorMap.reserve(_indexedNames.size());
+    for (const std::string& name : _indexedNames) {
+        vectorMap[name] = &_vocabularyIndex[name];
+    }
 
     // ONE PASS PER BEING, not one per (being, name).
     //
@@ -2399,6 +2402,10 @@ void LawManager::refreshVocabularyIndex() const {
     // tick that granted a property or admitted a being, since those are exactly
     // what move structuralRevision. Now the list is walked ONCE per being, and
     // each name it finds is tested against the indexed set.
+    //
+    // Bolt Optimization: Direct pointer map lookup and vector pointer set collection
+    // avoids temporary std::string allocations and std::unordered_map lookups per property
+    // per being during vocabulary index building.
     //
     // The membership rule is unchanged, and must stay that way: this index and
     // Law::couldApplyTo have to agree, or the sweep proposes candidates the
@@ -2415,21 +2422,31 @@ void LawManager::refreshVocabularyIndex() const {
         // listProperties() materialises every authored property's bridge, so
         // this walk sees dynamic properties too, which is what keeps the
         // membership rule identical to beingCarriesProperty's.
-        std::unordered_set<std::string_view> carried;
+        std::unordered_set<std::vector<Singular*>*> carried;
         for (Property* prop : being->listProperties()) {
             if (!prop) continue;
             const std::string_view propName = prop->name();
-            auto hit = wantedViews.find(propName);
-            if (hit != wantedViews.end()) carried.insert(*hit);
+            auto hit = vectorMap.find(propName);
+            if (hit != vectorMap.end()) carried.insert(hit->second);
             // The dotted-child rule: a being carrying `shape.fillet` carries `shape`.
             for (std::size_t dot = propName.find('.'); dot != std::string_view::npos;
                  dot = propName.find('.', dot + 1)) {
-                auto root = wantedViews.find(propName.substr(0, dot));
-                if (root != wantedViews.end()) carried.insert(*root);
+                auto root = vectorMap.find(propName.substr(0, dot));
+                if (root != vectorMap.end()) carried.insert(root->second);
             }
         }
-        for (const std::string_view name : carried) {
-            _vocabularyIndex[std::string(name)].push_back(being);
+        for (std::vector<Singular*>* vec : carried) {
+            vec->push_back(being);
+        }
+    }
+
+    // Clean up empty vector entries to match previous behavior where unreferenced
+    // indexed names had no key in _vocabularyIndex.
+    for (auto it = _vocabularyIndex.begin(); it != _vocabularyIndex.end(); ) {
+        if (it->second.empty()) {
+            it = _vocabularyIndex.erase(it);
+        } else {
+            ++it;
         }
     }
 }
