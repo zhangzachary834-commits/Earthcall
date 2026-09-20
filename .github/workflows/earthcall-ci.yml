@@ -178,8 +178,16 @@ jobs:
         shell: bash
         run: ./build/webgpu_sdf_color_expr_test
 
-      - name: Verify authored-Perlin gradient and traversal parity
+      - name: Verify authored-Perlin core gradient/compiler gates
         shell: bash
+        env:
+          EARTHCALL_PERLIN_TEST_MODE: ABC
+        run: ./build/webgpu_perlin_exact_gradient_test
+
+      - name: Verify authored-Perlin range-traversal camera gate
+        shell: bash
+        env:
+          EARTHCALL_PERLIN_TEST_MODE: D
         run: ./build/webgpu_perlin_exact_gradient_test
 
       - name: Measure native authored-Perlin range traversal A/B
