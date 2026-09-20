@@ -411,6 +411,29 @@ int main() {
         ++failures;
     }
 
+    // Sign-asymmetry witness: f(p)=-5 is also mathematically zero-free,
+    // but the baseline marcher begins inside negative space and reports an
+    // immediate hit. Range acceleration must preserve that behavior rather
+    // than treating "no zero" as synonymous with "empty outside."
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(-5.0));
+        const geom::SdfNode inside = geom::makeImplicit(constant);
+        const auto off = gpuMask(inside, glm::mat4(1.0f), 999998u, false);
+        const auto on  = gpuMask(inside, glm::mat4(1.0f), 999998u, true);
+        const Renderer::FrameStats stats = r.frameStats();
+        const bool identical = off == on;
+        const bool stillRendered =
+            std::any_of(on.begin(), on.end(), [](uint8_t v) { return v != 0; });
+        const bool notCulled = stats.sdfRangeProxyCulledDraws == 0;
+        std::printf("  %-14s pixels=%s cullCounter=%u %s\n",
+                    "RangeNegative", identical ? "identical" : "MISMATCH",
+                    stats.sdfRangeProxyCulledDraws,
+                    (identical && stillRendered && notCulled) ? "ok" : "FAILED");
+        if (!identical || !stillRendered || !notCulled) ++failures;
+    }
+
     // Strong cull witness: f(p)=5 has no zero anywhere in the render domain.
     // OFF and ON must both produce black, and ON must report a proof-authorized
     // culled draw rather than merely marching to the same empty answer.
