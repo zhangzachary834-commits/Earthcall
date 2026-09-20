@@ -65,7 +65,7 @@ public:
     int authoredTimbresSounded() const { return _authoredTimbresSounded; }
     int legacyTimbresSounded() const { return _legacyTimbresSounded; }
     int unresolvedTimbres() const { return _unresolvedTimbres; }
-    const std::string& lastTimbreStatus() const { return _lastTimbreStatus; }
+    std::string lastTimbreStatus() const { return _lastTimbreStatus; }
 
 private:
     void buildProperties() override;
