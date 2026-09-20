@@ -195,6 +195,16 @@ public:
         std::string path;
         bool aboutInstances = false;
     };
+
+    // An actuation source whose full write transform is not structurally
+    // enumerable. This is the first §20/§21 "unknown variable" rung: keep the
+    // known authored/model-backed part of a Law, but name the remaining
+    // transform instead of erasing every known edge in the graph.
+    struct UnknownWriteSource {
+        std::string lawId;
+        std::string why;
+        bool hasModeledWrites = false;
+    };
     // Rebuild from the whole law register. Cheap enough to call per frame
     // (it is a walk of the law TEXT, not of the world), but the caller is
     // expected to gate it on a revision — see LawManager::tick.
@@ -246,11 +256,17 @@ public:
 
     // Step 2 of the Formation-Rete/Prophetic integration: the same
     // possibility proof run pairwise instead of only against the union.
-    // IMPORTANT: callers may narrow with these edges only when
-    // relevanceComplete() is true. Opaque reads OR writes invalidate the
-    // graph globally; the correct fallback is the lower complete tier.
+    //
+    // Known edges are retained even when the graph is incomplete. This makes
+    // unknown/external actuation legible instead of turning one opaque source
+    // into a global information blackout. IMPORTANT: callers may NARROW with
+    // these edges only when relevanceComplete() is true; otherwise they are
+    // diagnostic/provenance facts and the execution path must fall back.
     bool relevanceComplete() const { return _relevanceComplete; }
     const std::vector<RelevanceEdge>& relevanceEdges() const { return _relevanceEdges; }
+    const std::vector<UnknownWriteSource>& unknownWriteSources() const {
+        return _unknownWriteSources;
+    }
 
     const std::vector<LawFacts>& facts() const { return _facts; }
 
@@ -267,6 +283,7 @@ private:
     std::unordered_map<std::string, Range> _writeRanges;
     std::vector<Unreachable> _unreachable;
     std::vector<RelevanceEdge> _relevanceEdges;
+    std::vector<UnknownWriteSource> _unknownWriteSources;
     bool _complete = true;
     bool _relevanceComplete = true;
 };
