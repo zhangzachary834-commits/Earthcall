@@ -1015,6 +1015,19 @@ void collectSelfImpossible(const ConditionNode& node, const std::string& lawId,
 
 } // namespace
 
+bool unknownSourceMayReach(const Index::UnknownWriteSource& source,
+                           const std::string& path) {
+    // This is the positive/negative knowledge asymmetry in executable form.
+    // A partial domain may contain useful positive facts, but absence from it
+    // proves nothing. Only a source whose domain is certified complete may
+    // use disjointness to answer "no".
+    if (!source.domainComplete) return true;
+    for (const auto& candidate : source.knownMayWritePaths) {
+        if (pathsMayAlias(candidate, path)) return true;
+    }
+    return false;
+}
+
 void Index::clear() {
     _facts.clear();
     _readNames.clear();
@@ -1157,6 +1170,25 @@ Range Index::writeRangeOf(const std::string& path) const {
     return found ? acc : Range::top();
 }
 
+bool Index::unknownWriteMayReach(const std::string& path) const {
+    for (const auto& source : _unknownWriteSources) {
+        if (unknownSourceMayReach(source, path)) return true;
+    }
+    return false;
+}
+
+bool Index::unknownWriteDomainCompleteFor(const std::string& path) const {
+    // The argument is intentionally present even though today's frontier has
+    // only whole-domain completeness. It makes the API property-granular now
+    // and leaves room for future provenance to certify subdomains without
+    // changing the cross-Law solver's question.
+    (void)path;
+    for (const auto& source : _unknownWriteSources) {
+        if (!source.domainComplete) return false;
+    }
+    return true;
+}
+
 nlohmann::json Index::toJson() const {
     nlohmann::json j;
     j["complete"] = _complete;
@@ -1209,7 +1241,9 @@ nlohmann::json Index::toJson() const {
         j["unknownWriteSources"].push_back({
             {"lawId", source.lawId},
             {"why", source.why},
-            {"hasModeledWrites", source.hasModeledWrites}});
+            {"hasModeledWrites", source.hasModeledWrites},
+            {"knownMayWritePaths", source.knownMayWritePaths},
+            {"domainComplete", source.domainComplete}});
     }
 
     j["relevanceEdges"] = nlohmann::json::array();
