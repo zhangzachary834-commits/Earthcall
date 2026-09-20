@@ -200,8 +200,16 @@ def upgrade(document):
             edges.append(edge)
 
     state = by_id["state.studio"]["authoredProperties"]
-    for name, value in {"voice": pv("string", TIMBRE_IDS["triangle"]),
-                        "inkR": pv("double", 1.0), "inkG": pv("double", 0.85),
+    # Migrate only the old engine-vocabulary voice values. A Person-authored
+    # custom identity is already ontology and must not be overwritten merely
+    # because this upgrade knows three starter timbres.
+    existing_voice = state.get("voice")
+    if existing_voice is None:
+        state["voice"] = pv("string", TIMBRE_IDS["triangle"])
+    elif (existing_voice.get("t") == "string" and
+          existing_voice.get("v") in TIMBRE_IDS):
+        state["voice"] = pv("string", TIMBRE_IDS[existing_voice["v"]])
+    for name, value in {"inkR": pv("double", 1.0), "inkG": pv("double", 0.85),
                         "inkB": pv("double", 0.15),
                         "strokeSpacing": pv("double", 0.09),
                         "lastStrokeX": pv("double", 0.0),
