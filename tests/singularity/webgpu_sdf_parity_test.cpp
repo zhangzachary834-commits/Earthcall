@@ -398,11 +398,12 @@ int main() {
         if (!ok) ++failures;
     }
 
-    // At least one ordinary shape must actually exercise the tightened
-    // proxy path; otherwise an accidentally dead switch could make every on/off
-    // comparison vacuously identical.
-    if (rangeProxyAppliedCases == 0) {
-        std::printf("  FAILED: range proxy never tightened any parity case\n");
+    // Raster-box tightening is independently quarantined after a native
+    // transformed SmoothUnion edge mismatch. The active rung under test here is
+    // the proof hierarchy plus GPU ray traversal; complete zero-free culling is
+    // still covered by the strong witness below.
+    if (rangeProxyAppliedCases != 0) {
+        std::printf("  FAILED: quarantined raster proxy tightening unexpectedly activated\n");
         ++failures;
     }
     if (rangeTraversalAppliedCases == 0) {
