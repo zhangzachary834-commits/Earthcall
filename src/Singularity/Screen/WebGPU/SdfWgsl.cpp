@@ -1335,9 +1335,9 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             candidate_step = max(d, current_eps);
-            if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
-                candidate_step = min(candidate_step, max(rangeCellExit - t, 0.0));
-            }
+            // Do not clamp the exact marcher's lawful step to octree-cell
+            // boundaries. The hierarchy may skip cells it proved zero-free,
+            // but ambiguous space must preserve the baseline march trajectory.
             prev_d = d;
             t = t + candidate_step;
         } else {
@@ -1362,9 +1362,8 @@ fn fs(in: VSOut) -> FSOut {
 
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
-            if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
-                candidate_step = min(candidate_step, max(rangeCellExit - t, 0.0));
-            }
+            // Same rule for distance-field marching: cell boundaries are not
+            // authored geometry and may not perturb the exact baseline step.
             t = t + candidate_step;
         }
         
