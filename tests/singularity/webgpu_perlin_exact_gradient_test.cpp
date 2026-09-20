@@ -715,6 +715,7 @@ int main() {
         mat.diffuse = 0.8f;
 
         size_t traversalActiveCases = 0;
+        bool sawInitialRangeUpload = false;
         const uint64_t terrainMemoId = 0x5045524c494eULL; // "PERLIN"
 
         for (const auto& c : cameraCorpus) {
@@ -805,7 +806,20 @@ int main() {
                 }
             }
             assert(coverageDiffPixels == 0);
-            if (onStats.sdfRangeTraversalDraws > 0) ++traversalActiveCases;
+            if (onStats.sdfRangeTraversalDraws > 0) {
+                ++traversalActiveCases;
+                if (onStats.sdfRangeNodeBytesUploaded > 0) {
+                    // One upload is lawful when the persistent proof buffer is
+                    // first materialized. The same memo/pipeline is reused for
+                    // every later camera, so subsequent traversal frames must
+                    // not re-upload identical hierarchy bytes.
+                    assert(!sawInitialRangeUpload);
+                    sawInitialRangeUpload = true;
+                } else if (sawInitialRangeUpload) {
+                    // Expected steady-state path: persistent range nodes remain
+                    // resident while camera state changes.
+                }
+            }
 
             const auto* px = baseline.data();
 
