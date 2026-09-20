@@ -56,7 +56,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "bindings": {
@@ -343,7 +343,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "theme-toggled",
@@ -561,7 +561,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "draw-mode-toggled",
@@ -1108,7 +1108,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "note-played",
@@ -1810,7 +1810,7 @@
           "input": "acoustic.amplitude",
           "kind": 18,
           "path": "acoustic.frequency",
-          "propertyName": "triangle"
+          "propertyName": "timbre.studio.triangle"
         },
         "activation": 0,
         "applicationLog": [],
@@ -2158,7 +2158,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "sine"
+              "propertyName": "timbre.studio.sine"
             },
             {
               "eventType": "note-played",
@@ -2282,7 +2282,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "square"
+              "propertyName": "timbre.studio.square"
             },
             {
               "eventType": "note-played",
@@ -3962,7 +3962,7 @@
   "currentZone": 0,
   "currentZoneId": "SynthesisStudio",
   "flying": true,
-  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02) / Codex (resonance studio, 2026-09-04)",
+  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02) / Codex (resonance studio, 2026-09-04) / GPT-5.6 Sol (authored timbre migration, 2026-09-19)",
   "materials": [
     {
       "baseColor": [
@@ -4940,6 +4940,38 @@
           "events": [],
           "type": "instance-of",
           "weight": 1.0
+        },
+        {
+          "directed": true,
+          "entityA": "studio.author.gpt-5.6-sol.audio-20260919",
+          "entityB": "Zach",
+          "events": [],
+          "type": "commissioned-by",
+          "weight": 1
+        },
+        {
+          "directed": true,
+          "entityA": "timbre.studio.triangle",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "events": [],
+          "type": "authored-by",
+          "weight": 1
+        },
+        {
+          "directed": true,
+          "entityA": "timbre.studio.sine",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "events": [],
+          "type": "authored-by",
+          "weight": 1
+        },
+        {
+          "directed": true,
+          "entityA": "timbre.studio.square",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "events": [],
+          "type": "authored-by",
+          "weight": 1
         }
       ],
       "identifier": "SynthesisStudio",
@@ -9097,7 +9129,7 @@
               },
               "voice": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               },
               "lastStrokeX": {
                 "t": "double",
@@ -12170,6 +12202,390 @@
             "x2D": 1160.0,
             "y2D": 233.0,
             "zOrder2D": 30
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "GPT-5.6 Sol / Audio micromastery authoring"
+              },
+              "onBehalfOf": {
+                "t": "string",
+                "v": "Zach"
+              },
+              "revision": {
+                "t": "string",
+                "v": "authored-timbre-rung-1"
+              },
+              "session": {
+                "t": "string",
+                "v": "sol-audio-micromastery-2026-09-19"
+              }
+            },
+            "center": [
+              0,
+              -6.2,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "studio.author.gpt-5.6-sol.audio-20260919",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -6.2,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Triangle / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":0.8346920896602298,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]},{\"c\":-0.09274356551780331,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":18.84955592153876}]},{\"c\":0.03338768358640919,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":31.41592653589793}]},{\"c\":-0.017034532442045506,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":43.982297150257104}]},{\"c\":0.010304840613089257,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":56.548667764616276}]},{\"c\":-0.006898281732729172,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":69.11503837897544}]},{\"c\":0.004939006447693668,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":81.68140899333463}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.4,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.triangle",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -6.4,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Sine / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":1,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.550000000000001,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.sine",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -6.550000000000001,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Square / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":1.0783931140121368,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]},{\"c\":0.3594643713373789,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":18.84955592153876}]},{\"c\":0.21567862280242733,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":31.41592653589793}]},{\"c\":0.15405615914459095,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":43.982297150257104}]},{\"c\":0.11982145711245965,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":56.548667764616276}]},{\"c\":0.09803573763746697,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":69.11503837897544}]},{\"c\":0.08295331646247205,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":81.68140899333463}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.7,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.square",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              -6.7,
+              0,
+              1
+            ]
           }
         ]
       }

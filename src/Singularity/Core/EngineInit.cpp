@@ -42,6 +42,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -191,6 +192,11 @@ bool Engine::initLogic() {
 
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
+
+    // Register first-mover AudioChannel (authored acoustic reality -> output substrate).
+    // This owns the checked PlayAudio sink; AudioSystem below it owns only
+    // miniaudio/device execution.
+    Singularity::Audio::AudioChannel::syncRegister(*_lawManager);
 
     // Register first-mover AudioRecorder (microphone audio capture and streaming recording)
     Singularity::Audio::AudioRecorder::syncRegister(*_lawManager);

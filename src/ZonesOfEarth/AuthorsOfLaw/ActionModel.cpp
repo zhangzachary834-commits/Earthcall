@@ -686,7 +686,13 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
-                sink(subject, frequency, amplitude, timbre);
+                std::string sinkReason;
+                if (!sink(subject, frequency, amplitude, timbre, sinkReason)) {
+                    emitEffect("PlayAudio", false,
+                               sinkReason.empty() ? "audio channel refused sound"
+                                                  : sinkReason);
+                    return;
+                }
 
                 // The event stays, now as a genuine past-tense record that a
                 // being sounded — an edge other laws may condition on. It is no

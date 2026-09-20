@@ -24,6 +24,7 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -331,8 +332,8 @@ int main() {
                           std::string("3D pad ") + note.noteName + " plays " + std::to_string(note.freq) + " Hz");
                     check(g_sounded[0].subject == note.pad3d,
                           std::string("note sounded by ") + note.pad3d);
-                    check(g_sounded[0].timbre == "triangle",
-                          "the timbre is triangle");
+                    check(g_sounded[0].timbre == "timbre.studio.triangle",
+                          "the default voice names the authored triangle timbre being");
                 }
                 publish("object-released", p3d);
                 check(nearly(readNumber(*p3d, "position.y"), 0.88),
@@ -959,13 +960,29 @@ int main() {
         Object* tidal = findObject("hud.resonance.ink.tidal");
         check(resonator && meter && sine && square && triangle && tidal,
               "resonance sculpture and creative selectors exist in the actual save");
+        Object* triangleTimbre = findObject("timbre.studio.triangle");
+        Object* sineTimbre = findObject("timbre.studio.sine");
+        Object* squareTimbre = findObject("timbre.studio.square");
+        check(triangleTimbre && sineTimbre && squareTimbre,
+              "the actual Studio save carries three authored timbre beings");
+        if (triangleTimbre) {
+            OntoMath::Piecewise form;
+            std::string timeVar, why;
+            double referenceHz = 0.0, duration = 0.0;
+            check(Singularity::Audio::AudioChannel::resolveAuthoredForm(
+                      *padC5, "timbre.studio.triangle", form, timeVar,
+                      referenceHz, duration, why),
+                  "Studio triangle identity resolves to authored OntoMath rather than an engine preset");
+            check(timeVar == "phase" && nearly(referenceHz, 1.0),
+                  "Studio timbre authors a normalized phase waveform for pitch retiming");
+        }
         if (resonator && meter && sine && square && triangle && tidal) {
             const auto population = zone->getOwnedObjects().size();
             Universe::instance().setClock(100, 1.0 / 60.0);
             activate(*sine);
             g_sounded.clear();
             activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
+            check(g_sounded.size() == 1 && g_sounded[0].timbre == "timbre.studio.sine",
                   "sine selector changes the next note with no duplicate triangle sound");
             check(nearly(readNumber(*resonator, "struckAt"), 100),
                   "note-played reaches the matching 3D resonator");
@@ -980,7 +997,7 @@ int main() {
             activate(*square);
             g_sounded.clear();
             activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "square",
+            check(g_sounded.size() == 1 && g_sounded[0].timbre == "timbre.studio.square",
                   "square voice is a real audio request");
             activate(*triangle);
             for (int i = 0; i < 40; ++i) activate(*padC5);
@@ -995,8 +1012,9 @@ int main() {
             activate(*sine);
             g_sounded.clear();
             activate(*padC5);
-            check(g_sounded.size() == 1 && g_sounded[0].timbre == "sine",
-                  "voice selection and note playback survive real Law save/load");
+            check(g_sounded.size() == 1 &&
+                      g_sounded[0].timbre == "timbre.studio.sine",
+                  "authored timbre identity survives real Law save/load");
         }
         for (const auto& saved : zoneJson["world"]["objects"]) {
             const auto id = saved["objectID"].get<std::string>();
