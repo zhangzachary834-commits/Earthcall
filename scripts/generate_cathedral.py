@@ -22,6 +22,132 @@ def make_color_expr_piecewise(r_terms, g_terms, b_terms, input_var="y"):
         ]
     }
 
+def make_cathedral_radiance_ast():
+    """
+    Authors the ethereal, rich, and profound OntoMath scalar radiance field
+    for the Cathedral of the Living Logos:
+
+      rho(p) = Num(p) / Denom(p)
+
+    Where:
+      p = (x, y, z) is the source-relative coordinate vector from the Crossing
+          Lantern Tower apex origin (0.0, 24.0, 0.0).
+
+      Denom(p) = 1.0 + 0.0016*x^2 + 0.0005*y^2 + 0.0012*z^2
+          Anisotropic continuous spatial falloff providing vertical shaft elongation
+          (0.0005 along Y) so heavenly illumination extends down to the floor,
+          along the longitudinal processional nave to the west (0.0012),
+          and through the transepts (0.0016).
+
+      Num(p) = Base(y) + Tracery(x, z) + LivingBreath(p)
+
+      Where:
+        Base(y) = 1.0 - 0.008*y
+            Provides gentle vertical warmth as light descends toward the sanctuary floor.
+
+        Tracery(x, z) = 0.12 * cos(0.28*x) * cos(0.28*z)
+                      + 0.08 * cos(0.56*z)
+                      + 0.06 * cos(0.56*x)
+            Harmonic Gothic vault bay clerestory ray lattice. Resonates with the
+            11-meter processional bay spacing and cruciform transept axes, casting
+            subtle geometric ribs of divine clarity across the Cosmati pavements.
+
+        LivingBreath(p) = 0.15 * Noise(0.05 * p)
+            Continuous 3D Perlin noise (Op::Noise = 29) evaluating cnoise3(0.05 * p).
+            Creates ethereal, organic, living atmospheric currents of luminous
+            presence throughout the cathedral volume.
+    """
+    denom_terms = [
+        {"c": 1.0, "factors": {}},
+        {"c": 0.0016, "factors": {"x": 2.0}},
+        {"c": 0.0005, "factors": {"y": 2.0}},
+        {"c": 0.0012, "factors": {"z": 2.0}},
+    ]
+    denom_node = {
+        "op": 0,
+        "scalarForm": {"terms": denom_terms}
+    }
+
+    lattice_terms = [
+        {"c": 1.0, "factors": {}},
+        {"c": -0.008, "factors": {"y": 1.0}},
+        {
+            "c": 0.12,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "x", "scale": 0.28, "shift": 0.0},
+                {"kind": 1, "var": "z", "scale": 0.28, "shift": 0.0}
+            ]
+        },
+        {
+            "c": 0.08,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "z", "scale": 0.56, "shift": 0.0}
+            ]
+        },
+        {
+            "c": 0.06,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "x", "scale": 0.56, "shift": 0.0}
+            ]
+        }
+    ]
+    lattice_node = {
+        "op": 0,
+        "scalarForm": {"terms": lattice_terms}
+    }
+
+    p_vector_node = {
+        "op": 2, # VectorConstruct
+        "children": [
+            {"op": 1, "var": "x"},
+            {"op": 1, "var": "y"},
+            {"op": 1, "var": "z"}
+        ]
+    }
+    freq_node = {
+        "op": 0,
+        "scalarForm": {"terms": [{"c": 0.05, "factors": {}}]}
+    }
+    scaled_p = {
+        "op": 6, # Scale (scalar * vec3)
+        "children": [freq_node, p_vector_node]
+    }
+    noise_node = {
+        "op": 29, # Noise
+        "children": [scaled_p]
+    }
+    noise_amp = {
+        "op": 0,
+        "scalarForm": {"terms": [{"c": 0.15, "factors": {}}]}
+    }
+    scaled_noise = {
+        "op": 6, # Scale (scalar * scalar)
+        "children": [noise_amp, noise_node]
+    }
+
+    num_node = {
+        "op": 4, # Add
+        "children": [lattice_node, scaled_noise]
+    }
+
+    radiance_node = {
+        "op": 23, # Div
+        "children": [num_node, denom_node]
+    }
+
+    return {
+        "input": "y",
+        "pieces": [
+            {
+                "mathNode": radiance_node
+            }
+        ]
+    }
+
+
 import os
 import math
 import struct
@@ -3858,13 +3984,26 @@ zone_doc = {
     "deletable": {"Zach": True},
     "spatialRoot": {
         "id": "Cathedral of the Living Logos_spatialRoot",
-        "origin": [0.0, 0.0, 0.0],
+        "origin": [0.0, 24.0, 0.0],
         "scale": [120.0, 80.0, 120.0],
+        "authoredProperties": {
+            "light.ambient": {"t": "float", "v": 0.28},
+            "light.attenuation.constant": {"t": "float", "v": 1.0},
+            "light.attenuation.linear": {"t": "float", "v": 0.015},
+            "light.attenuation.quadratic": {"t": "float", "v": 0.0005},
+            "light.color": {"t": "vec3", "x": 1.0, "y": 0.96, "z": 0.88},
+            "light.diffuse": {"t": "float", "v": 0.85},
+            "light.enabled": {"t": "bool", "v": True},
+            "light.intensity": {"t": "float", "v": 1.4},
+            "light.source": {"t": "bool", "v": True},
+            "light.specular": {"t": "float", "v": 0.90}
+        },
         "field": {
-            "amplitude": 1.2,
-            "baseDensity": 0.88,
-            "frequency": 1.618,
-            "mode": "Procedural"
+            "mode": "AST",
+            "baseDensity": 1.0,
+            "frequency": 1.0,
+            "amplitude": 1.0,
+            "astDefinition": make_cathedral_radiance_ast()
         },
         "vectorField": {
             "amplitude": 0.6,
