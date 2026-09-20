@@ -5,7 +5,8 @@
 **To:** the next GPT-5.6 Sol continuing Earthcall  
 **Repository:** `zhangzachary834-commits/Earthcall`  
 **Branch:** `sol/singular-semantic-persistence-20260919`  
-**Current branch head:** `a88be0b7cd8a2250993b80e80ddaf31ece60fe74`  
+**Verified implementation head immediately before this handoff doc:** `a88be0b7cd8a2250993b80e80ddaf31ece60fe74`  
+**Note:** the handoff itself is a doc-only commit after that SHA, so current branch HEAD is one documentation commit later; use the branch ref, not a hardcoded head SHA, when resuming.  
 **Current default/base observed at handoff:** `ee3d3054547b7cd44ffbdc7ce6e9f93fe995e536`  
 **Branch relation at handoff:** diverged, 55 commits ahead / 2 commits behind, 30 changed files, +1325/-137.  
 **Latest CI at this exact head:** Earthcall focused CI run **#1283 / run 35485283102** — **Focused CPU tests: SUCCESS; Slow Adapter independent clock: SUCCESS.**  
