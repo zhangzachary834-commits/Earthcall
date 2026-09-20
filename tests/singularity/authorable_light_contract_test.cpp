@@ -10,7 +10,7 @@
 #include <string>
 #include <variant>
 
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 
 namespace {
 
