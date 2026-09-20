@@ -296,7 +296,11 @@ private:
     // evaluation. OFF remains the fail-open baseline and parity oracle.
     bool _sdfRangeProxyEnabled = false;
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
-    static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
+    // A complete depth-5 octree contains at most
+    // 1+8+64+512+4096+32768 = 37,449 nodes. Keep headroom so the real
+    // Perlin floor cannot become a partial-tree authority merely because the
+    // renderer's cache budget was smaller than the mathematical hierarchy.
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 65536;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
