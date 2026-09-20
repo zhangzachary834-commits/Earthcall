@@ -15,6 +15,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 
 #include <webgpu/wgpu.h>
@@ -149,6 +150,39 @@ int main() {
     field.mathNode = buildTerrainMath();
 
     const glm::vec3 extent(1000.0f, 30.0f, 1000.0f);
+
+    // Release-mode latch diagnostics. These are the exact non-camera-dependent
+    // conditions required before drawImplicit can advertise traversal.
+    const sdfwgsl::Program probeProgram = sdfwgsl::compile(field);
+    if (!probeProgram.ok) {
+        std::printf("SDF_RANGE_PERF FAIL Release Perlin program refused: %s\n",
+                    probeProgram.error.c_str());
+        return 1;
+    }
+    const glm::vec3 proofExtent = glm::abs(extent * 1.05f);
+    const auto proofHierarchy = geom::buildRangeHierarchy(
+        field, proofExtent, /*maxDepth=*/5, /*maxNodes=*/65536);
+    size_t positiveSkipNodes = 0;
+    size_t negativeZeroFreeNodes = 0;
+    for (const auto& node : proofHierarchy.nodes) {
+        if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipNodes;
+        if (node.boundFinite && node.rangeHi < 0.0f) ++negativeZeroFreeNodes;
+    }
+    std::printf(
+        "SDF_RANGE_PERF_LATCH needsGradientStep=%d hierarchy_nodes=%zu "
+        "proved_empty=%zu positive_skip_nodes=%zu negative_zero_free_nodes=%zu "
+        "ambiguous_leaves=%zu unknown_leaves=%zu\n",
+        probeProgram.needsGradientStep ? 1 : 0,
+        proofHierarchy.nodes.size(),
+        proofHierarchy.provedEmptyNodes,
+        positiveSkipNodes,
+        negativeZeroFreeNodes,
+        proofHierarchy.ambiguousLeaves,
+        proofHierarchy.unknownLeaves);
+    if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
+        std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
+        return 1;
+    }
     RenderMaterial mat;
     mat.baseColor = glm::vec3(0.2f, 0.8f, 0.2f);
     mat.ambient = 0.2f;
@@ -275,9 +309,11 @@ int main() {
     wgpuTextureRelease(tex);
 
     if (measurementWarnings) {
-        std::printf("SDF_RANGE_PERF WARN measurement completed with instrumentation warning(s); correctness is governed by the native parity gates\n");
+        std::printf("SDF_RANGE_PERF FAIL measurement instrumentation did not prove active traversal\n");
+        std::fflush(stdout);
+        std::_Exit(2);
     }
-    std::printf("SDF_RANGE_PERF PASS measurement-only performance witness\n");
+    std::printf("SDF_RANGE_PERF PASS active traversal measurement witness\n");
     std::fflush(stdout);
     std::_Exit(0);
 }
