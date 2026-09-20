@@ -230,6 +230,35 @@ int main() {
         verifyProvedCellsBySampling(perlin, h);
     }
 
+    // Real Perlin-floor scale: this is the renderer's actual non-heightfield
+    // proxy extent (authored [1000,30,1000] grown by 5%). The old 8,192-node
+    // renderer budget could truncate a depth-5 tree before it reached useful
+    // small cells. A complete 65,536 budget plus lattice-aware Noise bounds must
+    // now prove genuine empty space while preserving an ambiguous terrain band.
+    {
+        const geom::SdfNode perlin =
+            geom::makeImplicit(perlinFloorMath(/*amplitude=*/40.0,
+                                               /*frequency=*/0.008));
+        const glm::vec3 realProxyExtent(1050.0f, 31.5f, 1050.0f);
+        const auto h = geom::buildRangeHierarchy(
+            perlin, realProxyExtent,
+            /*maxDepth=*/5, /*maxNodes=*/65536);
+
+        check(!h.nodes.empty(), "real-scale Perlin hierarchy builds");
+        check(h.provedEmptyNodes > 0,
+              "real-scale Perlin hierarchy proves zero-free cells");
+        check(h.ambiguousLeaves > 0,
+              "real-scale Perlin hierarchy preserves terrain ambiguity");
+        check(h.unknownLeaves == 0,
+              "real-scale supported Perlin expression stays finite");
+        check(h.nodes.size() <= 65536,
+              "real-scale Perlin hierarchy respects complete-tree budget");
+        check(h.nodes.size() <= 37449,
+              "depth-5 octree never exceeds mathematical node maximum");
+        verifyStructure(h);
+        verifyProvedCellsBySampling(perlin, h);
+    }
+
     // Budget exhaustion is a correctness mode, not a partial-tree authority:
     // construction stops with ambiguous leaves while preserving coverage.
     {
