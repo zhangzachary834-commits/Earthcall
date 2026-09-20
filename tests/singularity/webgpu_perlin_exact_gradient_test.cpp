@@ -326,6 +326,11 @@ int main() {
     }
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
 
+    const char* testMode = std::getenv("EARTHCALL_PERLIN_TEST_MODE");
+    const bool runCore = !(testMode && std::string(testMode) == "D");
+    const bool runGateD = !(testMode && std::string(testMode) == "ABC");
+
+    if (runCore) {
     // =========================================================================
     // Gate A: Fused Value vs Reference cnoise3 & Analytical Gradient Verification
     // =========================================================================
@@ -653,10 +658,12 @@ int main() {
         std::printf("[Gate C3] Falsification confirmed: native-f32 counterexample proves non-monotonicity in R^3.\n");
     }
 
+    } // runCore
+
     // =========================================================================
     // Gate D: Native WebGPU Analytic-Perlin Camera Corpus
     // =========================================================================
-    {
+    if (runGateD) {
         WebGpuRenderer r;
         if (!r.init(gpu)) {
             std::printf("FAIL: renderer init\n");
