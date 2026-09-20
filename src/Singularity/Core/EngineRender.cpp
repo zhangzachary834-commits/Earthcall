@@ -136,11 +136,8 @@ namespace Core {
                 clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
                 currentRenderer().setWireframe(screenChannel->wireframe);
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
-<<<<<<< HEAD
                 currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
-=======
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
->>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
