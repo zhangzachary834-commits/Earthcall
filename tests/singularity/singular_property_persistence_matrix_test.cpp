@@ -13,6 +13,8 @@
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
+#include "Identity/FirstMoverRegister.hpp"
 #include "Person/Body/Body.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
@@ -283,6 +285,21 @@ int main() {
     auto restoredLaw = Law::fromJson(lawJson);
     check(restoredLaw != nullptr, "Law codec restored root");
     if (restoredLaw) assertSimple(*restoredLaw, 8, "Law");
+
+    auto concept = std::make_shared<ObjectConcept>("Persistence Concept");
+    concept->setConceptId("concept.persistence-matrix");
+    seedSimple(*concept, 81);
+    auto conceptJson = concept->toJson();
+    auto restoredConcept = ObjectConcept::fromJson(conceptJson);
+    check(restoredConcept != nullptr, "ObjectConcept codec restored root");
+    if (restoredConcept) assertSimple(*restoredConcept, 81, "ObjectConcept");
+
+    Identity::FirstMover mover;
+    mover.displayName = "Persistence First Mover";
+    seedSimple(mover, 82);
+    auto moverJson = mover.toJson();
+    Identity::FirstMover restoredMover = Identity::FirstMover::fromJson(moverJson);
+    assertSimple(restoredMover, 82, "FirstMover");
 
     Person person(Soul("Persistence Person"), Body("Humanoid", "Voxel"), "");
     person.setDisplayName("Persistence Person");
