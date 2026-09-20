@@ -50,6 +50,43 @@ int main() {
         }
     }
 
+    // Expr leaf placement: evalSdf evaluates math at world-offset, so a
+    // range theorem must bind the exact same local coordinates. This translated
+    // plane has a zero at world x=10; analyzing world x directly would falsely
+    // prove the queried cell positive.
+    {
+        auto x = std::make_shared<OntoMath::MathNode>();
+        x->op = OntoMath::MathNode::Op::ValueLeaf;
+        x->variableName = "x";
+        geom::SdfNode translated = geom::makeImplicit(x);
+        translated.offset = glm::vec3(10.0f, 0.0f, 0.0f);
+
+        const glm::vec3 lo(9.9f, -0.1f, -0.1f);
+        const glm::vec3 hi(10.1f, 0.1f, 0.1f);
+        const auto range = geom::evalRange(translated, lo, hi);
+        check(range.lo <= 0.0f && range.hi >= 0.0f,
+              "translated Expr range preserves local zero crossing");
+        check(contains(range, geom::evalSdf(translated, glm::vec3(10.0f, 0.0f, 0.0f))),
+              "translated Expr range contains exact placed-field value");
+    }
+
+    // Convex planes are authored and need not have unit normals. A normal of
+    // length 100 makes the field 100-Lipschitz along x, so center±cell-radius
+    // is not a lawful generic SDF bound. The affine half-space interval must
+    // contain the actual extreme.
+    {
+        geom::SdfNode convex =
+            geom::SdfNode::leaf(geom::SdfPrim::Convex, glm::vec3(0.0f));
+        convex.planes.push_back(glm::vec4(100.0f, 0.0f, 0.0f, 0.0f));
+        const glm::vec3 lo(-1.0f, -0.1f, -0.1f);
+        const glm::vec3 hi( 1.0f,  0.1f,  0.1f);
+        const auto range = geom::evalRange(convex, lo, hi);
+        check(range.lo <= -100.0f && range.hi >= 100.0f,
+              "non-unit Convex plane receives affine conservative range");
+        check(contains(range, geom::evalSdf(convex, glm::vec3(1.0f, 0.0f, 0.0f))),
+              "Convex range contains non-unit-normal extreme");
+    }
+
     // Eccentric ellipsoid: Earthcall uses the fast k0*(k0-1)/k1 ellipsoid
     // approximation. It is not globally 1-Lipschitz. This tiny AABB is a
     // concrete falsifier for the old center±R assumption: with axes (3,1,1),
