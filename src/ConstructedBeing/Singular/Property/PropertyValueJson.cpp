@@ -23,11 +23,17 @@ std::optional<PropertyValue> resolvedReference(
     const PropertyReferenceResolver& resolve) {
     if (!resolve) return std::nullopt;
     const std::string id = j.value("id", std::string{});
-    if (id.empty()) return std::nullopt;
+    const std::string kind = j.value("k", std::string{"singular"});
+    if (id.empty()) {
+        if (kind == "object") return PropertyValue(static_cast<Object*>(nullptr));
+        if (kind == "relation") return PropertyValue(static_cast<Relation*>(nullptr));
+        if (kind == "formation") return PropertyValue(static_cast<Formation*>(nullptr));
+        return PropertyValue(static_cast<Singular*>(nullptr));
+    }
+    if (!resolve) return std::nullopt;
     Singular* being = resolve(id);
     if (!being) return std::nullopt;
 
-    const std::string kind = j.value("k", std::string{"singular"});
     if (kind == "object") {
         if (auto* object = dynamic_cast<Object*>(being)) return PropertyValue(object);
         return std::nullopt;
@@ -134,11 +140,19 @@ std::optional<PropertyValue> decode(
     }
     if (t == "ref") return resolvedReference(j, resolve);
     if (t == "scalar_field") {
-        if (!j.contains("v") || !j["v"].is_object()) return std::nullopt;
+        if (!j.contains("v")) return std::nullopt;
+        if (j["v"].is_null()) {
+            return PropertyValue(std::shared_ptr<OntoMath::ScalarField>{});
+        }
+        if (!j["v"].is_object()) return std::nullopt;
         return PropertyValue(OntoMath::ScalarField::fromJson(j["v"]));
     }
     if (t == "vector_field") {
-        if (!j.contains("v") || !j["v"].is_object()) return std::nullopt;
+        if (!j.contains("v")) return std::nullopt;
+        if (j["v"].is_null()) {
+            return PropertyValue(std::shared_ptr<OntoMath::VectorField>{});
+        }
+        if (!j["v"].is_object()) return std::nullopt;
         return PropertyValue(OntoMath::VectorField::fromJson(j["v"]));
     }
 
