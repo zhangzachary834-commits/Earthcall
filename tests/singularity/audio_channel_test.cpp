@@ -159,6 +159,18 @@ int main() {
                        unresolved));
     assert(std::get<int>(unresolved) == 2);
 
+    // An explicitly authored but malformed form is authoritative enough to
+    // REFUSE. It must never be erased by falling through to the old "sine"
+    // compatibility word.
+    source.setDynamicProperty(
+        "acoustic.form", PropertyValue(std::string("{not-valid-ontomath")));
+    reason.clear();
+    assert(!audioSink()(source, 440.0, 0.5, "sine", reason));
+    assert(reason.find("not valid OntoMath JSON") != std::string::npos);
+    assert(lawGetValue(*channel, PropertyPath::parse("unresolvedTimbres"),
+                       unresolved));
+    assert(std::get<int>(unresolved) == 3);
+
     // ------------------------------------------------------------------
     // 6. A sounding being may carry its own form; timbre identity is not
     //    compulsory when the authored structure is local.
