@@ -131,8 +131,9 @@ public:
     bool lightingEnabled() const           { return _lightingOn; }
 
     // Optional authored spatial radiance function for the active Zone. The
-    // renderer borrows world-owned OntoMath and keeps a content fingerprint so
-    // edits to the same AST object invalidate backend shader memoization.
+    // renderer borrows world-owned OntoMath and keeps a full content fingerprint.
+    // Backends use it as "authored content changed"; they may distinguish numeric
+    // parameter refresh from actual shader-structure invalidation.
     void setRadianceField(const OntoMath::Piecewise* expr, uint64_t revision) {
         _radianceExpr = expr;
         _radianceRevision = revision;
