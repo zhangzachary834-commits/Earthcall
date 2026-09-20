@@ -56,7 +56,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "bindings": {
@@ -68,13 +68,13 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "c": 1.0
+                            "c": 1
                           }
                         },
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {}
                         }
                       ]
@@ -99,7 +99,7 @@
                   "kind": 0,
                   "operand": {
                     "t": "vec3",
-                    "x": 1.0,
+                    "x": 1,
                     "y": 0.85,
                     "z": 0.22
                   },
@@ -109,7 +109,7 @@
                   "kind": 0,
                   "operand": {
                     "t": "vec3",
-                    "x": 0.0,
+                    "x": 0,
                     "y": 1.75,
                     "z": 1.25
                   },
@@ -131,7 +131,7 @@
                                 {
                                   "kind": 0,
                                   "scale": 0.8,
-                                  "shift": 0.0,
+                                  "shift": 0,
                                   "var": "n"
                                 }
                               ]
@@ -160,7 +160,7 @@
                                 {
                                   "kind": 1,
                                   "scale": 0.8,
-                                  "shift": 0.0,
+                                  "shift": 0,
                                   "var": "n"
                                 }
                               ]
@@ -193,7 +193,7 @@
                                 {
                                   "kind": 0,
                                   "scale": 1.7,
-                                  "shift": 0.0,
+                                  "shift": 0,
                                   "var": "n"
                                 }
                               ]
@@ -214,7 +214,7 @@
                   "kind": 12,
                   "operand": {
                     "t": "double",
-                    "v": 880.0
+                    "v": 880
                   },
                   "propertyName": "acoustic.frequency"
                 },
@@ -230,7 +230,7 @@
                   "kind": 12,
                   "operand": {
                     "t": "string",
-                    "v": "triangle"
+                    "v": "timbre.studio.triangle"
                   },
                   "propertyName": "acoustic.waveType"
                 },
@@ -296,13 +296,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -322,13 +322,13 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {}
                         },
                         {
-                          "c": -1.0,
+                          "c": -1,
                           "factors": {
-                            "tn": 1.0
+                            "tn": 1
                           }
                         }
                       ]
@@ -343,7 +343,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "theme-toggled",
@@ -382,13 +382,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -448,13 +448,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -514,13 +514,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -540,13 +540,13 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {}
                         },
                         {
-                          "c": -1.0,
+                          "c": -1,
                           "factors": {
-                            "d": 1.0
+                            "d": 1
                           }
                         }
                       ]
@@ -561,7 +561,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "draw-mode-toggled",
@@ -600,13 +600,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -679,13 +679,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -758,13 +758,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -797,18 +797,18 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         },
                         {
-                          "c": 0.0,
+                          "c": 0,
                           "factors": {}
                         }
                       ]
                     },
-                    "hi": 3.0,
+                    "hi": 3,
                     "includeHi": true,
                     "includeLo": true,
                     "lo": 0.2
@@ -817,13 +817,13 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 3.0,
+                          "c": 3,
                           "factors": {}
                         }
                       ]
                     },
                     "includeLo": true,
-                    "lo": 3.0
+                    "lo": 3
                   }
                 ]
               },
@@ -853,18 +853,18 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         },
                         {
-                          "c": 0.0,
+                          "c": 0,
                           "factors": {}
                         }
                       ]
                     },
-                    "hi": 3.0,
+                    "hi": 3,
                     "includeHi": true,
                     "includeLo": true,
                     "lo": 0.2
@@ -873,13 +873,13 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 3.0,
+                          "c": 3,
                           "factors": {}
                         }
                       ]
                     },
                     "includeLo": true,
-                    "lo": 3.0
+                    "lo": 3
                   }
                 ]
               },
@@ -909,9 +909,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         },
                         {
@@ -920,7 +920,7 @@
                         }
                       ]
                     },
-                    "hi": 3.0,
+                    "hi": 3,
                     "includeHi": true,
                     "includeLo": true,
                     "lo": 0.2
@@ -935,7 +935,7 @@
                       ]
                     },
                     "includeLo": true,
-                    "lo": 3.0
+                    "lo": 3
                   }
                 ]
               },
@@ -969,13 +969,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1002,13 +1002,13 @@
                         {
                           "c": 0.13,
                           "factors": {
-                            "p": 1.0
+                            "p": 1
                           },
                           "trans": [
                             {
                               "kind": 0,
                               "scale": 2.2,
-                              "shift": 0.0,
+                              "shift": 0,
                               "var": "t"
                             }
                           ]
@@ -1038,13 +1038,13 @@
                         {
                           "c": 0.06,
                           "factors": {
-                            "p": 1.0
+                            "p": 1
                           },
                           "trans": [
                             {
                               "kind": 0,
                               "scale": 2.2,
-                              "shift": 0.0,
+                              "shift": 0,
                               "var": "t"
                             }
                           ]
@@ -1088,13 +1088,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1108,7 +1108,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "triangle"
+              "propertyName": "timbre.studio.triangle"
             },
             {
               "eventType": "note-played",
@@ -1142,7 +1142,7 @@
               "op": 0,
               "operand": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               },
               "path": "@state.studio.voice"
             }
@@ -1161,13 +1161,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           },
           {
             "directed": true,
@@ -1175,7 +1175,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "revised-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1195,9 +1195,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "ry": 1.0
+                            "ry": 1
                           }
                         }
                       ]
@@ -1218,9 +1218,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "r": 1.0
+                            "r": 1
                           }
                         }
                       ]
@@ -1258,13 +1258,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1284,9 +1284,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "ry": 1.0
+                            "ry": 1
                           }
                         }
                       ]
@@ -1307,9 +1307,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "r": 1.0
+                            "r": 1
                           }
                         }
                       ]
@@ -1347,13 +1347,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1375,7 +1375,7 @@
               "kind": 0,
               "operand": {
                 "t": "vec3",
-                "x": 1.0,
+                "x": 1,
                 "y": 0.85,
                 "z": 0.15
               },
@@ -1409,7 +1409,7 @@
               "kind": 12,
               "operand": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               },
               "propertyName": "acoustic.waveType"
             },
@@ -1429,9 +1429,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         }
                       ]
@@ -1452,9 +1452,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         }
                       ]
@@ -1475,9 +1475,9 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "v": 1.0
+                            "v": 1
                           }
                         }
                       ]
@@ -1555,7 +1555,7 @@
                   "op": 4,
                   "operand": {
                     "t": "double",
-                    "v": 6.0
+                    "v": 6
                   },
                   "path": "@interaction-channel.dragX"
                 },
@@ -1564,7 +1564,7 @@
                   "op": 2,
                   "operand": {
                     "t": "double",
-                    "v": -6.0
+                    "v": -6
                   },
                   "path": "@interaction-channel.dragX"
                 },
@@ -1573,7 +1573,7 @@
                   "op": 4,
                   "operand": {
                     "t": "double",
-                    "v": 6.0
+                    "v": 6
                   },
                   "path": "@interaction-channel.dragY"
                 },
@@ -1582,7 +1582,7 @@
                   "op": 2,
                   "operand": {
                     "t": "double",
-                    "v": -6.0
+                    "v": -6
                   },
                   "path": "@interaction-channel.dragY"
                 }
@@ -1604,13 +1604,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1622,7 +1622,7 @@
           "input": "acoustic.amplitude",
           "kind": 18,
           "path": "acoustic.frequency",
-          "propertyName": "triangle"
+          "propertyName": "timbre.studio.triangle"
         },
         "activation": 0,
         "applicationLog": [],
@@ -1648,13 +1648,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1666,9 +1666,9 @@
           "kind": 0,
           "operand": {
             "t": "vec3",
-            "x": 1.0,
-            "y": 1.0,
-            "z": 1.0
+            "x": 1,
+            "y": 1,
+            "z": 1
           },
           "path": "color"
         },
@@ -1710,13 +1710,13 @@
             "entityB": "author.gemini-spark",
             "events": [
               {
-                "deltaWeight": 1.0,
+                "deltaWeight": 1,
                 "description": "authored-by",
                 "timestamp": 1787395000
               }
             ],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1734,13 +1734,13 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1.0,
+                      "c": 1,
                       "factors": {
-                        "r": 1.0
+                        "r": 1
                       }
                     },
                     {
-                      "c": 3.0,
+                      "c": 3,
                       "factors": {}
                     }
                   ]
@@ -1779,7 +1779,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1797,9 +1797,9 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1.0,
+                      "c": 1,
                       "factors": {
-                        "r": 1.0
+                        "r": 1
                       }
                     },
                     {
@@ -1842,7 +1842,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1856,7 +1856,7 @@
               "kind": 0,
               "operand": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               },
               "path": "@state.studio.voice"
             },
@@ -1883,7 +1883,7 @@
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "triangle"
+            "v": "timbre.studio.triangle"
           },
           "path": "studioVoice"
         },
@@ -1899,7 +1899,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1913,7 +1913,7 @@
               "kind": 0,
               "operand": {
                 "t": "string",
-                "v": "sine"
+                "v": "timbre.studio.sine"
               },
               "path": "@state.studio.voice"
             },
@@ -1940,7 +1940,7 @@
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "sine"
+            "v": "timbre.studio.sine"
           },
           "path": "studioVoice"
         },
@@ -1956,7 +1956,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -1970,7 +1970,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "sine"
+              "propertyName": "timbre.studio.sine"
             },
             {
               "eventType": "note-played",
@@ -2004,7 +2004,7 @@
               "op": 0,
               "operand": {
                 "t": "string",
-                "v": "sine"
+                "v": "timbre.studio.sine"
               },
               "path": "@state.studio.voice"
             }
@@ -2023,7 +2023,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2037,7 +2037,7 @@
               "kind": 0,
               "operand": {
                 "t": "string",
-                "v": "square"
+                "v": "timbre.studio.square"
               },
               "path": "@state.studio.voice"
             },
@@ -2064,7 +2064,7 @@
           "op": 0,
           "operand": {
             "t": "string",
-            "v": "square"
+            "v": "timbre.studio.square"
           },
           "path": "studioVoice"
         },
@@ -2080,7 +2080,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2094,7 +2094,7 @@
               "input": "acoustic.amplitude",
               "kind": 18,
               "path": "acoustic.frequency",
-              "propertyName": "square"
+              "propertyName": "timbre.studio.square"
             },
             {
               "eventType": "note-played",
@@ -2128,7 +2128,7 @@
               "op": 0,
               "operand": {
                 "t": "string",
-                "v": "square"
+                "v": "timbre.studio.square"
               },
               "path": "@state.studio.voice"
             }
@@ -2147,7 +2147,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2161,7 +2161,7 @@
               "kind": 0,
               "operand": {
                 "t": "double",
-                "v": 1.0
+                "v": 1
               },
               "path": "@state.studio.inkR"
             },
@@ -2220,7 +2220,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2293,7 +2293,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2366,7 +2366,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2384,9 +2384,9 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1.0,
+                      "c": 1,
                       "factors": {
-                        "t": 1.0
+                        "t": 1
                       }
                     }
                   ]
@@ -2422,7 +2422,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2481,7 +2481,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2503,7 +2503,7 @@
               "kind": 0,
               "operand": {
                 "t": "vec3",
-                "x": 1.0,
+                "x": 1,
                 "y": 0.53,
                 "z": 0.3
               },
@@ -2540,7 +2540,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2599,7 +2599,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2658,7 +2658,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2717,7 +2717,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2776,7 +2776,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2835,7 +2835,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -2886,45 +2886,45 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 0.0,
+                          "c": 0,
                           "factors": {}
                         }
                       ]
                     },
-                    "hi": 0.0,
+                    "hi": 0,
                     "includeHi": true
                   },
                   {
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {
-                            "a": 1.0
+                            "a": 1
                           }
                         },
                         {
-                          "c": 0.0,
+                          "c": 0,
                           "factors": {}
                         }
                       ]
                     },
-                    "hi": 3600.0,
+                    "hi": 3600,
                     "includeHi": true,
                     "includeLo": true,
-                    "lo": 0.0
+                    "lo": 0
                   },
                   {
                     "expr": {
                       "terms": [
                         {
-                          "c": 3600.0,
+                          "c": 3600,
                           "factors": {}
                         }
                       ]
                     },
                     "includeLo": true,
-                    "lo": 3600.0
+                    "lo": 3600
                   }
                 ]
               },
@@ -2941,7 +2941,7 @@
                     "expr": {
                       "terms": [
                         {
-                          "c": 1.0,
+                          "c": 1,
                           "factors": {},
                           "trans": [
                             {
@@ -2991,7 +2991,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -3061,7 +3061,7 @@
                             {
                               "kind": 0,
                               "scale": 1.2,
-                              "shift": 0.0,
+                              "shift": 0,
                               "var": "t"
                             }
                           ]
@@ -3105,7 +3105,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -3200,7 +3200,7 @@
             "entityB": "studio.author.codex",
             "events": [],
             "type": "authored-by",
-            "weight": 1.0
+            "weight": 1
           }
         ],
         "retrigger": 0,
@@ -3290,19 +3290,19 @@
     "Zach"
   ],
   "cameraFront": [
-    0.0,
+    0,
     -0.22,
     0.97
   ],
   "cameraPos": [
-    0.0,
+    0,
     1.35,
     -2.6
   ],
   "cameraUp": [
-    0.0,
-    1.0,
-    0.0
+    0,
+    1,
+    0
   ],
   "categories": [
     {
@@ -3313,42 +3313,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "author.gemini-spark",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3359,42 +3359,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "grok-4.6",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3405,42 +3405,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "Zach",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3451,42 +3451,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.control",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3497,42 +3497,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.control.button",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3543,42 +3543,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.control.toggle",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3589,42 +3589,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.control.slider",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3635,42 +3635,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.art",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3681,42 +3681,42 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.art.stroke",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     },
     {
@@ -3727,54 +3727,54 @@
         }
       },
       "center": [
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0
       ],
       "geometryType": 12,
       "materialId": "",
       "objectID": "category.interactive.orb",
       "shapeKind": 12,
       "shapeParams": [
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ],
       "transform": [
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
+        0,
+        0,
+        0,
+        0,
         0.01,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        0,
+        0,
+        0,
+        0,
+        1
       ]
     }
   ],
   "currentColor": [
-    1.0,
-    1.0,
-    1.0
+    1,
+    1,
+    1
   ],
   "currentZone": 0,
   "currentZoneId": "SynthesisStudio",
   "flying": true,
-  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02) / Codex (resonance studio, 2026-09-04)",
+  "injected_by": "Gemini Spark (authored) / Claude Opus 5 (repaired) / Antigravity (major scale 2026-09-02) / Codex (resonance studio, 2026-09-04) / GPT-5.6 Sol (authored timbre migration, 2026-09-19)",
   "materials": [
     {
       "baseColor": [
@@ -3783,7 +3783,7 @@
         0.22
       ],
       "name": "material.studio.slate",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3792,7 +3792,7 @@
         0.15
       ],
       "name": "material.studio.walnut",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3801,7 +3801,7 @@
         0.88
       ],
       "name": "material.studio.canvas",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3819,16 +3819,16 @@
         0.98
       ],
       "name": "material.studio.btn.blue",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
-        1.0,
+        1,
         0.7,
         0.15
       ],
       "name": "material.studio.btn.gold",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3837,7 +3837,7 @@
         0.32
       ],
       "name": "material.studio.sign",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3846,7 +3846,7 @@
         0.12
       ],
       "name": "material.studio.socket",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3855,7 +3855,7 @@
         0.32
       ],
       "name": "material.studio.track",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3864,7 +3864,7 @@
         0.98
       ],
       "name": "material.studio.handle",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3873,7 +3873,7 @@
         0.32
       ],
       "name": "material.studio.C5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3882,16 +3882,16 @@
         0.18
       ],
       "name": "material.studio.D5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
-        1.0,
+        1,
         0.72,
         0.12
       ],
       "name": "material.studio.E5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3900,7 +3900,7 @@
         0.25
       ],
       "name": "material.studio.F5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3909,7 +3909,7 @@
         0.45
       ],
       "name": "material.studio.G5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3918,16 +3918,16 @@
         0.98
       ],
       "name": "material.studio.A5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
         0.28,
         0.48,
-        1.0
+        1
       ],
       "name": "material.studio.B5",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3936,7 +3936,7 @@
         0.52
       ],
       "name": "material.studio.sign.blue",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3945,7 +3945,7 @@
         0.12
       ],
       "name": "material.studio.sign.gold",
-      "opacity": 1.0
+      "opacity": 1
     },
     {
       "baseColor": [
@@ -3954,13 +3954,13 @@
         0.3
       ],
       "name": "material.studio.sign.dark",
-      "opacity": 1.0
+      "opacity": 1
     }
   ],
-  "pitch": -13.0,
+  "pitch": -13,
   "saveFormat": "zone-identity-v1",
   "studioUpgrade": "resonance-1",
-  "yaw": 90.0,
+  "yaw": 90,
   "zoneRefs": [
     {
       "identifier": "SynthesisStudio",
@@ -3979,13 +3979,13 @@
           "entityB": "category.control",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "subcategory-of",
               "timestamp": 1787395000
             }
           ],
           "type": "subcategory-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -3993,13 +3993,13 @@
           "entityB": "category.control",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "subcategory-of",
               "timestamp": 1787395000
             }
           ],
           "type": "subcategory-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4007,13 +4007,13 @@
           "entityB": "category.control",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "subcategory-of",
               "timestamp": 1787395000
             }
           ],
           "type": "subcategory-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4021,13 +4021,13 @@
           "entityB": "category.art",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "subcategory-of",
               "timestamp": 1787395000
             }
           ],
           "type": "subcategory-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4035,13 +4035,13 @@
           "entityB": "author.gemini-spark",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "authored-by",
               "timestamp": 1787395000
             }
           ],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4049,13 +4049,13 @@
           "entityB": "author.gemini-spark",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "authored-by",
               "timestamp": 1787395000
             }
           ],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4063,13 +4063,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4077,13 +4077,13 @@
           "entityB": "category.control.toggle",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4091,13 +4091,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4105,13 +4105,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4119,13 +4119,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4133,13 +4133,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4147,13 +4147,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4161,13 +4161,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4175,13 +4175,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4189,13 +4189,13 @@
           "entityB": "category.control.slider",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4203,13 +4203,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4217,13 +4217,13 @@
           "entityB": "category.control.toggle",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4231,13 +4231,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4245,13 +4245,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4259,13 +4259,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4273,13 +4273,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4287,13 +4287,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4301,13 +4301,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4315,13 +4315,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4329,13 +4329,13 @@
           "entityB": "category.control.button",
           "events": [
             {
-              "deltaWeight": 1.0,
+              "deltaWeight": 1,
               "description": "instance-of",
               "timestamp": 1787395000
             }
           ],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4343,7 +4343,7 @@
           "entityB": "Zach",
           "events": [],
           "type": "commissioned-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4351,7 +4351,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4359,7 +4359,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4367,7 +4367,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4375,7 +4375,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4383,7 +4383,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4391,7 +4391,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4399,7 +4399,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4407,7 +4407,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4415,7 +4415,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4423,7 +4423,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4431,7 +4431,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4439,7 +4439,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4447,7 +4447,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4455,7 +4455,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4463,7 +4463,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4471,7 +4471,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4479,7 +4479,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4487,7 +4487,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4495,7 +4495,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4503,7 +4503,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4511,7 +4511,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4519,7 +4519,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4527,7 +4527,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4535,7 +4535,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4543,7 +4543,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4551,7 +4551,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4559,7 +4559,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4567,7 +4567,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4575,7 +4575,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4583,7 +4583,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4591,7 +4591,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4599,7 +4599,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4607,7 +4607,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4615,7 +4615,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4623,7 +4623,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4631,7 +4631,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4639,7 +4639,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4647,7 +4647,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4655,7 +4655,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4663,7 +4663,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4671,7 +4671,7 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4679,7 +4679,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4687,7 +4687,7 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4695,7 +4695,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4703,7 +4703,7 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4711,7 +4711,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4719,7 +4719,7 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4727,7 +4727,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4735,7 +4735,7 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4743,7 +4743,7 @@
           "entityB": "studio.author.codex",
           "events": [],
           "type": "authored-by",
-          "weight": 1.0
+          "weight": 1
         },
         {
           "directed": true,
@@ -4751,7 +4751,39 @@
           "entityB": "category.control.button",
           "events": [],
           "type": "instance-of",
-          "weight": 1.0
+          "weight": 1
+        },
+        {
+          "type": "commissioned-by",
+          "entityA": "studio.author.gpt-5.6-sol.audio-20260919",
+          "entityB": "Zach",
+          "directed": true,
+          "weight": 1,
+          "events": []
+        },
+        {
+          "type": "authored-by",
+          "entityA": "timbre.studio.triangle",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "directed": true,
+          "weight": 1,
+          "events": []
+        },
+        {
+          "type": "authored-by",
+          "entityA": "timbre.studio.sine",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "directed": true,
+          "weight": 1,
+          "events": []
+        },
+        {
+          "type": "authored-by",
+          "entityA": "timbre.studio.square",
+          "entityB": "studio.author.gpt-5.6-sol.audio-20260919",
+          "directed": true,
+          "weight": 1,
+          "events": []
         }
       ],
       "identifier": "SynthesisStudio",
@@ -4777,9 +4809,9 @@
               }
             },
             "center": [
-              0.0,
+              0,
               -0.1,
-              0.0
+              0
             ],
             "faceColors": [
               [
@@ -4822,29 +4854,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
-              14.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              14,
+              0,
+              0,
+              0,
+              0,
               0.2,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              14.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
               -0.1,
-              0.0,
-              1.0
+              0,
+              1
             ]
           },
           {
@@ -4859,9 +4891,9 @@
               }
             },
             "center": [
-              0.0,
+              0,
               0.4,
-              0.0
+              0
             ],
             "faceColors": [
               [
@@ -4904,29 +4936,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               5.2,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.8,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               2.4,
-              0.0,
-              0.0,
+              0,
+              0,
               0.4,
-              0.0,
-              1.0
+              0,
+              1
             ]
           },
           {
@@ -4941,7 +4973,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               2.2,
               2.4
             ],
@@ -4986,29 +5018,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               4.2,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               2.4,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.1,
-              0.0,
-              0.0,
+              0,
+              0,
               2.2,
               2.4,
-              1.0
+              1
             ]
           },
           {
@@ -5019,7 +5051,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               3.55,
               2.4
             ],
@@ -5064,29 +5096,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               3.2,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.22,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.06,
-              0.0,
-              0.0,
+              0,
+              0,
               3.55,
               2.4,
-              1.0
+              1
             ]
           },
           {
@@ -5101,7 +5133,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               0.4,
               1.25
             ],
@@ -5146,29 +5178,29 @@
               0.45,
               0.45,
               0.8,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.9,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.8,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.9,
-              0.0,
-              0.0,
+              0,
+              0,
               0.4,
               1.25,
-              1.0
+              1
             ]
           },
           {
@@ -5224,29 +5256,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.85,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.08,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.7,
-              0.0,
+              0,
               -1.5,
               0.82,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5322,29 +5354,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.7,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.16,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.55,
-              0.0,
+              0,
               -1.5,
               0.89,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5400,29 +5432,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.75,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.12,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.04,
-              0.0,
+              0,
               -1.5,
               1.12,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5478,29 +5510,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.85,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.08,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.7,
-              0.0,
+              0,
               -0.55,
               0.82,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5511,7 +5543,7 @@
               },
               "acoustic.frequency": {
                 "t": "double",
-                "v": 392.0
+                "v": 392
               },
               "buttonRole": {
                 "t": "string",
@@ -5580,29 +5612,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.7,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.16,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.55,
-              0.0,
+              0,
               -0.55,
               0.89,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5658,29 +5690,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.75,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.12,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.04,
-              0.0,
+              0,
               -0.55,
               1.12,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5736,29 +5768,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               2.35,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.08,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.7,
-              0.0,
+              0,
               1.28,
               0.82,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5842,29 +5874,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               0.29,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -5948,29 +5980,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               0.62,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6054,29 +6086,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               0.95,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6160,29 +6192,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               1.28,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6266,29 +6298,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               1.61,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6299,7 +6331,7 @@
               },
               "acoustic.frequency": {
                 "t": "double",
-                "v": 880.0
+                "v": 880
               },
               "acoustic.waveType": {
                 "t": "string",
@@ -6372,29 +6404,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               1.94,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6478,29 +6510,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.28,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.54,
-              0.0,
+              0,
               2.27,
               0.88,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6556,29 +6588,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               2.2,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.12,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.04,
-              0.0,
+              0,
               1.28,
               1.12,
               -0.35,
-              1.0
+              1
             ]
           },
           {
@@ -6589,7 +6621,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               0.82,
               0.55
             ],
@@ -6634,29 +6666,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               2.8,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.04,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.2,
-              0.0,
-              0.0,
+              0,
+              0,
               0.82,
               0.55,
-              1.0
+              1
             ]
           },
           {
@@ -6667,7 +6699,7 @@
               },
               "controlMax": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "controlMin": {
                 "t": "double",
@@ -6679,7 +6711,7 @@
               },
               "controlValue": {
                 "t": "double",
-                "v": 1.0
+                "v": 1
               },
               "displayName": {
                 "t": "string",
@@ -6736,29 +6768,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.38,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.14,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.34,
-              0.0,
+              0,
               -0.6,
               0.9,
               0.55,
-              1.0
+              1
             ]
           },
           {
@@ -6769,7 +6801,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               1.05,
               0.55
             ],
@@ -6814,29 +6846,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               1.8,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.1,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.04,
-              0.0,
-              0.0,
+              0,
+              0,
               1.05,
               0.55,
-              1.0
+              1
             ]
           },
           {
@@ -6855,15 +6887,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 26.0
+                "v": 26
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 28.0
+                "v": 28
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -6908,38 +6940,38 @@
             "objectID": "hud.title",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              28.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              28
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 32.0,
-            "y2D": 26.0,
+            "x2D": 32,
+            "y2D": 26,
             "zOrder2D": 40
           },
           {
@@ -6958,15 +6990,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 16.0
+                "v": 16
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7011,38 +7043,38 @@
             "objectID": "hud.title.sub",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              16.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              16
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 64.0,
+            "x2D": 34,
+            "y2D": 64,
             "zOrder2D": 40
           },
           {
@@ -7061,15 +7093,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 98.0
+                "v": 98
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7114,38 +7146,38 @@
             "objectID": "hud.legend.0",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 98.0,
+            "x2D": 34,
+            "y2D": 98,
             "zOrder2D": 40
           },
           {
@@ -7164,15 +7196,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 117.0
+                "v": 117
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7217,38 +7249,38 @@
             "objectID": "hud.legend.1",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 117.0,
+            "x2D": 34,
+            "y2D": 117,
             "zOrder2D": 40
           },
           {
@@ -7267,15 +7299,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 136.0
+                "v": 136
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7320,38 +7352,38 @@
             "objectID": "hud.legend.2",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 136.0,
+            "x2D": 34,
+            "y2D": 136,
             "zOrder2D": 40
           },
           {
@@ -7370,15 +7402,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 155.0
+                "v": 155
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7423,38 +7455,38 @@
             "objectID": "hud.legend.3",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 155.0,
+            "x2D": 34,
+            "y2D": 155,
             "zOrder2D": 40
           },
           {
@@ -7473,15 +7505,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 174.0
+                "v": 174
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -7526,38 +7558,38 @@
             "objectID": "hud.legend.4",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 34.0,
-            "y2D": 174.0,
+            "x2D": 34,
+            "y2D": 174,
             "zOrder2D": 40
           },
           {
@@ -7572,15 +7604,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 584.0
+                "v": 584
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 120.0
+                "v": 120
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 1232.0
+                "v": 1232
               }
             },
             "center": [
@@ -7625,38 +7657,38 @@
             "objectID": "hud.dock.bg",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1232.0,
-              120.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1232,
+              120
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 24.0,
-            "y2D": 584.0,
+            "x2D": 24,
+            "y2D": 584,
             "zOrder2D": 10
           },
           {
@@ -7687,15 +7719,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 150.0
+                "v": 150
               }
             },
             "center": [
@@ -7740,38 +7772,38 @@
             "objectID": "hud.btn.spawn-orb",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              150.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              150,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 42.0,
-            "y2D": 624.0,
+            "x2D": 42,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -7782,7 +7814,7 @@
               },
               "acoustic.frequency": {
                 "t": "double",
-                "v": 392.0
+                "v": 392
               },
               "buttonRole": {
                 "t": "string",
@@ -7802,15 +7834,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 150.0
+                "v": 150
               }
             },
             "center": [
@@ -7855,38 +7887,38 @@
             "objectID": "hud.btn.toggle-theme",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              150.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              150,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 204.0,
-            "y2D": 624.0,
+            "x2D": 204,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -7925,15 +7957,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -7978,38 +8010,38 @@
             "objectID": "hud.pad.c5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 380.0,
-            "y2D": 624.0,
+            "x2D": 380,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8048,15 +8080,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8066,32 +8098,32 @@
             ],
             "faceColors": [
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ]
@@ -8101,38 +8133,38 @@
             "objectID": "hud.pad.d5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 466.0,
-            "y2D": 624.0,
+            "x2D": 466,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8171,15 +8203,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8224,38 +8256,38 @@
             "objectID": "hud.pad.e5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 552.0,
-            "y2D": 624.0,
+            "x2D": 552,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8294,15 +8326,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8347,38 +8379,38 @@
             "objectID": "hud.pad.f5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 638.0,
-            "y2D": 624.0,
+            "x2D": 638,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8417,15 +8449,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8470,38 +8502,38 @@
             "objectID": "hud.pad.g5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 724.0,
-            "y2D": 624.0,
+            "x2D": 724,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8512,7 +8544,7 @@
               },
               "acoustic.frequency": {
                 "t": "double",
-                "v": 880.0
+                "v": 880
               },
               "acoustic.waveType": {
                 "t": "string",
@@ -8540,15 +8572,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8593,38 +8625,38 @@
             "objectID": "hud.pad.a5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 810.0,
-            "y2D": 624.0,
+            "x2D": 810,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8663,15 +8695,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               }
             },
             "center": [
@@ -8716,38 +8748,38 @@
             "objectID": "hud.pad.b5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 896.0,
-            "y2D": 624.0,
+            "x2D": 896,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8778,15 +8810,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 624.0
+                "v": 624
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 64.0
+                "v": 64
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 228.0
+                "v": 228
               }
             },
             "center": [
@@ -8831,38 +8863,38 @@
             "objectID": "hud.btn.draw-stroke",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              228.0,
-              64.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              228,
+              64
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1008.0,
-            "y2D": 624.0,
+            "x2D": 1008,
+            "y2D": 624,
             "zOrder2D": 30
           },
           {
@@ -8885,11 +8917,11 @@
               },
               "inkR": {
                 "t": "double",
-                "v": 1.0
+                "v": 1
               },
               "pulseRate": {
                 "t": "double",
-                "v": 1.0
+                "v": 1
               },
               "soundAmp": {
                 "t": "double",
@@ -8897,7 +8929,7 @@
               },
               "soundFreq": {
                 "t": "double",
-                "v": 440.0
+                "v": 440
               },
               "spawnCount": {
                 "t": "int",
@@ -8909,13 +8941,13 @@
               },
               "voice": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               }
             },
             "center": [
-              0.0,
-              -4.0,
-              0.0
+              0,
+              -4,
+              0
             ],
             "faceColors": [
               [
@@ -8958,29 +8990,29 @@
               0.5,
               0.5,
               0.5,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0
+              0,
+              0,
+              0,
+              0,
+              0
             ],
             "transform": [
               0.02,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.02,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
+              0,
+              0,
+              0,
+              0,
               0.02,
-              0.0,
-              0.0,
-              -4.0,
-              0.0,
-              1.0
+              0,
+              0,
+              -4,
+              0,
+              1
             ]
           },
           {
@@ -9051,22 +9083,22 @@
               0.01
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               0,
               -5,
               0,
-              1.0
+              1
             ]
           },
           {
@@ -9085,15 +9117,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 599.0
+                "v": 599
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 12
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -9138,38 +9170,38 @@
             "objectID": "hud.resonance.dock-caption",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              12.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              12
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 42.0,
-            "y2D": 599.0,
+            "x2D": 42,
+            "y2D": 599,
             "zOrder2D": 40
           },
           {
@@ -9188,15 +9220,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 599.0
+                "v": 599
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 12
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -9241,38 +9273,38 @@
             "objectID": "hud.resonance.notes-caption",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              12.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              12
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 380.0,
-            "y2D": 599.0,
+            "x2D": 380,
+            "y2D": 599,
             "zOrder2D": 40
           },
           {
@@ -9291,15 +9323,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 599.0
+                "v": 599
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 12
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -9344,38 +9376,38 @@
             "objectID": "hud.resonance.draw-caption",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              12.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              12
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1008.0,
-            "y2D": 599.0,
+            "x2D": 1008,
+            "y2D": 599,
             "zOrder2D": 40
           },
           {
@@ -9462,22 +9494,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               -1.71,
               3.3,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -9508,15 +9540,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -9565,38 +9597,38 @@
             "objectID": "hud.resonance.meter.c5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 380.0,
-            "y2D": 617.0,
+            "x2D": 380,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -9637,32 +9669,32 @@
             ],
             "faceColors": [
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ]
@@ -9683,22 +9715,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               -1.14,
               3.46,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -9729,15 +9761,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -9751,32 +9783,32 @@
             ],
             "faceColors": [
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ],
               [
-                1.0,
+                1,
                 0.53,
                 0.3
               ]
@@ -9786,38 +9818,38 @@
             "objectID": "hud.resonance.meter.d5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 466.0,
-            "y2D": 617.0,
+            "x2D": 466,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -9904,22 +9936,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               -0.57,
               3.6199999999999997,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -9950,15 +9982,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -10007,38 +10039,38 @@
             "objectID": "hud.resonance.meter.e5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 552.0,
-            "y2D": 617.0,
+            "x2D": 552,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -10073,7 +10105,7 @@
               }
             },
             "center": [
-              0.0,
+              0,
               3.78,
               1.9
             ],
@@ -10125,22 +10157,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
               3.78,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -10171,15 +10203,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -10228,38 +10260,38 @@
             "objectID": "hud.resonance.meter.f5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 638.0,
-            "y2D": 617.0,
+            "x2D": 638,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -10346,22 +10378,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               0.57,
               3.6199999999999997,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -10392,15 +10424,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -10449,38 +10481,38 @@
             "objectID": "hud.resonance.meter.g5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 724.0,
-            "y2D": 617.0,
+            "x2D": 724,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -10567,22 +10599,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               1.14,
               3.46,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -10613,15 +10645,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -10670,38 +10702,38 @@
             "objectID": "hud.resonance.meter.a5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 810.0,
-            "y2D": 617.0,
+            "x2D": 810,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -10788,22 +10820,22 @@
               0
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
               1.71,
               3.3,
               1.9,
-              1.0
+              1
             ]
           },
           {
@@ -10834,15 +10866,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 617.0
+                "v": 617
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 3.0
+                "v": 3
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 76.0
+                "v": 76
               },
               "struckAt": {
                 "t": "double",
@@ -10891,38 +10923,38 @@
             "objectID": "hud.resonance.meter.b5",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              76.0,
-              3.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              76,
+              3
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 896.0,
-            "y2D": 617.0,
+            "x2D": 896,
+            "y2D": 617,
             "zOrder2D": 25
           },
           {
@@ -10941,15 +10973,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 34.0
+                "v": 34
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 26.0
+                "v": 26
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -10994,38 +11026,38 @@
             "objectID": "hud.resonance.note",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              26.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              26
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 34.0,
+            "x2D": 1000,
+            "y2D": 34,
             "zOrder2D": 40
           },
           {
@@ -11044,15 +11076,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 69.0
+                "v": 69
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 12.0
+                "v": 12
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -11097,38 +11129,38 @@
             "objectID": "hud.resonance.note-hint",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              12.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              12
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 69.0,
+            "x2D": 1000,
+            "y2D": 69,
             "zOrder2D": 40
           },
           {
@@ -11147,15 +11179,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 109.0
+                "v": 109
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -11200,38 +11232,38 @@
             "objectID": "hud.resonance.voice-caption",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 109.0,
+            "x2D": 1000,
+            "y2D": 109,
             "zOrder2D": 40
           },
           {
@@ -11250,15 +11282,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 205.0
+                "v": 205
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 13.0
+                "v": 13
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 0.0
+                "v": 0
               }
             },
             "center": [
@@ -11303,38 +11335,38 @@
             "objectID": "hud.resonance.ink-caption",
             "shapeKind": 13,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              13.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              13
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 205.0,
+            "x2D": 1000,
+            "y2D": 205,
             "zOrder2D": 40
           },
           {
@@ -11349,19 +11381,19 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 137.0
+                "v": 137
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioVoice": {
                 "t": "string",
-                "v": "triangle"
+                "v": "timbre.studio.triangle"
               }
             },
             "center": [
@@ -11406,38 +11438,38 @@
             "objectID": "hud.resonance.voice.triangle",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 137.0,
+            "x2D": 1000,
+            "y2D": 137,
             "zOrder2D": 30
           },
           {
@@ -11452,19 +11484,19 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 137.0
+                "v": 137
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioVoice": {
                 "t": "string",
-                "v": "sine"
+                "v": "timbre.studio.sine"
               }
             },
             "center": [
@@ -11509,38 +11541,38 @@
             "objectID": "hud.resonance.voice.sine",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1080.0,
-            "y2D": 137.0,
+            "x2D": 1080,
+            "y2D": 137,
             "zOrder2D": 30
           },
           {
@@ -11555,19 +11587,19 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 137.0
+                "v": 137
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioVoice": {
                 "t": "string",
-                "v": "square"
+                "v": "timbre.studio.square"
               }
             },
             "center": [
@@ -11612,38 +11644,38 @@
             "objectID": "hud.resonance.voice.square",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1160.0,
-            "y2D": 137.0,
+            "x2D": 1160,
+            "y2D": 137,
             "zOrder2D": 30
           },
           {
@@ -11662,15 +11694,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 233.0
+                "v": 233
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioInk": {
                 "t": "string",
@@ -11684,32 +11716,32 @@
             ],
             "faceColors": [
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ],
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ],
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ],
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ],
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ],
               [
-                1.0,
+                1,
                 0.85,
                 0.15
               ]
@@ -11719,38 +11751,38 @@
             "objectID": "hud.resonance.ink.solar",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1000.0,
-            "y2D": 233.0,
+            "x2D": 1000,
+            "y2D": 233,
             "zOrder2D": 30
           },
           {
@@ -11769,15 +11801,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 233.0
+                "v": 233
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioInk": {
                 "t": "string",
@@ -11826,38 +11858,38 @@
             "objectID": "hud.resonance.ink.tidal",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1080.0,
-            "y2D": 233.0,
+            "x2D": 1080,
+            "y2D": 233,
             "zOrder2D": 30
           },
           {
@@ -11876,15 +11908,15 @@
               },
               "restY2D": {
                 "t": "double",
-                "v": 233.0
+                "v": 233
               },
               "shape.height2D": {
                 "t": "double",
-                "v": 40.0
+                "v": 40
               },
               "shape.width2D": {
                 "t": "double",
-                "v": 72.0
+                "v": 72
               },
               "studioInk": {
                 "t": "string",
@@ -11933,42 +11965,437 @@
             "objectID": "hud.resonance.ink.orchid",
             "shapeKind": 12,
             "shapeParams": [
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              72.0,
-              40.0
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              72,
+              40
             ],
             "transform": [
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
-              0.0,
-              0.0,
-              0.0,
-              1.0,
-              0.0,
+              1,
               0,
               0,
               0,
-              1.0
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
             ],
-            "x2D": 1160.0,
-            "y2D": 233.0,
+            "x2D": 1160,
+            "y2D": 233,
             "zOrder2D": 30
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "GPT-5.6 Sol / Audio micromastery authoring"
+              },
+              "onBehalfOf": {
+                "t": "string",
+                "v": "Zach"
+              },
+              "revision": {
+                "t": "string",
+                "v": "authored-timbre-rung-1"
+              },
+              "session": {
+                "t": "string",
+                "v": "sol-audio-micromastery-2026-09-19"
+              }
+            },
+            "center": [
+              0,
+              -6.2,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "studio.author.gpt-5.6-sol.audio-20260919",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              -6.2,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Triangle / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":0.8346920896602298,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]},{\"c\":-0.09274356551780331,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":18.84955592153876}]},{\"c\":0.03338768358640919,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":31.41592653589793}]},{\"c\":-0.017034532442045506,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":43.982297150257104}]},{\"c\":0.010304840613089257,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":56.548667764616276}]},{\"c\":-0.006898281732729172,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":69.11503837897544}]},{\"c\":0.004939006447693668,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":81.68140899333463}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.4,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.triangle",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              -6.4,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Sine / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":1,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.550000000000001,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.sine",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              -6.550000000000001,
+              0,
+              1
+            ]
+          },
+          {
+            "authoredProperties": {
+              "displayName": {
+                "t": "string",
+                "v": "Square / Authored Timbre"
+              },
+              "acoustic.form": {
+                "t": "string",
+                "v": "{\"input\":\"phase\",\"pieces\":[{\"expr\":{\"terms\":[{\"c\":1.0783931140121368,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":6.283185307179586}]},{\"c\":0.3594643713373789,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":18.84955592153876}]},{\"c\":0.21567862280242733,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":31.41592653589793}]},{\"c\":0.15405615914459095,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":43.982297150257104}]},{\"c\":0.11982145711245965,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":56.548667764616276}]},{\"c\":0.09803573763746697,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":69.11503837897544}]},{\"c\":0.08295331646247205,\"factors\":{},\"trans\":[{\"kind\":0,\"var\":\"phase\",\"scale\":81.68140899333463}]}]}}]}"
+              },
+              "acoustic.timeVariable": {
+                "t": "string",
+                "v": "phase"
+              },
+              "acoustic.referenceFrequency": {
+                "t": "double",
+                "v": 1
+              },
+              "acoustic.duration": {
+                "t": "double",
+                "v": 0.35
+              },
+              "acoustic.role": {
+                "t": "string",
+                "v": "timbre"
+              }
+            },
+            "center": [
+              0,
+              -6.7,
+              0
+            ],
+            "faceColors": [
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ],
+              [
+                0.035,
+                0.055,
+                0.073
+              ]
+            ],
+            "geometryType": 0,
+            "materialId": "",
+            "objectID": "timbre.studio.square",
+            "shapeKind": 0,
+            "shapeParams": [
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01,
+              0.01
+            ],
+            "transform": [
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              0,
+              0,
+              0.01,
+              0,
+              0,
+              -6.7,
+              0,
+              1
+            ]
           }
         ]
       }
+    }
+  ],
+  "authoringPasses": [
+    {
+      "injected_by": "GPT-5.6 Sol",
+      "authors": [
+        "Zach"
+      ],
+      "session": "sol-audio-micromastery-2026-09-19",
+      "revision": "authored-timbre-rung-1",
+      "scope": "Migrated Studio PlayAudio timbre identity from legacy oscillator names to authored OntoMath timbre beings; legacy acoustic.waveType data preserved."
     }
   ]
 }
