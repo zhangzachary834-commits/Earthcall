@@ -2215,14 +2215,22 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 }
 
                 bool holds = false;
-                const std::string subjectId = subject->getIdentifier();
-                if (law->drives() && hasDriveSession(lawId, subjectId) &&
-                    law->retrigger() == Law::Retrigger::Absorb) {
-                    holds = law->conditionsSatisfied(*subject);
-                } else {
-                    if (law->drives() && hasDriveSession(lawId, subjectId)) {
-                        restartDriveSession(*law, subjectId);
+                if (law->drives()) {
+                    const std::string subjectId = subject->getIdentifier();
+                    if (hasDriveSession(lawId, subjectId) &&
+                        law->retrigger() == Law::Retrigger::Absorb) {
+                        holds = law->conditionsSatisfied(*subject);
+                    } else {
+                        if (hasDriveSession(lawId, subjectId)) {
+                            restartDriveSession(*law, subjectId);
+                        }
+                        const Law::ApplicationResult result =
+                            applyAndMaybeDrive(*law, *subject, records);
+                        holds = result == Law::ApplicationResult::Applied ||
+                                (result != Law::ApplicationResult::ConditionsFailed &&
+                                 law->conditionsSatisfied(*subject));
                     }
+                } else {
                     const Law::ApplicationResult result =
                         applyAndMaybeDrive(*law, *subject, records);
                     holds = result == Law::ApplicationResult::Applied ||
