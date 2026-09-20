@@ -1066,8 +1066,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // revision supplied by EngineRender tells us that authored rho changed, but
     // only the production emitter can tell us whether that edit changes WGSL or
     // merely the parameter buffer. Never infer structure from pointer identity.
-    const sdfwgsl::ScalarExpressionLayout radianceLayout =
-        sdfwgsl::inspectScalarExpression(radianceExpr());
+    if (_radianceLayoutRevision != radianceRevision() ||
+        _radianceLayoutExprPtr != radianceExpr()) {
+        _radianceLayout = sdfwgsl::inspectScalarExpression(radianceExpr());
+        _radianceLayoutRevision = radianceRevision();
+        _radianceLayoutExprPtr = radianceExpr();
+    }
+    const sdfwgsl::ScalarExpressionLayout& radianceLayout = _radianceLayout;
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
         ++stats.sdfProgramRefusals;
