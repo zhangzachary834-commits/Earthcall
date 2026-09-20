@@ -232,7 +232,9 @@ namespace Core {
                                   static_cast<double>(stats.sdfParameterBytesUploaded),
                                   static_cast<int>(stats.sdfRangeHierarchyBuilds),
                                   static_cast<int>(stats.sdfRangeProxyDraws),
-                                  static_cast<int>(stats.sdfRangeProxyCulledDraws));
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws),
+                                  static_cast<int>(stats.sdfRangeTraversalDraws),
+                                  static_cast<double>(stats.sdfRangeNodeBytesUploaded));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 if (recorder->isRecording()) {
