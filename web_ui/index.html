@@ -114,7 +114,11 @@
             top: 20px;
             right: 20px;
             font-size: 0.85em;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 12px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -145,6 +149,12 @@
             0% { opacity: 1; }
             50% { opacity: 0.4; }
             100% { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .connecting .status-dot {
+                animation: none;
+            }
         }
 
         .sr-only {

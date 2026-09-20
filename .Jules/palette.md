@@ -40,3 +40,10 @@
 ## 2025-01-20 - [Screen Reader Feedback on Form Submission]
 **Learning:** When a form submission simply clears the input field without navigating to a new page or displaying a persistent visual success message (like in a chat or command interface), screen reader users receive no auditory confirmation that their action succeeded. The typed text silently disappears, which can leave the user wondering if the submission worked or failed.
 **Action:** Always provide an `aria-live="polite"` visually hidden region (e.g., using a `.sr-only` class) and update its text content upon successful submission to explicitly announce the outcome (e.g., "Emitted: [word]") to assistive technologies.
+## 2026-09-20 - [HUD Text Contrast over Dynamic Canvas]
+**Learning:** Text placed directly over a 3D canvas (like a WebGL or WebGPU viewport) can become entirely illegible if the scene renders light colors behind it. Relying only on text color is insufficient for accessibility when the background is dynamic.
+**Action:** Always wrap floating HUD text elements (like connection statuses) in a semi-transparent dark container (e.g., `background: rgba(0,0,0,0.6)`) to ensure WCAG-compliant contrast regardless of the underlying rendered scene.
+
+## 2026-09-20 - [Reduced Motion for Infinite Status Animations]
+**Learning:** Infinite CSS animations (like a pulsing status dot) can trigger vestibular disorders and violate WCAG 2.2.2 (Pause, Stop, Hide).
+**Action:** Always wrap infinite status animations in a `@media (prefers-reduced-motion: reduce)` query that sets `animation: none`.
