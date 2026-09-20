@@ -30,6 +30,8 @@ Singular::Singular(const Singular& o)
     : designatedZones(o.designatedZones),
       _stakeholders(o._stakeholders),
       _dynamicProperties(o._dynamicProperties),
+      _pendingAuthoredPropertyJson(o._pendingAuthoredPropertyJson),
+      _pendingRegisteredPropertyJson(o._pendingRegisteredPropertyJson),
       _dataStructures(o._dataStructures),
       name(o.name),
       _telosId(o._telosId) {
@@ -41,6 +43,8 @@ Singular& Singular::operator=(const Singular& o) {
         designatedZones = o.designatedZones;
         _stakeholders = o._stakeholders;
         _dynamicProperties = o._dynamicProperties;
+        _pendingAuthoredPropertyJson = o._pendingAuthoredPropertyJson;
+        _pendingRegisteredPropertyJson = o._pendingRegisteredPropertyJson;
         _dataStructures = o._dataStructures;
         name = o.name;
         _telosId = o._telosId;
@@ -56,6 +60,8 @@ Singular::Singular(Singular&& o) noexcept
     : designatedZones(std::move(o.designatedZones)),
       _stakeholders(std::move(o._stakeholders)),
       _dynamicProperties(std::move(o._dynamicProperties)),
+      _pendingAuthoredPropertyJson(std::move(o._pendingAuthoredPropertyJson)),
+      _pendingRegisteredPropertyJson(std::move(o._pendingRegisteredPropertyJson)),
       _dataStructures(std::move(o._dataStructures)),
       name(std::move(o.name)),
       _telosId(std::move(o._telosId)) {
@@ -67,6 +73,8 @@ Singular& Singular::operator=(Singular&& o) noexcept {
         designatedZones = std::move(o.designatedZones);
         _stakeholders = std::move(o._stakeholders);
         _dynamicProperties = std::move(o._dynamicProperties);
+        _pendingAuthoredPropertyJson = std::move(o._pendingAuthoredPropertyJson);
+        _pendingRegisteredPropertyJson = std::move(o._pendingRegisteredPropertyJson);
         _dataStructures = std::move(o._dataStructures);
         name = std::move(o.name);
         _telosId = std::move(o._telosId);
