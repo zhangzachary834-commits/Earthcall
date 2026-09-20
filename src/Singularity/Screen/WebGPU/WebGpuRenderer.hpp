@@ -93,6 +93,7 @@ public:
     // template as setWireframe -- disabled, every heightfield object simply
     // renders through the unmodified marcher, exactly as before this phase.
     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
+    void setSpaceDistortion(float d) override { _spaceDistortion = d; }
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -222,6 +223,7 @@ private:
     // (Phase C). Defaults true so the optimization is live out of the box;
     // a Person can author @screen-channel.heightGridDdaEnabled = false.
     bool _heightGridDdaEnabled = true;
+    float _spaceDistortion = 0.0f;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;

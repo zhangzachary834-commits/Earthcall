@@ -603,6 +603,52 @@
         },
         {
           "kind": 8,
+          "path": "@go_state.targetX",
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@go_state.targetY",
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gy": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
           "path": "@state.go.targetX",
           "bindings": {
             "tx": "@go_state.targetX"
@@ -674,6 +720,7 @@
     "applicationLog": []
   },
   "triggers": [
-    "object-clicked"
+    "object-clicked",
+    "object-drag-ended"
   ]
 }

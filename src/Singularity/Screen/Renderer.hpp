@@ -178,6 +178,7 @@ public:
     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
     // is honoured.
     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
+    virtual void setSpaceDistortion(float /*d*/) {}
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 

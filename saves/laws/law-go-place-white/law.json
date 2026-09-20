@@ -10,7 +10,7 @@
     "enabled": true,
     "authority": 0,
     "activation": 0,
-    "scope": 0,
+    "scope": 1,
     "drives": false,
     "retrigger": 0,
     "conditionMode": "all",
@@ -39,6 +39,18 @@
             "t": "bool",
             "v": true
           }
+        },
+        {
+          "kind": 0,
+          "path": "gridX",
+          "op": 0,
+          "operandPath": "@go_state.targetX"
+        },
+        {
+          "kind": 0,
+          "path": "gridY",
+          "op": 0,
+          "operandPath": "@go_state.targetY"
         },
         {
           "kind": 0,
@@ -88,10 +100,50 @@
         },
         {
           "kind": 0,
-          "path": "shape",
+          "path": "material",
           "operand": {
             "t": "string",
-            "v": "Sphere"
+            "v": "material.go.white"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.kind",
+          "operand": {
+            "t": "int",
+            "v": 5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.r",
+          "operand": {
+            "t": "double",
+            "v": 0.22
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.ry",
+          "operand": {
+            "t": "double",
+            "v": 0.08
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.rz",
+          "operand": {
+            "t": "double",
+            "v": 0.22
+          }
+        },
+        {
+          "kind": 0,
+          "path": "position.y",
+          "operand": {
+            "t": "double",
+            "v": 0.08
           }
         },
         {
@@ -137,6 +189,6 @@
     "applicationLog": []
   },
   "triggers": [
-    "object-clicked"
+    "intersection-clicked"
   ]
 }

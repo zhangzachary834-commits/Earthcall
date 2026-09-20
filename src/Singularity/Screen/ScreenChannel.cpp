@@ -89,6 +89,10 @@ void ScreenChannel::buildProperties() {
         registerProperty(
             std::make_unique<PropertyRef<ScreenChannel, glm::vec3>>(name, this, member));
     };
+    const auto floating = [this](const char* name, double ScreenChannel::*member) {
+        registerProperty(
+            std::make_unique<PropertyRef<ScreenChannel, double>>(name, this, member));
+    };
 
     readOnlyInt("drawCalls", &ScreenChannel::getDrawCalls);
     readOnlyInt("trianglesDrawn", &ScreenChannel::getTrianglesDrawn);
@@ -99,6 +103,7 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
+    floating("spaceDistortion", &ScreenChannel::spaceDistortion);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are

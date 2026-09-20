@@ -79,9 +79,10 @@ public:
     // light follows the Person's camera at cameraPos + (2,5,2). A Law can make
     // it world-fixed by setting light.cameraRelative=false and writing
     // light.position, or can animate either vector as any other property.
-    bool      lightCameraRelative = true;
+    bool      lightCameraRelative = false;
     glm::vec3 lightPosition{2.0f, 5.0f, 2.0f};
     glm::vec3 lightCameraOffset{2.0f, 5.0f, 2.0f};
+    double    spaceDistortion = 0.0;
 
     bool getHasScreenCapturePermission() const;
     bool getHasAccessibilityPermission() const;

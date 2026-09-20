@@ -286,7 +286,7 @@ def build_laws():
         "law-go-click",
         "address-clicked-intersection",
         0,
-        ["object-clicked"],
+        ["object-clicked", "object-drag-ended"],
         any_of(
             compare("isBoard", 0, pv("bool", True)),
             compare("isIntersection", 0, pv("bool", True)),
@@ -304,6 +304,16 @@ def build_laws():
                 "bindings": {"ptrZ": "@interaction-channel.pointerWorld.z"},
                 "function": {"input": "ptrZ", "pieces": go_pointer_bins()},
             },
+            map_path(
+                "@go_state.targetX",
+                {"gx": "gridX"},
+                copy_terms("gx"),
+            ),
+            map_path(
+                "@go_state.targetY",
+                {"gy": "gridY"},
+                copy_terms("gy"),
+            ),
             map_path(
                 "@state.go.targetX",
                 {"tx": "@go_state.targetX"},
@@ -324,10 +334,12 @@ def build_laws():
         "law-go-place-black",
         "place-black-stone",
         0,
-        ["object-clicked"],
+        ["intersection-clicked"],
         all_of(
             compare("isIntersection", 0, pv("bool", True)),
             compare("is_empty", 0, pv("bool", True)),
+            compare("gridX", 0, operand_path="@go_state.targetX"),
+            compare("gridY", 0, operand_path="@go_state.targetY"),
             compare("@go_state.current_turn", 0, pv("string", "black")),
         ),
         seq(
@@ -335,12 +347,17 @@ def build_laws():
             set_path("isEmpty", pv("bool", False)),
             set_path("stone_color", pv("string", "black")),
             set_path("stoneColor", pv("int", 1)),
-            set_path("shape", pv("string", "Sphere")),
+            set_path("material", pv("string", "material.go.black")),
+            set_path("shape.kind", pv("int", 5)),
+            set_path("shape.r", pv("double", 0.22)),
+            set_path("shape.ry", pv("double", 0.08)),
+            set_path("shape.rz", pv("double", 0.22)),
+            set_path("position.y", pv("double", 0.08)),
             set_path("@go_state.current_turn", pv("string", "white")),
             set_path("@state.go.current_turn", pv("string", "white")),
             publish("stone-placed", "go_state"),
         ),
-        scope=0,
+        scope=1,
     )
 
     # Place White Stone law
@@ -348,10 +365,12 @@ def build_laws():
         "law-go-place-white",
         "place-white-stone",
         0,
-        ["object-clicked"],
+        ["intersection-clicked"],
         all_of(
             compare("isIntersection", 0, pv("bool", True)),
             compare("is_empty", 0, pv("bool", True)),
+            compare("gridX", 0, operand_path="@go_state.targetX"),
+            compare("gridY", 0, operand_path="@go_state.targetY"),
             compare("@go_state.current_turn", 0, pv("string", "white")),
         ),
         seq(
@@ -359,12 +378,17 @@ def build_laws():
             set_path("isEmpty", pv("bool", False)),
             set_path("stone_color", pv("string", "white")),
             set_path("stoneColor", pv("int", 2)),
-            set_path("shape", pv("string", "Sphere")),
+            set_path("material", pv("string", "material.go.white")),
+            set_path("shape.kind", pv("int", 5)),
+            set_path("shape.r", pv("double", 0.22)),
+            set_path("shape.ry", pv("double", 0.08)),
+            set_path("shape.rz", pv("double", 0.22)),
+            set_path("position.y", pv("double", 0.08)),
             set_path("@go_state.current_turn", pv("string", "black")),
             set_path("@state.go.current_turn", pv("string", "black")),
             publish("stone-placed", "go_state"),
         ),
-        scope=0,
+        scope=1,
     )
 
 # ---------------------------------------------------------------------------
@@ -481,7 +505,7 @@ def build_world():
                 "shapeKind": 3,  # Cylinder pad at the intersection
                 "geometryType": 3,
                 "shapeParams": [0.08, 0.08, 0.08, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0],
-                "transform": mat4_translate(wx, wy, wz, (0.16, 0.01, 0.16)),
+                "transform": mat4_translate(wx, wy, wz, (1.0, 1.0, 1.0)),
                 "center": [wx, wy, wz],
                 "materialId": "material.go.intersection",
                 "faceColors": [kaya_rgb for _ in range(6)],
@@ -494,7 +518,6 @@ def build_world():
                     "isEmpty": pv("bool", True),
                     "stone_color": pv("string", "none"),
                     "stoneColor": pv("int", 0),
-                    "shape": pv("string", "Intersection"),
                     "restY": pv("double", wy),
                     "isIntersection": pv("bool", True),
                     "displayName": pv("string", f"Intersection ({x}, {y})"),

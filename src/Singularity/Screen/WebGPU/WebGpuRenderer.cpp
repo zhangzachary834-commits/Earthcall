@@ -927,9 +927,10 @@ namespace {
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
+    glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 limits;   // x = far-plane distance in world units; see struct RU
+    glm::vec4 limits;   // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
 };
 } // namespace
 
@@ -1260,6 +1261,7 @@ void WebGpuRenderer::flushSdfDraws() {
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
+    u.invViewProj = glm::inverse(_viewProj);
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
@@ -1274,7 +1276,7 @@ void WebGpuRenderer::flushSdfDraws() {
             if (std::isfinite(d) && d > 0.0f) farDist = d;
         }
     }
-    u.limits = glm::vec4(farDist, 0.0f, 0.0f, 0.0f);
+    u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
 
     auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 

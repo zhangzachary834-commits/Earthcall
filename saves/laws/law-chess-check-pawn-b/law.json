@@ -5,17 +5,105 @@
   "identifier": "law-chess-check-pawn-b",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
+    "id": "law-chess-check-pawn-b",
+    "name": "black-pawn-gives-check",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 3,
+          "children": [
+            {
+              "kind": 2,
+              "relationType": "instance-of",
+              "otherId": "category.chess.piece"
+            },
+            {
+              "kind": 0,
+              "path": "onBoard",
+              "op": 0,
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 1,
+              "operandPath": "@state.chess.turn"
+            },
+            {
+              "kind": 0,
+              "path": "chessRole",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            },
+            {
+              "kind": 0,
+              "path": "chessColor",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 1
+              }
+            }
+          ]
+        },
+        {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.kingXm1"
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.kingXp1"
+            }
+          ]
+        },
+        {
+          "kind": 0,
+          "path": "gridY",
+          "op": 0,
+          "operandPath": "@state.chess.kingYp1"
+        }
+      ]
+    },
     "actionModel": {
+      "kind": 5,
       "children": [
         {
           "kind": 0,
+          "path": "@state.chess.inCheck",
           "operand": {
             "t": "bool",
             "v": true
-          },
-          "path": "@state.chess.inCheck"
+          }
         },
         {
+          "kind": 8,
+          "path": "@state.chess.checkers",
           "bindings": {
             "n": "@state.chess.checkers"
           },
@@ -25,128 +113,40 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "n": 1
+                        "n": 1.0
                       }
                     },
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {}
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "@state.chess.checkers"
+          }
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "grok-4.6"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "children": [
-        {
-          "children": [
-            {
-              "kind": 2,
-              "otherId": "category.chess.piece",
-              "relationType": "instance-of"
-            },
-            {
-              "kind": 0,
-              "op": 0,
-              "operand": {
-                "t": "bool",
-                "v": true
-              },
-              "path": "onBoard"
-            },
-            {
-              "kind": 0,
-              "op": 1,
-              "operandPath": "@state.chess.turn",
-              "path": "chessColor"
-            },
-            {
-              "kind": 0,
-              "op": 0,
-              "operand": {
-                "t": "int",
-                "v": 0
-              },
-              "path": "chessRole"
-            },
-            {
-              "kind": 0,
-              "op": 0,
-              "operand": {
-                "t": "int",
-                "v": 1
-              },
-              "path": "chessColor"
-            }
-          ],
-          "kind": 3
-        },
-        {
-          "children": [
-            {
-              "kind": 0,
-              "op": 0,
-              "operandPath": "@state.chess.kingXm1",
-              "path": "gridX"
-            },
-            {
-              "kind": 0,
-              "op": 0,
-              "operandPath": "@state.chess.kingXp1",
-              "path": "gridX"
-            }
-          ],
-          "kind": 4
-        },
-        {
-          "kind": 0,
-          "op": 0,
-          "operandPath": "@state.chess.kingYp1",
-          "path": "gridY"
-        }
-      ],
-      "kind": 3
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-check-pawn-b",
-    "name": "black-pawn-gives-check",
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-check-pawn-b",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "check-scanned"

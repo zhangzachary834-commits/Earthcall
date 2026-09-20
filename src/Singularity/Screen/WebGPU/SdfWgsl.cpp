@@ -941,14 +941,15 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 // and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
-    viewProj:  mat4x4<f32>,
-    lightPos:  vec4<f32>,
-    eyePos:    vec4<f32>,
-    // x = distance to the camera's far plane, in WORLD units. Everything past it
-    // is clipped before it is ever seen, so marching there is work with no
-    // possible output. Unlike a hardcoded horizon constant this is not a quality
-    // setting -- it cannot remove anything a Person could have seen.
-    limits:    vec4<f32>,
+    viewProj:    mat4x4<f32>,
+    invViewProj: mat4x4<f32>,
+    lightPos:    vec4<f32>,
+    eyePos:      vec4<f32>,
+    // x = distance to the camera's far plane, in WORLD units.
+    // y = viewport width in pixels.
+    // z = viewport height in pixels.
+    // w = authorable space distortion factor (e.g. Far Lands Zone).
+    limits:      vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -966,8 +967,11 @@ fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VSO
     let inst = instances[instIdx];
     let world = inst.model * vec4<f32>(pos * inst.extents.xyz, 1.0);
     o.clip = u.viewProj * world;
-    // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
-    o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
+    // Clamp to far plane only when in front of camera (w > 0) so proxy geometry is never
+    // lost to far-plane clipping without inverting clip depth for vertices behind the camera plane.
+    if (o.clip.w > 0.0) {
+        o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
+    }
     o.worldPos = world.xyz;
     o.instIdx = instIdx;
     return o;
@@ -1063,10 +1067,32 @@ fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
     let inst    = instances[in.instIdx];
     let roWorld = u.eyePos.xyz;
-    let rdWorld = normalize(in.worldPos - roWorld);
+
+    // Derive primary ray direction: use exact screen NDC unprojection when viewport
+    // dimensions are available to eliminate proxy cube clipping and perspective non-linearities.
+    var rdWorld: vec3<f32>;
+    if (u.limits.y > 0.0 && u.limits.z > 0.0) {
+        let ndc = vec4<f32>(
+            (in.clip.x / u.limits.y) * 2.0 - 1.0,
+            (1.0 - (in.clip.y / u.limits.z)) * 2.0 - 1.0,
+            1.0,
+            1.0
+        );
+        let worldPt = u.invViewProj * ndc;
+        rdWorld = normalize(worldPt.xyz / worldPt.w - roWorld);
+    } else {
+        rdWorld = normalize(in.worldPos - roWorld);
+    }
+
     let ro      = (inst.invModel * vec4<f32>(roWorld, 1.0)).xyz;
     let rdField = (inst.invModel * vec4<f32>(rdWorld, 0.0)).xyz;
-    let rd      = normalize(rdField);
+    var rd      = normalize(rdField);
+
+    // Authorable Far Lands space distortion (Part 2):
+    if (u.limits.w > 1e-4) {
+        let warp = sin(ro.xyz * 0.05 + vec3<f32>(0.0, rdField.y * 2.0, 0.0)) * u.limits.w;
+        rd = normalize(rd + warp);
+    }
     // t is measured in FIELD units; the far plane is a WORLD distance. The
     // unnormalised field-space direction is exactly the conversion factor along
     // this ray, so this stays right under any invertible model transform,
