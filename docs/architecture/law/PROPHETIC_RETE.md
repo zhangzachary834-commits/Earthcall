@@ -308,10 +308,21 @@ therefore contributes the edges its ActionModel proves **and** remains an explic
 actuation source. `relevanceComplete()` stays false, so these partial edges have zero
 narrowing authority; runtime falls back exactly as before.
 
-The finer remaining rung is **path-granular unknown influence**: proving which property families an
-opaque external source can or cannot touch, instead of treating its unknown transform as globally
-capable. That requires legible First-Mover/property provenance rather than guessing from C++ call
-sites, and is the prerequisite for a useful general cross-Law least-post-fixpoint solver.
+**Path-granular unknown-domain representation — BUILT 2026-09-19, continuation rung.**
+Each unknown source can now carry `knownMayWritePaths` plus an independent
+`domainComplete` bit. The distinction is load-bearing: positive paths may accumulate while a
+domain is incomplete, but `unknownSourceMayReach` must still answer *possible* for every
+unlisted path. Only a complete domain may use path disjointness to answer *no*.
+`Index::unknownWriteMayReach(path)` and `unknownWriteDomainCompleteFor(path)` expose those
+separate questions for the future cross-Law solver, and the report serializes the distinction.
+
+Current C++ First Movers deliberately remain `domainComplete == false`. Their registered state,
+filesystem write scopes, or observed call sites are not silently promoted into an exhaustive
+in-world actuation contract. The remaining prerequisite is therefore the **provenance half**:
+legible First-Mover/property capability Relations (or an equivalent ontology-native source of
+truth) must populate and certify these domains. Only after that may the general cross-Law
+least-post-fixpoint/SCC solver use absence of unknown influence to replace an external `Top`
+seed with a finite one.
 
 **Rendering.** Zach: *"when rendering itself is handled by Laws everything I said here also
 applies to rendering."* True, and the interval algebra in §3a is already shared with the SDF
