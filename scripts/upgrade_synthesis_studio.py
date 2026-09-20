@@ -11,6 +11,7 @@ import argparse
 from copy import deepcopy
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 import shutil
 import tempfile
@@ -35,6 +36,41 @@ NOTES = [
     ("a5", "A5", (0.32, 0.69, 0.98)),
     ("b5", "B5", (0.66, 0.54, 0.97)),
 ]
+
+TIMBRE_IDS = {
+    "triangle": "timbre.studio.triangle",
+    "sine": "timbre.studio.sine",
+    "square": "timbre.studio.square",
+}
+
+
+def _timbre_terms(kind):
+    """Normalized authored Fourier structure: timbre is math, never an enum."""
+    if kind == "sine":
+        pairs = [(1, 1.0)]
+    elif kind == "triangle":
+        pairs = [(2*k + 1, (8 / math.pi**2) * ((-1) ** k) / (2*k + 1)**2)
+                 for k in range(7)]
+    elif kind == "square":
+        pairs = [(2*k + 1, (4 / math.pi) / (2*k + 1))
+                 for k in range(7)]
+    else:
+        raise ValueError("unknown authored starter timbre: " + kind)
+
+    # Normalize the finite authored approximation, not a hidden engine preset.
+    peak = max(abs(sum(c * math.sin(2 * math.pi * n * i / 8192)
+                       for n, c in pairs))
+               for i in range(8192))
+    return [{"c": c / peak, "factors": {},
+             "trans": [{"kind": 0, "var": "phase",
+                        "scale": 2 * math.pi * n}]}
+            for n, c in pairs]
+
+
+def timbre_form(kind):
+    return {"input": "phase",
+            "pieces": [{"expr": {"terms": _timbre_terms(kind)}}]}
+
 
 
 def colors(rgb):
@@ -123,8 +159,30 @@ def upgrade(document):
     edges[:] = [e for e in edges if not (e.get("entityA") == MOVER and e.get("entityB") == MOVER)]
     edges.append(relation(MOVER, "Zach", "commissioned-by"))
 
+    # Starter timbres are ordinary authored beings whose acoustic.form is
+    # OntoMath text. Their identity can be selected by Law without teaching
+    # AudioSystem a new C++ word.
+    for i, kind in enumerate(("triangle", "sine", "square")):
+        timbre_id = TIMBRE_IDS[kind]
+        put({"objectID": timbre_id, "shapeKind": 0, "geometryType": 0,
+             "shapeParams": [0.01] * 9,
+             "transform": mat4_translate(0, -6.4 - i * 0.15, 0),
+             "center": [0, -6.4 - i * 0.15, 0],
+             "materialId": "", "faceColors": colors(PANEL),
+             "authoredProperties": {
+                 "displayName": pv("string", kind.title() + " / Authored Timbre"),
+                 "acoustic.form": pv("string", json.dumps(timbre_form(kind), separators=(",", ":"))),
+                 "acoustic.timeVariable": pv("string", "phase"),
+                 "acoustic.referenceFrequency": pv("double", 1.0),
+                 "acoustic.duration": pv("double", 0.35),
+                 "acoustic.role": pv("string", "timbre"),
+             }})
+        edge = relation(timbre_id, MOVER)
+        if not any(all(e.get(k) == edge[k] for k in ("type", "entityA", "entityB")) for e in edges):
+            edges.append(edge)
+
     state = by_id["state.studio"]["authoredProperties"]
-    for name, value in {"voice": pv("string", "triangle"),
+    for name, value in {"voice": pv("string", TIMBRE_IDS["triangle"]),
                         "inkR": pv("double", 1.0), "inkG": pv("double", 0.85),
                         "inkB": pv("double", 0.15),
                         "strokeSpacing": pv("double", 0.09),
@@ -197,17 +255,17 @@ def upgrade(document):
 
     for i, (name, label) in enumerate([("triangle", "TRI"), ("sine", "SINE"), ("square", "SQR")]):
         put(object2d(f"hud.resonance.voice.{name}", label, 1000 + i * 80, 137, 72, 40,
-                     (0.17, 0.27, 0.32), props={"studioVoice": pv("string", name)}), button=True)
+                     (0.17, 0.27, 0.32), props={"studioVoice": pv("string", TIMBRE_IDS[name])}), button=True)
         add(f"law-studio-resonance-voice-{name}", f"Studio: Select {name} voice",
-            compare("studioVoice", 0, pv("string", name)),
-            seq(set_path("@state.studio.voice", pv("string", name)),
+            compare("studioVoice", 0, pv("string", TIMBRE_IDS[name])),
+            seq(set_path("@state.studio.voice", pv("string", TIMBRE_IDS[name])),
                 set_path("@hud.resonance.voice-caption.label2D", pv("string", f"VOICE / {name.upper()}"))),
             "control-activated")
         if name != "triangle":
             add(f"law-studio-resonance-play-{name}", f"Studio: Play {name} note",
                 all_of(compare("isChordPad", 0, pv("bool", True)),
-                       compare("@state.studio.voice", 0, pv("string", name))),
-                seq(play_audio("acoustic.frequency", "acoustic.amplitude", name), publish("note-played")),
+                       compare("@state.studio.voice", 0, pv("string", TIMBRE_IDS[name]))),
+                seq(play_audio("acoustic.frequency", "acoustic.amplitude", TIMBRE_IDS[name]), publish("note-played")),
                 "control-activated")
 
     for i, (name, rgb) in enumerate([("SOLAR", (1.0, 0.85, 0.15)),
@@ -257,8 +315,14 @@ def upgrade(document):
         existing = {l["id"]: l for l in register["laws"]}
         # Preserve the original pad Law's identity and original attribution.
         original = existing["law-studio-pad-play"]
+        def retarget_play_audio(node, old, new):
+            if node.get("kind") == 18 and node.get("propertyName") == old:
+                node["propertyName"] = new
+            for child in node.get("children", []):
+                retarget_play_audio(child, old, new)
+        retarget_play_audio(original["actionModel"], "triangle", TIMBRE_IDS["triangle"])
         original["conditionModel"] = all_of(original["conditionModel"],
-            compare("@state.studio.voice", 0, pv("string", "triangle")))
+            compare("@state.studio.voice", 0, pv("string", TIMBRE_IDS["triangle"])))
         revision_edge = relation(original["id"], MOVER, "revised-by")
         if not any(all(edge.get(k) == revision_edge[k]
                        for k in ("type", "entityA", "entityB"))
