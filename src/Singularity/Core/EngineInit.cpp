@@ -5,6 +5,7 @@
 #include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 // GameInit.cpp – Game initialisation, GLFW callbacks
 // Split from Game.cpp during refactor.
 
@@ -316,6 +317,7 @@ bool Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.bindLive();
     mgr.bindLawManager(_lawManager.get());
+    Integration::getEarthcallAPI().setZoneManager(&mgr);
     // Read the ground before asking whether a Home must be born. Previously
     // ensureHomeZone ran first, so a persisted Home could not possibly answer
     // the question and a name-twin could be minted before hydration saw disk.
