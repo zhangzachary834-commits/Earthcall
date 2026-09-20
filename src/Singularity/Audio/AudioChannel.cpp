@@ -199,11 +199,6 @@ bool AudioChannel::sound(Singular& subject, double frequency, double amplitude,
     }
 
     auto& system = Core::Audio::AudioSystem::instance();
-    if (!system.initialized()) {
-        reason = "audio backend is not initialized";
-        _lastTimbreStatus = reason;
-        return false;
-    }
 
     OntoMath::Piecewise form;
     std::string timeVariable;
@@ -225,6 +220,11 @@ bool AudioChannel::sound(Singular& subject, double frequency, double amplitude,
         // The authored form describes its own reference-rate waveform. Pitch
         // is a Law-supplied parameter that retimes that same mathematics rather
         // than selecting a different engine preset.
+        if (!system.initialized()) {
+            reason = "audio backend is not initialized";
+            _lastTimbreStatus = reason;
+            return false;
+        }
         const double timeScale = frequency / referenceFrequency;
         const bool sounded = system.playForm(
             form, timeVariable, duration, static_cast<float>(amplitude),
@@ -251,6 +251,12 @@ bool AudioChannel::sound(Singular& subject, double frequency, double amplitude,
                      ? "unresolved authored timbre '" + timbre + "'"
                      : "unresolved authored timbre '" + timbre + "': " +
                            authoredReason;
+        _lastTimbreStatus = reason;
+        return false;
+    }
+
+    if (!system.initialized()) {
+        reason = "audio backend is not initialized";
         _lastTimbreStatus = reason;
         return false;
     }
