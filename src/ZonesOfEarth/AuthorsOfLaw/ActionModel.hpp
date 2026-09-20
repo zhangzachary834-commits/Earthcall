@@ -7,6 +7,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <vector>
