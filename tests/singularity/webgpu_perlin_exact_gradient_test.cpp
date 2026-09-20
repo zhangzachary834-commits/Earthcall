@@ -692,6 +692,9 @@ int main() {
         mat.ambient = 0.2f;
         mat.diffuse = 0.8f;
 
+        size_t traversalActiveCases = 0;
+        const uint64_t terrainMemoId = 0x5045524c494eULL; // "PERLIN"
+
         for (const auto& c : cameraCorpus) {
             const glm::mat4 proj = glm::perspectiveZO(glm::radians(c.fovDeg), 1.0f, 0.1f, 3000.0f);
             const glm::mat4 viewM = glm::lookAt(c.eye, c.target, c.up);
@@ -699,38 +702,62 @@ int main() {
 
             r.setCamera(viewM, proj, c.eye);
             r.setModel(glm::mat4(1.0f));
-            r.beginFrameOffscreen(view, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
-            r.drawImplicit(perlinField, extent, mat, nullptr, 0, 0, nullptr);
-            r.endFrame();
-            wgpuDevicePoll(gpu.device, true, nullptr);
 
-            WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
-            WGPUTexelCopyTextureInfo src = {};
-            src.texture = tex;
-            src.aspect = WGPUTextureAspect_All;
-            src.origin = {0, 0, 0};
-            WGPUTexelCopyBufferInfo dst = {};
-            dst.buffer = readback;
-            dst.layout.bytesPerRow = rowStride;
-            dst.layout.rowsPerImage = H;
-            WGPUExtent3D ext = { W, H, 1 };
-            wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
-            WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
-            wgpuQueueSubmit(gpu.queue, 1, &cmd);
-            wgpuCommandBufferRelease(cmd);
-            wgpuCommandEncoderRelease(enc);
+            auto capture = [&](bool rangeEnabled, Renderer::FrameStats& statsOut) {
+                r.setSdfRangeProxyEnabled(rangeEnabled);
+                r.beginFrameOffscreen(view, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
+                r.drawImplicit(perlinField, extent, mat, nullptr,
+                               terrainMemoId,
+                               /*memoRevision=*/1,
+                               nullptr,
+                               /*memoParameterRevision=*/1);
+                r.endFrame();
+                wgpuDevicePoll(gpu.device, true, nullptr);
+                statsOut = r.frameStats();
 
-            MapR m;
-            WGPUBufferMapCallbackInfo ci = {};
-            ci.mode = WGPUCallbackMode_AllowProcessEvents;
-            ci.callback = onMap;
-            ci.userdata1 = &m;
-            wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, rowStride * H, ci);
-            while (!m.done) wgpuDevicePoll(gpu.device, true, nullptr);
+                WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+                WGPUTexelCopyTextureInfo src = {};
+                src.texture = tex;
+                src.aspect = WGPUTextureAspect_All;
+                src.origin = {0, 0, 0};
+                WGPUTexelCopyBufferInfo dst = {};
+                dst.buffer = readback;
+                dst.layout.bytesPerRow = rowStride;
+                dst.layout.rowsPerImage = H;
+                WGPUExtent3D ext = { W, H, 1 };
+                wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
+                WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+                wgpuQueueSubmit(gpu.queue, 1, &cmd);
+                wgpuCommandBufferRelease(cmd);
+                wgpuCommandEncoderRelease(enc);
 
-            const auto* px = static_cast<const unsigned char*>(
-                wgpuBufferGetConstMappedRange(readback, 0, rowStride * H));
-            
+                MapR m;
+                WGPUBufferMapCallbackInfo ci = {};
+                ci.mode = WGPUCallbackMode_AllowProcessEvents;
+                ci.callback = onMap;
+                ci.userdata1 = &m;
+                wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, rowStride * H, ci);
+                while (!m.done) wgpuDevicePoll(gpu.device, true, nullptr);
+
+                const auto* mapped = static_cast<const unsigned char*>(
+                    wgpuBufferGetConstMappedRange(readback, 0, rowStride * H));
+                std::vector<unsigned char> pixels(mapped, mapped + rowStride * H);
+                wgpuBufferUnmap(readback);
+                return pixels;
+            };
+
+            Renderer::FrameStats offStats;
+            Renderer::FrameStats onStats;
+            const auto baseline = capture(/*rangeEnabled=*/false, offStats);
+            const auto accelerated = capture(/*rangeEnabled=*/true, onStats);
+
+            // The hierarchy is an accelerator, never a visual authority. This
+            // is intentionally byte-exact: same authored field, same camera,
+            // same shading, same pixel result.
+            assert(baseline == accelerated);
+            if (onStats.sdfRangeTraversalDraws > 0) ++traversalActiveCases;
+
+            const auto* px = baseline.data();
             auto isBackground = [](unsigned char r, unsigned char g, unsigned char b) {
                 return (std::abs(static_cast<int>(r) - 25) <= 2 &&
                         std::abs(static_cast<int>(g) - 25) <= 2 &&
@@ -769,12 +796,15 @@ int main() {
                 }
             }
 
-            wgpuBufferUnmap(readback);
-
-            std::printf("[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels (bidirectional CPU/GPU root agreement verified)\n",
-                        c.name, terrainHits, W * H);
+            std::printf("[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels; rangeTraversal=%u; OFF/ON byte-exact\n",
+                        c.name, terrainHits, W * H, onStats.sdfRangeTraversalDraws);
             assert(terrainHits > 0);
         }
+
+        assert(traversalActiveCases > 0);
+        std::printf("[Gate D] Range hierarchy traversal activated in %zu/%zu authored-Perlin camera cases with byte-exact OFF/ON images.\n",
+                    traversalActiveCases,
+                    sizeof(cameraCorpus) / sizeof(cameraCorpus[0]));
 
         wgpuBufferRelease(readback);
         wgpuTextureViewRelease(view);
