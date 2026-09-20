@@ -69,6 +69,6 @@ struct Program {
 // fieldNode is optional (needed if the tree uses VolumetricField and needs to sample
 // the 3D texture).
 // colorExpr is optional; if provided, it replaces the uniform base color.
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr, const OntoMath::Piecewise* colorExpr = nullptr);
+Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr, const OntoMath::Piecewise* colorExpr = nullptr, const OntoMath::Piecewise* radianceExpr = nullptr);
 
 } // namespace sdfwgsl
