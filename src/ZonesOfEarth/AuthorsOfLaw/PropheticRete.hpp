@@ -204,6 +204,13 @@ public:
         std::string lawId;
         std::string why;
         bool hasModeledWrites = false;
+
+        // Positive path knowledge about the opaque remainder. This list is
+        // NEVER interpreted as exhaustive unless domainComplete is true.
+        // An incomplete source may name pointer.position and still be able to
+        // touch chessColor; absence from this list is not negative knowledge.
+        std::vector<std::string> knownMayWritePaths;
+        bool domainComplete = false;
     };
     // Rebuild from the whole law register. Cheap enough to call per frame
     // (it is a walk of the law TEXT, not of the world), but the caller is
@@ -268,6 +275,22 @@ public:
         return _unknownWriteSources;
     }
 
+    // Unknown-source reachability is deliberately two-dimensional:
+    //
+    //   unknownWriteMayReach(path)
+    //       positive possibility. An incomplete source answers true for every
+    //       path because its unenumerated remainder may still reach it.
+    //
+    //   unknownWriteDomainCompleteFor(path)
+    //       whether absence from all source domains may be used negatively.
+    //       Today one incomplete First Mover makes this false for every path.
+    //
+    // The future cross-Law solver needs BOTH. A finite fixpoint may only use
+    // absence of an external seed when the domain is complete AND no unknown
+    // source may reach that path.
+    bool unknownWriteMayReach(const std::string& path) const;
+    bool unknownWriteDomainCompleteFor(const std::string& path) const;
+
     const std::vector<LawFacts>& facts() const { return _facts; }
 
     // Counters, for the report and for the tests that guard the filter.
@@ -287,6 +310,12 @@ private:
     bool _complete = true;
     bool _relevanceComplete = true;
 };
+
+// Pure predicate used by the Index and by adversarial witnesses. A source
+// whose domain is incomplete remains wildcard regardless of any positive paths
+// already known. Only a complete domain may prove a disjoint path unreachable.
+bool unknownSourceMayReach(const Index::UnknownWriteSource& source,
+                           const std::string& path);
 
 // Every contiguous sub-run of a dotted path's segments, joined by dots.
 // "body.head.position" yields body, head, position, body.head, head.position,
