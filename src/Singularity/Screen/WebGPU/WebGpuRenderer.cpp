@@ -929,7 +929,11 @@ struct SdfGlobalUniforms {
     glm::mat4 viewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 limits;   // x = far-plane distance in world units; see struct RU
+    glm::vec4 lightAmbient;
+    glm::vec4 lightDiffuse;
+    glm::vec4 lightSpecular;
+    glm::vec4 lightControl; // x = lighting enabled (0 or 1)
+    glm::vec4 limits;       // x = far-plane distance in world units; see struct RU
 };
 } // namespace
 
@@ -1034,16 +1038,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     bool needsCompile = true;
     if (memoId != 0) {
         auto& entry = _programCache[memoId];
-        if (entry.revision == memoRevision && 
+        if (entry.revision == memoRevision &&
             entry.colorRevision == mat.colorRevision &&
-            entry.colorExprPtr == mat.colorExpr.get()) {
+            entry.radianceRevision == radianceRevision() &&
+            entry.colorExprPtr == mat.colorExpr.get() &&
+            entry.radianceExprPtr == radianceExpr()) {
             prog = entry.prog;
             sp = entry.sp;
             needsCompile = false;
         }
     }
     if (needsCompile) {
-        prog = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get());
+        prog = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
         if (!prog.ok) {
             std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", prog.error.c_str());
             return;
@@ -1053,7 +1059,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             auto& entry = _programCache[memoId];
             entry.revision = memoRevision;
             entry.colorRevision = mat.colorRevision;
+            entry.radianceRevision = radianceRevision();
             entry.colorExprPtr = mat.colorExpr.get();
+            entry.radianceExprPtr = radianceExpr();
             entry.prog = prog;
             entry.sp = sp;
         }
@@ -1262,6 +1270,10 @@ void WebGpuRenderer::flushSdfDraws() {
     u.viewProj = _viewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
+    u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
+    u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
+    u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
+    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
