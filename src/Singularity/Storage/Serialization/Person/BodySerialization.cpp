@@ -102,7 +102,8 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
     Singularity::Storage::writeSingularProperties(j, part);
     if (const Object* primary = part.getPrimaryObject()) {
         nlohmann::json primarySemantic = nlohmann::json::object();
-        Singularity::Storage::writeSingularProperties(primarySemantic, *primary);
+        Singularity::Storage::writeSingularProperties(
+            primarySemantic, *primary, objectRegisteredPropertyNeedsEnvelope);
         if (!primarySemantic.empty()) {
             j["primaryObjectSemantic"] = std::move(primarySemantic);
         }
@@ -222,7 +223,8 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
     Singularity::Storage::readSingularProperties(j, part);
     if (j.contains("primaryObjectSemantic") && part.getPrimaryObject()) {
         Singularity::Storage::readSingularProperties(
-            j["primaryObjectSemantic"], *part.getPrimaryObject());
+            j["primaryObjectSemantic"], *part.getPrimaryObject(), {},
+            objectRegisteredPropertyNeedsEnvelope);
     }
 }
 
