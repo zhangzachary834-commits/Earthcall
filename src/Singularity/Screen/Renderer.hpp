@@ -111,6 +111,17 @@ public:
     const glm::vec3& lightSpecular() const { return _lightSpecular; }
     bool lightingEnabled() const           { return _lightingOn; }
 
+    // Optional authored spatial radiance function for the active Zone. This is
+    // still ordinary FieldNode/OntoMath data: the renderer only borrows the AST
+    // for the duration of the frame and records a content fingerprint so a Law
+    // edit invalidates backend shader memoization instead of leaving stale light.
+    void setRadianceField(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceExpr = expr;
+        _radianceRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
+    uint64_t radianceRevision() const { return _radianceRevision; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -278,6 +289,8 @@ private:
     glm::vec3 _lightDiffuse{0.8f};
     glm::vec3 _lightSpecular{1.0f};
     bool      _lightingOn = true;
+    const OntoMath::Piecewise* _radianceExpr = nullptr;
+    uint64_t _radianceRevision = 0;
     FrameStats _frameStats;
 };
 
