@@ -305,6 +305,13 @@ private:
     // The proof hierarchy may still build, cull a completely zero-free draw,
     // and accelerate rays internally; only proxy-edge shrink is disabled.
     static constexpr bool kSdfRangeRasterTighteningVerified = false;
+    // The generic range theorem is valid for distance fields too, but the
+    // over-relaxed marcher has a separate sample-history contract. Native
+    // parity still shows a one-pixel SmoothUnion@xform difference when spatial
+    // jumps perturb that path. Keep it quarantined for this rung: expensive
+    // authored Expr fields use the gradient-corrected marcher and remain the
+    // intended acceleration target.
+    static constexpr bool kSdfRangeDistanceTraversalVerified = false;
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
     // A complete depth-5 octree contains at most
     // 1+8+64+512+4096+32768 = 37,449 nodes. Keep headroom so the real
