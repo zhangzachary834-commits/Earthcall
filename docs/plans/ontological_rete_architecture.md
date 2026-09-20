@@ -143,9 +143,12 @@ not; one opaque law makes every edge fail open.
 **Built 2026-09-18:** `Prophetic::Index::relevanceEdges()` now materializes this graph as
 derived C++ state, keyed by stable authored branch provenance and carrying `aboutInstances`.
 It is deliberately not yet reified as world Relations and has no narrowing authority on the
-hot path. `relevanceComplete()` is false and the graph is empty when either read or write
-analysis is opaque. `prophetic_rete_test` §H guards branch identity across JSON round trips,
-`Any`-arm distinction, pairwise disjointness, and global opacity. Step 3 now consumes these lower-tier structures through one cached query. The next bounded
+hot path. `relevanceComplete()` is false when either read or write analysis is opaque; since
+2026-09-19 the known subgraph is still retained for legibility while explicit
+`UnknownWriteSource` entries name the missing transform. Incomplete graphs remain
+non-authoritative and must fall back. `prophetic_rete_test` §H guards branch identity across
+JSON round trips, `Any`-arm distinction, pairwise disjointness, retained known edges under
+opacity, and First-Mover unknown-source reporting. Step 3 now consumes these lower-tier structures through one cached query. The next bounded
 implementation is Step 4's route competition; reifying roads into a Person's world remains gated below.
 
 ### ✅ Step 3 — The tier query contract *(built 2026-09-18)*
