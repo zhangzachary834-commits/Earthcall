@@ -157,6 +157,20 @@ int main() {
               proxy.halfExtent.y <= 2.0f &&
               proxy.halfExtent.z <= 2.0f,
               "sphere proxy never expands beyond authored coverage");
+        size_t positiveSkipSafe = 0;
+        size_t negativeZeroFree = 0;
+        for (const auto& node : h.nodes) {
+            if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipSafe;
+            if (node.boundFinite && node.rangeHi < 0.0f) {
+                ++negativeZeroFree;
+                check(!geom::rangeNodeProvesPositiveOutside(node),
+                      "proved-negative interior cell is never traversal-skippable");
+            }
+        }
+        check(positiveSkipSafe > 0,
+              "sphere hierarchy contains proved-positive outside cells to skip");
+        check(negativeZeroFree > 0,
+              "sphere hierarchy contains proved-negative interior cells to retain");
         verifyStructure(h);
         verifyProvedCellsBySampling(sphere, h);
     }
