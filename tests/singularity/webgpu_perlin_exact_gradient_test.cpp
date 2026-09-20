@@ -478,13 +478,40 @@ int main() {
         WGPUBindGroup bg0 = wgpuDeviceCreateBindGroup(gpu.device, &bg0Desc);
         assert(bg0 != nullptr);
 
+        // Group(1) now mirrors the renderer's complete SDF storage ABI:
+        // binding 0 instances, binding 1 optional height cells, binding 2
+        // optional conservative range nodes. This gradient-only compute probe
+        // does not read either accelerator, but auto-layout validation still
+        // requires legal storage bindings for every declared resource.
+        glm::vec2 dummyHeightCell(0.0f);
+        WGPUBufferDescriptor dummyHeightDesc = {};
+        dummyHeightDesc.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+        dummyHeightDesc.size = sizeof(dummyHeightCell);
+        WGPUBuffer dummyHeightBuf = wgpuDeviceCreateBuffer(gpu.device, &dummyHeightDesc);
+        wgpuQueueWriteBuffer(gpu.queue, dummyHeightBuf, 0,
+                             &dummyHeightCell, sizeof(dummyHeightCell));
+
+        struct DummyRangeNode {
+            glm::vec4 boxMin{0.0f};
+            glm::vec4 boxMax{0.0f};
+            glm::uvec4 rangeInfo{0u};
+        } dummyRangeNode;
+        WGPUBufferDescriptor dummyRangeDesc = {};
+        dummyRangeDesc.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+        dummyRangeDesc.size = sizeof(DummyRangeNode);
+        WGPUBuffer dummyRangeBuf = wgpuDeviceCreateBuffer(gpu.device, &dummyRangeDesc);
+        wgpuQueueWriteBuffer(gpu.queue, dummyRangeBuf, 0,
+                             &dummyRangeNode, sizeof(DummyRangeNode));
+
         WGPUBindGroupLayout bgl1 = wgpuComputePipelineGetBindGroupLayout(cp, 1);
-        WGPUBindGroupEntry bg1Entries[1] = {};
+        WGPUBindGroupEntry bg1Entries[3] = {};
         bg1Entries[0].binding = 0; bg1Entries[0].buffer = instBuf; bg1Entries[0].offset = 0; bg1Entries[0].size = sizeof(SimpleInstance);
+        bg1Entries[1].binding = 1; bg1Entries[1].buffer = dummyHeightBuf; bg1Entries[1].offset = 0; bg1Entries[1].size = sizeof(dummyHeightCell);
+        bg1Entries[2].binding = 2; bg1Entries[2].buffer = dummyRangeBuf; bg1Entries[2].offset = 0; bg1Entries[2].size = sizeof(DummyRangeNode);
 
         WGPUBindGroupDescriptor bg1Desc = {};
         bg1Desc.layout = bgl1;
-        bg1Desc.entryCount = 1;
+        bg1Desc.entryCount = 3;
         bg1Desc.entries = bg1Entries;
         WGPUBindGroup bg1 = wgpuDeviceCreateBindGroup(gpu.device, &bg1Desc);
         assert(bg1 != nullptr);
@@ -553,6 +580,8 @@ int main() {
         wgpuBufferRelease(inBuf);
         wgpuBufferRelease(paramBuf);
         wgpuBufferRelease(instBuf);
+        wgpuBufferRelease(dummyHeightBuf);
+        wgpuBufferRelease(dummyRangeBuf);
         wgpuBufferRelease(outBuf);
         wgpuBufferRelease(rbdBuf);
         wgpuBindGroupRelease(bg0);
