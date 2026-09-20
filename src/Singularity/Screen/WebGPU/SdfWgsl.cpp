@@ -1125,6 +1125,12 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             }
 
             let node = rangeNodes[idx];
+            // The chosen node must actually own the current point. Floating
+            // slab arithmetic at a shared face may disagree by an ulp; that is
+            // not permission to skip the gap. Fail open to exact marching.
+            if (any(p < node.boxMin.xyz) || any(p > node.boxMax.xyz)) {
+                return vec3<f32>(t, tMax, 1.0);
+            }
             let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
 
             if (node.meta.z != 0u) {
@@ -1141,16 +1147,24 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 
             if (node.meta.y == 0u) {
                 // Ambiguous or unknown terminal cell: exact authored evaluation
-                // owns this interval.
-                let candidateExit = min(max(cell.y, t), tMax);
+                // owns this interval. A grazing/shared-face interval with no
+                // forward extent disables further skipping for this ray rather
+                // than spinning at the same boundary.
+                if (cell.y <= t) {
+                    return vec3<f32>(t, tMax, 1.0);
+                }
+                let candidateExit = min(cell.y, tMax);
                 return vec3<f32>(t, candidateExit, 1.0);
             }
 
             let mid = 0.5 * (node.boxMin.xyz + node.boxMax.xyz);
             var child = 0u;
-            if (p.x >= mid.x) { child = child | 1u; }
-            if (p.y >= mid.y) { child = child | 2u; }
-            if (p.z >= mid.z) { child = child | 4u; }
+            // At an exact split plane, ownership follows the ray direction.
+            // Without this tie-break a negative-going ray reselects the octant
+            // it just exited and loses acceleration at every boundary.
+            if (p.x > mid.x || (p.x == mid.x && rd.x >= 0.0)) { child = child | 1u; }
+            if (p.y > mid.y || (p.y == mid.y && rd.y >= 0.0)) { child = child | 2u; }
+            if (p.z > mid.z || (p.z == mid.z && rd.z >= 0.0)) { child = child | 4u; }
             idx = node.meta.x + child;
         }
 
@@ -1320,6 +1334,9 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             candidate_step = max(d, current_eps);
+            if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
+                candidate_step = min(candidate_step, max(rangeCellExit - t, current_eps));
+            }
             prev_d = d;
             t = t + candidate_step;
         } else {
@@ -1344,6 +1361,9 @@ fn fs(in: VSOut) -> FSOut {
 
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
+            if (inst.rangeTraversalEnabled != 0u && rangeCandidateActive) {
+                candidate_step = min(candidate_step, max(rangeCellExit - t, current_eps));
+            }
             t = t + candidate_step;
         }
         
