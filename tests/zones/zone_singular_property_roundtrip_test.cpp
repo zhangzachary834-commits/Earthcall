@@ -146,10 +146,14 @@ int main() {
               "nested PropertyDict survived identity-store hydration");
         if (std::holds_alternative<std::shared_ptr<PropertyDict>>(value)) {
             auto dict = std::get<std::shared_ptr<PropertyDict>>(value);
-            auto buddy = dict ? dict->elements.find("buddy") : dict->elements.end();
-            check(dict && buddy != dict->elements.end() &&
-                      std::holds_alternative<Object*>(buddy->second) &&
-                      std::get<Object*>(buddy->second) == bootedB,
+            bool nestedBound = false;
+            if (dict) {
+                auto buddy = dict->elements.find("buddy");
+                nestedBound = buddy != dict->elements.end() &&
+                    std::holds_alternative<Object*>(buddy->second) &&
+                    std::get<Object*>(buddy->second) == bootedB;
+            }
+            check(nestedBound,
                   "nested Object* property rebound to fresh hydrated object.b");
         }
 
