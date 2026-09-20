@@ -58,6 +58,7 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
                                  double uBytes, int suballocs, int pipeSwitches,
                                  int cachedMeshes, int sdfCompiles,
                                  int sdfCacheHits, int sdfCacheMisses,
+                                 int sdfRefusals, std::string sdfLastRefusal,
                                  double sdfWgslBytes, double sdfParamBytes,
                                  int rangeBuilds, int rangeProxyDraws,
                                  int rangeProxyCulledDraws) {
@@ -71,6 +72,8 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
     sdfProgramCompiles = sdfCompiles;
     sdfProgramCacheHits = sdfCacheHits;
     sdfProgramCacheMisses = sdfCacheMisses;
+    sdfProgramRefusals = sdfRefusals;
+    sdfLastProgramRefusal = std::move(sdfLastRefusal);
     sdfWgslBytesGenerated = sdfWgslBytes;
     sdfParameterBytesUploaded = sdfParamBytes;
     sdfRangeHierarchyBuilds = rangeBuilds;
@@ -92,6 +95,10 @@ void ScreenChannel::buildProperties() {
     const auto readOnlyDouble = [this](const char* name, double (ScreenChannel::*getter)() const) {
         registerProperty(
             std::make_unique<ComputedProperty<ScreenChannel, double>>(name, this, getter));
+    };
+    const auto readOnlyString = [this](const char* name, std::string (ScreenChannel::*getter)() const) {
+        registerProperty(
+            std::make_unique<ComputedProperty<ScreenChannel, std::string>>(name, this, getter));
     };
     const auto boolean = [this](const char* name, bool ScreenChannel::*member) {
         registerProperty(
@@ -116,6 +123,8 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("sdfProgramCompiles", &ScreenChannel::getSdfProgramCompiles);
     readOnlyInt("sdfProgramCacheHits", &ScreenChannel::getSdfProgramCacheHits);
     readOnlyInt("sdfProgramCacheMisses", &ScreenChannel::getSdfProgramCacheMisses);
+    readOnlyInt("sdfProgramRefusals", &ScreenChannel::getSdfProgramRefusals);
+    readOnlyString("sdfLastProgramRefusal", &ScreenChannel::getSdfLastProgramRefusal);
     readOnlyDouble("sdfWgslBytesGenerated", &ScreenChannel::getSdfWgslBytesGenerated);
     readOnlyDouble("sdfParameterBytesUploaded", &ScreenChannel::getSdfParameterBytesUploaded);
     readOnlyInt("sdfRangeHierarchyBuilds", &ScreenChannel::getSdfRangeHierarchyBuilds);
