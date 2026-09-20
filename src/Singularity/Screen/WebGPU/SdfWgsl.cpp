@@ -1107,10 +1107,11 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     let end = begin + inst.rangeNodeCount;
     var t = tStart;
 
-    // A depth-5 octree can cross at most a few dozen leaf boundaries along a
-    // straight ray. If the guard is ever exhausted, the remaining interval is
-    // handed to exact marching rather than treated as empty.
-    for (var skipGuard = 0; skipGuard < 64; skipGuard = skipGuard + 1) {
+    // A depth-5 octree has 32 cells per axis. A straight ray through a
+    // regular 32^3 subdivision can visit at most (31+31+31)+1 = 94 cells, so
+    // 96 covers the configured hierarchy completely. If a future deeper tree
+    // exceeds this bounded guard, the remainder fails open to exact marching.
+    for (var skipGuard = 0; skipGuard < 96; skipGuard = skipGuard + 1) {
         if (t >= tMax) { return vec3<f32>(tMax, tMax, 0.0); }
 
         let p = ro + rd * t;
