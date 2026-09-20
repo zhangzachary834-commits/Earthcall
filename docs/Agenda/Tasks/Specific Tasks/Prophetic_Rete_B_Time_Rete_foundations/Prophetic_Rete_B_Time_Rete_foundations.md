@@ -46,3 +46,20 @@ cannot enumerate" without erasing every known relation in the register.
 The next prerequisite for general cross-Law widening is path-granular unknown influence: First
 Mover/property provenance must establish what an opaque source can touch before any solver may use
 the absence of an unknown edge as evidence.
+
+
+## 2026-09-19 — path-granular unknown-domain representation
+
+Continuation from the unknown-variable frontier handoff. `UnknownWriteSource` now separates
+positive domain knowledge (`knownMayWritePaths`) from proof that the domain is exhaustive
+(`domainComplete`). An incomplete domain remains wildcard for negative reasoning even when it
+already names some paths; a complete domain may prove disjoint properties unreachable by that
+source. `unknownWriteMayReach(path)` and `unknownWriteDomainCompleteFor(path)` make this
+distinction queryable and the JSON report exposes it.
+
+This does **not** hardcode per-channel capability lists. Current C++ First Movers remain
+domain-incomplete because Earthcall does not yet have a truthful ontology-native source proving
+their full in-world actuation footprint. The next rung is to ground these domains in
+First-Mover/property capability provenance and declare its invalidation revision in the Derived
+State Ledger; only then should the SCC-based cross-Law widening solver consume absence of unknown
+influence as authority.
