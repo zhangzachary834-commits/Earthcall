@@ -222,7 +222,6 @@ private:
         uint64_t radianceRevision = 0xffffffffffffffffULL;
         uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
-        const OntoMath::Piecewise* radianceExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
         // Derived solely from SDF tree structure. Compute it when this memo is
