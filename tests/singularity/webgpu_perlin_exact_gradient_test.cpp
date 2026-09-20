@@ -780,17 +780,22 @@ int main() {
             // it matters: it may not add or remove a surface hit.
             size_t rgbaDiffBytes = 0;
             size_t coverageDiffPixels = 0;
-            for (size_t p = 0; p < rowStride * H; p += 4) {
-                for (size_t cidx = 0; cidx < 4; ++cidx) {
-                    if (baseline[p + cidx] != accelerated[p + cidx]) {
-                        ++rgbaDiffBytes;
+            for (uint32_t py = 0; py < H; ++py) {
+                for (uint32_t pxIdx = 0; pxIdx < W; ++pxIdx) {
+                    const size_t p =
+                        static_cast<size_t>(py) * rowStride +
+                        static_cast<size_t>(pxIdx) * 4;
+                    for (size_t cidx = 0; cidx < 4; ++cidx) {
+                        if (baseline[p + cidx] != accelerated[p + cidx]) {
+                            ++rgbaDiffBytes;
+                        }
                     }
+                    const bool offHit =
+                        !isBackground(baseline[p], baseline[p+1], baseline[p+2]);
+                    const bool onHit =
+                        !isBackground(accelerated[p], accelerated[p+1], accelerated[p+2]);
+                    if (offHit != onHit) ++coverageDiffPixels;
                 }
-                const bool offHit =
-                    !isBackground(baseline[p], baseline[p+1], baseline[p+2]);
-                const bool onHit =
-                    !isBackground(accelerated[p], accelerated[p+1], accelerated[p+2]);
-                if (offHit != onHit) ++coverageDiffPixels;
             }
             assert(coverageDiffPixels == 0);
             if (onStats.sdfRangeTraversalDraws > 0) ++traversalActiveCases;
@@ -798,8 +803,13 @@ int main() {
             const auto* px = baseline.data();
 
             size_t terrainHits = 0;
-            for (size_t p = 0; p < rowStride * H; p += 4) {
-                if (!isBackground(px[p], px[p+1], px[p+2])) terrainHits++;
+            for (uint32_t py = 0; py < H; ++py) {
+                for (uint32_t pxIdx = 0; pxIdx < W; ++pxIdx) {
+                    const size_t p =
+                        static_cast<size_t>(py) * rowStride +
+                        static_cast<size_t>(pxIdx) * 4;
+                    if (!isBackground(px[p], px[p+1], px[p+2])) ++terrainHits;
+                }
             }
 
             // Bidirectional verification of exact pixel centers against reference exactGenericRaycast
