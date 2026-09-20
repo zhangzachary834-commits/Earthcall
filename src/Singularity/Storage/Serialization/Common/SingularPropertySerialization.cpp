@@ -109,6 +109,10 @@ void writeSingularProperties(
         if (!property || !property->isSemanticallyWritable()) continue;
         if (being.hasDynamicProperty(property->nameId())) continue;
         if (includeRegistered && !includeRegistered(property->name())) continue;
+        // If the concrete root already wrote a top-level field with this exact
+        // semantic name, that field is canonical. The envelope is a fallback,
+        // never a second authority.
+        if (j.contains(property->name())) continue;
 
         PropertyValue value = property->value();
         if (std::holds_alternative<std::monostate>(value)) continue;
@@ -120,6 +124,7 @@ void writeSingularProperties(
     for (const auto& [id, raw] : being.pendingRegisteredPropertyJson()) {
         const std::string name = propertyName(id);
         if (includeRegistered && !includeRegistered(name)) continue;
+        if (j.contains(name)) continue;
         registered[name] = raw;
     }
     if (!registered.empty()) j["registeredProperties"] = std::move(registered);
@@ -141,6 +146,9 @@ bool readSingularProperties(
         for (auto it = j["registeredProperties"].begin();
              it != j["registeredProperties"].end(); ++it) {
             if (includeRegistered && !includeRegistered(it.key())) continue;
+            // Concrete root fields are authoritative over an old/stale
+            // fallback copy carrying the same semantic name.
+            if (j.contains(it.key())) continue;
             if (!applyRegistered(it.key(), it.value(), being, resolve)) {
                 complete = false;
             }
