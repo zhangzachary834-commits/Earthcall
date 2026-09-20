@@ -60,6 +60,7 @@ public:
     PropertyValue value() const override {
         return PropertyValue(_owner->getShapeParams().*_member);
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         double n = 0.0;
         if (!propertyValueToNumber(v, n)) return false;
@@ -89,6 +90,7 @@ public:
     PropertyValue value() const override {
         return PropertyValue(static_cast<int>(_owner->getShapeKind()));
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         double n = 0.0;
         if (!propertyValueToNumber(v, n)) return false;
@@ -172,6 +174,8 @@ public:
         }
         return PropertyValue(0.0f);
     }
+
+    bool isSemanticallyWritable() const override { return true; }
 
     bool setValue(const PropertyValue& v) override {
         // The expression arm can CREATE the field; every other arm edits one
@@ -265,6 +269,7 @@ public:
     PropertyValue value() const override {
         return PropertyValue(_owner->getPatchControlLocal(_index));
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         if (!_owner->hasPatch() || _index >= _owner->getPatchControlCount()) return false;
         const glm::vec3* vec = std::get_if<glm::vec3>(&v);
@@ -346,6 +351,7 @@ public:
         }
         return PropertyValue(0.0f);
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
         if (_field == Field::Velocity) {
@@ -448,6 +454,10 @@ public:
                 return PropertyValue(tex ? tex->width : 64);
         }
         return PropertyValue{};
+    }
+
+    bool isSemanticallyWritable() const override {
+        return _field != Field::LayerCount && _field != Field::TextureSize;
     }
 
     bool setValue(const PropertyValue& v) override {
