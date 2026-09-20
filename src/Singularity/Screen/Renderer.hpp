@@ -192,9 +192,7 @@ public:
     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
     // is honoured.
     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
-<<<<<<< HEAD
     virtual void setSpaceDistortion(float /*d*/) {}
-=======
     // True only when this backend can actually consume a supplied HeightGrid in
     // the current build/state. This is substrate capability, distinct from the
     // authored enable bit: a quarantined optimization must not cause callers to
@@ -205,7 +203,6 @@ public:
     // a rendering optimization only: disabling restores the authored extent;
     // enabling may shrink/cull raster proxy coverage only from explicit proofs.
     virtual void setSdfRangeProxyEnabled(bool /*on*/) {}
->>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 

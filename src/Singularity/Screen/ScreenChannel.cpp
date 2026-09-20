@@ -123,11 +123,8 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("sdfRangeProxyCulledDraws", &ScreenChannel::getSdfRangeProxyCulledDraws);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
-<<<<<<< HEAD
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
-=======
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
->>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are
