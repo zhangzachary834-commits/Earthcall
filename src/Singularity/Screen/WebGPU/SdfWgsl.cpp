@@ -1328,6 +1328,27 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr) {
+    Emit e;
+    std::string body;
+
+    // No authored expression is a real structural state: compile() emits the
+    // compatibility return 1.0 path. Give it an explicit identity so switching
+    // between no radiance and authored radiance cannot look like a value edit.
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<legacy-radiance:1.0>", 0, true, ""};
+    }
+
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
