@@ -150,6 +150,13 @@ int main() {
         check(h.ambiguousLeaves > 0, "sphere hierarchy retains surface ambiguity");
         check(h.unknownLeaves == 0, "exact sphere hierarchy needs no unknown leaves");
         check(h.nodes.size() <= 10000, "sphere hierarchy obeys hard node budget");
+        const auto proxy = geom::deriveZeroSetProxy(h, glm::vec3(2.0f));
+        check(proxy.hasPossibleZero, "sphere proxy preserves possible surface");
+        check(proxy.tightened, "sphere proxy tightens the authored cube");
+        check(proxy.halfExtent.x <= 2.0f &&
+              proxy.halfExtent.y <= 2.0f &&
+              proxy.halfExtent.z <= 2.0f,
+              "sphere proxy never expands beyond authored coverage");
         verifyStructure(h);
         verifyProvedCellsBySampling(sphere, h);
     }
@@ -167,10 +174,34 @@ int main() {
         check(h.nodes.size() == 1, "unknown ellipsoid range does not subdivide");
         check(h.unknownLeaves == 1, "unknown ellipsoid is explicit fail-open leaf");
         check(h.provedEmptyNodes == 0, "unknown ellipsoid proves no empty space");
+        const auto proxy = geom::deriveZeroSetProxy(h, glm::vec3(4.0f));
+        check(proxy.hasPossibleZero, "unknown ellipsoid proxy fails open");
+        check(!proxy.tightened, "unknown ellipsoid retains full authored proxy");
+        check(proxy.halfExtent == glm::vec3(4.0f),
+              "unknown ellipsoid proxy exactly preserves authored extent");
         verifyStructure(h);
     }
 
-    // The current Perlin interval is global rather than spatially tight, but the
+    // A constant-positive field has a complete finite theorem excluding zero
+    // over the root itself. The proxy may cull only this strongest case: no
+    // ambiguous or unknown terminal region remains.
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(5.0));
+        const geom::SdfNode empty = geom::makeImplicit(constant);
+        const auto h = geom::buildRangeHierarchy(
+            empty, glm::vec3(3.0f), /*maxDepth=*/5, /*maxNodes=*/1000);
+        const auto proxy = geom::deriveZeroSetProxy(h, glm::vec3(3.0f));
+
+        check(h.nodes.size() == 1, "constant-positive field proves empty at root");
+        check(h.nodes[0].provedNoZero, "constant-positive root excludes zero");
+        check(!proxy.hasPossibleZero, "fully proved zero-free hierarchy culls proxy");
+    }
+
+    // Perlin now has a proved global amplitude enclosure plus a local Lipschitz
+    // tightening rule. The y term lets the hierarchy prove outer vertical slabs
+    // while unresolved cells around the zero set remain explicit.
     // y term still lets the hierarchy prove slabs beyond the maximum possible
     // noise amplitude. This is useful scaffold evidence without pretending it
     // solves horizon x/z ambiguity yet.
