@@ -3051,7 +3051,7 @@ pebble_bed_south  = sdf_leaf(3, [5.2, 0.20, 5.0], offset=[4.2, -0.12, -2.5])
 pebble_bed_tree = sdf_binary(5, pebble_bed_center, sdf_binary(5, pebble_bed_north, pebble_bed_south, 0.4), 0.45)
 objects.append(make_field(
     "cathedral.pond.pebble_bed", "Submerged Jasper & Obsidian Riverbed Shoal",
-    [0.0, 0.05, 50.0], pebble_bed_tree, [11.0, 0.8, 11.0],
+    [0.0, -0.05, 50.0], pebble_bed_tree, [11.0, 0.8, 11.0],
     "material.logos.pond.pebbles", [0.40, 0.38, 0.35],
     extra_props={
         "isPondBed": {"t": "bool", "v": True},
@@ -3065,7 +3065,7 @@ abyss_funnel = sdf_leaf(3, [1.8, 0.80, 1.8], offset=[0.0, -0.55, 0.0])
 abyss_tree = sdf_binary(5, abyss_pool, abyss_funnel, 0.25)
 objects.append(make_field(
     "cathedral.pond.abyss", "Abyssal Well-Spring of Living Water (Deep Heart)",
-    [0.0, -0.05, 52.0], abyss_tree, [4.2, 1.4, 4.2],
+    [0.0, -0.15, 52.0], abyss_tree, [4.2, 1.4, 4.2],
     "material.logos.pond.water_abyss", [0.05, 0.25, 0.85],
     extra_props={
         "isAbyssalWell": {"t": "bool", "v": True},
@@ -3086,7 +3086,7 @@ pond_water_tree = sdf_binary(5, pond_lobes_1, sdf_binary(5, pond_lobe_west, pond
 
 objects.append(make_field(
     "cathedral.pond.water_basin", "Sacred Edenic Lagoon of Living Water",
-    [0.0, 0.15, 50.0], pond_water_tree, [11.0, 1.2, 11.0],
+    [0.0, -0.19, 50.0], pond_water_tree, [11.0, 1.2, 11.0],
     "material.logos.pond.water", [0.15, 0.85, 0.95],
     extra_props={
         "isSacredPond": {"t": "bool", "v": True},
@@ -3104,19 +3104,19 @@ def make_bubble_upwelling_tree(r=0.45, h=0.18):
 
 objects.append(make_field(
     "cathedral.pond.spring_bubble.1", "Bubbling Spring Upwelling (North Effervescence)",
-    [-1.5, 0.24, 53.2], make_bubble_upwelling_tree(0.55, 0.22), [1.2, 0.5, 1.2],
+    [-1.5, 0.18, 53.2], make_bubble_upwelling_tree(0.55, 0.22), [1.2, 0.5, 1.2],
     "material.logos.pond.water", [0.35, 0.95, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 2.5}}
 ))
 objects.append(make_field(
     "cathedral.pond.spring_bubble.2", "Bubbling Spring Upwelling (South Geyser Fountain)",
-    [1.8, 0.24, 51.5], make_bubble_upwelling_tree(0.50, 0.20), [1.1, 0.5, 1.1],
+    [1.8, 0.18, 51.5], make_bubble_upwelling_tree(0.50, 0.20), [1.1, 0.5, 1.1],
     "material.logos.pond.water", [0.35, 0.95, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 2.4}}
 ))
 objects.append(make_field(
     "cathedral.pond.spring_bubble.3", "Bubbling Spring Upwelling (Grotto Plume Well)",
-    [0.0, 0.26, 55.2], make_bubble_upwelling_tree(0.65, 0.26), [1.3, 0.6, 1.3],
+    [0.0, 0.18, 55.2], make_bubble_upwelling_tree(0.65, 0.26), [1.3, 0.6, 1.3],
     "material.logos.pond.water", [0.40, 0.98, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 3.0}}
 ))
@@ -3162,7 +3162,7 @@ def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
 grand_lotus_tree = make_lotus_flower_tree(1.4, 1.2)
 objects.append(make_field(
     "cathedral.pond.lotus.grand", "Grand Celestial Lotus of Dawn",
-    [-2.5, 0.38, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
+    [-2.5, 0.20, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
     "material.logos.pond.lotus.dawn", [1.0, 0.45, 0.75],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3175,7 +3175,7 @@ objects.append(make_field(
 white_lotus_tree = make_lotus_flower_tree(1.2, 1.0)
 objects.append(make_field(
     "cathedral.pond.lotus.white", "Sacred Alabaster Lotus of Sophia",
-    [3.0, 0.36, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
+    [3.0, 0.20, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3188,7 +3188,7 @@ objects.append(make_field(
 cyan_lotus_tree = make_lotus_flower_tree(1.25, 1.05)
 objects.append(make_field(
     "cathedral.pond.lotus.cyan", "Nocturnal Cyan Star Lotus of Sophia",
-    [2.2, 0.38, 46.5], cyan_lotus_tree, [1.7, 1.1, 1.7],
+    [2.2, 0.20, 46.5], cyan_lotus_tree, [1.7, 1.1, 1.7],
     "material.logos.pond.lotus.cyan", [0.15, 0.90, 0.98],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3201,13 +3201,13 @@ objects.append(make_field(
 bud_n = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.north", "Northern Water Lily Bud",
-    [-4.2, 0.36, 52.5], bud_n, [0.9, 1.0, 0.9],
+    [-4.2, 0.21, 52.5], bud_n, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.dawn", [0.95, 0.45, 0.70]
 ))
 bud_s = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.south", "Southern Water Lily Bud",
-    [2.2, 0.36, 45.5], bud_s, [0.9, 1.0, 0.9],
+    [2.2, 0.21, 45.5], bud_s, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90]
 ))
 
@@ -3242,7 +3242,7 @@ def make_water_iris_colony_tree():
 iris_tree = make_water_iris_colony_tree()
 objects.append(make_field(
     "cathedral.pond.iris.north", "Northern Blue Flag Sacred Water Iris Colony",
-    [-4.0, 0.28, 46.2], iris_tree, [1.4, 2.0, 1.4],
+    [-4.0, 0.18, 46.2], iris_tree, [1.4, 2.0, 1.4],
     "material.logos.pond.iris", [0.45, 0.20, 0.85],
     extra_props={
         "isFlora": {"t": "bool", "v": True},
@@ -3252,7 +3252,7 @@ objects.append(make_field(
 ))
 objects.append(make_field(
     "cathedral.pond.iris.south", "Southern Blue Flag Sacred Water Iris Colony",
-    [4.5, 0.28, 53.8], iris_tree, [1.4, 2.0, 1.4],
+    [4.5, 0.18, 53.8], iris_tree, [1.4, 2.0, 1.4],
     "material.logos.pond.iris", [0.45, 0.20, 0.85],
     extra_props={
         "isFlora": {"t": "bool", "v": True},
@@ -3321,7 +3321,7 @@ def make_lilypad_cluster(pads):
 lilypads_c1 = make_lilypad_cluster([(-0.6, -0.6, 0.85), (0.7, -0.5, 0.75), (0.1, 0.8, 0.70)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.1", "Emerald Lily Pad Formation (Grand Lotus Fleet)",
-    [-2.5, 0.22, 48.0], lilypads_c1, [2.2, 0.25, 2.2],
+    [-2.5, 0.23, 48.0], lilypads_c1, [2.2, 0.40, 2.2],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3329,7 +3329,7 @@ objects.append(make_field(
 lilypads_c2 = make_lilypad_cluster([(-0.5, 0.0, 0.80), (0.6, 0.4, 0.70), (0.2, -0.7, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.2", "Emerald Lily Pad Formation (North Sanctuary)",
-    [-4.5, 0.22, 51.0], lilypads_c2, [2.0, 0.25, 2.0],
+    [-4.5, 0.23, 51.0], lilypads_c2, [2.0, 0.40, 2.0],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3337,7 +3337,7 @@ objects.append(make_field(
 lilypads_c3 = make_lilypad_cluster([(0.0, 0.0, 0.90), (-0.7, 0.6, 0.75), (0.8, -0.5, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.3", "Emerald Lily Pad Formation (South Sanctuary)",
-    [3.5, 0.22, 47.0], lilypads_c3, [2.2, 0.25, 2.2],
+    [3.5, 0.23, 47.0], lilypads_c3, [2.2, 0.40, 2.2],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3345,7 +3345,7 @@ objects.append(make_field(
 lilypads_c4 = make_lilypad_cluster([(-0.4, 0.3, 0.75), (0.5, -0.4, 0.80)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.4", "Emerald Lily Pad Formation (Spring Inlet)",
-    [0.5, 0.22, 44.5], lilypads_c4, [1.8, 0.25, 1.8],
+    [0.5, 0.23, 44.5], lilypads_c4, [1.8, 0.40, 1.8],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3365,17 +3365,17 @@ def make_duckweed_cluster():
 duckweed_tree = make_duckweed_cluster()
 objects.append(make_field(
     "cathedral.pond.duckweed.1", "Floating Water-Clover Rosettes (North Inlet)",
-    [-1.2, 0.23, 47.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [-1.2, 0.235, 47.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 objects.append(make_field(
     "cathedral.pond.duckweed.2", "Floating Water-Clover Rosettes (South Bay)",
-    [2.8, 0.23, 49.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [2.8, 0.235, 49.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 objects.append(make_field(
     "cathedral.pond.duckweed.3", "Floating Water-Clover Rosettes (Willow Cove)",
-    [-3.2, 0.23, 53.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [-3.2, 0.235, 53.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 
@@ -3409,7 +3409,7 @@ koi_swimming_3 = make_koi_fish_tree(0.65, 0.16, 0.14, 0.08)
 # Koi 1: Grand 24k Golden Kohaku (Near Grand Dawn Lotus)
 objects.append(make_field(
     "cathedral.pond.koi.1", "Grand 24k Golden Kohaku Koi (Celestial Emperor)",
-    [-1.6, 0.10, 49.2], koi_swimming_1, [0.9, 0.5, 1.2],
+    [-1.6, 0.15, 49.2], koi_swimming_1, [1.0, 0.60, 1.2],
     "material.logos.pond.koi", [1.0, 0.75, 0.15],
     rot_deg=[0.0, -35.0, 0.0],
     extra_props={
@@ -3422,7 +3422,7 @@ objects.append(make_field(
 # Koi 2: Scarlet & Pearl Tancho Koi (Near Alabaster Lotus)
 objects.append(make_field(
     "cathedral.pond.koi.2", "Scarlet & Pearl Tancho Koi (Sun-Crown)",
-    [1.8, 0.09, 50.8], koi_swimming_2, [0.8, 0.45, 1.0],
+    [1.8, 0.14, 50.8], koi_swimming_2, [1.0, 0.60, 1.1],
     "material.logos.pond.koi", [0.95, 0.85, 0.65],
     rot_deg=[0.0, 45.0, 0.0],
     extra_props={
@@ -3435,7 +3435,7 @@ objects.append(make_field(
 # Koi 3: Celestial Cyan Shusui Koi (Circling the Abyssal Spring Heart)
 objects.append(make_field(
     "cathedral.pond.koi.3", "Celestial Cyan Shusui Koi (Abyssal Guardian)",
-    [0.2, 0.06, 52.6], koi_swimming_3, [0.85, 0.48, 1.1],
+    [0.2, 0.12, 52.6], koi_swimming_3, [1.0, 0.60, 1.2],
     "material.logos.pond.koi", [0.45, 0.85, 0.95],
     rot_deg=[0.0, 110.0, 0.0],
     extra_props={
@@ -3448,7 +3448,7 @@ objects.append(make_field(
 # Koi 4: Young Golden Fry (Near Stepping Stones)
 objects.append(make_field(
     "cathedral.pond.koi.4", "Young Golden Fry Koi (Playful Dart)",
-    [-0.8, 0.12, 46.8], make_koi_fish_tree(0.42, 0.10, 0.09, -0.10), [0.6, 0.35, 0.7],
+    [-0.8, 0.14, 46.8], make_koi_fish_tree(0.42, 0.10, 0.09, -0.10), [0.8, 0.50, 0.8],
     "material.logos.pond.koi", [1.0, 0.80, 0.20],
     rot_deg=[0.0, -65.0, 0.0],
     extra_props={"isFauna": {"t": "bool", "v": True}}
@@ -3457,7 +3457,7 @@ objects.append(make_field(
 # Koi 5: Twin Golden Fry (Near Spring Cascade Inlet)
 objects.append(make_field(
     "cathedral.pond.koi.5", "Twin Golden Fry Koi (Spring Explorer)",
-    [1.0, 0.10, 53.5], make_koi_fish_tree(0.45, 0.11, 0.10, 0.12), [0.6, 0.35, 0.7],
+    [1.0, 0.14, 53.5], make_koi_fish_tree(0.45, 0.11, 0.10, 0.12), [0.8, 0.50, 0.8],
     "material.logos.pond.koi", [1.0, 0.80, 0.20],
     rot_deg=[0.0, 20.0, 0.0],
     extra_props={"isFauna": {"t": "bool", "v": True}}
@@ -3478,13 +3478,13 @@ def make_dragonfly_tree():
 
 objects.append(make_field(
     "cathedral.pond.dragonfly.1", "Gossamer Emerald Dragonfly (Spirit of Spring Air)",
-    [-4.2, 0.72, 52.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    [-4.2, 0.65, 52.5], make_dragonfly_tree(), [0.8, 0.50, 0.8],
     "material.logos.pond.reeds", [0.35, 0.95, 0.45],
     extra_props={"light.intensity": {"t": "float", "v": 1.4}}
 ))
 objects.append(make_field(
     "cathedral.pond.dragonfly.2", "Gossamer Celestial Dragonfly (Lotus Guardian)",
-    [-2.2, 0.75, 47.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    [-2.2, 0.65, 47.5], make_dragonfly_tree(), [0.8, 0.50, 0.8],
     "material.logos.pond.reeds", [0.25, 0.85, 0.95],
     extra_props={"light.intensity": {"t": "float", "v": 1.4}}
 ))
@@ -3521,10 +3521,10 @@ for wid, wpos, wname, wcol, wlight in wisp_data:
 
 # A. Natural Mossy Stepping Stones (Curving path connecting North & South shores)
 stepping_stone_coords = [
-    ("1", [-1.8, 0.30, 45.5], [0.65, 0.16, 0.65]),
-    ("2", [-0.4, 0.32, 47.8], [0.72, 0.18, 0.70]),
-    ("3", [0.8, 0.31, 50.2],  [0.68, 0.17, 0.68]),
-    ("4", [2.2, 0.28, 52.8],  [0.75, 0.16, 0.72])
+    ("1", [-1.8, 0.28, 45.5], [0.65, 0.18, 0.65]),
+    ("2", [-0.4, 0.28, 47.8], [0.72, 0.18, 0.70]),
+    ("3", [0.8, 0.28, 50.2],  [0.68, 0.18, 0.68]),
+    ("4", [2.2, 0.28, 52.8],  [0.75, 0.18, 0.72])
 ]
 for sid, spos, sdims in stepping_stone_coords:
     stone_core = sdf_leaf(2, [sdims[0], sdims[1], sdims[2]], p0=0.10)
@@ -3532,7 +3532,7 @@ for sid, spos, sdims in stepping_stone_coords:
     stone_tree = sdf_binary(5, stone_core, stone_cap, 0.12)
     objects.append(make_field(
         f"cathedral.pond.stepping_stone.{sid}", f"Mossy River Stepping Stone {sid}",
-        spos, stone_tree, [sdims[0] * 1.5, sdims[1] * 1.8, sdims[2] * 1.5],
+        spos, stone_tree, [sdims[0] * 1.5, 0.50, sdims[2] * 1.5],
         "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
     ))
 
