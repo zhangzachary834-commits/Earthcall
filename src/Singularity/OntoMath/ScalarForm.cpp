@@ -2028,7 +2028,10 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             }
 
             const float slack = kClassicPerlin3LipschitzBound * radius;
-            const Interval local(centreValue - slack, centreValue + slack);
+            const Interval local = Interval::outward(centreValue - slack,
+                                                     centreValue + slack);
+            // Intersection of two already-conservative intervals needs no new
+            // arithmetic; choosing the tighter endpoints preserves enclosure.
             return RangeValue::makeScalar(
                 Interval(std::max(global.lo, local.lo),
                          std::min(global.hi, local.hi)));
