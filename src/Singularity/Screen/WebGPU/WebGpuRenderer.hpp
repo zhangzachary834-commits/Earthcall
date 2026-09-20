@@ -95,14 +95,11 @@ public:
     // template as setWireframe -- disabled, every heightfield object simply
     // renders through the unmodified marcher, exactly as before this phase.
     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
-<<<<<<< HEAD
     void setSpaceDistortion(float d) override { _spaceDistortion = d; }
-=======
     bool usesHeightGridDda() const override {
         return kHeightGridDdaTraversalVerified && _heightGridDdaEnabled;
     }
     void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
->>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -258,9 +255,7 @@ private:
     // (Phase C). Defaults true so the optimization is live out of the box;
     // a Person can author @screen-channel.heightGridDdaEnabled = false.
     bool _heightGridDdaEnabled = true;
-<<<<<<< HEAD
     float _spaceDistortion = 0.0f;
-=======
     // Native Metal sweep still has an unresolved grazing-root hand-off mismatch.
     // Keep the verification latch next to the capability query so callers can
     // avoid building a grid that this build is forbidden to consume.
@@ -271,7 +266,6 @@ private:
     bool _sdfRangeProxyEnabled = false;
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
     static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
->>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
