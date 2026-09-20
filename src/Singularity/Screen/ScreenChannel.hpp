@@ -49,6 +49,8 @@ public:
                        double uniformBytes, int suballocations, int pipelineSwitches,
                        int cachedMeshes, int sdfProgramCompiles = 0,
                        int sdfProgramCacheHits = 0, int sdfProgramCacheMisses = 0,
+                       int sdfProgramRefusals = 0,
+                       std::string sdfLastProgramRefusal = {},
                        double sdfWgslBytesGenerated = 0.0,
                        double sdfParameterBytesUploaded = 0.0,
                        int sdfRangeHierarchyBuilds = 0,
@@ -65,6 +67,8 @@ public:
     int       sdfProgramCompiles = 0;
     int       sdfProgramCacheHits = 0;
     int       sdfProgramCacheMisses = 0;
+    int       sdfProgramRefusals = 0;
+    std::string sdfLastProgramRefusal;
     double    sdfWgslBytesGenerated = 0.0;
     double    sdfParameterBytesUploaded = 0.0;
     int       sdfRangeHierarchyBuilds = 0;
@@ -131,6 +135,8 @@ private:
     int    getSdfProgramCompiles() const { return sdfProgramCompiles; }
     int    getSdfProgramCacheHits() const { return sdfProgramCacheHits; }
     int    getSdfProgramCacheMisses() const { return sdfProgramCacheMisses; }
+    int    getSdfProgramRefusals() const { return sdfProgramRefusals; }
+    std::string getSdfLastProgramRefusal() const { return sdfLastProgramRefusal; }
     double getSdfWgslBytesGenerated() const { return sdfWgslBytesGenerated; }
     double getSdfParameterBytesUploaded() const { return sdfParameterBytesUploaded; }
     int    getSdfRangeHierarchyBuilds() const { return sdfRangeHierarchyBuilds; }
