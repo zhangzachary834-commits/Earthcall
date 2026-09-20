@@ -1022,6 +1022,7 @@ void Index::clear() {
     _writeRanges.clear();
     _unreachable.clear();
     _relevanceEdges.clear();
+    _unknownWriteSources.clear();
     _complete = true;
     _relevanceComplete = true;
 }
@@ -1041,6 +1042,16 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
         if (facts.opaqueWrites) {
             anyOpaqueWrite = true;
             _relevanceComplete = false;
+
+            std::string why = "opaque write: transform not structurally enumerable";
+            for (const auto& note : facts.notes) {
+                if (note.rfind("opaque write:", 0) == 0) {
+                    why = note;
+                    break;
+                }
+            }
+            _unknownWriteSources.push_back(
+                UnknownWriteSource{facts.lawId, why, !facts.writes.empty()});
         }
         _readNames.insert(facts.readNames.begin(), facts.readNames.end());
         _readRoots.insert(facts.readRoots.begin(), facts.readRoots.end());
@@ -1061,30 +1072,31 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     }
 
     // Pairwise Prophetic relevance graph. This is the modern descendant of
-    // the old "ActionNode -> Beta back-pointer" idea: prove which authored
-    // write branches can possibly feed which authored read branches, but do
-    // NOT yet reify the result into a Person's world or use it to narrow the
-    // hot path. Opacity invalidates the graph globally; callers then fall back
-    // to a lower complete Formation-Rete tier.
+    // the old "ActionNode -> Beta back-pointer" idea: prove which modeled
+    // write branches can possibly feed which modeled read branches.
+    //
+    // IMPORTANT: opacity no longer ERases known edges. It creates an explicit
+    // unknown frontier and leaves relevanceComplete() false. That distinction
+    // is the §20/§21 unknown-variable model: "these edges are genuinely known"
+    // and "there may also be other edges we cannot enumerate" can both be true.
+    // Runtime consumers still must fall back unless the graph is complete.
     _relevanceComplete = _complete && !anyOpaqueWrite;
-    if (_relevanceComplete) {
-        std::set<std::tuple<std::string, std::string, std::string, std::string,
-                            std::string, bool>> seen;
-        for (const auto& writerFacts : _facts) {
-            for (const auto& write : writerFacts.writes) {
-                for (const auto& readerFacts : _facts) {
-                    for (const auto& read : readerFacts.branchReads) {
-                        if (!pathsMayAlias(write.path, read.path)) continue;
-                        if (!write.range.mayIntersect(read.satisfying)) continue;
-                        const auto key = std::make_tuple(
-                            write.lawId, write.branchId, read.lawId, read.branchId,
-                            read.path, read.aboutInstances);
-                        if (!seen.insert(key).second) continue;
-                        _relevanceEdges.push_back(RelevanceEdge{
-                            write.lawId, write.branchId,
-                            read.lawId, read.branchId,
-                            read.path, read.aboutInstances});
-                    }
+    std::set<std::tuple<std::string, std::string, std::string, std::string,
+                        std::string, bool>> seen;
+    for (const auto& writerFacts : _facts) {
+        for (const auto& write : writerFacts.writes) {
+            for (const auto& readerFacts : _facts) {
+                for (const auto& read : readerFacts.branchReads) {
+                    if (!pathsMayAlias(write.path, read.path)) continue;
+                    if (!write.range.mayIntersect(read.satisfying)) continue;
+                    const auto key = std::make_tuple(
+                        write.lawId, write.branchId, read.lawId, read.branchId,
+                        read.path, read.aboutInstances);
+                    if (!seen.insert(key).second) continue;
+                    _relevanceEdges.push_back(RelevanceEdge{
+                        write.lawId, write.branchId,
+                        read.lawId, read.branchId,
+                        read.path, read.aboutInstances});
                 }
             }
         }
@@ -1190,6 +1202,14 @@ nlohmann::json Index::toJson() const {
         }
         lj["notes"] = facts.notes;
         j["laws"].push_back(std::move(lj));
+    }
+
+    j["unknownWriteSources"] = nlohmann::json::array();
+    for (const auto& source : _unknownWriteSources) {
+        j["unknownWriteSources"].push_back({
+            {"lawId", source.lawId},
+            {"why", source.why},
+            {"hasModeledWrites", source.hasModeledWrites}});
     }
 
     j["relevanceEdges"] = nlohmann::json::array();
