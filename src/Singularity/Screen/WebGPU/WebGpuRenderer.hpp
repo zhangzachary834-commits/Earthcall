@@ -15,6 +15,7 @@
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
 #include <array>
@@ -85,7 +86,8 @@ public:
                       const geom::FieldNode* fieldNode = nullptr,
                       uint64_t memoId = 0,
                       uint32_t memoRevision = 0,
-                      const geom::HeightGrid* heightGrid = nullptr) override;
+                      const geom::HeightGrid* heightGrid = nullptr,
+                      uint32_t memoParameterRevision = 0) override;
 
     // Governs whether drawImplicit's heightGrid argument is actually honoured
     // (rendering-optimization Phase C). Read from @screen-channel.
@@ -93,7 +95,14 @@ public:
     // template as setWireframe -- disabled, every heightfield object simply
     // renders through the unmodified marcher, exactly as before this phase.
     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
+<<<<<<< HEAD
     void setSpaceDistortion(float d) override { _spaceDistortion = d; }
+=======
+    bool usesHeightGridDda() const override {
+        return kHeightGridDdaTraversalVerified && _heightGridDdaEnabled;
+    }
+    void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
+>>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -208,12 +217,38 @@ private:
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
+        uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
+        // Derived solely from SDF tree structure. Compute it when this memo is
+        // compiled rather than re-walking the AST for every draw of a static field.
+        bool isProvenHeightfield = false;
+
+        // Parameter-dependent conservative spatial proof cache. It is derived
+        // substrate only; every unknown region remains represented by the proxy.
+        uint32_t rangeParameterRevision = 0xffffffff;
+        glm::vec3 rangeAuthoredExtent{0.0f};
+        geom::SdfRangeHierarchy rangeHierarchy;
+        geom::SdfZeroSetProxy rangeProxy;
+        bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
+
+    // Pipeline-local parameter storage survives frame boundaries. The frame still
+    // assembles the compact contiguous parameter vector in instance order, but an
+    // unchanged vector is not uploaded again. This is the first persistent-GPU
+    // rung; later work can eliminate the remaining CPU repack via stable slots.
+    struct PersistentSdfParams {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<float> mirror;
+    };
+    std::unordered_map<const SdfPipeline*, PersistentSdfParams> _persistentSdfParams;
+    size_t _persistentSdfParamVramBytes = 0;
+    void releasePersistentSdfParams();
+
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
 
@@ -223,7 +258,20 @@ private:
     // (Phase C). Defaults true so the optimization is live out of the box;
     // a Person can author @screen-channel.heightGridDdaEnabled = false.
     bool _heightGridDdaEnabled = true;
+<<<<<<< HEAD
     float _spaceDistortion = 0.0f;
+=======
+    // Native Metal sweep still has an unresolved grazing-root hand-off mismatch.
+    // Keep the verification latch next to the capability query so callers can
+    // avoid building a grid that this build is forbidden to consume.
+    static constexpr bool kHeightGridDdaTraversalVerified = false;
+
+    // First activation rung for the generic conservative range hierarchy.
+    // OFF by default until native on/off image/depth parity is witnessed.
+    bool _sdfRangeProxyEnabled = false;
+    static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
+>>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
@@ -365,6 +413,10 @@ private:
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
+    // Maps retain their vectors across frames so capacity is reused. This list
+    // names only pipelines that actually received an instance this frame,
+    // avoiding an ever-growing scan of historical pipeline keys.
+    std::vector<const SdfPipeline*> _activeSdfPipelines;
     WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
     void flushSdfDraws();
 

@@ -56,7 +56,11 @@ ScreenChannel* ScreenChannel::find(LawManager& laws) {
 
 void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
                                  double uBytes, int suballocs, int pipeSwitches,
-                                 int cachedMeshes) {
+                                 int cachedMeshes, int sdfCompiles,
+                                 int sdfCacheHits, int sdfCacheMisses,
+                                 double sdfWgslBytes, double sdfParamBytes,
+                                 int rangeBuilds, int rangeProxyDraws,
+                                 int rangeProxyCulledDraws) {
     drawCalls = dCalls;
     trianglesDrawn = tris;
     vramAllocatedBytes = vramBytes;
@@ -64,6 +68,14 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
     bufferSuballocations = suballocs;
     pipelineSwitches = pipeSwitches;
     cachedMeshesCount = cachedMeshes;
+    sdfProgramCompiles = sdfCompiles;
+    sdfProgramCacheHits = sdfCacheHits;
+    sdfProgramCacheMisses = sdfCacheMisses;
+    sdfWgslBytesGenerated = sdfWgslBytes;
+    sdfParameterBytesUploaded = sdfParamBytes;
+    sdfRangeHierarchyBuilds = rangeBuilds;
+    sdfRangeProxyDraws = rangeProxyDraws;
+    sdfRangeProxyCulledDraws = rangeProxyCulledDraws;
 }
 
 void ScreenChannel::buildProperties() {
@@ -101,9 +113,21 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("bufferSuballocations", &ScreenChannel::getBufferSuballocations);
     readOnlyInt("pipelineSwitches", &ScreenChannel::getPipelineSwitches);
     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
+    readOnlyInt("sdfProgramCompiles", &ScreenChannel::getSdfProgramCompiles);
+    readOnlyInt("sdfProgramCacheHits", &ScreenChannel::getSdfProgramCacheHits);
+    readOnlyInt("sdfProgramCacheMisses", &ScreenChannel::getSdfProgramCacheMisses);
+    readOnlyDouble("sdfWgslBytesGenerated", &ScreenChannel::getSdfWgslBytesGenerated);
+    readOnlyDouble("sdfParameterBytesUploaded", &ScreenChannel::getSdfParameterBytesUploaded);
+    readOnlyInt("sdfRangeHierarchyBuilds", &ScreenChannel::getSdfRangeHierarchyBuilds);
+    readOnlyInt("sdfRangeProxyDraws", &ScreenChannel::getSdfRangeProxyDraws);
+    readOnlyInt("sdfRangeProxyCulledDraws", &ScreenChannel::getSdfRangeProxyCulledDraws);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
+<<<<<<< HEAD
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
+=======
+    boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
+>>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are

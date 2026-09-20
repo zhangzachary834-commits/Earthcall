@@ -47,6 +47,19 @@ public:
         uint32_t bufferSuballocations = 0;
         uint32_t pipelineSwitches = 0;
         uint32_t cachedMeshesCount = 0;
+        // SDF-specific observability: these distinguish structural CPU churn
+        // from ordinary draw/upload work instead of making FPS carry every cause.
+        uint32_t sdfProgramCompiles = 0;
+        uint32_t sdfProgramCacheHits = 0;
+        uint32_t sdfProgramCacheMisses = 0;
+        size_t   sdfWgslBytesGenerated = 0;
+        size_t   sdfParameterBytesUploaded = 0;
+        // Conservative SDF range-proxy observability. A build is revision-bound;
+        // an applied draw used a strictly smaller proved-may-contain-zero proxy;
+        // a culled draw was proved to contain no zero set at all.
+        uint32_t sdfRangeHierarchyBuilds = 0;
+        uint32_t sdfRangeProxyDraws = 0;
+        uint32_t sdfRangeProxyCulledDraws = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
@@ -138,7 +151,8 @@ public:
                               const geom::FieldNode* fieldNode = nullptr,
                               uint64_t memoId = 0,
                               uint32_t memoRevision = 0,
-                              const geom::HeightGrid* heightGrid = nullptr) = 0;
+                              const geom::HeightGrid* heightGrid = nullptr,
+                              uint32_t memoParameterRevision = 0) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or
@@ -178,7 +192,20 @@ public:
     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
     // is honoured.
     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
+<<<<<<< HEAD
     virtual void setSpaceDistortion(float /*d*/) {}
+=======
+    // True only when this backend can actually consume a supplied HeightGrid in
+    // the current build/state. This is substrate capability, distinct from the
+    // authored enable bit: a quarantined optimization must not cause callers to
+    // build derived data that no renderer can use.
+    virtual bool usesHeightGridDda() const { return false; }
+
+    // Governs the conservative zero-set proxy derived from evalRange(). This is
+    // a rendering optimization only: disabling restores the authored extent;
+    // enabling may shrink/cull raster proxy coverage only from explicit proofs.
+    virtual void setSdfRangeProxyEnabled(bool /*on*/) {}
+>>>>>>> 4403d9e3725c70f3abbfab632117512e94c523bd
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 

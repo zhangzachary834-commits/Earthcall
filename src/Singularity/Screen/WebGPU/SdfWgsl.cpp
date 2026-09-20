@@ -1307,13 +1307,71 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
+ParameterBlock collectParams(const geom::SdfNode& root,
+                             const geom::FieldNode* fieldNode,
+                             const OntoMath::Piecewise* colorExpr) {
+    Emit e;
+
+    const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
+                                  root.prim == geom::SdfPrim::Expr &&
+                                  root.mathNode &&
+                                  isDifferentiableAst(*root.mathNode));
+
+    // Follow compile()'s exact traversal order so parameter indices remain a
+    // structural contract. We deliberately do not append kPrimitives/kMarcher
+    // or assemble a complete shader module on this value-only path.
+    if (hasAnalyticGrad) {
+        e.sawExpr = true;
+        const std::string off = e.param3(root.offset);
+        const std::string lp = e.fresh();
+        std::string throwawayBody = "    let " + lp + " = p - " + off + ";\n";
+        int nextVar = 0;
+        (void)emitMathNodeGrad(*root.mathNode, e, lp, throwawayBody, nextVar);
+    } else {
+        (void)emitNode(root, e);
+    }
+
+    std::string throwaway;
+    if (fieldNode && fieldNode->field) {
+        if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
+            emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
+        } else {
+            (void)e.param(fieldNode->field->baseDensity);
+            (void)e.param(fieldNode->field->frequency);
+            (void)e.param(fieldNode->field->amplitude);
+        }
+    }
+
+    if (fieldNode && fieldNode->vectorField) {
+        if (fieldNode->vectorField->mode == OntoMath::VectorField::EvaluationMode::AST) {
+            emitPiecewise(fieldNode->vectorField->astDefinition, e, "p", "vec3<f32>", throwaway);
+        } else {
+            (void)e.param(fieldNode->vectorField->baseFlowX);
+            (void)e.param(fieldNode->vectorField->baseFlowY);
+            (void)e.param(fieldNode->vectorField->baseFlowZ);
+            (void)e.param(fieldNode->vectorField->frequency);
+            (void)e.param(fieldNode->vectorField->amplitude);
+        }
+    }
+
+    if (colorExpr && !colorExpr->pieces.empty()) {
+        emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
+    }
+
+    ParameterBlock block;
+    block.ok = !e.refused;
+    block.error = e.refusal;
+    block.values = std::move(e.params);
+    if (block.values.empty()) block.values.push_back(0.0f);
+    return block;
+}
+
 Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, const OntoMath::Piecewise* colorExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
                                   root.prim == geom::SdfPrim::Expr &&
                                   root.mathNode &&
-                                  astContainsNoise(*root.mathNode) &&
                                   isDifferentiableAst(*root.mathNode));
 
     std::string evalGradFunc;

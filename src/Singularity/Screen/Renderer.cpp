@@ -21,7 +21,7 @@ Renderer& currentRenderer() {
         public:
             void drawMesh(const geom::TessMesh&, const RenderMaterial&) override {}
             void drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&,
-                              const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) override {}
+                              const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*, uint32_t) override {}
             void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) override {}
             void drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) override {}
             void drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) override {}
