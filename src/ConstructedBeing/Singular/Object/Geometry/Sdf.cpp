@@ -596,20 +596,38 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
                 return Interval(lo, hi);
             }
             
-            // True-distance leaves are 1-Lipschitz, so center ± half-diagonal
-            // is a sound enclosure over the whole AABB. The ellipsoid helper is
-            // deliberately NOT in that set: sdEllipsoid() is the common fast
-            // approximation k0*(k0-1)/k1. For eccentric axes it is not globally
-            // 1-Lipschitz (indeed its near-origin directional behaviour can make
-            // the gradient arbitrarily larger than 1), so using center ± R as a
-            // proof can exclude values that really occur in the cell. evalRange()
-            // is consumed by tessellation culling and zero-set skipping:
-            // unknown must fail open, never become an unsound finite theorem.
-            // Convex is handled above from its affine half-spaces because its
-            // authored normals need not be normalized.
-            if (n.prim == SdfPrim::Ellipsoid) return retInf();
+            // Only primitives whose CURRENT implementation has a proved
+            // 1-Lipschitz contract may use center ± half-diagonal. Keep this as
+            // an explicit allowlist: adding a future SdfPrim must not silently
+            // inherit a theorem merely because it falls through this switch.
+            //
+            // Sphere/Box/RoundBox/Cylinder/Torus are exact distance constructions.
+            // The capped-cone helper is exact in its authored valid domain
+            // (non-negative radius, positive half-height); outside that domain its
+            // algebra can degenerate and range knowledge deliberately fails open.
+            bool oneLipschitz = false;
+            switch (n.prim) {
+                case SdfPrim::Sphere:
+                case SdfPrim::Box:
+                case SdfPrim::RoundBox:
+                case SdfPrim::Cylinder:
+                case SdfPrim::Torus:
+                    oneLipschitz = true;
+                    break;
+                case SdfPrim::Cone:
+                    oneLipschitz =
+                        std::isfinite(n.dims.x) && std::isfinite(n.dims.y) &&
+                        n.dims.x >= 0.0f && n.dims.y > 1e-5f;
+                    break;
+                case SdfPrim::Ellipsoid:
+                case SdfPrim::Expr:
+                case SdfPrim::Convex:
+                    break;
+            }
+            if (!oneLipschitz) return retInf();
 
-            float distAtCenter = evalSdf(n, c);
+            const float distAtCenter = evalSdf(n, c);
+            if (!std::isfinite(distAtCenter)) return retInf();
             return Interval(distAtCenter - R, distAtCenter + R);
         }
         case SdfOp::Morph: {
