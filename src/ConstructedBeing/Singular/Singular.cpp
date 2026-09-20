@@ -145,6 +145,8 @@ public:
         return v;
     }
     
+    bool isSemanticallyWritable() const override { return true; }
+
     bool setValue(const PropertyValue& v) override {
         // AN AUTHORED PROPERTY KEEPS ITS TYPE, exactly as a registered one
         // does.
