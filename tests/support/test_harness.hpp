@@ -145,6 +145,7 @@ struct BootedEngineHarness {
         if (Physics::getLawManager() == &lawManager) {
             Physics::setLawManager(nullptr);
         }
+        Integration::getEarthcallAPI().setZoneManager(nullptr);
     }
 
     void loadWorld(const std::string& filename) {
