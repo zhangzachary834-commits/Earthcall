@@ -628,14 +628,15 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
 
             const float distAtCenter = evalSdf(n, c);
             if (!std::isfinite(distAtCenter)) return retInf();
-            return Interval(distAtCenter - R, distAtCenter + R);
+            return Interval::outward(distAtCenter - R, distAtCenter + R);
         }
         case SdfOp::Morph: {
             if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
             Interval a = evalRange(*n.children[0], boxMin, boxMax);
             Interval b = evalRange(*n.children[1], boxMin, boxMax);
             float t = glm::clamp(n.t, 0.0f, 1.0f);
-            return Interval(glm::mix(a.lo, b.lo, t), glm::mix(a.hi, b.hi, t));
+            return Interval::outward(glm::mix(a.lo, b.lo, t),
+                                     glm::mix(a.hi, b.hi, t));
         }
         case SdfOp::Union: {
             if (n.children.size() < 2 || !n.children[0] || !n.children[1]) return retInf();
@@ -669,7 +670,8 @@ OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const gl
             // Max diff is k * 0.5 * 0.5 = k / 4.
             // But we can be looser: just min(lo_a, lo_b) - k, and min(hi_a, hi_b) for upper bound.
             float k = std::max(0.0001f, n.t); // use n.t as k
-            return Interval(std::min(a.lo, b.lo) - k, std::min(a.hi, b.hi));
+            return Interval::outward(std::min(a.lo, b.lo) - k,
+                                     std::min(a.hi, b.hi));
         }
         default:
             return retInf();
