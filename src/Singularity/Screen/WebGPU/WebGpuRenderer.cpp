@@ -1257,7 +1257,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             mutableFrameStats().sdfRangeProxyCulledDraws++;
             return;
         }
-        if (memo->rangeProxy.tightened) {
+        if (kSdfRangeRasterTighteningVerified && memo->rangeProxy.tightened) {
             // Preserve a one-ULP outward raster guard at the derived boundary.
             // This is not a guessed world-space tolerance: it is the next
             // representable float, clamped to the already-authoritative baseline
