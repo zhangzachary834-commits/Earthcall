@@ -52,7 +52,7 @@ struct SdfRangeNode {
     boxMin: vec4<f32>,
     boxMax: vec4<f32>,
     // x firstChild, y childCount, z provedNoZero, w boundFinite.
-    meta: vec4<u32>,
+    rangeInfo: vec4<u32>,
 };
 @group(1) @binding(2) var<storage, read> rangeNodes: array<SdfRangeNode>;
 var<private> g_instIdx: u32;
@@ -1134,7 +1134,7 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             }
             let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
 
-            if (node.meta.z != 0u) {
+            if (node.rangeInfo.z != 0u) {
                 // The CPU interval theorem proves f never crosses zero in this
                 // entire closed cell. Jump only to its exact ray exit.
                 if (cell.y > t) {
@@ -1146,7 +1146,7 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
                 break;
             }
 
-            if (node.meta.y == 0u) {
+            if (node.rangeInfo.y == 0u) {
                 // Ambiguous or unknown terminal cell: exact authored evaluation
                 // owns this interval. A grazing/shared-face interval with no
                 // forward extent disables further skipping for this ray rather
@@ -1166,7 +1166,7 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             if (p.x > mid.x || (p.x == mid.x && rd.x >= 0.0)) { child = child | 1u; }
             if (p.y > mid.y || (p.y == mid.y && rd.y >= 0.0)) { child = child | 2u; }
             if (p.z > mid.z || (p.z == mid.z && rd.z >= 0.0)) { child = child | 4u; }
-            idx = node.meta.x + child;
+            idx = node.rangeInfo.x + child;
         }
 
         if (!skippedEmpty) {
