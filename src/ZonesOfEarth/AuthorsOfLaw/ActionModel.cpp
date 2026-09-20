@@ -842,7 +842,11 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
-                for (const auto* rel : Universe::instance().relations()) {
+                std::vector<Relation*> edges;
+                if (!Universe::instance().relationsInvolving(*a, edges)) {
+                    edges = Universe::instance().relations();
+                }
+                for (const auto* rel : edges) {
                     if (rel && rel->a() == a && rel->b() == b && rel->type == relType) {
                         emitEffect("AddRelation", true, "relation already present");
                         return;

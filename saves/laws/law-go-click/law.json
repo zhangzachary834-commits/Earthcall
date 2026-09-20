@@ -1,0 +1,679 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-go-click",
+  "injected_by": "grok-4.6 Go game injection migrated to Zone-native closure on Zach's authority",
+  "law": {
+    "id": "law-go-click",
+    "name": "address-clicked-intersection",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 0,
+          "path": "isBoard",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isIntersection",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@go_state.targetX",
+          "bindings": {
+            "ptrX": "@interaction-channel.pointerWorld.x"
+          },
+          "function": {
+            "input": "ptrX",
+            "pieces": [
+              {
+                "lo": -4.75,
+                "hi": -4.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -4.25,
+                "hi": -3.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.75,
+                "hi": -3.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 2.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.25,
+                "hi": -2.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.75,
+                "hi": -2.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 4.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.25,
+                "hi": -1.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 5.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.75,
+                "hi": -1.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 6.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.25,
+                "hi": -0.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -0.75,
+                "hi": -0.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 8.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -0.25,
+                "hi": 0.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 9.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.25,
+                "hi": 0.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 10.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.75,
+                "hi": 1.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 11.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.25,
+                "hi": 1.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 12.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.75,
+                "hi": 2.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 13.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.25,
+                "hi": 2.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 14.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.75,
+                "hi": 3.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 15.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.25,
+                "hi": 3.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 16.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.75,
+                "hi": 4.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 17.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 4.25,
+                "hi": 4.75,
+                "includeLo": true,
+                "includeHi": true,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 18.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@go_state.targetY",
+          "bindings": {
+            "ptrZ": "@interaction-channel.pointerWorld.z"
+          },
+          "function": {
+            "input": "ptrZ",
+            "pieces": [
+              {
+                "lo": -4.75,
+                "hi": -4.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 0.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -4.25,
+                "hi": -3.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.75,
+                "hi": -3.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 2.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -3.25,
+                "hi": -2.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.75,
+                "hi": -2.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 4.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -2.25,
+                "hi": -1.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 5.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.75,
+                "hi": -1.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 6.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -1.25,
+                "hi": -0.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 7.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -0.75,
+                "hi": -0.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 8.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": -0.25,
+                "hi": 0.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 9.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.25,
+                "hi": 0.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 10.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 0.75,
+                "hi": 1.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 11.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.25,
+                "hi": 1.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 12.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 1.75,
+                "hi": 2.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 13.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.25,
+                "hi": 2.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 14.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 2.75,
+                "hi": 3.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 15.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.25,
+                "hi": 3.75,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 16.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 3.75,
+                "hi": 4.25,
+                "includeLo": true,
+                "includeHi": false,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 17.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "lo": 4.25,
+                "hi": 4.75,
+                "includeLo": true,
+                "includeHi": true,
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 18.0,
+                      "factors": {}
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.go.targetX",
+          "bindings": {
+            "tx": "@go_state.targetX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "tx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.go.targetY",
+          "bindings": {
+            "ty": "@go_state.targetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "ty": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "intersection-clicked",
+          "publishSubject": "go_state",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-go-click",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

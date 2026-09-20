@@ -11,23 +11,29 @@ Implements the Go board game in Earthcall:
 - Go state tracking (turn, moveCount, phase).
 - Core interaction laws for clicking intersections and placing stones.
 
-Writes:
+Its ordinary output is the Zone-native Go closure:
+- saves/zones/Go/zone.json (with embedded materials, lawRefs, categories)
+- saves/zones/Go/zone.ecmatter and zone.<snapshotId>.ecmatter (scoped physical matter)
+- saves/laws/<id>/law.json (shared law roots)
+And refreshed legacy compatibility artifacts:
 - saves/worlds/go_app.json
 - saves/worlds/go_app.ecform
-- saves/zones/Go Game/zone.json
-- saves/zones/Go/zone.json
+- saves/worlds/go_app.ecmatter
 """
 
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
+import sys
 
 AUTHOR = "grok-4.6"
-ZONE_ID = "Go Game"
-ZONE_NAME = "Go Game"
+ZONE_ID = "Go"
+ZONE_NAME = "Go"
 
 SPACING = 0.5  # Distance between adjacent grid lines
 BOARD_WIDTH = 10.0
@@ -194,7 +200,6 @@ def solid_face(size, rgb):
 
 def goban_grid_face(size=128):
     """Generates the top face of a 19x19 Goban with wood grain, 19 lines, and 9 star points (hoshi)."""
-    # Grid margins: 5% border on all sides
     margin_ratio = 0.05
     grid_start = margin_ratio * (size - 1)
     grid_span = (1.0 - 2.0 * margin_ratio) * (size - 1)
@@ -205,19 +210,16 @@ def goban_grid_face(size=128):
     hoshi_coords = [(line_coords[xi], line_coords[yi]) for xi in hoshi_indices for yi in hoshi_indices]
 
     def paint(px, py, s):
-        # Subtle organic wood grain along X/Y
         grain = int(3.5 * math.sin(py * 0.25) + 1.5 * math.cos((px + py) * 0.12))
         r = max(0, min(255, KAYA[0] + grain))
         g = max(0, min(255, KAYA[1] + grain))
         b = max(0, min(255, KAYA[2] + grain))
 
-        # Check for hoshi (star point) dots (radius ~2.2 pixels)
         for hx, hy in hoshi_coords:
             dist_sq = (px - hx)**2 + (py - hy)**2
             if dist_sq <= 4.8:
                 return LINE_COLOR
 
-        # Check for grid lines
         on_grid_x = any(abs(px - lx) <= 0.65 for lx in line_coords)
         on_grid_y = any(abs(py - ly) <= 0.65 for ly in line_coords)
 
@@ -434,7 +436,7 @@ def build_world():
         },
     ]
 
-    # Categories
+    # Categories & Model Author Beings
     categories = [
         category_being("category.go", "Go Game"),
         category_being("category.go.board", "Go Board"),
@@ -706,48 +708,211 @@ def build_world():
         },
     }
 
-    return session, zone
+    # Zone-native closure. Admit category/author beings into the Zone itself,
+    # embed materials, and declare lawRefs so Move to Zone does not depend
+    # on loading a conglomerate World.
+    native_zone = json.loads(json.dumps(zone))
+    native_objects = list(native_zone["world"]["objects"])
+    seen_native_ids = {item.get("objectID", item.get("id"))
+                       for item in native_objects}
+    for dependency in categories:
+        dep_id = dependency.get("objectID", dependency.get("id"))
+        if dep_id and dep_id not in seen_native_ids:
+            native_objects.append(dependency)
+            seen_native_ids.add(dep_id)
+    native_zone["world"]["objects"] = native_objects
+    native_zone["materials"] = materials
+    native_zone["lawRefs"] = list(FORMATION)
+
+    return session, native_zone
+
+
+def validate_zone_native_manifestation(zone):
+    """Refuse to emit a collapsed Go Zone."""
+    objects = {item["objectID"]: item for item in zone["world"]["objects"]}
+    board = objects.get("object.go.board")
+    tengen = objects.get("intersection_9_9")
+    if board is None or tengen is None:
+        raise ValueError("Go Zone is missing board or Tengen intersection")
+
+    board_t = board.get("transform", [])
+    if (len(board_t) != 16 or
+        abs(board_t[0] - BOARD_WIDTH) > 1e-4 or
+        abs(board_t[5] - BOARD_DEPTH) > 1e-4 or
+        abs(board_t[10] - BOARD_LENGTH) > 1e-4):
+        raise ValueError("REFUSED collapsed Go Zone: board transform invalid")
+
+    tengen_c = tengen.get("center", [])
+    if len(tengen_c) != 3 or abs(tengen_c[0]) > 1e-4 or abs(tengen_c[2]) > 1e-4:
+        raise ValueError("REFUSED collapsed Go Zone: Tengen center not at board origin")
+
+    ix_count = sum(1 for oid in objects if oid.startswith("intersection_"))
+    if ix_count != 361:
+        raise ValueError(f"REFUSED Go Zone: expected 361 intersections, got {ix_count}")
+
+    bowl_count = sum(1 for oid in objects if oid.startswith("object.go.bowl."))
+    if bowl_count != 2:
+        raise ValueError(f"REFUSED Go Zone: expected 2 bowls, got {bowl_count}")
+
+    seat_count = sum(1 for oid in objects if oid.startswith("object.go.seat."))
+    if seat_count != 2:
+        raise ValueError(f"REFUSED Go Zone: expected 2 seats, got {seat_count}")
+
+
+def build_matter_chunk(zone_objects):
+    """Build a SaveChunk JSON structure for Go physical geometry."""
+    entities = []
+    for o in zone_objects:
+        oid = o["objectID"]
+        sk = o.get("shapeKind", -1)
+        if sk == 12:  # Shape2D / extra-spatial / category
+            continue
+        shape_name = "Cube" if sk == 0 else ("Cylinder" if sk == 3 else ("Ellipsoid" if sk == 5 else "Object"))
+        c = o.get("center", [0.0, 0.0, 0.0])
+        t = o.get("transform", mat4_translate(c[0], c[1], c[2]))
+        entities.append({
+            "id": oid,
+            "name": shape_name,
+            "owner_identifier": ZONE_ID,
+            "transform": [float(v) for v in t],
+            "center": {"x": float(c[0]), "y": float(c[1]), "z": float(c[2])},
+            "authoritative_axis": {"x": 0.0, "y": 1.0, "z": 0.0},
+            "target_rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+            "rotation_responsiveness": 1.0,
+        })
+    return {
+        "chunk_id": "matter_go",
+        "entities": entities,
+    }
+
+
+def compile_flatbuffer(root: Path, chunk_data: dict) -> bytes:
+    """Compile SaveChunk JSON to FlatBuffers binary using flatc."""
+    schema = root / "src" / "Singularity" / "Storage" / "Schema" / "Earthcall.fbs"
+    flatc_candidates = [
+        root / "build" / "_deps" / "flatbuffers-build" / "flatc",
+        root / "build-wasm" / "_deps" / "flatbuffers-build" / "flatc",
+        root / "build_release" / "_deps" / "flatbuffers-build" / "flatc",
+    ]
+    flatc = next((c for c in flatc_candidates if c.exists() and os.access(c, os.X_OK)), None)
+    if not flatc:
+        raise RuntimeError("flatc binary not found in build directories")
+
+    tmp_dir = Path("/tmp")
+    tmp_json = tmp_dir / f"matter_go_{os.getpid()}.json"
+    tmp_bin = tmp_dir / f"matter_go_{os.getpid()}.bin"
+    try:
+        tmp_json.write_text(json.dumps(chunk_data))
+        res = subprocess.run(
+            [str(flatc), "-b", "--strict-json", "-o", str(tmp_dir), str(schema), str(tmp_json)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return tmp_bin.read_bytes()
+    finally:
+        if tmp_json.exists():
+            tmp_json.unlink()
+        if tmp_bin.exists():
+            tmp_bin.unlink()
+
+
+def write_zone_native(root: Path, session: dict, zone: dict, matter_bytes: bytes, snapshot_id: str):
+    validate_zone_native_manifestation(zone)
+
+    # 1. Write Zone identity (zone.json)
+    zone_dir = root / "saves" / "zones" / ZONE_ID
+    zone_dir.mkdir(parents=True, exist_ok=True)
+    zone_path = zone_dir / "zone.json"
+    zone_path.write_text(json.dumps(zone, indent=2) + "\n")
+
+    # 2. Write physical matter (.ecmatter) sidecars
+    matter_fixed_path = zone_dir / "zone.ecmatter"
+    matter_gen_path = zone_dir / f"zone.{snapshot_id}.ecmatter"
+    matter_fixed_path.write_bytes(matter_bytes)
+    matter_gen_path.write_bytes(matter_bytes)
+
+    # 3. Write shared Law roots (saves/laws/<id>/law.json)
+    triggers = session["authoredLaws"]["triggers"]
+    law_root_dir = root / "saves" / "laws"
+    for law in session["authoredLaws"]["laws"]:
+        law_id = law["id"]
+        law_root = {
+            "authors": law.get("authors", []),
+            "identifier": law_id,
+            "injected_by": (
+                "grok-4.6 Go game injection migrated to Zone-native closure on Zach's authority"
+            ),
+            "law": law,
+            "triggers": triggers.get(law_id, []),
+        }
+        law_path = law_root_dir / law_id / "law.json"
+        law_path.parent.mkdir(parents=True, exist_ok=True)
+        law_path.write_text(json.dumps(law_root, indent=2) + "\n")
+
+    print(f"Authored Zone identity: {zone_path}")
+    print(f"  Zone physical matter: {matter_fixed_path} & {matter_gen_path} ({len(matter_bytes)} bytes)")
+    print(f"  Shared Law roots: {len(session['authoredLaws']['laws'])}")
+
 
 def main():
     root = Path(__file__).resolve().parents[1]
     session, zone = build_world()
 
+    # Build physical matter (.ecmatter)
+    chunk_data = build_matter_chunk(zone["world"]["objects"])
+    import os
+    matter_bytes = compile_flatbuffer(root, chunk_data)
+    matter_sha256 = hashlib.sha256(matter_bytes).hexdigest()
+    snapshot_id = matter_sha256[:16]
+
+    matter_gen = {
+        "snapshotId": snapshot_id,
+        "sha256": matter_sha256,
+        "byteLength": len(matter_bytes),
+        "schemaVersion": 1,
+    }
+    zone["matterGeneration"] = matter_gen
+    session["matterGeneration"] = matter_gen
+
+    # Write Zone-native files
+    write_zone_native(root, session, zone, matter_bytes, snapshot_id)
+
+    # Refresh legacy compatibility artifacts
     world_json_path = root / "saves" / "worlds" / "go_app.json"
     world_ecform_path = root / "saves" / "worlds" / "go_app.ecform"
-    zone_game_path = root / "saves" / "zones" / "Go Game" / "zone.json"
-    zone_go_path = root / "saves" / "zones" / "Go" / "zone.json"
+    world_matter_path = root / "saves" / "worlds" / "go_app.ecmatter"
+    world_gen_matter_path = root / "saves" / "worlds" / f"go_app.{snapshot_id}.ecmatter"
 
     world_json_path.parent.mkdir(parents=True, exist_ok=True)
-    zone_game_path.parent.mkdir(parents=True, exist_ok=True)
-    zone_go_path.parent.mkdir(parents=True, exist_ok=True)
-
     json_text = json.dumps(session, indent=2) + "\n"
-    zone_text = json.dumps(zone, indent=2) + "\n"
-
-    # For zone "Go", clone zone with identifier "Go"
-    zone_go = dict(zone)
-    zone_go["name"] = "Go"
-    zone_go["identifier"] = "Go"
-    zone_go_text = json.dumps(zone_go, indent=2) + "\n"
-
     world_json_path.write_text(json_text)
     world_ecform_path.write_text(json_text)
-    zone_game_path.write_text(zone_text)
-    zone_go_path.write_text(zone_go_text)
+    world_matter_path.write_bytes(matter_bytes)
+    world_gen_matter_path.write_bytes(matter_bytes)
 
-    # Also update scratch/author_go.py so it remains in sync
+    print(f"Refreshed legacy world: {world_json_path}")
+    print(f"Refreshed legacy world: {world_ecform_path}")
+    print(f"Refreshed legacy world matter: {world_matter_path}")
+
+    # Remove duplicate name-twin 'Go Game' directory if present
+    dup_zone_dir = root / "saves" / "zones" / "Go Game"
+    if dup_zone_dir.exists():
+        import shutil
+        shutil.rmtree(dup_zone_dir)
+        print(f"Removed duplicate name-twin directory: {dup_zone_dir}")
+
+    # Keep scratch/author_go.py in sync if it exists
     scratch_script = root / "scratch" / "author_go.py"
     if scratch_script.parent.exists():
         scratch_script.write_text(Path(__file__).read_text())
 
-    print(f"Authored {world_json_path}")
-    print(f"Authored {world_ecform_path}")
-    print(f"Authored {zone_game_path}")
-    print(f"Authored {zone_go_path}")
-    print(f"  zone objects: {len(zone['world']['objects'])}")
-    print(f"  intersections: {len([o for o in zone['world']['objects'] if o['objectID'].startswith('intersection_')])}")
-    print(f"  laws: {len(LAWS)}")
-    print(f"  author: {AUTHOR}")
+    print(f"  Zone objects: {len(zone['world']['objects'])}")
+    print(f"  Intersections: {len([o for o in zone['world']['objects'] if o['objectID'].startswith('intersection_')])}")
+    print(f"  Materials embedded in Zone identity: {len(zone['materials'])}")
+    print(f"  Laws in closure: {len(LAWS)}")
+    print(f"  Author: {AUTHOR}")
 
 if __name__ == "__main__":
+    import os
     main()

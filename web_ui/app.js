@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("[Earthcall] Engine is not connected.");
         }
         
+        const announcer = document.getElementById('sr-announcer');
+        if (announcer) {
+            announcer.textContent = `Emitted: ${text}`;
+        }
+
         inputField.value = '';
         inputField.dispatchEvent(new Event('input'));
         inputField.focus();
