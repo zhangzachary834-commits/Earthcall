@@ -38,10 +38,23 @@ struct SdfInstanceData {
     heightGridOffset: u32,
     heightGridDimX: u32,
     heightGridDimZ: u32,
+    // Generic conservative zero-set hierarchy. count==0 or enabled==0 means
+    // exact baseline marching with no hierarchy reads.
+    rangeNodeOffset: u32,
+    rangeNodeCount: u32,
+    rangeTraversalEnabled: u32,
+    rangeReserved: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
 @group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
+struct SdfRangeNode {
+    boxMin: vec4<f32>,
+    boxMax: vec4<f32>,
+    // x firstChild, y childCount, z provedNoZero, w boundFinite.
+    meta: vec4<u32>,
+};
+@group(1) @binding(2) var<storage, read> rangeNodes: array<SdfRangeNode>;
 var<private> g_instIdx: u32;
 
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
@@ -1002,6 +1015,19 @@ fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     return vec2<f32>(tEnter, tExit);
 }
 
+fn rayAabbBounds(ro: vec3<f32>, rd: vec3<f32>,
+                 bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
+    let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let inv = 1.0 / rds;
+    let t0 = (bmin - ro) * inv;
+    let t1 = (bmax - ro) * inv;
+    let tmin = min(t0, t1);
+    let tmax = max(t0, t1);
+    return vec2<f32>(
+        max(max(tmin.x, tmin.y), tmin.z),
+        min(min(tmax.x, tmax.y), tmax.z));
+}
+
 // Min/max heightfield grid DDA skip (rendering-optimization Phase C). Walks
 // the ray's XZ footprint across a uniform grid of conservative (hMin,hMax)
 // bounds (Amanatides & Woo 1987) and skips whole cells the ray's own height
@@ -1060,6 +1086,81 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         if (tMaxX < tMaxZ) { ix = ix + stepX; } else { iz = iz + stepZ; }
     }
     return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
+}
+
+// Generic spatial-Prophetic traversal. Starting at tStart, descend the cached
+// octree to the leaf containing the current ray point. A provedNoZero leaf may
+// be crossed without evaluating the authored SDF; ambiguous/unknown leaves hand
+// back a candidate interval to the exact marcher unchanged.
+//
+// Boundary ownership is deliberately conservative. If a proved-empty leaf's
+// exit is not strictly ahead of t (for example, the ray lies exactly on a shared
+// face), traversal fails open at that point instead of adding an epsilon that
+// could step over a root in the neighboring cell.
+fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                  tStart: f32, tMax: f32) -> vec3<f32> {
+    if (inst.rangeTraversalEnabled == 0u || inst.rangeNodeCount == 0u) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let begin = inst.rangeNodeOffset;
+    let end = begin + inst.rangeNodeCount;
+    var t = tStart;
+
+    // A depth-5 octree can cross at most a few dozen leaf boundaries along a
+    // straight ray. If the guard is ever exhausted, the remaining interval is
+    // handed to exact marching rather than treated as empty.
+    for (var skipGuard = 0; skipGuard < 64; skipGuard = skipGuard + 1) {
+        if (t >= tMax) { return vec3<f32>(tMax, tMax, 0.0); }
+
+        let p = ro + rd * t;
+        var idx = begin;
+        var skippedEmpty = false;
+
+        // Current producer depth is <=5; keep spare fail-open headroom for a
+        // future deeper tree without making this an unbounded shader loop.
+        for (var depthGuard = 0; depthGuard < 8; depthGuard = depthGuard + 1) {
+            if (idx < begin || idx >= end) {
+                return vec3<f32>(t, tMax, 1.0);
+            }
+
+            let node = rangeNodes[idx];
+            let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
+
+            if (node.meta.z != 0u) {
+                // The CPU interval theorem proves f never crosses zero in this
+                // entire closed cell. Jump only to its exact ray exit.
+                if (cell.y > t) {
+                    t = min(cell.y, tMax);
+                    skippedEmpty = true;
+                } else {
+                    return vec3<f32>(t, tMax, 1.0);
+                }
+                break;
+            }
+
+            if (node.meta.y == 0u) {
+                // Ambiguous or unknown terminal cell: exact authored evaluation
+                // owns this interval.
+                let candidateExit = min(max(cell.y, t), tMax);
+                return vec3<f32>(t, candidateExit, 1.0);
+            }
+
+            let mid = 0.5 * (node.boxMin.xyz + node.boxMax.xyz);
+            var child = 0u;
+            if (p.x >= mid.x) { child = child | 1u; }
+            if (p.y >= mid.y) { child = child | 2u; }
+            if (p.z >= mid.z) { child = child | 4u; }
+            idx = node.meta.x + child;
+        }
+
+        if (!skippedEmpty) {
+            // Malformed/deeper-than-supported tree: exact marcher is the floor.
+            return vec3<f32>(t, tMax, 1.0);
+        }
+    }
+
+    return vec3<f32>(t, tMax, 1.0);
 }
 
 @fragment
@@ -1160,9 +1261,30 @@ fn fs(in: VSOut) -> FSOut {
     var omega = select(1.0, 1.4, damping > 0.5);
     var prev_d = 1e10;
     var candidate_step = 0.0;
+
+    // When range traversal is active, exact marching owns only the current
+    // ambiguous leaf. Crossing its exit asks the hierarchy for the next
+    // candidate interval; proved-empty cells between them are skipped without
+    // calling sdfEval/sdfSampleStep.
+    var rangeCellExit = t;
+    var rangeCandidateActive = false;
     
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
+
+        if (inst.rangeTraversalEnabled != 0u &&
+            (!rangeCandidateActive || t >= rangeCellExit)) {
+            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            if (candidate.z < 0.5) {
+                t = maxDist + 1.0;
+                break;
+            }
+            t = max(t, candidate.x);
+            rangeCellExit = max(t, candidate.y);
+            rangeCandidateActive = true;
+            if (t > maxDist) { break; }
+        }
+
         let p = ro + rd * t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
