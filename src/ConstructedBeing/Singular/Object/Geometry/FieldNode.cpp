@@ -1,5 +1,6 @@
 #include "FieldNode.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 namespace geom {
 
@@ -11,19 +12,9 @@ nlohmann::json FieldNode::toJson() const {
     j["field"] = field->toJson();
     j["vectorField"] = vectorField->toJson();
 
-    // A FieldNode is a Singular, so properties a Person/Law grants it are
-    // first-order authored state just like authored Object properties. Keep
-    // them beside the mathematical ASTs instead of silently dropping them at
-    // the save boundary (the temporal form of Refusal #6's black box).
-    if (!dynamicProperties().empty()) {
-        nlohmann::json dyn = nlohmann::json::object();
-        for (const auto& entry : dynamicProperties()) {
-            PropertyValue live = entry.second;
-            getDynamicProperty(entry.first, live);
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
-        }
-        j["authoredProperties"] = std::move(dyn);
-    }
+    // FieldNode participates in the same universal Singular envelope as every
+    // other persistence root; its mathematical payload above stays canonical.
+    Singularity::Storage::writeSingularProperties(j, *this);
     return j;
 }
 
@@ -63,12 +54,7 @@ void FieldNode::applyJson(const nlohmann::json& j) {
         }
     }
 
-    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
-        for (auto it = j["authoredProperties"].begin();
-             it != j["authoredProperties"].end(); ++it) {
-            setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
-        }
-    }
+    Singularity::Storage::readSingularProperties(j, *this);
 }
 
 std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {
