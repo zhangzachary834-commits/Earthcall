@@ -149,8 +149,7 @@ jobs:
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
             webgpu_sdf_color_expr_test \
-            webgpu_perlin_exact_gradient_test \
-            webgpu_sdf_range_perf_test
+            webgpu_perlin_exact_gradient_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -190,11 +189,46 @@ jobs:
           EARTHCALL_PERLIN_TEST_MODE: D
         run: ./build/webgpu_perlin_exact_gradient_test
 
-      - name: Measure native authored-Perlin range traversal A/B
+  sdf-range-perf:
+    name: SDF authored-Perlin A/B (macOS Release)
+    runs-on: macos-14
+    timeout-minutes: 25
+    needs: sdf-range-proxy-verification
+
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure Release benchmark
         shell: bash
         run: |
-          set -euxo pipefail
-          ./build/webgpu_sdf_range_perf_test
+          set -euo pipefail
+          if ! cmake -S . -B build-perf -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a" \
+            >/tmp/sdf-range-perf-configure.log 2>&1; then
+            tail -80 /tmp/sdf-range-perf-configure.log
+            exit 1
+          fi
+
+      - name: Build Release authored-Perlin A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! cmake --build build-perf --parallel 4 --target webgpu_sdf_range_perf_test \
+            >/tmp/sdf-range-perf-build.log 2>&1; then
+            tail -120 /tmp/sdf-range-perf-build.log
+            exit 1
+          fi
+
+      - name: Measure 2880x1800 authored-Perlin OFF vs ON
+        shell: bash
+        run: ./build-perf/webgpu_sdf_range_perf_test
 
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
