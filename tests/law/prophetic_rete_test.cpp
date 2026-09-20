@@ -627,8 +627,10 @@ int main() {
         assert(sawHighHp);
         assert(!sawLowHp);
 
-        // Opacity is GLOBAL, not local. One unreadable condition invalidates
-        // every relevance edge rather than inviting a dangerously partial graph.
+        // Unknown-variable model: an unreadable condition makes the graph
+        // incomplete, but it no longer erases unrelated edges that are
+        // structurally known. Those edges remain diagnostic-only until
+        // relevanceComplete() becomes true.
         auto opaqueReader = std::make_shared<Law>("opaque-reader");
         opaqueReader->setLawIdentifier("opaque-reader");
         opaqueReader->setConditionModel(ConditionNode::overlaps("@event.object"));
@@ -636,7 +638,44 @@ int main() {
         Prophetic::Index opaqueGraph;
         opaqueGraph.rebuild({high, branchReader, opaqueReader});
         assert(!opaqueGraph.relevanceComplete());
-        assert(opaqueGraph.relevanceEdges().empty());
+        bool keptKnownHighHp = false;
+        for (const auto& edge : opaqueGraph.relevanceEdges()) {
+            if (edge.writerLawId == "high-writer" &&
+                edge.readerLawId == "branch-reader" &&
+                edge.path == "hp") {
+                keptKnownHighHp = true;
+            }
+        }
+        assert(keptKnownHighHp);
+        assert(opaqueGraph.unknownWriteSources().empty());
+
+        // A FirstMoverLaw can expose modeled Action text AND still have an
+        // unknown C++ actuation surface. Preserve the modeled edge, name the
+        // unknown source, and keep the graph non-authoritative.
+        auto firstMover = std::make_shared<FirstMoverLaw>("modeled-first-mover");
+        firstMover->setLawIdentifier("modeled-first-mover");
+        firstMover->setActionModel(ActionNode::set("hp", PropertyValue(500.0)));
+
+        Prophetic::Index firstMoverGraph;
+        firstMoverGraph.rebuild({firstMover, branchReader});
+        assert(!firstMoverGraph.relevanceComplete());
+        bool keptModeledFirstMoverEdge = false;
+        for (const auto& edge : firstMoverGraph.relevanceEdges()) {
+            if (edge.writerLawId == "modeled-first-mover" &&
+                edge.readerLawId == "branch-reader" &&
+                edge.path == "hp") {
+                keptModeledFirstMoverEdge = true;
+            }
+        }
+        assert(keptModeledFirstMoverEdge);
+        assert(firstMoverGraph.unknownWriteSources().size() == 1);
+        assert(firstMoverGraph.unknownWriteSources()[0].lawId == "modeled-first-mover");
+        assert(firstMoverGraph.unknownWriteSources()[0].hasModeledWrites);
+
+        const nlohmann::json firstMoverReport = firstMoverGraph.toJson();
+        assert(firstMoverReport["relevanceComplete"] == false);
+        assert(firstMoverReport["unknownWriteSources"].size() == 1);
+        assert(!firstMoverReport["relevanceEdges"].empty());
 
         // The same incompleteness must suppress cross-law "no lawful driver"
         // findings. Before this pass only opaque WRITES were checked here,
