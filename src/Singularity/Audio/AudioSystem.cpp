@@ -1,4 +1,6 @@
 #include "AudioSystem.hpp"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
