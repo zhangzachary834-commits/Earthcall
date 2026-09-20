@@ -158,6 +158,57 @@ int main() {
         }
     }
 
+    // SDF range-proxy governance is a ScreenChannel contract even though the
+    // derived counters are not authoring-picker entries. Keep it here rather
+    // than in gpu_mastery_test: this witness needs property registration, not a
+    // GPU buffer cache.
+    {
+        PropertyValue v;
+        const PropertyPath enabled = PropertyPath::parse("sdfRangeProxyEnabled");
+        auto getRes = enabled.getValue(screen, v);
+        if (getRes != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(v) || std::get<bool>(v)) {
+            fail("sdfRangeProxyEnabled", "Channel — Screen",
+                 "must resolve as a default-false authorable toggle");
+        }
+        auto setRes = enabled.setValue(screen, PropertyValue(true));
+        if (setRes != PropertyPath::PathResult::Ok || !screen.sdfRangeProxyEnabled) {
+            fail("sdfRangeProxyEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+
+        screen.updateMetrics(1, 2, 3.0, 4.0, 5, 6, 7,
+                             8, 9, 10, 11.0, 12.0,
+                             /*rangeBuilds=*/13,
+                             /*rangeProxyDraws=*/14,
+                             /*rangeProxyCulledDraws=*/15);
+        const struct {
+            const char* name;
+            int expected;
+        } counters[] = {
+            {"sdfRangeHierarchyBuilds", 13},
+            {"sdfRangeProxyDraws", 14},
+            {"sdfRangeProxyCulledDraws", 15},
+        };
+        for (const auto& counter : counters) {
+            PropertyValue value;
+            const PropertyPath p = PropertyPath::parse(counter.name);
+            const auto res = p.getValue(screen, value);
+            double number = 0.0;
+            if (res != PropertyPath::PathResult::Ok ||
+                !propertyValueToNumber(value, number) ||
+                static_cast<int>(number) != counter.expected) {
+                fail(counter.name, "Channel — Screen",
+                     "must report the renderer-derived metric");
+            }
+            if (p.setValue(screen, PropertyValue(999)) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail(counter.name, "Channel — Screen",
+                     "derived renderer metric must remain read-only");
+            }
+        }
+    }
+
     std::printf("\nchannel_paths_test: %d advertised paths resolved, %d skipped (clock), %d failed\n",
                 g_checked - g_failures, skipped, g_failures);
 
