@@ -1107,7 +1107,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
         if (memo) {
-            const bool sdfStructureChanged = memo->revision != memoRevision;
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
@@ -1115,12 +1114,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
-            if (sdfStructureChanged) {
-                memo->rangeReady = false;
-                memo->rangeHierarchy = {};
-                memo->rangeProxy = {};
-                memo->rangeParameterRevision = 0xffffffff;
-            }
+
+            // A full compiler pass means the previous memo was not trusted
+            // enough for reuse (structure/color changed or parameter recollection
+            // refused). Spatial proof is cheaper to rebuild than to risk pairing
+            // a new program with an old theorem, so invalidate it unconditionally.
+            memo->rangeReady = false;
+            memo->rangeHierarchy = {};
+            memo->rangeProxy = {};
+            memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
         } else {
             prog = &localProg;
