@@ -226,9 +226,19 @@ int main() {
     // ---------------------------------------------------------------------
     Material material("persistence-matrix");
     seedSimple(material, 2);
+    material.baseColor = glm::vec3(0.11f, 0.22f, 0.33f);
     auto materialJson = material.toJson();
+    check(!materialJson.contains("registeredProperties") ||
+              !materialJson["registeredProperties"].contains("baseColor"),
+          "Material canonical baseColor is not duplicated into fallback envelope");
+    // Simulate a stale historical/merge-poison fallback copy. Canonical root
+    // truth must win even if an older registeredProperties payload disagrees.
+    materialJson["registeredProperties"]["baseColor"] =
+        propertyValueToJson(PropertyValue(glm::vec3(0.91f, 0.82f, 0.73f)));
     Material restoredMaterial = Material::fromJson(materialJson);
     assertSimple(restoredMaterial, 2, "Material");
+    check(restoredMaterial.baseColor == glm::vec3(0.11f, 0.22f, 0.33f),
+          "Material canonical baseColor outranks stale fallback duplicate");
 
     Relation relation("matrix-relation", refA, refB, true, 0.75f);
     seedSimple(relation, 3);
