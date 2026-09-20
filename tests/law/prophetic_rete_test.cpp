@@ -672,9 +672,41 @@ int main() {
         assert(firstMoverGraph.unknownWriteSources()[0].lawId == "modeled-first-mover");
         assert(firstMoverGraph.unknownWriteSources()[0].hasModeledWrites);
 
+        // Current C++ First Movers do NOT yet expose an exhaustive in-world
+        // actuation capability relation. Their unknown remainder is therefore
+        // still wildcard for negative reasoning, even though the modeled
+        // Action branch above remains known.
+        const auto& liveUnknown = firstMoverGraph.unknownWriteSources()[0];
+        assert(liveUnknown.knownMayWritePaths.empty());
+        assert(!liveUnknown.domainComplete);
+        assert(firstMoverGraph.unknownWriteMayReach("hp"));
+        assert(firstMoverGraph.unknownWriteMayReach("chessColor"));
+        assert(!firstMoverGraph.unknownWriteDomainCompleteFor("hp"));
+        assert(!firstMoverGraph.unknownWriteDomainCompleteFor("chessColor"));
+
+        // Path-granular abstract-domain witness. A COMPLETE source domain may
+        // prove a disjoint property unreachable; an INCOMPLETE domain may not.
+        Prophetic::Index::UnknownWriteSource boundedPointer{
+            "interaction-channel",
+            "test witness: bounded pointer actuation",
+            false,
+            {"@interaction-channel.pointerX", "@interaction-channel.leftDown"},
+            true};
+        assert(Prophetic::unknownSourceMayReach(boundedPointer, "pointerX"));
+        assert(Prophetic::unknownSourceMayReach(
+            boundedPointer, "@interaction-channel.leftDown"));
+        assert(!Prophetic::unknownSourceMayReach(boundedPointer, "chessColor"));
+
+        auto partialPointer = boundedPointer;
+        partialPointer.domainComplete = false;
+        assert(Prophetic::unknownSourceMayReach(partialPointer, "pointerX"));
+        assert(Prophetic::unknownSourceMayReach(partialPointer, "chessColor"));
+
         const nlohmann::json firstMoverReport = firstMoverGraph.toJson();
         assert(firstMoverReport["relevanceComplete"] == false);
         assert(firstMoverReport["unknownWriteSources"].size() == 1);
+        assert(firstMoverReport["unknownWriteSources"][0]["domainComplete"] == false);
+        assert(firstMoverReport["unknownWriteSources"][0]["knownMayWritePaths"].empty());
         assert(!firstMoverReport["relevanceEdges"].empty());
 
         // The same incompleteness must suppress cross-law "no lawful driver"
@@ -694,8 +726,10 @@ int main() {
 
         const nlohmann::json report = relevance.toJson();
         assert(report["relevanceComplete"] == true);
+        assert(relevance.unknownWriteDomainCompleteFor("hp"));
+        assert(!relevance.unknownWriteMayReach("hp"));
         assert(!report["relevanceEdges"].empty());
-        std::puts("  H. branch provenance / relevance graph OK");
+        std::puts("  H. branch provenance / relevance graph / unknown domains OK");
     }
 
     // ======================================================================
