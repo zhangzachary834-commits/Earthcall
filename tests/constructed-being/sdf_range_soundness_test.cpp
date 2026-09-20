@@ -87,6 +87,18 @@ int main() {
               "Convex range contains non-unit-normal extreme");
     }
 
+    // Capped-cone 1-Lipschitz proof is valid only in the helper's
+    // authored geometric domain. A degenerate zero-height cone must not inherit
+    // center±radius merely because it is an enum member.
+    {
+        const geom::SdfNode cone =
+            geom::SdfNode::leaf(geom::SdfPrim::Cone, glm::vec3(1.0f, 0.0f, 0.0f));
+        const auto range = geom::evalRange(
+            cone, glm::vec3(-1.0f), glm::vec3(1.0f));
+        check(!std::isfinite(range.lo) && !std::isfinite(range.hi),
+              "degenerate Cone range fails open outside proved parameter domain");
+    }
+
     // Eccentric ellipsoid: Earthcall uses the fast k0*(k0-1)/k1 ellipsoid
     // approximation. It is not globally 1-Lipschitz. This tiny AABB is a
     // concrete falsifier for the old center±R assumption: with axes (3,1,1),
