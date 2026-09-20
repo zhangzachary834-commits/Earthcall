@@ -112,10 +112,9 @@ namespace Core {
                                            Rendering::lightSpecularRadiance(light));
                 currentRenderer().setLightingEnabled(light.enabled);
 
-                // If the radiant FieldNode authors an OntoMath scalar AST, hand
-                // that exact authored mathematics to the renderer. The hash is
-                // content-based so a Law edit to field.ast invalidates cached
-                // WGSL even though the FieldNode pointer itself stays stable.
+                // The radiant FieldNode's exact authored scalar AST is the
+                // spatial radiance function. Content identity, not pointer
+                // identity, governs invalidation when field.ast is edited.
                 if (root->field &&
                     root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
                     !root->field->astDefinition.pieces.empty()) {
@@ -154,6 +153,8 @@ namespace Core {
                 clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
                 currentRenderer().setWireframe(screenChannel->wireframe);
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
+                currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
+                currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -240,7 +241,15 @@ namespace Core {
                                   static_cast<double>(stats.uniformBytesWritten),
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
-                                  static_cast<int>(stats.cachedMeshesCount));
+                                  static_cast<int>(stats.cachedMeshesCount),
+                                  static_cast<int>(stats.sdfProgramCompiles),
+                                  static_cast<int>(stats.sdfProgramCacheHits),
+                                  static_cast<int>(stats.sdfProgramCacheMisses),
+                                  static_cast<double>(stats.sdfWgslBytesGenerated),
+                                  static_cast<double>(stats.sdfParameterBytesUploaded),
+                                  static_cast<int>(stats.sdfRangeHierarchyBuilds),
+                                  static_cast<int>(stats.sdfRangeProxyDraws),
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 if (recorder->isRecording()) {

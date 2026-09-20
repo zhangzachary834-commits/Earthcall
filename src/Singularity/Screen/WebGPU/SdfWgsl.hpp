@@ -27,6 +27,12 @@ namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
 
+struct ParameterBlock {
+    std::vector<float> values;
+    bool ok = true;
+    std::string error;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -69,6 +75,18 @@ struct Program {
 // fieldNode is optional (needed if the tree uses VolumetricField and needs to sample
 // the 3D texture).
 // colorExpr is optional; if provided, it replaces the uniform base color.
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode = nullptr, const OntoMath::Piecewise* colorExpr = nullptr, const OntoMath::Piecewise* radianceExpr = nullptr);
+// radianceExpr is optional; if provided, it supplies authored spatial light radiance.
+Program compile(const geom::SdfNode& root,
+                const geom::FieldNode* fieldNode = nullptr,
+                const OntoMath::Piecewise* colorExpr = nullptr,
+                const OntoMath::Piecewise* radianceExpr = nullptr);
+
+// Re-collect numeric parameter values in the exact order used by compile()
+// without assembling the complete WGSL module. This is the value-revision path:
+// tree structure is already compiled and only the storage-buffer contents changed.
+ParameterBlock collectParams(const geom::SdfNode& root,
+                             const geom::FieldNode* fieldNode = nullptr,
+                             const OntoMath::Piecewise* colorExpr = nullptr,
+                             const OntoMath::Piecewise* radianceExpr = nullptr);
 
 } // namespace sdfwgsl

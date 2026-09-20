@@ -48,6 +48,32 @@ namespace OntoMath {
 extern thread_local uint32_t t_astEvaluations;
 extern std::atomic<uint32_t> g_astEvaluationsTotal;
 
+// Conservative contracts for the exact 3D classic Perlin implementation shared
+// by CPU glm::perlin and WebGPU cnoise3.
+//
+// VALUE: after Taylor normalization each lattice gradient has norm <= 1.
+// Inside one unit lattice cube, every corner displacement has norm <= sqrt(3),
+// so every corner dot-product lies in [-sqrt(3), +sqrt(3)]. Quintic
+// interpolation is a convex blend on each axis, so the complete unscaled
+// interpolation remains inside that interval. cnoise3/glm::perlin then scale by
+// 2.2:
+//   |noise| <= 2.2*sqrt(3) = 3.810511776...
+// This is deliberately looser than observed extrema. Sampling is corroboration,
+// not authority for a range bound that can discard authored geometry.
+//
+// GRADIENT: after cnoise3's Taylor normalization every lattice gradient has
+// norm <= 1. The quintic fade f(t)=6t^5-15t^4+10t^3 has max |f'|=1.875.
+// For one coordinate, the interpolated gradient term contributes <=1 and the
+// fade-weight derivative multiplies a difference of two convex combinations of
+// corner dot-products, each bounded by sqrt(3):
+//   |dn/dx| <= 1 + 1.875*(2*sqrt(3)) = 1 + 3.75*sqrt(3).
+// Thus ||grad n||_2 <= sqrt(3)*(1 + 3.75*sqrt(3)); cnoise3 scales by 2.2:
+//   ||grad noise||_2 <= 28.5605117...
+// Again round outward. This is deliberately loose but proved; tighter future
+// bounds may replace it only with an equally conservative derivation.
+inline constexpr float kClassicPerlin3ValueBound = 3.810512f;
+inline constexpr float kClassicPerlin3LipschitzBound = 28.561f;
+
 // Interval arithmetic for conservative range evaluation
 struct Interval {
     float lo = 0.0f;
@@ -58,9 +84,41 @@ struct Interval {
     Interval(float l, float h) : lo(l), hi(h) {}
     
     static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
+
+    // Directed one-ULP widening for proof-bearing arithmetic. The hierarchy may
+    // use a finite interval to discard space, so round-to-nearest endpoints are
+    // not sufficient: an inward last-bit rounding must never turn "maybe zero"
+    // into "proved nonzero".
+    static float roundDown(float v) {
+        if (std::isnan(v)) return -std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, -std::numeric_limits<float>::infinity());
+    }
+    static float roundUp(float v) {
+        if (std::isnan(v)) return std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, std::numeric_limits<float>::infinity());
+    }
+    static Interval outward(float l, float h) {
+        if (std::isnan(l) || std::isnan(h)) return infinite();
+        return Interval(roundDown(l), roundUp(h));
+    }
     
-    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
-    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
+    bool exactZero() const { return lo == 0.0f && hi == 0.0f; }
+
+    Interval operator+(const Interval& o) const {
+        // Preserve exact algebraic identities before directed widening. This is
+        // not an approximation: x+0 and 0+x are exactly x in real arithmetic,
+        // and Prophetic Rete relies on authored zero remaining a true singleton.
+        if (exactZero()) return o;
+        if (o.exactZero()) return *this;
+        return outward(lo + o.lo, hi + o.hi);
+    }
+    Interval operator-(const Interval& o) const {
+        if (o.exactZero()) return *this;
+        if (exactZero()) return -o;
+        return outward(lo - o.hi, hi - o.lo);
+    }
     Interval operator-() const { return Interval(-hi, -lo); }
     // NaN-safe. The corner products of an interval containing an infinity
     // against one containing an exact zero give 0*inf = NaN, and std::min/max
@@ -69,18 +127,25 @@ struct Interval {
     // with. The true product set contributes 0 at exactly those corners (every
     // finite element times the 0 endpoint is 0), so NaN corners read as 0.
     Interval operator*(const Interval& o) const {
+        // 0 multiplied by any real-valued interval is exactly 0, including an
+        // unbounded interval. Preserve that theorem instead of widening the
+        // representational 0 by one ULP.
+        if (exactZero() || o.exactZero()) return Interval(0.0f);
         const auto corner = [](float a, float b) {
             const float p = a * b;
             return std::isnan(p) ? 0.0f : p;
         };
         float a = corner(lo, o.lo), b = corner(lo, o.hi);
         float c = corner(hi, o.lo), d = corner(hi, o.hi);
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     Interval operator/(const Interval& o) const {
         if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
+        if (exactZero()) return Interval(0.0f);
         float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        if (std::isnan(a) || std::isnan(b) || std::isnan(c) || std::isnan(d))
+            return infinite();
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     
     // Scale by scalar

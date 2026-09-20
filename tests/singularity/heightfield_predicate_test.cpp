@@ -209,18 +209,20 @@ int main() {
                        glm::vec3(1000.f, 30.f, 1000.f), 128, 128, 20000);
     }
     {
-        // A mathematically valid 2D heightfield can still lack a proved range
-        // bound for acceleration. Perlin's former Lipschitz number was
-        // empirical, so computeHeightGrid must refuse it rather than using a
-        // sampled margin to delete ray segments.
+        // The classic-Perlin implementation now carries a CLOSED-FORM
+        // Lipschitz bound (not the old sampled "6.0" guess), so a structurally
+        // valid x/z-only heightfield may build a conservative grid. The bound
+        // is deliberately loose; this gate establishes soundness, not speed.
         auto nx = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "x"));
         auto nz = mkBinary(MathNode::Op::Scale, mkConst(0.008), mkComponent(mkLeaf("p"), "z"));
         auto arg = mkVec3(std::move(nx), mkConst(0.0), std::move(nz));
         auto h = mkBinary(MathNode::Op::Scale, mkConst(40.0), mkNoise(std::move(arg)));
         geom::HeightGrid grid = geom::computeHeightGrid(
             *h, glm::vec3(1000.f, 30.f, 1000.f), 128, 128);
-        expect(grid.dimX == 0,
-              "2D Perlin heightfield refuses grid without a proved Lipschitz bound");
+        expect(grid.dimX == 128 && grid.dimZ == 128,
+               "2D Perlin heightfield builds only after a proved Lipschitz bound exists");
+        checkSoundness("2D Perlin heightfield (proved Lipschitz)",
+                       *h, glm::vec3(1000.f, 30.f, 1000.f), 128, 128, 20000);
     }
     {
         // An op the Lipschitz estimator does not cover (Pow) must REFUSE

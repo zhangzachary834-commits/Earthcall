@@ -196,8 +196,31 @@ namespace {
 // path never has to tessellate. Collision keeps its own coarser tessellation —
 // the cloud is decimated to `maxPts` anyway, and matching render resolution here
 // would change which points GJK sees for no benefit.
+void Object::invalidateFieldParameterCaches() {
+    if (!_hasField) return;
+    ++_fieldRevision;
+    ++_sdfParameterRevision;
+    _fieldMeshDirty = true;
+    _heightGridDirty = true;
+    _supportCloud.clear();
+    _localMin = -_fieldExtent;
+    _localMax = _fieldExtent;
+}
+
+void Object::invalidateFieldSamplingCaches() {
+    if (!_hasField) return;
+    ++_fieldRevision;
+    _fieldMeshDirty = true;
+    _supportCloud.clear();
+    _localMin = -_fieldExtent;
+    _localMax = _fieldExtent;
+}
+
 void Object::rebuildGeometryCaches() {
-    _fieldRevision++;
+    ++_fieldRevision;
+    ++_sdfStructureRevision;
+    ++_sdfParameterRevision;
+    _renderSdfCachesDirty = true;
     _supportCloud.clear();
     _smoothMesh.reset();
     _complexMeshes.clear();

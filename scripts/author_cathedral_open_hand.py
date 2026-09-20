@@ -37,8 +37,14 @@ def matrix(pos, angles=(0, 0, 0)):
 
 
 def leaf(prim, dims, off=(0, 0, 0), rounding=0):
-    return {'op': 0, 'prim': prim, 'dims': list(dims), 'offset': list(off),
+    node = {'op': 0, 'prim': prim, 'dims': list(dims), 'offset': list(off),
             'p0': rounding, 'p1': 0, 't': .5, 'children': []}
+    if prim == 0:
+        # Author the distance expression explicitly. This selects the existing
+        # gradient-aware marcher for the thin, concave spherical leaf cavities.
+        node['prim']=7
+        node['expr']=f'sqrt(x*x+y*y+z*z)-{dims[0]:.9g}'
+    return node
 
 
 def csg(op, a, b):
@@ -170,7 +176,7 @@ def build():
         obj(f'leaf.{i:02}', 'Open Hand / bronze leaf '+str(i+1),
             (CX+2.45*s, 4.5, CZ+2.45*c), shell, (1.06,1.06,1.06),
             'bronze' if i%2 == 0 else 'verdigris', (0,angle,0),
-            {'openHandLeaf': True, 'radialX': s, 'radialZ': c, 'azimuth': angle, 'lastAperture':0.0},scale=(.78,3.35,1.05))
+            {'openHandLeaf': True, 'radialX': s, 'radialZ': c, 'azimuth': angle},scale=(.78,3.35,1.05))
     obj('heart.plinth', 'Quiet plinth beneath the seed', (CX,.88,CZ),
         leaf(4, (1.6,.25,0)), (1.65,1.65,.30), 'ivory',(90,0,0))
     ring('heart.rim', 'Golden rim of the quiet center', (CX,1.14,CZ),1.43,.065,'gold')
@@ -220,8 +226,7 @@ def build():
         [map_action('intention',{'q':'intention'},[term(1),term(-1,{'q':1})])],True)
     # Exact exponential approach per elapsed frame; a long frame cannot overshoot.
     exp = [wave('d',-2.5,kind=2)]
-    law('approach','intention becomes form without a jump',{'kind':3,'children':[tagged('openHandTouchstone'),
-        {'kind':0,'path':'aperture','op':1,'operandPath':'intention'}]},
+    law('approach','intention becomes form without a jump',tagged('openHandTouchstone'),
         [map_action('aperture',{'a':'aperture','q':'intention','d':'time.delta'},
                     [term(1,{'q':1}),term(1,{'a':1},exp),term(-1,{'q':1},exp)])])
     binds = {'a':'@'+PREFIX+'touchstone.aperture','s':'radialX','c':'radialZ','r':'azimuth'}
@@ -230,12 +235,11 @@ def build():
     rotation = {'kind':8,'path':'rotation','bindings':binds,'function':{'pieces':[
         {'mathNode':{'op':2,'children':[{'op':0,'scalarForm':{'terms':terms}} for terms in
             ([term(34,{'a':1})],[term(1,{'r':1})],[term(0)])]}}]}}
-    law('unfold','twelve leaves follow one continuous aperture',{'kind':3,'children':[tagged('openHandLeaf'),
-        {'kind':0,'path':'lastAperture','op':1,'operandPath':'@'+PREFIX+'touchstone.aperture'}]},[
+    law('unfold','twelve leaves follow one continuous aperture',tagged('openHandLeaf'),[
         map_action('position.x',binds,[term(CX),term(2.45,{'s':1}),term(2.35,{'s':1,'a':1})]),
         map_action('position.z',binds,[term(CZ),term(2.45,{'c':1}),term(2.35,{'c':1,'a':1})]),
         map_action('position.y',binds,[term(4.5),term(-.35,{'a':1})]),
-        rotation,map_action('lastAperture',binds,[term(1,{'a':1})])])
+        rotation])
     return {'objects':objects,'materials':materials,'relations':relations,'laws':laws,'lexemes':lexemes}
 
 

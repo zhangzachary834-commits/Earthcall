@@ -28,6 +28,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -92,13 +93,17 @@ int main() {
     const glm::mat4 viewM = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
     const glm::mat4 invVP = glm::inverse(proj * viewM);
 
-    auto gpuMask = [&](const geom::SdfNode& field, const glm::mat4& model) {
+    auto gpuMask = [&](const geom::SdfNode& field, const glm::mat4& model,
+                       uint64_t memoId, bool rangeProxyEnabled) {
         RenderMaterial mat;
         mat.baseColor = glm::vec3(1.0f);
+        r.setSdfRangeProxyEnabled(rangeProxyEnabled);
         r.setCamera(viewM, proj, eye);
         r.setModel(model);
         r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        r.drawImplicit(field, glm::vec3(kExtent), mat);
+        r.drawImplicit(field, glm::vec3(kExtent), mat, nullptr,
+                       memoId, /*memoRevision=*/1, nullptr,
+                       /*memoParameterRevision=*/1);
         r.endFrame();
 
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
@@ -321,15 +326,24 @@ int main() {
     }
 
     int failures = 0;
-    for (const Case& c : cases) {
-        const std::vector<uint8_t> g = gpuMask(*c.node, c.model);
+    size_t rangeProxyAppliedCases = 0;
+    for (size_t caseIndex = 0; caseIndex < cases.size(); ++caseIndex) {
+        const Case& c = cases[caseIndex];
+        const uint64_t memoId = 1000u + static_cast<uint64_t>(caseIndex);
+        const std::vector<uint8_t> baseline =
+            gpuMask(*c.node, c.model, memoId, /*rangeProxyEnabled=*/false);
+        const std::vector<uint8_t> accelerated =
+            gpuMask(*c.node, c.model, memoId, /*rangeProxyEnabled=*/true);
+        const Renderer::FrameStats proxyStats = r.frameStats();
         const std::vector<uint8_t> p = cpuMask(*c.node, c.model);
 
-        size_t gpuOn = 0, cpuOn = 0, diff = 0;
-        for (size_t i = 0; i < g.size(); ++i) {
-            gpuOn += g[i]; cpuOn += p[i];
-            if (g[i] != p[i]) ++diff;
+        size_t gpuOn = 0, cpuOn = 0, diff = 0, proxyDiff = 0;
+        for (size_t i = 0; i < baseline.size(); ++i) {
+            gpuOn += baseline[i]; cpuOn += p[i];
+            if (baseline[i] != p[i]) ++diff;
+            if (baseline[i] != accelerated[i]) ++proxyDiff;
         }
+        if (proxyStats.sdfRangeProxyDraws > 0) ++rangeProxyAppliedCases;
 
         // Scale the tolerance with the silhouette's perimeter: disagreement is a
         // boundary phenomenon, so it grows with the edge, not the area. ~sqrt(area)
@@ -359,16 +373,57 @@ int main() {
         size_t holes = 0;
         for (uint32_t y = 1; y + 1 < H; ++y)
             for (uint32_t x = 1; x + 1 < W; ++x)
-                if (!g[y * W + x] && g[(y - 1) * W + x] && g[(y + 1) * W + x] &&
-                    g[y * W + x - 1] && g[y * W + x + 1]) ++holes;
+                if (!baseline[y * W + x] &&
+                    baseline[(y - 1) * W + x] && baseline[(y + 1) * W + x] &&
+                    baseline[y * W + x - 1] && baseline[y * W + x + 1]) ++holes;
 
-        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) && (holes == 0);
+        // Range-proxy activation changes only where the raster proxy begins and
+        // ends. The field evaluator and marcher are identical, so its silhouette
+        // must be bit-for-bit identical to the disabled baseline. Any difference
+        // means a supposedly empty region carried visible authored truth.
+        const bool proxyExact = proxyDiff == 0;
+        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) &&
+                        (holes == 0) && proxyExact;
         if (holes != 0)
             std::printf("  %-14s %zu HOLE(S) — the marcher passed through its own surface\n",
                         c.name, holes);
-        std::printf("  %-14s gpu=%4zu cpu=%4zu diff=%3zu (tol %3zu) %s\n",
-                    c.name, gpuOn, cpuOn, diff, tolerance, ok ? "ok" : "MISMATCH");
+        if (!proxyExact)
+            std::printf("  %-14s RANGE-PROXY changed %zu pixel(s) — proof activation mismatch\n",
+                        c.name, proxyDiff);
+        std::printf("  %-14s gpu=%4zu cpu=%4zu diff=%3zu (tol %3zu) proxyDiff=%3zu %s\n",
+                    c.name, gpuOn, cpuOn, diff, tolerance, proxyDiff,
+                    ok ? "ok" : "MISMATCH");
         if (!ok) ++failures;
+    }
+
+    // At least one ordinary shape must actually exercise the tightened
+    // proxy path; otherwise an accidentally dead switch could make every on/off
+    // comparison vacuously identical.
+    if (rangeProxyAppliedCases == 0) {
+        std::printf("  FAILED: range proxy never tightened any parity case\n");
+        ++failures;
+    }
+
+    // Strong cull witness: f(p)=5 has no zero anywhere in the render domain.
+    // OFF and ON must both produce black, and ON must report a proof-authorized
+    // culled draw rather than merely marching to the same empty answer.
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(5.0));
+        const geom::SdfNode empty = geom::makeImplicit(constant);
+        const auto off = gpuMask(empty, glm::mat4(1.0f), 999999u, false);
+        const auto on  = gpuMask(empty, glm::mat4(1.0f), 999999u, true);
+        const Renderer::FrameStats stats = r.frameStats();
+        const bool bothEmpty =
+            std::all_of(off.begin(), off.end(), [](uint8_t v) { return v == 0; }) &&
+            std::all_of(on.begin(), on.end(), [](uint8_t v) { return v == 0; });
+        const bool provedCull = stats.sdfRangeProxyCulledDraws > 0;
+        std::printf("  %-14s pixels=%s cullCounter=%u %s\n",
+                    "RangeProxyEmpty", bothEmpty ? "identical-empty" : "MISMATCH",
+                    stats.sdfRangeProxyCulledDraws,
+                    (bothEmpty && provedCull) ? "ok" : "FAILED");
+        if (!bothEmpty || !provedCull) ++failures;
     }
 
     setCurrentRenderer(nullptr);

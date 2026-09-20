@@ -5,47 +5,47 @@
   "identifier": "law-chess-check-scan-complete",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
-      "eventType": "check-scanned-done",
-      "kind": 10,
-      "publishObject": "",
-      "publishSubject": "state.chess"
-    },
-    "activation": 0,
-    "applicationLog": [],
+    "id": "law-chess-check-scan-complete",
+    "name": "publish-scan-complete",
+    "enabled": true,
     "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
     "authors": [
       "grok-4.6"
     ],
-    "conditionMode": "all",
+    "conditionSubjects": [],
+    "targets": [],
     "conditionModel": {
       "kind": 8,
       "otherId": "state.chess"
     },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-check-scan-complete",
-    "name": "publish-scan-complete",
+    "actionModel": {
+      "kind": 10,
+      "eventType": "check-scanned-done",
+      "publishSubject": "state.chess",
+      "publishObject": ""
+    },
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-check-scan-complete",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 0,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "check-scanned"

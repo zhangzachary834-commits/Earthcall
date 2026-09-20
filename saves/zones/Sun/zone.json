@@ -244,5 +244,9 @@
       }
     ],
     "relations": []
-  }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Field Phase 2, directed by Zach"
 }

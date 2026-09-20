@@ -1,5 +1,15 @@
 # Person Verification List
 
+## Sun — authored OntoMath radiance field
+
+*GPT-5.6 Sol · 2026-09-19. Phase 2 continues Zach's instruction that light be an authored continuous FieldNode/OntoMath function rather than a shader-only noun.*
+
+- [ ] Fresh-launch Earthcall, enter **Sun** through the Zone flow, and confirm the Zone still loads normally with `sun.light-field` active and the witness object present.
+- [ ] Put a known **raymarched SDF/implicit surface** at two visibly different distances from the Sun source (or move the same one): confirm the nearer surface receives stronger diffuse/specular illumination than the farther one. Do **not** use the ordinary witness cube alone as proof unless its draw path is confirmed to be SDF.
+- [ ] Edit the Sun spatial root's authored `field.ast` falloff through the normal authoring/property path, then observe an SDF surface without restarting: confirm the visible falloff changes, proving AST-content invalidation reaches generated WGSL.
+- [ ] Toggle authored `light.enabled`: confirm SDF lighting turns off/on while the surface's authored material color remains visible.
+
+
 ## Cathedral — Court of the Open Hand
 
 *Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
@@ -8,6 +18,21 @@
 - [ ] Click the **pearl at (44, 1.47, 19.35)**: twelve bronze/verdigris leaves should spread and incline smoothly around the blue seed; click again to gather, including a reversal halfway through.
 - [ ] Approach the leaf cavities, arch openings, and floor inlays; inspect from both sides, sit near the stone seats, and judge whether the composition rewards staying and getting close.
 - [ ] Open the leaves, **Save Zone**, restart, and return: confirm the same court and authored opening intention persist; confirm ordinary Cathedral interaction and performance remain comfortable.
+
+## Go — Zone-native boot, no legacy World load
+
+*Gemini Spark, 2026-09-19. Source requested by Zach: the exact legacy `saves/worlds/go_app.ecform` and `.ecmatter` bundle; migration target: `saves/zones/Go/zone.json` + `zone.ecmatter` + shared Law roots.*
+
+- [ ] Relaunch Earthcall. **Do not load `go_app`, `.ecform`, or any legacy World from Assets.**
+- [ ] Open Zones / Move to Zone and enter **Go** directly from the boot catalog.
+- [ ] Confirm the Goban wood grain, side textures, and 19x19 grid with 9 star points (hoshi) are visible rather than white/default untextured geometry.
+- [ ] Confirm the two stone bowls (black and white Goke), supply stones, and player seats are present and properly positioned.
+- [ ] Click the Tengen intersection (9, 9) at the board center: confirm a black stone is placed, the intersection state is no longer empty, and turn advances to white.
+- [ ] Click an adjacent intersection (e.g. (10, 10)): confirm a white stone is placed and turn advances back to black.
+- [ ] Use **Save Zone** while standing in Go, restart again without loading a World, re-enter Go, and confirm the independent identity and placement persist.
+
+The automated witness is `go_zone_native_boot_test`: its temporary SaveRoot intentionally contains **no `worlds/` directory**, only the Go Zone identity, its `.ecmatter` physical sidecar, and the 3 shared Law roots. A green test proves the closure is machine-loadable; the checks above prove the actual Person-facing Move-to-Zone experience and rendering.
+
 
 ## Chess — Zone-native boot, no legacy World load
 
@@ -502,3 +527,12 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] Boot Earthcall → open the Zones list → confirm you are standing in `Home` (the 10.6 MB one with your beings) and not `Home_of_Zach` (957 bytes, empty) → confirm both appear in the list. Prediction from the sort order in `SaveSystem.cpp:1142`: both appear and you are in `Home`. Nobody has looked.
 - [ ] Decide whether `saves/homes/Home_of_Zach/` may be retired. It carries your name as owner and it is a save file, so no agent should delete it without your word written here.
 - [ ] Creator Console → Zones → Move to Zone → Save Zone: does the ordinary Save Zone path still work in the app? Its guard test (`zone_native_save_isolation_test`) dies in `free()` before printing anything, so the suite cannot currently witness this path.
+
+*   **Property Predication and Lexeme Serialization**: Please verify `docs/architecture/interrelations/PROPERTY_PREDICATION_AND_LEXEME_SERIALIZATION.md` accurately reflects the application of the property predication doctrine onto the semantic graph serialization.
+*   **Substrate Isomorphism and First Mover Reversal**: Please verify `docs/architecture/interrelations/SUBSTRATE_ISOMORPHISM_AND_FIRST_MOVER_REVERSAL.md` correctly captures how the decoupling of execution and representation lays the groundwork for eventually bootstrapping the C++ engine out of the compilation loop.
+*   
+## Person / Object Identity Separation & Masquerading Refusal (added 2026-09-19)
+- [ ] Attempt to create or name an Object "Zach" (or any registered Person name) in the Creator Console / Singular Window: confirm the engine refuses the name and prevents an Object from masquerading as a Person. Headless guard `person_not_object_test.cpp` passes; Zach direct in-app witness pending.
+
+## Multi-Home Admission Invariant & Duplication Refusal (added 2026-09-19)
+- [ ] Boot Earthcall with an existing Home save: confirm admission guarantees at least one primary Home without minting duplicate homes (`Home_of_Zach_1`, etc.) or silently picking an ambiguous primary. Headless guard `home_identity_continuity_test.cpp` passes; Zach direct in-app witness pending.

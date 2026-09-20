@@ -5,17 +5,65 @@
   "identifier": "law-chess-deselect-others",
   "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
   "law": {
-    "actionModel": {
+    "id": "law-chess-deselect-others",
+    "name": "deselect-other-pieces",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
       "children": [
         {
           "kind": 0,
+          "path": "isSelected",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 1,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 1,
+              "operandPath": "@state.chess.targetY"
+            }
+          ]
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "isSelected",
           "operand": {
             "t": "bool",
             "v": false
-          },
-          "path": "isSelected"
+          }
         },
         {
+          "kind": 8,
+          "path": "position.y",
           "bindings": {
             "ry": "restY"
           },
@@ -25,84 +73,36 @@
                 "expr": {
                   "terms": [
                     {
-                      "c": 1,
+                      "c": 1.0,
                       "factors": {
-                        "ry": 1
+                        "ry": 1.0
                       }
                     }
                   ]
                 }
               }
             ]
-          },
-          "kind": 8,
-          "path": "position.y"
+          }
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "grok-4.6"
-    ],
-    "conditionMode": "all",
-    "conditionModel": {
-      "children": [
-        {
-          "kind": 0,
-          "op": 0,
-          "operand": {
-            "t": "bool",
-            "v": true
-          },
-          "path": "isSelected"
-        },
-        {
-          "children": [
-            {
-              "kind": 0,
-              "op": 1,
-              "operandPath": "@state.chess.targetX",
-              "path": "gridX"
-            },
-            {
-              "kind": 0,
-              "op": 1,
-              "operandPath": "@state.chess.targetY",
-              "path": "gridY"
-            }
-          ],
-          "kind": 4
-        }
-      ],
-      "kind": 3
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-chess-deselect-others",
-    "name": "deselect-other-pieces",
     "provenance": [
       {
-        "directed": true,
+        "type": "authored-by",
         "entityA": "law-chess-deselect-others",
         "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
         "events": [
           {
-            "deltaWeight": 1,
             "description": "authored-by",
+            "deltaWeight": 1.0,
             "timestamp": 1787390000
           }
-        ],
-        "type": "authored-by",
-        "weight": 1
+        ]
       }
     ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    "applicationLog": []
   },
   "triggers": [
     "piece-selected"

@@ -6,10 +6,13 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <limits>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -497,11 +500,26 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     return _sampler && _whiteView && _flatShader && _flatLayout && _imagePipe && _particlePipe;
 }
 
+void WebGpuRenderer::releasePersistentSdfParams() {
+    for (auto& kv : _persistentSdfParams) {
+        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
+    }
+    _persistentSdfParams.clear();
+    _persistentSdfParamVramBytes = 0;
+}
+
 void WebGpuRenderer::reloadShaders() {
+    // Keys are SdfPipeline addresses, so release these before destroying the
+    // pipeline map whose node addresses identify the caches.
+    releasePersistentSdfParams();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
+    _activeSdfPipelines.clear();
+    _sdfBatches.clear();
+    _sdfParamsBatches.clear();
+    _sdfHeightGridBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
 }
@@ -529,6 +547,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
+    releasePersistentSdfParams();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -927,13 +946,14 @@ namespace {
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
+    glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
     glm::vec4 lightAmbient;
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
     glm::vec4 lightControl; // x = lighting enabled (0 or 1)
-    glm::vec4 limits;       // x = far-plane distance in world units; see struct RU
+    glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
 };
 } // namespace
 
@@ -1029,44 +1049,95 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const geom::FieldNode* fieldNode,
                                   uint64_t memoId,
                                   uint32_t memoRevision,
-                                  const geom::HeightGrid* heightGrid) {
+                                  const geom::HeightGrid* heightGrid,
+                                  uint32_t memoParameterRevision) {
     if (!_pass) return;
 
-    // Memoize the WGSL string generation and pipeline lookup.
-    sdfwgsl::Program prog;
+    // Memoize WGSL generation and pipeline lookup. A cache hit must be an
+    // O(1)-ish reference acquisition, not a copy of the complete WGSL string and
+    // parameter vector. Keep a local Program only for uncached/compile-miss work.
+    sdfwgsl::Program localProg;
+    const sdfwgsl::Program* prog = nullptr;
     const SdfPipeline* sp = nullptr;
+    bool isProvenHeightfield = false;
     bool needsCompile = true;
+    MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
-        auto& entry = _programCache[memoId];
-        if (entry.revision == memoRevision &&
-            entry.colorRevision == mat.colorRevision &&
-            entry.radianceRevision == radianceRevision() &&
-            entry.colorExprPtr == mat.colorExpr.get() &&
-            entry.radianceExprPtr == radianceExpr()) {
-            prog = entry.prog;
-            sp = entry.sp;
+        memo = &_programCache[memoId];
+        if (memo->revision == memoRevision &&
+            memo->colorRevision == mat.colorRevision &&
+            memo->radianceRevision == radianceRevision() &&
+            memo->colorExprPtr == mat.colorExpr.get() &&
+            memo->radianceExprPtr == radianceExpr()) {
+            // We have a structural hit unless parameter recollection proves that
+            // the claimed structure identity is stale. Start on the cheap path;
+            // only fall back to compile on a refused/mismatched recollection.
             needsCompile = false;
+            // Structural cache hit. If only numeric field values changed,
+            // refresh the parameter block without rebuilding the WGSL module.
+            if (memo->parameterRevision != memoParameterRevision) {
+                sdfwgsl::ParameterBlock refreshed =
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr());
+                if (refreshed.ok && refreshed.values.size() == memo->prog.params.size()) {
+                    memo->prog.params = std::move(refreshed.values);
+                    memo->parameterRevision = memoParameterRevision;
+                } else {
+                    // A parameter-count mismatch means our claimed structural
+                    // identity is stale. Fail open to a full compile rather than
+                    // pairing old WGSL with a differently-shaped buffer layout.
+                    needsCompile = true;
+                }
+            }
+            if (!needsCompile) {
+                prog = &memo->prog;
+                sp = memo->sp;
+                isProvenHeightfield = memo->isProvenHeightfield;
+                mutableFrameStats().sdfProgramCacheHits++;
+                needsCompile = false;
+            }
         }
     }
     if (needsCompile) {
-        prog = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
-        if (!prog.ok) {
-            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", prog.error.c_str());
+        mutableFrameStats().sdfProgramCacheMisses++;
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
+        mutableFrameStats().sdfProgramCompiles++;
+        mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
+        if (!localProg.ok) {
+            std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", localProg.error.c_str());
             return;
         }
-        sp = sdfPipeline(prog.wgsl);
-        if (memoId != 0) {
-            auto& entry = _programCache[memoId];
-            entry.revision = memoRevision;
-            entry.colorRevision = mat.colorRevision;
-            entry.radianceRevision = radianceRevision();
-            entry.colorExprPtr = mat.colorExpr.get();
-            entry.radianceExprPtr = radianceExpr();
-            entry.prog = prog;
-            entry.sp = sp;
+        sp = sdfPipeline(localProg.wgsl);
+        if (!sp) return;
+
+        // Heightfield-ness is a theorem about tree structure, not frame state.
+        // Compute it at the same revision boundary as the compiled program.
+        isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
+
+        if (memo) {
+            memo->revision = memoRevision;
+            memo->parameterRevision = memoParameterRevision;
+            memo->colorRevision = mat.colorRevision;
+            memo->radianceRevision = radianceRevision();
+            memo->colorExprPtr = mat.colorExpr.get();
+            memo->radianceExprPtr = radianceExpr();
+            memo->prog = std::move(localProg);
+            memo->sp = sp;
+            memo->isProvenHeightfield = isProvenHeightfield;
+
+            // A full compiler pass means the previous memo was not trusted
+            // enough for reuse (structure/color changed or parameter recollection
+            // refused). Spatial proof is cheaper to rebuild than to risk pairing
+            // a new program with an old theorem, so invalidate it unconditionally.
+            memo->rangeReady = false;
+            memo->rangeHierarchy = {};
+            memo->rangeProxy = {};
+            memo->rangeParameterRevision = 0xffffffff;
+            prog = &memo->prog;
+        } else {
+            prog = &localProg;
         }
     }
-    if (!sp) return;
+    if (!sp || !prog) return;
 
     // The bounding cube, shared by every field: the vertex shader scales it by the
     // field extent, so one buffer serves all of them.
@@ -1108,7 +1179,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // derived conservative grid happened to be supplied for this draw. A test,
     // diagnostic, or disabled traversal must not change proxy coverage merely by
     // omitting that cache.
-    const bool isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
     const bool hasConservativeHeightGrid = heightGrid &&
                                            heightGrid->dimX > 0 && heightGrid->dimZ > 0;
     // DDA traversal is quarantined after the native Metal sweep found that its
@@ -1117,17 +1187,66 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the traversal until the full on/off camera corpus is exact. This is not a
     // performance regression for the saved Perlin floor: it is y-dependent and
     // was already ineligible for a grid.
-    constexpr bool kHeightGridDdaTraversalVerified = false;
-    const bool gridActive = kHeightGridDdaTraversalVerified &&
-                            _heightGridDdaEnabled && isProvenHeightfield &&
+    const bool gridActive = usesHeightGridDda() && isProvenHeightfield &&
                             hasConservativeHeightGrid &&
                             !heightGrid->cells.empty();
     // A grid's cell coordinates are authored over `extent` by Object::rebuildHeightGrid.
     // Keep that exact interval for every proved heightfield, whether DDA traversal
-    // is enabled or disabled: toggling the skip may not quietly change the proxy
-    // coverage that the comparison is meant to judge. Other fields retain the
-    // small rasterization guard band for roots on an authored boundary.
-    const glm::vec3 proxyExtent = isProvenHeightfield ? extent : extent * 1.05f;
+    // is enabled or disabled. Other fields retain the historical 5% raster guard.
+    // The range hierarchy is built over THIS actual render domain, not merely the
+    // authored extent, so enabling it can never trim space the baseline marcher
+    // was previously allowed to inspect.
+    const glm::vec3 baselineProxyExtent =
+        glm::abs(isProvenHeightfield ? extent : extent * 1.05f);
+    glm::vec3 proxyExtent = baselineProxyExtent;
+
+    // First generic spatial-Prophetic activation rung. It is deliberately limited
+    // to surface-only draws: a FieldNode may carry volumetric density outside the
+    // SDF zero set, so zero-set proof is not permission to trim that volume.
+    //
+    // memoId==0 also fails open: without a stable revision identity there is no
+    // lawful cache boundary, and rebuilding an octree every frame would replace
+    // one bottleneck with another.
+    if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr) {
+        const bool extentChanged =
+            memo->rangeAuthoredExtent.x != baselineProxyExtent.x ||
+            memo->rangeAuthoredExtent.y != baselineProxyExtent.y ||
+            memo->rangeAuthoredExtent.z != baselineProxyExtent.z;
+        if (!memo->rangeReady ||
+            memo->rangeParameterRevision != memoParameterRevision ||
+            extentChanged) {
+            memo->rangeHierarchy = geom::buildRangeHierarchy(
+                field, baselineProxyExtent,
+                kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
+            memo->rangeProxy =
+                geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
+            memo->rangeParameterRevision = memoParameterRevision;
+            memo->rangeAuthoredExtent = baselineProxyExtent;
+            memo->rangeReady = true;
+            mutableFrameStats().sdfRangeHierarchyBuilds++;
+        }
+
+        if (!memo->rangeProxy.hasPossibleZero) {
+            // Every terminal cell in the complete authored render domain carries
+            // a finite proof excluding zero. There is no surface to rasterize.
+            mutableFrameStats().sdfRangeProxyCulledDraws++;
+            return;
+        }
+        if (memo->rangeProxy.tightened) {
+            // Preserve a one-ULP outward raster guard at the derived boundary.
+            // This is not a guessed world-space tolerance: it is the next
+            // representable float, clamped to the already-authoritative baseline
+            // proxy, solely to avoid losing a root that lies exactly on a cube face.
+            const float inf = std::numeric_limits<float>::infinity();
+            proxyExtent.x = std::min(baselineProxyExtent.x,
+                                     std::nextafter(memo->rangeProxy.halfExtent.x, inf));
+            proxyExtent.y = std::min(baselineProxyExtent.y,
+                                     std::nextafter(memo->rangeProxy.halfExtent.y, inf));
+            proxyExtent.z = std::min(baselineProxyExtent.z,
+                                     std::nextafter(memo->rangeProxy.halfExtent.z, inf));
+            mutableFrameStats().sdfRangeProxyDraws++;
+        }
+    }
     inst.extents = glm::vec4(proxyExtent, 0.0f);
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
@@ -1158,7 +1277,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the VERTICAL distance and can exceed the Euclidean distance when h slopes.
     // A min/max grid may conservatively skip empty cells, but it does not license
     // distance-field stepping inside a candidate cell.
-    const float damping = prog.needsGradientStep ? 0.25f : 1.0f;
+    const float damping = prog->needsGradientStep ? 0.25f : 1.0f;
     // misc.x is a distinct proof bit: damping selects the step policy, while
     // only a structurally-proved y-h(x,z) field may use heightfield-only
     // planar/vertical early exits. Keep the two latches separate so a generic
@@ -1168,8 +1287,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
     inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
 
-    _sdfBatches[sp].push_back(inst);
-    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog.params.begin(), prog.params.end());
+    auto& sdfBatch = _sdfBatches[sp];
+    if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
+    sdfBatch.push_back(inst);
+    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
 
     mutableFrameStats().trianglesDrawn += 12;
 }
@@ -1262,12 +1383,21 @@ void WebGpuRenderer::drawOverlay(const geom::TessMesh& mesh, const glm::vec4& co
 }
 
 void WebGpuRenderer::flushSdfDraws() {
-    if (_sdfBatches.empty()) return;
-    if (!_pass) { _sdfBatches.clear(); _sdfParamsBatches.clear(); return; }
+    if (_activeSdfPipelines.empty()) return;
+    if (!_pass) {
+        for (const SdfPipeline* sp : _activeSdfPipelines) {
+            _sdfBatches[sp].clear();
+            _sdfParamsBatches[sp].clear();
+            _sdfHeightGridBatches[sp].clear();
+        }
+        _activeSdfPipelines.clear();
+        return;
+    }
     
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
+    u.invViewProj = glm::inverse(_viewProj);
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
     u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
@@ -1286,24 +1416,78 @@ void WebGpuRenderer::flushSdfDraws() {
             if (std::isfinite(d) && d > 0.0f) farDist = d;
         }
     }
-    u.limits = glm::vec4(farDist, 0.0f, 0.0f, 0.0f);
+    u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
 
     auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
-    for (auto& kv : _sdfBatches) {
-        const SdfPipeline* sp = kv.first;
-        const auto& instances = kv.second;
-        if (instances.empty()) continue;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto& instances = _sdfBatches[sp];
         
         const auto& params = _sdfParamsBatches[sp];
-        
-        auto pAlloc = bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
+
+        const size_t paramBytes = params.size() * sizeof(float);
+        auto& persistent = _persistentSdfParams[sp];
+
+        // Grow geometrically so a pipeline whose instance count fluctuates does
+        // not churn buffers. Buffer contents are compared byte-for-byte: NaNs,
+        // signed zero, and authored float bit patterns are all treated as data,
+        // not normalized by a semantic comparison.
+        const uint64_t requiredBytes = static_cast<uint64_t>(std::max<size_t>(paramBytes, sizeof(float)));
+        if (!persistent.buffer || persistent.capacityBytes < requiredBytes) {
+            uint64_t capacity = 256;
+            while (capacity < requiredBytes) capacity *= 2;
+
+            WGPUBufferDescriptor bd = {};
+            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+            bd.size = capacity;
+            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+            if (grown) {
+                if (persistent.buffer) {
+                    _persistentSdfParamVramBytes -= static_cast<size_t>(persistent.capacityBytes);
+                    wgpuBufferRelease(persistent.buffer);
+                }
+                persistent.buffer = grown;
+                persistent.capacityBytes = capacity;
+                persistent.mirror.clear();
+                _persistentSdfParamVramBytes += static_cast<size_t>(capacity);
+            }
+        }
+
+        bool paramsChanged = persistent.mirror.size() != params.size();
+        if (!paramsChanged && !params.empty()) {
+            paramsChanged = std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
+        }
+
+        // A failed grow leaves the previous buffer alive for accounting/later
+        // retry, but it is not large enough for this batch and must not be used.
+        const bool persistentUsable =
+            persistent.buffer && persistent.capacityBytes >= requiredBytes;
+        WGPUBuffer paramBuffer = persistentUsable ? persistent.buffer : nullptr;
+        uint64_t paramOffset = 0;
+        uint64_t paramBindingSize = requiredBytes;
+
+        if (paramBuffer) {
+            if (paramsChanged) {
+                wgpuQueueWriteBuffer(_queue, paramBuffer, 0, params.data(), paramBytes);
+                persistent.mirror = params;
+                mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
+            }
+        } else {
+            // Allocation failure must degrade to the already-correct frame ring,
+            // never to a missing parameter binding.
+            auto fallback = bufferPool().suballocateStorage(params.data(), paramBytes);
+            paramBuffer = fallback.buffer;
+            paramOffset = fallback.offset;
+            paramBindingSize = fallback.size;
+            mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
+        }
+
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: Globals and Parameters
         WGPUBindGroupEntry bge[2] = {};
         bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].buffer = pAlloc.buffer; bge[1].offset = pAlloc.offset; bge[1].size = pAlloc.size;
+        bge[1].binding = 1; bge[1].buffer = paramBuffer; bge[1].offset = paramOffset; bge[1].size = paramBindingSize;
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
@@ -1336,9 +1520,12 @@ void WebGpuRenderer::flushSdfDraws() {
         mutableFrameStats().drawCalls++;
         mutableFrameStats().sdfDrawCalls++;
     }
-    _sdfBatches.clear();
-    _sdfParamsBatches.clear();
-    _sdfHeightGridBatches.clear();
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        _sdfBatches[sp].clear();
+        _sdfParamsBatches[sp].clear();
+        _sdfHeightGridBatches[sp].clear();
+    }
+    _activeSdfPipelines.clear();
 }
 
 void WebGpuRenderer::endFrame() {
@@ -1372,7 +1559,8 @@ void WebGpuRenderer::endFrame() {
     _encoder = nullptr;
 
     auto& fs = mutableFrameStats();
-    fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes();
+    fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
+                            _persistentSdfParamVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());

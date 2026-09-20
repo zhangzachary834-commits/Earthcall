@@ -265,3 +265,16 @@ The hotfix restores the exact 39 board/piece/seat/HUD Object payloads from `ches
 
 This is a direct correction of my PR #222 migration judgment: calling the older Zone payloads “newer serialized forms” confused chronological recency with semantic authority. Zach's live visual witness exposed what the previous headless test did not.
 
+## 2026-09-19 — `go_app` → independent Go Zone boot
+
+**Authorized by Zach. Implemented by Gemini Spark.** Zach explicitly requested to make sure the Go zone is working in Earthcall and migrate the Go zone's files from the legacy conglomerates (both `.ecform` and `.ecmatter`) so Go no longer requires loading `saves/worlds/go_app.{json,ecform,ecmatter}`.
+
+The migration establishes the Zone-native closure for Go:
+- `saves/zones/Go/zone.json` carries all 385 beings (1 board, 361 intersections, 2 bowls, 10 supply stones, 2 player seats, 2 state beings `go_state` and `state.go`, plus the 7 category and First-Mover referent beings including `grok-4.6`), embeds the 5 face-textured Materials (`material.go.board` with its 19×19 Kaya wood grid and 9 star points, `go.black`, `go.white`, `go.bowl`, `go.intersection`), and names the 3 gameplay Laws via `lawRefs`.
+- The 3 authored Go Laws (`law-go-click`, `law-go-place-black`, `law-go-place-white`) are copied into their own stable `saves/laws/<id>/law.json` shared roots with their original author (`grok-4.6` on Zach's authority) and `object-clicked` triggers.
+- Scoped physical matter (`SaveChunk` `matter_go`) is built with `owner_identifier: "Go"` for all 376 physical entities, compiled to FlatBuffers `.ecmatter`, hashed (`snapshotId: 6e87a7ddd6ea386c`), and stored as `saves/zones/Go/zone.ecmatter` and `saves/zones/Go/zone.6e87a7ddd6ea386c.ecmatter`.
+- The duplicate name-twin directory `saves/zones/Go Game/` is retired and removed, permanently resolving the live collision where `applyMatterFlatBuffer` reported `entity 'object.go.board' matches 2 live objects across Zones (Go, Go Game)` and refused to hydrate matter.
+- `scripts/author_go.py` now emits the complete Zone-native Go closure by default and refreshes the legacy compatibility artifacts (`saves/worlds/go_app.{json,ecform,ecmatter}`).
+- `tests/law/go_zone_native_boot_test.cpp` constructs an isolated SaveRoot containing **only** `saves/zones/Go/` and `saves/laws/law-go-*/`, with zero `worlds/` directory and no `loadState()`. It proves boot discovery, Move to Zone activation, material hydration, 361 intersection placement, and real gameplay execution (Tengen click places black stone, toggles turn to white; next click places white stone, toggles back to black). 39/39 checks green.
+
+

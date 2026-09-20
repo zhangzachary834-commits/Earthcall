@@ -3,8 +3,14 @@
 #include "Singularity/Screen/AuthorableLight.hpp"
 
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
+#include <variant>
+
+#include <nlohmann/json.hpp>
 
 namespace {
 
@@ -75,6 +81,52 @@ int main() {
           "diffuse renderer radiance is color * intensity * authored diffuse coefficient");
     check(near3(Rendering::lightSpecularRadiance(state), glm::vec3(1.0f, 0.5f, 0.25f)),
           "specular renderer radiance is color * intensity * authored specular coefficient");
+
+    // Hydrate the actual authored Sun Zone spatial root rather than rebuilding
+    // a lookalike AST in test code. This witnesses the save -> FieldNode ->
+    // OntoMath path that EngineRender consumes.
+    {
+        namespace fs = std::filesystem;
+        const fs::path repoRoot = fs::path(__FILE__).parent_path().parent_path().parent_path();
+        std::ifstream in(repoRoot / "saves/zones/Sun/zone.json");
+        check(static_cast<bool>(in), "actual Sun Zone save is readable");
+
+        nlohmann::json sun;
+        if (in) in >> sun;
+        check(sun.contains("spatialRoot"), "Sun save carries a spatial root");
+
+        geom::FieldNode hydrated("sun.light-field.test");
+        if (sun.contains("spatialRoot")) hydrated.applyJson(sun["spatialRoot"]);
+
+        check(hydrated.field != nullptr, "Sun spatial root hydrates a scalar field");
+        check(hydrated.field &&
+              hydrated.field->mode == OntoMath::ScalarField::EvaluationMode::AST,
+              "Sun scalar field hydrates in AST mode");
+        check(hydrated.field && !hydrated.field->astDefinition.pieces.empty(),
+              "Sun scalar field hydrates an authored Piecewise");
+
+        Rendering::AuthorableLightState hydratedLight;
+        check(Rendering::readAuthorableLight(hydrated, hydratedLight) && hydratedLight.source,
+              "hydrated Sun spatial root retains authored light.source");
+
+        auto eval = [&](double x, double y, double z) -> double {
+            if (!hydrated.field) return -1.0;
+            std::map<std::string, PropertyValue> vars{
+                {"x", PropertyValue(x)},
+                {"y", PropertyValue(y)},
+                {"z", PropertyValue(z)}
+            };
+            const auto value = hydrated.field->astDefinition.evaluate(vars);
+            if (!value || !std::holds_alternative<double>(*value)) return -1.0;
+            return std::get<double>(*value);
+        };
+
+        const double nearSource = eval(0.0, 0.0, 0.0);
+        const double farther = eval(20.0, 0.0, 0.0);
+        check(nearSource > 0.99, "Sun radiance is approximately unit strength at its source");
+        check(farther >= 0.0 && farther < nearSource,
+              "Sun authored radiance decreases with distance on the CPU");
+    }
 
     // Wrongly typed authored state is visible but not silently guessed into a
     // different value. The resolver keeps its documented default.
