@@ -1252,10 +1252,17 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
 
         if (!memo->rangeProxy.hasPossibleZero) {
-            // Every terminal cell in the complete authored render domain carries
-            // a finite proof excluding zero. There is no surface to rasterize.
-            mutableFrameStats().sdfRangeProxyCulledDraws++;
-            return;
+            // Zero-free is not by itself permission to erase the draw. The
+            // existing marcher treats entry into negative space as an immediate
+            // hit, so an all-negative authored domain must fail open for parity.
+            // Only a root theorem f>0 everywhere is truly empty outside space.
+            const bool rootPositiveOutside =
+                !memo->rangeHierarchy.nodes.empty() &&
+                geom::rangeNodeProvesPositiveOutside(memo->rangeHierarchy.nodes.front());
+            if (rootPositiveOutside) {
+                mutableFrameStats().sdfRangeProxyCulledDraws++;
+                return;
+            }
         }
         if (kSdfRangeRasterTighteningVerified && memo->rangeProxy.tightened) {
             // Preserve a one-ULP outward raster guard at the derived boundary.
