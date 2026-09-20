@@ -250,9 +250,14 @@ bool AudioChannel::sound(Singular& subject, double frequency, double amplitude,
         return true;
     }
 
-    // Compatibility floor for old saves only. Unknown words do NOT become
-    // sine. A new timbre either resolves to authored structure or refuses.
-    if (!isLegacyWave(timbre)) {
+    // Compatibility floor for old saves only. It is reached ONLY when no
+    // authored structure exists. If the subject or named timbre being DID
+    // author acoustic.form but that structure is malformed/incomplete, that
+    // authored refusal is authoritative: silently dropping to a preset would
+    // replace the Person's mathematics with engine meaning.
+    const bool noAuthoredStructure =
+        authoredReason == "no authored acoustic.form resolved";
+    if (!noAuthoredStructure || !isLegacyWave(timbre)) {
         ++_unresolvedTimbres;
         reason = authoredReason.empty()
                      ? "unresolved authored timbre '" + timbre + "'"
