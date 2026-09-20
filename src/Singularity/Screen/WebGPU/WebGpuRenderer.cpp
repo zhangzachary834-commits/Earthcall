@@ -1240,7 +1240,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 packed.meta = glm::uvec4(
                     node.firstChild,
                     static_cast<uint32_t>(node.childCount),
-                    (node.boundFinite && node.rangeLo > 0.0f) ? 1u : 0u,
+                    geom::rangeNodeProvesPositiveOutside(node) ? 1u : 0u,
                     node.boundFinite ? 1u : 0u);
                 memo->rangeGpuNodes.push_back(packed);
             }
