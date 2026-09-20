@@ -37,7 +37,7 @@ Mathematical laws in reality often only apply under certain conditions (e.g., gr
    The field's properties (like `baseDensity` or `frequency`) are bound as dynamic uniform variables in the shader. The Law system can modify these properties via `PropertyPath` in real-time without recompiling the shader. This is ideal for continuous modulation.
 
 2. **Path B (AST Compilation):**
-   If the `Field` requires a custom mathematical equation authored by a Person via a Law, the `mode` is set to `AST`. The shader compiler (`SdfWgsl.cpp`) traverses the `OntoMath::Piecewise` tree and transpiles it into literal WGSL string operations. Changing the AST triggers a shader recompile, providing infinite mathematical flexibility.
+   If the `Field` requires a custom mathematical equation authored by a Person via a Law, the `mode` is set to `AST`. The shader compiler (`SdfWgsl.cpp`) traverses the `OntoMath::Piecewise` tree and transpiles its **structure** into WGSL while numeric coefficients/bounds become parameter-buffer slots. An operator/tree/variable edit therefore regenerates shader structure; a numeric edit that preserves the emitted structure refreshes the parameter block without recompiling WGSL. Authored radiance `rho(p)` uses this same split rather than a second lighting language.
 
 ## 4. Sub-Modules of OntoMath
 - `ScalarForm`: Multivariate signomial algebra and exact calculus.
