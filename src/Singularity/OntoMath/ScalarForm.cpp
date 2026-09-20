@@ -95,21 +95,22 @@ Interval TransFactor::evalRange(const Interval& x) const {
             };
             if (sweeps(peak)) mx = 1.0;
             if (sweeps(peak + M_PI)) mn = -1.0;
-            return Interval(static_cast<float>(mn), static_cast<float>(mx));
+            return Interval::outward(static_cast<float>(mn), static_cast<float>(mx));
         }
         case Kind::Exp: {
             if (!arg.bounded()) {
                 // exp is monotone, so an unbounded side stays unbounded on
                 // that side only -- and exp is never negative.
-                return Interval(std::isfinite(arg.lo)
-                                    ? static_cast<float>(std::exp(arg.lo))
-                                    : 0.0f,
-                                std::isfinite(arg.hi)
-                                    ? static_cast<float>(std::exp(arg.hi))
-                                    : std::numeric_limits<float>::infinity());
+                const float lo = std::isfinite(arg.lo)
+                                     ? static_cast<float>(std::exp(arg.lo))
+                                     : 0.0f;
+                const float hi = std::isfinite(arg.hi)
+                                     ? static_cast<float>(std::exp(arg.hi))
+                                     : std::numeric_limits<float>::infinity();
+                return Interval::outward(lo, hi);
             }
-            return Interval(static_cast<float>(std::exp(arg.lo)),
-                            static_cast<float>(std::exp(arg.hi)));
+            return Interval::outward(static_cast<float>(std::exp(arg.lo)),
+                                     static_cast<float>(std::exp(arg.hi)));
         }
         case Kind::Ln: {
             // ln is undefined at or below zero. Where part of the argument's
@@ -124,7 +125,7 @@ Interval TransFactor::evalRange(const Interval& x) const {
             const float hi = std::isfinite(arg.hi)
                                  ? static_cast<float>(std::log(arg.hi))
                                  : std::numeric_limits<float>::infinity();
-            return Interval(lo, hi);
+            return Interval::outward(lo, hi);
         }
     }
     return Interval::infinite();
@@ -202,8 +203,8 @@ Interval powRange(const Interval& x, double e) {
     const auto endpoints = [&](double a, double b) {
         const double pa = std::pow(a, e), pb = std::pow(b, e);
         if (!std::isfinite(pa) && !std::isfinite(pb)) return Interval::infinite();
-        return Interval(static_cast<float>(std::min(pa, pb)),
-                        static_cast<float>(std::max(pa, pb)));
+        return Interval::outward(static_cast<float>(std::min(pa, pb)),
+                                 static_cast<float>(std::max(pa, pb)));
     };
     const bool spansZero = x.lo <= 0.0f && x.hi >= 0.0f;
     if (!spansZero) {
@@ -223,7 +224,7 @@ Interval powRange(const Interval& x, double e) {
     if (n % 2 == 0) {
         const double m = std::max(std::pow(std::fabs(static_cast<double>(x.lo)), e),
                                   std::pow(std::fabs(static_cast<double>(x.hi)), e));
-        return Interval(0.0f, static_cast<float>(m));
+        return Interval(0.0f, Interval::roundUp(static_cast<float>(m)));
     }
     return endpoints(x.lo, x.hi);
 }
