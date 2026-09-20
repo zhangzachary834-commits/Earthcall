@@ -1068,7 +1068,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // merely the parameter buffer. Never infer structure from pointer identity.
     if (_radianceLayoutRevision != radianceRevision() ||
         _radianceLayoutExprPtr != radianceExpr()) {
-        _radianceLayout = sdfwgsl::inspectScalarExpression(radianceExpr());
+        sdfwgsl::ScalarExpressionLayout nextLayout =
+            sdfwgsl::inspectScalarExpression(radianceExpr());
+        const bool structureChanged =
+            _radianceLayoutRevision == 0xffffffffffffffffULL ||
+            nextLayout.ok != _radianceLayout.ok ||
+            nextLayout.structure != _radianceLayout.structure;
+        if (structureChanged) ++_radianceStructureRevision;
+        _radianceLayout = std::move(nextLayout);
         _radianceLayoutRevision = radianceRevision();
         _radianceLayoutExprPtr = radianceExpr();
     }
@@ -1089,7 +1096,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         memo = &_programCache[memoId];
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
-            memo->radianceStructure == radianceLayout.structure &&
+            memo->radianceStructureRevision == _radianceStructureRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             // We have a structural hit unless parameter recollection proves that
             // the claimed structure identity is stale. Start on the cheap path;
@@ -1151,7 +1158,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
             memo->radianceRevision = radianceRevision();
-            memo->radianceStructure = radianceLayout.structure;
+            memo->radianceStructureRevision = _radianceStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->radianceExprPtr = radianceExpr();
             memo->prog = std::move(localProg);
