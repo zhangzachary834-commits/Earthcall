@@ -181,7 +181,9 @@ int main() {
                              8, 9, 10, 11.0, 12.0,
                              /*rangeBuilds=*/13,
                              /*rangeProxyDraws=*/14,
-                             /*rangeProxyCulledDraws=*/15);
+                             /*rangeProxyCulledDraws=*/15,
+                             /*rangeTraversalDraws=*/16,
+                             /*rangeNodeBytesUploaded=*/17.0);
         const struct {
             const char* name;
             int expected;
@@ -189,6 +191,8 @@ int main() {
             {"sdfRangeHierarchyBuilds", 13},
             {"sdfRangeProxyDraws", 14},
             {"sdfRangeProxyCulledDraws", 15},
+            {"sdfRangeTraversalDraws", 16},
+            {"sdfRangeNodeBytesUploaded", 17},
         };
         for (const auto& counter : counters) {
             PropertyValue value;
