@@ -5,6 +5,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -789,22 +790,19 @@ nlohmann::json ObjectConcept::toJson() const {
     for (const auto& m : _mappings) mappingsJson.push_back(m.toJson());
     nlohmann::json relationsJson = nlohmann::json::array();
     for (const auto& t : _relationTemplates) relationsJson.push_back(t.toJson());
-    nlohmann::json authored = nlohmann::json::object();
-    for (const auto& entry : dynamicProperties()) {
-        authored[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
-    }
     nlohmann::json attrs = nlohmann::json::object();
     for (const auto& entry : getAttributes()) attrs[entry.first] = entry.second;
-    return nlohmann::json{
+    nlohmann::json out{
         {"id", getIdentifier()},
         {"name", _name},
-        {"authoredProperties", authored},
         {"attributes", attrs},
         {"members", membersJson},
         {"mappings", mappingsJson},
         {"relationTemplates", relationsJson},
         {"provenance", _provenance.toJson()}
     };
+    Singularity::Storage::writeSingularProperties(out, *this);
+    return out;
 }
 
 std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) {
@@ -814,15 +812,17 @@ std::shared_ptr<ObjectConcept> ObjectConcept::fromJson(const nlohmann::json& j) 
     if (j.contains("id")) {
         concept->setConceptId(j["id"].get<std::string>());
     }
-    // The concept's own authored state — the properties law text reads off
-    // anything this concept produces. A property that vanishes on save was
-    // never granted.
-    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
-        for (auto it = j["authoredProperties"].begin();
-             it != j["authoredProperties"].end(); ++it) {
-            concept->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
-        }
-    }
+    // Base Singular state uses the same preserve-first envelope as ordinary
+    // Objects. Identity-valued authored properties may defer until the whole
+    // ConceptRegistry/world exists.
+    Singularity::Storage::readSingularProperties(
+        j, *concept, [concept](const std::string& id) -> Singular* {
+            if (id == concept->getIdentifier()) return concept.get();
+            for (Singular* being : Universe::instance().beings()) {
+                if (being && being->getIdentifier() == id) return being;
+            }
+            return nullptr;
+        });
     if (j.contains("attributes") && j["attributes"].is_object()) {
         for (auto it = j["attributes"].begin(); it != j["attributes"].end(); ++it) {
             if (it.value().is_string()) {
@@ -995,5 +995,22 @@ void ConceptRegistry::loadFromJson(const nlohmann::json& j) {
     if (!j.contains("concepts")) return;
     for (const auto& cj : j["concepts"]) {
         add(ObjectConcept::fromJson(cj));
+    }
+
+    // Concepts may name concepts appearing later in the same file. Resolve
+    // only after the whole registry exists; external world references remain
+    // deferred until a broader resolver can see them.
+    const auto resolveConcept = [&](const std::string& id) -> Singular* {
+        if (auto concept = find(id)) return concept.get();
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == id) return being;
+        }
+        return nullptr;
+    };
+    for (const auto& concept : _concepts) {
+        if (concept) {
+            Singularity::Storage::resolveDeferredSingularProperties(
+                *concept, resolveConcept);
+        }
     }
 }
