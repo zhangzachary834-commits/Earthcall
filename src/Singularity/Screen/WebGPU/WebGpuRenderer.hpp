@@ -250,6 +250,7 @@ private:
         // Packed once at the same revision boundary as rangeHierarchy. Child
         // indices remain memo-local here and are rebased only while batching.
         std::vector<SdfRangeGpuNode> rangeGpuNodes;
+        bool rangeHasPositiveSkip = false;
         bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
