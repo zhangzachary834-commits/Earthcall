@@ -181,7 +181,10 @@ int main() {
         }
 
         screen.updateMetrics(1, 2, 3.0, 4.0, 5, 6, 7,
-                             8, 9, 10, 11.0, 12.0,
+                             8, 9, 10,
+                             /*sdfProgramRefusals=*/16,
+                             /*sdfLastProgramRefusal=*/"Raycast refused",
+                             11.0, 12.0,
                              /*rangeBuilds=*/13,
                              /*rangeProxyDraws=*/14,
                              /*rangeProxyCulledDraws=*/15);
@@ -208,6 +211,38 @@ int main() {
                 PropertyPath::PathResult::ReadOnly) {
                 fail(counter.name, "Channel — Screen",
                      "derived renderer metric must remain read-only");
+            }
+        }
+
+        {
+            PropertyValue value;
+            const PropertyPath countPath = PropertyPath::parse("sdfProgramRefusals");
+            const auto res = countPath.getValue(screen, value);
+            double number = 0.0;
+            if (res != PropertyPath::PathResult::Ok ||
+                !propertyValueToNumber(value, number) ||
+                static_cast<int>(number) != 16) {
+                fail("sdfProgramRefusals", "Channel — Screen",
+                     "must report explicit renderer/compiler refusal count");
+            }
+            if (countPath.setValue(screen, PropertyValue(0)) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail("sdfProgramRefusals", "Channel — Screen",
+                     "renderer refusal count must remain derived/read-only");
+            }
+
+            const PropertyPath reasonPath = PropertyPath::parse("sdfLastProgramRefusal");
+            const auto reasonRes = reasonPath.getValue(screen, value);
+            if (reasonRes != PropertyPath::PathResult::Ok ||
+                !std::holds_alternative<std::string>(value) ||
+                std::get<std::string>(value) != "Raycast refused") {
+                fail("sdfLastProgramRefusal", "Channel — Screen",
+                     "must expose the latest renderer/compiler refusal reason");
+            }
+            if (reasonPath.setValue(screen, PropertyValue(std::string("hide it"))) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail("sdfLastProgramRefusal", "Channel — Screen",
+                     "renderer refusal reason must remain derived/read-only");
             }
         }
     }
