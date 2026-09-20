@@ -25,6 +25,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstdio>
+#include <memory>
 #include <vector>
 
 extern MaterialManager materials;   // global Material beings (globals.cpp)
@@ -38,6 +39,13 @@ void onMap(WGPUMapAsyncStatus s, WGPUStringView, void* u, void*) {
     auto* r = static_cast<MapR*>(u);
     r->ok = (s == WGPUMapAsyncStatus_Success);
     r->done = true;
+}
+
+std::shared_ptr<OntoMath::MathNode> scalarNode(double value) {
+    auto node = std::make_shared<OntoMath::MathNode>();
+    node->op = OntoMath::MathNode::Op::ScalarLeaf;
+    node->scalarForm.terms.push_back(OntoMath::Term(value));
+    return node;
 }
 
 } // namespace
@@ -231,6 +239,97 @@ int main() {
            "corner is lit — the bounding box was painted instead of the sphere traced");
     assert(currentRenderer().rendersImplicitExactly() &&
            "WebGPU should report exact implicit rendering");
+
+    // --- Authored radiance live-edit witness ---------------------------------
+    // This is a REAL Object -> drawFieldModel -> drawImplicit path, not a direct
+    // shader fixture. Numeric edits to rho must change pixels while reusing the
+    // compiled WGSL; operator-tree edits must recompile; unsupported authored
+    // math must refuse visibly rather than leave an old shader answer on screen.
+    {
+        auto radiantMat = materials.create("webgpu_radiance_witness");
+        radiantMat->baseColor = glm::vec3(1.0f);
+        radiantMat->ambient = 0.0f;   // isolate rho on diffuse light
+        radiantMat->diffuse = 1.0f;
+        radiantMat->specular = 0.0f;
+
+        Object radiant;
+        radiant.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        radiant.setMaterialId("material.webgpu_radiance_witness");
+
+        auto rhoLeaf = scalarNode(1.0);
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoLeaf);
+
+        r.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                   glm::vec3(0.2f), glm::vec3(0.8f), glm::vec3(1.0f));
+        r.setLightingEnabled(true);
+        r.setRadianceField(&rho, 1001);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char rhoBright[4];
+        readCentre(rhoBright);
+        const Renderer::FrameStats firstStats = renderer.frameStats();
+        assert(firstStats.sdfProgramCompiles == 1 &&
+               "first authored-radiance draw must compile its SDF program");
+
+        // VALUE ONLY: same ScalarLeaf structure, new coefficient.
+        rhoLeaf->scalarForm.terms[0].coefficient = 0.15;
+        r.setRadianceField(&rho, 1002);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char rhoDim[4];
+        readCentre(rhoDim);
+        const Renderer::FrameStats valueStats = renderer.frameStats();
+
+        std::printf("radiance live edit centre bright=%d dim=%d compiles=%u cacheHits=%u\n",
+                    rhoBright[0], rhoDim[0], valueStats.sdfProgramCompiles,
+                    valueStats.sdfProgramCacheHits);
+        assert(rhoBright[0] > rhoDim[0] + 80 &&
+               "numeric authored rho edit did not change rendered radiance");
+        assert(valueStats.sdfProgramCompiles == 0 &&
+               "numeric authored rho edit recompiled WGSL instead of refreshing parameters");
+        assert(valueStats.sdfProgramCacheHits >= 1 &&
+               "numeric authored rho edit did not reuse the memoized SDF program");
+
+        // STRUCTURE: ScalarLeaf -> Add(ScalarLeaf, ScalarLeaf).
+        auto add = std::make_shared<OntoMath::MathNode>();
+        add->op = OntoMath::MathNode::Op::Add;
+        add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
+        add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
+        rho.pieces[0].mathNode = add;
+        r.setRadianceField(&rho, 1003);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        const Renderer::FrameStats structureStats = renderer.frameStats();
+        assert(structureStats.sdfProgramCompiles == 1 &&
+               "radiance operator-tree edit failed to regenerate WGSL structure");
+
+        // REFUSAL: Raycast is deliberately unsupported by the GPU compiler.
+        auto unsupported = std::make_shared<OntoMath::MathNode>();
+        unsupported->op = OntoMath::MathNode::Op::Raycast;
+        rho.pieces[0].mathNode = unsupported;
+        r.setRadianceField(&rho, 1004);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char refusedPixel[4];
+        readCentre(refusedPixel);
+        const Renderer::FrameStats refusalStats = renderer.frameStats();
+        assert(refusalStats.sdfProgramRefusals >= 1 &&
+               "unsupported authored rho did not surface an explicit renderer refusal");
+        assert(refusalStats.sdfLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "renderer refusal did not name the unsupported authored operation");
+        assert(refusedPixel[0] < 12 && refusedPixel[1] < 12 && refusedPixel[2] < 12 &&
+               "refused authored rho left stale rendered radiance on screen");
+
+        r.setRadianceField(nullptr, 0);
+    }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
     // must drop it straight back to the six-face path (remediation plan Phase
