@@ -33,6 +33,8 @@ namespace Screen {
 //   - @screen-channel.bufferSuballocations: number of suballocations served from the buffer pool
 //   - @screen-channel.pipelineSwitches: number of pipeline state transitions
 //   - @screen-channel.cachedMeshesCount: number of persistent VBO meshes retained in VRAM
+//   - @screen-channel.sdfProgramRefusals: SDF/WGSL draws refused this frame
+//   - @screen-channel.sdfLastProgramRefusal: latest legible refusal reason
 class ScreenChannel : public Law {
 public:
     ScreenChannel();
@@ -114,8 +116,8 @@ private:
     void buildProperties() override;
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
-    // read anything, but "writable unless genuinely derived" — these seven are
-    // the definition of derived (the renderer computes them; nothing upstream
+    // read anything, but "writable unless genuinely derived" — these are
+    // definitionally derived (the renderer computes them; nothing upstream
     // of it should get to override what actually happened last frame). Each is
     // registered as a ComputedProperty with a null setter, which resolves to a
     // refused write rather than a value a Law could quietly clobber and have
