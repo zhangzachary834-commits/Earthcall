@@ -148,7 +148,9 @@ jobs:
             channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
-            webgpu_sdf_color_expr_test
+            webgpu_sdf_color_expr_test \
+            webgpu_perlin_exact_gradient_test \
+            webgpu_sdf_range_perf_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -168,6 +170,13 @@ jobs:
           ./build/webgpu_sdf_parity_test
           ./build/webgpu_sdf_distance_test
           ./build/webgpu_sdf_color_expr_test
+          ./build/webgpu_perlin_exact_gradient_test
+
+      - name: Measure native authored-Perlin range traversal A/B
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ./build/webgpu_sdf_range_perf_test
 
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
