@@ -5,11 +5,13 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <iostream>
 #include <memory>
 #include <set>
 #include <tuple>
+#include <unordered_set>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
@@ -25,6 +27,7 @@ void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
         const std::string symbol = item.value("symbol", std::string{});
         if (id.empty() || symbol.empty()) continue;
         auto lexeme = language.intern(symbol, id);
+        Singularity::Storage::readSingularProperties(item, *lexeme);
         zone.addToFormation(lexeme.get());
     }
 }
@@ -39,6 +42,9 @@ Singular* resolveZoneEndpoint(Zone& zone, const std::string& id) {
     if (Singular* member = zone.formation().findMemberByIdentifier(id)) return member;
     for (const auto& obj : zone.getOwnedObjects()) {
         if (obj && obj->getIdentifier() == id) return obj.get();
+    }
+    for (const auto& relation : zone.formation().relations().getAll()) {
+        if (relation && relation->getIdentifier() == id) return relation.get();
     }
     if (auto cat = categories.get(id)) return cat.get();
     if (auto mat = materials.get(id)) return mat.get();
@@ -90,6 +96,33 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
             existing.insert(key);
         }
     }
+
+    // Second hydration phase: every root is now present, so identity-valued
+    // Properties that were preserve-first deferred during codec hydration can
+    // bind through the SAME resolver the Relation graph trusts.
+    auto resolve = [&](const std::string& id) -> Singular* {
+        return resolveZoneEndpoint(zone, id);
+    };
+    std::unordered_set<Singular*> rebound;
+    auto bindDeferred = [&](Singular* being) {
+        if (!being || !rebound.insert(being).second) return;
+        Singularity::Storage::resolveDeferredSingularProperties(*being, resolve);
+    };
+    bindDeferred(&zone);
+    bindDeferred(zone.spatialRoot());
+    for (const auto& object : zone.getOwnedObjects()) {
+        bindDeferred(object.get());
+        if (object) {
+            if (auto material = materials.get(object->materialId())) {
+                bindDeferred(material.get());
+            }
+        }
+    }
+    for (Singular* member : zone.formation().getMembers()) bindDeferred(member);
+    for (const auto& relation : zone.formation().relations().getAll()) {
+        bindDeferred(relation.get());
+    }
+    for (Singular* being : Universe::instance().beings()) bindDeferred(being);
 
     if (refused == 0) return;
     std::cout << "⚠️  Zone '" << zone.name() << "': " << refused
