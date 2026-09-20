@@ -295,6 +295,8 @@ int main() {
                "numeric authored rho edit recompiled WGSL instead of refreshing parameters");
         assert(valueStats.sdfProgramCacheHits >= 1 &&
                "numeric authored rho edit did not reuse the memoized SDF program");
+        assert(valueStats.sdfParameterBytesUploaded > 0 &&
+               "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
         // STRUCTURE: ScalarLeaf -> Add(ScalarLeaf, ScalarLeaf).
         auto add = std::make_shared<OntoMath::MathNode>();
