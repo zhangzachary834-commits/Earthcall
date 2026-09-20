@@ -1831,14 +1831,14 @@ hud_bg = {
     "objectID": "hud.logos.dock",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 195.0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 235.0],
     "shape": {
         "kind": 12,
         "params": {
             "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
             "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
             "ovoidAsym": 0.0, "fillet": 0.0,
-            "width2D": 360.0, "height2D": 195.0
+            "width2D": 360.0, "height2D": 235.0
         }
     },
     "x2D": 20.0,
@@ -1860,6 +1860,7 @@ objects.append(make_button2d("hud.btn.pneuma", "BREATHE PNEUMA", 35, 122, 155, 3
 objects.append(make_button2d("hud.btn.lux", "FIAT LUX", 205, 122, 155, 32, [0.92, 0.78, 0.25]))
 objects.append(make_button2d("hud.btn.chord", "SOUND CANON", 35, 160, 155, 32, [0.92, 0.55, 0.15]))
 objects.append(make_button2d("hud.btn.season", "CYCLE SEASON", 205, 160, 155, 32, [0.75, 0.25, 0.85]))
+objects.append(make_button2d("hud.btn.aurora", "CELESTIAL SKY AURORA", 35, 198, 325, 30, [0.15, 0.82, 0.72]))
 
 # ==============================================================================
 # 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE (ULTRA-DETAILED)
@@ -2917,6 +2918,53 @@ materials = [
             ]
         )
     },
+    # --- ONTOMATH CELESTIAL SKY AURORA LIGHT FIELDS ---
+    {
+        "name": "material.logos.colorfield.lightshow.sky_aurora_canopy",
+        "textureResolution": 256, "ambient": 0.65, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.92, 0.82], "roughness": 0.06, "metallic": 0.92,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.45, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.08}, {"kind": 0, "var": "x", "scale": 0.06}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.07}]}
+            ],
+            [
+                {"c": 0.88, "factors": {}},
+                {"c": 0.28, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.10}, {"kind": 1, "var": "z", "scale": 0.08}]},
+                {"c": 0.16, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.12}]}
+            ],
+            [
+                {"c": 0.82, "factors": {}},
+                {"c": 0.32, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.09}, {"kind": 1, "var": "x", "scale": 0.07}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.10}]}
+            ]
+        )
+    },
+    {
+        "name": "material.logos.colorfield.lightshow.sky_aurora_curtains",
+        "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.82, 0.42, 0.98], "roughness": 0.08, "metallic": 0.90,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.82, "factors": {}},
+                {"c": 0.28, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.06}, {"kind": 0, "var": "y", "scale": 0.09}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.08}]}
+            ],
+            [
+                {"c": 0.52, "factors": {}},
+                {"c": 0.38, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.07}, {"kind": 1, "var": "z", "scale": 0.10}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.12}]}
+            ],
+            [
+                {"c": 0.92, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.07}, {"kind": 0, "var": "x", "scale": 0.09}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.11}]}
+            ]
+        )
+    },
     # --- ONTOMATH ADVANCED BOUNDED COLOR FIELDS ---
     {
         "name": "logos.bounds.stratified",
@@ -3313,6 +3361,75 @@ objects.append(make_field(
         "isLightShow": {"t": "bool", "v": True},
         "light.intensity": {"t": "float", "v": 5.5},
         "description": {"t": "string", "v": "Aquatic bioluminescent well-spring mist with seafoam-cyan OntoMath color field"}
+    }
+))
+
+# 5. Colossal Celestial Sky Aurora Borealis (Spanning the Heavens above Cathedral)
+sky_aurora_arc_major = sdf_leaf(6, [64.0, 5.2, 0.0]) # Colossal 128m-diameter main wave arc
+sky_aurora_arc_north = sdf_leaf(6, [82.0, 4.2, 0.0], offset=[0.0, 4.0, 32.0]) # Secondary sweeping crest to north
+sky_aurora_mantle = sdf_leaf(3, [70.0, 10.0, 35.0], offset=[0.0, 2.0, -12.0]) # Billowing radiant mantle
+sky_aurora_zenith_ring = sdf_leaf(6, [36.0, 3.2, 0.0], offset=[0.0, 8.0, 0.0]) # Zenith coronal ring
+sky_aurora_core = sdf_leaf(0, [26.0, 7.5, 26.0], offset=[0.0, 6.0, 0.0]) # Zenith radiant core orb
+
+sky_aurora_tree = sdf_binary(
+    5,
+    sky_aurora_arc_major,
+    sdf_binary(
+        5,
+        sky_aurora_arc_north,
+        sdf_binary(
+            5,
+            sky_aurora_mantle,
+            sdf_binary(5, sky_aurora_zenith_ring, sky_aurora_core, 0.35),
+            0.40
+        ),
+        0.42
+    ),
+    0.45
+)
+
+objects.append(make_field(
+    "cathedral.lightshow.giant_sky_aurora", "Colossal Celestial Sky Aurora Borealis",
+    [0.0, 68.0, 10.0], sky_aurora_tree, [120.0, 26.0, 140.0],
+    "material.logos.colorfield.lightshow.sky_aurora_canopy", [0.35, 0.98, 0.82],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 9.5},
+        "light.color": {"t": "vec3", "x": 0.35, "y": 0.98, "z": 0.82},
+        "light.ambient": {"t": "float", "v": 0.50},
+        "light.diffuse": {"t": "float", "v": 0.92},
+        "light.specular": {"t": "float", "v": 1.0},
+        "description": {"t": "string", "v": "Colossal 240-meter celestial aurora borealis canopy spanning the sky with multi-octave OntoMath spectral radiance field"}
+    }
+))
+
+# 6. High Stratospheric Aurora Borealis Curtains (Cascading Drapes of Light)
+curtain_fold_west = sdf_leaf(3, [24.0, 12.0, 70.0], offset=[-48.0, -2.0, 0.0])
+curtain_fold_east = sdf_leaf(3, [24.0, 12.0, 70.0], offset=[48.0, -2.0, 0.0])
+curtain_corona_crown = sdf_leaf(6, [52.0, 2.8, 0.0], offset=[0.0, 5.0, 0.0])
+sky_curtains_tree = sdf_binary(
+    5,
+    curtain_corona_crown,
+    sdf_binary(5, curtain_fold_west, curtain_fold_east, 0.38),
+    0.40
+)
+
+objects.append(make_field(
+    "cathedral.lightshow.sky_aurora_curtains", "High Stratospheric Aurora Borealis Curtains",
+    [0.0, 80.0, 20.0], sky_curtains_tree, [105.0, 22.0, 125.0],
+    "material.logos.colorfield.lightshow.sky_aurora_curtains", [0.85, 0.45, 1.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.0},
+        "light.color": {"t": "vec3", "x": 0.82, "y": 0.42, "z": 0.98},
+        "light.ambient": {"t": "float", "v": 0.38},
+        "light.diffuse": {"t": "float", "v": 0.88},
+        "light.specular": {"t": "float", "v": 0.95},
+        "description": {"t": "string", "v": "Cascading high-stratospheric draperies of violet, magenta, and celestial emerald aurora curtains"}
     }
 ))
 
@@ -4183,7 +4300,8 @@ zone_doc = {
         "law-logos-covenant-weave",
         "law-logos-unison",
         "law-logos-season-toggle",
-        "law-logos-pillar-pulse"
+        "law-logos-pillar-pulse",
+        "law-logos-sky-aurora"
     ]
 }
 
@@ -4345,19 +4463,41 @@ world_doc = {
                     ]
                 },
                 "provenance": [{"entityA": "law-logos-season-toggle", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
+            },
+            {
+                "id": "law-logos-sky-aurora",
+                "name": "Logos: Radiate Celestial Sky Aurora",
+                "enabled": True, "authority": 0, "activation": 0, "scope": 1, "drives": False, "retrigger": 0, "conditionMode": "any",
+                "authors": ["Zach"], "conditionSubjects": [], "targets": [], "applicationLog": [],
+                "conditionModel": {
+                    "kind": 4,
+                    "children": [{"kind": 8, "otherId": "hud.btn.aurora"}]
+                },
+                "actionModel": {
+                    "kind": 5,
+                    "children": [
+                        {"kind": 0, "path": "@cathedral.lightshow.giant_sky_aurora.light.intensity", "operand": {"t": "float", "v": 14.0}},
+                        {"kind": 0, "path": "@cathedral.lightshow.sky_aurora_curtains.light.intensity", "operand": {"t": "float", "v": 11.0}},
+                        {"kind": 0, "path": "@hud.logos.telemetry.season.label2D", "operand": {"t": "string", "v": "CELESTIAL SKY: AURORA BOREALIS (TRANSCENDENT GLORY)"}},
+                        {"kind": 18, "path": "acoustic.frequency", "input": "acoustic.amplitude", "propertyName": "sine"}
+                    ]
+                },
+                "provenance": [{"entityA": "law-logos-sky-aurora", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
             }
         ],
         "triggers": {
             "law-logos-breath": ["object-clicked"],
             "law-logos-fiat-lux": ["object-clicked"],
             "law-logos-celestial-chord": ["object-clicked"],
-            "law-logos-season-toggle": ["object-clicked"]
+            "law-logos-season-toggle": ["object-clicked"],
+            "law-logos-sky-aurora": ["object-clicked"]
         },
         "formationMembers": [
             "law-logos-breath",
             "law-logos-fiat-lux",
             "law-logos-celestial-chord",
-            "law-logos-season-toggle"
+            "law-logos-season-toggle",
+            "law-logos-sky-aurora"
         ],
         "rete": {"alphaNodes": [], "betaNodes": [], "facts": [], "agenda": []}
     }
