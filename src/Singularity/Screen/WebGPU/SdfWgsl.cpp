@@ -375,7 +375,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
     if (var == OntoMath::kTimeVar) {
-        if (e.bindTime) return "u.time.x";
+        if (e.bindTime) return "u.radianceTime.x";
         e.refuse("a field expression names temporal variable 't', but this shader "
                  "expression context does not bind the temporal coordinate");
         return "0.0";
@@ -964,9 +964,9 @@ struct RU {
     // z = viewport height in pixels.
     // w = authorable space distortion factor (e.g. Far Lands Zone).
     limits:      vec4<f32>,
-    // x = admitted temporal coordinate; y = its admitted delta.
-    // z/w reserved. Authored rho(p,t) reads t from time.x.
-    time:        vec4<f32>,
+    // x = admitted radiance-source temporal coordinate; y = its delta.
+    // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
+    radianceTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
