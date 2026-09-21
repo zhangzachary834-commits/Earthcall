@@ -599,6 +599,90 @@ int main() {
               "source 1 temporal mathematics reads source 1's relative Timeline coordinate");
     }
 
+
+    // ---------------------------------------------------------------------
+    // 9. Volumetric V0b: density is a separate authored scalar channel.
+    //    Its structure/value invalidation and Timeline are independent from rho.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto rhoNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.35).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        auto densityBinding =
+            Rendering::VolumeDensityBinding::authored(&density, 5001, 0.25, 0.01);
+
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr,
+                             nullptr, &densityBinding);
+        check(before.ok, "authored V0 density WGSL compilation succeeds");
+        check(before.wgsl.find("fn volumeDensityEval") != std::string::npos,
+              "V0 compiler emits a semantically named density evaluator");
+        check(before.wgsl.find("fn lightRadiance") != std::string::npos,
+              "source rho remains a separate emitted function beside density");
+
+        // VALUE ONLY: same ScalarLeaf topology, different numeric density.
+        densityNode->scalarForm.terms[0].coefficient = 0.7;
+        densityBinding.revision = 5002;
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr,
+                                   nullptr, &densityBinding);
+        const auto valueEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr,
+                             nullptr, &densityBinding);
+        check(refreshed.ok && valueEdited.ok,
+              "numeric density parameter refresh succeeds");
+        check(before.wgsl == valueEdited.wgsl,
+              "numeric density edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, valueEdited.params),
+              "numeric density edit changes packed authored parameters");
+        check(sameFloats(refreshed.values, valueEdited.params),
+              "density parameter recollection matches a full compile exactly");
+
+        // STRUCTURE: D becomes Add(number, number).
+        auto addDensity = std::make_shared<OntoMath::MathNode>();
+        addDensity->op = OntoMath::MathNode::Op::Add;
+        addDensity->children.push_back(number(0.3));
+        addDensity->children.push_back(number(0.4));
+        density.pieces[0].mathNode = addDensity;
+        densityBinding.revision = 5003;
+        const auto structureEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr,
+                             nullptr, &densityBinding);
+        check(structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural density edit changes generated WGSL");
+
+        // NONE: an explicit no-medium resolution must not fall through into a
+        // legacy generic field even when a FieldNode is supplied.
+        geom::FieldNode legacyCandidate("radiant-but-no-medium");
+        legacyCandidate.field->mode = OntoMath::ScalarField::EvaluationMode::AST;
+        legacyCandidate.field->astDefinition = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(9.0).release()));
+        auto noneBinding = Rendering::VolumeDensityBinding::none();
+        const auto noneProgram =
+            sdfwgsl::compile(sphere, &legacyCandidate, nullptr, &rho, nullptr, nullptr,
+                             nullptr, &noneBinding);
+        check(noneProgram.ok &&
+                  noneProgram.wgsl.find("Legacy generic field density") == std::string::npos,
+              "explicit no-medium binding suppresses legacy field reinterpretation");
+
+        // TIME: D=t must read the density Timeline, not the radiance Timeline.
+        auto densityTime = std::make_shared<OntoMath::MathNode>();
+        densityTime->op = OntoMath::MathNode::Op::ValueLeaf;
+        densityTime->variableName = OntoMath::kTimeVar;
+        density.pieces[0].mathNode = densityTime;
+        densityBinding.revision = 5004;
+        densityBinding.temporalCoordinate = 2.5;
+        const auto timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr,
+                             nullptr, &densityBinding);
+        check(timed.ok && timed.wgsl.find("u.volumeTime.x") != std::string::npos,
+              "D(p,t) reads its independent participating-medium Timeline");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
