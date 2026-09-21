@@ -185,6 +185,30 @@ SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
                                       uint8_t maxDepth = 6,
                                       uint32_t maxNodes = 65536);
 
+// Incremental refresh for an already-built hierarchy whose authored SDF
+// structure and extent are unchanged but whose value premises changed.
+//
+// Existing subdivision blocks are retained and reused. A previously-terminal
+// cell allocates children only if its refreshed interval becomes ambiguous;
+// a cell that becomes proved-empty or unknown may temporarily collapse while
+// retaining its old child block for a later reactivation. This makes proof
+// maintenance monotone in allocated topology instead of rebuilding the octree
+// from scratch on every value revision.
+//
+// Returns false if the supplied hierarchy/extent is incompatible or malformed;
+// callers must then fail open to buildRangeHierarchy().
+struct SdfRangeRefreshStats {
+    uint32_t evaluatedNodes = 0;
+    uint32_t reusedChildBlocks = 0;
+    uint32_t allocatedChildBlocks = 0;
+};
+bool refreshRangeHierarchy(SdfRangeHierarchy& hierarchy,
+                           const SdfNode& n,
+                           const glm::vec3& extent,
+                           uint8_t maxDepth = 6,
+                           uint32_t maxNodes = 65536,
+                           SdfRangeRefreshStats* stats = nullptr);
+
 // Conservative centred proxy for a hierarchy. Earthcall's current implicit
 // draw contract rasterizes a cube centred on the Object origin, so this first
 // activation rung unions all terminal cells that MAY contain zero, then expands
