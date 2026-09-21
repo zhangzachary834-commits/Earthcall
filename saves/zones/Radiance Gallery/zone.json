@@ -1,0 +1,8262 @@
+{
+  "identifier": "Radiance Gallery",
+  "name": "Radiance Gallery",
+  "owner": "Zach",
+  "parentZone": "",
+  "scope": "Local",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "deletable": {
+    "Zach": true
+  },
+  "spatialRoot": {
+    "id": "radiance-gallery.light-field",
+    "origin": [
+      0.0,
+      12.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "authoredProperties": {
+      "displayName": {
+        "t": "string",
+        "v": "Radiance Gallery Unified Light Field"
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.enabled": {
+        "t": "bool",
+        "v": true
+      },
+      "light.color": {
+        "t": "vec3",
+        "x": 1.0,
+        "y": 0.98,
+        "z": 0.95
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.ambient": {
+        "t": "float",
+        "v": 0.2
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.85
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.attenuation.constant": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.attenuation.linear": {
+        "t": "float",
+        "v": 0.0
+      },
+      "light.attenuation.quadratic": {
+        "t": "float",
+        "v": 0.0
+      }
+    },
+    "field": {
+      "mode": "AST",
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "amplitude": 1.0,
+      "astDefinition": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": true,
+            "hi": -30.0,
+            "includeHi": true,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 1.05,
+                    "factors": {}
+                  },
+                  {
+                    "c": 0.12,
+                    "factors": {},
+                    "trans": [
+                      {
+                        "kind": 1,
+                        "var": "z",
+                        "scale": 0.3,
+                        "shift": 0.0
+                      }
+                    ]
+                  },
+                  {
+                    "c": 0.08,
+                    "factors": {},
+                    "trans": [
+                      {
+                        "kind": 0,
+                        "var": "x",
+                        "scale": 0.3,
+                        "shift": 12.0
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "hasLo": true,
+            "lo": -30.0,
+            "includeLo": false,
+            "hasHi": true,
+            "hi": -10.0,
+            "includeHi": true,
+            "mathNode": {
+              "op": 23,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 4.2,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 221.6125,
+                        "factors": {}
+                      },
+                      {
+                        "c": 18.0,
+                        "factors": {
+                          "x": 1.0
+                        }
+                      },
+                      {
+                        "c": 8.55,
+                        "factors": {
+                          "y": 1.0
+                        }
+                      },
+                      {
+                        "c": 0.45,
+                        "factors": {
+                          "x": 2.0
+                        }
+                      },
+                      {
+                        "c": 0.45,
+                        "factors": {
+                          "y": 2.0
+                        }
+                      },
+                      {
+                        "c": 0.45,
+                        "factors": {
+                          "z": 2.0
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "hasLo": true,
+            "lo": -10.0,
+            "includeLo": false,
+            "hasHi": true,
+            "hi": 10.0,
+            "includeHi": true,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 23,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 2.4,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 3.2,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 5,
+                                      "children": [
+                                        {
+                                          "op": 15,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 0.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -9.5,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 0.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 2.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 2.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 23,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 2.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 2.2,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 5,
+                                      "children": [
+                                        {
+                                          "op": 15,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 0.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -9.5,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 0.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 5.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 2.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.15,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "hasLo": true,
+            "lo": 10.0,
+            "includeLo": false,
+            "hasHi": true,
+            "hi": 30.0,
+            "includeHi": true,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.6,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.8,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 15,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 20.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -9.5,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 4.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 2.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.4,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.8,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 24,
+                                      "children": [
+                                        {
+                                          "op": 15,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            },
+                                            {
+                                              "op": 2,
+                                              "children": [
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 16.5,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -9.5,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -3.0,
+                                                        "factors": {}
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 2.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 23,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 2.4,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.8,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 24,
+                                  "children": [
+                                    {
+                                      "op": 15,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "p"
+                                        },
+                                        {
+                                          "op": 2,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 23.5,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": -9.5,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": -3.0,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 2.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.12,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "hasLo": true,
+            "lo": 30.0,
+            "includeLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 23,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 2.5,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.035,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 24,
+                              "children": [
+                                {
+                                  "op": 15,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "p"
+                                    },
+                                    {
+                                      "op": 2,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 40.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": -9.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 2.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.6,
+                            "factors": {}
+                          },
+                          {
+                            "c": 0.25,
+                            "factors": {},
+                            "trans": [
+                              {
+                                "kind": 1,
+                                "var": "x",
+                                "scale": 0.8,
+                                "shift": -32.0
+                              },
+                              {
+                                "kind": 1,
+                                "var": "z",
+                                "scale": 0.8,
+                                "shift": 0.0
+                              }
+                            ]
+                          },
+                          {
+                            "c": 0.15,
+                            "factors": {},
+                            "trans": [
+                              {
+                                "kind": 1,
+                                "var": "x",
+                                "scale": 1.6,
+                                "shift": -64.0
+                              }
+                            ]
+                          },
+                          {
+                            "c": 0.15,
+                            "factors": {},
+                            "trans": [
+                              {
+                                "kind": 1,
+                                "var": "z",
+                                "scale": 1.6,
+                                "shift": 0.0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.28,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 29,
+                          "children": [
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.18,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "p"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "vectorField": {
+      "mode": "Procedural",
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "amplitude": 1.0
+    }
+  },
+  "materials": [
+    {
+      "name": "gallery.marble.white",
+      "baseColor": [
+        0.95,
+        0.95,
+        0.96
+      ],
+      "opacity": 1.0,
+      "shininess": 32.0,
+      "specular": 0.95,
+      "ambient": 0.2,
+      "diffuse": 0.85
+    },
+    {
+      "name": "gallery.pedestal.stone",
+      "baseColor": [
+        0.72,
+        0.74,
+        0.78
+      ],
+      "opacity": 1.0,
+      "shininess": 16.0,
+      "specular": 0.5,
+      "ambient": 0.25,
+      "diffuse": 0.8
+    },
+    {
+      "name": "gallery.arch.gold",
+      "baseColor": [
+        0.92,
+        0.84,
+        0.62
+      ],
+      "opacity": 1.0,
+      "shininess": 48.0,
+      "specular": 1.0,
+      "ambient": 0.2,
+      "diffuse": 0.9
+    }
+  ],
+  "world": {
+    "objects": [
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          -0.2,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "gallery-promenade-floor",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.2,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            52.0,
+            0.2,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          52.1,
+          0.30000000000000004,
+          10.1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Gallery Promenade Floor"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -30.0,
+          3.0,
+          5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-1-2-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -30.0,
+          3.0,
+          5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 1-2 Arch North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -30.0,
+          3.0,
+          -5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-1-2-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -30.0,
+          3.0,
+          -5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 1-2 Arch South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -30.0,
+          5.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-lintel-1-2",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -30.0,
+          5.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.3,
+            5.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          0.4,
+          5.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 1-2 Header Lintel"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -10.0,
+          3.0,
+          5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-2-3-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -10.0,
+          3.0,
+          5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 2-3 Arch North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -10.0,
+          3.0,
+          -5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-2-3-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -10.0,
+          3.0,
+          -5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 2-3 Arch South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -10.0,
+          5.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-lintel-2-3",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -10.0,
+          5.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.3,
+            5.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          0.4,
+          5.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 2-3 Header Lintel"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          10.0,
+          3.0,
+          5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-3-4-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          10.0,
+          3.0,
+          5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 3-4 Arch North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          10.0,
+          3.0,
+          -5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-3-4-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          10.0,
+          3.0,
+          -5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 3-4 Arch South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          10.0,
+          5.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-lintel-3-4",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          10.0,
+          5.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.3,
+            5.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          0.4,
+          5.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 3-4 Header Lintel"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          30.0,
+          3.0,
+          5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-4-5-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          30.0,
+          3.0,
+          5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 4-5 Arch North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          30.0,
+          3.0,
+          -5.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-col-4-5-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          30.0,
+          3.0,
+          -5.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            3.0,
+            0.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.1,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 4-5 Arch South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          30.0,
+          5.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.arch.gold",
+        "objectID": "portal-lintel-4-5",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          30.0,
+          5.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.5,
+            0.3,
+            5.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          0.4,
+          5.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Portal 4-5 Header Lintel"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "architecture"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          0.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r1-pedestal-center",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          0.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.1,
+            0.8,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2000000000000002,
+          0.9,
+          1.2000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 Baseline Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          2.5,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r1-witness-center",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          2.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 Baseline Center Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "baseline_center"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          0.6,
+          4.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r1-pedestal-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          0.6,
+          4.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9,
+          0.7,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 North Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          2.0,
+          4.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r1-witness-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          2.0,
+          4.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 North Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "baseline_flank"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          0.6,
+          -4.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r1-pedestal-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          0.6,
+          -4.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9,
+          0.7,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 South Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -40.0,
+          2.0,
+          -4.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r1-witness-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -40.0,
+          2.0,
+          -4.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 South Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "baseline_flank"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -51.5,
+          2.5,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r1-backdrop-west",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -51.5,
+          2.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.4,
+            2.5,
+            7.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.5,
+          2.6,
+          7.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 1 West Gallery Wall"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "backdrop"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          1.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-altar-pedestal",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.2,
+            1.0,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3,
+          1.1,
+          1.3
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Focal Altar Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          2.7,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-focal-center",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          2.7,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Blazing Focal Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_focal_peak"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -18.4,
+          0.7,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-near-e",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -18.4,
+          0.7,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Near East Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -18.4,
+          2.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-near-e",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -18.4,
+          2.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Near East Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_near"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -21.6,
+          0.7,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-near-w",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -21.6,
+          0.7,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Near West Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -21.6,
+          2.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-near-w",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -21.6,
+          2.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Near West Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_near"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          0.7,
+          3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-mid-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          0.7,
+          3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Mid North Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          2.0,
+          3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-mid-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          2.0,
+          3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Mid North Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_mid"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          0.7,
+          -3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-mid-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          0.7,
+          -3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Mid South Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          2.0,
+          -3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-mid-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          2.0,
+          -3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Mid South Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_mid"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          0.7,
+          6.2
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-far-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          0.7,
+          6.2,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Far North Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          2.0,
+          6.2
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-far-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          2.0,
+          6.2,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Far North Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_far"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          0.7,
+          -6.2
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r2-pedestal-far-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          0.7,
+          -6.2,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7999999999999999,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Far South Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -20.0,
+          2.0,
+          -6.2
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r2-witness-far-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -20.0,
+          2.0,
+          -6.2,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.65,
+            0.65,
+            0.65
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8500000000000001,
+          0.8500000000000001,
+          0.8500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 2 Far South Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "falloff_far"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          0.8,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r3-core-pedestal",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.8,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Dark Core Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          2.4,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-dark-core",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Hollow Dark Core Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_dark_core"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          1.2,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-halo-inner-torus",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            2.5,
+            0.25,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          2.85,
+          0.35,
+          2.85
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Inner Halo Ring"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_inner_ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          2.5,
+          2.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-inner-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          2.5,
+          2.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Inner Halo Witness North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_inner_peak"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          2.5,
+          -2.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-inner-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          2.5,
+          -2.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Inner Halo Witness South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_inner_peak"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          0.6,
+          4.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r3-valley-pedestal-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.6,
+          4.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.6,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.7,
+          0.7,
+          0.7
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Inter-Shell Valley Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          1.9,
+          4.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-valley-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.9,
+          4.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.7,
+            0.7,
+            0.7
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.8999999999999999,
+          0.8999999999999999,
+          0.8999999999999999
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Valley Witness North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_valley_dip"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-halo-outer-torus",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            5.5,
+            0.25,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          5.85,
+          0.35,
+          5.85
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Outer Halo Ring"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_outer_ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          2.5,
+          5.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-outer-n",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          2.5,
+          5.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Outer Halo Witness North"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_outer_peak"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          2.5,
+          -5.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r3-witness-outer-s",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          2.5,
+          -5.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 3 Outer Halo Witness South"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "halo_outer_peak"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          20.0,
+          0.9,
+          4.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r4-pedestal-lobe1",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          20.0,
+          0.9,
+          4.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.0,
+            0.9,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.1,
+          1.0,
+          1.1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 1 North Altar"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          20.0,
+          2.6,
+          4.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r4-witness-lobe1",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          20.0,
+          2.6,
+          4.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 1 Focal Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "lobe_peak_alpha"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          16.5,
+          0.9,
+          -3.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r4-pedestal-lobe2",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          16.5,
+          0.9,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.0,
+            0.9,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.1,
+          1.0,
+          1.1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 2 SW Altar"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          16.5,
+          2.6,
+          -3.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r4-witness-lobe2",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          16.5,
+          2.6,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 2 Focal Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "lobe_peak_beta"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          23.5,
+          0.9,
+          -3.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r4-pedestal-lobe3",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          23.5,
+          0.9,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.0,
+            0.9,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.1,
+          1.0,
+          1.1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 3 SE Altar"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          23.5,
+          2.6,
+          -3.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r4-witness-lobe3",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          23.5,
+          2.6,
+          -3.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.85,
+            0.85,
+            0.85
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Lobe 3 Focal Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "lobe_peak_gamma"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          20.0,
+          0.6,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r4-pedestal-saddle",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          20.0,
+          0.6,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9,
+          0.7,
+          0.9
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Central Saddle Pedestal"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          20.0,
+          2.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r4-witness-saddle",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          20.0,
+          2.0,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 4 Inter-Lobe Saddle Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "lobe_saddle_valley"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          40.0,
+          1.1,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.pedestal.stone",
+        "objectID": "r5-cathedral-monument-pedestal",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          40.0,
+          1.1,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            1.6,
+            1.1,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.7000000000000002,
+          1.2000000000000002,
+          1.7000000000000002
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Cathedral Rotunda Base"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          40.0,
+          2.9,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-cathedral-monument-witness",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          40.0,
+          2.9,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.95,
+            0.95,
+            0.95
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.15,
+          1.15,
+          1.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Procedural Apex Witness"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "procedural_apex"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          43.5,
+          2.2,
+          3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-col-ne",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          43.5,
+          2.2,
+          3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            2.2,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.55,
+          2.3000000000000003,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Colonnade NE"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "procedural_colonnade"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          36.5,
+          2.2,
+          3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-col-nw",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          36.5,
+          2.2,
+          3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            2.2,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.55,
+          2.3000000000000003,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Colonnade NW"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "procedural_colonnade"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          43.5,
+          2.2,
+          -3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-col-se",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          43.5,
+          2.2,
+          -3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            2.2,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.55,
+          2.3000000000000003,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Colonnade SE"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "procedural_colonnade"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          36.5,
+          2.2,
+          -3.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-col-sw",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          36.5,
+          2.2,
+          -3.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            2.2,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.55,
+          2.3000000000000003,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Colonnade SW"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "procedural_colonnade"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          51.5,
+          2.5,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "gallery.marble.white",
+        "objectID": "r5-apse-wall",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          51.5,
+          2.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.4,
+            2.5,
+            7.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.5,
+          2.6,
+          7.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Chamber 5 Terminal Apse Wall"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "backdrop"
+          }
+        }
+      }
+    ],
+    "laws": [],
+    "relations": []
+  },
+  "formationRelations": [],
+  "lexemes": [],
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": "Gemini Spark \u2014 OntoMath Radiance Rung 3 Showcase Zone (Radiance Gallery)"
+}
