@@ -6,7 +6,8 @@
 #include <cstdint>
 #include <string>
 #include <utility>
-#include <vector>\n#include "Singularity/Screen/RadianceSource.hpp"
+#include <vector>
+#include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -393,6 +394,8 @@ private:
     glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;
+    std::vector<Rendering::RadianceSourceBinding> _radianceSources;
+    uint64_t _radianceSourcesRevision = 0;
     FrameStats _frameStats;
 };
 
