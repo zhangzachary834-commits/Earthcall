@@ -1245,7 +1245,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeHasPositiveSkip = false;
             const auto& rangeNodes = memo->rangeHierarchy.nodes;
 
-            constexpr uint32_t proofDepth = kSdfRangeProxyMaxDepth;
+            static_assert(
+                kSdfRangeGpuProofDepth <= kSdfRangeProxyMaxDepth,
+                "GPU proof depth cannot exceed the CPU theorem depth");
+            constexpr uint32_t proofDepth = kSdfRangeGpuProofDepth;
             constexpr uint32_t proofDim = 1u << proofDepth;
             constexpr uint32_t proofCellCount =
                 proofDim * proofDim * proofDim;
@@ -1262,6 +1265,45 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                         (1u << (linear & 31u));
                 };
 
+                // A target cell may be skipped only when the CPU theorem proves
+                // the ENTIRE corresponding adaptive subtree positive. A direct
+                // positive node is sufficient. Otherwise every one of the eight
+                // partitioning children must recursively prove positive. Missing,
+                // malformed, negative, ambiguous, or budget-stopped refinement
+                // therefore fails open to exact authored marching.
+                auto subtreeProvesPositive =
+                    [&](auto&& self,
+                        uint32_t sourceIndex,
+                        uint32_t sourceDepth) -> bool {
+                    if (sourceIndex >= rangeNodes.size() ||
+                        sourceDepth > kSdfRangeProxyMaxDepth) {
+                        return false;
+                    }
+                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
+                    if (node.depth != sourceDepth) {
+                        return false;
+                    }
+                    if (geom::rangeNodeProvesPositiveOutside(node)) {
+                        return true;
+                    }
+                    if (sourceDepth == kSdfRangeProxyMaxDepth ||
+                        node.childCount != 8u) {
+                        return false;
+                    }
+
+                    for (uint32_t child = 0; child < 8u; ++child) {
+                        const uint64_t childIndex =
+                            static_cast<uint64_t>(node.firstChild) + child;
+                        if (childIndex >= rangeNodes.size() ||
+                            !self(self,
+                                  static_cast<uint32_t>(childIndex),
+                                  sourceDepth + 1u)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+
                 auto rasterizeProof =
                     [&](auto&& self,
                         uint32_t sourceIndex,
@@ -1273,7 +1315,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                         return;
                     }
                     const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
+                    if (node.depth != depth) {
+                        return;
+                    }
 
+                    // A positive ancestor proves every target-depth descendant
+                    // beneath it, so rasterize that authority downward without
+                    // requiring refinement that the CPU theorem intentionally
+                    // stopped building.
                     if (geom::rangeNodeProvesPositiveOutside(node)) {
                         memo->rangeHasPositiveSkip = true;
                         const uint32_t span = 1u << (proofDepth - depth);
@@ -1290,7 +1339,16 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                         return;
                     }
 
-                    if (node.childCount != 8u || depth == proofDepth) {
+                    if (depth == proofDepth) {
+                        if (subtreeProvesPositive(
+                                subtreeProvesPositive, sourceIndex, depth)) {
+                            memo->rangeHasPositiveSkip = true;
+                            setProofBit(cellX, cellY, cellZ);
+                        }
+                        return;
+                    }
+
+                    if (node.childCount != 8u) {
                         return;
                     }
                     for (uint32_t child = 0; child < 8u; ++child) {
@@ -1367,7 +1425,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             inst.rangeProofWordOffset = static_cast<uint32_t>(base);
             inst.rangeProofWordCount = static_cast<uint32_t>(count);
             inst.rangeTraversalEnabled = 1u;
-            inst.rangeProofDepth = kSdfRangeProxyMaxDepth;
+            inst.rangeProofDepth = kSdfRangeGpuProofDepth;
             rangeBatch.insert(rangeBatch.end(),
                               memo->rangeProofWords.begin(),
                               memo->rangeProofWords.end());
