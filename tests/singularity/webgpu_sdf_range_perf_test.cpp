@@ -211,10 +211,10 @@ int main() {
         ambiguousLeafByDepth[6]);
 
     // Mirror the renderer's derived profitability question without touching GPU
-    // timing: how many depth-5 regular cells are wholly proved positive by the
-    // depth-6 CPU theorem? A direct positive ancestor authorizes every covered
-    // target cell; otherwise all eight partitioning children must recursively
-    // prove positive. Missing or malformed refinement fails open.
+    // timing: how many regular cells at the selected GPU proof depth are wholly
+    // proved positive by the depth-6 CPU theorem? A direct positive ancestor
+    // authorizes every covered target cell; otherwise every partitioning child
+    // must recursively prove positive. Missing or malformed refinement fails open.
     constexpr uint32_t gpuProofDepth = 4u;
     constexpr uint32_t theoremDepth = 6u;
     auto subtreeProvesPositive =
