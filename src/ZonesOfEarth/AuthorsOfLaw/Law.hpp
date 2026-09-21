@@ -878,9 +878,9 @@ public:
     // evaluates the network and drains the agenda into applyTo. Event facts
     // are transient: consumed by the round that evaluates them.
     //
-    // NOTE: the EventBus has no unsubscribe, so a connected LawManager must
-    // outlive all publishing (engine-lifetime object). Handlers run on the
-    // publishing thread; keep publishing on the main thread for now.
+    // The EventBus subscriptions belong to this manager and are released by
+    // ~LawManager(). That symmetry matters in tests and reload tools, where a
+    // connected manager can leave scope while the process-wide bus continues.
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
@@ -1243,6 +1243,8 @@ private:
     // compileConditionsToRete; see seedStateFacts for why the narrowing is
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
+    Core::EventBus::SubscriptionId _ecaEventSubscription = Core::EventBus::InvalidSubscription;
+    Core::EventBus::SubscriptionId _customEventSubscription = Core::EventBus::InvalidSubscription;
     bool _connected = false;
     bool _dirty = false;
     TickTiming _tickTiming;

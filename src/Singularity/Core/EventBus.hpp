@@ -12,6 +12,7 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <cstdint>
 
 // Forward declarations
 class Formation;
@@ -39,7 +40,23 @@ public:
     // Public types
     // ------------------------------------------------------------------
     using Listener = std::function<void(const void*)>;
-    struct ListenerEntry { int priority; Listener listener; };
+    using SubscriptionId = std::uint64_t;
+    static constexpr SubscriptionId InvalidSubscription = 0;
+
+    // Shared by registry snapshots and already-queued async deliveries. A
+    // subscription release closes this gate before its owner can disappear;
+    // old snapshots then observe inactive rather than calling an owner that
+    // has already left the world.
+    struct ListenerState {
+        std::recursive_mutex gate;
+        bool active = true;
+        Listener listener;
+    };
+    struct ListenerEntry {
+        int priority;
+        SubscriptionId id;
+        std::shared_ptr<ListenerState> state;
+    };
     
     // Lightweight metadata automatically attached to each event. Can be
     // extended later without breaking the templated interface.
@@ -63,26 +80,22 @@ public:
     // Subscription ------------------------------------------------------
     // ------------------------------------------------------------------
     template<typename Event>
-    void subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
+    SubscriptionId subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto it = _listeners.find(typeid(Event));
-        auto newVec = std::make_shared<std::vector<ListenerEntry>>();
-        if (it != _listeners.end() && it->second) {
-            *newVec = *it->second;
-        }
-        newVec->emplace_back(ListenerEntry{priority, [handler](const void* ePtr){
+        return subscribe(typeid(Event), [handler](const void* ePtr) {
             handler(*static_cast<const Event*>(ePtr));
-        }});
-        // Keep highest priority first for deterministic ordering.
-        std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
-            return a.priority > b.priority;
-        });
-        _listeners[typeid(Event)] = newVec;
+        }, priority);
     }
 
-    // Non-template version for internal use
-    void subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    template<typename Event>
+    void unsubscribe(SubscriptionId id)
+    {
+        unsubscribe(typeid(Event), id);
+    }
+
+    // Non-template versions for internal use.
+    SubscriptionId subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    void unsubscribe(const std::type_index& type, SubscriptionId id);
 
     // ------------------------------------------------------------------
     // Publication (synchronous) -----------------------------------------
@@ -100,7 +113,10 @@ public:
         }
         if (!listenersCopy) return;
         for (auto& entry : *listenersCopy) {
-            entry.listener(&event);
+            if (!entry.state) continue;
+            std::lock_guard<std::recursive_mutex> callbackLock(entry.state->gate);
+            if (!entry.state->active) continue;
+            entry.state->listener(&event);
         }
     }
 
@@ -122,7 +138,10 @@ public:
         auto ePtr = std::make_shared<Event>(event); // shared to outlive lambda
         auto job  = [listenersCopy, ePtr]() {
             for (auto& entry : *listenersCopy) {
-                entry.listener(ePtr.get());
+                if (!entry.state) continue;
+                std::lock_guard<std::recursive_mutex> callbackLock(entry.state->gate);
+                if (!entry.state->active) continue;
+                entry.state->listener(ePtr.get());
             }
         };
 
@@ -157,6 +176,7 @@ private:
     // Listener registry keyed by event type ---------------------------------
     std::unordered_map<std::type_index, std::shared_ptr<const std::vector<ListenerEntry>>> _listeners;
     std::mutex   _mutex;
+    SubscriptionId _nextSubscriptionId = 1;
 
     // Async queue -----------------------------------------------------------
     using Job = std::function<void()>;
