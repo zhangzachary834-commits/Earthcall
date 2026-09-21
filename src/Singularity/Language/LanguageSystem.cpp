@@ -94,6 +94,9 @@ std::shared_ptr<Lexeme> LanguageSystem::resolve(const std::string& symbol) {
         if (evict < _lexemes.size()) {
             auto oldest = _lexemes[evict];
             const std::string oldestSymbol = oldest ? oldest->getSymbol() : std::string{};
+            if (oldest) {
+                RelationManager::forgetTypeLexemeEverywhere(oldest.get());
+            }
             detachFromAllZones(oldest.get());
             if (oldest) {
                 _idIndex.erase(oldest->getIdentifier());
@@ -203,6 +206,7 @@ void LanguageSystem::remove(const std::string& symbol) {
     // by the Lexeme's visible symbol, so always update it by the actual being we
     // resolved rather than by the caller's reference token.
     const std::string spelling = lexeme->getSymbol();
+    RelationManager::forgetTypeLexemeEverywhere(lexeme.get());
     detachFromAllZones(lexeme.get());
 
     auto sit = _symbolIndex.find(spelling);
@@ -304,6 +308,7 @@ void LanguageSystem::clear() {
     // Detach before dropping the owning references, or every Zone Formation is
     // left pointing at freed Lexemes.
     for (const auto& lexeme : _lexemes) {
+        if (lexeme) RelationManager::forgetTypeLexemeEverywhere(lexeme.get());
         detachFromAllZones(lexeme.get());
     }
     _lexemes.clear();
