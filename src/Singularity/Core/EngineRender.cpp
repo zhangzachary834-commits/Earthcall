@@ -154,6 +154,18 @@ namespace Core {
                 } else {
                     currentRenderer().setRadianceChroma(nullptr, 0);
                 }
+
+                // Rung 6: alpha is a third independent authored source invariant.
+                // Its omega coordinate is supplied by Screen from source origin
+                // to each receiver sample; FieldNode owns only the mathematics.
+                if (root->lightAngular && !root->lightAngular->pieces.empty()) {
+                    const std::string angularJson = root->lightAngular->toJson().dump();
+                    const uint64_t angularRevision =
+                        static_cast<uint64_t>(std::hash<std::string>{}(angularJson));
+                    currentRenderer().setRadianceAngular(root->lightAngular.get(), angularRevision);
+                } else {
+                    currentRenderer().setRadianceAngular(nullptr, 0);
+                }
                 persistentLightPlaced = true;
             }
         }
@@ -161,6 +173,7 @@ namespace Core {
         if (!persistentLightPlaced) {
             currentRenderer().setRadianceField(nullptr, 0);
             currentRenderer().setRadianceChroma(nullptr, 0);
+            currentRenderer().setRadianceAngular(nullptr, 0);
             currentRenderer().setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
             currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
             // A previously active authored Zone may have disabled illumination.

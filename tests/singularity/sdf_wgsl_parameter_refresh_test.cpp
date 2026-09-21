@@ -404,6 +404,120 @@ int main() {
               "source without chi retains the exact legacy-color compatibility branch");
     }
 
+
+    // ---------------------------------------------------------------------
+    // 7. Rung 6: alpha(p,omega,t)->scalar is independent authored angular
+    //    emission. omega is admitted ONLY here and means normalized world-space
+    //    source -> receiver direction at the production shader seam.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        OntoMath::Piecewise chi = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 1.0, 1.0).release()));
+
+        auto coefficient = number(-1.0);
+        auto omegaZ = variable(OntoMath::kOmegaZVar);
+        auto lobe = std::make_shared<OntoMath::MathNode>();
+        lobe->op = OntoMath::MathNode::Op::Scale;
+        lobe->children.push_back(std::move(coefficient));
+        lobe->children.push_back(std::move(omegaZ));
+        OntoMath::Piecewise alpha = OntoMath::Piecewise::continuous(lobe);
+
+        const auto legacyLayout = sdfwgsl::inspectAngularExpression(nullptr);
+        const auto layoutBefore = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+
+        check(legacyLayout.ok && !legacyLayout.readsOmega &&
+                  legacyLayout.structure.find("legacy-angular:1.0") != std::string::npos,
+              "absent alpha has explicit multiplicative-identity structure");
+        check(layoutBefore.ok && layoutBefore.readsOmega,
+              "authored directional alpha records that its structure reads omega");
+        check(before.ok &&
+                  before.wgsl.find("fn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32") != std::string::npos &&
+                  before.wgsl.find("omega.z") != std::string::npos &&
+                  before.wgsl.find("sourceDelta / directionLength") != std::string::npos,
+              "alpha lowers through production WGSL with normalized source-to-receiver omega");
+        check(before.wgsl.find("const HAS_AUTHORED_ANGULAR: bool = true") != std::string::npos &&
+                  before.wgsl.find("const ANGULAR_READS_OMEGA: bool = true") != std::string::npos,
+              "production shader exposes authored/directional angular structure explicitly");
+
+        // VALUE ONLY: keep Scale(number, omega.z), change only its coefficient.
+        lobe->children[0]->scalarForm.terms[0].coefficient = -0.25;
+        const auto layoutAfter = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        const auto after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        check(layoutAfter.ok && layoutAfter.structure == layoutBefore.structure &&
+                  layoutAfter.readsOmega == layoutBefore.readsOmega,
+              "numeric alpha edit preserves angular structure identity");
+        check(layoutAfter.parameterCount == layoutBefore.parameterCount,
+              "numeric alpha edit preserves angular parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric alpha edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric alpha edit changes authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "alpha parameter recollection exactly matches full compile");
+
+        // STRUCTURE + TIME: alpha = -omega.z * cos(t). The temporal coordinate
+        // is ambient; its value is not baked into WGSL or the parameter buffer.
+        auto cosine = std::make_unique<OntoMath::MathNode>();
+        cosine->op = OntoMath::MathNode::Op::ScalarLeaf;
+        cosine->scalarForm =
+            OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos,
+                                                 OntoMath::kTimeVar);
+        auto omegaZTimed = variable(OntoMath::kOmegaZVar);
+        auto directionalCos = std::make_unique<OntoMath::MathNode>();
+        directionalCos->op = OntoMath::MathNode::Op::Scale;
+        directionalCos->children.push_back(std::move(omegaZTimed));
+        directionalCos->children.push_back(std::move(cosine));
+        auto rotating = std::make_shared<OntoMath::MathNode>();
+        rotating->op = OntoMath::MathNode::Op::Scale;
+        rotating->children.push_back(number(-1.0));
+        rotating->children.push_back(std::move(directionalCos));
+        alpha.pieces[0].mathNode = rotating;
+
+        const auto timedLayout = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        check(timedLayout.ok && timedLayout.readsOmega &&
+                  timedLayout.structure != layoutAfter.structure,
+              "structural timed-alpha edit advances angular structure identity");
+        check(timed.ok &&
+                  timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
+                  timed.wgsl.find("omega.z") != std::string::npos,
+              "alpha(omega,t) binds both the source Timeline and canonical omega");
+
+        // omega must not leak into rho: the same authored variable outside the
+        // angular context is a refusal, not a fabricated zero or direction.
+        OntoMath::Piecewise illegalRho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kOmegaXVar).release()));
+        const auto omegaOutsideAngular =
+            sdfwgsl::inspectScalarExpression(&illegalRho, true);
+        check(!omegaOutsideAngular.ok &&
+                  omegaOutsideAngular.error.find("does not bind omega") != std::string::npos,
+              "omega refuses outside the admitted angular-radiance context");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        alpha.pieces[0].mathNode = raycast;
+        const auto refused = sdfwgsl::inspectAngularExpression(&alpha);
+        check(!refused.ok && refused.error.find("Raycast") != std::string::npos,
+              "unsupported authored angular math refuses explicitly");
+
+        const auto legacy =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, nullptr);
+        check(legacy.ok &&
+                  legacy.wgsl.find("const HAS_AUTHORED_ANGULAR: bool = false") != std::string::npos &&
+                  legacy.wgsl.find("return 1.0;") != std::string::npos,
+              "source without alpha retains exact multiplicative-identity compatibility");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;

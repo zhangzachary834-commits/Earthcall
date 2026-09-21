@@ -13,6 +13,9 @@ nlohmann::json FieldNode::toJson() const {
     if (lightChroma && !lightChroma->pieces.empty()) {
         j["lightChroma"] = lightChroma->toJson();
     }
+    if (lightAngular && !lightAngular->pieces.empty()) {
+        j["lightAngular"] = lightAngular->toJson();
+    }
 
     // A FieldNode is a Singular, so properties a Person/Law grants it are
     // first-order authored state just like authored Object properties. Keep
@@ -71,6 +74,13 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             *lightChroma = OntoMath::Piecewise::fromJson(j["lightChroma"]);
         } else {
             *lightChroma = OntoMath::Piecewise{};
+        }
+    }
+    if (lightAngular) {
+        if (j.contains("lightAngular")) {
+            *lightAngular = OntoMath::Piecewise::fromJson(j["lightAngular"]);
+        } else {
+            *lightAngular = OntoMath::Piecewise{};
         }
     }
 

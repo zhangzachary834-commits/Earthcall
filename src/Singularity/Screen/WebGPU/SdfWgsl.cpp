@@ -314,6 +314,8 @@ struct Emit {
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
     bool               bindTime = false; // expression-context capability, not authored state
+    bool               bindOmega = false; // only Rung-6 angular radiance admits omega
+    bool               readOmega = false; // structural witness for singularity handling
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -386,6 +388,19 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         if (e.bindTime) return "u.radianceTime.x";
         e.refuse("a field expression names temporal variable 't', but this shader "
                  "expression context does not bind the temporal coordinate");
+        return "0.0";
+    }
+    if (var == OntoMath::kOmegaXVar ||
+        var == OntoMath::kOmegaYVar ||
+        var == OntoMath::kOmegaZVar) {
+        e.readOmega = true;
+        if (e.bindOmega) {
+            if (var == OntoMath::kOmegaXVar) return "omega.x";
+            if (var == OntoMath::kOmegaYVar) return "omega.y";
+            return "omega.z";
+        }
+        e.refuse("a field expression names angular coordinate '" + var +
+                 "', but this shader expression context does not bind omega");
         return "0.0";
     }
     e.refuse("a field expression names the variable '" + var +
@@ -995,6 +1010,51 @@ bool validateVectorPiecewise(const OntoMath::Piecewise& pw, bool bindTime,
     return true;
 }
 
+// Validate the authored angular source factor before lowering. Alpha is scalar
+// and is the only Screen-radiance expression context that admits omega.x/y/z.
+bool validateAngularPiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored angular expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Scalar) {
+            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
@@ -1500,8 +1560,28 @@ fn fs(in: VSOut) -> FSOut {
     let H = normalize(L + V);
 
     // Evaluate the Person-authored source invariants in source-relative world
-    // coordinates. rho remains scalar; chi is an independent vec3 channel.
-    let radialRadiance = max(lightRadiance(pw - u.lightPos.xyz), 0.0);
+    // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
+    // scalar over the normalized WORLD-space source -> receiver direction.
+    let sourceDelta = pw - u.lightPos.xyz;
+    let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
+    var angularRadiance = 1.0;
+    if (HAS_AUTHORED_ANGULAR) {
+        if (ANGULAR_READS_OMEGA) {
+            let directionLength = length(sourceDelta);
+            if (directionLength > SOURCE_DIRECTION_EPS) {
+                let emissionOmega = sourceDelta / directionLength;
+                angularRadiance = max(lightAngular(sourceDelta, emissionOmega), 0.0);
+            } else {
+                // omega is undefined at the source singularity. Refuse this
+                // directional sample by contributing zero; never invent an axis.
+                angularRadiance = 0.0;
+            }
+        } else {
+            // A direction-independent authored alpha does not require omega.
+            angularRadiance = max(lightAngular(sourceDelta, vec3<f32>(0.0)), 0.0);
+        }
+    }
+    let shapedRadiance = radialRadiance * angularRadiance;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
@@ -1520,8 +1600,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
-        specTerm = specularEnvelope * specShape * radialRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
+        specTerm = specularEnvelope * specShape * shapedRadiance;
     } else {
         // EXACT compatibility branch from Rung 4. No authored chi means
         // constant legacy light.color, already carried by these uniforms.
@@ -1529,8 +1609,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
-        specTerm = specularEnvelope * specShape * radialRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
+        specTerm = specularEnvelope * specShape * shapedRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -1607,11 +1687,37 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
     return layout;
 }
 
+AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateAngularPiecewise(*expr, validationError)) {
+        return AngularExpressionLayout{"", 0, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.bindOmega = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    AngularExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsOmega = e.readOmega;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
                              const OntoMath::Piecewise* radianceExpr,
-                             const OntoMath::Piecewise* chromaExpr) {
+                             const OntoMath::Piecewise* chromaExpr,
+                             const OntoMath::Piecewise* angularExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1674,6 +1780,18 @@ ParameterBlock collectParams(const geom::SdfNode& root,
             e.bindTime = false;
         }
     }
+    if (angularExpr && !angularExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateAngularPiecewise(*angularExpr, validationError)) {
+            e.refuse("angular: " + validationError);
+        } else {
+            e.bindTime = true;
+            e.bindOmega = true;
+            emitPiecewise(*angularExpr, e, "p", "f32", throwaway);
+            e.bindOmega = false;
+            e.bindTime = false;
+        }
+    }
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -1687,7 +1805,8 @@ Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode,
                 const OntoMath::Piecewise* colorExpr,
                 const OntoMath::Piecewise* radianceExpr,
-                const OntoMath::Piecewise* chromaExpr) {
+                const OntoMath::Piecewise* chromaExpr,
+                const OntoMath::Piecewise* angularExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1824,6 +1943,33 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
     prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
                  ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
+
+    std::string angularBody;
+    bool angularReadsOmega = false;
+    if (angularExpr && !angularExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateAngularPiecewise(*angularExpr, validationError)) {
+            e.refuse("angular: " + validationError);
+        } else {
+            e.bindTime = true;
+            e.bindOmega = true;
+            e.readOmega = false;
+            emitPiecewise(*angularExpr, e, "p", "f32", angularBody);
+            angularReadsOmega = e.readOmega;
+            e.bindOmega = false;
+            e.bindTime = false;
+        }
+    } else {
+        angularBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                 angularBody + "}\n";
+    prog.wgsl += std::string("\nconst HAS_AUTHORED_ANGULAR: bool = ") +
+                 ((angularExpr && !angularExpr->pieces.empty()) ? "true;\n" : "false;\n");
+    prog.wgsl += std::string("const ANGULAR_READS_OMEGA: bool = ") +
+                 (angularReadsOmega ? "true;\n" : "false;\n");
+    prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                 wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
 
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);

@@ -1113,6 +1113,22 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     const sdfwgsl::VectorExpressionLayout& chromaLayout = _chromaLayout;
 
+    if (_angularLayoutRevision != radianceAngularRevision() ||
+        _angularLayoutExprPtr != radianceAngularExpr()) {
+        sdfwgsl::AngularExpressionLayout nextLayout =
+            sdfwgsl::inspectAngularExpression(radianceAngularExpr());
+        const bool structureChanged =
+            _angularLayoutRevision == 0xffffffffffffffffULL ||
+            nextLayout.ok != _angularLayout.ok ||
+            nextLayout.structure != _angularLayout.structure ||
+            nextLayout.readsOmega != _angularLayout.readsOmega;
+        if (structureChanged) ++_angularStructureRevision;
+        _angularLayout = std::move(nextLayout);
+        _angularLayoutRevision = radianceAngularRevision();
+        _angularLayoutExprPtr = radianceAngularExpr();
+    }
+    const sdfwgsl::AngularExpressionLayout& angularLayout = _angularLayout;
+
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
         const bool firstOfReason =
@@ -1131,6 +1147,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("chroma: " + chromaLayout.error);
         return;
     }
+    if (!angularLayout.ok) {
+        recordProgramRefusal("angular: " + angularLayout.error);
+        return;
+    }
 
     MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
@@ -1139,6 +1159,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->colorRevision == mat.colorRevision &&
             memo->radianceStructureRevision == _radianceStructureRevision &&
             memo->chromaStructureRevision == _chromaStructureRevision &&
+            memo->angularStructureRevision == _angularStructureRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             // We have a structural hit unless parameter recollection proves that
             // the claimed structure identity is stale. Start on the cheap path;
@@ -1151,11 +1172,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 memo->radianceRevision != radianceRevision() ||
-                memo->chromaRevision != radianceChromaRevision();
+                memo->chromaRevision != radianceChromaRevision() ||
+                memo->angularRevision != radianceAngularRevision();
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
-                                           radianceChromaExpr());
+                                           radianceChromaExpr(), radianceAngularExpr());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1165,6 +1187,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->parameterRevision = memoParameterRevision;
                     memo->radianceRevision = radianceRevision();
                     memo->chromaRevision = radianceChromaRevision();
+                    memo->angularRevision = radianceAngularRevision();
                 } else {
                     // A parameter-count mismatch means our claimed structural
                     // identity is stale. Fail open to a full compile rather than
@@ -1184,7 +1207,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
-                                     radianceChromaExpr());
+                                     radianceChromaExpr(), radianceAngularExpr());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1206,6 +1229,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->chromaRevision = radianceChromaRevision();
             memo->chromaStructureRevision = _chromaStructureRevision;
+            memo->angularRevision = radianceAngularRevision();
+            memo->angularStructureRevision = _angularStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;

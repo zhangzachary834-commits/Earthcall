@@ -536,3 +536,110 @@ Phase 2 merged
 Do not jump to GI by making `rho` secretly answer transport questions.
 
 The architectural objective is not merely prettier light. It is a lighting system where every new capability adds one inspectable invariant while preserving the mathematics Persons already authored.
+
+
+---
+
+# Mandatory parallel substrate — authored volumetric density and transport
+
+This roadmap is about radiance, but it MUST NOT leave volumetrics as a shader-side
+exception. Earthcall already has an authored scalar-field substrate: a
+`FieldNode` exposes `field.ast`, `field.baseDensity`, `field.frequency`, and
+`field.amplitude` through PropertyPath, and `SdfWgsl` can lower the scalar field
+into `fieldEval(p)`. That is necessary, but it is not yet the whole volumetric
+constitution.
+
+The current marcher still contains renderer-owned medium assumptions such as a
+fixed extinction multiplier (`density * 0.5`) and white volumetric scatter.
+Those are temporary execution fossils, not authored ontology. They must not
+survive as the final meaning of fog, cloud, aura, smoke, radiance-bearing gas,
+or any other volumetric presence.
+
+## Density is first-order authored truth
+
+A volumetric medium's density must remain an independently inspectable authored
+field, conceptually:
+
+```
+D(p,t) -> scalar
+```
+
+The Person/Law surface must provide a stable PropertyPath to that complete AST.
+The implementation may reuse the existing `OntoMath::ScalarField` storage where
+semantically truthful, but production authoring must expose an explicit
+volumetric density property surface (target vocabulary:
+`volume.density.ast`) rather than requiring renderer code or save surgery.
+
+The existing generic `field.ast` remains valid authored mathematics. If a
+single `FieldNode` is ever expected to carry BOTH source radiance `rho` and
+volumetric density `D`, those must be two independent authored invariants.
+One AST must never silently mean both "how strongly this source emits" and
+"how much participating medium occupies this point."
+
+## Volumetric transport must also become authorable
+
+Fully authorable volumetrics means density alone is not enough. The medium terms
+that currently live as constants in WGSL must become inspectable properties /
+OntoMath expressions as the relevant rung lands. At minimum the architecture
+must be able to expose independent authored truth in the family of:
+
+```
+volume.density.ast       D(p,t)              -> scalar
+volume.extinction.ast    sigma_t(p,t)        -> scalar
+volume.scattering.ast    sigma_s(p,t)        -> scalar or vec3
+volume.chroma.ast        C_v(p,t)            -> vec3
+volume.phase.ast         Phi(p,wi,wo,t)       -> scalar   // when angular scattering lands
+volume.emission.ast      E_v(p,omega,t)       -> vec3     // when emissive media land
+```
+
+Exact storage types/names may be refined before implementation, but the
+architectural requirement is fixed: these meanings are authored state reachable
+through PropertyPath/Law, persisted, inspectable, and independently invalidated.
+They are not anonymous constants inside `SdfWgsl.cpp`.
+
+The resulting transport should be conceptually composed rather than hidden:
+
+```
+opticalDepth += sigma_t(p,t) * ds
+transmittance = exp(-opticalDepth)
+inScatter += transmittance * sigma_s(p,t) * C_v(p,t) * Phi(...) * incidentRadiance * ds
+```
+
+Numerical integration strategy, step size, caching, empty-space skipping, and
+other acceleration remain renderer implementation. The coefficients/functions
+being integrated belong to authored world truth.
+
+## Cross-rung laws for volumetrics
+
+- Numeric medium edits refresh data without shader regeneration when emitted
+  structure is unchanged.
+- Structural medium edits invalidate only the relevant emitted structure.
+- A Timeline advance is an ambient coordinate change, not an AST mutation.
+- Unsupported authored medium math refuses; it must never silently become
+  density zero, extinction 0.5, white scattering, or stale prior output.
+- Density/medium ASTs are independent from surface SDF geometry and from source
+  `rho / chi / alpha`.
+- Volumetric-only pixels require truthful depth/composition behavior; a hard
+  surface hit must not be required merely to make a medium visible.
+- Multiple media eventually compose as world/Zone truth above an individual AST,
+  with indexed/incremental discovery rather than a permanent O(world) renderer scan.
+
+## Required witnesses before volumetrics can be called fully authored
+
+1. A Law/PropertyPath can read and replace the complete density AST.
+2. Save/load restores that density AST exactly.
+3. Editing density visibly changes native WebGPU volume rendering.
+4. Numeric density edits reuse compiled structure.
+5. Extinction/scattering/chroma are not hardcoded WGSL constants.
+6. Two differently colored/scattering media can share the same density shape
+   without rewriting that density AST.
+7. A timed density/medium expression changes pixels from its admitted Timeline
+   without structural recompilation.
+8. Unsupported medium math refuses with no stale or fallback volume.
+9. A source that is also a participating medium can author radiance and density
+   independently; changing one does not mutate/reinterpret the other.
+
+This is a mandatory companion to the radiance roadmap, not an optional visual
+polish rung.
+
+— addendum directed by Zach, recorded by GPT-5.6 Sol, 2026-09-21

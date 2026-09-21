@@ -526,6 +526,141 @@ int main() {
         assert(chiRefused[0] < 12 && chiRefused[1] < 12 && chiRefused[2] < 12 &&
                "refused authored chi fell back or left stale rendered illumination");
 
+
+        // RUNG 6 ANGULAR EMISSION: restore valid white chi, then shape the same
+        // source by alpha(p,omega,t). At this receiver the outgoing world-space
+        // source->receiver direction points approximately -Z, so -omega.z is a
+        // bright lobe and a small coefficient is visibly dimmer.
+        chi.pieces[0].mathNode = vectorNode(1.0, 1.0, 1.0);
+        renderer.setRadianceChroma(&chi, 2005);
+
+        auto angularScale = scalarNode(-1.0);
+        auto omegaZ = std::make_unique<OntoMath::MathNode>();
+        omegaZ->op = OntoMath::MathNode::Op::ValueLeaf;
+        omegaZ->variableName = OntoMath::kOmegaZVar;
+        auto angularNode = std::make_shared<OntoMath::MathNode>();
+        angularNode->op = OntoMath::MathNode::Op::Scale;
+        angularNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*angularScale));
+        angularNode->children.push_back(std::move(omegaZ));
+        OntoMath::Piecewise alpha = OntoMath::Piecewise::continuous(angularNode);
+
+        renderer.setRadianceAngular(&alpha, 3001);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char alphaBright[4];
+        readCentre(alphaBright);
+        const Renderer::FrameStats alphaCompileStats = renderer.frameStats();
+        assert(alphaCompileStats.sdfProgramCompiles == 1 &&
+               "introducing authored alpha should compile its new structure once");
+
+        // VALUE ONLY: same Scale(number, omega.z), smaller coefficient.
+        angularNode->children[0]->scalarForm.terms[0].coefficient = -0.05;
+        renderer.setRadianceAngular(&alpha, 3002);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char alphaDim[4];
+        readCentre(alphaDim);
+        const Renderer::FrameStats alphaValueStats = renderer.frameStats();
+        std::printf("angular lobe centre bright=%d dim=%d compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    alphaBright[0], alphaDim[0], alphaValueStats.sdfProgramCompiles,
+                    alphaValueStats.sdfProgramCacheHits,
+                    alphaValueStats.sdfParameterBytesUploaded);
+        assert(alphaBright[0] > alphaDim[0] + 60 &&
+               "authored alpha(omega) did not visibly shape received illumination");
+        assert(alphaValueStats.sdfProgramCompiles == 0 &&
+               alphaValueStats.sdfProgramCacheHits >= 1 &&
+               alphaValueStats.sdfParameterBytesUploaded > 0 &&
+               "numeric alpha edit did not take the parameter-refresh cache path");
+
+        // STRUCTURE + RELATIVE TIME: rotate a lobe axis through the XZ plane:
+        // alpha = -(omega.x*sin(t) + omega.z*cos(t)). The same source-owned
+        // Timeline advances the direction without changing authored parameters.
+        auto omegaXTimed = std::make_unique<OntoMath::MathNode>();
+        omegaXTimed->op = OntoMath::MathNode::Op::ValueLeaf;
+        omegaXTimed->variableName = OntoMath::kOmegaXVar;
+        auto omegaZTimed = std::make_unique<OntoMath::MathNode>();
+        omegaZTimed->op = OntoMath::MathNode::Op::ValueLeaf;
+        omegaZTimed->variableName = OntoMath::kOmegaZVar;
+
+        auto sinTime = std::make_unique<OntoMath::MathNode>();
+        sinTime->op = OntoMath::MathNode::Op::ScalarLeaf;
+        sinTime->scalarForm =
+            OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Sin,
+                                                 OntoMath::kTimeVar);
+        auto cosTime = std::make_unique<OntoMath::MathNode>();
+        cosTime->op = OntoMath::MathNode::Op::ScalarLeaf;
+        cosTime->scalarForm =
+            OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos,
+                                                 OntoMath::kTimeVar);
+
+        auto xProjection = std::make_unique<OntoMath::MathNode>();
+        xProjection->op = OntoMath::MathNode::Op::Scale;
+        xProjection->children.push_back(std::move(omegaXTimed));
+        xProjection->children.push_back(std::move(sinTime));
+        auto zProjection = std::make_unique<OntoMath::MathNode>();
+        zProjection->op = OntoMath::MathNode::Op::Scale;
+        zProjection->children.push_back(std::move(omegaZTimed));
+        zProjection->children.push_back(std::move(cosTime));
+        auto rotatingDot = std::make_unique<OntoMath::MathNode>();
+        rotatingDot->op = OntoMath::MathNode::Op::Add;
+        rotatingDot->children.push_back(std::move(xProjection));
+        rotatingDot->children.push_back(std::move(zProjection));
+        auto rotatingAlpha = std::make_shared<OntoMath::MathNode>();
+        rotatingAlpha->op = OntoMath::MathNode::Op::Scale;
+        rotatingAlpha->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(-1.0)));
+        rotatingAlpha->children.push_back(std::move(rotatingDot));
+        alpha.pieces[0].mathNode = rotatingAlpha;
+
+        assert(localTimeline.setClock(0.0, -1.0));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(), localTimeline.delta());
+        renderer.setRadianceAngular(&alpha, 3003);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char rotatingToward[4];
+        readCentre(rotatingToward);
+        const Renderer::FrameStats alphaTimeCompileStats = renderer.frameStats();
+        assert(alphaTimeCompileStats.sdfProgramCompiles == 1 &&
+               "introducing rotating alpha should compile its structure once");
+
+        assert(localTimeline.setClock(3.141592653589793, 3.141592653589793));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(), localTimeline.delta());
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char rotatingAway[4];
+        readCentre(rotatingAway);
+        const Renderer::FrameStats alphaTimeAdvanceStats = renderer.frameStats();
+        assert(rotatingToward[0] > rotatingAway[0] + 60 &&
+               "advancing the source Timeline did not visibly rotate alpha(omega,t)");
+        assert(alphaTimeAdvanceStats.sdfProgramCompiles == 0 &&
+               alphaTimeAdvanceStats.sdfProgramCacheHits >= 1 &&
+               alphaTimeAdvanceStats.sdfParameterBytesUploaded == 0 &&
+               "advancing angular time mutated authored parameters or recompiled WGSL");
+
+        // REFUSAL: unsupported alpha must not reuse the previously bright lobe.
+        auto badAlpha = std::make_shared<OntoMath::MathNode>();
+        badAlpha->op = OntoMath::MathNode::Op::Raycast;
+        alpha.pieces[0].mathNode = badAlpha;
+        renderer.setRadianceAngular(&alpha, 3004);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char alphaRefused[4];
+        readCentre(alphaRefused);
+        const Renderer::FrameStats alphaRefusalStats = renderer.frameStats();
+        assert(alphaRefusalStats.sdfProgramRefusals >= 1 &&
+               alphaRefusalStats.sdfLastProgramRefusal.find("angular") != std::string::npos &&
+               alphaRefusalStats.sdfLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "unsupported authored alpha did not surface a named angular refusal");
+        assert(alphaRefused[0] < 12 && alphaRefused[1] < 12 && alphaRefused[2] < 12 &&
+               "refused authored alpha left stale rendered illumination");
+
+        renderer.setRadianceAngular(nullptr, 0);
         renderer.setRadianceChroma(nullptr, 0);
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceTemporalCoordinate(0.0, 0.0);
