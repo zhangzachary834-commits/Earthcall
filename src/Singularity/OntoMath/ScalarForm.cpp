@@ -1877,9 +1877,29 @@ Interval perlinDotRange(const glm::vec3& g,
 
 Interval perlinMixRange(const Interval& a, const Interval& b,
                         const Interval& t) {
-    // mix(a,b,t) = a + (b-a)t. Ordinary interval dependency may make this
-    // looser than necessary, never narrower than the represented values.
-    return a + (b - a) * t;
+    // mix(a,b,t) = (1-t)a + tb. For Perlin fade, t is guaranteed to lie in
+    // [0,1], so both coefficients are non-negative and sum to one. Propagating
+    // the expression as a + (b-a)t repeats a and b and creates artificial
+    // interval dependency. Over the independent enclosure box
+    // a∈[a.lo,a.hi], b∈[b.lo,b.hi], t∈[t.lo,t.hi]⊆[0,1], the minimum uses the
+    // lower endpoint of both a and b and the maximum uses the upper endpoint
+    // of both. Each is affine in t, so its extremum occurs at t.lo or t.hi.
+    //
+    // If a future caller violates the fade contract, retain the older generic
+    // interval arithmetic rather than silently clamping an out-of-domain t.
+    if (!a.bounded() || !b.bounded() || !t.bounded() ||
+        t.lo < 0.0f || t.hi > 1.0f) {
+        return a + (b - a) * t;
+    }
+
+    const auto lerpScalar = [](float x, float y, float w) {
+        return x + (y - x) * w;
+    };
+    const float lo0 = lerpScalar(a.lo, b.lo, t.lo);
+    const float lo1 = lerpScalar(a.lo, b.lo, t.hi);
+    const float hi0 = lerpScalar(a.hi, b.hi, t.lo);
+    const float hi1 = lerpScalar(a.hi, b.hi, t.hi);
+    return Interval::outward(std::min(lo0, lo1), std::max(hi0, hi1));
 }
 
 std::optional<Interval> classicPerlin3CellRange(
