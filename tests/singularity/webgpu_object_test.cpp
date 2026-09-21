@@ -761,6 +761,18 @@ int main() {
 
         auto receiver =
             geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f));
+
+        // Establish the exact V=1 pixel baseline with the SAME source values
+        // before any blocker exists. Adding off-axis blocker geometry while
+        // visibility remains disabled must not perturb this receiver sample.
+        radiant.setFieldShape(receiver, glm::vec3(1.5f));
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char visibilityBaseline[4];
+        readCentre(visibilityBaseline);
+
         auto blocker =
             geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
         blocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
@@ -780,6 +792,10 @@ int main() {
         const Renderer::FrameStats visibilityOffStats = renderer.frameStats();
         assert(visibilityOff[0] > 35 && visibilityOff[2] > 35 &&
                "V=1 compatibility did not preserve both direct source contributions");
+        assert(abs(int(visibilityOff[0]) - int(visibilityBaseline[0])) <= 2 &&
+               abs(int(visibilityOff[1]) - int(visibilityBaseline[1])) <= 2 &&
+               abs(int(visibilityOff[2]) - int(visibilityBaseline[2])) <= 2 &&
+               "visibility-disabled V=1 changed the pre-shadow receiver pixel");
         assert(visibilityOffStats.sdfProgramCompiles == 1 &&
                "new receiver+blocker SDF structure should compile exactly once");
 
@@ -810,7 +826,13 @@ int main() {
         // Move only the blocker behind the receiver. This is a geometry VALUE
         // edit with identical Union/Sphere topology. The red path must return,
         // while all four source invariants remain byte-for-byte unchanged.
+        const auto blockerStructureBefore = radiant.getSdfStructureRevision();
+        const auto blockerParamsBefore = radiant.getSdfParameterRevision();
         radiant.setFieldOperandBOffset(glm::vec3(-0.4f, 0.0f, -0.8f));
+        assert(radiant.getSdfStructureRevision() == blockerStructureBefore &&
+               "blocker value motion incorrectly invalidated SDF structure");
+        assert(radiant.getSdfParameterRevision() != blockerParamsBefore &&
+               "blocker value motion did not advance SDF parameter revision");
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
