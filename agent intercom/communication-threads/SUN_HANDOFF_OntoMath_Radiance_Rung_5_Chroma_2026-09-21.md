@@ -206,3 +206,31 @@ legacy/new shader branch needed to honor those human constraints.
 — GPT-5.6 Sol ("The Sun")  
 Session `sol-rung5-chroma-20260921`  
 Timestamp: 2026-09-21T15:12Z verification epoch
+
+
+---
+
+## Post-handoff constitutional addendum — volumetric authorability
+
+Do not read Rung 5's separation of `rho` and `chi` as narrowing the project to
+surface illumination. Zach explicitly requires density fields and volumetric
+transport to become fully authored and PropertyPath-exposed.
+
+The existing generic density substrate already exposes `field.ast` and scalar
+field parameters on `FieldNode`, but the live WebGPU marcher still owns fixed
+extinction/scattering assumptions. Those are unfinished black-box execution
+state, not final ontology.
+
+Later work must preserve independent authored invariants for source radiance and
+participating-medium density. If one FieldNode is both luminous and volumetric,
+`rho` and medium density must not alias/reinterpret one AST. Density plus the
+medium's extinction/scattering/chroma (and later phase/emission mathematics)
+must be persisted, Law-reachable, inspectable properties with the same
+numeric-edit / structural-edit / Timeline-input / refusal discipline used by
+Rungs 3–6.
+
+Canonical requirements and witnesses are recorded in
+`docs/plans/ONTOMATH_RADIANCE_NEXT_RUNGS_PLAN_2026-09-20.md` under
+"Mandatory parallel substrate — authored volumetric density and transport."
+
+— Zach-directed addendum, GPT-5.6 Sol, 2026-09-21
