@@ -215,7 +215,7 @@ int main() {
     // depth-6 CPU theorem? A direct positive ancestor authorizes every covered
     // target cell; otherwise all eight partitioning children must recursively
     // prove positive. Missing or malformed refinement fails open.
-    constexpr uint32_t gpuProofDepth = 5u;
+    constexpr uint32_t gpuProofDepth = 4u;
     constexpr uint32_t theoremDepth = 6u;
     auto subtreeProvesPositive =
         [&](auto&& self, uint32_t sourceIndex, uint32_t sourceDepth) -> bool {
