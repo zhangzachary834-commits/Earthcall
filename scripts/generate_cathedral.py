@@ -22,6 +22,132 @@ def make_color_expr_piecewise(r_terms, g_terms, b_terms, input_var="y"):
         ]
     }
 
+def make_cathedral_radiance_ast():
+    """
+    Authors the ethereal, rich, and profound OntoMath scalar radiance field
+    for the Cathedral of the Living Logos:
+
+      rho(p) = Num(p) / Denom(p)
+
+    Where:
+      p = (x, y, z) is the source-relative coordinate vector from the Crossing
+          Lantern Tower apex origin (0.0, 24.0, 0.0).
+
+      Denom(p) = 1.0 + 0.0016*x^2 + 0.0005*y^2 + 0.0012*z^2
+          Anisotropic continuous spatial falloff providing vertical shaft elongation
+          (0.0005 along Y) so heavenly illumination extends down to the floor,
+          along the longitudinal processional nave to the west (0.0012),
+          and through the transepts (0.0016).
+
+      Num(p) = Base(y) + Tracery(x, z) + LivingBreath(p)
+
+      Where:
+        Base(y) = 1.0 - 0.008*y
+            Provides gentle vertical warmth as light descends toward the sanctuary floor.
+
+        Tracery(x, z) = 0.12 * cos(0.28*x) * cos(0.28*z)
+                      + 0.08 * cos(0.56*z)
+                      + 0.06 * cos(0.56*x)
+            Harmonic Gothic vault bay clerestory ray lattice. Resonates with the
+            11-meter processional bay spacing and cruciform transept axes, casting
+            subtle geometric ribs of divine clarity across the Cosmati pavements.
+
+        LivingBreath(p) = 0.15 * Noise(0.05 * p)
+            Continuous 3D Perlin noise (Op::Noise = 29) evaluating cnoise3(0.05 * p).
+            Creates ethereal, organic, living atmospheric currents of luminous
+            presence throughout the cathedral volume.
+    """
+    denom_terms = [
+        {"c": 1.0, "factors": {}},
+        {"c": 0.0016, "factors": {"x": 2.0}},
+        {"c": 0.0005, "factors": {"y": 2.0}},
+        {"c": 0.0012, "factors": {"z": 2.0}},
+    ]
+    denom_node = {
+        "op": 0,
+        "scalarForm": {"terms": denom_terms}
+    }
+
+    lattice_terms = [
+        {"c": 1.0, "factors": {}},
+        {"c": -0.008, "factors": {"y": 1.0}},
+        {
+            "c": 0.12,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "x", "scale": 0.28, "shift": 0.0},
+                {"kind": 1, "var": "z", "scale": 0.28, "shift": 0.0}
+            ]
+        },
+        {
+            "c": 0.08,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "z", "scale": 0.56, "shift": 0.0}
+            ]
+        },
+        {
+            "c": 0.06,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "x", "scale": 0.56, "shift": 0.0}
+            ]
+        }
+    ]
+    lattice_node = {
+        "op": 0,
+        "scalarForm": {"terms": lattice_terms}
+    }
+
+    p_vector_node = {
+        "op": 2, # VectorConstruct
+        "children": [
+            {"op": 1, "var": "x"},
+            {"op": 1, "var": "y"},
+            {"op": 1, "var": "z"}
+        ]
+    }
+    freq_node = {
+        "op": 0,
+        "scalarForm": {"terms": [{"c": 0.05, "factors": {}}]}
+    }
+    scaled_p = {
+        "op": 6, # Scale (scalar * vec3)
+        "children": [freq_node, p_vector_node]
+    }
+    noise_node = {
+        "op": 29, # Noise
+        "children": [scaled_p]
+    }
+    noise_amp = {
+        "op": 0,
+        "scalarForm": {"terms": [{"c": 0.15, "factors": {}}]}
+    }
+    scaled_noise = {
+        "op": 6, # Scale (scalar * scalar)
+        "children": [noise_amp, noise_node]
+    }
+
+    num_node = {
+        "op": 4, # Add
+        "children": [lattice_node, scaled_noise]
+    }
+
+    radiance_node = {
+        "op": 23, # Div
+        "children": [num_node, denom_node]
+    }
+
+    return {
+        "input": "y",
+        "pieces": [
+            {
+                "mathNode": radiance_node
+            }
+        ]
+    }
+
+
 import os
 import math
 import struct
@@ -1705,14 +1831,14 @@ hud_bg = {
     "objectID": "hud.logos.dock",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 195.0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 235.0],
     "shape": {
         "kind": 12,
         "params": {
             "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
             "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
             "ovoidAsym": 0.0, "fillet": 0.0,
-            "width2D": 360.0, "height2D": 195.0
+            "width2D": 360.0, "height2D": 235.0
         }
     },
     "x2D": 20.0,
@@ -1734,6 +1860,7 @@ objects.append(make_button2d("hud.btn.pneuma", "BREATHE PNEUMA", 35, 122, 155, 3
 objects.append(make_button2d("hud.btn.lux", "FIAT LUX", 205, 122, 155, 32, [0.92, 0.78, 0.25]))
 objects.append(make_button2d("hud.btn.chord", "SOUND CANON", 35, 160, 155, 32, [0.92, 0.55, 0.15]))
 objects.append(make_button2d("hud.btn.season", "CYCLE SEASON", 205, 160, 155, 32, [0.75, 0.25, 0.85]))
+objects.append(make_button2d("hud.btn.aurora", "CELESTIAL SKY AURORA", 35, 198, 325, 30, [0.15, 0.82, 0.72]))
 
 # ==============================================================================
 # 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE (ULTRA-DETAILED)
@@ -2707,6 +2834,183 @@ materials = [
             ]
         )
     },
+    # --- ONTOMATH CELESTIAL LIGHT SHOW COLOR FIELDS ---
+    {
+        "name": "logos.colorfield.lightshow.aurora",
+        "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.55, 0.45, 0.85], "roughness": 0.08, "metallic": 0.90,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.35}, {"kind": 1, "var": "x", "scale": 0.45}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.60}]}
+            ],
+            [
+                {"c": 0.60, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.40}, {"kind": 1, "var": "z", "scale": 0.50}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.70}]}
+            ],
+            [
+                {"c": 0.75, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.30}, {"kind": 1, "var": "z", "scale": 0.35}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.50}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.prism",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 1.0, "shininess": 120.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.50, 0.70], "roughness": 0.10, "metallic": 0.85,
+        "faceTextures": [tex_rose_sapphire] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.22}, {"kind": 1, "var": "y", "scale": 0.15}]}
+            ],
+            [
+                {"c": 0.55, "factors": {}},
+                {"c": 0.40, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.28}, {"kind": 0, "var": "x", "scale": 0.20}]}
+            ],
+            [
+                {"c": 0.70, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.35}, {"kind": 1, "var": "y", "scale": 0.25}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.shekinah",
+        "textureResolution": 256, "ambient": 0.65, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.75, 0.60, 0.25], "roughness": 0.08, "metallic": 0.95,
+        "faceTextures": [tex_filigree] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.90, "factors": {}},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.50}]}
+            ],
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.60}, {"kind": 1, "var": "x", "scale": 0.40}]}
+            ],
+            [
+                {"c": 0.40, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.80}, {"kind": 1, "var": "z", "scale": 0.50}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.aether",
+        "textureResolution": 256, "ambient": 0.55, "diffuse": 0.90, "specular": 0.95, "shininess": 96.0,
+        "baseColor": [1.0, 1.0, 1.0], "emission": [0.20, 0.80, 0.90], "roughness": 0.12, "metallic": 0.80,
+        "faceTextures": [tex_water_caustics] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.20, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.40}, {"kind": 0, "var": "z", "scale": 0.40}]}
+            ],
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.50}, {"kind": 1, "var": "x", "scale": 0.30}]}
+            ],
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.05, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.30}]}
+            ]
+        )
+    },
+    # --- ONTOMATH CELESTIAL SKY AURORA LIGHT FIELDS (VIBRANT GLOWING EMISSION) ---
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_emerald",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.15, 0.98, 0.70], "emission": [0.25, 0.98, 0.75], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.18, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.04}]},
+                {"c": 0.12, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.05}]}
+            ],
+            [
+                {"c": 0.96, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}, {"kind": 1, "var": "y", "scale": 0.08}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.04}]}
+            ],
+            [
+                {"c": 0.65, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.07}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_turquoise",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.10, 0.90, 0.98], "emission": [0.20, 0.92, 0.98], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.15, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.06}]},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.05}]}
+            ],
+            [
+                {"c": 0.88, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.05}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.07}]}
+            ],
+            [
+                {"c": 0.98, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.07}, {"kind": 1, "var": "y", "scale": 0.05}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.06}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_violet",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.85, 0.35, 0.98], "emission": [0.85, 0.38, 0.98], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.05}]}
+            ],
+            [
+                {"c": 0.35, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.06}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.08}]}
+            ],
+            [
+                {"c": 0.96, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}, {"kind": 0, "var": "z", "scale": 0.08}]},
+                {"c": 0.22, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.07}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_corona",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.95, 0.82, 0.35], "emission": [0.95, 0.85, 0.40], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.08}]}
+            ],
+            [
+                {"c": 0.82, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}, {"kind": 1, "var": "z", "scale": 0.05}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.06}]}
+            ],
+            [
+                {"c": 0.45, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.07}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.05}]}
+            ]
+        )
+    },
     # --- ONTOMATH ADVANCED BOUNDED COLOR FIELDS ---
     {
         "name": "logos.bounds.stratified",
@@ -3035,6 +3339,162 @@ objects.append(make_field(
 
 
 # ==============================================================================
+# CELESTIAL ONTOMATH LIGHT SHOW PHENOMENA (LUMINOUS AURORAS & SPECTRAL BEAMS)
+# Multi-octave continuous Color Field Gradients interacting with the Radiance Field
+# ==============================================================================
+
+# 1. Great Celestial Shekinah Aurora of the Logos (Suspended in Crossing Dome)
+aurora_ring_major = sdf_leaf(6, [5.5, 0.65, 0.0]) # Major torus ring
+aurora_orb_core = sdf_leaf(0, [3.2, 2.2, 3.2])   # Core radiant cloud
+aurora_halo_disc = sdf_leaf(3, [7.5, 0.45, 7.5]) # Spreading halo disc
+aurora_tree = sdf_binary(5, aurora_ring_major, sdf_binary(5, aurora_orb_core, aurora_halo_disc, 0.4), 0.45)
+
+objects.append(make_field(
+    "cathedral.lightshow.shekinah_aurora", "Great Celestial Shekinah Aurora of the Logos",
+    [0.0, 18.0, 0.0], aurora_tree, [8.0, 4.5, 8.0],
+    "material.logos.colorfield.lightshow.aurora", [0.85, 0.65, 1.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 7.5},
+        "description": {"t": "string", "v": "Floating celestial aurora borealis with multi-octave OntoMath spectral color gradient"}
+    }
+))
+
+# 2. Prismatic West Portal Sunbeam Cascade (Streaming from Rose Window into Nave)
+prism_beam_center = sdf_leaf(2, [1.8, 1.8, 8.5], p0=0.3)
+prism_beam_left   = sdf_leaf(2, [1.2, 1.2, 7.5], offset=[-2.5, -1.0, -1.0], p0=0.25)
+prism_beam_right  = sdf_leaf(2, [1.2, 1.2, 7.5], offset=[2.5, -1.0, -1.0], p0=0.25)
+prism_beams_tree = sdf_binary(5, prism_beam_center, sdf_binary(5, prism_beam_left, prism_beam_right, 0.35), 0.4)
+
+objects.append(make_field(
+    "cathedral.lightshow.prismatic_shafts", "Prismatic West Portal Sunbeam Cascade",
+    [0.0, 13.0, 20.0], prism_beams_tree, [5.0, 4.5, 10.0],
+    "material.logos.colorfield.lightshow.prism", [0.75, 0.85, 1.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 6.5},
+        "description": {"t": "string", "v": "17-meter long prismatic sunbeam shafts with continuous spectral dispersion color field"}
+    }
+))
+
+# 3. Sacred Altar Shekinah Glory (Hovering above High Altar & Crucifix)
+shekinah_ring1 = sdf_leaf(6, [2.2, 0.28, 0.0])
+shekinah_ring2 = sdf_leaf(6, [1.6, 0.22, 0.0], offset=[0.0, 0.4, 0.0])
+shekinah_orb   = sdf_leaf(0, [1.2, 1.2, 1.2])
+shekinah_tree = sdf_binary(5, shekinah_ring1, sdf_binary(5, shekinah_ring2, shekinah_orb, 0.25), 0.3)
+
+objects.append(make_field(
+    "cathedral.lightshow.altar_shekinah", "Sacred Altar Transfiguration Glory",
+    [0.0, 5.2, -29.5], shekinah_tree, [3.2, 2.5, 3.2],
+    "material.logos.colorfield.lightshow.shekinah", [1.0, 0.88, 0.45],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.0},
+        "description": {"t": "string", "v": "Hovering transfiguration glory mandorla with gold-violet OntoMath color gradient"}
+    }
+))
+
+# 4. Edenic Lagoon Bioluminescent Well-Spring Aurora
+lagoon_mist_ring = sdf_leaf(6, [3.2, 0.35, 0.0])
+lagoon_mist_plume = sdf_leaf(3, [2.5, 1.2, 2.5], offset=[0.0, 0.5, 0.0])
+lagoon_aurora_tree = sdf_binary(5, lagoon_mist_ring, lagoon_mist_plume, 0.35)
+
+objects.append(make_field(
+    "cathedral.lightshow.lagoon_aurora", "Edenic Lagoon Bioluminescent Well-Spring Aurora",
+    [0.0, 1.8, 52.0], lagoon_aurora_tree, [4.5, 2.5, 4.5],
+    "material.logos.colorfield.lightshow.aether", [0.45, 0.95, 0.90],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 5.5},
+        "description": {"t": "string", "v": "Aquatic bioluminescent well-spring mist with seafoam-cyan OntoMath color field"}
+    }
+))
+
+# 5. CELESTIAL ONTOMATH SKY AURORA BOREALIS (DELICATE TRANSLUCENT LIGHT CURTAINS)
+# Ethereal, sweeping paper-thin harmonic curtains of emerald, cyan, violet, and solar gold
+# No thick dinosaur bones, toruses, or boulders — pure gossamer atmospheric waves!
+
+# Curtain 1: The Great Polar Emerald Ribbon (Primary wave sweeping across the northern sky)
+aurora_emerald_tree = sdf_leaf(3, [125.0, 15.0, 0.35]) # 250m wide, 30m high, 0.70m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.emerald", "Celestial Emerald Aurora Curtain",
+    [0.0, 72.0, -15.0], aurora_emerald_tree, [130.0, 18.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_emerald", [0.15, 0.98, 0.70],
+    rot_deg=[0.0, -12.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 9.0},
+        "light.color": {"t": "vec3", "x": 0.20, "y": 0.98, "z": 0.72},
+        "light.ambient": {"t": "float", "v": 0.75},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Ethereal 250-meter sweeping curtain of polar emerald auroral light"}
+    }
+))
+
+# Curtain 2: The Prismatic Turquoise & Aquamarine Wave (Secondary wave arching over nave)
+aurora_turquoise_tree = sdf_leaf(3, [140.0, 18.0, 0.35]) # 280m wide, 36m high, 0.70m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.turquoise", "Prismatic Turquoise Aurora Curtain",
+    [15.0, 76.0, 15.0], aurora_turquoise_tree, [145.0, 20.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_turquoise", [0.10, 0.90, 0.98],
+    rot_deg=[0.0, 15.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.5},
+        "light.color": {"t": "vec3", "x": 0.15, "y": 0.92, "z": 0.98},
+        "light.ambient": {"t": "float", "v": 0.70},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Shimmering 280-meter curtain of celestial cyan and turquoise light"}
+    }
+))
+
+# Curtain 3: The High Celestial Violet & Amethyst Veil (High-altitude nitrogen glow)
+aurora_violet_tree = sdf_leaf(3, [115.0, 14.0, 0.35]) # 230m wide, 28m high, 0.70m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.violet", "High Celestial Violet Aurora Veil",
+    [-15.0, 81.0, 42.0], aurora_violet_tree, [120.0, 16.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_violet", [0.85, 0.35, 0.98],
+    rot_deg=[0.0, -22.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.0},
+        "light.color": {"t": "vec3", "x": 0.85, "y": 0.35, "z": 0.98},
+        "light.ambient": {"t": "float", "v": 0.65},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Cascading high-stratospheric veil of deep amethyst, royal violet, and magenta light"}
+    }
+))
+
+# Curtain 4: The Solar Gold & Prismatic Corona (Zenith crown hovering above the Crossing Tower)
+aurora_corona_tree = sdf_leaf(3, [95.0, 12.0, 0.30]) # 190m wide, 24m high, 0.60m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.corona", "Solar Gold Aurora Zenith Corona",
+    [0.0, 87.0, 5.0], aurora_corona_tree, [100.0, 14.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_corona", [0.95, 0.82, 0.35],
+    rot_deg=[0.0, 5.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 7.5},
+        "light.color": {"t": "vec3", "x": 0.95, "y": 0.85, "z": 0.40},
+        "light.ambient": {"t": "float", "v": 0.65},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Crown of celestial solar gold and warm amber auroral light at the zenith"}
+    }
+))
+
+# ==============================================================================
 # THE SACRED LIVING EDENIC POND OF LIVING WATERS (MAGNUM OPUS NUANCED EXPANSION)
 # Located in the West Forecourt of the Cathedral (Z = 40 to 60, X = -10 to 10)
 # A multi-tiered botanical, hydrological, and spiritual living sanctuary.
@@ -3051,7 +3511,7 @@ pebble_bed_south  = sdf_leaf(3, [5.2, 0.20, 5.0], offset=[4.2, -0.12, -2.5])
 pebble_bed_tree = sdf_binary(5, pebble_bed_center, sdf_binary(5, pebble_bed_north, pebble_bed_south, 0.4), 0.45)
 objects.append(make_field(
     "cathedral.pond.pebble_bed", "Submerged Jasper & Obsidian Riverbed Shoal",
-    [0.0, 0.05, 50.0], pebble_bed_tree, [11.0, 0.8, 11.0],
+    [0.0, -0.05, 50.0], pebble_bed_tree, [11.0, 0.8, 11.0],
     "material.logos.pond.pebbles", [0.40, 0.38, 0.35],
     extra_props={
         "isPondBed": {"t": "bool", "v": True},
@@ -3065,7 +3525,7 @@ abyss_funnel = sdf_leaf(3, [1.8, 0.80, 1.8], offset=[0.0, -0.55, 0.0])
 abyss_tree = sdf_binary(5, abyss_pool, abyss_funnel, 0.25)
 objects.append(make_field(
     "cathedral.pond.abyss", "Abyssal Well-Spring of Living Water (Deep Heart)",
-    [0.0, -0.05, 52.0], abyss_tree, [4.2, 1.4, 4.2],
+    [0.0, -0.15, 52.0], abyss_tree, [4.2, 1.4, 4.2],
     "material.logos.pond.water_abyss", [0.05, 0.25, 0.85],
     extra_props={
         "isAbyssalWell": {"t": "bool", "v": True},
@@ -3086,7 +3546,7 @@ pond_water_tree = sdf_binary(5, pond_lobes_1, sdf_binary(5, pond_lobe_west, pond
 
 objects.append(make_field(
     "cathedral.pond.water_basin", "Sacred Edenic Lagoon of Living Water",
-    [0.0, 0.15, 50.0], pond_water_tree, [11.0, 1.2, 11.0],
+    [0.0, -0.19, 50.0], pond_water_tree, [11.0, 1.2, 11.0],
     "material.logos.pond.water", [0.15, 0.85, 0.95],
     extra_props={
         "isSacredPond": {"t": "bool", "v": True},
@@ -3104,19 +3564,19 @@ def make_bubble_upwelling_tree(r=0.45, h=0.18):
 
 objects.append(make_field(
     "cathedral.pond.spring_bubble.1", "Bubbling Spring Upwelling (North Effervescence)",
-    [-1.5, 0.24, 53.2], make_bubble_upwelling_tree(0.55, 0.22), [1.2, 0.5, 1.2],
+    [-1.5, 0.18, 53.2], make_bubble_upwelling_tree(0.55, 0.22), [1.2, 0.5, 1.2],
     "material.logos.pond.water", [0.35, 0.95, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 2.5}}
 ))
 objects.append(make_field(
     "cathedral.pond.spring_bubble.2", "Bubbling Spring Upwelling (South Geyser Fountain)",
-    [1.8, 0.24, 51.5], make_bubble_upwelling_tree(0.50, 0.20), [1.1, 0.5, 1.1],
+    [1.8, 0.18, 51.5], make_bubble_upwelling_tree(0.50, 0.20), [1.1, 0.5, 1.1],
     "material.logos.pond.water", [0.35, 0.95, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 2.4}}
 ))
 objects.append(make_field(
     "cathedral.pond.spring_bubble.3", "Bubbling Spring Upwelling (Grotto Plume Well)",
-    [0.0, 0.26, 55.2], make_bubble_upwelling_tree(0.65, 0.26), [1.3, 0.6, 1.3],
+    [0.0, 0.18, 55.2], make_bubble_upwelling_tree(0.65, 0.26), [1.3, 0.6, 1.3],
     "material.logos.pond.water", [0.40, 0.98, 1.0],
     extra_props={"light.intensity": {"t": "float", "v": 3.0}}
 ))
@@ -3162,7 +3622,7 @@ def make_lotus_flower_tree(scale_r=1.0, scale_h=1.0):
 grand_lotus_tree = make_lotus_flower_tree(1.4, 1.2)
 objects.append(make_field(
     "cathedral.pond.lotus.grand", "Grand Celestial Lotus of Dawn",
-    [-2.5, 0.38, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
+    [-2.5, 0.20, 48.0], grand_lotus_tree, [1.8, 1.2, 1.8],
     "material.logos.pond.lotus.dawn", [1.0, 0.45, 0.75],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3175,7 +3635,7 @@ objects.append(make_field(
 white_lotus_tree = make_lotus_flower_tree(1.2, 1.0)
 objects.append(make_field(
     "cathedral.pond.lotus.white", "Sacred Alabaster Lotus of Sophia",
-    [3.0, 0.36, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
+    [3.0, 0.20, 51.5], white_lotus_tree, [1.6, 1.0, 1.6],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3188,7 +3648,7 @@ objects.append(make_field(
 cyan_lotus_tree = make_lotus_flower_tree(1.25, 1.05)
 objects.append(make_field(
     "cathedral.pond.lotus.cyan", "Nocturnal Cyan Star Lotus of Sophia",
-    [2.2, 0.38, 46.5], cyan_lotus_tree, [1.7, 1.1, 1.7],
+    [2.2, 0.20, 46.5], cyan_lotus_tree, [1.7, 1.1, 1.7],
     "material.logos.pond.lotus.cyan", [0.15, 0.90, 0.98],
     extra_props={
         "isSacredRelic": {"t": "bool", "v": True},
@@ -3201,13 +3661,13 @@ objects.append(make_field(
 bud_n = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.north", "Northern Water Lily Bud",
-    [-4.2, 0.36, 52.5], bud_n, [0.9, 1.0, 0.9],
+    [-4.2, 0.21, 52.5], bud_n, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.dawn", [0.95, 0.45, 0.70]
 ))
 bud_s = sdf_binary(5, sdf_leaf(3, [0.25, 0.55, 0.25]), sdf_leaf(0, [0.20, 0.20, 0.20], offset=[0.0, 0.25, 0.0]), 0.15)
 objects.append(make_field(
     "cathedral.pond.lily.bud.south", "Southern Water Lily Bud",
-    [2.2, 0.36, 45.5], bud_s, [0.9, 1.0, 0.9],
+    [2.2, 0.21, 45.5], bud_s, [0.9, 1.0, 0.9],
     "material.logos.pond.lotus.white", [0.95, 0.95, 0.90]
 ))
 
@@ -3242,7 +3702,7 @@ def make_water_iris_colony_tree():
 iris_tree = make_water_iris_colony_tree()
 objects.append(make_field(
     "cathedral.pond.iris.north", "Northern Blue Flag Sacred Water Iris Colony",
-    [-4.0, 0.28, 46.2], iris_tree, [1.4, 2.0, 1.4],
+    [-4.0, 0.18, 46.2], iris_tree, [1.4, 2.0, 1.4],
     "material.logos.pond.iris", [0.45, 0.20, 0.85],
     extra_props={
         "isFlora": {"t": "bool", "v": True},
@@ -3252,7 +3712,7 @@ objects.append(make_field(
 ))
 objects.append(make_field(
     "cathedral.pond.iris.south", "Southern Blue Flag Sacred Water Iris Colony",
-    [4.5, 0.28, 53.8], iris_tree, [1.4, 2.0, 1.4],
+    [4.5, 0.18, 53.8], iris_tree, [1.4, 2.0, 1.4],
     "material.logos.pond.iris", [0.45, 0.20, 0.85],
     extra_props={
         "isFlora": {"t": "bool", "v": True},
@@ -3321,7 +3781,7 @@ def make_lilypad_cluster(pads):
 lilypads_c1 = make_lilypad_cluster([(-0.6, -0.6, 0.85), (0.7, -0.5, 0.75), (0.1, 0.8, 0.70)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.1", "Emerald Lily Pad Formation (Grand Lotus Fleet)",
-    [-2.5, 0.22, 48.0], lilypads_c1, [2.2, 0.25, 2.2],
+    [-2.5, 0.23, 48.0], lilypads_c1, [2.2, 0.40, 2.2],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3329,7 +3789,7 @@ objects.append(make_field(
 lilypads_c2 = make_lilypad_cluster([(-0.5, 0.0, 0.80), (0.6, 0.4, 0.70), (0.2, -0.7, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.2", "Emerald Lily Pad Formation (North Sanctuary)",
-    [-4.5, 0.22, 51.0], lilypads_c2, [2.0, 0.25, 2.0],
+    [-4.5, 0.23, 51.0], lilypads_c2, [2.0, 0.40, 2.0],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3337,7 +3797,7 @@ objects.append(make_field(
 lilypads_c3 = make_lilypad_cluster([(0.0, 0.0, 0.90), (-0.7, 0.6, 0.75), (0.8, -0.5, 0.65)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.3", "Emerald Lily Pad Formation (South Sanctuary)",
-    [3.5, 0.22, 47.0], lilypads_c3, [2.2, 0.25, 2.2],
+    [3.5, 0.23, 47.0], lilypads_c3, [2.2, 0.40, 2.2],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3345,7 +3805,7 @@ objects.append(make_field(
 lilypads_c4 = make_lilypad_cluster([(-0.4, 0.3, 0.75), (0.5, -0.4, 0.80)])
 objects.append(make_field(
     "cathedral.pond.lilypads.cluster.4", "Emerald Lily Pad Formation (Spring Inlet)",
-    [0.5, 0.22, 44.5], lilypads_c4, [1.8, 0.25, 1.8],
+    [0.5, 0.23, 44.5], lilypads_c4, [1.8, 0.40, 1.8],
     "material.logos.pond.lilypad", [0.2, 0.85, 0.3]
 ))
 
@@ -3365,17 +3825,17 @@ def make_duckweed_cluster():
 duckweed_tree = make_duckweed_cluster()
 objects.append(make_field(
     "cathedral.pond.duckweed.1", "Floating Water-Clover Rosettes (North Inlet)",
-    [-1.2, 0.23, 47.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [-1.2, 0.235, 47.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 objects.append(make_field(
     "cathedral.pond.duckweed.2", "Floating Water-Clover Rosettes (South Bay)",
-    [2.8, 0.23, 49.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [2.8, 0.235, 49.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 objects.append(make_field(
     "cathedral.pond.duckweed.3", "Floating Water-Clover Rosettes (Willow Cove)",
-    [-3.2, 0.23, 53.5], duckweed_tree, [0.9, 0.1, 0.9],
+    [-3.2, 0.235, 53.5], duckweed_tree, [0.9, 0.30, 0.9],
     "material.logos.pond.lilypad", [0.25, 0.90, 0.35]
 ))
 
@@ -3409,7 +3869,7 @@ koi_swimming_3 = make_koi_fish_tree(0.65, 0.16, 0.14, 0.08)
 # Koi 1: Grand 24k Golden Kohaku (Near Grand Dawn Lotus)
 objects.append(make_field(
     "cathedral.pond.koi.1", "Grand 24k Golden Kohaku Koi (Celestial Emperor)",
-    [-1.6, 0.10, 49.2], koi_swimming_1, [0.9, 0.5, 1.2],
+    [-1.6, 0.15, 49.2], koi_swimming_1, [1.0, 0.60, 1.2],
     "material.logos.pond.koi", [1.0, 0.75, 0.15],
     rot_deg=[0.0, -35.0, 0.0],
     extra_props={
@@ -3422,7 +3882,7 @@ objects.append(make_field(
 # Koi 2: Scarlet & Pearl Tancho Koi (Near Alabaster Lotus)
 objects.append(make_field(
     "cathedral.pond.koi.2", "Scarlet & Pearl Tancho Koi (Sun-Crown)",
-    [1.8, 0.09, 50.8], koi_swimming_2, [0.8, 0.45, 1.0],
+    [1.8, 0.14, 50.8], koi_swimming_2, [1.0, 0.60, 1.1],
     "material.logos.pond.koi", [0.95, 0.85, 0.65],
     rot_deg=[0.0, 45.0, 0.0],
     extra_props={
@@ -3435,7 +3895,7 @@ objects.append(make_field(
 # Koi 3: Celestial Cyan Shusui Koi (Circling the Abyssal Spring Heart)
 objects.append(make_field(
     "cathedral.pond.koi.3", "Celestial Cyan Shusui Koi (Abyssal Guardian)",
-    [0.2, 0.06, 52.6], koi_swimming_3, [0.85, 0.48, 1.1],
+    [0.2, 0.12, 52.6], koi_swimming_3, [1.0, 0.60, 1.2],
     "material.logos.pond.koi", [0.45, 0.85, 0.95],
     rot_deg=[0.0, 110.0, 0.0],
     extra_props={
@@ -3448,7 +3908,7 @@ objects.append(make_field(
 # Koi 4: Young Golden Fry (Near Stepping Stones)
 objects.append(make_field(
     "cathedral.pond.koi.4", "Young Golden Fry Koi (Playful Dart)",
-    [-0.8, 0.12, 46.8], make_koi_fish_tree(0.42, 0.10, 0.09, -0.10), [0.6, 0.35, 0.7],
+    [-0.8, 0.14, 46.8], make_koi_fish_tree(0.42, 0.10, 0.09, -0.10), [0.8, 0.50, 0.8],
     "material.logos.pond.koi", [1.0, 0.80, 0.20],
     rot_deg=[0.0, -65.0, 0.0],
     extra_props={"isFauna": {"t": "bool", "v": True}}
@@ -3457,7 +3917,7 @@ objects.append(make_field(
 # Koi 5: Twin Golden Fry (Near Spring Cascade Inlet)
 objects.append(make_field(
     "cathedral.pond.koi.5", "Twin Golden Fry Koi (Spring Explorer)",
-    [1.0, 0.10, 53.5], make_koi_fish_tree(0.45, 0.11, 0.10, 0.12), [0.6, 0.35, 0.7],
+    [1.0, 0.14, 53.5], make_koi_fish_tree(0.45, 0.11, 0.10, 0.12), [0.8, 0.50, 0.8],
     "material.logos.pond.koi", [1.0, 0.80, 0.20],
     rot_deg=[0.0, 20.0, 0.0],
     extra_props={"isFauna": {"t": "bool", "v": True}}
@@ -3478,13 +3938,13 @@ def make_dragonfly_tree():
 
 objects.append(make_field(
     "cathedral.pond.dragonfly.1", "Gossamer Emerald Dragonfly (Spirit of Spring Air)",
-    [-4.2, 0.72, 52.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    [-4.2, 0.65, 52.5], make_dragonfly_tree(), [0.8, 0.50, 0.8],
     "material.logos.pond.reeds", [0.35, 0.95, 0.45],
     extra_props={"light.intensity": {"t": "float", "v": 1.4}}
 ))
 objects.append(make_field(
     "cathedral.pond.dragonfly.2", "Gossamer Celestial Dragonfly (Lotus Guardian)",
-    [-2.2, 0.75, 47.5], make_dragonfly_tree(), [0.8, 0.3, 0.8],
+    [-2.2, 0.65, 47.5], make_dragonfly_tree(), [0.8, 0.50, 0.8],
     "material.logos.pond.reeds", [0.25, 0.85, 0.95],
     extra_props={"light.intensity": {"t": "float", "v": 1.4}}
 ))
@@ -3521,10 +3981,10 @@ for wid, wpos, wname, wcol, wlight in wisp_data:
 
 # A. Natural Mossy Stepping Stones (Curving path connecting North & South shores)
 stepping_stone_coords = [
-    ("1", [-1.8, 0.30, 45.5], [0.65, 0.16, 0.65]),
-    ("2", [-0.4, 0.32, 47.8], [0.72, 0.18, 0.70]),
-    ("3", [0.8, 0.31, 50.2],  [0.68, 0.17, 0.68]),
-    ("4", [2.2, 0.28, 52.8],  [0.75, 0.16, 0.72])
+    ("1", [-1.8, 0.28, 45.5], [0.65, 0.18, 0.65]),
+    ("2", [-0.4, 0.28, 47.8], [0.72, 0.18, 0.70]),
+    ("3", [0.8, 0.28, 50.2],  [0.68, 0.18, 0.68]),
+    ("4", [2.2, 0.28, 52.8],  [0.75, 0.18, 0.72])
 ]
 for sid, spos, sdims in stepping_stone_coords:
     stone_core = sdf_leaf(2, [sdims[0], sdims[1], sdims[2]], p0=0.10)
@@ -3532,7 +3992,7 @@ for sid, spos, sdims in stepping_stone_coords:
     stone_tree = sdf_binary(5, stone_core, stone_cap, 0.12)
     objects.append(make_field(
         f"cathedral.pond.stepping_stone.{sid}", f"Mossy River Stepping Stone {sid}",
-        spos, stone_tree, [sdims[0] * 1.5, sdims[1] * 1.8, sdims[2] * 1.5],
+        spos, stone_tree, [sdims[0] * 1.5, 0.50, sdims[2] * 1.5],
         "material.logos.pond.mossy_stone", [0.45, 0.65, 0.40]
     ))
 
@@ -3858,13 +4318,26 @@ zone_doc = {
     "deletable": {"Zach": True},
     "spatialRoot": {
         "id": "Cathedral of the Living Logos_spatialRoot",
-        "origin": [0.0, 0.0, 0.0],
+        "origin": [0.0, 24.0, 0.0],
         "scale": [120.0, 80.0, 120.0],
+        "authoredProperties": {
+            "light.ambient": {"t": "float", "v": 0.28},
+            "light.attenuation.constant": {"t": "float", "v": 1.0},
+            "light.attenuation.linear": {"t": "float", "v": 0.015},
+            "light.attenuation.quadratic": {"t": "float", "v": 0.0005},
+            "light.color": {"t": "vec3", "x": 1.0, "y": 0.96, "z": 0.88},
+            "light.diffuse": {"t": "float", "v": 0.85},
+            "light.enabled": {"t": "bool", "v": True},
+            "light.intensity": {"t": "float", "v": 1.4},
+            "light.source": {"t": "bool", "v": True},
+            "light.specular": {"t": "float", "v": 0.90}
+        },
         "field": {
-            "amplitude": 1.2,
-            "baseDensity": 0.88,
-            "frequency": 1.618,
-            "mode": "Procedural"
+            "mode": "AST",
+            "baseDensity": 1.0,
+            "frequency": 1.0,
+            "amplitude": 1.0,
+            "astDefinition": make_cathedral_radiance_ast()
         },
         "vectorField": {
             "amplitude": 0.6,
@@ -3888,7 +4361,8 @@ zone_doc = {
         "law-logos-covenant-weave",
         "law-logos-unison",
         "law-logos-season-toggle",
-        "law-logos-pillar-pulse"
+        "law-logos-pillar-pulse",
+        "law-logos-sky-aurora"
     ]
 }
 
@@ -4050,19 +4524,43 @@ world_doc = {
                     ]
                 },
                 "provenance": [{"entityA": "law-logos-season-toggle", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
+            },
+            {
+                "id": "law-logos-sky-aurora",
+                "name": "Logos: Radiate Celestial Sky Aurora",
+                "enabled": True, "authority": 0, "activation": 0, "scope": 1, "drives": False, "retrigger": 0, "conditionMode": "any",
+                "authors": ["Zach"], "conditionSubjects": [], "targets": [], "applicationLog": [],
+                "conditionModel": {
+                    "kind": 4,
+                    "children": [{"kind": 8, "otherId": "hud.btn.aurora"}]
+                },
+                "actionModel": {
+                    "kind": 5,
+                    "children": [
+                        {"kind": 0, "path": "@cathedral.sky.aurora.emerald.light.intensity", "operand": {"t": "float", "v": 12.5}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.turquoise.light.intensity", "operand": {"t": "float", "v": 11.5}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.violet.light.intensity", "operand": {"t": "float", "v": 11.0}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.corona.light.intensity", "operand": {"t": "float", "v": 10.5}},
+                        {"kind": 0, "path": "@hud.logos.telemetry.season.label2D", "operand": {"t": "string", "v": "CELESTIAL SKY: AURORA BOREALIS (TRANSCENDENT GLORY)"}},
+                        {"kind": 18, "path": "acoustic.frequency", "input": "acoustic.amplitude", "propertyName": "sine"}
+                    ]
+                },
+                "provenance": [{"entityA": "law-logos-sky-aurora", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
             }
         ],
         "triggers": {
             "law-logos-breath": ["object-clicked"],
             "law-logos-fiat-lux": ["object-clicked"],
             "law-logos-celestial-chord": ["object-clicked"],
-            "law-logos-season-toggle": ["object-clicked"]
+            "law-logos-season-toggle": ["object-clicked"],
+            "law-logos-sky-aurora": ["object-clicked"]
         },
         "formationMembers": [
             "law-logos-breath",
             "law-logos-fiat-lux",
             "law-logos-celestial-chord",
-            "law-logos-season-toggle"
+            "law-logos-season-toggle",
+            "law-logos-sky-aurora"
         ],
         "rete": {"alphaNodes": [], "betaNodes": [], "facts": [], "agenda": []}
     }
@@ -4072,3 +4570,21 @@ world_path = os.path.join(repo_root, "saves", "worlds", "cathedral_of_the_living
 with open(world_path, "w") as f:
     json.dump(world_doc, f, indent=2)
 print(f"Wrote {world_path}")
+
+# Write individual law files to saves/laws/<law_id>/law.json for runtime Zone switching
+for law in world_doc["authoredLaws"]["laws"]:
+    law_id = law["id"]
+    law_dir = os.path.join(repo_root, "saves", "laws", law_id)
+    os.makedirs(law_dir, exist_ok=True)
+    law_file = os.path.join(law_dir, "law.json")
+    law_data = {
+        "authors": law.get("authors", ["Zach"]),
+        "identifier": law_id,
+        "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+        "law": law,
+        "triggers": world_doc["authoredLaws"]["triggers"].get(law_id, ["object-clicked"])
+    }
+    with open(law_file, "w") as lf:
+        json.dump(law_data, lf, indent=2)
+        lf.write("\n")
+print(f"Wrote {len(world_doc['authoredLaws']['laws'])} law roots in saves/laws/")

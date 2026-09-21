@@ -198,9 +198,11 @@ That first derived layer is now implemented in `Prophetic::Index`:
   demand;
 - `aboutInstances` stays on the edge, so a quantifier's instance-side read is not silently
   conflated with the Law subject;
-- opacity is global: if any read or write is not structurally legible,
-  `relevanceComplete() == false` and the derived graph is empty. A future consumer must fall
-  to a complete lower tier rather than trusting a partial graph.
+- opacity remains globally authoritative: if any read or write is not structurally legible,
+  `relevanceComplete() == false`, so no consumer may narrow execution from the graph. But
+  known model-backed edges are now retained as diagnostic/provenance facts rather than erased;
+  opaque write sources are listed explicitly in `unknownWriteSources()`. A future consumer still
+  falls to a complete lower tier until completeness is restored.
 
 This graph is **derived state only**. It does not yet write Relations/Formations into a
 Person's world and it is not yet a hot-path narrowing decision. Those are Formation-Rete
@@ -298,11 +300,29 @@ model edit including one performed *by* a Law, so a metalaw rewriting a law alre
 invalidates the index correctly. Whether the interpreter should instead *synthesize through*
 the metalaw (§13's law-synthesis path) rather than re-deriving is Zach's call.
 
-**§20/§21, the unknown-variable model.** Foreign writers are handled today by the blunt
-instrument: any opaque writer anywhere suppresses cross-law findings. Modelling a Singular-
-represented external agent as a genuine *unknown variable* — keeping the Beta-side constraints
-while treating only its transform as unconstrained — is the finer version Zach describes, and
-it is not built.
+**§20/§21, the unknown-variable model — first rung BUILT 2026-09-19.** Prophetic no
+longer turns one opaque writer into a total information blackout. Every structurally known
+write/read edge is retained, while each opaque writer is named in an
+`UnknownWriteSource{lawId, why, hasModeledWrites}` frontier. A model-backed `FirstMoverLaw`
+therefore contributes the edges its ActionModel proves **and** remains an explicit unknown C++
+actuation source. `relevanceComplete()` stays false, so these partial edges have zero
+narrowing authority; runtime falls back exactly as before.
+
+**Path-granular unknown-domain representation — BUILT 2026-09-19, continuation rung.**
+Each unknown source can now carry `knownMayWritePaths` plus an independent
+`domainComplete` bit. The distinction is load-bearing: positive paths may accumulate while a
+domain is incomplete, but `unknownSourceMayReach` must still answer *possible* for every
+unlisted path. Only a complete domain may use path disjointness to answer *no*.
+`Index::unknownWriteMayReach(path)` and `unknownWriteDomainCompleteFor(path)` expose those
+separate questions for the future cross-Law solver, and the report serializes the distinction.
+
+Current C++ First Movers deliberately remain `domainComplete == false`. Their registered state,
+filesystem write scopes, or observed call sites are not silently promoted into an exhaustive
+in-world actuation contract. The remaining prerequisite is therefore the **provenance half**:
+legible First-Mover/property capability Relations (or an equivalent ontology-native source of
+truth) must populate and certify these domains. Only after that may the general cross-Law
+least-post-fixpoint/SCC solver use absence of unknown influence to replace an external `Top`
+seed with a finite one.
 
 **Rendering.** Zach: *"when rendering itself is handled by Laws everything I said here also
 applies to rendering."* True, and the interval algebra in §3a is already shared with the SDF
@@ -319,7 +339,7 @@ tessellator. Nothing further is done.
 | the wiring | `LawManager::syncProphetic` / `propheticHears` / `prophetic()` in `Law.{hpp,cpp}` |
 | alpha provenance | `ReteNetwork::AlphaSource`, `hasForeignBoundAlpha()` in `Law.{hpp,cpp}`; tagged in `ConditionModel.cpp` |
 | the change-feed fix | `PropertyPath::setValue` + `resolve`'s `owner` out-param; `Singular::setDynamicProperty` |
-| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section; Section I is the guarded write-state/fixpoint witness** |
+| the tests | `tests/law/prophetic_rete_test.cpp` — **Section F is the safety section; Section H covers branch provenance / partial relevance / unknown sources; Section I is the guarded write-state/fixpoint witness** |
 
 ---
 

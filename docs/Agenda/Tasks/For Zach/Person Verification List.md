@@ -1,5 +1,15 @@
 # Person Verification List
 
+## Sun — authored OntoMath radiance field
+
+*GPT-5.6 Sol · 2026-09-19. Phase 2 continues Zach's instruction that light be an authored continuous FieldNode/OntoMath function rather than a shader-only noun.*
+
+- [ ] Fresh-launch Earthcall, enter **Sun** through the Zone flow, and confirm the Zone still loads normally with `sun.light-field` active and the witness object present.
+- [ ] Put a known **raymarched SDF/implicit surface** at two visibly different distances from the Sun source (or move the same one): confirm the nearer surface receives stronger diffuse/specular illumination than the farther one. Do **not** use the ordinary witness cube alone as proof unless its draw path is confirmed to be SDF.
+- [ ] Edit the Sun spatial root's authored `field.ast` falloff through the normal authoring/property path, then observe an SDF surface without restarting: confirm the visible falloff changes, proving AST-content invalidation reaches generated WGSL.
+- [ ] Toggle authored `light.enabled`: confirm SDF lighting turns off/on while the surface's authored material color remains visible.
+
+
 ## Cathedral — Court of the Open Hand
 
 *Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
@@ -360,6 +370,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 - [ ] **Look at the new "Rete network" block in the performance window.** `PerformanceMetricsWindow` now shows alpha/beta node counts, live fact count, and "fact refs held", plus the prophetic filter's skip rate. Open chess in `earthcall_webgpu` — chess states `instance-of category.chess.piece` in **76 separate laws**, so before this change the network carried 76 identical nodes each holding its own copy of the same match set. The alpha count should now be far below the number of laws. This is the first time the network's own size has been visible at all.
 - [ ] **Chess and Go must play identically.** Sharing means many laws now read one node. `chess_app_test`, `go_app_test` and `rete_compile_test` pass, but a shared node binding the wrong law is exactly the kind of fault a suite can miss and a hand cannot: play a real game in each and confirm no piece behaves differently, and especially that nothing has gone *quiet*.
 - [ ] **Synthesis Studio chord pads.** `synthesis_studio_living.json` states `isChordPad == true` in ten laws, which now share one node. Play the pads and confirm all of them still sound and light.
+- [ ] **Hear the authored-timbre Synthesis Studio migration (PR #260).** Load `synthesis_studio_living`, switch TRI / SINE / SQR, play single notes and harmony modes, and confirm all three are audibly distinct, responsive, and produce no duplicate/quiet notes. These selectors now point at `timbre.studio.*` beings whose `acoustic.form` is authored OntoMath; report any sound that feels materially worse than the former miniaudio preset because that is a Person-facing fidelity regression even if the mathematical witness is green.
 
 ## IDE Docking Mode for First Mover Window Tools
 

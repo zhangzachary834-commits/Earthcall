@@ -5,6 +5,7 @@
 #include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
+#include "Singularity/Foreign/API/EarthcallAPI.hpp"
 // GameInit.cpp – Game initialisation, GLFW callbacks
 // Split from Game.cpp during refactor.
 
@@ -42,6 +43,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -192,6 +194,11 @@ bool Engine::initLogic() {
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
 
+    // Register first-mover AudioChannel (authored acoustic reality -> output substrate).
+    // This owns the checked PlayAudio sink; AudioSystem below it owns only
+    // miniaudio/device execution.
+    Singularity::Audio::AudioChannel::syncRegister(*_lawManager);
+
     // Register first-mover AudioRecorder (microphone audio capture and streaming recording)
     Singularity::Audio::AudioRecorder::syncRegister(*_lawManager);
 
@@ -310,6 +317,7 @@ bool Engine::initLogic() {
     mgr.addZone(std::make_shared<Zone>("Character Architect Forge", "default"));
     mgr.bindLive();
     mgr.bindLawManager(_lawManager.get());
+    Integration::getEarthcallAPI().setZoneManager(&mgr);
     // Read the ground before asking whether a Home must be born. Previously
     // ensureHomeZone ran first, so a persisted Home could not possibly answer
     // the question and a name-twin could be minted before hydration saw disk.

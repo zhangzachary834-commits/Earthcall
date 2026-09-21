@@ -21,7 +21,7 @@ from author_synthesis_studio import (
     all_of, any_of, compare, clamp_pieces, copy_terms, map_path, mat4_translate,
     play_audio, publish, pv, seq, set_path, sin_factor, wave_term,
 )
-from upgrade_synthesis_studio import object2d, caption, colors, relation
+from upgrade_synthesis_studio import object2d, caption, colors, relation, TIMBRE_IDS
 
 REVISION = "living-instrument-1"
 MOVER = "studio.author.astra"
@@ -308,6 +308,7 @@ def upgrade(document):
         for voice, ident in [("triangle", "law-studio-pad-play"),
                               ("sine", "law-studio-resonance-play-sine"),
                               ("square", "law-studio-resonance-play-square")]:
+            timbre = TIMBRE_IDS[voice]
             revise(ident, seq(
                 map_path("acoustic.frequency", {"f":"noteBaseHz","o":"@state.studio.octaveFactor"}, [term(1,f=1,o=1)]),
                 map_path("acoustic.amplitude", {"b":"@state.studio.bloom"}, [term(0.12),term(0.18,b=1)]),
@@ -315,13 +316,13 @@ def upgrade(document):
                 map_path("harmony.thirdHz", {"f":"acoustic.frequency","r":"@state.studio.thirdRatio"}, [term(1,f=1,r=1)]),
                 map_path("harmony.fifthHz", {"f":"acoustic.frequency"}, [term(2**(7/12),f=1)]),
                 map_path("@state.studio.lastNoteHz", {"f":"acoustic.frequency"}, copy_terms("f")),
-                play_audio("acoustic.frequency", "acoustic.amplitude", voice), publish("note-played")))
+                play_audio("acoustic.frequency", "acoustic.amplitude", timbre), publish("note-played")))
             for interval in ("fifth", "third"):
                 harmony_cond = (any_of(equal("@state.studio.harmony","major"),equal("@state.studio.harmony","minor"))
                     if interval == "third" else any_of(*(equal("@state.studio.harmony", h) for h in ("fifth","major","minor"))))
                 add(f"{voice}-{interval}", f"Sound the {voice} {interval}",
-                    all_of(equal("isChordPad",True),equal("@state.studio.voice",voice),harmony_cond),
-                    play_audio("harmony." + interval + "Hz", "harmony.amplitude", voice), "note-played")
+                    all_of(equal("isChordPad",True),equal("@state.studio.voice",timbre),harmony_cond),
+                    play_audio("harmony." + interval + "Hz", "harmony.amplitude", timbre), "note-played")
         # A single causal chain computes each response before writing geometry.
         revise("law-studio-resonance-sculpture", seq(
             map_path("shape.r", {"r":"resonanceRadius","e":"resonanceEnergy","b":"@state.studio.bloom"},

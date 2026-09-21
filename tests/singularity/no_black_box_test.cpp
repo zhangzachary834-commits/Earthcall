@@ -51,6 +51,7 @@
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "../../src/ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "Singularity/TransferPolicy.hpp"
@@ -323,6 +324,7 @@ int main() {
         Singularity::Input::LocomotionChannel locomotion; audit("LocomotionChannel", locomotion);
         Singularity::Input::InteractionChannel interaction; audit("InteractionChannel", interaction);
         Singularity::Screen::ScreenChannel screen;        audit("ScreenChannel", screen);
+        Singularity::Audio::AudioChannel audio;            audit("AudioChannel", audio);
         audit("TransferPolicy", TransferPolicy::instance());
 
         Soul soul("Prober");

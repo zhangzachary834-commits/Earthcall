@@ -18,6 +18,7 @@
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -225,6 +226,15 @@ const std::vector<PathOption>& knownPathOptions() {
                 options.push_back({property->name() + ".y", "Channel — Screen", "number", false});
                 options.push_back({property->name() + ".z", "Channel — Screen", "number", false});
             }
+        }
+
+        static Singularity::Audio::AudioChannel audioPrototype;
+        for (Property* property : audioPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const char* type = "number";
+            if (std::holds_alternative<std::string>(probe)) type = "text";
+            else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            options.push_back({property->name(), "Channel — Audio", type, false});
         }
 
         static Singularity::Language::Lexeme lexemePrototype("prototype");

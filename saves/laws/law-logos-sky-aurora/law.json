@@ -1,0 +1,97 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-logos-sky-aurora",
+  "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+  "law": {
+    "id": "law-logos-sky-aurora",
+    "name": "Logos: Radiate Celestial Sky Aurora",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "any",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "hud.btn.aurora"
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.emerald.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 12.5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.turquoise.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 11.5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.violet.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 11.0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.corona.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 10.5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.logos.telemetry.season.label2D",
+          "operand": {
+            "t": "string",
+            "v": "CELESTIAL SKY: AURORA BOREALIS (TRANSCENDENT GLORY)"
+          }
+        },
+        {
+          "kind": 18,
+          "path": "acoustic.frequency",
+          "input": "acoustic.amplitude",
+          "propertyName": "sine"
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-logos-sky-aurora",
+        "entityB": "Zach",
+        "directed": true,
+        "weight": 1.0,
+        "events": [],
+        "type": "authored-by"
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

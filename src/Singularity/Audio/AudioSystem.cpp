@@ -1,4 +1,6 @@
 #include "AudioSystem.hpp"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -64,6 +66,8 @@ bool AudioSystem::init() {
     }
 
     _initialized = true;
+    ma_engine_set_volume(&_state->engine,
+                         static_cast<float>(_outputEnabled ? _masterGain : 0.0));
     ECA::Logger::instance().log(ECA::LogCategory::Audio, "SYSTEM", "Audio System initialized");
     std::cout << "🎵 Audio System initialized." << std::endl;
     return true;
@@ -113,6 +117,35 @@ void AudioSystem::shutdown() {
     std::cout << "🎵 Audio System shut down." << std::endl;
 }
 
+void AudioSystem::setOutputEnabled(bool enabled) {
+    _outputEnabled = enabled;
+    if (_initialized && _state) {
+        ma_engine_set_volume(&_state->engine,
+                             static_cast<float>(_outputEnabled ? _masterGain : 0.0));
+    }
+}
+
+void AudioSystem::setMasterGain(double gain) {
+    if (!std::isfinite(gain)) return;
+    _masterGain = std::max(0.0, gain);
+    if (_initialized && _state) {
+        ma_engine_set_volume(&_state->engine,
+                             static_cast<float>(_outputEnabled ? _masterGain : 0.0));
+    }
+}
+
+int AudioSystem::actualSampleRate() const {
+    if (!_initialized || !_state || !_state->engine.pDevice) return 0;
+    return static_cast<int>(_state->engine.pDevice->sampleRate);
+}
+
+int AudioSystem::activeVoiceCount() const {
+    if (!_initialized || !_state) return 0;
+    return static_cast<int>(_state->activeSpatialSounds.size() +
+                            _state->activeEmitters.size() +
+                            (_state->hasMusic ? 1u : 0u));
+}
+
 void AudioSystem::playSound(const std::string& filepath) {
     if (!_initialized || !_state) return;
 
@@ -120,36 +153,10 @@ void AudioSystem::playSound(const std::string& filepath) {
 }
 
 void AudioSystem::setupAudioEventListeners() {
-    if (!_initialized) return;
-    // A continuous sound-emitter object (see tick()) is how a being that IS
-    // sounding stays sounding. This is the other half: the one-shot, the
-    // struck note — what ActionNode::PlayAudio authors when a law says "sound
-    // this frequency, now".
-    //
-    // Registered as a SINK rather than an event subscription, and the
-    // difference is the bug it fixes. The old contract was an
-    // "audio-synthesized" event this function once listened for and stopped
-    // listening for; the publish on the other side was never removed, so every
-    // authored note went into a bus with no subscriber while the law engine
-    // logged a successful application. A sink cannot rot that way — when it is
-    // absent, PlayAudio says so and reports failure (ActionModel.hpp).
-    //
-    // The channel decides how a frequency becomes pressure, and nothing else
-    // does: playProceduralCollisionSound already spatializes, applies the
-    // speed-of-sound delay, and — the part that matters — enforces the
-    // infrasound floor (kAudibleFloorHz), which is a Kernel guard on the path
-    // to a Person's body and must not be reachable from law text.
-    registerAudioSink([](Singular& subject, double frequency, double amplitude,
-                         const std::string& timbre) {
-        glm::vec3 position(0.0f);
-        if (auto* obj = dynamic_cast<Object*>(&subject)) position = obj->getPosition();
-        // Authored timbre names that are not waveforms fall back to sine
-        // inside playProceduralCollisionSound; "crystal" and "bell" are the
-        // Synthesis Studio's, and they are names for a sound the synthesizer
-        // does not yet have rather than errors.
-        AudioSystem::instance().playProceduralCollisionSound(
-            position, glm::vec3(0.0f), frequency, amplitude, timbre);
-    });
+    // Compatibility no-op. The checked PlayAudio sink is now owned by
+    // Singularity::Audio::AudioChannel, matching ScreenChannel and
+    // InteractionChannel: the modality Law is the world/machine boundary,
+    // while AudioSystem remains the hardware/DSP substrate below it.
 }
 
 void AudioSystem::tick() {
@@ -247,9 +254,40 @@ void AudioSystem::tick() {
         }
 
         ma_waveform_type waveType = ma_waveform_type_sine;
-        if (waveTypeStr == "triangle") waveType = ma_waveform_type_triangle;
-        else if (waveTypeStr == "square") waveType = ma_waveform_type_square;
-        else if (waveTypeStr == "sawtooth") waveType = ma_waveform_type_sawtooth;
+        bool knownLegacyWave = waveTypeStr.empty() || waveTypeStr == "sine";
+        if (waveTypeStr == "triangle") {
+            waveType = ma_waveform_type_triangle;
+            knownLegacyWave = true;
+        } else if (waveTypeStr == "square") {
+            waveType = ma_waveform_type_square;
+            knownLegacyWave = true;
+        } else if (waveTypeStr == "sawtooth") {
+            waveType = ma_waveform_type_sawtooth;
+            knownLegacyWave = true;
+        }
+        if (!knownLegacyWave) {
+            // Unknown vocabulary is not permission to invent sine. If this
+            // object previously had a valid legacy waveform, stop it too so a
+            // runtime edit cannot leave yesterday's timbre sounding.
+            for (auto it = _state->activeEmitters.begin();
+                 it != _state->activeEmitters.end(); ++it) {
+                if ((*it)->subject != obj) continue;
+                ma_sound_stop((*it)->sound);
+                ma_sound_uninit((*it)->sound);
+                delete (*it)->sound;
+                if ((*it)->waveform) {
+                    ma_waveform_uninit((*it)->waveform);
+                    delete (*it)->waveform;
+                }
+                delete *it;
+                _state->activeEmitters.erase(it);
+                break;
+            }
+            std::cerr << "AudioSystem: unresolved legacy acoustic.waveType '"
+                      << waveTypeStr
+                      << "'; no silent fallback to sine.\n";
+            continue;
+        }
 
         // 2. Ontological Occlusion (Muffling)
         if (lawGetValue(*obj, PropertyPath::parse("acoustic.lowpassCutoff"), pv)) {
@@ -341,36 +379,49 @@ void AudioSystem::playSpatialSound(const std::string& filepath, const glm::vec3&
     }
 }
 
-void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const glm::vec3& velocity, double frequency, double amplitude, const std::string& waveTypeStr) {
-    if (!_initialized || !_state) return;
+bool AudioSystem::playProceduralCollisionSound(const glm::vec3& position,
+                                                    const glm::vec3& velocity,
+                                                    double frequency,
+                                                    double amplitude,
+                                                    const std::string& waveTypeStr) {
+    if (!_initialized || !_state || !_outputEnabled) return false;
 
     glm::vec3 camPos = Integration::getEarthcallAPI().getCameraPosition();
     float distToCam = glm::distance(camPos, position);
     glm::vec3 rayDir = camPos - position;
     if (distToCam > 0.0001f) rayDir /= distToCam;
 
-    // 1. Doppler Shift
-    float speedOfSound = 343.0f;
-    float sourceVelTowardsListener = glm::dot(velocity, rayDir);
-    float dopplerFactor = speedOfSound / std::max(speedOfSound - sourceVelTowardsListener, 0.1f);
-
+    const float speedOfSound = 343.0f;
+    const float sourceVelTowardsListener = glm::dot(velocity, rayDir);
+    const float dopplerFactor =
+        speedOfSound / std::max(speedOfSound - sourceVelTowardsListener, 0.1f);
     frequency *= dopplerFactor;
 
-    // The same infrasound floor renderForm enforces, on the path that HAS a
-    // frequency to clamp. One constant, so the two cannot drift apart.
-    if (frequency < kAudibleFloorHz) frequency = kAudibleFloorHz;
+    // Legacy oscillator path has an explicit frequency, so hold it to the same
+    // Person-body boundary as authored forms. Refuse rather than silently
+    // changing the Person's mathematics into a different note.
+    if (frequency < kAudibleFloorHz) {
+        std::cerr << "AudioSystem: refused " << frequency
+                  << " Hz legacy oscillator below the " << kAudibleFloorHz
+                  << " Hz Person-body floor.\n";
+        return false;
+    }
     if (frequency > 20000.0) frequency = 20000.0;
-
-    if (amplitude > 1.0) amplitude = 1.0;
-    if (amplitude < 0.0) amplitude = 0.0;
+    amplitude = std::clamp(amplitude, 0.0, 1.0);
 
     ma_waveform_type waveType = ma_waveform_type_sine;
-    if (waveTypeStr == "triangle") {
+    if (waveTypeStr.empty() || waveTypeStr == "sine") {
+        waveType = ma_waveform_type_sine;
+    } else if (waveTypeStr == "triangle") {
         waveType = ma_waveform_type_triangle;
     } else if (waveTypeStr == "square") {
         waveType = ma_waveform_type_square;
     } else if (waveTypeStr == "sawtooth") {
         waveType = ma_waveform_type_sawtooth;
+    } else {
+        std::cerr << "AudioSystem: unresolved legacy timbre '" << waveTypeStr
+                  << "'; refusing instead of falling back to sine.\n";
+        return false;
     }
 
     ma_waveform_config config = ma_waveform_config_init(
@@ -379,47 +430,42 @@ void AudioSystem::playProceduralCollisionSound(const glm::vec3& position, const 
         _state->engine.pDevice->sampleRate,
         waveType,
         amplitude,
-        frequency
-    );
+        frequency);
 
-    ma_waveform* waveform = new ma_waveform();
-    ma_result result = ma_waveform_init(&config, waveform);
-    if (result != MA_SUCCESS) {
+    auto* waveform = new ma_waveform();
+    if (ma_waveform_init(&config, waveform) != MA_SUCCESS) {
         delete waveform;
-        return;
+        return false;
     }
 
-    ma_sound* sound = new ma_sound();
-    result = ma_sound_init_from_data_source(
-        &_state->engine,
-        waveform,
-        0,
-        NULL,
-        sound
-    );
+    auto* sound = new ma_sound();
+    const ma_result result = ma_sound_init_from_data_source(
+        &_state->engine, waveform, 0, NULL, sound);
 
-    if (result == MA_SUCCESS) {
-        ma_sound_set_position(sound, position.x, position.y, position.z);
-        ma_sound_set_velocity(sound, velocity.x, velocity.y, velocity.z);
-        
-        // 3. Speed-of-sound delay
-        ma_uint64 engineTimeMs = ma_engine_get_time_in_milliseconds(&_state->engine);
-        ma_uint64 delayMs = static_cast<ma_uint64>((distToCam / speedOfSound) * 1000.0f);
-        ma_sound_set_start_time_in_milliseconds(sound, engineTimeMs + delayMs);
-        
-        ma_sound_start(sound);
-
-        ma_sound_set_stop_time_with_fade_in_milliseconds(sound, engineTimeMs + delayMs + 300, 300);
-
-        SpatialSoundInstance* instance = new SpatialSoundInstance();
-        instance->sound = sound;
-        instance->waveform = waveform;
-        _state->activeSpatialSounds.push_back(instance);
-    } else {
+    if (result != MA_SUCCESS) {
         ma_waveform_uninit(waveform);
         delete waveform;
         delete sound;
+        return false;
     }
+
+    ma_sound_set_position(sound, position.x, position.y, position.z);
+    ma_sound_set_velocity(sound, velocity.x, velocity.y, velocity.z);
+
+    const ma_uint64 engineTimeMs =
+        ma_engine_get_time_in_milliseconds(&_state->engine);
+    const ma_uint64 delayMs =
+        static_cast<ma_uint64>((distToCam / speedOfSound) * 1000.0f);
+    ma_sound_set_start_time_in_milliseconds(sound, engineTimeMs + delayMs);
+    ma_sound_start(sound);
+    ma_sound_set_stop_time_with_fade_in_milliseconds(
+        sound, engineTimeMs + delayMs + 300, 300);
+
+    auto* instance = new SpatialSoundInstance();
+    instance->sound = sound;
+    instance->waveform = waveform;
+    _state->activeSpatialSounds.push_back(instance);
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -642,20 +688,22 @@ std::vector<float> renderForm(const OntoMath::Piecewise& form,
                               double seconds,
                               int sampleRate,
                               const std::map<std::string, double>& constants,
-                              SoundingReport* report) {
+                              SoundingReport* report,
+                              double timeScale) {
     SoundingReport local;
     SoundingReport& out = report ? *report : local;
     out = SoundingReport{};
 
     std::vector<float> samples;
-    if (seconds <= 0.0 || sampleRate <= 0) return samples;
+    if (seconds <= 0.0 || sampleRate <= 0 || !std::isfinite(timeScale)) return samples;
 
     // ------------------------------------------------------------------
     // The floor, first pass: read the TEXT. An authored infrasonic sinusoid
     // is refused before a single sample exists, and named exactly, because
     // the waveform is symbolic rather than sampled.
     // ------------------------------------------------------------------
-    out.lowestAuthoredHz = lowestAuthoredFrequency(form, timeVariable);
+    out.lowestAuthoredHz =
+        lowestAuthoredFrequency(form, timeVariable) * std::fabs(timeScale);
     if (out.lowestAuthoredHz > 0.0 && out.lowestAuthoredHz < kAudibleFloorHz) {
         out.refused = true;
         out.refusal = "refused: the model authors a " +
@@ -675,7 +723,8 @@ std::vector<float> renderForm(const OntoMath::Piecewise& form,
     for (const auto& [name, value] : constants) vars[name] = PropertyValue(value);
 
     for (std::size_t i = 0; i < count; ++i) {
-        const double t = static_cast<double>(i) / static_cast<double>(sampleRate);
+        const double t =
+            (static_cast<double>(i) / static_cast<double>(sampleRate)) * timeScale;
         vars[timeVariable] = PropertyValue(t);
 
         // No subject: this is pure mathematics being sounded, so a piece that
@@ -725,13 +774,15 @@ bool AudioSystem::playForm(const OntoMath::Piecewise& form,
                            double seconds,
                            float volume,
                            const glm::vec3* position,
-                           const std::map<std::string, double>& constants) {
-    if (!_initialized || !_state) return false;
+                           const std::map<std::string, double>& constants,
+                           double timeScale) {
+    if (!_initialized || !_state || !_outputEnabled) return false;
 
     const ma_uint32 sampleRate = _state->engine.pDevice->sampleRate;
     SoundingReport report;
     auto* samples = new std::vector<float>(renderForm(
-        form, timeVariable, seconds, static_cast<int>(sampleRate), constants, &report));
+        form, timeVariable, seconds, static_cast<int>(sampleRate), constants,
+        &report, timeScale));
     if (samples->empty()) {
         // The floor refuses out loud. A guard that stops a Person's authored
         // sound without saying so is indistinguishable from a broken channel.

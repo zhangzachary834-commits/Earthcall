@@ -101,6 +101,17 @@ int main() {
     bool deleteNonExistent = api.deleteDesignElement("non_existent_element");
     assert(!deleteNonExistent && "Deletion of non-existent element should fail");
 
+    // --- WITNESS ANALYSIS & DOCUMENTATION ---
+    // What the old test could prove:
+    //   A standalone EarthcallAPI object delegates object/zone operations to whatever
+    //   ZoneManager pointer is explicitly attached to it via api.setZoneManager(&zm).
+    //
+    // What the old test could NOT prove:
+    //   That the actual production engine boot sequence (Engine::initLogic()) bound the
+    //   live ZoneManager (mgr) to the global Integration::getEarthcallAPI() singleton.
+    //   Without that binding, real runtime calls from Web/foreign interfaces (e.g. RealWebView.cpp)
+    //   to getEarthcallAPI().createObject(...) silently failed on the real application path.
+
     // --- WORLD/ENVIRONMENT ACCESS TESTS ---
     std::cout << "\n--- World/Environment Access Tests ---" << std::endl;
     assert(!api.createZone("zone1", 0, 0, 100, 100));
@@ -143,6 +154,19 @@ int main() {
     assert(!api.modifyObject("non_existent_rock", glm::vec3(1.0f), glm::vec3(1.0f)));
     assert(!api.deleteObject("non_existent_rock"));
     assert(api.setCameraPosition(glm::vec3(10.0f)));
+
+    // --- REAL RUNTIME GLOBAL SINGLETON PATH TEST ---
+    // Test that the global getEarthcallAPI() singleton used by Web/foreign runtime
+    // properly receives a ZoneManager binding and performs real application calls.
+    std::cout << "\n--- Global Singleton Real Path Test ---" << std::endl;
+    Integration::EarthcallAPI& globalApi = Integration::getEarthcallAPI();
+    globalApi.setZoneManager(&zm);
+    assert(globalApi.createObject("global_rock", glm::vec3(5.0f, 0.0f, 0.0f)));
+    assert(zm.active().getOwnedObjects().size() == 1);
+    std::string globalRockId = zm.active().getOwnedObjects()[0]->getIdentifier();
+    assert(globalApi.modifyObject(globalRockId, glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(2.0f, 2.0f, 2.0f)));
+    assert(globalApi.deleteObject(globalRockId));
+    assert(zm.active().getOwnedObjects().empty());
 
     // --- DATA/SAVE ACCESS TESTS ---
     std::cout << "\n--- Data/Save Access Tests ---" << std::endl;

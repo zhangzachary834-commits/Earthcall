@@ -7,6 +7,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "json.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <vector>
@@ -34,18 +35,38 @@
 // disguised as success — PlayAudio answers `false` with "no audio channel
 // bound", which is the honest report the old stub owed and never made.
 // ---------------------------------------------------------------------------
-using AudioSink = std::function<void(Singular& subject, double frequency,
-                                     double amplitude, const std::string& timbre)>;
+using AudioSink = std::function<bool(Singular& subject, double frequency,
+                                     double amplitude, const std::string& timbre,
+                                     std::string& reason)>;
+using LegacyAudioSink = std::function<void(Singular& subject, double frequency,
+                                           double amplitude, const std::string& timbre)>;
 
 inline AudioSink& audioSink() {
     static AudioSink sink;
     return sink;
 }
 
-// Idempotent-by-replacement, expected once at channel init. Passing an empty
-// function unregisters, which is how a channel that shuts down stops claiming
-// it can sound anything.
-inline void registerAudioSink(AudioSink sink) { audioSink() = std::move(sink); }
+// Checked form used by the real AudioChannel: a refusal must propagate back to
+// the Law trace instead of publishing "audio-synthesized" for a sound that
+// never happened.
+inline void registerAudioSinkChecked(AudioSink sink) { audioSink() = std::move(sink); }
+
+// Compatibility adapter for tests and older callers that only observe notes.
+// These sinks have no refusal vocabulary, so reaching them counts as success.
+inline void registerAudioSink(LegacyAudioSink sink) {
+    if (!sink) {
+        audioSink() = {};
+        return;
+    }
+    audioSink() = [sink = std::move(sink)](
+                      Singular& subject, double frequency, double amplitude,
+                      const std::string& timbre, std::string&) {
+        sink(subject, frequency, amplitude, timbre);
+        return true;
+    };
+}
+
+inline void registerAudioSink(std::nullptr_t) { audioSink() = {}; }
 
 // The Screen modality's smallest authored act: replace one sample on one
 // surface.  The Law engine knows neither Object nor texture storage; the

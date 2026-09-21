@@ -179,6 +179,48 @@ int main() {
               "analytic Perlin recollection exactly matches full-compile parameters");
     }
 
+    // ---------------------------------------------------------------------
+    // 4. Authored radiance uses the SAME OntoMath emitter and parameter
+    //    traversal as geometry/material math. A value-only radiance edit must
+    //    recollect to the exact full-compile buffer without changing WGSL.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto radianceNode = std::shared_ptr<OntoMath::MathNode>(number(0.75).release());
+        OntoMath::Piecewise radiance;
+        radiance.pieces.push_back({
+            false, false, 0.0, 0.0, true, true,
+            radianceNode, nullptr, nullptr, nullptr, nullptr, nullptr
+        });
+
+        const sdfwgsl::Program before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+        check(before.ok, "authored radiance program compiles");
+        check(before.wgsl.find("fn lightRadiance(p: vec3<f32>) -> f32") != std::string::npos,
+              "authored radiance emits the shared OntoMath WGSL function");
+
+        radianceNode->scalarForm.terms[0].coefficient = 0.25;
+        const sdfwgsl::ParameterBlock refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::Program after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+
+        check(refreshed.ok, "radiance parameter recollection succeeds");
+        check(after.ok, "mutated radiance full compile succeeds");
+        check(before.wgsl == after.wgsl,
+              "radiance value edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "radiance value edit changes the parameter block");
+        check(sameFloats(refreshed.values, after.params),
+              "radiance recollection exactly matches full-compile parameters");
+
+        const sdfwgsl::Program legacy = sdfwgsl::compile(sphere);
+        check(legacy.ok, "legacy no-radiance program still compiles");
+        check(legacy.wgsl.find("fn lightRadiance(p: vec3<f32>) -> f32") != std::string::npos,
+              "no-radiance source still exposes the common lightRadiance seam");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
