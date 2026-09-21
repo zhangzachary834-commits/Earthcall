@@ -3,6 +3,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -1237,138 +1238,17 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
 
-            // Rasterize only proved-positive OUTSIDE knowledge into a compact
+            // Derive only proved-positive OUTSIDE knowledge into a compact
             // fixed-depth bit grid. The complete adaptive hierarchy remains the
             // CPU theorem. A zero GPU bit is deliberately non-authoritative:
             // exact authored marching owns that regular cell.
-            memo->rangeProofWords.clear();
-            memo->rangeHasPositiveSkip = false;
-            const auto& rangeNodes = memo->rangeHierarchy.nodes;
-
             static_assert(
                 kSdfRangeGpuProofDepth <= kSdfRangeProxyMaxDepth,
                 "GPU proof depth cannot exceed the CPU theorem depth");
-            constexpr uint32_t proofDepth = kSdfRangeGpuProofDepth;
-            constexpr uint32_t proofDim = 1u << proofDepth;
-            constexpr uint32_t proofCellCount =
-                proofDim * proofDim * proofDim;
-            constexpr uint32_t proofWordCount =
-                (proofCellCount + 31u) / 32u;
-
-            if (!rangeNodes.empty()) {
-                memo->rangeProofWords.assign(proofWordCount, 0u);
-
-                auto setProofBit = [&](uint32_t x, uint32_t y, uint32_t z) {
-                    const uint32_t linear =
-                        x + proofDim * (y + proofDim * z);
-                    memo->rangeProofWords[linear >> 5u] |=
-                        (1u << (linear & 31u));
-                };
-
-                // A target cell may be skipped only when the CPU theorem proves
-                // the ENTIRE corresponding adaptive subtree positive. A direct
-                // positive node is sufficient. Otherwise every one of the eight
-                // partitioning children must recursively prove positive. Missing,
-                // malformed, negative, ambiguous, or budget-stopped refinement
-                // therefore fails open to exact authored marching.
-                auto subtreeProvesPositive =
-                    [&](auto&& self,
-                        uint32_t sourceIndex,
-                        uint32_t sourceDepth) -> bool {
-                    if (sourceIndex >= rangeNodes.size() ||
-                        sourceDepth > kSdfRangeProxyMaxDepth) {
-                        return false;
-                    }
-                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
-                    if (node.depth != sourceDepth) {
-                        return false;
-                    }
-                    if (geom::rangeNodeProvesPositiveOutside(node)) {
-                        return true;
-                    }
-                    if (sourceDepth == kSdfRangeProxyMaxDepth ||
-                        node.childCount != 8u) {
-                        return false;
-                    }
-
-                    for (uint32_t child = 0; child < 8u; ++child) {
-                        const uint64_t childIndex =
-                            static_cast<uint64_t>(node.firstChild) + child;
-                        if (childIndex >= rangeNodes.size() ||
-                            !self(self,
-                                  static_cast<uint32_t>(childIndex),
-                                  sourceDepth + 1u)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                };
-
-                auto rasterizeProof =
-                    [&](auto&& self,
-                        uint32_t sourceIndex,
-                        uint32_t depth,
-                        uint32_t cellX,
-                        uint32_t cellY,
-                        uint32_t cellZ) -> void {
-                    if (sourceIndex >= rangeNodes.size() || depth > proofDepth) {
-                        return;
-                    }
-                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
-                    if (node.depth != depth) {
-                        return;
-                    }
-
-                    // A positive ancestor proves every target-depth descendant
-                    // beneath it, so rasterize that authority downward without
-                    // requiring refinement that the CPU theorem intentionally
-                    // stopped building.
-                    if (geom::rangeNodeProvesPositiveOutside(node)) {
-                        memo->rangeHasPositiveSkip = true;
-                        const uint32_t span = 1u << (proofDepth - depth);
-                        const uint32_t baseX = cellX * span;
-                        const uint32_t baseY = cellY * span;
-                        const uint32_t baseZ = cellZ * span;
-                        for (uint32_t z = 0; z < span; ++z) {
-                            for (uint32_t y = 0; y < span; ++y) {
-                                for (uint32_t x = 0; x < span; ++x) {
-                                    setProofBit(baseX + x, baseY + y, baseZ + z);
-                                }
-                            }
-                        }
-                        return;
-                    }
-
-                    if (depth == proofDepth) {
-                        if (subtreeProvesPositive(
-                                subtreeProvesPositive, sourceIndex, depth)) {
-                            memo->rangeHasPositiveSkip = true;
-                            setProofBit(cellX, cellY, cellZ);
-                        }
-                        return;
-                    }
-
-                    if (node.childCount != 8u) {
-                        return;
-                    }
-                    for (uint32_t child = 0; child < 8u; ++child) {
-                        const uint64_t childIndex =
-                            static_cast<uint64_t>(node.firstChild) + child;
-                        if (childIndex >= rangeNodes.size()) continue;
-                        self(self,
-                             static_cast<uint32_t>(childIndex),
-                             depth + 1u,
-                             cellX * 2u + ((child & 1u) != 0u ? 1u : 0u),
-                             cellY * 2u + ((child & 2u) != 0u ? 1u : 0u),
-                             cellZ * 2u + ((child & 4u) != 0u ? 1u : 0u));
-                    }
-                };
-
-                rasterizeProof(rasterizeProof, 0u, 0u, 0u, 0u, 0u);
-                if (!memo->rangeHasPositiveSkip) {
-                    memo->rangeProofWords.clear();
-                }
-            }
+            auto proofGrid = geom::derivePositiveRangeProofGrid(
+                memo->rangeHierarchy, kSdfRangeGpuProofDepth);
+            memo->rangeHasPositiveSkip = proofGrid.hasPositiveCells();
+            memo->rangeProofWords = std::move(proofGrid.words);
 
             memo->rangeParameterRevision = memoParameterRevision;
             memo->rangeAuthoredExtent = baselineProxyExtent;
