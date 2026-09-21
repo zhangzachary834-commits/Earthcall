@@ -1076,6 +1076,8 @@ struct RU {
     lightAmbient:   vec4<f32>,
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
+    // x = lighting enabled; y = Rung-8 derived visibility enabled.
+    // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
     // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
     // only when authored chi is present; the no-chi branch keeps the exact
@@ -1308,6 +1310,82 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     }
 
     return vec3<f32>(t, tMax, 1.0);
+}
+
+// Rung 8 exact baseline for the geometry this shader actually owns.
+//
+// This is deliberately DERIVED transport: it reads the already-authored SDF
+// between the receiver and source and never writes or reinterprets rho/chi/alpha.
+// lightControl.y=0 is the exact Rung-7 compatibility law V=1.
+//
+// Scope is intentionally honest. A generated SDF pipeline can evaluate its own
+// authored geometry; it cannot yet name arbitrary differently-structured SDF
+// pipelines elsewhere in the Zone. Scene-wide transport needs a shared scene
+// geometry representation rather than pretending those other beings are visible
+// here. Until that exists, this function is not enabled globally by EngineRender.
+fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.lightControl.y < 0.5) { return 1.0; }
+
+    let inst = instances[g_instIdx];
+    let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+    let toSource = sourceField - surfacePoint;
+    let sourceDistance = length(toSource);
+    let surfaceEps = max(inst.misc.y, 1e-4);
+    let bias = surfaceEps * 4.0;
+    if (sourceDistance <= bias * 2.0) { return 1.0; }
+
+    let initialDir = toSource / sourceDistance;
+    let origin = surfacePoint + initialDir * bias;
+    let remaining = sourceField - origin;
+    let rayLength = length(remaining);
+    if (rayLength <= bias) { return 1.0; }
+    let shadowDir = remaining / rayLength;
+
+    // Restrict the query to authored geometry inside this instance's domain.
+    // A source outside the box is fine: leaving the box unobstructed proves this
+    // instance contributes no blocker beyond that exit.
+    let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+
+    var tShadow = max(bounds.x, 0.0);
+    let maxShadow = min(bounds.y, rayLength - bias);
+    if (maxShadow <= tShadow) { return 1.0; }
+
+    let damping = inst.misc.w;
+    // Match the primary renderer's finite exact-march budget. This baseline uses
+    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
+    for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        if (tShadow >= maxShadow) { return 1.0; }
+
+        let pShadow = origin + shadowDir * tShadow;
+        let currentEps = max(surfaceEps, tShadow * 0.001);
+        var dShadow = 0.0;
+
+        if (damping < 0.5) {
+            let s = sdfSampleStep(pShadow);
+            var gradLen = s.gradLen;
+            if (gradLen <= 1e-6) {
+                let ge = 1e-3;
+                let raw = s.raw;
+                let g = vec3<f32>(
+                    sdfEval(pShadow + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                    sdfEval(pShadow + vec3<f32>(0.0, ge, 0.0)) - raw,
+                    sdfEval(pShadow + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+                gradLen = length(g);
+            }
+            dShadow = select(s.raw, s.raw / gradLen, gradLen > 1e-6);
+        } else {
+            dShadow = sdfEval(pShadow);
+        }
+
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        tShadow = tShadow + max(dShadow, currentEps);
+    }
+
+    // The primary marcher uses the same bounded iteration contract. If the
+    // budget is exhausted before the segment is decided, fail conservatively:
+    // never invent an unobstructed path that was not actually traversed.
+    return 0.0;
 }
 
 @fragment
@@ -1586,6 +1664,8 @@ fn fs(in: VSOut) -> FSOut {
         }
     }
     let shapedRadiance = radialRadiance * angularRadiance;
+    let pathVisibility = sourceVisibility(pf, u.lightPos.xyz);
+    let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
@@ -1604,8 +1684,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     } else {
         // EXACT compatibility branch from Rung 4. No authored chi means
         // constant legacy light.color, already carried by these uniforms.
@@ -1613,8 +1693,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -2144,6 +2224,8 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "            let pathVisibility = sourceVisibility(pf, source.position.xyz);\n";
+                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
                        "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
@@ -2168,9 +2250,9 @@ Program compile(const geom::SdfNode& root,
                 }
                 sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
                 sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * shapedRadiance;\n";
+                       "diff * directRadiance;\n";
                 sum += "            specTerm += specularEnvelope * specShape * "
-                       "shapedRadiance;\n";
+                       "directRadiance;\n";
                 sum += "        }\n";
                 sum += "    }\n";
             }
