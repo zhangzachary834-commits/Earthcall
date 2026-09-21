@@ -1405,7 +1405,9 @@ fn fs(in: VSOut) -> FSOut {
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;
-    var first_hit_t = -1.0;
+    // First ray coordinate at which the authored medium was actually sampled
+    // with positive density. This is NOT a hard-surface hit.
+    var first_density_t = -1.0;
     
     // Enhanced Sphere Tracing (Over-Relaxation) state:
     var omega = select(1.0, 1.4, damping > 0.5);
@@ -1445,7 +1447,12 @@ fn fs(in: VSOut) -> FSOut {
             if (t > maxDist) { break; }
         }
 
-        let p = ro + rd * t;
+        // Keep the coordinate at which this iteration's medium sample is
+        // evaluated. Surface marching may advance t by a gradient-corrected,
+        // damped, or over-relaxed amount below; transport must integrate the
+        // interval that was ACTUALLY traversed, not reuse raw SDF magnitude.
+        let sample_t = t;
+        let p = ro + rd * sample_t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
         if (isHeightfield && rd.y > 1e-4 && p.y > inst.extents.y) {
@@ -1514,13 +1521,17 @@ fn fs(in: VSOut) -> FSOut {
         
         // Volumetric Field Accumulation
         let density = volumeDensityEval(p);
-        if (density > 0.0) {
-            if (first_hit_t < 0.0) { first_hit_t = t; }
-            let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
-            let extinction = max(density * 0.5, 1e-6); // Tunable constant
+        // t may advance beyond maxDist on the last surface-march step. Medium
+        // transport owns only the bounded interval [sample_t, maxDist].
+        let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
+        if (density > 0.0 && marched_field_distance > 0.0) {
+            if (first_density_t < 0.0) { first_density_t = sample_t; }
+            // V0 compatibility extinction. The 0.5 coefficient is intentionally
+            // still a fossil until V1 authors sigma_t independently.
+            let extinction = max(density * 0.5, 1e-6);
             
             let old_t = transmittance;
-            transmittance *= exp(-extinction * step_size);
+            transmittance *= exp(-extinction * marched_field_distance);
             
             // Analytical integration prevents double attenuation across large steps
             volumetric_scatter += (density / extinction) * (old_t - transmittance);
@@ -1535,8 +1546,10 @@ fn fs(in: VSOut) -> FSOut {
     var out: FSOut;
     
     if (!hit) {
-        // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
-        // Set depth to the first volumetric hit so it occludes correctly
+        // Volumetric-only output still uses the legacy shared SDF pipeline.
+        // first_density_t records the sampled medium coordinate truthfully, but
+        // V0c MUST NOT activate this path in production until volume composition
+        // no longer treats a translucent sample as an opaque depth owner.
         let final_alpha = 1.0 - transmittance;
         let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
         if (final_alpha > 0.0) {
@@ -1544,8 +1557,8 @@ fn fs(in: VSOut) -> FSOut {
         } else {
             out.color = vec4<f32>(0.0);
         }
-        if (first_hit_t >= 0.0) {
-            let hit_p = ro + rd * first_hit_t;
+        if (first_density_t >= 0.0) {
+            let hit_p = ro + rd * first_density_t;
             let hit_w = (inst.model * vec4<f32>(hit_p, 1.0)).xyz;
             let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
             out.depth = hit_c.z / hit_c.w;
