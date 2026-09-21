@@ -1237,29 +1237,70 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
 
-            // Rasterize only proved-positive OUTSIDE knowledge into a compact
-            // fixed-depth bit grid. The complete adaptive hierarchy remains the
-            // CPU theorem. A zero GPU bit is deliberately non-authoritative:
-            // exact authored marching owns that regular cell.
+            // Build a two-bit semantic proof pyramid over the regular depth-N
+            // cells induced by the adaptive CPU theorem:
+            //   ANY=0  => this macrocell contains no GPU positive proof; exact
+            //             authored marching owns the entire macrocell.
+            //   ALL=1  => every depth-N descendant is proved f>0; the whole
+            //             macrocell may be skipped in one jump.
+            //   ANY=1,ALL=0 => mixed; descend one level.
+            //
+            // This keeps absence-of-proof fail-open while avoiding fine-cell
+            // rechecks in large regions where prophecy is either wholly silent
+            // or wholly positive.
             memo->rangeProofWords.clear();
             memo->rangeHasPositiveSkip = false;
             const auto& rangeNodes = memo->rangeHierarchy.nodes;
 
             constexpr uint32_t proofDepth = kSdfRangeProxyMaxDepth;
-            constexpr uint32_t proofDim = 1u << proofDepth;
-            constexpr uint32_t proofCellCount =
-                proofDim * proofDim * proofDim;
-            constexpr uint32_t proofWordCount =
-                (proofCellCount + 31u) / 32u;
+            constexpr uint32_t leafDim = 1u << proofDepth;
+            constexpr uint32_t leafCellCount =
+                leafDim * leafDim * leafDim;
+
+            std::array<uint32_t, proofDepth + 1u> levelWordOffsets{};
+            std::array<uint32_t, proofDepth + 1u> levelWordCounts{};
+            uint32_t wordsPerPyramid = 0u;
+            for (uint32_t depth = 0u; depth <= proofDepth; ++depth) {
+                const uint32_t dim = 1u << depth;
+                const uint32_t cells = dim * dim * dim;
+                const uint32_t words = (cells + 31u) / 32u;
+                levelWordOffsets[depth] = wordsPerPyramid;
+                levelWordCounts[depth] = words;
+                wordsPerPyramid += words;
+            }
 
             if (!rangeNodes.empty()) {
-                memo->rangeProofWords.assign(proofWordCount, 0u);
+                memo->rangeProofWords.assign(
+                    static_cast<size_t>(wordsPerPyramid) * 2u, 0u);
+                const uint32_t allBase = wordsPerPyramid;
 
-                auto setProofBit = [&](uint32_t x, uint32_t y, uint32_t z) {
-                    const uint32_t linear =
-                        x + proofDim * (y + proofDim * z);
-                    memo->rangeProofWords[linear >> 5u] |=
+                auto setLevelBit =
+                    [&](uint32_t pyramidBase,
+                        uint32_t depth,
+                        uint32_t linear) {
+                    const uint32_t word =
+                        pyramidBase + levelWordOffsets[depth] + (linear >> 5u);
+                    memo->rangeProofWords[word] |=
                         (1u << (linear & 31u));
+                };
+                auto getLevelBit =
+                    [&](uint32_t pyramidBase,
+                        uint32_t depth,
+                        uint32_t linear) -> bool {
+                    const uint32_t word =
+                        pyramidBase + levelWordOffsets[depth] + (linear >> 5u);
+                    return (memo->rangeProofWords[word] &
+                            (1u << (linear & 31u))) != 0u;
+                };
+
+                // First rasterize positive theorems into the finest level. A
+                // positive adaptive node authorizes every regular descendant;
+                // negative/ambiguous/unknown nodes authorize nothing.
+                auto setLeafPositive = [&](uint32_t x, uint32_t y, uint32_t z) {
+                    const uint32_t linear =
+                        x + leafDim * (y + leafDim * z);
+                    setLevelBit(0u, proofDepth, linear);
+                    setLevelBit(allBase, proofDepth, linear);
                 };
 
                 auto rasterizeProof =
@@ -1280,10 +1321,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                         const uint32_t baseX = cellX * span;
                         const uint32_t baseY = cellY * span;
                         const uint32_t baseZ = cellZ * span;
-                        for (uint32_t z = 0; z < span; ++z) {
-                            for (uint32_t y = 0; y < span; ++y) {
-                                for (uint32_t x = 0; x < span; ++x) {
-                                    setProofBit(baseX + x, baseY + y, baseZ + z);
+                        for (uint32_t z = 0u; z < span; ++z) {
+                            for (uint32_t y = 0u; y < span; ++y) {
+                                for (uint32_t x = 0u; x < span; ++x) {
+                                    setLeafPositive(
+                                        baseX + x, baseY + y, baseZ + z);
                                 }
                             }
                         }
@@ -1293,7 +1335,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     if (node.childCount != 8u || depth == proofDepth) {
                         return;
                     }
-                    for (uint32_t child = 0; child < 8u; ++child) {
+                    for (uint32_t child = 0u; child < 8u; ++child) {
                         const uint64_t childIndex =
                             static_cast<uint64_t>(node.firstChild) + child;
                         if (childIndex >= rangeNodes.size()) continue;
@@ -1307,6 +1349,48 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 };
 
                 rasterizeProof(rasterizeProof, 0u, 0u, 0u, 0u, 0u);
+
+                // Fold finest truth upward. ANY is OR(children); ALL is
+                // AND(children). A coarse ALL bit is therefore exactly a proof
+                // that every fine descendant was independently proved f>0.
+                for (uint32_t depth = proofDepth; depth-- > 0u;) {
+                    const uint32_t childDim = 1u << (depth + 1u);
+                    const uint32_t parentDim = 1u << depth;
+                    for (uint32_t z = 0u; z < parentDim; ++z) {
+                        for (uint32_t y = 0u; y < parentDim; ++y) {
+                            for (uint32_t x = 0u; x < parentDim; ++x) {
+                                bool any = false;
+                                bool all = true;
+                                for (uint32_t child = 0u; child < 8u; ++child) {
+                                    const uint32_t cx =
+                                        x * 2u + ((child & 1u) != 0u ? 1u : 0u);
+                                    const uint32_t cy =
+                                        y * 2u + ((child & 2u) != 0u ? 1u : 0u);
+                                    const uint32_t cz =
+                                        z * 2u + ((child & 4u) != 0u ? 1u : 0u);
+                                    const uint32_t childLinear =
+                                        cx + childDim * (cy + childDim * cz);
+                                    const bool childAny =
+                                        getLevelBit(0u, depth + 1u, childLinear);
+                                    const bool childAll =
+                                        getLevelBit(allBase, depth + 1u, childLinear);
+                                    any = any || childAny;
+                                    all = all && childAll;
+                                }
+
+                                const uint32_t parentLinear =
+                                    x + parentDim * (y + parentDim * z);
+                                if (any) {
+                                    setLevelBit(0u, depth, parentLinear);
+                                }
+                                if (all) {
+                                    setLevelBit(allBase, depth, parentLinear);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 if (!memo->rangeHasPositiveSkip) {
                     memo->rangeProofWords.clear();
                 }
