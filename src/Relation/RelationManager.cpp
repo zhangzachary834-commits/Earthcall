@@ -101,6 +101,22 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
     }
 }
 
+void RelationManager::forgetTypeLexemeEverywhere(
+    const Singularity::Language::Lexeme* lexeme) {
+    if (!lexeme) return;
+
+    // Deliberately rare-path O(total live Relations): unlike endpoints, type
+    // Lexemes are released only by LanguageSystem removal/eviction/clear.
+    // Keeping this out of Singular::~Singular preserves the endpoint register's
+    // O(1) fast path for transient Moments and ordinary beings.
+    for (RelationManager* manager : liveManagers()) {
+        if (!manager) continue;
+        for (const auto& relation : manager->relations) {
+            if (relation) relation->forgetTypeLexeme(lexeme);
+        }
+    }
+}
+
 RelationManager::RelationManager() { liveManagers().insert(this); }
 
 RelationManager::RelationManager(const RelationManager& other)
