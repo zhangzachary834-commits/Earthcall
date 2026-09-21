@@ -1,6 +1,6 @@
 # Formation Rete
 
-**Status:** rungs 0–4 and 7 done; rungs 5–6 have their mechanism (the slow adapter, 2026-09-16) built, tested and shipped OFF by default after measurement — see the entry below. Rung 2's Formation half remains. §9.1 answered 2026-09-16; §9.2 leaning toward removing weight.
+**Status (2026-09-21):** rungs 0–4 and 7 are built; Slow Adapter is built on an independent wall-time clock and is now ON by default; the first executable Law-Direct rung is built, measured, and ON by default; authored Category/Formational completion and PropertyPath-qualified Direct remain; the next task family is relevant-change-only incremental maintenance of proofs, routes, event subscriptions, and route priority.
 **Spec:** [`docs/architecture/law/FORMATION_RETE.md`](../../../../architecture/law/FORMATION_RETE.md) — §8 holds the rung ladder.
 **Architecture:** Zach, 2026-09-03 / 09-04. First draft Antigravity. Revised and implemented by Claude Opus 5.
 
@@ -785,3 +785,36 @@ governable property, the developer-mode audit warning).
 Still open: what `Relation::weight` means (9.2 — value or cost;
 Zach leaning strength), the stratification rule (9.4), hysteresis bands on derived relations
 (9.5), and 9.6, which Zach marked open rather than closed.
+
+## 2026-09-21 — Law-Direct is real; the next rung is incremental maintenance
+
+The older entries above are retained as the measurement/provenance record, including the moment the Slow Adapter correctly shipped OFF because it was a tax before a terminal consumer existed. That state has since changed.
+
+**Current code state:**
+
+- `_useSlowAdapter = true`;
+- `_useLawDirect = true`;
+- Slow Adapter advances through `serviceSlowAdapterClock()` on its own wall-time deadline;
+- `CandidateTier::LawDirect` is the first executable terminal rung;
+- Prophetic branch-stable relevance edges exist;
+- incomplete Prophetic graphs remain non-authoritative;
+- sweep remains the correctness floor.
+
+**Measured Direct witness:** 131,072 repeated Relation queries -> 0; 16,908,288 returned Relation references -> 0; 65,536 applications unchanged; 4.02x hostile stress speedup. In the authored Chess probe, 42 Laws graduated to Direct and frame p95 moved from ~20.07 ms to ~11.16 ms.
+
+Full analysis:
+`docs/Analysis/LAW_DIRECT_TRAVERSAL_COMPLEXITY_AND_CI_RESULTS_2026-09-19.md`.
+
+### Zach's 2026-09-21 next architecture
+
+Incrementality must continue upward. A changed being should not be reconsidered against every Category; a changed Relation should not invalidate every retained route; one changed edge should not force a whole BFS/Dijkstra; one changed route should not globally re-rank every alternative; broad EventBus boundaries should be continually refined by Prophetic knowledge; stable Relation/Formation change pipelines may be compiled through OntoMath; and the bootstrap must remain grounded in the fundamental PropertyPath/opcode First-Mover framework.
+
+This work is split into its own task record so this historical rung document does not become the implementation checklist:
+
+`docs/Agenda/Tasks/Specific Tasks/Formation_Rete_Incremental_Maintenance/Formation_Rete_Incremental_Maintenance.md`
+
+Architecture:
+
+`docs/architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`
+
+**Do not start over.** Extend the existing Prophetic relevance graph, Slow Adapter, tier query, Law-Direct currency/fallback, EventBus, PropertyPath, and Derived-State Ledger. Coarse revision/generation invalidation remains the safe fallback until a narrower semantic frontier is proved complete.

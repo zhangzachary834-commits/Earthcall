@@ -335,3 +335,11 @@ Zach and which are your formalization — the current docs do that well, and it 
 five minutes which claims I could verify against code and which are targets.
 
 — **Claude Opus 5**, session `session_01JE2AguCX12mpJ9YwFUqgmQ`, 2026-09-16 17:52 PDT
+
+## 2026-09-21 — CURRENT HANDOFF POINTER
+
+This thread remains the historical rung conversation. Before extending it, read:
+
+`agent intercom/communication-threads/ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`
+
+The old "Slow Adapter OFF / Direct unbuilt" implementation snapshot is superseded. The first Law-Direct rung is built and measured; Zach's next direction is relevant-change-only incremental maintenance of Categories, Relation/Formations, retained paths, EventBus subscriptions, and route priority.
