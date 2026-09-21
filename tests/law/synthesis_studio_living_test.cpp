@@ -93,7 +93,18 @@ int main() {
         auto* pad=find(std::string("hud.pad.")+slugs[i]);
         auto* resonator=find(std::string("studio.resonance.")+slugs[i]);
         check(pad && resonator && near(number(*resonator,"struckAt"),time),"note reaches its spatial resonator");
-        if (pad) check(number(*pad,"color.r")>number(*pad,"pigmentR"),"pressed pad brightens in its own hue");
+        if (pad) {
+            check(pad->getShapeParams().height2D > 60.0f,
+                  "played Living pad remains the full authored rectangle");
+            check(number(*pad,"color.r")>number(*pad,"pigmentR"),
+                  "pressed pad brightens in its own hue");
+            time += 1.0/60.0;
+            tick();
+            const double energy=number(*pad,"resonanceEnergy");
+            const double rest=number(*pad,"restY2D");
+            check(energy>0.1 && near(number(*pad,"y2D"),rest-12.0*energy,0.05),
+                  "the full Living pad body rises with its note, not only the 3px meter");
+        }
         time+=0.2;
     }
     for (int octave: {3,4,5,6}) {
@@ -143,6 +154,8 @@ int main() {
         time=100;click("hud.pad.c5");
         time=103;tick();
         check(near(number(*pad,"color.r"),number(*pad,"pigmentR"),0.001),"pad settles back to its exact authored pigment");
+        check(near(number(*pad,"y2D"),number(*pad,"restY2D"),0.01),
+              "Living pad body settles back to its authored rectangle position");
     }
     for(int i=0;i<24;++i) {time+=0.1;click(std::string("hud.pad.")+slugs[i%12]);}
     check(zone->getOwnedObjects().size()==population,"repeated music and expression allocate no beings");
