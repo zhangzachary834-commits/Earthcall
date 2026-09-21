@@ -23,7 +23,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <algorithm>
-#include <functional>\n#include <vector>
+#include <functional>
+#include <vector>
 
 extern ZoneManager mgr;
 
