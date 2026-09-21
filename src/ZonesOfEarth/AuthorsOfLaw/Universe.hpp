@@ -12,6 +12,7 @@
 
 class Singular;
 class Relation;
+class Timeline;
 
 // The law engine's working set — not a being, not the vessel (Ourverse),
 // not the womb that receives newborns (Zone). Continuous laws and quantified
@@ -140,20 +141,22 @@ public:
     }
 
     // ------------------------------------------------------------------
-    // The world clock. Singularity owns time: the engine sets it once per
-    // frame (accumulated seconds since the world began + that frame's dt),
-    // tests set it by hand, and laws read it through the reserved paths
-    // "time" / "time.delta" / "time.sinceApplied" (MathBinding.hpp). No law
-    // writes time.
+    // Temporal authority.
+    //
+    // Universe is still kernel working context, NOT a being. The actual clock
+    // may be a first-class Timeline Singular supplied by the engine/world.
+    // Universe BORROWS that Timeline and projects its head through the legacy
+    // now()/dt()/setClock() API so existing Law math stays source-compatible.
+    //
+    // Tests and isolated tools that do not bind a Timeline retain the scalar
+    // fallback below. This is compatibility state, not a second ontology.
     // ------------------------------------------------------------------
-    void setClock(double now, double dt) {
-        _now = now;
-        _dt = dt;
-        _clockSet = true;
-    }
-    bool hasClock() const { return _clockSet; }
-    double now() const { return _now; }
-    double dt() const { return _dt; }
+    void setTimeline(Timeline* timeline);
+    Timeline* timeline() const { return _timeline; }
+    void setClock(double now, double dt);
+    bool hasClock() const;
+    double now() const;
+    double dt() const;
 
     // The application context: while a law's actions execute, this holds the
     // world time at which that law began holding for the current subject, so
@@ -290,7 +293,8 @@ private:
     RelationRegistrar _relationRegistrar;
     EventInterest _eventInterest;
 
-    double _now = 0.0;
+    Timeline* _timeline = nullptr; // borrowed; provider/world owns the Singular
+    double _now = 0.0;          // compatibility fallback when no Timeline is bound
     double _dt = 0.0;
     bool _clockSet = false;
 
