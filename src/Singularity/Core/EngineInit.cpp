@@ -218,6 +218,12 @@ bool Engine::initLogic() {
     // beings it arms. See CreationChannel::syncRegisterCreatorTools.
     Singularity::Core::syncRegisterCreatorTools(*_lawManager, *_person);
 
+    // The ordinary world clock is a first-class Timeline being. Universe
+    // borrows it as temporal authority; the initial 0/0 clock also makes the
+    // legacy save/load double* seam safe before the first frame advances.
+    (void)_worldTimeline.setClock(_worldTimeline.now(), 0.0);
+    Universe::instance().setTimeline(&_worldTimeline);
+
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
     // themselves (so metalaws can quantify over laws), and the player.
@@ -257,6 +263,12 @@ bool Engine::initLogic() {
         }
         for (const auto& category : ::categories.getAll()) {
             if (category) beings.push_back(category.get());
+        }
+        // Timeline reachability is generic: new temporal domains are ordinary
+        // Timeline beings. No render/physics/adapter timeline type list belongs
+        // here; construction/destruction updates Timeline::all().
+        for (Timeline* timeline : Timeline::all()) {
+            if (timeline) beings.push_back(timeline);
         }
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.
