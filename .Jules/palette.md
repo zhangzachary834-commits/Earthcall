@@ -47,3 +47,7 @@
 ## 2026-09-20 - [Reduced Motion for Infinite Status Animations]
 **Learning:** Infinite CSS animations (like a pulsing status dot) can trigger vestibular disorders and violate WCAG 2.2.2 (Pause, Stop, Hide).
 **Action:** Always wrap infinite status animations in a `@media (prefers-reduced-motion: reduce)` query that sets `animation: none`.
+
+## 2024-11-29 - [Aria-Live Consecutive Announcements]
+**Learning:** When using an `aria-live="polite"` region for dynamic announcements (like form submissions), if the new text is identical to the previous text, screen readers will not announce it again. This creates a silent failure when a user repeats an action.
+**Action:** Always briefly clear the text content of the live region (e.g., using `setTimeout` for a few milliseconds) before setting the new text to guarantee reliable announcements of consecutive identical strings.
