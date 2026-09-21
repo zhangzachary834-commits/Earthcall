@@ -983,6 +983,7 @@ struct SdfGlobalUniforms {
     glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
+    glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta, z/w reserved
 };
 
 struct RadianceSourceGpuData {
@@ -1116,6 +1117,34 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // coordinates and numeric AST coefficients are values.
     const bool multiSource = radianceSources().size() > 1;
     const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
+    const auto& densityBinding = volumeDensityBinding();
+
+    if (_volumeDensityLayoutRevision != densityBinding.revision ||
+        _volumeDensityLayoutKind != densityBinding.kind ||
+        _volumeDensityLayoutExprPtr != densityBinding.densityExpr) {
+        sdfwgsl::ScalarExpressionLayout nextDensity;
+        if (densityBinding.kind == Rendering::VolumeDensityBinding::Kind::Authored) {
+            nextDensity = sdfwgsl::inspectScalarExpression(
+                densityBinding.enabled ? densityBinding.densityExpr : nullptr, true);
+        } else if (densityBinding.kind == Rendering::VolumeDensityBinding::Kind::None) {
+            nextDensity.structure = "<volume:none>";
+            nextDensity.parameterCount = 0;
+            nextDensity.ok = true;
+        } else {
+            nextDensity.structure = "<volume:legacy-field>";
+            nextDensity.parameterCount = 0;
+            nextDensity.ok = true;
+        }
+        const bool densityStructureChanged =
+            _volumeDensityLayoutRevision == 0xffffffffffffffffULL ||
+            nextDensity.ok != _volumeDensityLayout.ok ||
+            nextDensity.structure != _volumeDensityLayout.structure;
+        if (densityStructureChanged) ++_volumeDensityStructureRevision;
+        _volumeDensityLayout = std::move(nextDensity);
+        _volumeDensityLayoutRevision = densityBinding.revision;
+        _volumeDensityLayoutKind = densityBinding.kind;
+        _volumeDensityLayoutExprPtr = densityBinding.densityExpr;
+    }
 
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
@@ -1216,6 +1245,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     };
 
+    if (!_volumeDensityLayout.ok) {
+        recordProgramRefusal("volume density: " + _volumeDensityLayout.error);
+        return;
+    }
+
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
             recordProgramRefusal(_radianceSourcesLayoutError);
@@ -1246,10 +1280,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceStructureRevision == _radianceStructureRevision &&
                    memo->chromaStructureRevision == _chromaStructureRevision &&
                    memo->angularStructureRevision == _angularStructureRevision));
+        const bool densityStructureMatches =
+            memo->volumeDensityStructureRevision == _volumeDensityStructureRevision;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
+            densityStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1258,14 +1295,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceRevision != radianceRevision() ||
                    memo->chromaRevision != radianceChromaRevision() ||
                    memo->angularRevision != radianceAngularRevision());
+            const bool densityValuesChanged =
+                memo->volumeDensityRevision != densityBinding.revision;
             const bool valuesChanged =
-                memo->parameterRevision != memoParameterRevision || sourceValuesChanged;
+                memo->parameterRevision != memoParameterRevision ||
+                sourceValuesChanged || densityValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
-                                           radianceAngularExpr(), sourceSet);
+                                           radianceAngularExpr(), sourceSet,
+                                           &densityBinding);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1277,6 +1318,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->chromaRevision = radianceChromaRevision();
                     memo->angularRevision = radianceAngularRevision();
                     memo->sourceSetRevision = radianceSourcesRevision();
+                    memo->volumeDensityRevision = densityBinding.revision;
                 } else {
                     needsCompile = true;
                 }
@@ -1295,7 +1337,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         mutableFrameStats().sdfProgramCacheMisses++;
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
-                                     radianceAngularExpr(), sourceSet);
+                                     radianceAngularExpr(), sourceSet,
+                                     &densityBinding);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1320,6 +1363,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->angularStructureRevision = _angularStructureRevision;
             memo->sourceSetRevision = radianceSourcesRevision();
             memo->sourceSetStructureRevision = _radianceSourcesStructureRevision;
+            memo->volumeDensityRevision = densityBinding.revision;
+            memo->volumeDensityStructureRevision = _volumeDensityStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -1723,6 +1768,8 @@ void WebGpuRenderer::flushSdfDraws() {
     u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
+    u.volumeTime = glm::vec4(static_cast<float>(densityBinding.temporalCoordinate),
+                            static_cast<float>(densityBinding.temporalDelta), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
