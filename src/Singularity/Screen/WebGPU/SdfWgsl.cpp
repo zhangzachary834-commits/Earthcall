@@ -1099,26 +1099,11 @@ fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
 }
 
 fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                  extent: vec3<f32>, cellSize: vec3<f32>,
+                  invRd: vec3<f32>, dim: u32,
                   tStart: f32, tMax: f32) -> vec3<f32> {
-    if (inst.rangeTraversalEnabled == 0u ||
-        inst.rangeProofWordCount == 0u ||
-        inst.rangeProofDepth == 0u ||
-        inst.rangeProofDepth > 10u) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-
-    let dim = 1u << inst.rangeProofDepth;
-    let cellCount = dim * dim * dim;
-    let neededWords = (cellCount + 31u) >> 5u;
-    if (inst.rangeProofWordCount < neededWords) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-
-    let extent = abs(inst.extents.xyz);
-    if (any(extent <= vec3<f32>(0.0))) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-    let cellSize = (2.0 * extent) / f32(dim);
+    // Grid/ray invariants are validated and prepared once per fragment by fs().
+    // This function owns only per-cell classification and proof-authorized skips.
     var t = tStart;
 
     // At depth 6 a straight ray crosses at most 190 regular cells. If a future
@@ -1158,9 +1143,7 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         // Keep the same near-zero substitution and arithmetic order, but skip
         // the unused entry-face work. This is not a DDA; one classified cell
         // still hands a clear bit straight back to the exact authored marcher.
-        let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
-        let invRd = 1.0 / rds;
-        let exitFace = select(cellMin, cellMax, rds >= vec3<f32>(0.0));
+        let exitFace = select(cellMin, cellMax, invRd >= vec3<f32>(0.0));
         let axisExit = (exitFace - ro) * invRd;
         let cellExit = min(
             min(min(axisExit.x, axisExit.y), axisExit.z),
@@ -1282,6 +1265,34 @@ fn fs(in: VSOut) -> FSOut {
     var prev_d = 1e10;
     var candidate_step = 0.0;
 
+    // Prepare range-grid invariants once for this fragment. rangeCandidate() may
+    // be revisited every time exact marching crosses a regular cell boundary,
+    // but the proof depth, extent, cell size, and ray reciprocal do not change.
+    // Invalid/malformed proof metadata simply leaves rangeQueryReady false, so
+    // the exact authored marcher remains sovereign exactly as before.
+    var rangeQueryReady = false;
+    var rangeDim = 1u;
+    var rangeExtent = vec3<f32>(1.0);
+    var rangeCellSize = vec3<f32>(1.0);
+    var rangeInvRd = vec3<f32>(1.0);
+    if (inst.rangeTraversalEnabled != 0u &&
+        inst.rangeProofWordCount != 0u &&
+        inst.rangeProofDepth != 0u &&
+        inst.rangeProofDepth <= 10u) {
+        rangeDim = 1u << inst.rangeProofDepth;
+        let rangeCellCount = rangeDim * rangeDim * rangeDim;
+        let rangeNeededWords = (rangeCellCount + 31u) >> 5u;
+        rangeExtent = abs(inst.extents.xyz);
+        if (inst.rangeProofWordCount >= rangeNeededWords &&
+            !any(rangeExtent <= vec3<f32>(0.0))) {
+            rangeCellSize = (2.0 * rangeExtent) / f32(rangeDim);
+            let rangeSafeRd =
+                select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+            rangeInvRd = 1.0 / rangeSafeRd;
+            rangeQueryReady = true;
+        }
+    }
+
     // When range traversal is active, exact marching owns only the current
     // ambiguous leaf. Crossing its exit asks the hierarchy for the next
     // candidate interval; proved-empty cells between them are skipped without
@@ -1292,9 +1303,12 @@ fn fs(in: VSOut) -> FSOut {
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
 
-        if (inst.rangeTraversalEnabled != 0u &&
+        if (rangeQueryReady &&
             (!rangeCandidateActive || t >= rangeCellExit)) {
-            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            let candidate = rangeCandidate(
+                inst, ro, rd,
+                rangeExtent, rangeCellSize, rangeInvRd, rangeDim,
+                t, maxDist);
             if (candidate.z < 0.5) {
                 t = maxDist + 1.0;
                 break;
