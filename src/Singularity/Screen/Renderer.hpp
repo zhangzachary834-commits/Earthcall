@@ -152,6 +152,16 @@ public:
     const OntoMath::Piecewise* radianceChromaExpr() const { return _radianceChromaExpr; }
     uint64_t radianceChromaRevision() const { return _radianceChromaRevision; }
 
+    // Optional authored angular source factor alpha(p,omega,t)->scalar. Absence
+    // is the exact multiplicative identity alpha=1. Keep its content revision
+    // independent from both rho and chi.
+    void setRadianceAngular(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceAngularExpr = expr;
+        _radianceAngularRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceAngularExpr() const { return _radianceAngularExpr; }
+    uint64_t radianceAngularRevision() const { return _radianceAngularRevision; }
+
     // Scalar source coefficients are the non-chromatic part of the historical
     // light state. WebGPU uses them only when authored chi is present, so the
     // no-chi path remains the exact pre-Rung-5 formula.
@@ -358,6 +368,8 @@ private:
     uint64_t _radianceRevision = 0;
     const OntoMath::Piecewise* _radianceChromaExpr = nullptr;
     uint64_t _radianceChromaRevision = 0;
+    const OntoMath::Piecewise* _radianceAngularExpr = nullptr;
+    uint64_t _radianceAngularRevision = 0;
     glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;

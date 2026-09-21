@@ -55,6 +55,18 @@ struct VectorExpressionLayout {
     std::string error;
 };
 
+// Rung 6 source angular factor. It stays distinct from the generic scalar
+// layout so alpha can expose whether its authored structure actually reads
+// omega; the shader needs that fact to refuse the source singularity without
+// suppressing direction-independent alpha.
+struct AngularExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
+    bool readsOmega = false;
+    bool ok = true;
+    std::string error;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -102,7 +114,8 @@ Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
                 const OntoMath::Piecewise* radianceExpr = nullptr,
-                const OntoMath::Piecewise* chromaExpr = nullptr);
+                const OntoMath::Piecewise* chromaExpr = nullptr,
+                const OntoMath::Piecewise* angularExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -111,7 +124,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode = nullptr,
                              const OntoMath::Piecewise* colorExpr = nullptr,
                              const OntoMath::Piecewise* radianceExpr = nullptr,
-                             const OntoMath::Piecewise* chromaExpr = nullptr);
+                             const OntoMath::Piecewise* chromaExpr = nullptr,
+                             const OntoMath::Piecewise* angularExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -128,5 +142,9 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
 // must type-check as Vector and unsupported GPU semantics refuse.
 VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime = false);
+
+// Inspect alpha(p,omega,t)->scalar through the production emitter. This is the
+// only scalar Screen context that admits omega.x/y/z.
+AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
 
 } // namespace sdfwgsl

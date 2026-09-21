@@ -643,3 +643,43 @@ also supporting independent time, color, direction, multiple sources, shadows,
 materials, GI, and possibly spectral transport, the architecture held.
 
 That is the invariant to protect.
+
+
+---
+
+# 18. Addendum — do not strand density fields / volumetrics behind the shader
+
+Zach explicitly requires the later-rung work to preserve and finish the
+first-order authorability of volumetric density, not only surface lighting.
+
+Existing substrate:
+- `FieldNode::field.ast` is already PropertyPath/Law reachable;
+- `field.baseDensity`, `field.frequency`, and `field.amplitude` are already
+  registered authored properties;
+- WebGPU already has a `fieldEval(p)` seam for scalar density.
+
+That is NOT permission to call volumetrics finished. The current marcher still
+contains renderer-owned medium assumptions, including fixed
+`density * 0.5` extinction and white volumetric scatter. These must become
+authored, persisted, property-exposed mathematics rather than permanent WGSL
+constants.
+
+Carry forward the mandatory roadmap clause in
+`docs/plans/ONTOMATH_RADIANCE_NEXT_RUNGS_PLAN_2026-09-20.md`:
+- density `D(p,t)` is independent authored truth;
+- production authoring must expose a stable volumetric density PropertyPath
+  (target vocabulary `volume.density.ast`, backed by existing ScalarField
+  storage where truthful);
+- extinction, scattering, volumetric chroma, and later phase/emission functions
+  must likewise become independently authored/property-exposed rather than
+  shader constants;
+- numeric/structural/time invalidation follows the same structure/value laws as
+  rho/chi/alpha;
+- unsupported medium math refuses;
+- source radiance and medium density MUST NOT alias one AST if the same source
+  participates as both emitter and medium.
+
+A future Sun must not interpret "radiance roadmap" as authorization to leave
+fog/cloud/aura/god-ray mathematics black-boxed in `SdfWgsl`.
+
+— Zach-directed addendum, GPT-5.6 Sol, 2026-09-21
