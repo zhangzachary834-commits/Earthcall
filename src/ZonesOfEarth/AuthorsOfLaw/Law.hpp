@@ -540,6 +540,8 @@ public:
     // never got one: a WhileTrue law reading it stayed permanently deaf to
     // that being, silently. Same family as the relation deafness rung 0 fixed.
     // The scan was already linear over the fact list, so the answer is free.
+    // Fast-path scalar pointer overload bypassing string heap allocations and string concatenation
+    bool markFactDirty(const Singular* subject, const std::string& attribute);
     bool markFactDirty(const std::string& subjectId, const std::string& attribute);
     void evaluateDirty();
     bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }
@@ -780,6 +782,7 @@ private:
     // asymmetry is why the bulk paths clear rather than try to be precise.
     std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateIndex;
     std::unordered_map<std::string, std::vector<FactPtr>> _stateFactsBySubjectAttr;
+    std::unordered_map<const Singular*, std::unordered_map<std::string, std::vector<FactPtr>>> _stateFactsBySubjectPtrAttr;
     std::unordered_map<std::string, FactPtr> _factById;
     std::unordered_map<std::string, std::vector<std::size_t>> _factAlphaNodes;
     std::unordered_map<std::string, std::vector<std::size_t>> _factBetaNodes;

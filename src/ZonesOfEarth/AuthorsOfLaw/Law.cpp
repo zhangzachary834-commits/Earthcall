@@ -804,6 +804,9 @@ std::string ReteNetwork::assertFact(FactPtr fact) {
     _factById[f->id] = f;
     if (f->isState) {
         _stateFactsBySubjectAttr[f->subjectId + ":" + f->attribute].push_back(f);
+        if (f->subject) {
+            _stateFactsBySubjectPtrAttr[f->subject][f->attribute].push_back(f);
+        }
     }
 
     propagateFact(f);
@@ -1086,6 +1089,18 @@ bool ReteNetwork::retractFact(const std::string& factId) {
             vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());
             if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
         }
+        if (fact->subject) {
+            auto pIt = _stateFactsBySubjectPtrAttr.find(fact->subject);
+            if (pIt != _stateFactsBySubjectPtrAttr.end()) {
+                auto aIt = pIt->second.find(fact->attribute);
+                if (aIt != pIt->second.end()) {
+                    auto& vec = aIt->second;
+                    vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == factId; }), vec.end());
+                    if (vec.empty()) pIt->second.erase(aIt);
+                }
+                if (pIt->second.empty()) _stateFactsBySubjectPtrAttr.erase(pIt);
+            }
+        }
         if (fact->type == "relation-state" && fact->subject) {
             auto rIt = _relationStateIndex.find(fact->subject);
             if (rIt != _relationStateIndex.end()) {
@@ -1172,6 +1187,18 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
                     vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == id; }), vec.end());
                     if (vec.empty()) _stateFactsBySubjectAttr.erase(sIt);
                 }
+                if (fact->subject) {
+                    auto pIt = _stateFactsBySubjectPtrAttr.find(fact->subject);
+                    if (pIt != _stateFactsBySubjectPtrAttr.end()) {
+                        auto aIt = pIt->second.find(fact->attribute);
+                        if (aIt != pIt->second.end()) {
+                            auto& vec = aIt->second;
+                            vec.erase(std::remove_if(vec.begin(), vec.end(), [&](const FactPtr& f) { return f->id == id; }), vec.end());
+                            if (vec.empty()) pIt->second.erase(aIt);
+                        }
+                        if (pIt->second.empty()) _stateFactsBySubjectPtrAttr.erase(pIt);
+                    }
+                }
             }
             _factById.erase(factIt);
         }
@@ -1219,6 +1246,25 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
     _dirtyFacts.erase(std::remove_if(_dirtyFacts.begin(), _dirtyFacts.end(),
                                      [&](const FactPtr& f) { return removedIds.count(f->id) != 0; }),
                       _dirtyFacts.end());
+}
+
+// Fast-path scalar pointer lookup for state fact dirtying.
+// Bypasses subject->getIdentifier() materialization, key string construction,
+// and string-key map hashing on the hottest callback path in the engine,
+// eliminating heap allocations for non-SSO string identifiers.
+bool ReteNetwork::markFactDirty(const Singular* subject, const std::string& attribute) {
+    if (!subject) return false;
+    auto pIt = _stateFactsBySubjectPtrAttr.find(subject);
+    if (pIt == _stateFactsBySubjectPtrAttr.end()) return false;
+    auto aIt = pIt->second.find(attribute);
+    if (aIt == pIt->second.end() || aIt->second.empty()) return false;
+    for (const auto& fact : aIt->second) {
+        if (!fact->dirty) {
+            fact->dirty = true;
+            _dirtyFacts.push_back(fact);
+        }
+    }
+    return true;
 }
 
 bool ReteNetwork::markFactDirty(const std::string& subjectId, const std::string& attribute) {
@@ -1294,6 +1340,7 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
     orphanedSubjects.assign(subjects.begin(), subjects.end());
     _factParticipants.erase(being);
     _relationStateIndex.erase(being);
+    _stateFactsBySubjectPtrAttr.erase(being);
     if (removedIds.empty()) return orphanedSubjects;
 
     std::unordered_set<std::size_t> affectedAlphas;
@@ -1370,6 +1417,7 @@ void ReteNetwork::clearFacts() {
     _factParticipants.clear();
     _relationStateIndex.clear();
     _stateFactsBySubjectAttr.clear();
+    _stateFactsBySubjectPtrAttr.clear();
     _factById.clear();
     _factAlphaNodes.clear();
     _factBetaNodes.clear();
@@ -1839,7 +1887,8 @@ void LawManager::connectToEventBus() {
         // in the engine. It answers "no" only where the abstract
         // interpretation PROVED no; see LawManager::propheticHears.
         if (!propheticHears(name)) return;
-        if (!_rete.markFactDirty(owner->getIdentifier(), name)) {
+        // Fast-path: O(1) scalar pointer lookup bypassing string heap allocations and concatenation
+        if (!_rete.markFactDirty(owner, name)) {
             // No fact existed for this (being, property). Not "unchanged" —
             // UNKNOWN. seedStateFacts runs once per being, ever, so a property
             // granted after that being was first seen had nothing to dirty and
