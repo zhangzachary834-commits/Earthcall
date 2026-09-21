@@ -265,7 +265,7 @@ int main() {
             OntoMath::Piecewise::continuous(timeNode);
 
         const sdfwgsl::ScalarExpressionLayout layout =
-            sdfwgsl::inspectScalarExpression(&timedRadiance);
+            sdfwgsl::inspectScalarExpression(&timedRadiance, true);
         const sdfwgsl::Program timed =
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
 
