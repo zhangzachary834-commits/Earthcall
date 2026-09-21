@@ -520,11 +520,22 @@ void WebGpuRenderer::releasePersistentSdfRangeNodes() {
     _persistentSdfRangeNodeVramBytes = 0;
 }
 
+void WebGpuRenderer::releasePersistentRadianceSources() {
+    if (_persistentRadianceSources.buffer) {
+        wgpuBufferRelease(_persistentRadianceSources.buffer);
+        _persistentRadianceSources.buffer = nullptr;
+    }
+    _persistentRadianceSources.capacityBytes = 0;
+    _persistentRadianceSources.mirror.clear();
+    _persistentRadianceSourceVramBytes = 0;
+}
+
 void WebGpuRenderer::reloadShaders() {
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
+    releasePersistentRadianceSources();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
@@ -563,6 +574,7 @@ void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
+    releasePersistentRadianceSources();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -972,6 +984,16 @@ struct SdfGlobalUniforms {
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
 };
+
+struct RadianceSourceGpuData {
+    glm::vec4 position;
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+    glm::vec4 coefficients;
+    glm::vec4 time;
+    glm::vec4 control;
+};
 } // namespace
 
 // Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
@@ -992,7 +1014,9 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
         return nullptr;
     }
 
-    WGPUBindGroupLayoutEntry be[2] = {};
+    const bool usesRadianceSources =
+        wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
+    WGPUBindGroupLayoutEntry be[3] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1000,10 +1024,17 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    if (usesRadianceSources) {
+        be[2].binding = 2;
+        be[2].visibility = WGPUShaderStage_Fragment;
+        be[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    }
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = 2; bgld.entries = be;
+    bgld.entryCount = usesRadianceSources ? 3 : 2;
+    bgld.entries = be;
 
     SdfPipeline out;
+    out.usesRadianceSources = usesRadianceSources;
     out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
     WGPUBindGroupLayout meshLayouts[2] = { out.bgl, _sdfInstanceBgl };
     WGPUPipelineLayoutDescriptor pld = {};
@@ -1079,55 +1110,100 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     bool isProvenHeightfield = false;
     bool needsCompile = true;
 
-    // Radiance has the same structure/value split as geometry. The full content
-    // revision supplied by EngineRender tells us that authored rho changed, but
-    // only the production emitter can tell us whether that edit changes WGSL or
-    // merely the parameter buffer. Never infer structure from pointer identity.
-    if (_radianceLayoutRevision != radianceRevision() ||
-        _radianceLayoutExprPtr != radianceExpr()) {
-        sdfwgsl::ScalarExpressionLayout nextLayout =
-            sdfwgsl::inspectScalarExpression(radianceExpr(), true);
-        const bool structureChanged =
-            _radianceLayoutRevision == 0xffffffffffffffffULL ||
-            nextLayout.ok != _radianceLayout.ok ||
-            nextLayout.structure != _radianceLayout.structure;
-        if (structureChanged) ++_radianceStructureRevision;
-        _radianceLayout = std::move(nextLayout);
-        _radianceLayoutRevision = radianceRevision();
-        _radianceLayoutExprPtr = radianceExpr();
-    }
-    const sdfwgsl::ScalarExpressionLayout& radianceLayout = _radianceLayout;
+    // Radiance has the same structure/value split as geometry. Rung 7 keeps
+    // that rule for a COLLECTION: source membership/count and emitted AST shape
+    // are shader structure; source positions, colors, enablement, temporal
+    // coordinates and numeric AST coefficients are values.
+    const bool multiSource = radianceSources().size() > 1;
+    const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
 
-    if (_chromaLayoutRevision != radianceChromaRevision() ||
-        _chromaLayoutExprPtr != radianceChromaExpr()) {
-        sdfwgsl::VectorExpressionLayout nextLayout =
-            sdfwgsl::inspectVectorExpression(radianceChromaExpr(), true);
-        const bool structureChanged =
-            _chromaLayoutRevision == 0xffffffffffffffffULL ||
-            nextLayout.ok != _chromaLayout.ok ||
-            nextLayout.structure != _chromaLayout.structure;
-        if (structureChanged) ++_chromaStructureRevision;
-        _chromaLayout = std::move(nextLayout);
-        _chromaLayoutRevision = radianceChromaRevision();
-        _chromaLayoutExprPtr = radianceChromaExpr();
-    }
-    const sdfwgsl::VectorExpressionLayout& chromaLayout = _chromaLayout;
+    if (multiSource) {
+        if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
+            std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
+            bool ok = true;
+            std::string error;
 
-    if (_angularLayoutRevision != radianceAngularRevision() ||
-        _angularLayoutExprPtr != radianceAngularExpr()) {
-        sdfwgsl::AngularExpressionLayout nextLayout =
-            sdfwgsl::inspectAngularExpression(radianceAngularExpr());
-        const bool structureChanged =
-            _angularLayoutRevision == 0xffffffffffffffffULL ||
-            nextLayout.ok != _angularLayout.ok ||
-            nextLayout.structure != _angularLayout.structure ||
-            nextLayout.readsOmega != _angularLayout.readsOmega;
-        if (structureChanged) ++_angularStructureRevision;
-        _angularLayout = std::move(nextLayout);
-        _angularLayoutRevision = radianceAngularRevision();
-        _angularLayoutExprPtr = radianceAngularExpr();
+            for (std::size_t i = 0; i < radianceSources().size(); ++i) {
+                const auto& source = radianceSources()[i];
+                const auto rho = sdfwgsl::inspectScalarExpression(source.radianceExpr, true);
+                const auto chi = sdfwgsl::inspectVectorExpression(source.chromaExpr, true);
+                const auto alpha = sdfwgsl::inspectAngularExpression(source.angularExpr);
+
+                structure += "source[" + std::to_string(i) + "]\n";
+                structure += "rho:" + rho.structure + "\n";
+                structure += "chi:" + chi.structure + "\n";
+                structure += "alpha:" + alpha.structure +
+                             (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
+
+                if (!rho.ok && ok) {
+                    ok = false;
+                    error = "source[" + std::to_string(i) + "] radiance: " + rho.error;
+                }
+                if (!chi.ok && ok) {
+                    ok = false;
+                    error = "source[" + std::to_string(i) + "] chroma: " + chi.error;
+                }
+                if (!alpha.ok && ok) {
+                    ok = false;
+                    error = "source[" + std::to_string(i) + "] angular: " + alpha.error;
+                }
+            }
+
+            const bool structureChanged =
+                _radianceSourcesLayoutRevision == 0xffffffffffffffffULL ||
+                structure != _radianceSourcesLayoutStructure ||
+                ok != _radianceSourcesLayoutOk;
+            if (structureChanged) ++_radianceSourcesStructureRevision;
+            _radianceSourcesLayoutRevision = radianceSourcesRevision();
+            _radianceSourcesLayoutStructure = std::move(structure);
+            _radianceSourcesLayoutOk = ok;
+            _radianceSourcesLayoutError = std::move(error);
+        }
+    } else {
+        // Exact Rungs 3-6 layout inspection.
+        if (_radianceLayoutRevision != radianceRevision() ||
+            _radianceLayoutExprPtr != radianceExpr()) {
+            sdfwgsl::ScalarExpressionLayout nextLayout =
+                sdfwgsl::inspectScalarExpression(radianceExpr(), true);
+            const bool structureChanged =
+                _radianceLayoutRevision == 0xffffffffffffffffULL ||
+                nextLayout.ok != _radianceLayout.ok ||
+                nextLayout.structure != _radianceLayout.structure;
+            if (structureChanged) ++_radianceStructureRevision;
+            _radianceLayout = std::move(nextLayout);
+            _radianceLayoutRevision = radianceRevision();
+            _radianceLayoutExprPtr = radianceExpr();
+        }
+
+        if (_chromaLayoutRevision != radianceChromaRevision() ||
+            _chromaLayoutExprPtr != radianceChromaExpr()) {
+            sdfwgsl::VectorExpressionLayout nextLayout =
+                sdfwgsl::inspectVectorExpression(radianceChromaExpr(), true);
+            const bool structureChanged =
+                _chromaLayoutRevision == 0xffffffffffffffffULL ||
+                nextLayout.ok != _chromaLayout.ok ||
+                nextLayout.structure != _chromaLayout.structure;
+            if (structureChanged) ++_chromaStructureRevision;
+            _chromaLayout = std::move(nextLayout);
+            _chromaLayoutRevision = radianceChromaRevision();
+            _chromaLayoutExprPtr = radianceChromaExpr();
+        }
+
+        if (_angularLayoutRevision != radianceAngularRevision() ||
+            _angularLayoutExprPtr != radianceAngularExpr()) {
+            sdfwgsl::AngularExpressionLayout nextLayout =
+                sdfwgsl::inspectAngularExpression(radianceAngularExpr());
+            const bool structureChanged =
+                _angularLayoutRevision == 0xffffffffffffffffULL ||
+                nextLayout.ok != _angularLayout.ok ||
+                nextLayout.structure != _angularLayout.structure ||
+                nextLayout.readsOmega != _angularLayout.readsOmega;
+            if (structureChanged) ++_angularStructureRevision;
+            _angularLayout = std::move(nextLayout);
+            _angularLayoutRevision = radianceAngularRevision();
+            _angularLayoutExprPtr = radianceAngularExpr();
+        }
     }
-    const sdfwgsl::AngularExpressionLayout& angularLayout = _angularLayout;
 
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
@@ -1139,45 +1215,57 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", why.c_str());
         }
     };
-    if (!radianceLayout.ok) {
-        recordProgramRefusal("radiance: " + radianceLayout.error);
-        return;
-    }
-    if (!chromaLayout.ok) {
-        recordProgramRefusal("chroma: " + chromaLayout.error);
-        return;
-    }
-    if (!angularLayout.ok) {
-        recordProgramRefusal("angular: " + angularLayout.error);
-        return;
+
+    if (multiSource) {
+        if (!_radianceSourcesLayoutOk) {
+            recordProgramRefusal(_radianceSourcesLayoutError);
+            return;
+        }
+    } else {
+        if (!_radianceLayout.ok) {
+            recordProgramRefusal("radiance: " + _radianceLayout.error);
+            return;
+        }
+        if (!_chromaLayout.ok) {
+            recordProgramRefusal("chroma: " + _chromaLayout.error);
+            return;
+        }
+        if (!_angularLayout.ok) {
+            recordProgramRefusal("angular: " + _angularLayout.error);
+            return;
+        }
     }
 
     MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
         memo = &_programCache[memoId];
+        const bool sourceStructureMatches =
+            memo->multiSource == multiSource &&
+            (multiSource
+                ? memo->sourceSetStructureRevision == _radianceSourcesStructureRevision
+                : (memo->radianceStructureRevision == _radianceStructureRevision &&
+                   memo->chromaStructureRevision == _chromaStructureRevision &&
+                   memo->angularStructureRevision == _angularStructureRevision));
+
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
-            memo->radianceStructureRevision == _radianceStructureRevision &&
-            memo->chromaStructureRevision == _chromaStructureRevision &&
-            memo->angularStructureRevision == _angularStructureRevision &&
+            sourceStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
-            // We have a structural hit unless parameter recollection proves that
-            // the claimed structure identity is stale. Start on the cheap path;
-            // only fall back to compile on a mismatched recollection.
             needsCompile = false;
 
-            // Geometry parameters and radiance parameters share the same packed
-            // buffer. Either value-domain revision changing requires one exact
-            // recollection, but does NOT regenerate shader source.
+            const bool sourceValuesChanged = multiSource
+                ? memo->sourceSetRevision != radianceSourcesRevision()
+                : (memo->radianceRevision != radianceRevision() ||
+                   memo->chromaRevision != radianceChromaRevision() ||
+                   memo->angularRevision != radianceAngularRevision());
             const bool valuesChanged =
-                memo->parameterRevision != memoParameterRevision ||
-                memo->radianceRevision != radianceRevision() ||
-                memo->chromaRevision != radianceChromaRevision() ||
-                memo->angularRevision != radianceAngularRevision();
+                memo->parameterRevision != memoParameterRevision || sourceValuesChanged;
+
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
-                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
-                                           radianceChromaExpr(), radianceAngularExpr());
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
+                                           radianceExpr(), radianceChromaExpr(),
+                                           radianceAngularExpr(), sourceSet);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1188,26 +1276,26 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->radianceRevision = radianceRevision();
                     memo->chromaRevision = radianceChromaRevision();
                     memo->angularRevision = radianceAngularRevision();
+                    memo->sourceSetRevision = radianceSourcesRevision();
                 } else {
-                    // A parameter-count mismatch means our claimed structural
-                    // identity is stale. Fail open to a full compile rather than
-                    // pairing old WGSL with a differently-shaped buffer layout.
                     needsCompile = true;
                 }
             }
+
             if (!needsCompile) {
                 prog = &memo->prog;
                 sp = memo->sp;
                 isProvenHeightfield = memo->isProvenHeightfield;
                 mutableFrameStats().sdfProgramCacheHits++;
-                needsCompile = false;
             }
         }
     }
+
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
-        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
-                                     radianceChromaExpr(), radianceAngularExpr());
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
+                                     radianceExpr(), radianceChromaExpr(),
+                                     radianceAngularExpr(), sourceSet);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1217,29 +1305,26 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         sp = sdfPipeline(localProg.wgsl);
         if (!sp) return;
 
-        // Heightfield-ness is a theorem about tree structure, not frame state.
-        // Compute it at the same revision boundary as the compiled program.
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
         if (memo) {
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
+            memo->multiSource = multiSource;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->chromaRevision = radianceChromaRevision();
             memo->chromaStructureRevision = _chromaStructureRevision;
             memo->angularRevision = radianceAngularRevision();
             memo->angularStructureRevision = _angularStructureRevision;
+            memo->sourceSetRevision = radianceSourcesRevision();
+            memo->sourceSetStructureRevision = _radianceSourcesStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
 
-            // A full compiler pass means the previous memo was not trusted
-            // enough for reuse (structure/color changed or parameter recollection
-            // refused). Spatial proof is cheaper to rebuild than to risk pairing
-            // a new program with an old theorem, so invalidate it unconditionally.
             memo->rangeReady = false;
             memo->rangeHierarchy = {};
             memo->rangeProxy = {};
