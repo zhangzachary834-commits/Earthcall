@@ -368,14 +368,14 @@ struct TypeResult {
 
 using TypeEnv = std::map<std::string, ValueKind>;
 
-// Canonical ambient inputs for authored field expressions. A field AST is
-// pointwise mathematics evaluated at a place and, optionally, a world time.
-// CPU callers bind these names in the variable map; channel emitters bind the
-// same names to their native execution inputs. This convention is what keeps
-// CPU and GPU evaluation of the same authored tree semantically identical.
+// Canonical ambient names available to authored mathematics. A spatial field
+// is evaluated at p/x/y/z. Channels that explicitly admit world time may also
+// bind t; OntoMath itself never invents a clock value. Radiance Rung 4 is the
+// first Screen binding of t. CPU callers bind the same name in their variable
+// map, preserving one authored tree across execution channels.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
-//   "t"          Universe world time in seconds, a Scalar (optional input)
+//   "t"          world/simulation time in seconds when the channel binds it
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kWorldTimeVar = "t";
 
