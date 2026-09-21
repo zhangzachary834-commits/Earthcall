@@ -113,6 +113,72 @@ struct Arm {
     uint32_t traversalDraws = 0;
 };
 
+struct RuntimeTaxMapResult {
+    bool done = false;
+    bool ok = false;
+};
+
+void onRuntimeTaxMap(WGPUMapAsyncStatus status, WGPUStringView,
+                     void* userdata1, void*) {
+    auto* result = static_cast<RuntimeTaxMapResult*>(userdata1);
+    result->ok = status == WGPUMapAsyncStatus_Success;
+    result->done = true;
+}
+
+struct RuntimeTaxRay {
+    glm::vec4 ro;
+    glm::vec4 rdFar;
+};
+
+struct alignas(16) RuntimeTaxOut {
+    // x/y/z/w = candidate calls / clear handoffs / useful skip calls /
+    // exact gradient-sample calls.
+    glm::uvec4 counts0{0u};
+    // x/y/z/w = fallback sdfEval calls / hit / proof-to-end exhaustions /
+    // marcher iterations.
+    glm::uvec4 counts1{0u};
+    // x = proof-authorized distance skipped.
+    glm::vec4 distances{0.0f};
+};
+
+struct RuntimeTaxInstance {
+    glm::mat4 model{1.0f};
+    glm::mat4 invModel{1.0f};
+    glm::vec4 baseColor{1.0f};
+    glm::vec4 shading{1.0f};
+    glm::vec4 extents{0.0f};
+    glm::vec4 misc{0.0f};
+    uint32_t paramOffset = 0;
+    uint32_t heightGridOffset = 0;
+    uint32_t heightGridDimX = 0;
+    uint32_t heightGridDimZ = 0;
+    uint32_t rangeProofWordOffset = 0;
+    uint32_t rangeProofWordCount = 0;
+    uint32_t rangeTraversalEnabled = 0;
+    uint32_t rangeProofDepth = 0;
+};
+
+static_assert(sizeof(RuntimeTaxInstance) == 224,
+              "diagnostic instance ABI must match SdfInstanceData");
+
+struct RuntimeTaxTotals {
+    uint64_t rays = 0;
+    uint64_t candidateCalls = 0;
+    uint64_t clearHandoffs = 0;
+    uint64_t skipCalls = 0;
+    uint64_t onSampleSteps = 0;
+    uint64_t onFallbackEvals = 0;
+    uint64_t onHits = 0;
+    uint64_t candidateExhaustions = 0;
+    uint64_t onIterations = 0;
+    uint64_t offSampleSteps = 0;
+    uint64_t offFallbackEvals = 0;
+    uint64_t offHits = 0;
+    uint64_t offIterations = 0;
+    double skippedDistance = 0.0;
+    bool valid = false;
+};
+
 // CPU-side opportunity census for the exact regular proof bitmap consumed by
 // rangeCandidate(). This deliberately does NOT instrument the hot shader: the
 // native AB/BA GPU timing below remains unpolluted. The census walks the same
@@ -448,6 +514,451 @@ void printProofGridCensus(const char* viewName,
         s.maxPositiveRunDistance);
 }
 
+RuntimeTaxTotals runRuntimeTaxDiagnostic(
+    wgpu::Device& gpu,
+    const sdfwgsl::Program& program,
+    const geom::SdfPositiveProofGrid& proofGrid,
+    const glm::vec3& extent,
+    const glm::vec3& eye,
+    const glm::mat4& view,
+    const glm::mat4& proj) {
+    constexpr uint32_t sampleW = 160;
+    constexpr uint32_t sampleH = 100;
+    constexpr float farField = 3000.0f;
+
+    RuntimeTaxTotals totals;
+    if (!program.ok || proofGrid.dim == 0u || proofGrid.words.empty()) {
+        return totals;
+    }
+
+    std::vector<RuntimeTaxRay> rays;
+    rays.reserve(static_cast<size_t>(sampleW) * sampleH);
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
+    for (uint32_t y = 0; y < sampleH; ++y) {
+        for (uint32_t x = 0; x < sampleW; ++x) {
+            const float sx =
+                (static_cast<float>(x) + 0.5f) / static_cast<float>(sampleW);
+            const float sy =
+                (static_cast<float>(y) + 0.5f) / static_cast<float>(sampleH);
+            const glm::vec4 ndc(
+                sx * 2.0f - 1.0f,
+                (1.0f - sy) * 2.0f - 1.0f,
+                1.0f,
+                1.0f);
+            const glm::vec4 worldH = invViewProj * ndc;
+            glm::vec3 rd(0.0f, 0.0f, 1.0f);
+            if (std::abs(worldH.w) >= 1e-8f) {
+                const glm::vec3 world = glm::vec3(worldH) / worldH.w;
+                rd = glm::normalize(world - eye);
+            }
+            rays.push_back({glm::vec4(eye, 1.0f), glm::vec4(rd, farField)});
+        }
+    }
+
+    // Append a compute-only diagnostic entry point to the exact generated
+    // production WGSL. The helper calls production rangeCandidate() itself;
+    // it does not carry a second C++/WGSL transcription of proof traversal.
+    // ON and OFF march the same GPU ray independently, so the counters expose
+    // consultation tax without perturbing the timed renderer A/B below.
+    const char* diagnosticWgsl = R"WGSL(
+struct RuntimeTaxRay {
+    ro: vec4<f32>,
+    rdFar: vec4<f32>,
+};
+struct RuntimeTaxOut {
+    counts0: vec4<u32>,
+    counts1: vec4<u32>,
+    distances: vec4<f32>,
+};
+@group(2) @binding(0) var<storage, read> runtimeTaxRays: array<RuntimeTaxRay>;
+@group(2) @binding(1) var<storage, read_write> runtimeTaxOut: array<RuntimeTaxOut>;
+
+fn runtimeTaxMarch(ray: RuntimeTaxRay, useRange: bool) -> RuntimeTaxOut {
+    var out: RuntimeTaxOut;
+    g_instIdx = 0u;
+    let inst = instances[0u];
+    let ro = ray.ro.xyz;
+    let rd = normalize(ray.rdFar.xyz);
+    let box = rayAabb(ro, rd, inst.extents.xyz);
+    if (box.y < box.x || box.y < 0.0) {
+        return out;
+    }
+
+    var t = max(box.x, 0.0);
+    let maxDist = min(min(box.y, t + inst.misc.z), ray.rdFar.w);
+    var rangeCellExit = t;
+    var rangeCandidateActive = false;
+
+    var candidateCalls = 0u;
+    var clearHandoffs = 0u;
+    var skipCalls = 0u;
+    var sampleSteps = 0u;
+    var fallbackEvals = 0u;
+    var hit = false;
+    var candidateExhaustions = 0u;
+    var iterations = 0u;
+    var skippedDistance = 0.0;
+
+    var prev_d = 1e10;
+    var candidate_step = 0.0;
+
+    for (var i = 0; i < 192; i = i + 1) {
+        if (t > maxDist) { break; }
+        iterations = iterations + 1u;
+
+        if (useRange && inst.rangeTraversalEnabled != 0u &&
+            (!rangeCandidateActive || t >= rangeCellExit)) {
+            candidateCalls = candidateCalls + 1u;
+            let oldT = t;
+            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            if (candidate.z < 0.5) {
+                candidateExhaustions = candidateExhaustions + 1u;
+                skipCalls = skipCalls + 1u;
+                skippedDistance = skippedDistance + max(maxDist - oldT, 0.0);
+                t = maxDist + 1.0;
+                break;
+            }
+
+            // A non-exhausting rangeCandidate return hands an interval back to
+            // the exact marcher. If candidate.x advanced, the same consultation
+            // first consumed one or more positive-proof cells.
+            clearHandoffs = clearHandoffs + 1u;
+            t = max(t, candidate.x);
+            if (t > oldT) {
+                skipCalls = skipCalls + 1u;
+                skippedDistance = skippedDistance + (t - oldT);
+                prev_d = 1e10;
+                candidate_step = 0.0;
+            }
+            rangeCellExit = max(t, candidate.y);
+            rangeCandidateActive = true;
+            if (t > maxDist) { break; }
+        }
+
+        let p = ro + rd * t;
+        let current_eps = max(inst.misc.y, t * 0.001);
+        let sample = sdfSampleStep(p);
+        sampleSteps = sampleSteps + 1u;
+        let raw = sample.raw;
+        var gl = sample.gradLen;
+        if (gl <= 1e-6) {
+            let ge = 1e-3;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            fallbackEvals = fallbackEvals + 3u;
+            gl = length(g);
+        }
+        let d = select(raw, raw / gl, gl > 1e-6);
+
+        if (d <= 0.0 || abs(d) < current_eps) {
+            hit = true;
+            if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                t = (t - candidate_step) + candidate_step * frac;
+            }
+            break;
+        }
+
+        candidate_step = max(d, current_eps);
+        prev_d = d;
+        t = t + candidate_step;
+    }
+
+    out.counts0 =
+        vec4<u32>(candidateCalls, clearHandoffs, skipCalls, sampleSteps);
+    out.counts1 =
+        vec4<u32>(fallbackEvals, select(0u, 1u, hit),
+                  candidateExhaustions, iterations);
+    out.distances = vec4<f32>(skippedDistance, 0.0, 0.0, 0.0);
+    return out;
+}
+
+@compute @workgroup_size(64)
+fn cs_runtime_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let idx = gid.x;
+    if (idx >= arrayLength(&runtimeTaxRays)) { return; }
+    let ray = runtimeTaxRays[idx];
+    runtimeTaxOut[idx * 2u] = runtimeTaxMarch(ray, true);
+    runtimeTaxOut[idx * 2u + 1u] = runtimeTaxMarch(ray, false);
+}
+)WGSL";
+
+    const std::string shaderCode = program.wgsl + diagnosticWgsl;
+
+    WGPUShaderSourceWGSL wgslSrc = {};
+    wgslSrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    wgslSrc.code = wgpu::Device::str(shaderCode.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &wgslSrc.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(gpu.device, &smd);
+    if (!shader) {
+        std::printf("SDF_RANGE_RUNTIME_TAX FAIL shader module\n");
+        return totals;
+    }
+
+    WGPUComputePipelineDescriptor cpd = {};
+    cpd.compute.module = shader;
+    cpd.compute.entryPoint = wgpu::Device::str("cs_runtime_tax");
+    WGPUComputePipeline pipeline = wgpuDeviceCreateComputePipeline(gpu.device, &cpd);
+    if (!pipeline) {
+        std::printf("SDF_RANGE_RUNTIME_TAX FAIL compute pipeline\n");
+        wgpuShaderModuleRelease(shader);
+        return totals;
+    }
+
+    RuntimeTaxInstance inst;
+    inst.extents = glm::vec4(extent, 0.0f);
+    inst.misc = glm::vec4(0.0f, 1e-4f, 8000.0f, 0.25f);
+    inst.rangeProofWordOffset = 0u;
+    inst.rangeProofWordCount = static_cast<uint32_t>(proofGrid.words.size());
+    inst.rangeTraversalEnabled = 1u;
+    inst.rangeProofDepth = proofGrid.depth;
+
+    const size_t rayBytes = rays.size() * sizeof(RuntimeTaxRay);
+    const size_t outCount = rays.size() * 2u;
+    const size_t outBytes = outCount * sizeof(RuntimeTaxOut);
+    const size_t paramBytes =
+        std::max(program.params.size() * sizeof(float), sizeof(float));
+    const size_t proofBytes =
+        std::max(proofGrid.words.size() * sizeof(uint32_t), sizeof(uint32_t));
+
+    auto makeBuffer = [&](uint64_t size, WGPUBufferUsage usage) {
+        WGPUBufferDescriptor desc = {};
+        desc.size = size;
+        desc.usage = usage;
+        return wgpuDeviceCreateBuffer(gpu.device, &desc);
+    };
+
+    WGPUBuffer rayBuffer = makeBuffer(
+        rayBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer outBuffer = makeBuffer(
+        outBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+    WGPUBuffer readback = makeBuffer(
+        outBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+    WGPUBuffer paramBuffer = makeBuffer(
+        paramBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer instBuffer = makeBuffer(
+        sizeof(RuntimeTaxInstance),
+        WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer proofBuffer = makeBuffer(
+        proofBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+
+    if (!rayBuffer || !outBuffer || !readback ||
+        !paramBuffer || !instBuffer || !proofBuffer) {
+        std::printf("SDF_RANGE_RUNTIME_TAX FAIL buffer allocation\n");
+        if (proofBuffer) wgpuBufferRelease(proofBuffer);
+        if (instBuffer) wgpuBufferRelease(instBuffer);
+        if (paramBuffer) wgpuBufferRelease(paramBuffer);
+        if (readback) wgpuBufferRelease(readback);
+        if (outBuffer) wgpuBufferRelease(outBuffer);
+        if (rayBuffer) wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return totals;
+    }
+
+    wgpuQueueWriteBuffer(gpu.queue, rayBuffer, 0, rays.data(), rayBytes);
+    if (!program.params.empty()) {
+        wgpuQueueWriteBuffer(
+            gpu.queue, paramBuffer, 0, program.params.data(),
+            program.params.size() * sizeof(float));
+    } else {
+        const float zero = 0.0f;
+        wgpuQueueWriteBuffer(gpu.queue, paramBuffer, 0, &zero, sizeof(zero));
+    }
+    wgpuQueueWriteBuffer(
+        gpu.queue, instBuffer, 0, &inst, sizeof(RuntimeTaxInstance));
+    wgpuQueueWriteBuffer(
+        gpu.queue, proofBuffer, 0, proofGrid.words.data(),
+        proofGrid.words.size() * sizeof(uint32_t));
+
+    WGPUBindGroupLayout bgl0 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
+    WGPUBindGroupLayout bgl1 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 1);
+    WGPUBindGroupLayout bgl2 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 2);
+
+    WGPUBindGroupEntry g0e = {};
+    g0e.binding = 1;
+    g0e.buffer = paramBuffer;
+    g0e.offset = 0;
+    g0e.size = paramBytes;
+    WGPUBindGroupDescriptor g0d = {};
+    g0d.layout = bgl0;
+    g0d.entryCount = 1;
+    g0d.entries = &g0e;
+    WGPUBindGroup g0 = wgpuDeviceCreateBindGroup(gpu.device, &g0d);
+
+    WGPUBindGroupEntry g1e[2] = {};
+    g1e[0].binding = 0;
+    g1e[0].buffer = instBuffer;
+    g1e[0].offset = 0;
+    g1e[0].size = sizeof(RuntimeTaxInstance);
+    g1e[1].binding = 2;
+    g1e[1].buffer = proofBuffer;
+    g1e[1].offset = 0;
+    g1e[1].size = proofBytes;
+    WGPUBindGroupDescriptor g1d = {};
+    g1d.layout = bgl1;
+    g1d.entryCount = 2;
+    g1d.entries = g1e;
+    WGPUBindGroup g1 = wgpuDeviceCreateBindGroup(gpu.device, &g1d);
+
+    WGPUBindGroupEntry g2e[2] = {};
+    g2e[0].binding = 0;
+    g2e[0].buffer = rayBuffer;
+    g2e[0].offset = 0;
+    g2e[0].size = rayBytes;
+    g2e[1].binding = 1;
+    g2e[1].buffer = outBuffer;
+    g2e[1].offset = 0;
+    g2e[1].size = outBytes;
+    WGPUBindGroupDescriptor g2d = {};
+    g2d.layout = bgl2;
+    g2d.entryCount = 2;
+    g2d.entries = g2e;
+    WGPUBindGroup g2 = wgpuDeviceCreateBindGroup(gpu.device, &g2d);
+
+    if (!g0 || !g1 || !g2) {
+        std::printf("SDF_RANGE_RUNTIME_TAX FAIL bind group\n");
+    } else {
+        WGPUCommandEncoder encoder =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUComputePassEncoder pass =
+            wgpuCommandEncoderBeginComputePass(encoder, nullptr);
+        wgpuComputePassEncoderSetPipeline(pass, pipeline);
+        wgpuComputePassEncoderSetBindGroup(pass, 0, g0, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 1, g1, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 2, g2, 0, nullptr);
+        const uint32_t workgroups =
+            static_cast<uint32_t>((rays.size() + 63u) / 64u);
+        wgpuComputePassEncoderDispatchWorkgroups(pass, workgroups, 1, 1);
+        wgpuComputePassEncoderEnd(pass);
+        wgpuComputePassEncoderRelease(pass);
+
+        wgpuCommandEncoderCopyBufferToBuffer(
+            encoder, outBuffer, 0, readback, 0, outBytes);
+        WGPUCommandBuffer command =
+            wgpuCommandEncoderFinish(encoder, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &command);
+        wgpuCommandBufferRelease(command);
+        wgpuCommandEncoderRelease(encoder);
+
+        RuntimeTaxMapResult mapResult;
+        WGPUBufferMapCallbackInfo mapInfo = {};
+        mapInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+        mapInfo.callback = onRuntimeTaxMap;
+        mapInfo.userdata1 = &mapResult;
+        wgpuBufferMapAsync(
+            readback, WGPUMapMode_Read, 0, outBytes, mapInfo);
+        while (!mapResult.done) {
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        }
+
+        if (mapResult.ok) {
+            const auto* out = static_cast<const RuntimeTaxOut*>(
+                wgpuBufferGetConstMappedRange(readback, 0, outBytes));
+            if (out) {
+                totals.rays = rays.size();
+                for (size_t i = 0; i < rays.size(); ++i) {
+                    const RuntimeTaxOut& on = out[i * 2u];
+                    const RuntimeTaxOut& off = out[i * 2u + 1u];
+                    totals.candidateCalls += on.counts0.x;
+                    totals.clearHandoffs += on.counts0.y;
+                    totals.skipCalls += on.counts0.z;
+                    totals.onSampleSteps += on.counts0.w;
+                    totals.onFallbackEvals += on.counts1.x;
+                    totals.onHits += on.counts1.y;
+                    totals.candidateExhaustions += on.counts1.z;
+                    totals.onIterations += on.counts1.w;
+                    totals.offSampleSteps += off.counts0.w;
+                    totals.offFallbackEvals += off.counts1.x;
+                    totals.offHits += off.counts1.y;
+                    totals.offIterations += off.counts1.w;
+                    totals.skippedDistance +=
+                        static_cast<double>(on.distances.x);
+                }
+                totals.valid = true;
+            }
+            wgpuBufferUnmap(readback);
+        } else {
+            std::printf("SDF_RANGE_RUNTIME_TAX FAIL readback map\n");
+        }
+    }
+
+    if (g2) wgpuBindGroupRelease(g2);
+    if (g1) wgpuBindGroupRelease(g1);
+    if (g0) wgpuBindGroupRelease(g0);
+    wgpuBindGroupLayoutRelease(bgl2);
+    wgpuBindGroupLayoutRelease(bgl1);
+    wgpuBindGroupLayoutRelease(bgl0);
+    wgpuBufferRelease(proofBuffer);
+    wgpuBufferRelease(instBuffer);
+    wgpuBufferRelease(paramBuffer);
+    wgpuBufferRelease(readback);
+    wgpuBufferRelease(outBuffer);
+    wgpuBufferRelease(rayBuffer);
+    wgpuComputePipelineRelease(pipeline);
+    wgpuShaderModuleRelease(shader);
+    return totals;
+}
+
+void printRuntimeTax(const char* viewName, const RuntimeTaxTotals& t) {
+    if (!t.valid) {
+        std::printf("SDF_RANGE_RUNTIME_TAX view=%s valid=0\n", viewName);
+        return;
+    }
+    const double callsPerRay =
+        t.rays > 0
+            ? static_cast<double>(t.candidateCalls) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+    const double usefulCallRatio =
+        t.candidateCalls > 0
+            ? static_cast<double>(t.skipCalls) /
+                  static_cast<double>(t.candidateCalls)
+            : 0.0;
+    const int64_t savedSampleSteps =
+        static_cast<int64_t>(t.offSampleSteps) -
+        static_cast<int64_t>(t.onSampleSteps);
+    const double samplesSavedPerCall =
+        t.candidateCalls > 0
+            ? static_cast<double>(savedSampleSteps) /
+                  static_cast<double>(t.candidateCalls)
+            : 0.0;
+
+    std::printf(
+        "SDF_RANGE_RUNTIME_TAX view=%s valid=1 rays=%llu "
+        "candidate_calls=%llu clear_handoffs=%llu useful_skip_calls=%llu "
+        "candidate_exhaustions=%llu on_sample_steps=%llu off_sample_steps=%llu "
+        "saved_sample_steps=%lld on_fallback_evals=%llu off_fallback_evals=%llu "
+        "on_iterations=%llu off_iterations=%llu on_hits=%llu off_hits=%llu "
+        "skipped_distance=%.6f calls_per_ray=%.6f useful_call_ratio=%.6f "
+        "samples_saved_per_call=%.6f\n",
+        viewName,
+        static_cast<unsigned long long>(t.rays),
+        static_cast<unsigned long long>(t.candidateCalls),
+        static_cast<unsigned long long>(t.clearHandoffs),
+        static_cast<unsigned long long>(t.skipCalls),
+        static_cast<unsigned long long>(t.candidateExhaustions),
+        static_cast<unsigned long long>(t.onSampleSteps),
+        static_cast<unsigned long long>(t.offSampleSteps),
+        static_cast<long long>(savedSampleSteps),
+        static_cast<unsigned long long>(t.onFallbackEvals),
+        static_cast<unsigned long long>(t.offFallbackEvals),
+        static_cast<unsigned long long>(t.onIterations),
+        static_cast<unsigned long long>(t.offIterations),
+        static_cast<unsigned long long>(t.onHits),
+        static_cast<unsigned long long>(t.offHits),
+        t.skippedDistance,
+        callsPerRay,
+        usefulCallRatio,
+        samplesSavedPerCall);
+}
+
 } // namespace
 
 int main() {
@@ -665,6 +1176,30 @@ int main() {
             const ProofGridCensus census =
                 censusProofGrid(proofGrid, proofExtent, c.eye, view, proj);
             printProofGridCensus(c.name, proofGrid, census);
+        }
+
+        // Exact runtime-consumption diagnostic for the production-selected
+        // depth-4 proof grid. It runs outside the timed renderer samples and
+        // calls the emitted production rangeCandidate() directly on GPU.
+        const RuntimeTaxTotals runtimeTax =
+            runRuntimeTaxDiagnostic(
+                gpu, probeProgram, proofGrids[1], proofExtent,
+                c.eye, view, proj);
+        printRuntimeTax(c.name, runtimeTax);
+        if (!runtimeTax.valid || runtimeTax.candidateCalls == 0u) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL runtime tax diagnostic inactive for %s\n",
+                c.name);
+            measurementWarnings = true;
+        }
+        if (runtimeTax.valid && runtimeTax.onHits != runtimeTax.offHits) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL runtime tax ON/OFF hit mismatch for %s: "
+                "on=%llu off=%llu\n",
+                c.name,
+                static_cast<unsigned long long>(runtimeTax.onHits),
+                static_cast<unsigned long long>(runtimeTax.offHits));
+            measurementWarnings = true;
         }
 
         Arm off;
