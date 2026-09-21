@@ -983,6 +983,7 @@ struct SdfGlobalUniforms {
     glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
+    glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
 };
 
 struct RadianceSourceGpuData {
@@ -1723,6 +1724,8 @@ void WebGpuRenderer::flushSdfDraws() {
     u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
+    u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
+                            static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
