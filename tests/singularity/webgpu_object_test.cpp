@@ -17,7 +17,6 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -300,14 +299,14 @@ int main() {
                "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
         // RUNG 4 TIME: make rho read the canonical world-time input. The first
-        // transition is structural and compiles once; advancing Universe::now()
-        // afterward must change pixels through the shared uniform only.
+        // transition is structural and compiles once; advancing the pushed world-time
+        // snapshot afterward must change pixels through the shared uniform only.
         auto timeLeaf = std::make_shared<OntoMath::MathNode>();
         timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
         timeLeaf->variableName = OntoMath::kTimeVar;
         rho.pieces[0].mathNode = timeLeaf;
 
-        Universe::instance().setClock(0.15, 0.15);
+        renderer.setWorldTime(0.15, 0.15);
         renderer.setRadianceField(&rho, 1003);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
@@ -318,7 +317,7 @@ int main() {
         assert(timeCompileStats.sdfProgramCompiles == 1 &&
                "introducing canonical t should compile the new rho structure once");
 
-        Universe::instance().setClock(1.0, 0.85);
+        renderer.setWorldTime(1.0, 0.85);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -331,7 +330,7 @@ int main() {
                     timeAdvanceStats.sdfProgramCacheHits,
                     timeAdvanceStats.sdfParameterBytesUploaded);
         assert(timeBright[0] > timeDim[0] + 80 &&
-               "advancing Universe world time did not visibly change rho(p,t)");
+               "advancing renderer world time did not visibly change rho(p,t)");
         assert(timeAdvanceStats.sdfProgramCompiles == 0 &&
                "advancing t recompiled WGSL instead of updating the shared uniform");
         assert(timeAdvanceStats.sdfProgramCacheHits >= 1 &&
@@ -372,7 +371,7 @@ int main() {
                "refused authored rho left stale rendered radiance on screen");
 
         renderer.setRadianceField(nullptr, 0);
-        Universe::instance().setClock(0.0, 0.0);
+        renderer.setWorldTime(0.0, 0.0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
