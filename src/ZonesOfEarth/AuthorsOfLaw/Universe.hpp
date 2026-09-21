@@ -293,7 +293,7 @@ private:
     RelationRegistrar _relationRegistrar;
     EventInterest _eventInterest;
 
-    Timeline* _timeline = nullptr; // borrowed; provider/world owns the Singular
+    Timeline* _timeline = nullptr; // borrowed authority; ownership is Relation truth
     double _now = 0.0;          // compatibility fallback when no Timeline is bound
     double _dt = 0.0;
     bool _clockSet = false;
