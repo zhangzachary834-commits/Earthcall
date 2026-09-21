@@ -141,15 +141,17 @@ public:
     const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
     uint64_t radianceRevision() const { return _radianceRevision; }
 
-    // Snapshot of the authoritative simulation/world clock for this render
-    // frame. The engine pushes Universe time across the renderer boundary;
-    // backends consume it without reaching back into world/Law ontology.
-    void setWorldTime(double now, double dt) {
-        _worldTime = now;
-        _worldDelta = dt;
+    // Temporal coordinate admitted by the current rendering context. Renderer
+    // does not decide which Timeline supplies it. Today EngineRender projects
+    // the Universe-selected Timeline here as a compatibility/default binding;
+    // a future Law/First Mover may select another Timeline without changing
+    // WebGPU or OntoMath.
+    void setTemporalCoordinate(double t, double delta) {
+        _temporalCoordinate = t;
+        _temporalDelta = delta;
     }
-    double worldTime() const { return _worldTime; }
-    double worldDelta() const { return _worldDelta; }
+    double temporalCoordinate() const { return _temporalCoordinate; }
+    double temporalDelta() const { return _temporalDelta; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
@@ -332,8 +334,8 @@ private:
     bool      _lightingOn = true;
     const OntoMath::Piecewise* _radianceExpr = nullptr;
     uint64_t _radianceRevision = 0;
-    double _worldTime = 0.0;
-    double _worldDelta = 0.0;
+    double _temporalCoordinate = 0.0;
+    double _temporalDelta = 0.0;
     FrameStats _frameStats;
 };
 
