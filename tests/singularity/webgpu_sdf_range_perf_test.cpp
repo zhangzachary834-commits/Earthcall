@@ -161,7 +161,7 @@ int main() {
     }
     const glm::vec3 proofExtent = glm::abs(extent * 1.05f);
     const auto proofHierarchy = geom::buildRangeHierarchy(
-        field, proofExtent, /*maxDepth=*/5, /*maxNodes=*/65536);
+        field, proofExtent, /*maxDepth=*/6, /*maxNodes=*/327680);
     size_t positiveSkipNodes = 0;
     size_t negativeZeroFreeNodes = 0;
     for (const auto& node : proofHierarchy.nodes) {
