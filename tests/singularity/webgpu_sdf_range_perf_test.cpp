@@ -24,6 +24,7 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -164,9 +165,24 @@ int main() {
         field, proofExtent, /*maxDepth=*/6, /*maxNodes=*/327680);
     size_t positiveSkipNodes = 0;
     size_t negativeZeroFreeNodes = 0;
+    std::array<size_t, 7> positiveByDepth{};
+    std::array<size_t, 7> negativeByDepth{};
+    std::array<size_t, 7> ambiguousLeafByDepth{};
     for (const auto& node : proofHierarchy.nodes) {
-        if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipNodes;
-        if (node.boundFinite && node.rangeHi < 0.0f) ++negativeZeroFreeNodes;
+        const size_t depth =
+            std::min<size_t>(node.depth, positiveByDepth.size() - 1u);
+        if (geom::rangeNodeProvesPositiveOutside(node)) {
+            ++positiveSkipNodes;
+            ++positiveByDepth[depth];
+        }
+        if (node.boundFinite && node.rangeHi < 0.0f) {
+            ++negativeZeroFreeNodes;
+            ++negativeByDepth[depth];
+        }
+        if (node.childCount == 0u && node.boundFinite &&
+            !node.provedNoZero) {
+            ++ambiguousLeafByDepth[depth];
+        }
     }
     std::printf(
         "SDF_RANGE_PERF_LATCH needsGradientStep=%d hierarchy_nodes=%zu "
@@ -179,6 +195,20 @@ int main() {
         negativeZeroFreeNodes,
         proofHierarchy.ambiguousLeaves,
         proofHierarchy.unknownLeaves);
+    std::printf(
+        "SDF_RANGE_PERF_DEPTH positive=%zu,%zu,%zu,%zu,%zu,%zu,%zu "
+        "negative=%zu,%zu,%zu,%zu,%zu,%zu,%zu "
+        "ambiguous=%zu,%zu,%zu,%zu,%zu,%zu,%zu\n",
+        positiveByDepth[0], positiveByDepth[1], positiveByDepth[2],
+        positiveByDepth[3], positiveByDepth[4], positiveByDepth[5],
+        positiveByDepth[6],
+        negativeByDepth[0], negativeByDepth[1], negativeByDepth[2],
+        negativeByDepth[3], negativeByDepth[4], negativeByDepth[5],
+        negativeByDepth[6],
+        ambiguousLeafByDepth[0], ambiguousLeafByDepth[1],
+        ambiguousLeafByDepth[2], ambiguousLeafByDepth[3],
+        ambiguousLeafByDepth[4], ambiguousLeafByDepth[5],
+        ambiguousLeafByDepth[6]);
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
         return 1;
