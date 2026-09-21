@@ -141,6 +141,16 @@ public:
     const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
     uint64_t radianceRevision() const { return _radianceRevision; }
 
+    // Snapshot of the authoritative simulation/world clock for this render
+    // frame. The engine pushes Universe time across the renderer boundary;
+    // backends consume it without reaching back into world/Law ontology.
+    void setWorldTime(double now, double dt) {
+        _worldTime = now;
+        _worldDelta = dt;
+    }
+    double worldTime() const { return _worldTime; }
+    double worldDelta() const { return _worldDelta; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -322,6 +332,8 @@ private:
     bool      _lightingOn = true;
     const OntoMath::Piecewise* _radianceExpr = nullptr;
     uint64_t _radianceRevision = 0;
+    double _worldTime = 0.0;
+    double _worldDelta = 0.0;
     FrameStats _frameStats;
 };
 
