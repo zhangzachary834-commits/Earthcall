@@ -180,6 +180,124 @@ struct RuntimeTaxTotals {
     bool valid = false;
 };
 
+struct alignas(16) DirectProofRun {
+    // xyz are field-local AABB bounds. w carries diagnostic provenance only:
+    // axis in bmin.w, positive-cell count in bmax.w.
+    glm::vec4 bmin{0.0f};
+    glm::vec4 bmax{0.0f};
+};
+
+struct DirectRunArtifact {
+    uint32_t axis = 0;
+    uint32_t minRunCells = 1;
+    uint32_t coveredPositiveCells = 0;
+    float minAxisWorld = 0.0f;
+    std::vector<DirectProofRun> runs;
+};
+
+struct DirectRuntimeTax {
+    uint32_t axis = 0;
+    uint32_t minRunCells = 1;
+    uint32_t coveredPositiveCells = 0;
+    float minAxisWorld = 0.0f;
+    size_t artifactRecords = 0;
+    size_t artifactBytes = 0;
+    uint64_t rays = 0;
+    uint64_t artifactQueries = 0;
+    uint64_t recordTests = 0;
+    uint64_t skipCalls = 0;
+    uint64_t directSampleSteps = 0;
+    uint64_t directFallbackEvals = 0;
+    uint64_t directHits = 0;
+    uint64_t artifactExhaustions = 0;
+    uint64_t directIterations = 0;
+    uint64_t offSampleSteps = 0;
+    uint64_t offFallbackEvals = 0;
+    uint64_t offHits = 0;
+    uint64_t offIterations = 0;
+    uint64_t perRayHitMismatches = 0;
+    double skippedDistance = 0.0;
+    bool valid = false;
+};
+
+const char* directAxisName(uint32_t axis) {
+    return axis == 0u ? "x" : (axis == 1u ? "y" : "z");
+}
+
+DirectRunArtifact buildDirectRunArtifact(
+    const geom::SdfPositiveProofGrid& grid,
+    const glm::vec3& extent,
+    uint32_t axis,
+    uint32_t minRunCells) {
+    DirectRunArtifact out;
+    out.axis = std::min(axis, 2u);
+    out.minRunCells = std::max(minRunCells, 1u);
+    if (grid.dim == 0u || grid.words.empty()) return out;
+
+    const glm::vec3 absExtent = glm::abs(extent);
+    const glm::vec3 cellSize =
+        (2.0f * absExtent) / static_cast<float>(grid.dim);
+    out.minAxisWorld =
+        static_cast<float>(out.minRunCells) * cellSize[out.axis];
+
+    auto positive = [&](uint32_t k, uint32_t u, uint32_t v) {
+        if (out.axis == 0u) return proofCellPositive(grid, k, u, v);
+        if (out.axis == 1u) return proofCellPositive(grid, u, k, v);
+        return proofCellPositive(grid, u, v, k);
+    };
+
+    auto emitRun = [&](uint32_t start, uint32_t end,
+                       uint32_t u, uint32_t v) {
+        const uint32_t runCells = end - start;
+        if (runCells < out.minRunCells) return;
+
+        glm::uvec3 lo(0u);
+        glm::uvec3 hi(0u);
+        if (out.axis == 0u) {
+            lo = glm::uvec3(start, u, v);
+            hi = glm::uvec3(end, u + 1u, v + 1u);
+        } else if (out.axis == 1u) {
+            lo = glm::uvec3(u, start, v);
+            hi = glm::uvec3(u + 1u, end, v + 1u);
+        } else {
+            lo = glm::uvec3(u, v, start);
+            hi = glm::uvec3(u + 1u, v + 1u, end);
+        }
+
+        const glm::vec3 bmin =
+            -absExtent + glm::vec3(lo) * cellSize;
+        const glm::vec3 bmax =
+            -absExtent + glm::vec3(hi) * cellSize;
+        DirectProofRun run;
+        run.bmin = glm::vec4(bmin, static_cast<float>(out.axis));
+        run.bmax = glm::vec4(bmax, static_cast<float>(runCells));
+        out.runs.push_back(run);
+        out.coveredPositiveCells += runCells;
+    };
+
+    // One chosen axis partitions the positive cells into disjoint maximal runs.
+    // No cell is duplicated inside one artifact, and thresholding only removes
+    // optimization opportunities; it never creates skip authority.
+    for (uint32_t v = 0; v < grid.dim; ++v) {
+        for (uint32_t u = 0; u < grid.dim; ++u) {
+            bool inRun = false;
+            uint32_t runStart = 0u;
+            for (uint32_t k = 0; k <= grid.dim; ++k) {
+                const bool isPositive =
+                    k < grid.dim ? positive(k, u, v) : false;
+                if (isPositive && !inRun) {
+                    inRun = true;
+                    runStart = k;
+                } else if (!isPositive && inRun) {
+                    emitRun(runStart, k, u, v);
+                    inRun = false;
+                }
+            }
+        }
+    }
+    return out;
+}
+
 // CPU-side opportunity census for the exact regular proof bitmap consumed by
 // rangeCandidate(). This deliberately does NOT instrument the hot shader: the
 // native AB/BA GPU timing below remains unpolluted. The census walks the same
@@ -979,6 +1097,557 @@ void printRuntimeTax(const char* viewName, const RuntimeTaxTotals& t) {
         samplesSavedPerCall);
 }
 
+
+std::vector<DirectRuntimeTax> runDirectArtifactDiagnostic(
+    wgpu::Device& gpu,
+    const sdfwgsl::Program& program,
+    const std::vector<DirectRunArtifact>& artifacts,
+    const RuntimeTaxTotals& genericBaseline,
+    const glm::vec3& extent,
+    const glm::vec3& eye,
+    const glm::mat4& view,
+    const glm::mat4& proj) {
+    constexpr uint32_t sampleW = 160;
+    constexpr uint32_t sampleH = 100;
+
+    std::vector<DirectRuntimeTax> results;
+    results.reserve(artifacts.size());
+    if (!program.ok) return results;
+
+    float farField = 1e6f;
+    {
+        const glm::vec4 farPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(farPt.w) > 1e-9f) {
+            const float d = -(farPt.z / farPt.w);
+            if (std::isfinite(d) && d > 0.0f) farField = d;
+        }
+    }
+
+    std::vector<RuntimeTaxRay> rays;
+    rays.reserve(static_cast<size_t>(sampleW) * sampleH);
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
+    for (uint32_t y = 0; y < sampleH; ++y) {
+        for (uint32_t x = 0; x < sampleW; ++x) {
+            const float sx =
+                (static_cast<float>(x) + 0.5f) / static_cast<float>(sampleW);
+            const float sy =
+                (static_cast<float>(y) + 0.5f) / static_cast<float>(sampleH);
+            const glm::vec4 ndc(
+                sx * 2.0f - 1.0f,
+                (1.0f - sy) * 2.0f - 1.0f,
+                1.0f,
+                1.0f);
+            const glm::vec4 worldH = invViewProj * ndc;
+            glm::vec3 rd(0.0f, 0.0f, 1.0f);
+            if (std::abs(worldH.w) >= 1e-8f) {
+                const glm::vec3 world = glm::vec3(worldH) / worldH.w;
+                rd = glm::normalize(world - eye);
+            }
+            rays.push_back({glm::vec4(eye, 1.0f), glm::vec4(rd, farField)});
+        }
+    }
+
+    const char* diagnosticWgsl = R"WGSL(
+struct DirectTaxRay {
+    ro: vec4<f32>,
+    rdFar: vec4<f32>,
+};
+struct DirectProofRun {
+    bmin: vec4<f32>,
+    bmax: vec4<f32>,
+};
+struct DirectTaxOut {
+    counts0: vec4<u32>,
+    counts1: vec4<u32>,
+    distances: vec4<f32>,
+};
+@group(2) @binding(0) var<storage, read> directTaxRays: array<DirectTaxRay>;
+@group(2) @binding(1) var<storage, read_write> directTaxOut: array<DirectTaxOut>;
+@group(2) @binding(2) var<storage, read> directRuns: array<DirectProofRun>;
+
+fn findDirectRun(ro: vec3<f32>, rd: vec3<f32>,
+                 t: f32, maxDist: f32) -> vec4<f32> {
+    var found = false;
+    var bestEnter = maxDist + 1.0;
+    var bestExit = 0.0;
+    var tests = 0u;
+    let count = arrayLength(&directRuns);
+
+    for (var i = 0u; i < count; i = i + 1u) {
+        tests = tests + 1u;
+        let run = directRuns[i];
+        let center = 0.5 * (run.bmin.xyz + run.bmax.xyz);
+        let halfExtent =
+            max(0.5 * (run.bmax.xyz - run.bmin.xyz), vec3<f32>(1e-8));
+        let interval = rayAabb(ro - center, rd, halfExtent);
+        let enter = max(interval.x, t);
+        let exit = min(interval.y, maxDist);
+        if (exit <= enter) { continue; }
+
+        if (!found || enter < bestEnter - 1e-6 ||
+            (abs(enter - bestEnter) <= 1e-6 && exit > bestExit)) {
+            found = true;
+            bestEnter = enter;
+            bestExit = exit;
+        }
+    }
+
+    return vec4<f32>(
+        bestEnter, bestExit, select(0.0, 1.0, found), f32(tests));
+}
+
+fn directTaxMarch(ray: DirectTaxRay, useDirect: bool) -> DirectTaxOut {
+    var out: DirectTaxOut;
+    g_instIdx = 0u;
+    let inst = instances[0u];
+    let ro = ray.ro.xyz;
+    let rd = normalize(ray.rdFar.xyz);
+    let box = rayAabb(ro, rd, inst.extents.xyz);
+    if (box.y < box.x || box.y < 0.0) {
+        return out;
+    }
+
+    var t = max(box.x, 0.0);
+    let maxDist = min(min(box.y, t + inst.misc.z), ray.rdFar.w);
+
+    var artifactQueries = 0u;
+    var recordTests = 0u;
+    var skipCalls = 0u;
+    var sampleSteps = 0u;
+    var fallbackEvals = 0u;
+    var hit = false;
+    var artifactExhaustions = 0u;
+    var iterations = 0u;
+    var skippedDistance = 0.0;
+
+    var directValid = false;
+    var directExhausted = !useDirect;
+    var directEnter = 0.0;
+    var directExit = 0.0;
+
+    var prev_d = 1e10;
+    var candidate_step = 0.0;
+
+    for (var i = 0; i < 192; i = i + 1) {
+        if (t > maxDist) { break; }
+        iterations = iterations + 1u;
+
+        if (useDirect && directValid && t >= directExit) {
+            directValid = false;
+        }
+
+        // The direct artifact is discovered at most once per retained candidate
+        // interval, not once per exact marcher step. A no-future-run result is
+        // final for this monotonic ray and suppresses all later artifact work.
+        if (useDirect && !directExhausted && !directValid) {
+            artifactQueries = artifactQueries + 1u;
+            let candidate = findDirectRun(ro, rd, t, maxDist);
+            recordTests = recordTests + u32(candidate.w);
+            if (candidate.z > 0.5) {
+                directEnter = candidate.x;
+                directExit = candidate.y;
+                directValid = true;
+            } else {
+                artifactExhaustions = artifactExhaustions + 1u;
+                directExhausted = true;
+            }
+        }
+
+        if (useDirect && directValid &&
+            t >= directEnter && t < directExit) {
+            let oldT = t;
+            t = directExit;
+            directValid = false;
+            if (t > oldT) {
+                skipCalls = skipCalls + 1u;
+                skippedDistance = skippedDistance + (t - oldT);
+                prev_d = 1e10;
+                candidate_step = 0.0;
+            }
+            if (t > maxDist) { break; }
+        }
+
+        let p = ro + rd * t;
+        let current_eps = max(inst.misc.y, t * 0.001);
+        let sample = sdfSampleStep(p);
+        sampleSteps = sampleSteps + 1u;
+        let raw = sample.raw;
+        var gl = sample.gradLen;
+        if (gl <= 1e-6) {
+            let ge = 1e-3;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            fallbackEvals = fallbackEvals + 3u;
+            gl = length(g);
+        }
+        let d = select(raw, raw / gl, gl > 1e-6);
+
+        if (d <= 0.0 || abs(d) < current_eps) {
+            hit = true;
+            if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                t = (t - candidate_step) + candidate_step * frac;
+            }
+            break;
+        }
+
+        candidate_step = max(d, current_eps);
+        prev_d = d;
+        t = t + candidate_step;
+    }
+
+    out.counts0 =
+        vec4<u32>(artifactQueries, recordTests, skipCalls, sampleSteps);
+    out.counts1 =
+        vec4<u32>(fallbackEvals, select(0u, 1u, hit),
+                  artifactExhaustions, iterations);
+    out.distances = vec4<f32>(skippedDistance, 0.0, 0.0, 0.0);
+    return out;
+}
+
+@compute @workgroup_size(64)
+fn cs_direct_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let idx = gid.x;
+    if (idx >= arrayLength(&directTaxRays)) { return; }
+    let ray = directTaxRays[idx];
+    directTaxOut[idx * 2u] = directTaxMarch(ray, true);
+    directTaxOut[idx * 2u + 1u] = directTaxMarch(ray, false);
+}
+)WGSL";
+
+    const std::string shaderCode = program.wgsl + diagnosticWgsl;
+    WGPUShaderSourceWGSL wgslSrc = {};
+    wgslSrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    wgslSrc.code = wgpu::Device::str(shaderCode.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &wgslSrc.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(gpu.device, &smd);
+    if (!shader) return results;
+
+    WGPUComputePipelineDescriptor cpd = {};
+    cpd.compute.module = shader;
+    cpd.compute.entryPoint = wgpu::Device::str("cs_direct_tax");
+    WGPUComputePipeline pipeline = wgpuDeviceCreateComputePipeline(gpu.device, &cpd);
+    if (!pipeline) {
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    RuntimeTaxInstance inst;
+    inst.extents = glm::vec4(extent, 0.0f);
+    inst.misc = glm::vec4(0.0f, 1e-4f, 8000.0f, 0.25f);
+
+    const size_t rayBytes = rays.size() * sizeof(RuntimeTaxRay);
+    const size_t outCount = rays.size() * 2u;
+    const size_t outBytes = outCount * sizeof(RuntimeTaxOut);
+    const size_t paramBytes =
+        std::max(program.params.size() * sizeof(float), sizeof(float));
+
+    size_t maxDirectBytes = sizeof(DirectProofRun);
+    for (const auto& artifact : artifacts) {
+        maxDirectBytes = std::max(
+            maxDirectBytes,
+            artifact.runs.size() * sizeof(DirectProofRun));
+    }
+
+    auto makeBuffer = [&](uint64_t size, WGPUBufferUsage usage) {
+        WGPUBufferDescriptor desc = {};
+        desc.size = size;
+        desc.usage = usage;
+        return wgpuDeviceCreateBuffer(gpu.device, &desc);
+    };
+
+    WGPUBuffer rayBuffer = makeBuffer(
+        rayBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer outBuffer = makeBuffer(
+        outBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+    WGPUBuffer readback = makeBuffer(
+        outBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+    WGPUBuffer paramBuffer = makeBuffer(
+        paramBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer instBuffer = makeBuffer(
+        sizeof(RuntimeTaxInstance),
+        WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer directBuffer = makeBuffer(
+        maxDirectBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+
+    if (!rayBuffer || !outBuffer || !readback ||
+        !paramBuffer || !instBuffer || !directBuffer) {
+        if (directBuffer) wgpuBufferRelease(directBuffer);
+        if (instBuffer) wgpuBufferRelease(instBuffer);
+        if (paramBuffer) wgpuBufferRelease(paramBuffer);
+        if (readback) wgpuBufferRelease(readback);
+        if (outBuffer) wgpuBufferRelease(outBuffer);
+        if (rayBuffer) wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    wgpuQueueWriteBuffer(gpu.queue, rayBuffer, 0, rays.data(), rayBytes);
+    if (!program.params.empty()) {
+        wgpuQueueWriteBuffer(
+            gpu.queue, paramBuffer, 0, program.params.data(),
+            program.params.size() * sizeof(float));
+    } else {
+        const float zero = 0.0f;
+        wgpuQueueWriteBuffer(gpu.queue, paramBuffer, 0, &zero, sizeof(zero));
+    }
+    wgpuQueueWriteBuffer(
+        gpu.queue, instBuffer, 0, &inst, sizeof(RuntimeTaxInstance));
+
+    WGPUBindGroupLayout bgl0 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
+    WGPUBindGroupLayout bgl1 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 1);
+    WGPUBindGroupLayout bgl2 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 2);
+
+    WGPUBindGroupEntry g0e = {};
+    g0e.binding = 1;
+    g0e.buffer = paramBuffer;
+    g0e.offset = 0;
+    g0e.size = paramBytes;
+    WGPUBindGroupDescriptor g0d = {};
+    g0d.layout = bgl0;
+    g0d.entryCount = 1;
+    g0d.entries = &g0e;
+    WGPUBindGroup g0 = wgpuDeviceCreateBindGroup(gpu.device, &g0d);
+
+    WGPUBindGroupEntry g1e = {};
+    g1e.binding = 0;
+    g1e.buffer = instBuffer;
+    g1e.offset = 0;
+    g1e.size = sizeof(RuntimeTaxInstance);
+    WGPUBindGroupDescriptor g1d = {};
+    g1d.layout = bgl1;
+    g1d.entryCount = 1;
+    g1d.entries = &g1e;
+    WGPUBindGroup g1 = wgpuDeviceCreateBindGroup(gpu.device, &g1d);
+
+    if (!g0 || !g1) {
+        if (g1) wgpuBindGroupRelease(g1);
+        if (g0) wgpuBindGroupRelease(g0);
+        wgpuBindGroupLayoutRelease(bgl2);
+        wgpuBindGroupLayoutRelease(bgl1);
+        wgpuBindGroupLayoutRelease(bgl0);
+        wgpuBufferRelease(directBuffer);
+        wgpuBufferRelease(instBuffer);
+        wgpuBufferRelease(paramBuffer);
+        wgpuBufferRelease(readback);
+        wgpuBufferRelease(outBuffer);
+        wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    for (const auto& artifact : artifacts) {
+        DirectRuntimeTax totals;
+        totals.axis = artifact.axis;
+        totals.minRunCells = artifact.minRunCells;
+        totals.coveredPositiveCells = artifact.coveredPositiveCells;
+        totals.minAxisWorld = artifact.minAxisWorld;
+        totals.artifactRecords = artifact.runs.size();
+        totals.artifactBytes = artifact.runs.size() * sizeof(DirectProofRun);
+        totals.rays = rays.size();
+
+        if (artifact.runs.empty()) {
+            totals.directSampleSteps = genericBaseline.offSampleSteps;
+            totals.offSampleSteps = genericBaseline.offSampleSteps;
+            totals.directFallbackEvals = genericBaseline.offFallbackEvals;
+            totals.offFallbackEvals = genericBaseline.offFallbackEvals;
+            totals.directHits = genericBaseline.offHits;
+            totals.offHits = genericBaseline.offHits;
+            totals.directIterations = genericBaseline.offIterations;
+            totals.offIterations = genericBaseline.offIterations;
+            totals.valid = genericBaseline.valid;
+            results.push_back(totals);
+            continue;
+        }
+
+        const size_t directBytes =
+            artifact.runs.size() * sizeof(DirectProofRun);
+        wgpuQueueWriteBuffer(
+            gpu.queue, directBuffer, 0, artifact.runs.data(), directBytes);
+
+        WGPUBindGroupEntry g2e[3] = {};
+        g2e[0].binding = 0;
+        g2e[0].buffer = rayBuffer;
+        g2e[0].offset = 0;
+        g2e[0].size = rayBytes;
+        g2e[1].binding = 1;
+        g2e[1].buffer = outBuffer;
+        g2e[1].offset = 0;
+        g2e[1].size = outBytes;
+        g2e[2].binding = 2;
+        g2e[2].buffer = directBuffer;
+        g2e[2].offset = 0;
+        g2e[2].size = directBytes;
+        WGPUBindGroupDescriptor g2d = {};
+        g2d.layout = bgl2;
+        g2d.entryCount = 3;
+        g2d.entries = g2e;
+        WGPUBindGroup g2 =
+            wgpuDeviceCreateBindGroup(gpu.device, &g2d);
+        if (!g2) {
+            results.push_back(totals);
+            continue;
+        }
+
+        WGPUCommandEncoder encoder =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUComputePassEncoder pass =
+            wgpuCommandEncoderBeginComputePass(encoder, nullptr);
+        wgpuComputePassEncoderSetPipeline(pass, pipeline);
+        wgpuComputePassEncoderSetBindGroup(pass, 0, g0, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 1, g1, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 2, g2, 0, nullptr);
+        const uint32_t workgroups =
+            static_cast<uint32_t>((rays.size() + 63u) / 64u);
+        wgpuComputePassEncoderDispatchWorkgroups(pass, workgroups, 1, 1);
+        wgpuComputePassEncoderEnd(pass);
+        wgpuComputePassEncoderRelease(pass);
+        wgpuCommandEncoderCopyBufferToBuffer(
+            encoder, outBuffer, 0, readback, 0, outBytes);
+        WGPUCommandBuffer command =
+            wgpuCommandEncoderFinish(encoder, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &command);
+        wgpuCommandBufferRelease(command);
+        wgpuCommandEncoderRelease(encoder);
+
+        RuntimeTaxMapResult mapResult;
+        WGPUBufferMapCallbackInfo mapInfo = {};
+        mapInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+        mapInfo.callback = onRuntimeTaxMap;
+        mapInfo.userdata1 = &mapResult;
+        wgpuBufferMapAsync(
+            readback, WGPUMapMode_Read, 0, outBytes, mapInfo);
+        while (!mapResult.done) {
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        }
+
+        if (mapResult.ok) {
+            const auto* out = static_cast<const RuntimeTaxOut*>(
+                wgpuBufferGetConstMappedRange(readback, 0, outBytes));
+            if (out) {
+                for (size_t i = 0; i < rays.size(); ++i) {
+                    const RuntimeTaxOut& direct = out[i * 2u];
+                    const RuntimeTaxOut& off = out[i * 2u + 1u];
+                    totals.artifactQueries += direct.counts0.x;
+                    totals.recordTests += direct.counts0.y;
+                    totals.skipCalls += direct.counts0.z;
+                    totals.directSampleSteps += direct.counts0.w;
+                    totals.directFallbackEvals += direct.counts1.x;
+                    totals.directHits += direct.counts1.y;
+                    totals.artifactExhaustions += direct.counts1.z;
+                    totals.directIterations += direct.counts1.w;
+                    totals.offSampleSteps += off.counts0.w;
+                    totals.offFallbackEvals += off.counts1.x;
+                    totals.offHits += off.counts1.y;
+                    totals.offIterations += off.counts1.w;
+                    if (direct.counts1.y != off.counts1.y) {
+                        ++totals.perRayHitMismatches;
+                    }
+                    totals.skippedDistance +=
+                        static_cast<double>(direct.distances.x);
+                }
+                totals.valid = true;
+            }
+            wgpuBufferUnmap(readback);
+        }
+
+        wgpuBindGroupRelease(g2);
+        results.push_back(totals);
+    }
+
+    wgpuBindGroupRelease(g1);
+    wgpuBindGroupRelease(g0);
+    wgpuBindGroupLayoutRelease(bgl2);
+    wgpuBindGroupLayoutRelease(bgl1);
+    wgpuBindGroupLayoutRelease(bgl0);
+    wgpuBufferRelease(directBuffer);
+    wgpuBufferRelease(instBuffer);
+    wgpuBufferRelease(paramBuffer);
+    wgpuBufferRelease(readback);
+    wgpuBufferRelease(outBuffer);
+    wgpuBufferRelease(rayBuffer);
+    wgpuComputePipelineRelease(pipeline);
+    wgpuShaderModuleRelease(shader);
+    return results;
+}
+
+void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
+    const int64_t savedSampleSteps =
+        static_cast<int64_t>(t.offSampleSteps) -
+        static_cast<int64_t>(t.directSampleSteps);
+    const double queriesPerRay =
+        t.rays > 0
+            ? static_cast<double>(t.artifactQueries) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+    const double recordTestsPerRay =
+        t.rays > 0
+            ? static_cast<double>(t.recordTests) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+    const double samplesSavedPerQuery =
+        t.artifactQueries > 0
+            ? static_cast<double>(savedSampleSteps) /
+                  static_cast<double>(t.artifactQueries)
+            : 0.0;
+    const double samplesSavedPerRecordTest =
+        t.recordTests > 0
+            ? static_cast<double>(savedSampleSteps) /
+                  static_cast<double>(t.recordTests)
+            : 0.0;
+
+    std::printf(
+        "SDF_DIRECT_RUNTIME_TAX view=%s valid=%d axis=%s "
+        "min_run_cells=%u min_axis_world=%.6f artifact_records=%zu "
+        "artifact_bytes=%zu covered_positive_cells=%u rays=%llu "
+        "artifact_queries=%llu record_tests=%llu useful_skip_calls=%llu "
+        "artifact_exhaustions=%llu direct_sample_steps=%llu "
+        "off_sample_steps=%llu saved_sample_steps=%lld "
+        "direct_fallback_evals=%llu off_fallback_evals=%llu "
+        "direct_iterations=%llu off_iterations=%llu "
+        "direct_hits=%llu off_hits=%llu per_ray_hit_mismatches=%llu "
+        "skipped_distance=%.6f queries_per_ray=%.6f "
+        "record_tests_per_ray=%.6f samples_saved_per_query=%.6f "
+        "samples_saved_per_record_test=%.6f\n",
+        viewName,
+        t.valid ? 1 : 0,
+        directAxisName(t.axis),
+        t.minRunCells,
+        t.minAxisWorld,
+        t.artifactRecords,
+        t.artifactBytes,
+        t.coveredPositiveCells,
+        static_cast<unsigned long long>(t.rays),
+        static_cast<unsigned long long>(t.artifactQueries),
+        static_cast<unsigned long long>(t.recordTests),
+        static_cast<unsigned long long>(t.skipCalls),
+        static_cast<unsigned long long>(t.artifactExhaustions),
+        static_cast<unsigned long long>(t.directSampleSteps),
+        static_cast<unsigned long long>(t.offSampleSteps),
+        static_cast<long long>(savedSampleSteps),
+        static_cast<unsigned long long>(t.directFallbackEvals),
+        static_cast<unsigned long long>(t.offFallbackEvals),
+        static_cast<unsigned long long>(t.directIterations),
+        static_cast<unsigned long long>(t.offIterations),
+        static_cast<unsigned long long>(t.directHits),
+        static_cast<unsigned long long>(t.offHits),
+        static_cast<unsigned long long>(t.perRayHitMismatches),
+        t.skippedDistance,
+        queriesPerRay,
+        recordTestsPerRay,
+        samplesSavedPerQuery,
+        samplesSavedPerRecordTest);
+}
+
 } // namespace
 
 int main() {
@@ -1110,6 +1779,18 @@ int main() {
             proofBytes);
     }
 
+    // Test-only Spatial-Prophetic Direct candidates. Each artifact chooses one
+    // partition axis and a minimum maximal-run length. This deliberately sweeps
+    // representation economics before any production shader mutation.
+    std::vector<DirectRunArtifact> directArtifacts;
+    for (uint32_t axis = 0u; axis < 3u; ++axis) {
+        for (uint32_t minRunCells : {1u, 2u, 4u}) {
+            directArtifacts.push_back(
+                buildDirectRunArtifact(
+                    proofGrids[1], proofExtent, axis, minRunCells));
+        }
+    }
+
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
         return 1;
@@ -1222,6 +1903,47 @@ int main() {
                 static_cast<unsigned long long>(runtimeTax.onHits),
                 static_cast<unsigned long long>(runtimeTax.offHits));
             measurementWarnings = true;
+        }
+
+        const auto directTaxes =
+            runDirectArtifactDiagnostic(
+                gpu, probeProgram, directArtifacts, runtimeTax,
+                proofExtent, c.eye, view, proj);
+        for (const auto& directTax : directTaxes) {
+            printDirectRuntimeTax(c.name, directTax);
+            if (!directTax.valid) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct artifact diagnostic invalid "
+                    "for %s axis=%s min_run_cells=%u\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells);
+                measurementWarnings = true;
+                continue;
+            }
+            if (directTax.perRayHitMismatches != 0u) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct artifact per-ray hit mismatch "
+                    "for %s axis=%s min_run_cells=%u mismatches=%llu\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells,
+                    static_cast<unsigned long long>(
+                        directTax.perRayHitMismatches));
+                measurementWarnings = true;
+            }
+            if (runtimeTax.valid &&
+                directTax.offSampleSteps != runtimeTax.offSampleSteps) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct diagnostic OFF baseline drift "
+                    "for %s axis=%s min_run_cells=%u direct_off=%llu "
+                    "generic_off=%llu\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells,
+                    static_cast<unsigned long long>(
+                        directTax.offSampleSteps),
+                    static_cast<unsigned long long>(
+                        runtimeTax.offSampleSteps));
+                measurementWarnings = true;
+            }
         }
 
         Arm off;
