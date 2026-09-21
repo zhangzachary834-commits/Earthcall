@@ -1124,8 +1124,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         _volumeDensityLayoutExprPtr != densityBinding.densityExpr) {
         sdfwgsl::ScalarExpressionLayout nextDensity;
         if (densityBinding.kind == Rendering::VolumeDensityBinding::Kind::Authored) {
-            nextDensity = sdfwgsl::inspectScalarExpression(
-                densityBinding.enabled ? densityBinding.densityExpr : nullptr, true);
+            nextDensity =
+                sdfwgsl::inspectScalarExpression(densityBinding.densityExpr, true);
         } else if (densityBinding.kind == Rendering::VolumeDensityBinding::Kind::None) {
             nextDensity.structure = "<volume:none>";
             nextDensity.parameterCount = 0;
