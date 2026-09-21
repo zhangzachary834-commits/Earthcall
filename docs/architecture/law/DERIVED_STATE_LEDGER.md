@@ -53,7 +53,7 @@ red the moment the map stops noticing the world's shape move.
 
 | Structure | Derived from | Invalidated by | Guarded by |
 |---|---|---|---|
-| `_facts`, `_factById`, `_stateFactsBySubjectAttr` | asserted facts | `assertFact`, `retractFact`, `retractFirst`, `retractStateFactsBySubject`, `retractFactsAbout`, `clear` | `rete_compile_test`, `rete_relation_state_test` |
+| `_facts`, `_factById`, `_stateFactsBySubjectAttr`, `_stateFactsBySubjectPtrAttr` | asserted facts | `assertFact`, `retractFact`, `retractFirst`, `retractStateFactsBySubject`, `retractFactsAbout`, `clear` | `rete_compile_test`, `rete_relation_state_test`, `rete_state_ptr_index_test` |
 | `_factParticipants` | every fact's subject and object | inserted in `assertFact`, erased in `retractFactsAbout`, cleared with the network | `quantifier_scaling_test` (it exists because the scan was quadratic) |
 | `_relationStateIndex` | relation-state facts, per (being, kind) | `retractFact`, `retractStateFactsBySubject` (**scoped to the retracted being only**, 2026-09-16), `retractFactsAbout` | `relation_state_index_test` — **confirmed red** with the old wholesale clear |
 | `_dirtyFacts` | property-change notifications | `markFactDirty` adds, `evaluateDirty` drains, every retraction purges | `reactive_departure_test`, `prophetic_rete_test` |
