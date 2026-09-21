@@ -50,6 +50,19 @@ std::shared_ptr<OntoMath::MathNode> scalarNode(double value) {
     return node;
 }
 
+// Test-only stand-in for the production radiant FieldNode. The important
+// distinction is source vs receiver: rho's Timeline belongs to the Singular
+// whose conditional process emits radiance, not to whichever surface is shaded.
+class RadianceSourceProbe final : public Singular {
+public:
+    std::string getIdentifier() const override {
+        return "webgpu-radiance-source-probe";
+    }
+
+protected:
+    void buildProperties() override { _propertiesBuilt = true; }
+};
+
 } // namespace
 
 int main() {
@@ -301,24 +314,25 @@ int main() {
                "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
         // RUNG 4 TIME: make rho read the canonical temporal coordinate.
-        // Timeline is RELATIVE: any Singular may own one. The radiant Object
-        // owns an ordinary Timeline through the same generic owned-by Relation
-        // used elsewhere in Earthcall. Renderer must not care which being owns
-        // the Timeline or which future Law selects it.
+        // Timeline is RELATIVE: any Singular may own one. Here the radiance
+        // SOURCE owns an ordinary Timeline; the Object below is only the
+        // receiver being shaded. This prevents source time from being confused
+        // with per-surface time while leaving future Law selection open.
         auto timeLeaf = std::make_shared<OntoMath::MathNode>();
         timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
         timeLeaf->variableName = OntoMath::kTimeVar;
         rho.pieces[0].mathNode = timeLeaf;
 
+        RadianceSourceProbe radianceSource;
         Timeline localTimeline;
         Relation localTimelineOwnership(
-            "owned-by", localTimeline, radiant, true, 1.0f);
+            "owned-by", localTimeline, radianceSource, true, 1.0f);
         assert(localTimelineOwnership.a() == &localTimeline);
-        assert(localTimelineOwnership.b() == &radiant);
+        assert(localTimelineOwnership.b() == &radianceSource);
         assert(localTimelineOwnership.typeLabel() == "owned-by");
 
         assert(localTimeline.setClock(0.15, 0.15));
-        renderer.setTemporalCoordinate(localTimeline.now(),
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(),
                                        localTimeline.delta());
         renderer.setRadianceField(&rho, 1003);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
@@ -331,7 +345,7 @@ int main() {
                "introducing canonical t should compile the new rho structure once");
 
         assert(localTimeline.setClock(1.0, 0.85));
-        renderer.setTemporalCoordinate(localTimeline.now(),
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(),
                                        localTimeline.delta());
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
@@ -345,7 +359,7 @@ int main() {
                     timeAdvanceStats.sdfProgramCacheHits,
                     timeAdvanceStats.sdfParameterBytesUploaded);
         assert(timeBright[0] > timeDim[0] + 80 &&
-               "advancing an admitted Timeline did not visibly change rho(p,t)");
+               "advancing the radiance source Timeline did not visibly change rho(p,t)");
         assert(timeAdvanceStats.sdfProgramCompiles == 0 &&
                "advancing t recompiled WGSL instead of updating the shared uniform");
         assert(timeAdvanceStats.sdfProgramCacheHits >= 1 &&
@@ -386,7 +400,7 @@ int main() {
                "refused authored rho left stale rendered radiance on screen");
 
         renderer.setRadianceField(nullptr, 0);
-        renderer.setTemporalCoordinate(0.0, 0.0);
+        renderer.setRadianceTemporalCoordinate(0.0, 0.0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
