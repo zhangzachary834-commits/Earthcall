@@ -297,6 +297,65 @@ int main() {
         verifyStructure(h);
     }
 
+    // Ahead-of-time spatial proof maintenance must repair value-premise
+    // changes without throwing away already-refined topology. Moving the same
+    // sphere far outside the authored domain collapses the active theorem to a
+    // positive root while retaining its child block as cache topology; moving
+    // it back must reactivate that exact subdivision without reallocating it.
+    {
+        geom::SdfNode sphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        const glm::vec3 extent(2.0f);
+        auto h = geom::buildRangeHierarchy(
+            sphere, extent, /*maxDepth=*/4, /*maxNodes=*/10000);
+
+        check(!h.nodes.empty() && h.nodes[0].childCount == 8,
+              "incremental witness begins with a refined ambiguous root");
+        const size_t initialNodeCount = h.nodes.size();
+        const uint32_t retainedRootChildren = h.nodes[0].firstChild;
+        check(retainedRootChildren != 0u,
+              "refined root owns a reusable child block");
+
+        sphere.offset = glm::vec3(10.0f, 0.0f, 0.0f);
+        geom::SdfRangeRefreshStats collapseStats;
+        check(geom::refreshRangeHierarchy(
+                  h, sphere, extent, /*maxDepth=*/4, /*maxNodes=*/10000,
+                  &collapseStats),
+              "parameter-only proof refresh succeeds");
+        check(collapseStats.evaluatedNodes == 1,
+              "proved-positive root stops incremental refresh at the root");
+        check(h.nodes[0].childCount == 0,
+              "proved-positive root deactivates deeper theorem topology");
+        check(h.nodes[0].firstChild == retainedRootChildren,
+              "collapsed proof retains its previous child block for repair");
+        check(h.nodes.size() == initialNodeCount,
+              "proof collapse does not discard allocated topology");
+
+        const auto collapsedProof =
+            geom::derivePositiveRangeProofGrid(h, /*targetDepth=*/4);
+        check(collapsedProof.dim == 16 &&
+                  collapsedProof.positiveCells == 4096,
+              "active positive root fills the fixed-depth proof bitmap");
+
+        sphere.offset = glm::vec3(0.0f);
+        geom::SdfRangeRefreshStats restoreStats;
+        check(geom::refreshRangeHierarchy(
+                  h, sphere, extent, /*maxDepth=*/4, /*maxNodes=*/10000,
+                  &restoreStats),
+              "returning value premises incrementally repairs the theorem");
+        check(h.nodes[0].childCount == 8 &&
+                  h.nodes[0].firstChild == retainedRootChildren,
+              "repair reactivates the original root child block");
+        check(restoreStats.reusedChildBlocks > 0,
+              "repair reuses previously-refined child blocks");
+        check(restoreStats.allocatedChildBlocks == 0,
+              "restoring identical premises needs no new topology allocation");
+        check(h.nodes.size() == initialNodeCount,
+              "incremental repair preserves the original node allocation");
+        verifyStructure(h);
+        verifyProvedCellsBySampling(sphere, h);
+    }
+
     // Positive-proof coalescing is derived acceleration permission. It may
     // discard theorem knowledge, but it must never create a skip across any
     // negative, ambiguous, unknown, or structurally missing partition.
