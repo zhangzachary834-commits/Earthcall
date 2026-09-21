@@ -14,6 +14,7 @@ class KeyboardHandler;
 class MouseHandler;
 class CursorTools;
 class Chat;
+class Relation;
 
 namespace Core { class Camera; }
 
@@ -203,6 +204,12 @@ public:
     const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
     
     Ourverse _ourverse;
+
+    // Compatibility First Mover relation witnessing the broad Timeline's
+    // actual ontological owner. Storage of _worldTimeline on Engine is merely
+    // storage; this Relation is the ownership claim.
+    std::shared_ptr<Relation> _worldTimelineOwnership;
+
     int _patchCtrlIndex = 0;
     float _currentColor[4] = {1,1,1,1};
     struct DummyBrush { bool showCursor=false; bool cursorVisible=false; float previewSize=1.0f; }; DummyBrush _brush;
