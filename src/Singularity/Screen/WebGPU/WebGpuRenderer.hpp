@@ -243,8 +243,10 @@ private:
         // compiled rather than re-walking the AST for every draw of a static field.
         bool isProvenHeightfield = false;
 
-        // Parameter-dependent conservative spatial proof cache. It is derived
-        // substrate only; every unknown region remains represented by the proxy.
+        // Conservative spatial proof cache. Structure and value premises are
+        // tracked independently so unrelated shader recompiles (radiance,
+        // chroma, material color) cannot erase a still-current geometry theorem.
+        uint32_t rangeStructureRevision = 0xffffffff;
         uint32_t rangeParameterRevision = 0xffffffff;
         glm::vec3 rangeAuthoredExtent{0.0f};
         geom::SdfRangeHierarchy rangeHierarchy;
