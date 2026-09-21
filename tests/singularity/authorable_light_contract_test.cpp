@@ -120,12 +120,13 @@ int main() {
         check(Rendering::readAuthorableLight(hydrated, hydratedLight) && hydratedLight.source,
               "hydrated Sun spatial root retains authored light.source");
 
-        auto eval = [&](double x, double y, double z) -> double {
+        auto eval = [&](double x, double y, double z, double t) -> double {
             if (!hydrated.field) return -1.0;
             std::map<std::string, PropertyValue> vars{
                 {"x", PropertyValue(x)},
                 {"y", PropertyValue(y)},
-                {"z", PropertyValue(z)}
+                {"z", PropertyValue(z)},
+                {OntoMath::kWorldTimeVar, PropertyValue(t)}
             };
             const auto value = hydrated.field->astDefinition.evaluate(vars);
             if (!value) return -1.0;
@@ -134,11 +135,27 @@ int main() {
             return numeric;
         };
 
-        const double nearSource = eval(0.0, 0.0, 0.0);
-        const double farther = eval(20.0, 0.0, 0.0);
+        const double nearSource = eval(0.0, 0.0, 0.0, 0.0);
+        const double farther = eval(20.0, 0.0, 0.0, 0.0);
+        const double nearSourceLater = eval(0.0, 0.0, 0.0, 123.0);
         check(nearSource > 0.99, "Sun radiance is approximately unit strength at its source");
         check(farther >= 0.0 && farther < nearSource,
               "Sun authored radiance decreases with distance on the CPU");
+        check(std::fabs(nearSourceLater - nearSource) < 1e-9,
+              "pre-Rung-4 spatial rho remains identical when optional t changes");
+
+        auto timeNode = std::make_shared<OntoMath::MathNode>();
+        timeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        timeNode->variableName = OntoMath::kWorldTimeVar;
+        OntoMath::Piecewise timed = OntoMath::Piecewise::continuous(timeNode);
+        std::map<std::string, PropertyValue> timeVars{
+            {OntoMath::kWorldTimeVar, PropertyValue(2.5)}
+        };
+        const auto timedValue = timed.evaluate(timeVars);
+        double timedNumeric = -1.0;
+        check(timedValue && propertyValueToNumber(*timedValue, timedNumeric) &&
+                  std::fabs(timedNumeric - 2.5) < 1e-9,
+              "CPU OntoMath evaluation resolves canonical t as authored world-time input");
 
         // Rung 3 persists two identical SDF witnesses at different
         // source-relative positions. This proves the saved world contains an
@@ -172,8 +189,8 @@ int main() {
             const glm::vec3 farPos = worldPosition(*farWitness);
             const glm::vec3 nearRel = nearPos - hydratedLight.position;
             const glm::vec3 farRel = farPos - hydratedLight.position;
-            const double nearWitnessRho = eval(nearRel.x, nearRel.y, nearRel.z);
-            const double farWitnessRho = eval(farRel.x, farRel.y, farRel.z);
+            const double nearWitnessRho = eval(nearRel.x, nearRel.y, nearRel.z, 0.0);
+            const double farWitnessRho = eval(farRel.x, farRel.y, farRel.z, 0.0);
             check(glm::length(nearRel) < glm::length(farRel),
                   "near SDF witness is geometrically closer to the authored source");
             check(nearWitnessRho > farWitnessRho,
