@@ -89,7 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const announcer = document.getElementById('sr-announcer');
         if (announcer) {
-            announcer.textContent = `Emitted: ${text}`;
+            announcer.textContent = '';
+            setTimeout(() => {
+                announcer.textContent = `Emitted: ${text}`;
+            }, 50);
         }
 
         inputField.value = '';
@@ -101,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (emitBtn.getAttribute('aria-disabled') === 'true') {
+            inputField.focus();
             return;
         }
         emitUtterance();
