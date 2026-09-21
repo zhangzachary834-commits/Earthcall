@@ -198,6 +198,51 @@ int main() {
         }
     }
 
+    // Rung 5: source chroma is a first-order authored Piecewise on the
+    // radiant FieldNode. It must be Law-reachable and survive save/load without
+    // being smuggled into vectorField (which remains physical flow/force).
+    {
+        auto vec = std::make_shared<OntoMath::MathNode>();
+        vec->op = OntoMath::MathNode::Op::VectorConstruct;
+        for (double c : {0.8, 0.2, 0.6}) {
+            auto component = std::make_unique<OntoMath::MathNode>();
+            component->op = OntoMath::MathNode::Op::ScalarLeaf;
+            component->scalarForm.terms.push_back(OntoMath::Term(c));
+            vec->children.push_back(std::move(component));
+        }
+        *field.lightChroma = OntoMath::Piecewise::continuous(vec);
+
+        Property* chromaProperty = field.findProperty("light.chroma.ast");
+        check(chromaProperty != nullptr,
+              "authored chi is registered as reachable property light.chroma.ast");
+        check(field.findProperty("vectorField.ast") != chromaProperty,
+              "source chroma is not aliased to the physical flow/force vector field");
+
+        const nlohmann::json saved = field.toJson();
+        check(saved.contains("lightChroma"),
+              "FieldNode serialization persists authored source chroma");
+
+        geom::FieldNode restored("sun.light-field.restored");
+        restored.applyJson(saved);
+        check(restored.lightChroma && !restored.lightChroma->pieces.empty(),
+              "FieldNode load restores authored source chroma");
+
+        std::map<std::string, PropertyValue> vars{
+            {"p", PropertyValue(glm::vec3(0.0f))},
+            {"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)}, {"z", PropertyValue(0.0)},
+            {OntoMath::kTimeVar, PropertyValue(7.0)}
+        };
+        const auto restoredValue = restored.lightChroma->evaluate(vars);
+        check(restoredValue && std::holds_alternative<glm::vec3>(*restoredValue) &&
+                  near3(std::get<glm::vec3>(*restoredValue), glm::vec3(0.8f, 0.2f, 0.6f)),
+              "restored chi evaluates as the authored RGB vector on the CPU");
+
+        PropertyValue propertyValue = chromaProperty ? chromaProperty->value() : PropertyValue(std::string());
+        check(chromaProperty && std::holds_alternative<std::string>(propertyValue) &&
+                  !std::get<std::string>(propertyValue).empty(),
+              "light.chroma.ast exposes the complete authored tree rather than a hidden renderer copy");
+    }
+
     // Wrongly typed authored state is visible but not silently guessed into a
     // different value. The resolver keeps its documented default.
     field.setDynamicProperty("light.intensity", PropertyValue(std::string("very bright")));

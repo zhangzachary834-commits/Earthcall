@@ -260,6 +260,54 @@ This unlocks:
 
 **Compatibility:** exact. Old `rho` is multiplied by a constant color.
 
+### Rung 5 implementation — 2026-09-21
+
+Implemented on branch `sol/ontomath-radiance-rung5-chroma-20260921`, PR #281.
+
+The implementation preserves Rungs 3–4 rather than reopening `rho`:
+
+- `FieldNode` now carries an optional authored `Piecewise` source-chroma channel,
+  reachable as `light.chroma.ast` and persisted as `lightChroma`; it is explicitly
+  separate from the existing flow/force `VectorField`;
+- Renderer accepts `chi` and its content revision independently of scalar radiance
+  `rho`; WebGPU maintains independent emitted-structure identities for the two;
+- the existing OntoMath vector calculus and production WGSL emitter lower
+  `chi(p,t)->vec3`; no second lighting-expression language was introduced;
+- absence of `chi` takes the exact pre-Rung-5 lighting formula, whose color-bearing
+  uniforms already encode legacy `light.color`;
+- presence of `chi` separates the non-chromatic legacy source coefficients from
+  chroma, so authored `chi` replaces rather than double-multiplies `light.color`,
+  including when a legacy color channel is exactly zero;
+- numeric `chi` edits recollect the packed parameter buffer without regenerating
+  WGSL; structural edits advance only chroma's structural revision and compile;
+- `chi` may read the same explicitly admitted radiance-source `t` coordinate as
+  `rho`; advancing that source Timeline changes pixels without authored-parameter
+  upload or shader recompilation;
+- authored non-vector or unsupported chroma refuses before drawing. It does not
+  substitute white/black, fall back to legacy color, or reuse stale shader output.
+
+Authoritative evidence on code head `dfb57ec496440e0be00952aae4aed2570101301a`:
+
+- Earthcall CI run #1928, **SDF range-proxy verification (macOS): success**;
+- `sdf_wgsl_parameter_refresh_test: PASS`, including legacy-chroma identity,
+  numeric structure preservation, timed chi, type refusal, and unsupported-math refusal;
+- native `webgpu_object_test: ALL OK`; its pixel witness measured legacy green at
+  G=253 and authored red at RGB=(253,0,0), then proved numeric recolor cache reuse,
+  Timeline-driven chroma without recompilation, and black/no-stale output on refusal;
+- Focused CPU compiled successfully and `authorable_light_contract_test` passed,
+  proving `light.chroma.ast` reachability plus save/load and CPU vector evaluation;
+- the Focused CPU job's sole red test was `synthesis_studio_living_test`, the known
+  pre-existing base failure named in the Rung-4 handoff; this Rung-5 diff touches no
+  Synthesis Studio code or saves. Therefore the overall workflow is not claimed green.
+
+Authorship note: Zach directed the later-rung implementation and the requirement that
+old authored truth remain unmigrated. The Sun selected the explicit optional Piecewise
+storage seam, independent rho/chi cache identities, and exact legacy/new lighting branch
+used to realize that intent.
+
+— GPT-5.6 Sol (The Sun), session `sol-rung5-chroma-20260921`,
+2026-09-21T15:12Z (verification timestamp)
+
 ---
 
 ## Rung 6 — Angular emission as another independent field

@@ -141,6 +141,26 @@ public:
     const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
     uint64_t radianceRevision() const { return _radianceRevision; }
 
+    // Optional authored source chroma chi(p,t)->vec3. Absence is semantically
+    // different from authored white: absence means the historical light.color
+    // remains the source's constant chroma. Keep chi's revision independent of
+    // rho so value/structure invalidation can remain independently observable.
+    void setRadianceChroma(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceChromaExpr = expr;
+        _radianceChromaRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceChromaExpr() const { return _radianceChromaExpr; }
+    uint64_t radianceChromaRevision() const { return _radianceChromaRevision; }
+
+    // Scalar source coefficients are the non-chromatic part of the historical
+    // light state. WebGPU uses them only when authored chi is present, so the
+    // no-chi path remains the exact pre-Rung-5 formula.
+    void setRadianceSourceCoefficients(float intensity, float ambient,
+                                       float diffuse, float specular) {
+        _radianceSourceCoefficients = glm::vec4(intensity, ambient, diffuse, specular);
+    }
+    const glm::vec4& radianceSourceCoefficients() const { return _radianceSourceCoefficients; }
+
     // Temporal coordinate admitted by the active authored RADIANCE SOURCE.
     // Renderer does not decide which Timeline supplies it and does not attach
     // this coordinate to the surfaces being illuminated. Today EngineRender
@@ -336,6 +356,9 @@ private:
     bool      _lightingOn = true;
     const OntoMath::Piecewise* _radianceExpr = nullptr;
     uint64_t _radianceRevision = 0;
+    const OntoMath::Piecewise* _radianceChromaExpr = nullptr;
+    uint64_t _radianceChromaRevision = 0;
+    glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;
     FrameStats _frameStats;

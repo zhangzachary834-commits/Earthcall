@@ -50,6 +50,39 @@ private:
     FieldT* _field;
 };
 
+// An authored Piecewise that is semantically its own channel rather than a
+// ScalarField/VectorField container. Rung 5 uses this for source chroma chi(p,t):
+// vec3. The bridge keeps the recursive mathematics reachable by Law without
+// pretending RGB is the existing flow/force VectorField merely because both are vec3.
+class PiecewiseAstBridge : public Property {
+public:
+    PiecewiseAstBridge(std::string name, OntoMath::Piecewise* expr)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _expr(expr) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_expr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_expr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_expr) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+        *_expr = OntoMath::Piecewise::fromJson(parsed);
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    OntoMath::Piecewise* _expr;
+};
+
 // A FieldNode represents the spatial placement of an OntoMath Field within the scene.
 // By inheriting from Singular, it maps the field's mathematical variables into the 
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
@@ -61,7 +94,8 @@ public:
     FieldNode(std::string id = "field_node") 
         : _id(std::move(id)), 
           field(std::make_shared<OntoMath::ScalarField>()),
-          vectorField(std::make_shared<OntoMath::VectorField>()) {}
+          vectorField(std::make_shared<OntoMath::VectorField>()),
+          lightChroma(std::make_shared<OntoMath::Piecewise>()) {}
 
     std::string getIdentifier() const override { return _id; }
 
@@ -73,6 +107,11 @@ public:
     // Const pointer ensures the property registry doesn't dangle
     const std::shared_ptr<OntoMath::ScalarField> field;
     const std::shared_ptr<OntoMath::VectorField> vectorField;
+
+    // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
+    // case the historical authored light.color remains the constant chroma.
+    // This is deliberately not VectorField: that existing vessel means flow/force.
+    const std::shared_ptr<OntoMath::Piecewise> lightChroma;
 
     nlohmann::json toJson() const;
     void applyJson(const nlohmann::json& j);
@@ -113,6 +152,11 @@ protected:
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
             registerProperty(std::make_unique<AstBridge<OntoMath::VectorField>>(
                 "vectorField.ast", vectorField.get()));
+        }
+
+        if (lightChroma) {
+            registerProperty(std::make_unique<PiecewiseAstBridge>(
+                "light.chroma.ast", lightChroma.get()));
         }
     }
 };

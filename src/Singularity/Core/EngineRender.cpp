@@ -112,6 +112,8 @@ namespace Core {
                                            Rendering::lightDiffuseRadiance(light),
                                            Rendering::lightSpecularRadiance(light));
                 currentRenderer().setLightingEnabled(light.enabled);
+                currentRenderer().setRadianceSourceCoefficients(
+                    light.intensity, light.ambient, light.diffuse, light.specular);
 
                 // Compatibility/default binding for THIS radiance source.
                 // Renderer and OntoMath see only a temporal coordinate; they do
@@ -138,12 +140,26 @@ namespace Core {
                 } else {
                     currentRenderer().setRadianceField(nullptr, 0);
                 }
+
+                // Rung 5: chi is a separate authored source invariant. It lives
+                // on the radiant FieldNode, not in the flow/force VectorField and
+                // not on the receiving Material. Absence means legacy light.color.
+                if (root->lightChroma && !root->lightChroma->pieces.empty()) {
+                    const std::string chromaJson = root->lightChroma->toJson().dump();
+                    const uint64_t chromaRevision =
+                        static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
+                    currentRenderer().setRadianceChroma(root->lightChroma.get(), chromaRevision);
+                } else {
+                    currentRenderer().setRadianceChroma(nullptr, 0);
+                }
                 persistentLightPlaced = true;
             }
         }
 
         if (!persistentLightPlaced) {
             currentRenderer().setRadianceField(nullptr, 0);
+            currentRenderer().setRadianceChroma(nullptr, 0);
+            currentRenderer().setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
             currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
             // A previously active authored Zone may have disabled illumination.
             // No-source means the historical compatibility contract, so restore
