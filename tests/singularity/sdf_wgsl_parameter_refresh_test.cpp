@@ -250,6 +250,43 @@ int main() {
               "no-radiance source still exposes the common lightRadiance seam");
     }
 
+    // ---------------------------------------------------------------------
+    // 5. Rung 4 world time is an ambient input, not an authored parameter.
+    //    A rho(p,t) expression must compile to the shared Universe-time
+    //    uniform and therefore require no parameter slot or per-frame WGSL
+    //    regeneration merely because t advances.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto timeNode = std::shared_ptr<OntoMath::MathNode>(
+            variable(OntoMath::kWorldTimeVar).release());
+        OntoMath::Piecewise timedRadiance =
+            OntoMath::Piecewise::continuous(timeNode);
+
+        const sdfwgsl::ScalarExpressionLayout layout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance);
+        const sdfwgsl::Program timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+
+        check(layout.ok, "rho(p,t) structure inspection succeeds");
+        check(timed.ok, "rho(p,t) WGSL compilation succeeds");
+        check(layout.parameterCount == 0,
+              "world time consumes no authored parameter slot");
+        check(timed.wgsl.find("u.time.x") != std::string::npos,
+              "canonical t binds to the shared SDF world-time uniform");
+
+        auto scalarTime = std::make_shared<OntoMath::MathNode>();
+        scalarTime->op = OntoMath::MathNode::Op::ScalarLeaf;
+        scalarTime->scalarForm.terms.push_back(
+            OntoMath::Term(2.0, {{OntoMath::kWorldTimeVar, 1.0}}));
+        timedRadiance.pieces[0].mathNode = scalarTime;
+        const sdfwgsl::Program scalarTimed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+        check(scalarTimed.ok && scalarTimed.wgsl.find("u.time.x") != std::string::npos,
+              "ScalarForm factors may use the same canonical t binding");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
