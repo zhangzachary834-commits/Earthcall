@@ -27,6 +27,7 @@ namespace Input {
 class LocomotionChannel : public Law {
 public:
     LocomotionChannel();
+    ~LocomotionChannel() override;
 
     bool isFirstMover() const override { return true; }
     std::string getIdentifier() const override { return "locomotion-channel"; }
@@ -46,7 +47,8 @@ public:
     void stopClips(Person& person);
     void tickAutomations(Person& person, float dt);
 
-    // One EventBus router for LocomotionChanged → setLocomotion. Idempotent.
+    // One EventBus router for LocomotionChanged → setLocomotion. Idempotent;
+    // the channel owns and revokes the registration with its own lifetime.
     void installRouting();
 
     // Law-addressable facts about the local vessel this frame.
@@ -67,9 +69,8 @@ private:
     // wasGrounded exist only so SPACE and landing publish on the transition,
     // not as a per-frame level. walkActive / idleActive keep clip clocks from
     // restarting every frame. routingInstalled is the EventBus subscribe-once
-    // latch for this channel instance. EventBus now supports owned unsubscription;
-    // LocomotionChannel teardown ownership is a separate lifecycle audit.
-    // _wasActuating is the disable edge:
+    // latch for this channel instance; routingSubscription is its lifetime
+    // ownership token. _wasActuating is the disable edge:
     // dropping the first mover must clear clips it authored, once.
     bool _jumpKeyDownLast = false;
     bool _wasGrounded     = false;
@@ -77,6 +78,7 @@ private:
     bool _walkActive      = false;
     bool _idleActive      = false;
     bool _routingInstalled = false;
+    ::Core::EventBus::SubscriptionToken _routingSubscription;
     bool _wasActuating     = false;
 };
 
