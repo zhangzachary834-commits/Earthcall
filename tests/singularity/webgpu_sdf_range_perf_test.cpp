@@ -212,21 +212,26 @@ int main() {
         ambiguousLeafByDepth[6]);
 
     // Measure the exact same derived proof semantics consumed by the renderer.
-    // The selected depth remains a profitability policy; the coalescing theorem
-    // itself now has one implementation shared by production and this witness.
+    // The selected renderer depth remains a profitability policy; the coalescing
+    // theorem itself has one implementation shared by production and this witness.
+    // Report neighboring depths too so one run reveals the coalescing cliff
+    // without changing shader behavior between measurements.
     constexpr uint8_t gpuProofDepth = 4u;
-    const auto gpuProofGrid =
-        geom::derivePositiveRangeProofGrid(proofHierarchy, gpuProofDepth);
-    const size_t gpuPositiveCells = gpuProofGrid.positiveCells;
-    const size_t gpuProofDim = size_t{1} << gpuProofDepth;
-    const size_t gpuProofCells =
-        gpuProofDim * gpuProofDim * gpuProofDim;
-    const size_t gpuProofBytes = (gpuProofCells + 7u) / 8u;
-    std::printf(
-        "SDF_RANGE_PERF_GPU_PROOF depth=%u positive_cells=%zu total_cells=%zu "
-        "proof_bytes=%zu\n",
-        static_cast<unsigned>(gpuProofDepth),
-        gpuPositiveCells, gpuProofCells, gpuProofBytes);
+    for (const uint8_t proofDepth : {uint8_t{3}, uint8_t{4}, uint8_t{5}, uint8_t{6}}) {
+        const auto proofGrid =
+            geom::derivePositiveRangeProofGrid(proofHierarchy, proofDepth);
+        const size_t proofDim = size_t{1} << proofDepth;
+        const size_t proofCells = proofDim * proofDim * proofDim;
+        const size_t proofBytes = (proofCells + 7u) / 8u;
+        std::printf(
+            "SDF_RANGE_PERF_GPU_PROOF depth=%u positive_cells=%u total_cells=%zu "
+            "proof_bytes=%zu selected=%d\n",
+            static_cast<unsigned>(proofDepth),
+            proofGrid.positiveCells,
+            proofCells,
+            proofBytes,
+            proofDepth == gpuProofDepth ? 1 : 0);
+    }
 
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
