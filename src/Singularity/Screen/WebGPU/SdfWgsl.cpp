@@ -1111,58 +1111,32 @@ fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
     return idx;
 }
 
-fn rangeProofLevelWordOffset(depth: u32) -> u32 {
-    var offset = 0u;
-    for (var d = 0u; d < depth; d = d + 1u) {
-        let dim = 1u << d;
-        let cells = dim * dim * dim;
-        offset = offset + ((cells + 31u) >> 5u);
-    }
-    return offset;
-}
-
-fn rangeProofPyramidWordCount(maxDepth: u32) -> u32 {
-    var words = 0u;
-    for (var d = 0u; d <= maxDepth; d = d + 1u) {
-        let dim = 1u << d;
-        let cells = dim * dim * dim;
-        words = words + ((cells + 31u) >> 5u);
-    }
-    return words;
-}
-
 fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
                   tStart: f32, tMax: f32) -> vec3<f32> {
     if (inst.rangeTraversalEnabled == 0u ||
         inst.rangeProofWordCount == 0u ||
         inst.rangeProofDepth == 0u ||
-        inst.rangeProofDepth > 10u ||
-        (inst.rangeProofWordCount & 1u) != 0u) {
+        inst.rangeProofDepth > 10u) {
         return vec3<f32>(tStart, tMax, 1.0);
     }
 
-    // Two equally-sized pyramids share one storage slice:
-    // [ANY subtree has positive proof][ALL subtree is positive proof].
-    // ANY=0 hands the entire current macrocell to exact authored marching.
-    // ALL=1 permits skipping the entire macrocell. Mixed descends.
-    let wordsPerPyramid = inst.rangeProofWordCount >> 1u;
-    let neededWords = rangeProofPyramidWordCount(inst.rangeProofDepth);
-    if (wordsPerPyramid < neededWords) {
+    let dim = 1u << inst.rangeProofDepth;
+    let cellCount = dim * dim * dim;
+    let neededWords = (cellCount + 31u) >> 5u;
+    if (inst.rangeProofWordCount < neededWords) {
         return vec3<f32>(tStart, tMax, 1.0);
     }
 
-    let anyBase = inst.rangeProofWordOffset;
-    let allBase = anyBase + wordsPerPyramid;
     let extent = abs(inst.extents.xyz);
     if (any(extent <= vec3<f32>(0.0))) {
         return vec3<f32>(tStart, tMax, 1.0);
     }
-
+    let cellSize = (2.0 * extent) / f32(dim);
     var t = tStart;
 
-    // A depth-6 regular grid admits at most 190 fine-cell crossings along a
-    // straight ray. Macrocell skips only reduce that count. Future deeper grids
-    // that exceed this bounded guard fail open for the remainder.
+    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
+    // deeper proof grid exceeds this guard, the unvisited remainder fails open
+    // to exact marching rather than silently disappearing.
     for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
         if (t >= tMax) {
             return vec3<f32>(tMax, tMax, 0.0);
@@ -1173,65 +1147,37 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             return vec3<f32>(t, tMax, 1.0);
         }
 
-        var skippedPositive = false;
-        var resolved = false;
-
-        for (var depth = 0u; depth <= inst.rangeProofDepth; depth = depth + 1u) {
-            let dim = 1u << depth;
-            let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
-            let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
-            let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
-            let linear = ix + dim * (iy + dim * iz);
-            let localWord =
-                rangeProofLevelWordOffset(depth) + (linear >> 5u);
-            if (localWord >= wordsPerPyramid) {
-                return vec3<f32>(t, tMax, 1.0);
-            }
-
-            let bit = 1u << (linear & 31u);
-            let anyProof =
-                (rangeProofWords[anyBase + localWord] & bit) != 0u;
-            let allProof =
-                (rangeProofWords[allBase + localWord] & bit) != 0u;
-
-            if (!anyProof || allProof || depth == inst.rangeProofDepth) {
-                let cellSize = (2.0 * extent) / f32(dim);
-                let cellMin =
-                    -extent +
-                    vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
-                let cellMax = cellMin + cellSize;
-                let cell = rayAabbBounds(ro, rd, cellMin, cellMax);
-                if (cell.y <= t) {
-                    return vec3<f32>(t, tMax, 1.0);
-                }
-                let cellExit = min(cell.y, tMax);
-                resolved = true;
-
-                if (!anyProof) {
-                    // No positive proof anywhere beneath this macrocell. This
-                    // says NOTHING about sign or occupancy: exact authored
-                    // marching owns the entire interval.
-                    return vec3<f32>(t, cellExit, 1.0);
-                }
-
-                if (allProof) {
-                    // Every finest descendant is independently proved f>0.
-                    // Jump across the whole macrocell in one lawful skip.
-                    t = cellExit;
-                    skippedPositive = true;
-                    break;
-                }
-
-                // A finest-level ANY/ALL disagreement is malformed proof data.
-                // Fail open rather than inventing a skip.
-                return vec3<f32>(t, cellExit, 1.0);
-            }
-            // Mixed macrocell: descend toward the selected child.
-        }
-
-        if (!resolved || !skippedPositive) {
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let linear = ix + dim * (iy + dim * iz);
+        let localWord = linear >> 5u;
+        if (localWord >= inst.rangeProofWordCount) {
             return vec3<f32>(t, tMax, 1.0);
         }
+
+        let bit = 1u << (linear & 31u);
+        let provedPositive =
+            (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
+
+        let cellMin =
+            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
+        let cellMax = cellMin + cellSize;
+        let cell = rayAabbBounds(ro, rd, cellMin, cellMax);
+        if (cell.y <= t) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+        let cellExit = min(cell.y, tMax);
+
+        if (!provedPositive) {
+            // A clear bit says only that the proof grid grants no skip here.
+            // Preserve the exact marcher's authority over this interval.
+            return vec3<f32>(t, cellExit, 1.0);
+        }
+
+        // The CPU theorem proved f>0 throughout this regular cell. Advance to
+        // its exact exit without evaluating the authored field.
+        t = cellExit;
     }
 
     return vec3<f32>(t, tMax, 1.0);
