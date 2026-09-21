@@ -319,88 +319,60 @@ def build_sky_celestial_apparatus():
 
 def create_celestial_spatial_root():
     OX, OY, OZ = 0.0, 52.0, 87.5
+
+    # 1. Canonical Scalar Radiance rho(p, t):
+    # Op 6 (Scale) of:
+    #   Child 0: Op 23 (Div) of scalarForm(6.8) / scalarForm(1 + 0.006*x^2 + 0.006*y^2 + 0.006*z^2)
+    #   Child 1: Op 0 (ScalarLeaf) with terms [1.0] and [0.35 * sin(2.4*t)]
     rho_ast = {
         "input": "x",
         "pieces": [
             {
                 "mathNode": {
-                    "op": 1,
+                    "op": 6, # Scale (multiplication)
                     "children": [
                         {
-                            "op": 3,
+                            "op": 23, # Div
                             "children": [
                                 {
-                                    "op": 23,
-                                    "children": [
-                                        {"op": 0, "scalarForm": {"terms": [{"c": 6.8, "factors": {}}]}},
-                                        {
-                                            "op": 0,
-                                            "scalarForm": {
-                                                "terms": [
-                                                    {"c": 1.0, "factors": {}},
-                                                    {"c": 0.006, "factors": {"x": 2}},
-                                                    {"c": 0.006, "factors": {"y": 2}},
-                                                    {"c": 0.006, "factors": {"z": 2}}
-                                                ]
-                                            }
-                                        }
-                                    ]
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {"c": 6.8, "factors": {}}
+                                        ]
+                                    }
                                 },
-                                {
-                                    "op": 1,
-                                    "children": [
-                                        {"op": 0, "scalarForm": {"terms": [{"c": 1.0, "factors": {}}]}},
-                                        {
-                                            "op": 3,
-                                            "children": [
-                                                {"op": 0, "scalarForm": {"terms": [{"c": 0.35, "factors": {}}]}},
-                                                {
-                                                    "op": 9,
-                                                    "children": [
-                                                        {"op": 0, "scalarForm": {"terms": [{"c": 2.4, "factors": {"t": 1}}]}}
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "op": 3,
-                            "children": [
-                                {"op": 0, "scalarForm": {"terms": [{"c": 0.65, "factors": {}}]}},
-                                {
-                                    "op": 10,
-                                    "children": [
-                                        {
-                                            "op": 0,
-                                            "scalarForm": {
-                                                "terms": [
-                                                    {"c": 0.35, "factors": {"x": 1}},
-                                                    {"c": -2.8, "factors": {"t": 1}}
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "op": 23,
-                            "children": [
-                                {"op": 0, "scalarForm": {"terms": [{"c": 4.2, "factors": {}}]}},
                                 {
                                     "op": 0,
                                     "scalarForm": {
                                         "terms": [
                                             {"c": 1.0, "factors": {}},
-                                            {"c": 0.15, "factors": {"x": 2}},
-                                            {"c": 0.15, "factors": {"z": 2}}
+                                            {"c": 0.006, "factors": {"x": 2.0}},
+                                            {"c": 0.006, "factors": {"y": 2.0}},
+                                            {"c": 0.006, "factors": {"z": 2.0}}
                                         ]
                                     }
                                 }
                             ]
+                        },
+                        {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 1.0, "factors": {}},
+                                    {
+                                        "c": 0.35,
+                                        "factors": {},
+                                        "trans": [
+                                            {
+                                                "kind": 0, # Sin
+                                                "scale": 2.4,
+                                                "var": "t"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }
@@ -408,93 +380,90 @@ def create_celestial_spatial_root():
         ]
     }
 
+    # 2. Canonical Chroma Vector Field chi(p, t):
+    # Op 2 (VectorConstruct) with 3 scalar children
     chi_ast = {
         "input": "x",
         "pieces": [
             {
-                "vectorForm": {
-                    "x": {
-                        "op": 1,
-                        "children": [
-                            {"op": 0, "scalarForm": {"terms": [{"c": 0.85, "factors": {}}]}},
-                            {
-                                "op": 3,
-                                "children": [
-                                    {"op": 0, "scalarForm": {"terms": [{"c": 0.60, "factors": {}}]}},
+                "mathNode": {
+                    "op": 2, # VectorConstruct
+                    "children": [
+                        {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 0.85, "factors": {}},
                                     {
-                                        "op": 10,
-                                        "children": [
-                                            {"op": 0, "scalarForm": {"terms": [{"c": 0.12, "factors": {"x": 1}}, {"c": -1.5, "factors": {"t": 1}}]}}
+                                        "c": 0.35,
+                                        "factors": {},
+                                        "trans": [
+                                            {"kind": 1, "scale": 1.5, "var": "t"} # Cos
                                         ]
                                     }
                                 ]
                             }
-                        ]
-                    },
-                    "y": {
-                        "op": 1,
-                        "children": [
-                            {"op": 0, "scalarForm": {"terms": [{"c": 0.65, "factors": {}}]}},
-                            {
-                                "op": 3,
-                                "children": [
-                                    {"op": 0, "scalarForm": {"terms": [{"c": 0.50, "factors": {}}]}},
+                        },
+                        {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 0.65, "factors": {}},
                                     {
-                                        "op": 10,
-                                        "children": [
-                                            {"op": 0, "scalarForm": {"terms": [{"c": 0.12, "factors": {"x": 1}}, {"c": -1.5, "factors": {"t": 1}}, {"c": -2.09, "factors": {}}]}}
+                                        "c": 0.25,
+                                        "factors": {},
+                                        "trans": [
+                                            {"kind": 0, "scale": 1.5, "var": "t"} # Sin
                                         ]
                                     }
                                 ]
                             }
-                        ]
-                    },
-                    "z": {
-                        "op": 1,
-                        "children": [
-                            {"op": 0, "scalarForm": {"terms": [{"c": 0.95, "factors": {}}]}},
-                            {
-                                "op": 3,
-                                "children": [
-                                    {"op": 0, "scalarForm": {"terms": [{"c": 0.55, "factors": {}}]}},
+                        },
+                        {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 0.95, "factors": {}},
                                     {
-                                        "op": 10,
-                                        "children": [
-                                            {"op": 0, "scalarForm": {"terms": [{"c": 0.12, "factors": {"x": 1}}, {"c": -1.5, "factors": {"t": 1}}, {"c": -4.18, "factors": {}}]}}
+                                        "c": 0.35,
+                                        "factors": {},
+                                        "trans": [
+                                            {"kind": 1, "scale": 1.5, "shift": 3.14159, "var": "t"} # Cos shifted
                                         ]
                                     }
                                 ]
                             }
-                        ]
-                    }
+                        }
+                    ]
                 }
             }
         ]
     }
 
+    # 3. Canonical Angular Emission Field alpha(p, omega, t):
+    # Op 4 (Add): base 0.5 + 3.0 * omega.y^2
     alpha_ast = {
-        "input": "omega",
+        "input": "x",
         "pieces": [
             {
                 "mathNode": {
-                    "op": 1,
+                    "op": 4, # Add
                     "children": [
-                        {"op": 0, "scalarForm": {"terms": [{"c": 0.50, "factors": {}}]}},
-                        {"op": 0, "scalarForm": {"terms": [{"c": 3.2, "factors": {"y": 4}}]}},
                         {
-                            "op": 3,
-                            "children": [
-                                {"op": 0, "scalarForm": {"terms": [{"c": 4.5, "factors": {}}]}},
-                                {
-                                    "op": 0,
-                                    "scalarForm": {
-                                        "terms": [
-                                            {"c": 0.5, "factors": {"x": 2}},
-                                            {"c": 0.5, "factors": {"z": 2}}
-                                        ]
-                                    }
-                                }
-                            ]
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 0.5, "factors": {}}
+                                ]
+                            }
+                        },
+                        {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [
+                                    {"c": 3.0, "factors": {"omega.y": 2.0}}
+                                ]
+                            }
                         }
                     ]
                 }
