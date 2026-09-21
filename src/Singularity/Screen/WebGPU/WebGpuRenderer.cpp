@@ -1330,6 +1330,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeProxy = {};
             memo->rangeProofWords.clear();
             memo->rangeHasPositiveSkip = false;
+            memo->rangePositiveMin = glm::vec3(0.0f);
+            memo->rangePositiveMax = glm::vec3(0.0f);
+            memo->rangePositiveBoundsValid = false;
             memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
         } else {
@@ -1432,6 +1435,55 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeHasPositiveSkip = proofGrid.hasPositiveCells();
             memo->rangeProofWords = std::move(proofGrid.words);
 
+            // Crystallize a coarse admission road from the stable theorem once,
+            // alongside the bitmap. This is deliberately derived here rather
+            // than in the frame hot path: time passing does not invalidate a
+            // proof. Only the same semantic revision/extent changes that rebuild
+            // the theorem rebuild this enclosing positive region.
+            memo->rangePositiveBoundsValid = false;
+            memo->rangePositiveMin = glm::vec3(0.0f);
+            memo->rangePositiveMax = glm::vec3(0.0f);
+            if (memo->rangeHasPositiveSkip) {
+                const uint32_t dim = 1u << kSdfRangeGpuProofDepth;
+                uint32_t minX = dim, minY = dim, minZ = dim;
+                uint32_t maxX = 0u, maxY = 0u, maxZ = 0u;
+                bool anyPositive = false;
+                const uint32_t cellCount = dim * dim * dim;
+                for (uint32_t linear = 0; linear < cellCount; ++linear) {
+                    const uint32_t word = linear >> 5u;
+                    if (word >= memo->rangeProofWords.size()) break;
+                    const uint32_t bit = 1u << (linear & 31u);
+                    if ((memo->rangeProofWords[word] & bit) == 0u) continue;
+
+                    const uint32_t ix = linear % dim;
+                    const uint32_t iy = (linear / dim) % dim;
+                    const uint32_t iz = linear / (dim * dim);
+                    minX = std::min(minX, ix);
+                    minY = std::min(minY, iy);
+                    minZ = std::min(minZ, iz);
+                    maxX = std::max(maxX, ix);
+                    maxY = std::max(maxY, iy);
+                    maxZ = std::max(maxZ, iz);
+                    anyPositive = true;
+                }
+
+                if (anyPositive) {
+                    const glm::vec3 cellSize =
+                        (2.0f * baselineProxyExtent) / static_cast<float>(dim);
+                    memo->rangePositiveMin =
+                        -baselineProxyExtent +
+                        glm::vec3(static_cast<float>(minX),
+                                  static_cast<float>(minY),
+                                  static_cast<float>(minZ)) * cellSize;
+                    memo->rangePositiveMax =
+                        -baselineProxyExtent +
+                        glm::vec3(static_cast<float>(maxX + 1u),
+                                  static_cast<float>(maxY + 1u),
+                                  static_cast<float>(maxZ + 1u)) * cellSize;
+                    memo->rangePositiveBoundsValid = true;
+                }
+            }
+
             memo->rangeParameterRevision = memoParameterRevision;
             memo->rangeAuthoredExtent = baselineProxyExtent;
             memo->rangeReady = true;
@@ -1476,6 +1528,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
         rangeTraversalMarcherVerified &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
+        memo->rangePositiveBoundsValid &&
         !memo->rangeProofWords.empty()) {
         auto& rangeBatch = _sdfRangeNodeBatches[sp];
         const uint64_t base = static_cast<uint64_t>(rangeBatch.size());
@@ -1488,6 +1541,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             inst.rangeProofWordCount = static_cast<uint32_t>(count);
             inst.rangeTraversalEnabled = 1u;
             inst.rangeProofDepth = kSdfRangeGpuProofDepth;
+            inst.rangePositiveMin = glm::vec4(memo->rangePositiveMin, 0.0f);
+            inst.rangePositiveMax = glm::vec4(memo->rangePositiveMax, 0.0f);
             rangeBatch.insert(rangeBatch.end(),
                               memo->rangeProofWords.begin(),
                               memo->rangeProofWords.end());
