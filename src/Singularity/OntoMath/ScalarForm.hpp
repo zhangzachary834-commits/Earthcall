@@ -368,13 +368,16 @@ struct TypeResult {
 
 using TypeEnv = std::map<std::string, ValueKind>;
 
-// The ambient point a field expression is evaluated AT. A field AST is a
-// pointwise expression: the CPU evaluator binds these variables in its
-// variable map, and the WGSL emitter binds them to the shader's point. They
-// are the ONE convention that makes CPU and GPU evaluate the same tree.
+// Canonical ambient inputs for authored field expressions. A field AST is
+// pointwise mathematics evaluated at a place and, optionally, a world time.
+// CPU callers bind these names in the variable map; channel emitters bind the
+// same names to their native execution inputs. This convention is what keeps
+// CPU and GPU evaluation of the same authored tree semantically identical.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
+//   "t"          Universe world time in seconds, a Scalar (optional input)
 inline constexpr const char* kAmbientPointVar = "p";
+inline constexpr const char* kWorldTimeVar = "t";
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
