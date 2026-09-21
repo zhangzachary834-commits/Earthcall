@@ -128,6 +128,7 @@ public:
     void setWireframe(bool on) override { _wireframe = on; }
     bool zeroToOneDepth() const override { return true; }
     bool rendersImplicitExactly() const override { return true; }
+    void composeVolumes() override;
 
     // Persistent GPU textures for face paint. FaceTexture calls this only when the
     // paint actually changes, so holding the texture means a repainted surface
