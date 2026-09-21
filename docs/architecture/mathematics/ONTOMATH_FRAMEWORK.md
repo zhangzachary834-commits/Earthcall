@@ -8,6 +8,16 @@ In most traditional game engines, mathematical behaviors like noise fields, velo
 
 If a `FieldNode` in Geometry needs a procedural density map, it does not define a custom WebGPU node. Instead, it maintains a reference to an `OntoMath::ScalarField` or `OntoMath::VectorField`. The WebGPU modality compiles the WGSL shader by reading the `OntoMath` structures. The Physics modality reads the exact same `OntoMath` structures to apply wind or gravity.
 
+Coordinates are **named by the mathematics but bound by the consuming channel**.
+Spatial field channels conventionally bind `p` and its scalar components
+`x/y/z`. `OntoMath::kTimeVar == "t"` names a temporal scalar coordinate, but
+OntoMath does not own a clock and the name does not force every modality onto
+one temporal frame. Screen radiance Rung 4 binds `t` to the world's
+`Universe::now()` simulation time; the audio channel may instead sample an
+authored `timeVariable` in waveform time. A channel that does not explicitly
+admit a coordinate must refuse an expression that names it rather than silently
+substituting zero or borrowing another channel's meaning.
+
 ## 2. Representation: The `MathNode` AST and `Piecewise` Functions
 
 The foundation of `OntoMath` is exact symbolic math, avoiding approximations where possible.
