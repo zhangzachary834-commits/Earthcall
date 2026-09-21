@@ -104,6 +104,14 @@ int main() {
             OntoMath::ScalarForm::variable("x", 1.0, 3.0)));
     const std::string authoredAstJson = authoredAst.toJson().dump();
 
+    // V0 density sovereignty: this mathematics is intentionally different from
+    // the radiant field AST above. The test will carry both through the real
+    // Zone store and prove that neither channel aliases the other.
+    auto densityAst = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(
+            OntoMath::ScalarForm::variable("z", 0.25, 0.6)));
+    const std::string densityAstJson = densityAst.toJson().dump();
+
     {
         ZoneManager writer;
         auto zone = std::make_shared<Zone>(zoneId, "strict");
@@ -123,6 +131,28 @@ int main() {
             check(PropertyPath::parse("field.ast").setValue(
                       *root, PropertyValue(authoredAstJson)) == PropertyPath::PathResult::Ok,
                   "the radiant field's OntoMath AST is authored through PropertyPath");
+
+            check(PropertyPath::parse("volume.density.ast").setValue(
+                      *root, PropertyValue(densityAstJson)) == PropertyPath::PathResult::Ok,
+                  "V0 density AST is independently authored through PropertyPath");
+
+            Property* rhoProperty = root->findProperty("field.ast");
+            Property* densityProperty = root->findProperty("volume.density.ast");
+            check(rhoProperty != nullptr && densityProperty != nullptr &&
+                      rhoProperty != densityProperty,
+                  "rho-compatible field AST and V0 density are distinct Property beings");
+
+            const PropertyValue rhoBeforeBadDensity =
+                rhoProperty ? rhoProperty->value() : PropertyValue(std::string());
+            const PropertyValue densityBeforeBadWrite =
+                densityProperty ? densityProperty->value() : PropertyValue(std::string());
+            check(densityProperty &&
+                      !densityProperty->setValue(PropertyValue(std::string("{ malformed"))),
+                  "malformed V0 density AST is refused atomically");
+            check(rhoProperty && densityProperty &&
+                      rhoProperty->value() == rhoBeforeBadDensity &&
+                      densityProperty->value() == densityBeforeBadWrite,
+                  "refused density authorship mutates neither density nor source-radiance mathematics");
         }
 
         auto second = std::make_shared<geom::FieldNode>(zoneId + "_secondRadiantField");
@@ -229,6 +259,38 @@ int main() {
             }
             check(sameAst,
                   "the Person-authored OntoMath AST survives save -> fresh hydration");
+
+            Property* density = root->findProperty("volume.density.ast");
+            bool sameDensityAst = false;
+            if (density) {
+                const PropertyValue densityValue = density->value();
+                if (const auto* densityText = std::get_if<std::string>(&densityValue)) {
+                    const auto expected =
+                        nlohmann::json::parse(densityAstJson, nullptr, false);
+                    const auto actual =
+                        nlohmann::json::parse(*densityText, nullptr, false);
+                    sameDensityAst = !expected.is_discarded() && !actual.is_discarded()
+                                  && expected == actual;
+                }
+            }
+            check(sameDensityAst,
+                  "independent volume.density.ast survives save -> fresh hydration");
+
+            Property* rho = root->findProperty("field.ast");
+            check(rho != nullptr && density != nullptr && rho != density,
+                  "fresh hydration preserves rho/D property independence");
+
+            if (rho && density) {
+                const PropertyValue rhoBeforeDensityRewrite = rho->value();
+                auto replacementDensity = OntoMath::Piecewise::continuous(
+                    OntoMath::MathNode::fromLegacyExpression(
+                        OntoMath::ScalarForm::variable("y", 0.5, 1.25)));
+                check(density->setValue(
+                          PropertyValue(replacementDensity.toJson().dump())),
+                      "hydrated V0 density accepts a complete Law-style AST replacement");
+                check(rho->value() == rhoBeforeDensityRewrite,
+                      "rewriting D leaves rho-compatible field mathematics byte-identical");
+            }
         }
     }
 
