@@ -941,6 +941,52 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
     return out;
 }
 
+// Validate the authored vector channel before lowering it. The generic emitter
+// can print vector syntax, but a chroma expression has a stronger contract than
+// "something that happens to parse": every authored piece must actually be a
+// Vector and every Piecewise feature must have a GPU realization. An absent chi
+// is handled outside this helper as the legacy light.color default.
+bool validateVectorPiecewise(const OntoMath::Piecewise& pw, bool bindTime,
+                             std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar}
+    };
+    if (bindTime) env[OntoMath::kTimeVar] = OntoMath::ValueKind::Scalar;
+
+    if (pw.pieces.empty()) {
+        error = "authored vector expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) + " must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
@@ -1298,6 +1344,7 @@ fn fs(in: VSOut) -> FSOut {
 
     // Evaluate the Person-authored radiance field in source-relative world
     // coordinates. Negative radiance is clamped only at the rendering seam.
+    let sourceChroma = lightChroma(pw - u.lightPos.xyz);
     let radialRadiance = max(lightRadiance(pw - u.lightPos.xyz), 0.0);
     let diff = max(dot(nw, L), 0.0);
 
@@ -1308,12 +1355,12 @@ fn fs(in: VSOut) -> FSOut {
     let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
     let specularEnvelope = u.lightSpecular.rgb;
 
-    let ambientTerm = inst.shading.x * ambientEnvelope;
-    let diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
+    let ambientTerm = inst.shading.x * ambientEnvelope * sourceChroma;
+    let diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance * sourceChroma;
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
-    let specTerm = specularEnvelope * specShape * radialRadiance;
+    let specTerm = specularEnvelope * specShape * radialRadiance * sourceChroma;
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
@@ -1364,10 +1411,37 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
     return layout;
 }
 
+VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime) {
+    // Absence is not refusal: it means the historical authored light.color is
+    // the constant chroma. Presence, however, must be honored or refused.
+    if (!expr || expr->pieces.empty()) {
+        return VectorExpressionLayout{"<legacy-chroma:light.color>", 0, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateVectorPiecewise(*expr, bindTime, validationError)) {
+        return VectorExpressionLayout{"", 0, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = bindTime;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    VectorExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
-                             const OntoMath::Piecewise* radianceExpr) {
+                             const OntoMath::Piecewise* radianceExpr,
+                             const OntoMath::Piecewise* chromaExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1420,6 +1494,16 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
         e.bindTime = false;
     }
+    if (chromaExpr && !chromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+            e.refuse("chroma: " + validationError);
+        } else {
+            e.bindTime = true;
+            emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindTime = false;
+        }
+    }
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -1432,7 +1516,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode,
                 const OntoMath::Piecewise* colorExpr,
-                const OntoMath::Piecewise* radianceExpr) {
+                const OntoMath::Piecewise* radianceExpr,
+                const OntoMath::Piecewise* chromaExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1550,6 +1635,23 @@ Program compile(const geom::SdfNode& root,
         radianceBody = "    return 1.0;\n";
     }
     prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+    std::string chromaBody;
+    if (chromaExpr && !chromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+            e.refuse("chroma: " + validationError);
+        } else {
+            e.bindTime = true;
+            emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", chromaBody);
+            e.bindTime = false;
+        }
+    } else {
+        // Multiplicative identity. EngineRender preserves legacy light.color in
+        // the historical light uniforms when chi is absent.
+        chromaBody = "    return vec3<f32>(1.0);\n";
+    }
+    prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
 
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
