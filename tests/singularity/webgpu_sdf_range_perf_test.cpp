@@ -190,6 +190,9 @@ struct alignas(16) DirectProofRun {
     glm::vec4 bmax{0.0f};
 };
 
+static_assert(sizeof(DirectProofRun) == 32,
+              "direct proof-run ABI must match two WGSL vec4 fields");
+
 struct DirectRunArtifact {
     uint32_t axis = 0;
     uint32_t minRunCells = 1;
@@ -267,10 +270,16 @@ DirectRunArtifact buildDirectRunArtifact(
             hi = glm::uvec3(u + 1u, v + 1u, end);
         }
 
-        const glm::vec3 bmin =
-            -absExtent + glm::vec3(lo) * cellSize;
-        const glm::vec3 bmax =
-            -absExtent + glm::vec3(hi) * cellSize;
+        const glm::vec3 loF(
+            static_cast<float>(lo.x),
+            static_cast<float>(lo.y),
+            static_cast<float>(lo.z));
+        const glm::vec3 hiF(
+            static_cast<float>(hi.x),
+            static_cast<float>(hi.y),
+            static_cast<float>(hi.z));
+        const glm::vec3 bmin = -absExtent + loF * cellSize;
+        const glm::vec3 bmax = -absExtent + hiF * cellSize;
         DirectProofRun run;
         run.bmin = glm::vec4(bmin, static_cast<float>(out.axis));
         run.bmax = glm::vec4(bmax, static_cast<float>(runCells));
