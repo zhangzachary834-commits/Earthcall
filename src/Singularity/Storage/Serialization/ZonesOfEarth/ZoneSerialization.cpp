@@ -222,6 +222,14 @@ nlohmann::json zoneToJson(const Zone& zone) {
         zj["spatialRoot"] = root->toJson();
     }
 
+    if (!zone.additionalSpatialFields().empty()) {
+        nlohmann::json fields = nlohmann::json::array();
+        for (const auto& field : zone.additionalSpatialFields()) {
+            if (field) fields.push_back(field->toJson());
+        }
+        if (!fields.empty()) zj["spatialFields"] = std::move(fields);
+    }
+
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
@@ -291,6 +299,17 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     // Formation membership and lazily materialised PropertyRefs stay valid.
     if (replaceObjects && zj.contains("spatialRoot") && zj["spatialRoot"].is_object()) {
         if (auto* root = zone.spatialRoot()) root->applyJson(zj["spatialRoot"]);
+    }
+
+    if (replaceObjects) {
+        zone.clearAdditionalSpatialFields();
+        if (zj.contains("spatialFields") && zj["spatialFields"].is_array()) {
+            for (const auto& fj : zj["spatialFields"]) {
+                if (!fj.is_object()) continue;
+                auto field = geom::FieldNode::fromJson(fj);
+                if (field) zone.addSpatialField(std::move(field));
+            }
+        }
     }
 
     if (replaceObjects) {
