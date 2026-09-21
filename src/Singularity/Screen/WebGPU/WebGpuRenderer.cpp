@@ -1071,7 +1071,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (_radianceLayoutRevision != radianceRevision() ||
         _radianceLayoutExprPtr != radianceExpr()) {
         sdfwgsl::ScalarExpressionLayout nextLayout =
-            sdfwgsl::inspectScalarExpression(radianceExpr());
+            sdfwgsl::inspectScalarExpression(radianceExpr(), true);
         const bool structureChanged =
             _radianceLayoutRevision == 0xffffffffffffffffULL ||
             nextLayout.ok != _radianceLayout.ok ||
