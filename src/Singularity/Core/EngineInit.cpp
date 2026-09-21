@@ -247,6 +247,9 @@ bool Engine::initLogic() {
         // a black box (Refusal #6). This is generic Field reachability, not a
         // special Light type; light is merely the first consumer.
         if (auto* field = mgr.active().spatialRoot()) beings.push_back(field);
+        for (const auto& field : mgr.active().additionalSpatialFields()) {
+            if (field) beings.push_back(field.get());
+        }
         for (const auto& obj : mgr.active().getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
@@ -294,6 +297,9 @@ bool Engine::initLogic() {
             if (zone.get() == &mgr.active()) continue;
             beings.push_back(zone.get());
             if (auto* field = zone->spatialRoot()) beings.push_back(field);
+            for (const auto& field : zone->additionalSpatialFields()) {
+                if (field) beings.push_back(field.get());
+            }
         }
     });
 
