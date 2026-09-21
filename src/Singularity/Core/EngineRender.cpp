@@ -103,15 +103,6 @@ namespace Core {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
 
-        // Compatibility/default temporal binding for Screen. Renderer itself
-        // is Timeline-agnostic: when Law/Timeline selection is authored, this
-        // projection can be supplied by that First Mover without changing the
-        // WebGPU/OntoMath path.
-        const Universe& universe = Universe::instance();
-        currentRenderer().setTemporalCoordinate(
-            universe.hasClock() ? universe.now() : 0.0,
-            universe.hasClock() ? universe.dt() : 0.0);
-
         bool persistentLightPlaced = false;
         if (auto* root = zone.spatialRoot()) {
             Rendering::AuthorableLightState light;
@@ -121,6 +112,17 @@ namespace Core {
                                            Rendering::lightDiffuseRadiance(light),
                                            Rendering::lightSpecularRadiance(light));
                 currentRenderer().setLightingEnabled(light.enabled);
+
+                // Compatibility/default binding for THIS radiance source.
+                // Renderer and OntoMath see only a temporal coordinate; they do
+                // not decide which Timeline owns the source's process. Until
+                // authored Law/Timeline selection supplies root's relative
+                // Timeline, the broad Universe-selected Timeline is the First
+                // Mover fallback.
+                const Universe& universe = Universe::instance();
+                currentRenderer().setRadianceTemporalCoordinate(
+                    universe.hasClock() ? universe.now() : 0.0,
+                    universe.hasClock() ? universe.dt() : 0.0);
 
                 // The radiant FieldNode's exact authored scalar AST is the
                 // spatial radiance function. Content identity, not pointer
@@ -142,6 +144,7 @@ namespace Core {
 
         if (!persistentLightPlaced) {
             currentRenderer().setRadianceField(nullptr, 0);
+            currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
             // A previously active authored Zone may have disabled illumination.
             // No-source means the historical compatibility contract, so restore
             // enabled state even when no ScreenChannel happens to be present.
