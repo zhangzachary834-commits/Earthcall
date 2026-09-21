@@ -192,6 +192,16 @@ public:
     double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
     double radianceTemporalDelta() const { return _radianceTemporalDelta; }
 
+    // Volumetric V0: participating-medium density owns a temporal coordinate
+    // independent from source radiance. Renderer does not decide which Timeline
+    // supplies it; it merely transports the coordinate admitted by D(p,t).
+    void setVolumeDensityTemporalCoordinate(double t, double delta) {
+        _volumeDensityTemporalCoordinate = t;
+        _volumeDensityTemporalDelta = delta;
+    }
+    double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
+    double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
+
     // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
     // them together instead of forcing one source AST to enumerate the world.
     // One-source worlds intentionally keep using the historical scalar setters
@@ -394,6 +404,8 @@ private:
     glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;
+    double _volumeDensityTemporalCoordinate = 0.0;
+    double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
     FrameStats _frameStats;
