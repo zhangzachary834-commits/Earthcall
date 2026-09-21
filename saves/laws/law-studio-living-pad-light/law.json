@@ -6,7 +6,7 @@
   "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
   "law": {
     "id": "law-studio-living-pad-light",
-    "name": "Studio: A pad reverberates in its own color",
+    "name": "Studio: A pad reverberates in color and rises with its note",
     "enabled": true,
     "authority": 0,
     "activation": 1,
@@ -31,6 +31,36 @@
     "actionModel": {
       "kind": 5,
       "children": [
+        {
+          "kind": 8,
+          "path": "y2D",
+          "bindings": {
+            "r": "restY2D",
+            "e": "resonanceEnergy"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "r": 1
+                      }
+                    },
+                    {
+                      "c": -12,
+                      "factors": {
+                        "e": 1
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
         {
           "kind": 8,
           "path": "color.r",
@@ -150,7 +180,7 @@
         "entityA": "law-studio-living-pad-light",
         "entityB": "studio.author.astra",
         "directed": true,
-        "weight": 1.0,
+        "weight": 1,
         "events": []
       }
     ],
