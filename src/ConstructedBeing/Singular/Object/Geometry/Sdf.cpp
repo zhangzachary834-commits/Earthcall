@@ -817,7 +817,9 @@ bool refreshRangeHierarchy(SdfRangeHierarchy& hierarchy,
 
         uint32_t firstChild = hierarchy.nodes[nodeIndex].firstChild;
         if (firstChild != 0u) {
-            if (firstChild + 7u >= hierarchy.nodes.size()) return false;
+            const uint64_t lastChild =
+                static_cast<uint64_t>(firstChild) + 7u;
+            if (lastChild >= hierarchy.nodes.size()) return false;
             hierarchy.nodes[nodeIndex].childCount = 8;
             ++s.reusedChildBlocks;
         } else {
@@ -883,7 +885,9 @@ SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
 
         const SdfRangeNode& node = hierarchy.nodes[idx];
         if (node.childCount != 0) {
-            if (node.childCount != 8 || node.firstChild + 7u >= hierarchy.nodes.size()) {
+            const uint64_t lastChild =
+                static_cast<uint64_t>(node.firstChild) + 7u;
+            if (node.childCount != 8 || lastChild >= hierarchy.nodes.size()) {
                 return out; // malformed topology: never tighten from partial knowledge
             }
             for (uint32_t child = 0; child < 8; ++child) {
