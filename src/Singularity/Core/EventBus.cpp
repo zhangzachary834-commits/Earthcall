@@ -31,7 +31,7 @@ EventBus& EventBus::instance() {
 // The priority is an integer that determines the order in which the subscribers are called.
 // The higher the priority, the earlier the subscriber is called.
 // The default priority is 0.
-void EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
+EventBus::SubscriptionId EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     auto it = _listeners.find(type);
@@ -39,18 +39,78 @@ void EventBus::subscribe(const std::type_index& type, const Listener& listener, 
     if (it != _listeners.end() && it->second) {
         *newVec = *it->second;
     }
-    newVec->emplace_back(ListenerEntry{priority, listener});
+
+    const SubscriptionId id = _nextSubscriptionId++;
+    auto state = std::make_shared<ListenerState>();
+    state->listener = listener;
+    newVec->emplace_back(ListenerEntry{priority, id, std::move(state)});
+
     // Keep highest priority first for deterministic ordering.
     std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
         return a.priority > b.priority;
     });
     _listeners[type] = newVec;
+    return id;
+}
+
+void EventBus::unsubscribe(const std::type_index& type, SubscriptionId id)
+{
+    if (id == InvalidSubscription) return;
+
+    std::shared_ptr<ListenerState> released;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        auto it = _listeners.find(type);
+        if (it == _listeners.end() || !it->second) return;
+
+        auto newVec = std::make_shared<std::vector<ListenerEntry>>();
+        newVec->reserve(it->second->size());
+        for (const auto& entry : *it->second) {
+            if (entry.id == id) {
+                released = entry.state;
+            } else {
+                newVec->push_back(entry);
+            }
+        }
+        if (!released) return;
+
+        if (newVec->empty()) {
+            _listeners.erase(it);
+        } else {
+            _listeners[type] = newVec;
+        }
+    }
+
+    // Do this after releasing the registry mutex. A callback may itself
+    // subscribe/unsubscribe, and holding both locks in opposite orders would
+    // turn a lifetime repair into a lock-order cycle. Holding the per-listener
+    // gate until the callback returns also means unsubscribe() does not return
+    // while another thread is still executing this listener.
+    std::lock_guard<std::recursive_mutex> callbackLock(released->gate);
+    released->active = false;
 }
 
 void EventBus::clear()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    _listeners.clear();
+    std::vector<std::shared_ptr<ListenerState>> released;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        for (const auto& [type, listeners] : _listeners) {
+            (void)type;
+            if (!listeners) continue;
+            for (const auto& entry : *listeners) {
+                if (entry.state) released.push_back(entry.state);
+            }
+        }
+        _listeners.clear();
+    }
+
+    // Queued async jobs may still own old listener-vector snapshots. Closing
+    // every state makes those snapshots inert before clear() returns.
+    for (const auto& state : released) {
+        std::lock_guard<std::recursive_mutex> callbackLock(state->gate);
+        state->active = false;
+    }
 }
 
 void EventBus::shutdown()
