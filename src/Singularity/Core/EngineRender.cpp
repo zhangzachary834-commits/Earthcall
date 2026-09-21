@@ -133,20 +133,9 @@ namespace Core {
             // be fog without being a light, a light without being fog, or both.
             // Therefore density discovery MUST happen before the light.source
             // compatibility reader below.
-            if (field->volumeDensity && !field->volumeDensity->pieces.empty()) {
-                Rendering::VolumeDensityBinding medium;
-                medium.origin = field->origin;
-                medium.scale = field->scale;
-                medium.densityExpr = field->volumeDensity.get();
-                const std::string json = field->volumeDensity->toJson().dump();
-                medium.densityRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
-                // Compatibility projection only: the binding owns its temporal
-                // coordinate, so a later Singular-owned Timeline resolver can
-                // diverge media clocks without changing the renderer contract.
-                medium.temporalCoordinate = sourceTime;
-                medium.temporalDelta = sourceDelta;
-
+            Rendering::VolumeDensityBinding medium;
+            if (Rendering::readVolumeDensity(
+                    *field, sourceTime, sourceDelta, medium)) {
                 volumeSetIdentity += field->getIdentifier();
                 volumeSetIdentity += ":";
                 volumeSetIdentity += std::to_string(medium.densityRevision);
