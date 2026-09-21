@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Person/Person.hpp"
+#include "Person/PersonEvents.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -245,6 +246,15 @@ int main() {
             auto* restored = Singularity::Input::LocomotionChannel::find(reloaded);
             assert(restored);
             assert(!restored->isEnabled());
+
+            // Warden lifetime regression: EngineInit installs this route, while
+            // LawManager::remove is allowed to destroy the first-mover Law.
+            // Publishing after removal must not enter a callback that captured
+            // the destroyed channel's `this`.
+            restored->installRouting();
+            assert(reloaded.remove("locomotion-channel"));
+            Core::EventBus::instance().publish(
+                LocomotionChanged{&person, false, 0.0f});
         }
 
         Universe::instance().setProvider({});               // leave no dangling refs
