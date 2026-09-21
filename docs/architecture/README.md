@@ -20,6 +20,8 @@ A **framework name is not a directory name.** `Integration/` stays
 | [`interrelations/`](interrelations/) | Cross-checks between architectural systems (e.g. Rete + Semantics, UI + Multiplayer, Substrate + IR); the human-origin chain and Git genealogy behind grounded Relation-kind identity are recorded in [`RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md`](interrelations/RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md). Other intersections include the [`Formation Rete and HTML Bridge`](interrelations/FORMATION_RETE_AND_HTML_BRIDGE.md), [`Prophetic Rete and TransferPolicy`](interrelations/PROPHETIC_RETE_AND_TRANSFER_POLICY.md), and [`No Black Box and Geometry Substrate`](interrelations/NO_BLACK_BOX_AND_GEOMETRY_SUBSTRATE.md) |
 | [`Design/`](Design/) | 2D/3D visual grammar, OntoMath raster formations, granular pixel mastery ([`Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)), Lexeme-Relation serialization ([`Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md`](Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md)), and foundational design specifications |
 
+Cross-cutting historical observability is governed by [`PER_SINGULAR_DURABLE_LOGGING.md`](PER_SINGULAR_DURABLE_LOGGING.md): the console is an immediate observation surface, while meaningful history is routed toward durable subsystem chronicles and per-Singular histories that survive process shutdown.
+
 Bare filenames in older notes (`NEW_KIND_FRAMEWORK.md`) mean the file in the
 folder above. Prefer the folder-qualified path from now on.
 
