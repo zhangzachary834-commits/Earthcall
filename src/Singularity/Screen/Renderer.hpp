@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -190,6 +191,18 @@ public:
     }
     double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
     double radianceTemporalDelta() const { return _radianceTemporalDelta; }
+
+    // Rung 7: multiple authored FieldNodes remain independent sources. The
+    // collection is renderer-facing projection only; FieldNode stays ontology.
+    void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
+                            uint64_t revision) {
+        _radianceSources = std::move(sources);
+        _radianceSourcesRevision = revision;
+    }
+    const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
+        return _radianceSources;
+    }
+    uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
@@ -379,6 +392,8 @@ private:
     glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;
+    std::vector<Rendering::RadianceSourceBinding> _radianceSources;
+    uint64_t _radianceSourcesRevision = 0;
     FrameStats _frameStats;
 };
 
