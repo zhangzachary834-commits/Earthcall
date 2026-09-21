@@ -327,6 +327,7 @@ int main() {
 
     int failures = 0;
     size_t rangeProxyAppliedCases = 0;
+    size_t rangeTraversalAppliedCases = 0;
     for (size_t caseIndex = 0; caseIndex < cases.size(); ++caseIndex) {
         const Case& c = cases[caseIndex];
         const uint64_t memoId = 1000u + static_cast<uint64_t>(caseIndex);
@@ -344,6 +345,7 @@ int main() {
             if (baseline[i] != accelerated[i]) ++proxyDiff;
         }
         if (proxyStats.sdfRangeProxyDraws > 0) ++rangeProxyAppliedCases;
+        if (proxyStats.sdfRangeTraversalDraws > 0) ++rangeTraversalAppliedCases;
 
         // Scale the tolerance with the silhouette's perimeter: disagreement is a
         // boundary phenomenon, so it grows with the edge, not the area. ~sqrt(area)
@@ -377,10 +379,10 @@ int main() {
                     baseline[(y - 1) * W + x] && baseline[(y + 1) * W + x] &&
                     baseline[y * W + x - 1] && baseline[y * W + x + 1]) ++holes;
 
-        // Range-proxy activation changes only where the raster proxy begins and
-        // ends. The field evaluator and marcher are identical, so its silhouette
-        // must be bit-for-bit identical to the disabled baseline. Any difference
-        // means a supposedly empty region carried visible authored truth.
+        // Range acceleration may now change both the raster proxy and where the
+        // marcher spends exact evaluations, but it may never change authored
+        // visible truth. OFF is the exact baseline oracle; ON must remain
+        // bit-for-bit identical in coverage.
         const bool proxyExact = proxyDiff == 0;
         const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) &&
                         (holes == 0) && proxyExact;
@@ -396,12 +398,41 @@ int main() {
         if (!ok) ++failures;
     }
 
-    // At least one ordinary shape must actually exercise the tightened
-    // proxy path; otherwise an accidentally dead switch could make every on/off
-    // comparison vacuously identical.
-    if (rangeProxyAppliedCases == 0) {
-        std::printf("  FAILED: range proxy never tightened any parity case\n");
+    // Raster-box tightening is independently quarantined after a native
+    // transformed SmoothUnion edge mismatch. The active rung under test here is
+    // the proof hierarchy plus GPU ray traversal; complete zero-free culling is
+    // still covered by the strong witness below.
+    if (rangeProxyAppliedCases != 0) {
+        std::printf("  FAILED: quarantined raster proxy tightening unexpectedly activated\n");
         ++failures;
+    }
+    // Distance-field traversal is independently quarantined after the
+    // SmoothUnion@xform one-pixel witness. Generic parity therefore does not
+    // require traversal here; the authored-Perlin six-camera corpus below the
+    // CI lane is the activation authority for the gradient-corrected Expr path.
+    (void)rangeTraversalAppliedCases;
+
+    // Sign-asymmetry witness: f(p)=-5 is also mathematically zero-free,
+    // but the baseline marcher begins inside negative space and reports an
+    // immediate hit. Range acceleration must preserve that behavior rather
+    // than treating "no zero" as synonymous with "empty outside."
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(-5.0));
+        const geom::SdfNode inside = geom::makeImplicit(constant);
+        const auto off = gpuMask(inside, glm::mat4(1.0f), 999998u, false);
+        const auto on  = gpuMask(inside, glm::mat4(1.0f), 999998u, true);
+        const Renderer::FrameStats stats = r.frameStats();
+        const bool identical = off == on;
+        const bool stillRendered =
+            std::any_of(on.begin(), on.end(), [](uint8_t v) { return v != 0; });
+        const bool notCulled = stats.sdfRangeProxyCulledDraws == 0;
+        std::printf("  %-14s pixels=%s cullCounter=%u %s\n",
+                    "RangeNegative", identical ? "identical" : "MISMATCH",
+                    stats.sdfRangeProxyCulledDraws,
+                    (identical && stillRendered && notCulled) ? "ok" : "FAILED");
+        if (!identical || !stillRendered || !notCulled) ++failures;
     }
 
     // Strong cull witness: f(p)=5 has no zero anywhere in the render domain.

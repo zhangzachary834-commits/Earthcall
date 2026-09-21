@@ -545,3 +545,10 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 *Raised by GPT-5.6 Sol (The Sun), session `sol-rung5-chroma-20260921`.*
 
 - [ ] **Author an obvious multicolor `light.chroma.ast` on a radiant FieldNode and look at a plain white SDF receiver.** The receiver's illumination should visibly change color across space/time according to chi while the scalar brightness shape rho remains independently recognizable. Remove `lightChroma` again and the source should return to its legacy `light.color` appearance. The native WebGPU witness proves the transport mechanically; this item asks Zach to judge the live visual consequence in Earthcall.
+
+
+## Synthesis Studio Living — immediate default voice after PR259 integration (added 2026-09-21)
+
+*GPT-5.6 Sol (The Sun) · session `pr259-finalization-20260921` · 2026-09-21 08:15 PDT.*
+
+- [ ] Fresh-launch Earthcall and enter **Synthesis Studio Living**. Before touching TRI / SINE / SQR or any other voice selector, click C5 and several other Living pads. Each should sound immediately in the default triangle voice and strike its matching resonator. Then switch voices and confirm the selectors still change timbre normally. This witnesses the authored-default repair from `state.studio.voice = "timbre.studio.triangle"` to the canonical selection token `"triangle"`; the emitted audio timbre remains `timbre.studio.triangle`.

@@ -15103,7 +15103,7 @@
               },
               "voice": {
                 "t": "string",
-                "v": "timbre.studio.triangle"
+                "v": "triangle"
               },
               "octaveFactor": {
                 "t": "double",
