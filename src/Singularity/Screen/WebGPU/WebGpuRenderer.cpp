@@ -1237,26 +1237,94 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
 
-            // Pack the CPU theorem once at the same invalidation boundary. Child
-            // indices stay memo-local here; batching rebases them into the shared
-            // per-pipeline storage buffer without re-deriving any mathematics.
+            // Pack only the proof-relevant frontier. The full CPU hierarchy
+            // remains the mathematical authority, but the GPU does not need
+            // ambiguous/negative subtrees that contain no positive-outside proof.
+            // Omitting a child is explicitly fail-open: the shader derives that
+            // octant's bounds and gives it back to the exact marcher.
             memo->rangeGpuNodes.clear();
             memo->rangeHasPositiveSkip = false;
-            memo->rangeGpuNodes.reserve(memo->rangeHierarchy.nodes.size());
-            for (const geom::SdfRangeNode& node : memo->rangeHierarchy.nodes) {
-                SdfRangeGpuNode packed;
-                packed.boxMin = glm::vec4(node.boxMin, 0.0f);
-                packed.boxMax = glm::vec4(node.boxMax, 0.0f);
-                const bool positiveSkip =
-                    geom::rangeNodeProvesPositiveOutside(node);
-                packed.meta = glm::uvec4(
-                    node.firstChild,
-                    static_cast<uint32_t>(node.childCount),
-                    positiveSkip ? 1u : 0u,
-                    node.boundFinite ? 1u : 0u);
+            const auto& rangeNodes = memo->rangeHierarchy.nodes;
+            std::vector<uint8_t> keep(rangeNodes.size(), 0u);
+
+            // buildRangeHierarchy appends children after their parent, so a
+            // reverse pass can mark exactly the transitive ancestry of every
+            // positive-outside theorem.
+            for (size_t i = rangeNodes.size(); i-- > 0;) {
+                const geom::SdfRangeNode& node = rangeNodes[i];
+                bool retained = geom::rangeNodeProvesPositiveOutside(node);
                 memo->rangeHasPositiveSkip =
-                    memo->rangeHasPositiveSkip || positiveSkip;
-                memo->rangeGpuNodes.push_back(packed);
+                    memo->rangeHasPositiveSkip || retained;
+                if (!retained && node.childCount != 0u) {
+                    for (uint32_t child = 0; child < node.childCount; ++child) {
+                        const size_t childIndex =
+                            static_cast<size_t>(node.firstChild) + child;
+                        if (childIndex < keep.size() && keep[childIndex] != 0u) {
+                            retained = true;
+                            break;
+                        }
+                    }
+                }
+                keep[i] = retained ? 1u : 0u;
+            }
+
+            if (!rangeNodes.empty() && keep[0] != 0u) {
+                memo->rangeGpuNodes.resize(1);
+                auto packSparse = [&](auto&& self,
+                                      uint32_t sourceIndex,
+                                      uint32_t packedIndex) -> void {
+                    if (sourceIndex >= rangeNodes.size() ||
+                        packedIndex >= memo->rangeGpuNodes.size()) {
+                        return;
+                    }
+
+                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
+                    const bool positiveSkip =
+                        geom::rangeNodeProvesPositiveOutside(node);
+
+                    uint32_t childMask = 0u;
+                    uint32_t retainedChildren = 0u;
+                    if (!positiveSkip && node.childCount != 0u) {
+                        for (uint32_t child = 0; child < node.childCount; ++child) {
+                            const size_t childIndex =
+                                static_cast<size_t>(node.firstChild) + child;
+                            if (childIndex < keep.size() && keep[childIndex] != 0u) {
+                                childMask |= (1u << child);
+                                ++retainedChildren;
+                            }
+                        }
+                    }
+
+                    uint32_t firstPackedChild = 0u;
+                    if (retainedChildren != 0u) {
+                        firstPackedChild =
+                            static_cast<uint32_t>(memo->rangeGpuNodes.size());
+                        memo->rangeGpuNodes.resize(
+                            memo->rangeGpuNodes.size() + retainedChildren);
+                    }
+
+                    // Re-acquire after resize: vector growth may invalidate
+                    // references. Immediate retained children occupy one compact
+                    // contiguous block; descendants are appended afterward.
+                    SdfRangeGpuNode& packed =
+                        memo->rangeGpuNodes[packedIndex];
+                    packed.boxMin = glm::vec4(node.boxMin, 0.0f);
+                    packed.boxMax = glm::vec4(node.boxMax, 0.0f);
+                    packed.meta = glm::uvec4(
+                        firstPackedChild,
+                        childMask,
+                        positiveSkip ? 1u : 0u,
+                        node.boundFinite ? 1u : 0u);
+
+                    uint32_t nextPackedChild = firstPackedChild;
+                    for (uint32_t child = 0; child < node.childCount; ++child) {
+                        if ((childMask & (1u << child)) == 0u) continue;
+                        self(self,
+                             node.firstChild + child,
+                             nextPackedChild++);
+                    }
+                };
+                packSparse(packSparse, 0u, 0u);
             }
 
             memo->rangeParameterRevision = memoParameterRevision;

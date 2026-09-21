@@ -51,7 +51,8 @@ struct SdfInstanceData {
 struct SdfRangeNode {
     boxMin: vec4<f32>,
     boxMax: vec4<f32>,
-    // x firstChild, y childCount, z provedPositiveOutside, w boundFinite.
+    // x first retained child, y retained-child mask (bits 0..7),
+    // z provedPositiveOutside, w boundFinite.
     rangeInfo: vec4<u32>,
 };
 @group(1) @binding(2) var<storage, read> rangeNodes: array<SdfRangeNode>;
@@ -1158,21 +1159,12 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
                 break;
             }
 
-            if (node.rangeInfo.y == 0u) {
-                // Terminal ambiguous/unknown cells likewise need their exact ray
-                // exit for hand-off, but no ancestor did. Computing the slab only
-                // here preserves the same interval contract with less traversal
-                // work.
-                let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
-                // Ambiguous or unknown terminal cell: exact authored evaluation
-                // owns this interval. A grazing/shared-face interval with no
-                // forward extent disables further skipping for this ray rather
-                // than spinning at the same boundary.
-                if (cell.y <= t) {
-                    return vec3<f32>(t, tMax, 1.0);
-                }
-                let candidateExit = min(cell.y, tMax);
-                return vec3<f32>(t, candidateExit, 1.0);
+            let childMask = node.rangeInfo.y;
+            if (childMask == 0u) {
+                // Defensive fail-open terminal. Positive terminals were handled
+                // above; a non-positive sparse terminal carries no permission to
+                // skip any further space.
+                return vec3<f32>(t, tMax, 1.0);
             }
 
             let mid = 0.5 * (node.boxMin.xyz + node.boxMax.xyz);
@@ -1183,7 +1175,34 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             if (p.x > mid.x || (p.x == mid.x && rd.x >= 0.0)) { child = child | 1u; }
             if (p.y > mid.y || (p.y == mid.y && rd.y >= 0.0)) { child = child | 2u; }
             if (p.z > mid.z || (p.z == mid.z && rd.z >= 0.0)) { child = child | 4u; }
-            idx = node.rangeInfo.x + child;
+
+            let childBit = 1u << child;
+            if ((childMask & childBit) == 0u) {
+                // This octant was omitted because its CPU subtree contains no
+                // positive-outside proof. Omission is NOT an emptiness claim.
+                // Derive the missing child's box from the retained parent, let
+                // the exact marcher own that interval, then permit a fresh
+                // hierarchy query after its exit.
+                var childMin = node.boxMin.xyz;
+                var childMax = node.boxMax.xyz;
+                if ((child & 1u) != 0u) { childMin.x = mid.x; }
+                else { childMax.x = mid.x; }
+                if ((child & 2u) != 0u) { childMin.y = mid.y; }
+                else { childMax.y = mid.y; }
+                if ((child & 4u) != 0u) { childMin.z = mid.z; }
+                else { childMax.z = mid.z; }
+
+                let cell = rayAabbBounds(ro, rd, childMin, childMax);
+                if (cell.y <= t) {
+                    return vec3<f32>(t, tMax, 1.0);
+                }
+                return vec3<f32>(t, min(cell.y, tMax), 1.0);
+            }
+
+            // Retained children are compacted in child-bit order.
+            let lowerBits = childMask & (childBit - 1u);
+            let childRank = countOneBits(lowerBits);
+            idx = node.rangeInfo.x + childRank;
         }
 
         if (!skippedEmpty) {

@@ -214,9 +214,12 @@ private:
 
     // GPU storage representation of one conservative zero-set hierarchy node.
     // This is Kernel substrate: it mirrors geom::SdfRangeNode's proved spatial
-    // theorem in a std430/WGSL-friendly 16-byte-aligned layout. meta is:
-    //   x = first child index (rebased to the batch buffer at draw time)
-    //   y = child count (0 or 8)
+    // theorem in a std430/WGSL-friendly 16-byte-aligned layout. The GPU
+    // representation is SPARSE: only ancestry leading to a positive-outside
+    // proof is retained. Missing octants mean "no GPU proof here; exact marcher
+    // owns it", never "empty". meta is:
+    //   x = first retained child index (rebased to the batch buffer at draw time)
+    //   y = retained child bitmask (bits 0..7; 0 means terminal/no retained proof)
     //   z = provedPositiveOutside (1 only when evalRange proved f > 0)
     //   w = boundFinite (diagnostic/fail-open bit)
     //
