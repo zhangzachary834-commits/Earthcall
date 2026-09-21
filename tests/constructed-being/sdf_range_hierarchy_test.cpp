@@ -351,6 +351,16 @@ int main() {
         check(!ambiguousRefusal.hasPositiveCells(),
               "one ambiguous child refuses positive parent coalescing");
 
+        auto withUnknown = siblings;
+        withUnknown.nodes[8].boundFinite = false;
+        withUnknown.nodes[8].rangeLo = 0.0f;
+        withUnknown.nodes[8].rangeHi = 0.0f;
+        withUnknown.nodes[8].provedNoZero = false;
+        const auto unknownRefusal =
+            geom::derivePositiveRangeProofGrid(withUnknown, /*targetDepth=*/0);
+        check(!unknownRefusal.hasPositiveCells(),
+              "one unknown child refuses positive parent coalescing");
+
         auto malformed = siblings;
         malformed.nodes.pop_back();
         const auto missingChildRefusal =
