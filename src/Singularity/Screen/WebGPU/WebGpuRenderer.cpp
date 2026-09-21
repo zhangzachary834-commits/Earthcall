@@ -512,6 +512,16 @@ void WebGpuRenderer::releasePersistentSdfParams() {
     _persistentSdfParamVramBytes = 0;
 }
 
+void WebGpuRenderer::releasePersistentRadianceSources() {
+    if (_persistentRadianceSources.buffer) {
+        wgpuBufferRelease(_persistentRadianceSources.buffer);
+        _persistentRadianceSources.buffer = nullptr;
+    }
+    _persistentRadianceSources.capacityBytes = 0;
+    _persistentRadianceSources.mirror.clear();
+    _persistentRadianceSourceVramBytes = 0;
+}
+
 void WebGpuRenderer::releasePersistentSdfRangeNodes() {
     for (auto& kv : _persistentSdfRangeNodes) {
         if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
@@ -524,6 +534,7 @@ void WebGpuRenderer::reloadShaders() {
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
+    releasePersistentRadianceSources();
     releasePersistentSdfRangeNodes();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
@@ -972,6 +983,16 @@ struct SdfGlobalUniforms {
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
 };
+
+struct RadianceSourceGpuData {
+    glm::vec4 position;
+    glm::vec4 ambient;
+    glm::vec4 diffuse;
+    glm::vec4 specular;
+    glm::vec4 coefficients;
+    glm::vec4 time;
+    glm::vec4 control;
+};
 } // namespace
 
 // Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
@@ -992,7 +1013,9 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
         return nullptr;
     }
 
-    WGPUBindGroupLayoutEntry be[2] = {};
+    const bool usesRadianceSources =
+        wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
+    WGPUBindGroupLayoutEntry be[3] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1000,10 +1023,17 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    if (usesRadianceSources) {
+        be[2].binding = 2;
+        be[2].visibility = WGPUShaderStage_Fragment;
+        be[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    }
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = 2; bgld.entries = be;
+    bgld.entryCount = usesRadianceSources ? 3 : 2;
+    bgld.entries = be;
 
     SdfPipeline out;
+    out.usesRadianceSources = usesRadianceSources;
     out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
     WGPUBindGroupLayout meshLayouts[2] = { out.bgl, _sdfInstanceBgl };
     WGPUPipelineLayoutDescriptor pld = {};
