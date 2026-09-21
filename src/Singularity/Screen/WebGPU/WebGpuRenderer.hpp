@@ -253,6 +253,13 @@ private:
         // theorem invalidates. One bit corresponds to one depth-N regular cell.
         std::vector<uint32_t> rangeProofWords;
         bool rangeHasPositiveSkip = false;
+        // Ahead-of-time admission artifact derived from the same positive-proof
+        // bitmap. It encloses every proved-positive regular cell, so a ray that
+        // misses this box cannot possibly benefit from rangeCandidate(). The
+        // bounds rebuild only when the theorem itself invalidates.
+        glm::vec3 rangePositiveMin{0.0f};
+        glm::vec3 rangePositiveMax{0.0f};
+        bool rangePositiveBoundsValid = false;
         bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
@@ -516,6 +523,12 @@ private:
         uint32_t rangeProofWordCount = 0;
         uint32_t rangeTraversalEnabled = 0;
         uint32_t rangeProofDepth = 0;
+        // AOT admission bounds for the positive-proof bitmap, in field-local
+        // coordinates. The shader consults the grid only while the ray is inside
+        // this conservative box; outside it, the exact baseline marcher proceeds
+        // without paying proof-classification tax.
+        glm::vec4 rangePositiveMin{0.0f};
+        glm::vec4 rangePositiveMax{0.0f};
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
