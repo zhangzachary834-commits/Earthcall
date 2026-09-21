@@ -519,6 +519,12 @@ void LawManager::tick() {                          // once per frame from GameUp
 }
 ```
 
+**Current lifecycle note (2026-09-20):** the implemented `connectToEventBus()` stores the
+subscription tokens returned by EventBus, and `LawManager::~LawManager()` revokes those exact
+registrations. The sketch above is historical wiring pseudocode; ignoring the returned token in a
+transient owner would recreate the stale-callback bug guarded by
+`law_manager_eventbus_lifetime_test`.
+
 **Adapters:** each existing typed event (`ObjectHoverEvent`, PersonEvents,
 collision events, `Law::AppliedEvent`) gets a one-line echo publishing a generic
 `ECA::Event` with a string `type`. Strings are the deliberate choice: C++ event
