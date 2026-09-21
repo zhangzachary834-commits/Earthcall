@@ -76,10 +76,13 @@ authorship, Laws, and whatever future temporal ontology Zach and Opus establish.
 Creating another temporal domain therefore means creating another Timeline being,
 not editing a switch statement.
 
-The implementation keeps a generic live registry (`Timeline::all()`) so the
-engine's existing Universe provider can expose newly created Timeline beings
-without hard-coding every future identifier. That registry is reachability
-mechanism, not a taxonomy.
+The implementation keeps a process-local live registry
+(`Timeline::all()`) for lifecycle/identity bookkeeping. **That registry is not
+temporal scope, ownership, authority, or Law reachability.** In particular, the
+Universe provider does not sweep every Timeline into its global working set:
+doing so would make a local Singular-owned clock globally visible merely because
+it exists. Future Law/Timeline architecture must derive lawful reachability from
+authored ownership, Zone context, and the temporal relations Zach + Opus define.
 
 ## 2. A Timeline contains Moments
 
