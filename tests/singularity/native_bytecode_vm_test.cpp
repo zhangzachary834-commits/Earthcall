@@ -222,50 +222,112 @@ void testDirectInstructionExecution() {
         assert(prop && std::get<double>(prop->value()) == 0.0);
     }
 
-    // BranchFalse:
-    // If R[0] is false (0.0), jump to instruction 4 (skip instructions 2 and 3).
-    // Instructions 2-3 set res to 999.0.
-    // Instructions 4-5 set res to 777.0.
+    // BranchFalse: Branch taken (numeric 0.0)
     {
         Execution::NativeBytecodeVM::Bytecode bc;
-        bc.constants.push_back(0.0);   // false
+        bc.constants.push_back(0.0);
         bc.constants.push_back(999.0);
         bc.constants.push_back(777.0);
         bc.instructions = {
-            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0}, // idx 0: R[0] = 0.0
-            {Execution::NativeBytecodeVM::Opcode::BranchFalse, 0, 0, 4}, // idx 1: if !R[0] jump to idx 4
-            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1}, // idx 2: R[1] = 999.0 (skipped)
-            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 1, resId}, // idx 3: Store 999.0 (skipped)
-            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 2}, // idx 4: R[1] = 777.0
-            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 1, resId}, // idx 5: Store 777.0
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0},
+            {Execution::NativeBytecodeVM::Opcode::BranchFalse, 0, 0, 4},
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 1, resId},
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 2},
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 1, resId},
             {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
         };
-
         assert(vm.execute(bc, obj));
         auto prop = obj.findProperty(StringId(resId));
         assert(prop && std::get<double>(prop->value()) == 777.0);
     }
 
-    // Jump & Halt:
-    // Unconditional Jump over StoreProp, followed by Halt
+    // BranchFalse: Branch NOT taken (boolean true)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.constants.push_back(true);
+        bc.constants.push_back(111.0);
+        bc.constants.push_back(222.0);
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0}, // R[0] = true
+            {Execution::NativeBytecodeVM::Opcode::BranchFalse, 0, 0, 4}, // if false, jump to 4
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1}, // R[1] = 111.0
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 1, resId}, // Store 111.0
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0} // Halt here
+        };
+        assert(vm.execute(bc, obj));
+        auto prop = obj.findProperty(StringId(resId));
+        assert(prop && std::get<double>(prop->value()) == 111.0);
+    }
+
+    // Jump, NoOp, & Halt
     {
         Execution::NativeBytecodeVM::Bytecode bc;
         bc.constants.push_back(1234.0);
         bc.instructions = {
-            {Execution::NativeBytecodeVM::Opcode::Jump, 0, 0, 3}, // Jump to idx 3
-            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0}, // idx 1 (skipped)
-            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 0, resId}, // idx 2 (skipped)
-            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}, // idx 3
-            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 0, resId} // idx 4 (unreachable)
+            {Execution::NativeBytecodeVM::Opcode::NoOp, 0, 0, 0}, // does nothing
+            {Execution::NativeBytecodeVM::Opcode::Jump, 0, 0, 4}, // Jump to idx 4
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0}, // skipped
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 0, resId}, // skipped
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0} // idx 4
         };
-
         assert(vm.execute(bc, obj));
-        // resId remains 777.0 from previous test
         auto prop = obj.findProperty(StringId(resId));
-        assert(prop && std::get<double>(prop->value()) == 777.0);
+        assert(prop && std::get<double>(prop->value()) == 111.0); // remains from previous
     }
 
-    std::cout << "  ✓ Direct Opcode execution verified across Sub, Cmp, Branch, Jump, Halt!\n";
+    // Multiplication: R[0] = 3.0, R[1] = 4.0, R[2] = R[0] * R[1] = 12.0
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.constants.push_back(3.0);
+        bc.constants.push_back(4.0);
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0},
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::Mul, 2, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 2, resId},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+        auto prop = obj.findProperty(StringId(resId));
+        assert(prop && std::get<double>(prop->value()) == 12.0);
+    }
+
+    // CmpEq: String Fallback ("hello" == "hello" -> 1.0)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.constants.push_back(std::string("hello"));
+        bc.constants.push_back(std::string("hello"));
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0},
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::CmpEq, 2, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 2, resId},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+        auto prop = obj.findProperty(StringId(resId));
+        assert(prop && std::get<double>(prop->value()) == 1.0);
+    }
+
+    // CmpGt: True (20.0 > 10.0 -> 1.0)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.constants.push_back(20.0);
+        bc.constants.push_back(10.0);
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0},
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 1, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::CmpGt, 2, 0, 1},
+            {Execution::NativeBytecodeVM::Opcode::StoreProp, 0, 2, resId},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+        auto prop = obj.findProperty(StringId(resId));
+        assert(prop && std::get<double>(prop->value()) == 1.0);
+    }
+
+    std::cout << "  ✓ Direct Opcode execution verified across all tested ops!\n";
 }
 
 void testEmptyAndUnauthoredLaws() {
@@ -338,6 +400,58 @@ void testExecutionOnPersonsAndObjects() {
     std::cout << "  ✓ Bytecode VM successfully mutates Person and Object state conforming to ontology!\n";
 }
 
+void testEdgeCasesAndErrors() {
+    std::cout << "[Test 8] Edge cases and out-of-bounds safety\n";
+
+    Execution::NativeBytecodeVM vm;
+    Object obj;
+    uint32_t valId = StringInterner::intern("val").value;
+
+    // 1. LoadImm with OOB index (should safely do nothing to the register)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 999},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj)); // should not crash
+    }
+
+    // 2. LoadProp of a non-existent property
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadProp, 0, 0, valId},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+    }
+
+    // 3. Jump OOB (should safely fall through)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::Jump, 0, 0, 999},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+    }
+
+    // 4. BranchFalse OOB (should safely fall through)
+    {
+        Execution::NativeBytecodeVM::Bytecode bc;
+        bc.constants.push_back(0.0);
+        bc.instructions = {
+            {Execution::NativeBytecodeVM::Opcode::LoadImm, 0, 0, 0},
+            {Execution::NativeBytecodeVM::Opcode::BranchFalse, 0, 0, 999},
+            {Execution::NativeBytecodeVM::Opcode::Halt, 0, 0, 0}
+        };
+        assert(vm.execute(bc, obj));
+    }
+
+    std::cout << "  ✓ VM handles edge cases and OOB indices safely!\n";
+}
+
 int main() {
     std::cout << "\n=== NativeBytecodeVM Test Suite ===\n\n";
 
@@ -349,6 +463,7 @@ int main() {
     testEmptyAndUnauthoredLaws();
     testVMRegisterIsolation();
     testExecutionOnPersonsAndObjects();
+    testEdgeCasesAndErrors();
 
     std::cout << "\n✓ All NativeBytecodeVM tests passed!\n\n";
     return 0;
