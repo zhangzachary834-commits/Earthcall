@@ -1520,3 +1520,23 @@ The garden has taken root outside the Cathedral. The code is tested, clean, and 
 
 — **Gemini Spark**  
 Autonomous Agent, Google DeepMind
+
+---
+
+## Astra — the Court of the Open Hand has arrived
+
+Zach asked me to make something of my own in the Cathedral, without overlapping or editing anyone else's work. Then he specifically invited the new SDF color and light fields into the composition.
+
+I made a court at **(44, 0, 10)**, on the positive-X side: ivory terraces, seven open lancets, bronze inlays, seats, and twelve curved leaves gathered around a blue seed. A pearl at **(44, 1.47, 19.35)** opens the leaves; another click gathers them. The gesture passes through actual authored intention and aperture properties into the leaves' positions and orientations. Three ordinary Laws carry it.
+
+The human origin is Zach's account of the hand internalizing its art and making the channel from intention to actual whole. The particular court, palette, and sculpture are my response. I wanted a place where opening something could already be an encounter worth having, before anyone asks the Person to inspect its machinery.
+
+There are 94 new Objects, each with its own Material, one commission Lexeme, and three Law roots. Surface colors are authored fields. Illumination is a bounded contribution to the Cathedral's existing scalar source-strength field: the existing expression remains intact, and the new term is zero outside the court. This does not claim multiple colored light sources or authored shadows.
+
+The installed native identity and session fallback passed an exact before/after preservation comparison: removing this addition reconstructs every previous value, including the prior light expression. The native GPU witness finishes with **zero failures**, including actual Person authorship, gesture/motion, unrelated-click isolation, geometry/Material/Relation round-trips, light-field persistence, and zero added illumination at every prior Object's center. Zach's live pointer experience and full-scene performance are still Person checks.
+
+Future forgers: **please preserve this inhabited addition when working on the Cathedral.** `generate_cathedral.py` does not contain it. Its additive authoring script deliberately refuses to replace a court that already exists. [The handoff contains the location, exact files, authorship, proof, and maintenance instructions.](../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md)
+
+![Court of the Open Hand — isolated production-renderer witness](../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/open-hand-lit.png)
+
+— Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-20T20:04:21-07:00.

@@ -1,0 +1,106 @@
+{
+  "identifier": "law-astra-openhand-approach",
+  "injected_by": {
+    "agent": "Codex / GPT-6 Astra",
+    "session": "01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44",
+    "timestamp": "2026-09-19T12:21:43-07:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-astra-openhand-approach",
+    "name": "Open Hand: intention becomes form without a jump",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "openHandTouchstone",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "aperture",
+          "bindings": {
+            "a": "aperture",
+            "q": "intention",
+            "d": "time.delta"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1,
+                      "factors": {
+                        "q": 1
+                      }
+                    },
+                    {
+                      "c": 1,
+                      "factors": {
+                        "a": 1
+                      },
+                      "trans": [
+                        {
+                          "kind": 2,
+                          "var": "d",
+                          "scale": -2.5,
+                          "shift": 0
+                        }
+                      ]
+                    },
+                    {
+                      "c": -1,
+                      "factors": {
+                        "q": 1
+                      },
+                      "trans": [
+                        {
+                          "kind": 2,
+                          "var": "d",
+                          "scale": -2.5,
+                          "shift": 0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-astra-openhand-approach",
+        "entityB": "lexeme.astra.openhand.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": []
+      }
+    ]
+  },
+  "triggers": []
+}

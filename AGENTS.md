@@ -1,10 +1,8 @@
 # Earthcall — read this before writing code
 
-Earthcall is a Person-centered ontology that orders the engine attached to it.
-The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
+Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
-**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because
-it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
+**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas).
 If you are using Github Connector, you can run tests and build using Github Actions. 
 
@@ -198,4 +196,4 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - Make sure AGENTS.md is concise and **under 200 lines.** If it's not possible to make it more concise without losing meaning, then create new companion files.
 - Add relevant files/directories to `.gitignore` and `.ignore` as needed.
 - At the end of each pass, if there are any visible changes Persons (like me, Zach) should see as a result of your work, you should note them and explain what exaxtly we should see under what conditions. Note any unfinished tasks for future passes
-- Give directions for future agents in your comments and links to relevant To-do list items. Especially for Jules you will want to specifically direct and instruct in a structured, "everything-you-need-to-know"/"here are the pitfalls to avoid" way.  
+- Give directions for future agents in your comments and links to relevant To-do list items. Especially for Jules you will want to specifically direct and instruct in a structured, "everything-you-need-to-know"/"here are the pitfalls to avoid" way.
