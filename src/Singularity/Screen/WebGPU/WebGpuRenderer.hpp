@@ -212,25 +212,11 @@ private:
         WGPUBindGroupLayout bgl = nullptr;
     };
 
-    // GPU storage representation of one conservative zero-set hierarchy node.
-    // This is Kernel substrate: it mirrors geom::SdfRangeNode's proved spatial
-    // theorem in a std430/WGSL-friendly 16-byte-aligned layout. The GPU
-    // representation is SPARSE: only ancestry leading to a positive-outside
-    // proof is retained. Missing octants mean "no GPU proof here; exact marcher
-    // owns it", never "empty". meta is:
-    //   x = first retained child index (rebased to the batch buffer at draw time)
-    //   y = retained child bitmask (bits 0..7; 0 means terminal/no retained proof)
-    //   z = provedPositiveOutside (1 only when evalRange proved f > 0)
-    //   w = boundFinite (diagnostic/fail-open bit)
-    //
-    // A proved-negative cell is zero-free too, but it is INSIDE the surface:
-    // the baseline marcher must sample that sign to register a hit. Only
-    // proved-positive outside space is lawful to fast-forward through.
-    struct SdfRangeGpuNode {
-        glm::vec4 boxMin{0.0f};
-        glm::vec4 boxMax{0.0f};
-        glm::uvec4 meta{0u};
-    };
+    // GPU proof representation for conservative SDF range traversal.
+    // The complete adaptive hierarchy stays CPU-side as mathematical authority.
+    // GPU-side we rasterize only proved-positive OUTSIDE knowledge into a fixed
+    // depth bit grid. A zero bit never means "occupied" or "empty"; it means
+    // "no skip proof here, exact authored marching owns this cell."
 
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
@@ -252,9 +238,9 @@ private:
         glm::vec3 rangeAuthoredExtent{0.0f};
         geom::SdfRangeHierarchy rangeHierarchy;
         geom::SdfZeroSetProxy rangeProxy;
-        // Packed once at the same revision boundary as rangeHierarchy. Child
-        // indices remain memo-local here and are rebased only while batching.
-        std::vector<SdfRangeGpuNode> rangeGpuNodes;
+        // Fixed-depth positive-proof bit grid, rebuilt only when the range
+        // theorem invalidates. One bit corresponds to one depth-N regular cell.
+        std::vector<uint32_t> rangeProofWords;
         bool rangeHasPositiveSkip = false;
         bool rangeReady = false;
     };
@@ -273,13 +259,13 @@ private:
     size_t _persistentSdfParamVramBytes = 0;
     void releasePersistentSdfParams();
 
-    // The range hierarchy is also static between SDF value revisions. Keep its
-    // packed node buffer resident so activating spatial Prophetic traversal does
-    // not replace field-evaluation debt with a per-frame hierarchy upload.
+    // The positive-proof bit grid is static between SDF value revisions. Keep
+    // it resident so spatial Prophetic traversal does not replace evaluation
+    // debt with per-frame uploads.
     struct PersistentSdfRangeNodes {
         WGPUBuffer buffer = nullptr;
         uint64_t capacityBytes = 0;
-        std::vector<SdfRangeGpuNode> mirror;
+        std::vector<uint32_t> mirror;
     };
     std::unordered_map<const SdfPipeline*, PersistentSdfRangeNodes> _persistentSdfRangeNodes;
     size_t _persistentSdfRangeNodeVramBytes = 0;
@@ -465,17 +451,18 @@ private:
         uint32_t heightGridOffset = 0;
         uint32_t heightGridDimX = 0;
         uint32_t heightGridDimZ = 0;
-        // Conservative zero-set hierarchy. count==0 is the exact baseline.
-        // offset/count address the shared per-pipeline range-node buffer.
-        uint32_t rangeNodeOffset = 0;
-        uint32_t rangeNodeCount = 0;
+        // Conservative positive-proof bit grid. count==0 is the exact
+        // baseline. offset/count are u32 words in the shared proof buffer;
+        // rangeProofDepth is the regular subdivision depth used by those bits.
+        uint32_t rangeProofWordOffset = 0;
+        uint32_t rangeProofWordCount = 0;
         uint32_t rangeTraversalEnabled = 0;
-        uint32_t rangeReserved = 0;
+        uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
-    std::map<const SdfPipeline*, std::vector<SdfRangeGpuNode>> _sdfRangeNodeBatches;
+    std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
     // Maps retain their vectors across frames so capacity is reused. This list
     // names only pipelines that actually received an instance this frame,
     // avoiding an ever-growing scan of historical pipeline keys.
