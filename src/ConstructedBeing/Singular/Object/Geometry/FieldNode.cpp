@@ -10,6 +10,9 @@ nlohmann::json FieldNode::toJson() const {
     j["scale"] = {scale.x, scale.y, scale.z};
     j["field"] = field->toJson();
     j["vectorField"] = vectorField->toJson();
+    if (volumeDensity && !volumeDensity->pieces.empty()) {
+        j["volumeDensity"] = volumeDensity->toJson();
+    }
     if (lightChroma && !lightChroma->pieces.empty()) {
         j["lightChroma"] = lightChroma->toJson();
     }
@@ -66,6 +69,14 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             mutVec->frequency = newVec->frequency;
             mutVec->amplitude = newVec->amplitude;
             mutVec->astDefinition = newVec->astDefinition;
+        }
+    }
+
+    if (volumeDensity) {
+        if (j.contains("volumeDensity")) {
+            *volumeDensity = OntoMath::Piecewise::fromJson(j["volumeDensity"]);
+        } else {
+            *volumeDensity = OntoMath::Piecewise{};
         }
     }
 
