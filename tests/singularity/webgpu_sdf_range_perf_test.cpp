@@ -175,6 +175,7 @@ struct RuntimeTaxTotals {
     uint64_t offFallbackEvals = 0;
     uint64_t offHits = 0;
     uint64_t offIterations = 0;
+    uint64_t perRayHitMismatches = 0;
     double skippedDistance = 0.0;
     bool valid = false;
 };
@@ -613,8 +614,11 @@ fn runtimeTaxMarch(ray: RuntimeTaxRay, useRange: bool) -> RuntimeTaxOut {
             let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
             if (candidate.z < 0.5) {
                 candidateExhaustions = candidateExhaustions + 1u;
-                skipCalls = skipCalls + 1u;
-                skippedDistance = skippedDistance + max(maxDist - oldT, 0.0);
+                let exhaustedDistance = max(maxDist - oldT, 0.0);
+                if (exhaustedDistance > 0.0) {
+                    skipCalls = skipCalls + 1u;
+                    skippedDistance = skippedDistance + exhaustedDistance;
+                }
                 t = maxDist + 1.0;
                 break;
             }
@@ -878,6 +882,9 @@ fn cs_runtime_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
                     totals.offFallbackEvals += off.counts1.x;
                     totals.offHits += off.counts1.y;
                     totals.offIterations += off.counts1.w;
+                    if (on.counts1.y != off.counts1.y) {
+                        ++totals.perRayHitMismatches;
+                    }
                     totals.skippedDistance +=
                         static_cast<double>(on.distances.x);
                 }
@@ -936,7 +943,8 @@ void printRuntimeTax(const char* viewName, const RuntimeTaxTotals& t) {
         "candidate_exhaustions=%llu on_sample_steps=%llu off_sample_steps=%llu "
         "saved_sample_steps=%lld on_fallback_evals=%llu off_fallback_evals=%llu "
         "on_iterations=%llu off_iterations=%llu on_hits=%llu off_hits=%llu "
-        "skipped_distance=%.6f calls_per_ray=%.6f useful_call_ratio=%.6f "
+        "per_ray_hit_mismatches=%llu skipped_distance=%.6f "
+        "calls_per_ray=%.6f useful_call_ratio=%.6f "
         "samples_saved_per_call=%.6f\n",
         viewName,
         static_cast<unsigned long long>(t.rays),
@@ -953,6 +961,7 @@ void printRuntimeTax(const char* viewName, const RuntimeTaxTotals& t) {
         static_cast<unsigned long long>(t.offIterations),
         static_cast<unsigned long long>(t.onHits),
         static_cast<unsigned long long>(t.offHits),
+        static_cast<unsigned long long>(t.perRayHitMismatches),
         t.skippedDistance,
         callsPerRay,
         usefulCallRatio,
@@ -1192,11 +1201,13 @@ int main() {
                 c.name);
             measurementWarnings = true;
         }
-        if (runtimeTax.valid && runtimeTax.onHits != runtimeTax.offHits) {
+        if (runtimeTax.valid && runtimeTax.perRayHitMismatches != 0u) {
             std::printf(
-                "SDF_RANGE_PERF FAIL runtime tax ON/OFF hit mismatch for %s: "
-                "on=%llu off=%llu\n",
+                "SDF_RANGE_PERF FAIL runtime tax ON/OFF per-ray hit mismatch "
+                "for %s: mismatches=%llu on=%llu off=%llu\n",
                 c.name,
+                static_cast<unsigned long long>(
+                    runtimeTax.perRayHitMismatches),
                 static_cast<unsigned long long>(runtimeTax.onHits),
                 static_cast<unsigned long long>(runtimeTax.offHits));
             measurementWarnings = true;
