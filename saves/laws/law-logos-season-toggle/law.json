@@ -5,7 +5,32 @@
   "identifier": "law-logos-season-toggle",
   "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
   "law": {
+    "id": "law-logos-season-toggle",
+    "name": "Logos: Cycle Liturgical Season",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "any",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "hud.btn.season"
+        }
+      ]
+    },
     "actionModel": {
+      "kind": 5,
       "children": [
         {
           "kind": 0,
@@ -17,10 +42,10 @@
         },
         {
           "kind": 0,
-          "path": "@hud.logos.telemetry.season.textString",
+          "path": "@hud.logos.telemetry.season.label2D",
           "operand": {
             "t": "string",
-            "v": "LITURGICAL SEASON: SOLAR TRANSFIGURATION (NOON)"
+            "v": "LITURGY: SOLAR TRANSFIGURATION (NOON)"
           }
         },
         {
@@ -28,52 +53,21 @@
           "path": "@logos.resonator.core.light.intensity",
           "operand": {
             "t": "float",
-            "v": 9.0
+            "v": 8.5
           }
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "Zach"
-    ],
-    "conditionMode": "any",
-    "conditionModel": {
-      "children": [
-        {
-          "kind": 8,
-          "otherId": "hud.btn.season"
-        }
-      ],
-      "kind": 4
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-logos-season-toggle",
-    "name": "Logos: Cycle Liturgical Season",
     "provenance": [
       {
-        "directed": true,
         "entityA": "law-logos-season-toggle",
         "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1787395000
-          }
-        ],
-        "type": "authored-by",
-        "weight": 1.0
+        "directed": true,
+        "weight": 1.0,
+        "events": [],
+        "type": "authored-by"
       }
-    ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    ]
   },
   "triggers": [
     "object-clicked"

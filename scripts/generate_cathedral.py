@@ -4507,3 +4507,21 @@ world_path = os.path.join(repo_root, "saves", "worlds", "cathedral_of_the_living
 with open(world_path, "w") as f:
     json.dump(world_doc, f, indent=2)
 print(f"Wrote {world_path}")
+
+# Write individual law files to saves/laws/<law_id>/law.json for runtime Zone switching
+for law in world_doc["authoredLaws"]["laws"]:
+    law_id = law["id"]
+    law_dir = os.path.join(repo_root, "saves", "laws", law_id)
+    os.makedirs(law_dir, exist_ok=True)
+    law_file = os.path.join(law_dir, "law.json")
+    law_data = {
+        "authors": law.get("authors", ["Zach"]),
+        "identifier": law_id,
+        "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+        "law": law,
+        "triggers": world_doc["authoredLaws"]["triggers"].get(law_id, ["object-clicked"])
+    }
+    with open(law_file, "w") as lf:
+        json.dump(law_data, lf, indent=2)
+        lf.write("\n")
+print(f"Wrote {len(world_doc['authoredLaws']['laws'])} law roots in saves/laws/")

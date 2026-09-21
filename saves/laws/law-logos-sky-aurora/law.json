@@ -2,11 +2,11 @@
   "authors": [
     "Zach"
   ],
-  "identifier": "law-logos-breath",
+  "identifier": "law-logos-sky-aurora",
   "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
   "law": {
-    "id": "law-logos-breath",
-    "name": "Logos: Breath of Life (Pneuma Respiration)",
+    "id": "law-logos-sky-aurora",
+    "name": "Logos: Radiate Celestial Sky Aurora",
     "enabled": true,
     "authority": 0,
     "activation": 0,
@@ -25,11 +25,7 @@
       "children": [
         {
           "kind": 8,
-          "otherId": "hud.btn.pneuma"
-        },
-        {
-          "kind": 8,
-          "otherId": "glyph.lexeme.pneuma"
+          "otherId": "hud.btn.aurora"
         }
       ]
     },
@@ -38,41 +34,39 @@
       "children": [
         {
           "kind": 0,
-          "path": "@state.logos.breathActive",
-          "operand": {
-            "t": "bool",
-            "v": true
-          }
-        },
-        {
-          "kind": 0,
-          "path": "@state.logos.pulseRate",
+          "path": "@cathedral.lightshow.giant_sky_aurora.light.intensity",
           "operand": {
             "t": "float",
-            "v": 2.4
+            "v": 14.0
           }
         },
         {
           "kind": 0,
-          "path": "@hud.logos.telemetry.breath.label2D",
+          "path": "@cathedral.lightshow.sky_aurora_curtains.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 11.0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.logos.telemetry.season.label2D",
           "operand": {
             "t": "string",
-            "v": "BREATH: RESPIRING (PNEUMA HARMONIC ACTIVE)"
+            "v": "CELESTIAL SKY: AURORA BOREALIS (TRANSCENDENT GLORY)"
           }
         },
         {
-          "kind": 0,
-          "path": "@logos.resonator.core.light.intensity",
-          "operand": {
-            "t": "float",
-            "v": 6.0
-          }
+          "kind": 18,
+          "path": "acoustic.frequency",
+          "input": "acoustic.amplitude",
+          "propertyName": "sine"
         }
       ]
     },
     "provenance": [
       {
-        "entityA": "law-logos-breath",
+        "entityA": "law-logos-sky-aurora",
         "entityB": "Zach",
         "directed": true,
         "weight": 1.0,

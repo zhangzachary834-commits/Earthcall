@@ -5,7 +5,36 @@
   "identifier": "law-logos-celestial-chord",
   "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
   "law": {
+    "id": "law-logos-celestial-chord",
+    "name": "Logos: Sound Polyphonic Celestial Canon",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "any",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "hud.btn.chord"
+        },
+        {
+          "kind": 8,
+          "otherId": "glyph.lexeme.harmonia"
+        }
+      ]
+    },
     "actionModel": {
+      "kind": 5,
       "children": [
         {
           "kind": 0,
@@ -20,12 +49,12 @@
           "path": "@logos.resonator.core.light.intensity",
           "operand": {
             "t": "float",
-            "v": 7.0
+            "v": 7.5
           }
         },
         {
           "kind": 0,
-          "path": "@hud.logos.telemetry.freq.textString",
+          "path": "@hud.logos.telemetry.freq.label2D",
           "operand": {
             "t": "string",
             "v": "CHORD: 432 Hz PYTHAGOREAN CELESTIAL CANON (ACTIVE)"
@@ -37,53 +66,18 @@
           "input": "acoustic.amplitude",
           "propertyName": "sine"
         }
-      ],
-      "kind": 5
+      ]
     },
-    "activation": 0,
-    "applicationLog": [],
-    "authority": 0,
-    "authors": [
-      "Zach"
-    ],
-    "conditionMode": "any",
-    "conditionModel": {
-      "children": [
-        {
-          "kind": 8,
-          "otherId": "hud.btn.chord"
-        },
-        {
-          "kind": 8,
-          "otherId": "glyph.lexeme.harmonia"
-        }
-      ],
-      "kind": 4
-    },
-    "conditionSubjects": [],
-    "drives": false,
-    "enabled": true,
-    "id": "law-logos-celestial-chord",
-    "name": "Logos: Sound Polyphonic Celestial Canon",
     "provenance": [
       {
-        "directed": true,
         "entityA": "law-logos-celestial-chord",
         "entityB": "Zach",
-        "events": [
-          {
-            "deltaWeight": 1.0,
-            "description": "authored-by",
-            "timestamp": 1787395000
-          }
-        ],
-        "type": "authored-by",
-        "weight": 1.0
+        "directed": true,
+        "weight": 1.0,
+        "events": [],
+        "type": "authored-by"
       }
-    ],
-    "retrigger": 0,
-    "scope": 1,
-    "targets": []
+    ]
   },
   "triggers": [
     "object-clicked"
