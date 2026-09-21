@@ -25,9 +25,20 @@ There is still no `class Duration`: a duration is represented by
 `Moment::interval(start,end)` or by a difference between coordinates when only
 the scalar measure is needed.
 
-## 1. Timeline — the temporal domain
+## 1. Timeline — a relative temporal domain
 
 `Timeline` inherits `Singular`.
+
+A Timeline is not intrinsically global. **Any Singular may own its own Timeline.**
+Ownership is expressed with ordinary Relation truth (for example
+`Timeline --owned-by--> Singular`), not by inventing subclasses such as
+`ObjectTimeline`, by adding a timeline field to every kind of being, or by
+inferring ownership from whichever C++ object stores the pointer.
+
+A lamp may own a Timeline. A Field may own one. A Material, Relation, Person,
+Zone, or any other Singular may own one. The broad clock shared across the
+Ourverse/Zones is merely a Timeline at the broadest scope; it is not the
+definition of Timeline.
 
 A Timeline contains Moments and may also carry a currently advancing temporal
 coordinate:
@@ -109,16 +120,21 @@ The current implementation proves the substrate can hold multiple independently
 advancing Timeline beings. It does **not** define the final Laws that relate,
 synchronize, fork, pause, scale, or derive one Timeline from another.
 
-## 4. The ordinary world Timeline
+## 4. The broad world Timeline is one relative Timeline
 
-The Engine currently owns one ordinary Timeline being:
+The current compatibility implementation stores one broad Timeline instance:
 
 ```
 world-timeline
 ```
 
-This replaces Engine's former raw `_worldTime` scalar as the primary live world
-clock state.
+It replaces Engine's former raw `_worldTime` scalar as the primary live world
+clock state, but **its C++ storage location is not ontological ownership**.
+Timeline ownership belongs in Relations among Singulars.
+
+Conceptually, this Timeline is the broad temporal domain shared by the
+Ourverse/ordinary Zones. That does not prevent any Singular inside them from
+owning an independent Timeline of its own.
 
 `Universe` borrows that Timeline during normal execution:
 
@@ -243,13 +259,14 @@ Renderer::setTemporalCoordinate(t, delta)
 The current production first mover supplies that coordinate from the
 Universe-selected world Timeline as a compatibility/default binding.
 
-The native Rung 4 GPU witness intentionally does something stronger: it creates
-a separate hard-coded `radiance-test-timeline`, advances that Timeline, projects
+The native Rung 4 GPU witness intentionally does something stronger: the radiant
+Object owns an ordinary, anonymously generated Timeline through the existing
+`owned-by` Relation. The witness advances that Object-owned Timeline, projects
 its coordinate through the Renderer boundary, and proves `rho(p,t)` changes
 pixels without changing the authored AST, parameter buffer, or WGSL program.
 
-That hard-coded Timeline is test scaffolding / First Mover substrate proof. It is
-not the future ontology for animation.
+There is no special "radiance Timeline" class, enum, identifier, or framework.
+The same substrate proves "I own my own clock" for any Singular.
 
 ## 9. Author direction for temporal change
 
@@ -266,12 +283,14 @@ being authored later.
 ## 10. Invariants this rung establishes
 
 1. Timeline is a Singular.
-2. Timeline contains Moments.
-3. Event remains a distinguished Moment.
-4. There is no enum/class proliferation for timeline kinds.
-5. Multiple Timelines can advance independently.
-6. Universe may borrow a Timeline but is not itself temporal ontology.
-7. Renderer/OntoMath accept a temporal coordinate without knowing which Timeline
-   supplied it.
-8. Legacy Drive/Flow/`f(t)` semantics remain compatibility machinery pending
-   the future Law/Timeline ontology.
+2. Timeline is relative: any Singular may own one through ordinary Relations.
+3. Timeline contains Moments.
+4. Event remains a distinguished Moment.
+5. There is no enum/class proliferation for timeline kinds or owners.
+6. Multiple Singular-owned Timelines can advance independently.
+7. The broad world clock is one Timeline at broad scope, not the definition of Time.
+8. Universe may borrow a Timeline but is not itself temporal ontology.
+9. Renderer/OntoMath accept a temporal coordinate without knowing which Timeline
+   or owner supplied it.
+10. Legacy Drive/Flow/`f(t)` semantics remain compatibility machinery pending
+    the future Law/Timeline ontology.
