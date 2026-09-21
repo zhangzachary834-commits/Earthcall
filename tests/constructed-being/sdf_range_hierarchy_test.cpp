@@ -256,7 +256,7 @@ int main() {
         const glm::vec3 realProxyExtent(1050.0f, 31.5f, 1050.0f);
         const auto h = geom::buildRangeHierarchy(
             perlin, realProxyExtent,
-            /*maxDepth=*/5, /*maxNodes=*/65536);
+            /*maxDepth=*/6, /*maxNodes=*/327680);
 
         check(!h.nodes.empty(), "real-scale Perlin hierarchy builds");
         check(h.provedEmptyNodes > 0,
@@ -265,16 +265,20 @@ int main() {
               "real-scale Perlin hierarchy preserves terrain ambiguity");
         check(h.unknownLeaves == 0,
               "real-scale supported Perlin expression stays finite");
-        check(h.nodes.size() <= 65536,
+        check(h.nodes.size() <= 327680,
               "real-scale Perlin hierarchy respects complete-tree budget");
-        check(h.nodes.size() <= 37449,
-              "depth-5 octree never exceeds mathematical node maximum");
+        check(h.nodes.size() <= 299593,
+              "depth-6 octree never exceeds mathematical node maximum");
         size_t positiveSkipNodes = 0;
+        size_t negativeZeroFreeNodes = 0;
         for (const auto& node : h.nodes) {
             if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipNodes;
+            if (node.boundFinite && node.rangeHi < 0.0f) ++negativeZeroFreeNodes;
         }
         check(positiveSkipNodes > 0,
               "real-scale Perlin hierarchy contains positive outside cells to skip");
+        check(negativeZeroFreeNodes > 0,
+              "real-scale Perlin hierarchy also preserves proved-negative interior cells");
         verifyStructure(h);
         verifyProvedCellsBySampling(perlin, h);
     }
