@@ -72,7 +72,7 @@ Time ontology:
 - removed empty `src/Time/Time.h/.cpp`;
 - added `src/Time/timeline.hpp/.cpp`;
 - `src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp/.cpp` now projects a borrowed Timeline;
-- Engine world-time compatibility state is backed by one broad Timeline instance.
+- Engine compatibility storage is backed by one broad Timeline instance whose ontological owner is explicitly the Ourverse through an `owned-by` Relation.
 
 Witnesses:
 - `tests/time/timeline_test.cpp`
