@@ -1448,8 +1448,8 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
-    u.time = glm::vec4(static_cast<float>(temporalCoordinate()),
-                       static_cast<float>(temporalDelta()), 0.0f, 0.0f);
+    u.time = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
+                       static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
