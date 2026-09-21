@@ -1811,11 +1811,13 @@ LawManager::~LawManager() {
     // connectToEventBus() creates two callbacks that capture this. Revoke only
     // this manager's registrations before its storage disappears; other
     // subsystems' listeners remain untouched.
-    auto& eventBus = Core::EventBus::instance();
-    eventBus.unsubscribe(_ecaEventSubscription);
-    eventBus.unsubscribe(_customEventSubscription);
-    _ecaEventSubscription = {};
-    _customEventSubscription = {};
+    if (_ecaEventSubscription || _customEventSubscription) {
+        auto& eventBus = Core::EventBus::instance();
+        eventBus.unsubscribe(_ecaEventSubscription);
+        eventBus.unsubscribe(_customEventSubscription);
+        _ecaEventSubscription = {};
+        _customEventSubscription = {};
+    }
     _connected = false;
 
     if (s_singularHookOwner == this) {
