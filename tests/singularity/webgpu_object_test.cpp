@@ -304,7 +304,7 @@ int main() {
         // afterward must change pixels through the shared uniform only.
         auto timeLeaf = std::make_shared<OntoMath::MathNode>();
         timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
-        timeLeaf->variableName = OntoMath::kWorldTimeVar;
+        timeLeaf->variableName = OntoMath::kTimeVar;
         rho.pieces[0].mathNode = timeLeaf;
 
         Universe::instance().setClock(0.15, 0.15);
