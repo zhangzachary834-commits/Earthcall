@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -222,6 +223,80 @@ int main() {
            "painting an object must give it its own material, not repaint the shared one");
     assert(tint->faceTextures.empty() &&
            "the shared material took paint meant for one object");
+
+    // --- Volumetric V0 native witness ---------------------------------------
+    // Use an implicit f(p)=1: it is positive everywhere, so there is NO hard
+    // zero-surface inside the proxy. Any non-black pixel therefore comes from
+    // participating-medium integration alone, not from surface shading.
+    //
+    // This is intentionally an isolated offscreen composition witness. Production
+    // Zone media are not activated through this path until the renderer has a
+    // depth-aware volume-composition pass that can clamp transport against opaque
+    // scene depth without letting translucent samples become depth owners.
+    {
+        geom::SdfNode noSurface = geom::makeImplicit("1");
+        geom::FieldNode medium("webgpu-volume-density-probe");
+        auto densityNode = scalarNode(0.08);
+        *medium.volumeDensity = OntoMath::Piecewise::continuous(densityNode);
+
+        RenderMaterial volumeMat;
+        volumeMat.baseColor = glm::vec3(0.0f);
+        volumeMat.opacity = 0.0f;
+
+        constexpr uint64_t kVolumeMemoId = 0xD3115179ULL;
+        constexpr uint32_t kVolumeStructureRevision = 1u;
+
+        renderer.setVolumeDensityTemporalCoordinate(0.0, 0.0);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/1u);
+        renderer.endFrame();
+
+        unsigned char lowDensity[4];
+        readCentre(lowDensity);
+        const Renderer::FrameStats lowStats = renderer.frameStats();
+        std::printf("volume low density  = (%d,%d,%d,%d), compiles=%llu hits=%llu\n",
+                    lowDensity[0], lowDensity[1], lowDensity[2], lowDensity[3],
+                    static_cast<unsigned long long>(lowStats.sdfProgramCompiles),
+                    static_cast<unsigned long long>(lowStats.sdfProgramCacheHits));
+
+        assert(lowDensity[0] > 0 &&
+               "authored volume density produced no native WebGPU contribution");
+        assert(abs(int(lowDensity[0]) - int(lowDensity[1])) < 8 &&
+               abs(int(lowDensity[1]) - int(lowDensity[2])) < 8 &&
+               "V0 compatibility scatter should still be neutral/white");
+        assert(lowStats.sdfProgramCompiles >= 1 &&
+               "first authored density draw must compile its structure");
+
+        // VALUE ONLY: mutate the coefficient in-place, preserve AST topology,
+        // and advance only the parameter revision. The next draw must refresh
+        // packed values while reusing the exact compiled WGSL/pipeline.
+        densityNode->scalarForm.terms[0].coefficient = 0.8;
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/2u);
+        renderer.endFrame();
+
+        unsigned char highDensity[4];
+        readCentre(highDensity);
+        const Renderer::FrameStats highStats = renderer.frameStats();
+        std::printf("volume high density = (%d,%d,%d,%d), compiles=%llu hits=%llu\n",
+                    highDensity[0], highDensity[1], highDensity[2], highDensity[3],
+                    static_cast<unsigned long long>(highStats.sdfProgramCompiles),
+                    static_cast<unsigned long long>(highStats.sdfProgramCacheHits));
+
+        assert(highDensity[0] > lowDensity[0] + 10 &&
+               "numeric volume-density edit did not visibly change native pixels");
+        assert(highStats.sdfProgramCompiles == 0 &&
+               "numeric D edit regenerated WGSL instead of refreshing parameters");
+        assert(highStats.sdfProgramCacheHits >= 1 &&
+               "numeric D edit did not reuse the memoized volume shader");
+    }
 
     // Unhook before the renderer (a stack object) goes out of scope: globals such
     // as ZoneManager are destroyed after main returns and can still reach for the
