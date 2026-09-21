@@ -233,6 +233,8 @@ private:
         uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
         uint64_t angularRevision = 0xffffffffffffffffULL;
         uint64_t angularStructureRevision = 0xffffffffffffffffULL;
+        uint64_t volumeDensityRevision = 0xffffffffffffffffULL;
+        uint64_t volumeDensityStructureRevision = 0xffffffffffffffffULL;
         bool multiSource = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
@@ -280,6 +282,16 @@ private:
     const OntoMath::Piecewise* _angularLayoutExprPtr = nullptr;
     sdfwgsl::AngularExpressionLayout _angularLayout;
     uint64_t _angularStructureRevision = 0;
+
+    // V0 density owns an independent structure/value identity. LegacyField and
+    // None are explicit structural states; Authored uses the production scalar
+    // emitter so numeric coefficient changes remain value-only.
+    uint64_t _volumeDensityLayoutRevision = 0xffffffffffffffffULL;
+    Rendering::VolumeDensityBinding::Kind _volumeDensityLayoutKind =
+        Rendering::VolumeDensityBinding::Kind::LegacyField;
+    const OntoMath::Piecewise* _volumeDensityLayoutExprPtr = nullptr;
+    sdfwgsl::ScalarExpressionLayout _volumeDensityLayout;
+    uint64_t _volumeDensityStructureRevision = 0;
 
     // Composite structural identity for Rung 7. Source positions, colors,
     // enablement and numeric AST parameters are values; source count and each
