@@ -106,18 +106,21 @@ struct Program {
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
 // the fragment output convention lives with the pipeline, not the codegen.
 //
-// An empty/degenerate tree still yields valid WGSL that reports "no surface", so
-// fieldNode is optional (needed if the tree uses VolumetricField and needs to sample
-// the 3D texture).
+// An empty/degenerate tree still yields valid WGSL that reports "no surface".
+// fieldNode remains only as a LEGACY generic-field compatibility input. New
+// participating-medium authorship enters through densityExpr so density never
+// needs to borrow source-radiance or generic-field identity by accident.
 // colorExpr is optional; if provided, it replaces the uniform base color.
 // radianceExpr is optional; if provided, it supplies authored spatial light radiance.
+// densityExpr is optional; if present, it is the explicit V0 D(p,t) authority.
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
                 const OntoMath::Piecewise* radianceExpr = nullptr,
                 const OntoMath::Piecewise* chromaExpr = nullptr,
                 const OntoMath::Piecewise* angularExpr = nullptr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr);
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
+                const OntoMath::Piecewise* densityExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -128,7 +131,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* radianceExpr = nullptr,
                              const OntoMath::Piecewise* chromaExpr = nullptr,
                              const OntoMath::Piecewise* angularExpr = nullptr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr);
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
+                             const OntoMath::Piecewise* densityExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -139,6 +143,11 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 // about which Timeline or Singular owner supplied that coordinate.
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime = false);
+
+// Inspect authored participating-medium density D(p,t)->scalar through the same
+// production emitter, but with its OWN temporal coordinate (u.volumeTime.x).
+// Absence is a real structural state and means no explicit V0 density channel.
+ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr);
 
 // Inspect authored source chroma chi(p,t)->vec3 with the same production
 // emitter. Absent chi has a distinct legacy identity; an authored expression
