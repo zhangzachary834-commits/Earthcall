@@ -103,7 +103,9 @@ public:
     
     double getWorldTime() const { return _worldTimeline.now(); }
     void setWorldTime(double t) {
-        (void)_worldTimeline.setClock(t, _worldTimeline.delta());
+        // Absolute repositioning is not a frame advance. Do not carry a stale
+        // prior-frame delta across a First Mover clock jump.
+        (void)_worldTimeline.setClock(t, 0.0);
     }
     double* worldTimePtr() { return _worldTimeline.nowPtr(); }
     Timeline& worldTimeline() { return _worldTimeline; }
