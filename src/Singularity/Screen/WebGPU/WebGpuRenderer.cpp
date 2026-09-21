@@ -1145,7 +1145,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeReady = false;
             memo->rangeHierarchy = {};
             memo->rangeProxy = {};
-            memo->rangeGpuNodes.clear();
+            memo->rangeProofWords.clear();
             memo->rangeHasPositiveSkip = false;
             memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
@@ -1237,94 +1237,79 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
 
-            // Pack only the proof-relevant frontier. The full CPU hierarchy
-            // remains the mathematical authority, but the GPU does not need
-            // ambiguous/negative subtrees that contain no positive-outside proof.
-            // Omitting a child is explicitly fail-open: the shader derives that
-            // octant's bounds and gives it back to the exact marcher.
-            memo->rangeGpuNodes.clear();
+            // Rasterize only proved-positive OUTSIDE knowledge into a compact
+            // fixed-depth bit grid. The complete adaptive hierarchy remains the
+            // CPU theorem. A zero GPU bit is deliberately non-authoritative:
+            // exact authored marching owns that regular cell.
+            memo->rangeProofWords.clear();
             memo->rangeHasPositiveSkip = false;
             const auto& rangeNodes = memo->rangeHierarchy.nodes;
-            std::vector<uint8_t> keep(rangeNodes.size(), 0u);
 
-            // buildRangeHierarchy appends children after their parent, so a
-            // reverse pass can mark exactly the transitive ancestry of every
-            // positive-outside theorem.
-            for (size_t i = rangeNodes.size(); i-- > 0;) {
-                const geom::SdfRangeNode& node = rangeNodes[i];
-                bool retained = geom::rangeNodeProvesPositiveOutside(node);
-                memo->rangeHasPositiveSkip =
-                    memo->rangeHasPositiveSkip || retained;
-                if (!retained && node.childCount != 0u) {
-                    for (uint32_t child = 0; child < node.childCount; ++child) {
-                        const size_t childIndex =
-                            static_cast<size_t>(node.firstChild) + child;
-                        if (childIndex < keep.size() && keep[childIndex] != 0u) {
-                            retained = true;
-                            break;
-                        }
+            constexpr uint32_t proofDepth = kSdfRangeProxyMaxDepth;
+            constexpr uint32_t proofDim = 1u << proofDepth;
+            constexpr uint32_t proofCellCount =
+                proofDim * proofDim * proofDim;
+            constexpr uint32_t proofWordCount =
+                (proofCellCount + 31u) / 32u;
+
+            if (!rangeNodes.empty()) {
+                memo->rangeProofWords.assign(proofWordCount, 0u);
+
+                auto setProofBit = [&](uint32_t x, uint32_t y, uint32_t z) {
+                    const uint32_t linear =
+                        x + proofDim * (y + proofDim * z);
+                    memo->rangeProofWords[linear >> 5u] |=
+                        (1u << (linear & 31u));
+                };
+
+                auto rasterizeProof =
+                    [&](auto&& self,
+                        uint32_t sourceIndex,
+                        uint32_t depth,
+                        uint32_t cellX,
+                        uint32_t cellY,
+                        uint32_t cellZ) -> void {
+                    if (sourceIndex >= rangeNodes.size() || depth > proofDepth) {
+                        return;
                     }
-                }
-                keep[i] = retained ? 1u : 0u;
-            }
+                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
 
-            if (!rangeNodes.empty() && keep[0] != 0u) {
-                memo->rangeGpuNodes.resize(1);
-                auto packSparse = [&](auto&& self,
-                                      uint32_t sourceIndex,
-                                      uint32_t packedIndex) -> void {
-                    if (sourceIndex >= rangeNodes.size() ||
-                        packedIndex >= memo->rangeGpuNodes.size()) {
+                    if (geom::rangeNodeProvesPositiveOutside(node)) {
+                        memo->rangeHasPositiveSkip = true;
+                        const uint32_t span = 1u << (proofDepth - depth);
+                        const uint32_t baseX = cellX * span;
+                        const uint32_t baseY = cellY * span;
+                        const uint32_t baseZ = cellZ * span;
+                        for (uint32_t z = 0; z < span; ++z) {
+                            for (uint32_t y = 0; y < span; ++y) {
+                                for (uint32_t x = 0; x < span; ++x) {
+                                    setProofBit(baseX + x, baseY + y, baseZ + z);
+                                }
+                            }
+                        }
                         return;
                     }
 
-                    const geom::SdfRangeNode& node = rangeNodes[sourceIndex];
-                    const bool positiveSkip =
-                        geom::rangeNodeProvesPositiveOutside(node);
-
-                    uint32_t childMask = 0u;
-                    uint32_t retainedChildren = 0u;
-                    if (!positiveSkip && node.childCount != 0u) {
-                        for (uint32_t child = 0; child < node.childCount; ++child) {
-                            const size_t childIndex =
-                                static_cast<size_t>(node.firstChild) + child;
-                            if (childIndex < keep.size() && keep[childIndex] != 0u) {
-                                childMask |= (1u << child);
-                                ++retainedChildren;
-                            }
-                        }
+                    if (node.childCount != 8u || depth == proofDepth) {
+                        return;
                     }
-
-                    uint32_t firstPackedChild = 0u;
-                    if (retainedChildren != 0u) {
-                        firstPackedChild =
-                            static_cast<uint32_t>(memo->rangeGpuNodes.size());
-                        memo->rangeGpuNodes.resize(
-                            memo->rangeGpuNodes.size() + retainedChildren);
-                    }
-
-                    // Re-acquire after resize: vector growth may invalidate
-                    // references. Immediate retained children occupy one compact
-                    // contiguous block; descendants are appended afterward.
-                    SdfRangeGpuNode& packed =
-                        memo->rangeGpuNodes[packedIndex];
-                    packed.boxMin = glm::vec4(node.boxMin, 0.0f);
-                    packed.boxMax = glm::vec4(node.boxMax, 0.0f);
-                    packed.meta = glm::uvec4(
-                        firstPackedChild,
-                        childMask,
-                        positiveSkip ? 1u : 0u,
-                        node.boundFinite ? 1u : 0u);
-
-                    uint32_t nextPackedChild = firstPackedChild;
-                    for (uint32_t child = 0; child < node.childCount; ++child) {
-                        if ((childMask & (1u << child)) == 0u) continue;
+                    for (uint32_t child = 0; child < 8u; ++child) {
+                        const uint64_t childIndex =
+                            static_cast<uint64_t>(node.firstChild) + child;
+                        if (childIndex >= rangeNodes.size()) continue;
                         self(self,
-                             node.firstChild + child,
-                             nextPackedChild++);
+                             static_cast<uint32_t>(childIndex),
+                             depth + 1u,
+                             cellX * 2u + ((child & 1u) != 0u ? 1u : 0u),
+                             cellY * 2u + ((child & 2u) != 0u ? 1u : 0u),
+                             cellZ * 2u + ((child & 4u) != 0u ? 1u : 0u));
                     }
                 };
-                packSparse(packSparse, 0u, 0u);
+
+                rasterizeProof(rasterizeProof, 0u, 0u, 0u, 0u, 0u);
+                if (!memo->rangeHasPositiveSkip) {
+                    memo->rangeProofWords.clear();
+                }
             }
 
             memo->rangeParameterRevision = memoParameterRevision;
@@ -1362,32 +1347,30 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    // Upload/traverse the hierarchy only when it can actually prove at least one
-    // cell empty. Unknown-only trees would add traversal overhead while skipping
-    // nothing, so they remain on the exact baseline path. FieldNode draws remain
-    // excluded because zero-set emptiness says nothing about volumetric density.
+    // Upload/traverse the proof grid only when it contains at least one
+    // positive-outside theorem. Zero-bit cells are exact-march fallback space.
+    // FieldNode draws remain excluded because zero-set emptiness says nothing
+    // about volumetric density.
     const bool rangeTraversalMarcherVerified =
         prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
         rangeTraversalMarcherVerified &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
-        !memo->rangeGpuNodes.empty()) {
+        !memo->rangeProofWords.empty()) {
         auto& rangeBatch = _sdfRangeNodeBatches[sp];
         const uint64_t base = static_cast<uint64_t>(rangeBatch.size());
-        const uint64_t count = static_cast<uint64_t>(memo->rangeGpuNodes.size());
-        const uint64_t u32Max = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+        const uint64_t count =
+            static_cast<uint64_t>(memo->rangeProofWords.size());
+        const uint64_t u32Max =
+            static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
         if (base <= u32Max && count <= u32Max && base + count <= u32Max) {
-            inst.rangeNodeOffset = static_cast<uint32_t>(base);
-            inst.rangeNodeCount = static_cast<uint32_t>(count);
+            inst.rangeProofWordOffset = static_cast<uint32_t>(base);
+            inst.rangeProofWordCount = static_cast<uint32_t>(count);
             inst.rangeTraversalEnabled = 1u;
-            rangeBatch.reserve(rangeBatch.size() + memo->rangeGpuNodes.size());
-            for (const SdfRangeGpuNode& local : memo->rangeGpuNodes) {
-                SdfRangeGpuNode packed = local;
-                if (packed.meta.y != 0u) {
-                    packed.meta.x += inst.rangeNodeOffset;
-                }
-                rangeBatch.push_back(packed);
-            }
+            inst.rangeProofDepth = kSdfRangeProxyMaxDepth;
+            rangeBatch.insert(rangeBatch.end(),
+                              memo->rangeProofWords.begin(),
+                              memo->rangeProofWords.end());
             mutableFrameStats().sdfRangeTraversalDraws++;
         }
     }
@@ -1628,14 +1611,14 @@ void WebGpuRenderer::flushSdfDraws() {
             mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
         }
 
-        // Keep the packed range hierarchy resident exactly like static SDF
-        // parameters. The CPU batch is rebuilt in instance order, but unchanged
-        // proof bytes are not re-uploaded after warmup.
+        // Keep the compact positive-proof words resident exactly like static
+        // SDF parameters. The CPU batch is rebuilt in instance order, but
+        // unchanged proof bytes are not re-uploaded after warmup.
         const auto& rangeNodes = _sdfRangeNodeBatches[sp];
-        const size_t rangeBytes = rangeNodes.size() * sizeof(SdfRangeGpuNode);
+        const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
         auto& persistentRange = _persistentSdfRangeNodes[sp];
         const uint64_t requiredRangeBytes =
-            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(SdfRangeGpuNode)));
+            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
         if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
             uint64_t capacity = 256;
             while (capacity < requiredRangeBytes) capacity *= 2;
@@ -1678,9 +1661,9 @@ void WebGpuRenderer::flushSdfDraws() {
                 persistentRange.mirror.clear();
             }
         } else {
-            // Binding 2 must remain valid even for a batch with no hierarchy.
+            // Binding 2 must remain valid even for a batch with no proof grid.
             // A zeroed dummy is never read because each such instance has count=0.
-            SdfRangeGpuNode dummy;
+            const uint32_t dummy = 0u;
             const void* src = rangeNodes.empty()
                 ? static_cast<const void*>(&dummy)
                 : static_cast<const void*>(rangeNodes.data());
@@ -1704,9 +1687,9 @@ void WebGpuRenderer::flushSdfDraws() {
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
 
-        // Group 1: instances + heightfield cells + generic range-hierarchy
-        // nodes. Empty accelerators bind legal dummy storage but advertise zero
-        // dimensions/counts, so the shader cannot observe the dummy contents.
+        // Group 1: instances + heightfield cells + positive-proof bit words.
+        // Empty accelerators bind legal dummy storage but advertise zero count,
+        // so the shader cannot observe the dummy contents.
         auto& hgCells = _sdfHeightGridBatches[sp];
         if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
         auto hgAlloc = bufferPool().suballocateStorage(
