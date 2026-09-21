@@ -1,5 +1,6 @@
 class ElementalToolHandler;
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
+#include "Time/timeline.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/Menu.hpp"
 #include <glm/glm.hpp>
 #pragma once
@@ -100,9 +101,13 @@ public:
     
         
     
-    double getWorldTime() const { return _worldTime; }
-    void setWorldTime(double t) { _worldTime = t; }
-    double* worldTimePtr() { return &_worldTime; }
+    double getWorldTime() const { return _worldTimeline.now(); }
+    void setWorldTime(double t) {
+        (void)_worldTimeline.setClock(t, _worldTimeline.delta());
+    }
+    double* worldTimePtr() { return _worldTimeline.nowPtr(); }
+    Timeline& worldTimeline() { return _worldTimeline; }
+    const Timeline& worldTimeline() const { return _worldTimeline; }
 
 private:
     Engine() = default;                       // use instance()
@@ -124,7 +129,11 @@ private:
     std::unique_ptr<CursorTools> _cursorTools;
     std::unique_ptr<Chat> _chat;
     std::unique_ptr<::ElementalToolHandler> _elementalToolHandler;
-    double _worldTime = 0.0;
+
+    // The ordinary world clock is one Timeline being, not a privileged time
+    // class. Additional temporal domains are ordinary Timeline instances and
+    // require no new Engine enum/member kind.
+    Timeline _worldTimeline{"world-timeline"};
 
     bool _mouseLeftPressedLast = false;
     bool _mouseLeftJustPressed = false;
