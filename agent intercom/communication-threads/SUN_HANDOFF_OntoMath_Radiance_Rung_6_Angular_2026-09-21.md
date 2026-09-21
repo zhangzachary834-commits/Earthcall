@@ -180,34 +180,42 @@ Carry forward the full requirement from:
 `docs/plans/ONTOMATH_RADIANCE_NEXT_RUNGS_PLAN_2026-09-20.md`
 section **Mandatory parallel substrate — authored volumetric density and transport**.
 
-## Current verification state
+## Final verification and merge state
 
-PR #283 is Ready for Review and GitHub reports it mergeable.
+PR #283 is **MERGED**.
 
-The first PR-head code run, Earthcall focused CI #1957 at
-`1b8336a8d0ebd8c52bcc0b446433c1e51f9126c8`, completed the entire
-**SDF range-proxy verification (macOS) job successfully** before later
-documentation commits advanced the branch. That successful job includes:
-- build of the SDF proof and native GPU parity witnesses;
-- CPU SDF proof witnesses;
-- native WebGPU SDF parity witnesses;
-- `webgpu_object_test`, which contains the new directional, numeric-refresh,
-  rotating-Timeline, and refusal pixel witnesses for alpha.
+Merge commit:
 
-The Focused CPU and Slow Adapter jobs on #1957 were cancelled by the branch's
-subsequent documentation pushes, not by a test failure.
+```
+5315a64487ddab1430fa917bda303529bdf90fda
+```
 
-After recording the mandatory volumetric-authorability addenda and this handoff,
-the current PR head is newer but code-identical with respect to Rung 6. The
-authoritative newest workflow is Earthcall focused CI #1967 on the docs-updated
-head; it is queued at this recording epoch.
+The final PR-head workflow was Earthcall focused CI #1970 on
+`cd051daa1984f4a1658abc1a5c76b009ed0390e3`.
 
-Therefore:
-- the Rung-6 SDF/native-WebGPU implementation has a real green code-head witness;
-- the final PR-head workflow still needs to settle before claiming the entire
-  current head green.
+Its three lanes settled as follows:
 
-If the newest run fails, inspect the exact failing job before changing architecture.
+- **SDF range-proxy verification (macOS): PASS**
+- **Slow Adapter independent clock (macOS): PASS**
+- **Focused CPU tests (macOS): 35/36 PASS; one unrelated Living Studio failure**
+
+The sole Focused CPU failure was `synthesis_studio_living_test`, with 29
+failures around chromatic-pad click pitches, spatial resonators, octave
+selection, and opening the 3D constellation. The Rung-6 contract witness
+`authorable_light_contract_test` passed in that same job. The renderer/SDF
+lane also passed, preserving the native WebGPU angular-radiance witnesses.
+
+Thus the workflow's top-level red conclusion is not evidence of a Rung-6
+radiance failure. The relevant Rung-6 implementation, persistence, compiler,
+parameter-refresh, Timeline, refusal, and native GPU witness lanes are green,
+and the PR is already merged.
+
+Do not reopen Rung 6 merely because CI #1970 is globally red. Treat the Living
+Studio failure as a separate regression unless new evidence ties it to this
+radiance work.
+
+The next Sun should begin from the merged state, not from the old feature
+branch, and should preserve the volumetric-authorability constitution above.
 
 ## Next architectural rung after Rung 6
 
