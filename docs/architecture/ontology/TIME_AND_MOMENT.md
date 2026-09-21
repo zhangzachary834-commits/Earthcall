@@ -135,11 +135,21 @@ It replaces Engine's former raw `_worldTime` scalar as the primary live world
 clock state, but **its C++ storage location is not ontological ownership**.
 Timeline ownership belongs in Relations among Singulars.
 
-Conceptually, this Timeline is the broad temporal domain shared by the
-Ourverse/ordinary Zones. That does not prevent any Singular inside them from
-owning an independent Timeline of its own.
+This compatibility First Mover now makes the broad ownership claim explicit:
 
-`Universe` borrows that Timeline during normal execution:
+```
+world-timeline --owned-by--> Ourverse
+```
+
+The Relation is the ontological ownership claim. Engine merely retains the
+Timeline and Relation in memory so their lifetimes span the process.
+
+That broad Timeline is therefore available across the ordinary Ourverse/Zone
+scope without implying that every Timeline is global. Any Singular inside that
+scope may own an independent Timeline of its own through the same Relation
+shape.
+
+`Universe` borrows that broad Timeline during normal legacy execution:
 
 ```
 world-timeline : Timeline : Singular
