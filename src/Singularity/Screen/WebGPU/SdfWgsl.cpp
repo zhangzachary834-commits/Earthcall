@@ -1089,6 +1089,9 @@ struct RU {
     // x = admitted radiance-source temporal coordinate; y = its delta.
     // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
     radianceTime: vec4<f32>,
+    // Independent participating-medium Timeline. D(p,t) reads t here; density
+    // never borrows the source clock merely because both are scalar channels.
+    volumeTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -1510,7 +1513,7 @@ fn fs(in: VSOut) -> FSOut {
         }
         
         // Volumetric Field Accumulation
-        let density = fieldEval(p);
+        let density = volumeDensityEval(p);
         if (density > 0.0) {
             if (first_hit_t < 0.0) { first_hit_t = t; }
             let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
@@ -1722,7 +1725,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* radianceExpr,
                              const OntoMath::Piecewise* chromaExpr,
                              const OntoMath::Piecewise* angularExpr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                             const Rendering::VolumeDensityBinding* volumeDensity) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1745,13 +1749,27 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     }
 
     std::string throwaway;
-    if (fieldNode && fieldNode->field) {
-        if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
-        } else {
-            (void)e.param(fieldNode->field->baseDensity);
-            (void)e.param(fieldNode->field->frequency);
-            (void)e.param(fieldNode->field->amplitude);
+    const auto densityKind = volumeDensity
+        ? volumeDensity->kind
+        : Rendering::VolumeDensityBinding::Kind::LegacyField;
+    if (densityKind == Rendering::VolumeDensityBinding::Kind::Authored) {
+        if (volumeDensity && volumeDensity->enabled &&
+            volumeDensity->densityExpr && !volumeDensity->densityExpr->pieces.empty()) {
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            emitPiecewise(*volumeDensity->densityExpr, e, "p", "f32", throwaway);
+            e.bindTime = false;
+            e.timeExpression = "u.radianceTime.x";
+        }
+    } else if (densityKind == Rendering::VolumeDensityBinding::Kind::LegacyField) {
+        if (fieldNode && fieldNode->field) {
+            if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
+                emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
+            } else {
+                (void)e.param(fieldNode->field->baseDensity);
+                (void)e.param(fieldNode->field->frequency);
+                (void)e.param(fieldNode->field->amplitude);
+            }
         }
     }
 
@@ -1849,7 +1867,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* radianceExpr,
                 const OntoMath::Piecewise* chromaExpr,
                 const OntoMath::Piecewise* angularExpr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                const Rendering::VolumeDensityBinding* volumeDensity) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1906,18 +1925,39 @@ Program compile(const geom::SdfNode& root,
                      "}\n";
     }
 
-    // --- Dual-Path Field Compiler ---
-    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
-    if (fieldNode && fieldNode->field) {
+    // --- V0 participating-medium density compiler ---
+    // The renderer resolves density semantics before codegen. Authored density,
+    // explicit absence, and the legacy generic-field compatibility path are
+    // distinct states; null is never asked to carry those meanings.
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
+    const auto densityKind = volumeDensity
+        ? volumeDensity->kind
+        : Rendering::VolumeDensityBinding::Kind::LegacyField;
+    if (densityKind == Rendering::VolumeDensityBinding::Kind::Authored) {
+        if (volumeDensity && volumeDensity->enabled &&
+            volumeDensity->densityExpr && !volumeDensity->densityExpr->pieces.empty()) {
+            prog.wgsl += "    // Authored V0 D(p,t)\n";
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            emitPiecewise(*volumeDensity->densityExpr, e, "p", "f32", prog.wgsl);
+            e.bindTime = false;
+            e.timeExpression = "u.radianceTime.x";
+        } else {
+            prog.wgsl += "    return 0.0;\n";
+        }
+    } else if (densityKind == Rendering::VolumeDensityBinding::Kind::None) {
+        prog.wgsl += "    return 0.0;\n";
+    } else if (fieldNode && fieldNode->field) {
+        // Named compatibility path only. New media author volume.density.ast.
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            prog.wgsl += "    // Legacy generic field density\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
             std::string amp = e.param(fieldNode->field->amplitude);
-            
-            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+
+            prog.wgsl += "    // Legacy procedural field density\n";
             prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
             prog.wgsl += "    return max(rawDensity, 0.0);\n";
         }
