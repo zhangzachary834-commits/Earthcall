@@ -12,6 +12,7 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <cstdint>
 
 // Forward declarations
 class Formation;
@@ -38,8 +39,23 @@ public:
     // ------------------------------------------------------------------
     // Public types
     // ------------------------------------------------------------------
+    using SubscriptionId = std::uint64_t;
     using Listener = std::function<void(const void*)>;
-    struct ListenerEntry { int priority; Listener listener; };
+
+    // A subscription state outlives copies of ListenerEntry. Closing a road
+    // marks the shared state inactive before the registry forgets it, so an
+    // async job that already copied the old listener list still refuses to
+    // enter an owner that has left the world.
+    struct SubscriptionState {
+        std::recursive_mutex mutex;
+        bool active = true;
+    };
+    struct ListenerEntry {
+        int priority;
+        SubscriptionId id;
+        std::shared_ptr<SubscriptionState> state;
+        Listener listener;
+    };
     
     // Lightweight metadata automatically attached to each event. Can be
     // extended later without breaking the templated interface.
@@ -63,15 +79,17 @@ public:
     // Subscription ------------------------------------------------------
     // ------------------------------------------------------------------
     template<typename Event>
-    void subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
+    SubscriptionId subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
     {
         std::lock_guard<std::mutex> lock(_mutex);
+        const SubscriptionId id = _nextSubscriptionId++;
+        auto state = std::make_shared<SubscriptionState>();
         auto it = _listeners.find(typeid(Event));
         auto newVec = std::make_shared<std::vector<ListenerEntry>>();
         if (it != _listeners.end() && it->second) {
             *newVec = *it->second;
         }
-        newVec->emplace_back(ListenerEntry{priority, [handler](const void* ePtr){
+        newVec->emplace_back(ListenerEntry{priority, id, std::move(state), [handler](const void* ePtr){
             handler(*static_cast<const Event*>(ePtr));
         }});
         // Keep highest priority first for deterministic ordering.
@@ -79,10 +97,13 @@ public:
             return a.priority > b.priority;
         });
         _listeners[typeid(Event)] = newVec;
+        return id;
     }
 
-    // Non-template version for internal use
-    void subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    // Non-template version for internal use. The returned road identity can be
+    // closed explicitly when its owner leaves the world.
+    SubscriptionId subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    bool unsubscribe(SubscriptionId id);
 
     // ------------------------------------------------------------------
     // Publication (synchronous) -----------------------------------------
@@ -99,8 +120,8 @@ public:
             listenersCopy = it->second;
         }
         if (!listenersCopy) return;
-        for (auto& entry : *listenersCopy) {
-            entry.listener(&event);
+        for (const auto& entry : *listenersCopy) {
+            invokeListener(entry, &event);
         }
     }
 
@@ -121,8 +142,8 @@ public:
 
         auto ePtr = std::make_shared<Event>(event); // shared to outlive lambda
         auto job  = [listenersCopy, ePtr]() {
-            for (auto& entry : *listenersCopy) {
-                entry.listener(ePtr.get());
+            for (const auto& entry : *listenersCopy) {
+                invokeListener(entry, ePtr.get());
             }
         };
 
@@ -152,11 +173,23 @@ public:
 
 private:
     friend struct EventBusTestFriend;
+
+    static void invokeListener(const ListenerEntry& entry, const void* eventPtr)
+    {
+        if (!entry.state) return;
+        // Per-road gate: unsubscribe waits for any delivery already inside the
+        // road to leave, and queued snapshots see active=false afterwards.
+        std::lock_guard<std::recursive_mutex> gate(entry.state->mutex);
+        if (!entry.state->active) return;
+        entry.listener(eventPtr);
+    }
+
     void clear();    // remove all listeners (for testing only)
 
     // Listener registry keyed by event type ---------------------------------
     std::unordered_map<std::type_index, std::shared_ptr<const std::vector<ListenerEntry>>> _listeners;
     std::mutex   _mutex;
+    SubscriptionId _nextSubscriptionId{1};
 
     // Async queue -----------------------------------------------------------
     using Job = std::function<void()>;
