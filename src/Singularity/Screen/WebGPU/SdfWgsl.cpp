@@ -1014,19 +1014,6 @@ fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     return vec2<f32>(tEnter, tExit);
 }
 
-fn rayAabbBounds(ro: vec3<f32>, rd: vec3<f32>,
-                 bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
-    let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
-    let inv = 1.0 / rds;
-    let t0 = (bmin - ro) * inv;
-    let t1 = (bmax - ro) * inv;
-    let tmin = min(t0, t1);
-    let tmax = max(t0, t1);
-    return vec2<f32>(
-        max(max(tmin.x, tmin.y), tmin.z),
-        min(min(tmax.x, tmax.y), tmax.z));
-}
-
 // Min/max heightfield grid DDA skip (rendering-optimization Phase C). Walks
 // the ray's XZ footprint across a uniform grid of conservative (hMin,hMax)
 // bounds (Amanatides & Woo 1987) and skips whole cells the ray's own height
@@ -1163,11 +1150,24 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         let cellMin =
             -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
         let cellMax = cellMin + cellSize;
-        let cell = rayAabbBounds(ro, rd, cellMin, cellMax);
-        if (cell.y <= t) {
+
+        // We need only the selected cell's EXIT. The old slab helper computed
+        // both entry and exit even though this ray point already owns the cell.
+        // Per axis, max((bmin-ro)/rd, (bmax-ro)/rd) is exactly the forward
+        // face: bmax for a positive safe direction, bmin for a negative one.
+        // Keep the same near-zero substitution and arithmetic order, but skip
+        // the unused entry-face work. This is not a DDA; one classified cell
+        // still hands a clear bit straight back to the exact authored marcher.
+        let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+        let invRd = 1.0 / rds;
+        let exitFace = select(cellMin, cellMax, rds >= vec3<f32>(0.0));
+        let axisExit = (exitFace - ro) * invRd;
+        let cellExit = min(
+            min(min(axisExit.x, axisExit.y), axisExit.z),
+            tMax);
+        if (cellExit <= t) {
             return vec3<f32>(t, tMax, 1.0);
         }
-        let cellExit = min(cell.y, tMax);
 
         if (!provedPositive) {
             // A clear bit says only that the proof grid grants no skip here.
