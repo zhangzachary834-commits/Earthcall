@@ -954,6 +954,7 @@ struct SdfGlobalUniforms {
     glm::vec4 lightSpecular;
     glm::vec4 lightControl; // x = lighting enabled (0 or 1)
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
+    glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
 };
 } // namespace
 
@@ -1069,7 +1070,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (_radianceLayoutRevision != radianceRevision() ||
         _radianceLayoutExprPtr != radianceExpr()) {
         sdfwgsl::ScalarExpressionLayout nextLayout =
-            sdfwgsl::inspectScalarExpression(radianceExpr());
+            sdfwgsl::inspectScalarExpression(radianceExpr(), true);
         const bool structureChanged =
             _radianceLayoutRevision == 0xffffffffffffffffULL ||
             nextLayout.ok != _radianceLayout.ok ||
@@ -1447,6 +1448,8 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
+                               static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range

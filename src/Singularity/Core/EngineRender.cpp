@@ -12,6 +12,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -112,6 +113,17 @@ namespace Core {
                                            Rendering::lightSpecularRadiance(light));
                 currentRenderer().setLightingEnabled(light.enabled);
 
+                // Compatibility/default binding for THIS radiance source.
+                // Renderer and OntoMath see only a temporal coordinate; they do
+                // not decide which Timeline owns the source's process. Until
+                // authored Law/Timeline selection supplies root's relative
+                // Timeline, the broad Universe-selected Timeline is the First
+                // Mover fallback.
+                const Universe& universe = Universe::instance();
+                currentRenderer().setRadianceTemporalCoordinate(
+                    universe.hasClock() ? universe.now() : 0.0,
+                    universe.hasClock() ? universe.dt() : 0.0);
+
                 // The radiant FieldNode's exact authored scalar AST is the
                 // spatial radiance function. Content identity, not pointer
                 // identity, governs invalidation when field.ast is edited.
@@ -132,6 +144,7 @@ namespace Core {
 
         if (!persistentLightPlaced) {
             currentRenderer().setRadianceField(nullptr, 0);
+            currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
             // A previously active authored Zone may have disabled illumination.
             // No-source means the historical compatibility contract, so restore
             // enabled state even when no ScreenChannel happens to be present.

@@ -17,6 +17,8 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
+#include "Time/timeline.hpp"
+#include "Relation/Relation.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -26,6 +28,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 extern MaterialManager materials;   // global Material beings (globals.cpp)
@@ -47,6 +50,19 @@ std::shared_ptr<OntoMath::MathNode> scalarNode(double value) {
     node->scalarForm.terms.push_back(OntoMath::Term(value));
     return node;
 }
+
+// Test-only stand-in for the production radiant FieldNode. The important
+// distinction is source vs receiver: rho's Timeline belongs to the Singular
+// whose conditional process emits radiance, not to whichever surface is shaded.
+class RadianceSourceProbe final : public Singular {
+public:
+    std::string getIdentifier() const override {
+        return "webgpu-radiance-source-probe";
+    }
+
+protected:
+    void buildProperties() override { _propertiesBuilt = true; }
+};
 
 } // namespace
 
@@ -298,13 +314,67 @@ int main() {
         assert(valueStats.sdfParameterBytesUploaded > 0 &&
                "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
-        // STRUCTURE: ScalarLeaf -> Add(ScalarLeaf, ScalarLeaf).
+        // RUNG 4 TIME: make rho read the canonical temporal coordinate.
+        // Timeline is RELATIVE: any Singular may own one. Here the radiance
+        // SOURCE owns an ordinary Timeline; the Object below is only the
+        // receiver being shaded. This prevents source time from being confused
+        // with per-surface time while leaving future Law selection open.
+        auto timeLeaf = std::make_shared<OntoMath::MathNode>();
+        timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
+        timeLeaf->variableName = OntoMath::kTimeVar;
+        rho.pieces[0].mathNode = timeLeaf;
+
+        RadianceSourceProbe radianceSource;
+        Timeline localTimeline;
+        Relation localTimelineOwnership(
+            "owned-by", localTimeline, radianceSource, true, 1.0f);
+        assert(localTimelineOwnership.a() == &localTimeline);
+        assert(localTimelineOwnership.b() == &radianceSource);
+        assert(localTimelineOwnership.typeLabel() == "owned-by");
+
+        assert(localTimeline.setClock(0.15, 0.15));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(),
+                                       localTimeline.delta());
+        renderer.setRadianceField(&rho, 1003);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char timeDim[4];
+        readCentre(timeDim);
+        const Renderer::FrameStats timeCompileStats = renderer.frameStats();
+        assert(timeCompileStats.sdfProgramCompiles == 1 &&
+               "introducing canonical t should compile the new rho structure once");
+
+        assert(localTimeline.setClock(1.0, 0.85));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(),
+                                       localTimeline.delta());
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char timeBright[4];
+        readCentre(timeBright);
+        const Renderer::FrameStats timeAdvanceStats = renderer.frameStats();
+
+        std::printf("radiance timeline centre t=.15:%d t=1:%d compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    timeDim[0], timeBright[0], timeAdvanceStats.sdfProgramCompiles,
+                    timeAdvanceStats.sdfProgramCacheHits,
+                    timeAdvanceStats.sdfParameterBytesUploaded);
+        assert(timeBright[0] > timeDim[0] + 80 &&
+               "advancing the radiance source Timeline did not visibly change rho(p,t)");
+        assert(timeAdvanceStats.sdfProgramCompiles == 0 &&
+               "advancing t recompiled WGSL instead of updating the shared uniform");
+        assert(timeAdvanceStats.sdfProgramCacheHits >= 1 &&
+               "advancing t failed to reuse the memoized SDF program");
+        assert(timeAdvanceStats.sdfParameterBytesUploaded == 0 &&
+               "advancing t incorrectly rewrote the authored SDF parameter buffer");
+
+        // STRUCTURE: ValueLeaf(t) -> Add(ScalarLeaf, ScalarLeaf).
         auto add = std::make_shared<OntoMath::MathNode>();
         add->op = OntoMath::MathNode::Op::Add;
         add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
         add->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
         rho.pieces[0].mathNode = add;
-        renderer.setRadianceField(&rho, 1003);
+        renderer.setRadianceField(&rho, 1004);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -316,7 +386,7 @@ int main() {
         auto unsupported = std::make_shared<OntoMath::MathNode>();
         unsupported->op = OntoMath::MathNode::Op::Raycast;
         rho.pieces[0].mathNode = unsupported;
-        renderer.setRadianceField(&rho, 1004);
+        renderer.setRadianceField(&rho, 1005);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -331,6 +401,7 @@ int main() {
                "refused authored rho left stale rendered radiance on screen");
 
         renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceTemporalCoordinate(0.0, 0.0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face

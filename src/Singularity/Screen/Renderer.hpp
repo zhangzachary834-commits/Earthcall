@@ -141,6 +141,20 @@ public:
     const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
     uint64_t radianceRevision() const { return _radianceRevision; }
 
+    // Temporal coordinate admitted by the active authored RADIANCE SOURCE.
+    // Renderer does not decide which Timeline supplies it and does not attach
+    // this coordinate to the surfaces being illuminated. Today EngineRender
+    // projects the broad compatibility Timeline for the active radiant FieldNode;
+    // a future Law/First Mover may select that source Singular's own Timeline
+    // without changing WebGPU or OntoMath. Other changing channels (material
+    // color, geometry, animation, etc.) require their own explicit bindings.
+    void setRadianceTemporalCoordinate(double t, double delta) {
+        _radianceTemporalCoordinate = t;
+        _radianceTemporalDelta = delta;
+    }
+    double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
+    double radianceTemporalDelta() const { return _radianceTemporalDelta; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -322,6 +336,8 @@ private:
     bool      _lightingOn = true;
     const OntoMath::Piecewise* _radianceExpr = nullptr;
     uint64_t _radianceRevision = 0;
+    double _radianceTemporalCoordinate = 0.0;
+    double _radianceTemporalDelta = 0.0;
     FrameStats _frameStats;
 };
 

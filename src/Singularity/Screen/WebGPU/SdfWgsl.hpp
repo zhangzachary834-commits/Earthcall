@@ -107,6 +107,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 // a value-only edit can refresh the shared parameter block without regenerating
 // WGSL; unequal structure means the shader source can have changed. Unsupported
 // mathematics refuses here for the same reason it refuses in compile().
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr);
+// bindTime admits the canonical temporal coordinate "t"; it says nothing
+// about which Timeline or Singular owner supplied that coordinate.
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime = false);
 
 } // namespace sdfwgsl

@@ -163,7 +163,8 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-    Time/                  the world clock itself lives on Universe
+    Time/                  Timeline · Moment · Event
+      timeline.hpp/.cpp    (Timeline: relative temporal domain, a Singular)
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
     ZonesOfEarth/

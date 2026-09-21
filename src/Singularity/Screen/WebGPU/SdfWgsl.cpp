@@ -305,6 +305,7 @@ struct Emit {
     std::vector<float> params;
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
+    bool               bindTime = false; // expression-context capability, not authored state
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -373,9 +374,14 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
+    if (var == OntoMath::kTimeVar) {
+        if (e.bindTime) return "u.radianceTime.x";
+        e.refuse("a field expression names temporal variable 't', but this shader "
+                 "expression context does not bind the temporal coordinate");
+        return "0.0";
+    }
     e.refuse("a field expression names the variable '" + var +
-             "', which has no binding in a shader; only the ambient point "
-             "(p, x, y, z) is bound here");
+             "', which has no binding in this shader expression context");
     return "0.0";
 }
 
@@ -578,7 +584,11 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
 }
 
 void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt, const std::string& outType, std::string& outBody) {
-    std::string inVar = (pw.inputVariable == "x") ? (pt + ".x") : (pw.inputVariable == "y") ? (pt + ".y") : (pw.inputVariable == "z") ? (pt + ".z") : "0.0";
+    // Piecewise interval bounds live on the same authored coordinate vocabulary
+    // as the value expression itself. In particular, rho(p,t) may cut pieces
+    // along t. An unbound coordinate refuses through pointComponent(); it is
+    // never silently reinterpreted as the scalar zero.
+    std::string inVar = pointComponent(pw.inputVariable, e, pt);
     
     for (size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
@@ -954,6 +964,9 @@ struct RU {
     // z = viewport height in pixels.
     // w = authorable space distortion factor (e.g. Far Lands Zone).
     limits:      vec4<f32>,
+    // x = admitted radiance-source temporal coordinate; y = its delta.
+    // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
+    radianceTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -1328,8 +1341,10 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr) {
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime) {
     Emit e;
+    e.bindTime = bindTime;
     std::string body;
 
     // No authored expression is a real structural state: compile() emits the
@@ -1401,7 +1416,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
     if (radianceExpr && !radianceExpr->pieces.empty()) {
+        e.bindTime = true;
         emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
     }
 
     ParameterBlock block;
@@ -1526,7 +1543,9 @@ Program compile(const geom::SdfNode& root,
 
     std::string radianceBody;
     if (radianceExpr && !radianceExpr->pieces.empty()) {
+        e.bindTime = true;
         emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
+        e.bindTime = false;
     } else {
         radianceBody = "    return 1.0;\n";
     }

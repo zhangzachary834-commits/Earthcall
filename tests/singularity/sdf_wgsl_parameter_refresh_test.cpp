@@ -250,6 +250,76 @@ int main() {
               "no-radiance source still exposes the common lightRadiance seam");
     }
 
+    // ---------------------------------------------------------------------
+    // 5. Rung 4's admitted temporal coordinate is an ambient input, not an
+    //    authored parameter. rho(p,t) must compile to the shared temporal
+    //    uniform without knowing which Timeline supplied t, and therefore
+    //    requires no parameter slot or per-frame WGSL regeneration.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto timeNode = std::shared_ptr<OntoMath::MathNode>(
+            variable(OntoMath::kTimeVar).release());
+        OntoMath::Piecewise timedRadiance =
+            OntoMath::Piecewise::continuous(timeNode);
+
+        const sdfwgsl::ScalarExpressionLayout unboundLayout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance);
+        const sdfwgsl::ScalarExpressionLayout layout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance, true);
+        const sdfwgsl::Program timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+
+        check(!unboundLayout.ok &&
+                  unboundLayout.error.find("does not bind the temporal coordinate") != std::string::npos,
+              "t refuses in a shader expression context that did not opt into time");
+        check(layout.ok, "rho(p,t) structure inspection succeeds");
+        check(timed.ok, "rho(p,t) WGSL compilation succeeds");
+        check(layout.parameterCount == 0,
+              "temporal coordinate consumes no authored parameter slot");
+        check(timed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "canonical t binds to the shared SDF temporal uniform");
+
+        auto scalarTime = std::make_shared<OntoMath::MathNode>();
+        scalarTime->op = OntoMath::MathNode::Op::ScalarLeaf;
+        scalarTime->scalarForm.terms.push_back(
+            OntoMath::Term(2.0, {{OntoMath::kTimeVar, 1.0}}));
+        timedRadiance.pieces[0].mathNode = scalarTime;
+        const sdfwgsl::Program scalarTimed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+        check(scalarTimed.ok && scalarTimed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "ScalarForm factors may use the same canonical t binding");
+
+        // Piecewise applicability must use the same admitted coordinate. Before
+        // Rung 4 this emitter recognized only x/y/z and silently used 0.0 for
+        // every other inputVariable, which would make a bounded rho(t) choose
+        // the wrong branch while still producing valid WGSL.
+        OntoMath::Piecewise boundedTime =
+            OntoMath::Piecewise::continuous(
+                std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        boundedTime.inputVariable = OntoMath::kTimeVar;
+        boundedTime.pieces[0].hasLo = true;
+        boundedTime.pieces[0].lo = 0.25;
+        boundedTime.pieces[0].hasHi = true;
+        boundedTime.pieces[0].hi = 0.75;
+
+        const auto boundedUnbound =
+            sdfwgsl::inspectScalarExpression(&boundedTime);
+        const auto boundedLayout =
+            sdfwgsl::inspectScalarExpression(&boundedTime, true);
+        const auto boundedProgram =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &boundedTime);
+
+        check(!boundedUnbound.ok,
+              "bounded rho(t) refuses when temporal coordinate is not admitted");
+        check(boundedLayout.ok && boundedProgram.ok,
+              "bounded rho(t) compiles when temporal coordinate is admitted");
+        check(boundedProgram.wgsl.find("u.radianceTime.x >=") != std::string::npos &&
+                  boundedProgram.wgsl.find("u.radianceTime.x <=") != std::string::npos,
+              "Piecewise t bounds read the admitted Timeline coordinate");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;

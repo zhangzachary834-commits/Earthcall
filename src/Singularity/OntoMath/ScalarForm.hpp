@@ -368,13 +368,16 @@ struct TypeResult {
 
 using TypeEnv = std::map<std::string, ValueKind>;
 
-// The ambient point a field expression is evaluated AT. A field AST is a
-// pointwise expression: the CPU evaluator binds these variables in its
-// variable map, and the WGSL emitter binds them to the shader's point. They
-// are the ONE convention that makes CPU and GPU evaluate the same tree.
+// Canonical ambient names available to authored mathematics. A spatial field
+// is evaluated at p/x/y/z. Channels that explicitly admit world time may also
+// bind t; OntoMath itself never invents a clock value. Radiance Rung 4 is the
+// first Screen binding of t. CPU callers bind the same name in their variable
+// map, preserving one authored tree across execution channels.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
+//   "t"          a scalar temporal coordinate whose meaning the channel binds
 inline constexpr const char* kAmbientPointVar = "p";
+inline constexpr const char* kTimeVar = "t";
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
