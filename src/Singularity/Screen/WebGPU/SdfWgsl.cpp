@@ -584,7 +584,11 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
 }
 
 void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt, const std::string& outType, std::string& outBody) {
-    std::string inVar = (pw.inputVariable == "x") ? (pt + ".x") : (pw.inputVariable == "y") ? (pt + ".y") : (pw.inputVariable == "z") ? (pt + ".z") : "0.0";
+    // Piecewise interval bounds live on the same authored coordinate vocabulary
+    // as the value expression itself. In particular, rho(p,t) may cut pieces
+    // along t. An unbound coordinate refuses through pointComponent(); it is
+    // never silently reinterpreted as the scalar zero.
+    std::string inVar = pointComponent(pw.inputVariable, e, pt);
     
     for (size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
