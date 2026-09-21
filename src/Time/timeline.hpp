@@ -7,13 +7,18 @@
 #include <string>
 #include <vector>
 
-// A Timeline is a first-class temporal domain: an identifiable Singular that
-// contains Moments and carries a current temporal head when the domain is
-// actively advancing.
+// A Timeline is a first-class RELATIVE temporal domain: an identifiable
+// Singular that contains Moments and carries a current temporal head when the
+// domain is actively advancing.
 //
-// Timeline is deliberately NOT an enum of engine clocks. "render", "physics",
-// "maintenance", "world", or any future temporal domain are ordinary Timeline
-// instances distinguished by authored identity/relations, not new C++ kinds.
+// Any Singular may own a Timeline through ordinary Relations ("I own my own
+// clock"). A Timeline can be as broad as the Ourverse/world clock or as local
+// as one Object, Field, Material, Person, Relation, Zone, etc. Storage location
+// never decides ownership; authored Relation truth does.
+//
+// Timeline is deliberately NOT an enum of engine clocks. "world", "local",
+// "animation", "maintenance", or any future use are ordinary Timeline instances
+// distinguished by authored identity/Relations, not new C++ kinds.
 //
 // Moments are owned through shared_ptr so an Event (which IS a Moment) can live
 // on a Timeline without slicing. The storage order is not temporal doctrine;
