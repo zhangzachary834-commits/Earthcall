@@ -954,10 +954,14 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 // and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
-    viewProj:    mat4x4<f32>,
-    invViewProj: mat4x4<f32>,
-    lightPos:    vec4<f32>,
-    eyePos:      vec4<f32>,
+    viewProj:       mat4x4<f32>,
+    invViewProj:    mat4x4<f32>,
+    lightPos:       vec4<f32>,
+    eyePos:         vec4<f32>,
+    lightAmbient:   vec4<f32>,
+    lightDiffuse:   vec4<f32>,
+    lightSpecular:  vec4<f32>,
+    lightControl:   vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
@@ -1434,15 +1438,26 @@ fn fs(in: VSOut) -> FSOut {
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
-    
+
+    let radialRadiance = max(lightRadiance(pw - u.lightPos.xyz), 0.0);
     let diff = max(dot(nw, L), 0.0);
-    let lit  = inst.shading.x + inst.shading.y * diff;
-    let spec = inst.shading.z * pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) * step(0.0001, diff);
+
+    let ambientEnvelope  = u.lightAmbient.rgb  / vec3<f32>(0.2);
+    let diffuseEnvelope  = u.lightDiffuse.rgb  / vec3<f32>(0.8);
+    let specularEnvelope = u.lightSpecular.rgb;
+
+    let ambientTerm = inst.shading.x * ambientEnvelope;
+    let diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
+    let specShape = inst.shading.z *
+        pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
+        step(0.0001, diff);
+    let specTerm = specularEnvelope * specShape * radialRadiance;
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    // Combine hard surface with accumulated volumetric scatter
-    let base_rgb = sdfColor(pf) * lit + vec3<f32>(spec);
+    let surfaceColor = sdfColor(pf);
+    let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
+    let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
     let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
@@ -1465,7 +1480,8 @@ fn fs(in: VSOut) -> FSOut {
 
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
-                             const OntoMath::Piecewise* colorExpr) {
+                             const OntoMath::Piecewise* colorExpr,
+                             const OntoMath::Piecewise* radianceExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1513,6 +1529,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     if (colorExpr && !colorExpr->pieces.empty()) {
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
+    if (radianceExpr && !radianceExpr->pieces.empty()) {
+        emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
+    }
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -1522,7 +1541,10 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     return block;
 }
 
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, const OntoMath::Piecewise* colorExpr) {
+Program compile(const geom::SdfNode& root,
+                const geom::FieldNode* fieldNode,
+                const OntoMath::Piecewise* colorExpr,
+                const OntoMath::Piecewise* radianceExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1630,6 +1652,14 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
         colorBody = "    return instances[g_instIdx].baseColor.xyz;\n";
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
+
+    std::string radianceBody;
+    if (radianceExpr && !radianceExpr->pieces.empty()) {
+        emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
+    } else {
+        radianceBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
 
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
