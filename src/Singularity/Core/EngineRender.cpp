@@ -12,6 +12,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -101,6 +102,13 @@ namespace Core {
         if (_lawManager) {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
+
+        // Universe is the authority for simulation time. Rendering receives a
+        // frame snapshot through its boundary rather than backend code reaching
+        // into world/Law state.
+        const Universe& universe = Universe::instance();
+        currentRenderer().setWorldTime(universe.hasClock() ? universe.now() : 0.0,
+                                       universe.hasClock() ? universe.dt() : 0.0);
 
         bool persistentLightPlaced = false;
         if (auto* root = zone.spatialRoot()) {
