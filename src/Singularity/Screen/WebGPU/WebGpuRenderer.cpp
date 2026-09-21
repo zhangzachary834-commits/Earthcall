@@ -1308,6 +1308,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
         if (memo) {
+            // A shader compile is broader than a geometry-proof invalidation:
+            // Radiance/chroma/angular/material edits may regenerate WGSL while
+            // leaving the SDF theorem's premises untouched. Preserve spatial
+            // prophecy across those unrelated recompiles.
+            const bool rangePremisesChanged =
+                memo->rangeReady &&
+                (memo->rangeStructureRevision != memoRevision ||
+                 memo->rangeParameterRevision != memoParameterRevision);
+
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
@@ -1325,12 +1334,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
 
-            memo->rangeReady = false;
-            memo->rangeHierarchy = {};
-            memo->rangeProxy = {};
-            memo->rangeProofWords.clear();
-            memo->rangeHasPositiveSkip = false;
-            memo->rangeParameterRevision = 0xffffffff;
+            if (rangePremisesChanged) {
+                memo->rangeReady = false;
+                memo->rangeHierarchy = {};
+                memo->rangeProxy = {};
+                memo->rangeProofWords.clear();
+                memo->rangeHasPositiveSkip = false;
+                memo->rangeStructureRevision = 0xffffffff;
+                memo->rangeParameterRevision = 0xffffffff;
+            }
             prog = &memo->prog;
         } else {
             prog = &localProg;
@@ -1411,12 +1423,38 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeAuthoredExtent.x != baselineProxyExtent.x ||
             memo->rangeAuthoredExtent.y != baselineProxyExtent.y ||
             memo->rangeAuthoredExtent.z != baselineProxyExtent.z;
-        if (!memo->rangeReady ||
-            memo->rangeParameterRevision != memoParameterRevision ||
-            extentChanged) {
+        const bool structureChanged =
+            memo->rangeStructureRevision != memoRevision;
+        const bool parametersChanged =
+            memo->rangeParameterRevision != memoParameterRevision;
+
+        bool theoremChanged = false;
+        if (!memo->rangeReady || structureChanged || extentChanged) {
+            // Authored topology/coverage changed: the old subdivision itself is
+            // no longer a lawful repair spine, so establish a fresh theorem.
             memo->rangeHierarchy = geom::buildRangeHierarchy(
                 field, baselineProxyExtent,
                 kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
+            theoremChanged = true;
+        } else if (parametersChanged) {
+            // Same authored structure, changed value premises: repair the
+            // existing theorem in place. Stable subdivision blocks survive;
+            // only newly ambiguous leaves allocate new octets.
+            geom::SdfRangeRefreshStats refreshStats;
+            if (!geom::refreshRangeHierarchy(
+                    memo->rangeHierarchy, field, baselineProxyExtent,
+                    kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes,
+                    &refreshStats)) {
+                // Malformed/incompatible retained topology has zero authority.
+                // Fail open to a fresh conservative theorem.
+                memo->rangeHierarchy = geom::buildRangeHierarchy(
+                    field, baselineProxyExtent,
+                    kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
+            }
+            theoremChanged = true;
+        }
+
+        if (theoremChanged) {
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
 
@@ -1432,9 +1470,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeHasPositiveSkip = proofGrid.hasPositiveCells();
             memo->rangeProofWords = std::move(proofGrid.words);
 
+            memo->rangeStructureRevision = memoRevision;
             memo->rangeParameterRevision = memoParameterRevision;
             memo->rangeAuthoredExtent = baselineProxyExtent;
             memo->rangeReady = true;
+            // Existing telemetry counts theorem maintenance events. A parameter
+            // refresh is intentionally counted here too; it is not a per-frame
+            // event, and preserving this counter's meaning avoids hiding work.
             mutableFrameStats().sdfRangeHierarchyBuilds++;
         }
 
