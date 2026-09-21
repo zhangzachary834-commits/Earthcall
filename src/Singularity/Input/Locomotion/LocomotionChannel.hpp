@@ -27,6 +27,7 @@ namespace Input {
 class LocomotionChannel : public Law {
 public:
     LocomotionChannel();
+    ~LocomotionChannel() override;
 
     bool isFirstMover() const override { return true; }
     std::string getIdentifier() const override { return "locomotion-channel"; }
@@ -67,7 +68,8 @@ private:
     // wasGrounded exist only so SPACE and landing publish on the transition,
     // not as a per-frame level. walkActive / idleActive keep clip clocks from
     // restarting every frame. routingInstalled is the EventBus subscribe-once
-    // latch (the bus has no unsubscribe). _wasActuating is the disable edge:
+    // latch; routingSubscription is the matching teardown identity.
+    // _wasActuating is the disable edge:
     // dropping the first mover must clear clips it authored, once.
     bool _jumpKeyDownLast = false;
     bool _wasGrounded     = false;
@@ -75,6 +77,7 @@ private:
     bool _walkActive      = false;
     bool _idleActive      = false;
     bool _routingInstalled = false;
+    Core::EventBus::SubscriptionId _routingSubscription = Core::EventBus::InvalidSubscription;
     bool _wasActuating     = false;
 };
 
