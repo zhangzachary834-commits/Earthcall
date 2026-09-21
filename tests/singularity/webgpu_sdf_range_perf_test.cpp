@@ -1929,6 +1929,13 @@ int main() {
             runDirectArtifactDiagnostic(
                 gpu, probeProgram, directArtifacts, runtimeTax,
                 proofExtent, c.eye, view, proj);
+        if (directTaxes.size() != directArtifacts.size()) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL direct artifact diagnostic result count "
+                "for %s: got=%zu expected=%zu\n",
+                c.name, directTaxes.size(), directArtifacts.size());
+            measurementWarnings = true;
+        }
         for (const auto& directTax : directTaxes) {
             printDirectRuntimeTax(c.name, directTax);
             if (!directTax.valid) {
