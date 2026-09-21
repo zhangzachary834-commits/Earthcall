@@ -120,6 +120,7 @@ public:
 
     Singularity::Language::Lexeme* getTypeLexeme() const { return _typeLexeme; }
     void setTypeLexeme(Singularity::Language::Lexeme* lexeme);
+    void forgetTypeLexeme(const Singularity::Language::Lexeme* lexeme);
     bool hasGroundedType() const { return _typeLexeme != nullptr; }
     std::string typeLabel() const;
 
