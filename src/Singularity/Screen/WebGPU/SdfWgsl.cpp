@@ -373,9 +373,10 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
+    if (var == OntoMath::kWorldTimeVar) return "u.time.x";
     e.refuse("a field expression names the variable '" + var +
-             "', which has no binding in a shader; only the ambient point "
-             "(p, x, y, z) is bound here");
+             "', which has no binding in a shader; only the canonical ambient "
+             "inputs (p, x, y, z, t) are bound here");
     return "0.0";
 }
 
@@ -640,7 +641,8 @@ bool isDifferentiableAst(const OntoMath::MathNode& node) {
             return (node.variableName == OntoMath::kAmbientPointVar ||
                     node.variableName == "x" ||
                     node.variableName == "y" ||
-                    node.variableName == "z");
+                    node.variableName == "z" ||
+                    node.variableName == OntoMath::kWorldTimeVar);
         case OntoMath::MathNode::Op::VectorConstruct: {
             if (node.children.size() != 3) return false;
             for (const auto& c : node.children) {
@@ -712,6 +714,11 @@ JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
             }
             if (node.variableName == "z") {
                 return JetExpr{ JetKind::Scalar, "(" + pt + ").z", "vec3<f32>(0.0, 0.0, 1.0)", "", "", "" };
+            }
+            if (node.variableName == OntoMath::kWorldTimeVar) {
+                // World time is an ambient scalar input. Spatial differentiation
+                // treats it as constant, so its gradient with respect to p is zero.
+                return JetExpr{ JetKind::Scalar, "u.time.x", "vec3<f32>(0.0)", "", "", "" };
             }
             e.refuse("unsupported variable in analytic gradient emitter: " + node.variableName);
             return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
@@ -954,6 +961,9 @@ struct RU {
     // z = viewport height in pixels.
     // w = authorable space distortion factor (e.g. Far Lands Zone).
     limits:      vec4<f32>,
+    // x = Universe world time in seconds; y = world delta for this frame.
+    // z/w reserved. Authored rho(p,t) reads t from time.x.
+    time:        vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
