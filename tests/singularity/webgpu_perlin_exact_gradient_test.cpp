@@ -426,6 +426,8 @@ int main() {
             uint32_t  rangeNodeCount = 0;
             uint32_t  rangeTraversalEnabled = 0;
             uint32_t  rangeReserved = 0;
+            glm::vec4 rangePositiveMin{0.0f};
+            glm::vec4 rangePositiveMax{0.0f};
         } inst0;
 
         WGPUBufferDescriptor instDesc = {};
