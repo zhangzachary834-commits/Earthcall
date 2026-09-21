@@ -70,6 +70,19 @@ member pointer.
 The future world/Ourverse ownership relation can be made explicit without changing
 Timeline itself.
 
+## Follow-up scope correction
+
+After the first correction, I caught a second-order leak: I had added every live
+`Timeline::all()` entry to `Universe::beings()` for "generic reachability."
+That still globalized relative time by another route.
+
+That sweep has been removed.
+
+`Timeline::all()` is now explicitly lifecycle/identity bookkeeping only.
+Construction does not grant global Law visibility. Ownership/scope belongs to
+authored Relations and Zone context; future Law reachability belongs to the
+Law/Timeline/Moment architecture, not a process-wide registry.
+
 ## Rung 4 consequence
 
 The renderer has been corrected to accept only:
