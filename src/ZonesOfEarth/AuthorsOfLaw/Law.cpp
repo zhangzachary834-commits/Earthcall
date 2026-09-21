@@ -3123,7 +3123,11 @@ void LawManager::backSeedRelationStateFacts(const std::unordered_set<std::string
     if (relations.empty()) return;
     for (Singular* being : Universe::instance().beings()) {
         if (!being) continue;
-        for (Relation* relation : relations) {
+        std::vector<Relation*> edges;
+        if (!Universe::instance().relationsInvolving(*being, edges)) {
+            edges = relations;
+        }
+        for (Relation* relation : edges) {
             if (!relation) continue;
             if (relation->a() != being && relation->b() != being) continue;
             if (!types.count(relation->type)) continue;
