@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
 
@@ -115,7 +116,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* colorExpr = nullptr,
                 const OntoMath::Piecewise* radianceExpr = nullptr,
                 const OntoMath::Piecewise* chromaExpr = nullptr,
-                const OntoMath::Piecewise* angularExpr = nullptr);
+                const OntoMath::Piecewise* angularExpr = nullptr,
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -125,7 +127,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* colorExpr = nullptr,
                              const OntoMath::Piecewise* radianceExpr = nullptr,
                              const OntoMath::Piecewise* chromaExpr = nullptr,
-                             const OntoMath::Piecewise* angularExpr = nullptr);
+                             const OntoMath::Piecewise* angularExpr = nullptr,
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
