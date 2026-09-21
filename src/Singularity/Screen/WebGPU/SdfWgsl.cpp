@@ -316,6 +316,10 @@ struct Emit {
     bool               bindTime = false; // expression-context capability, not authored state
     bool               bindOmega = false; // only Rung-6 angular radiance admits omega
     bool               readOmega = false; // structural witness for singularity handling
+    // Ambient temporal coordinate for the expression currently being emitted.
+    // Rungs 3-6 use the historical global uniform; Rung 7 redirects this to
+    // the current authored source record while lowering rho/chi/alpha.
+    std::string        timeExpression = "u.radianceTime.x";
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -385,7 +389,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
     if (var == OntoMath::kTimeVar) {
-        if (e.bindTime) return "u.radianceTime.x";
+        if (e.bindTime) return e.timeExpression;
         e.refuse("a field expression names temporal variable 't', but this shader "
                  "expression context does not bind the temporal coordinate");
         return "0.0";
@@ -1717,7 +1721,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* colorExpr,
                              const OntoMath::Piecewise* radianceExpr,
                              const OntoMath::Piecewise* chromaExpr,
-                             const OntoMath::Piecewise* angularExpr) {
+                             const OntoMath::Piecewise* angularExpr,
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1765,31 +1770,68 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     if (colorExpr && !colorExpr->pieces.empty()) {
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
-    if (radianceExpr && !radianceExpr->pieces.empty()) {
-        e.bindTime = true;
-        emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
-        e.bindTime = false;
-    }
-    if (chromaExpr && !chromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
-            e.refuse("chroma: " + validationError);
-        } else {
+    const bool multiSource = radianceSources && radianceSources->size() > 1;
+    if (multiSource) {
+        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+            const auto& source = (*radianceSources)[i];
+            e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
+
+            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+                e.bindTime = true;
+                emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
+                e.bindTime = false;
+            }
+            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
+                    e.refuse("source[" + std::to_string(i) + "] chroma: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", throwaway);
+                    e.bindTime = false;
+                }
+            }
+            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
+                    e.refuse("source[" + std::to_string(i) + "] angular: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    e.bindOmega = true;
+                    emitPiecewise(*source.angularExpr, e, "p", "f32", throwaway);
+                    e.bindOmega = false;
+                    e.bindTime = false;
+                }
+            }
+        }
+        e.timeExpression = "u.radianceTime.x";
+    } else {
+        if (radianceExpr && !radianceExpr->pieces.empty()) {
             e.bindTime = true;
-            emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", throwaway);
+            emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
             e.bindTime = false;
         }
-    }
-    if (angularExpr && !angularExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateAngularPiecewise(*angularExpr, validationError)) {
-            e.refuse("angular: " + validationError);
-        } else {
-            e.bindTime = true;
-            e.bindOmega = true;
-            emitPiecewise(*angularExpr, e, "p", "f32", throwaway);
-            e.bindOmega = false;
-            e.bindTime = false;
+        if (chromaExpr && !chromaExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+                e.refuse("chroma: " + validationError);
+            } else {
+                e.bindTime = true;
+                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", throwaway);
+                e.bindTime = false;
+            }
+        }
+        if (angularExpr && !angularExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateAngularPiecewise(*angularExpr, validationError)) {
+                e.refuse("angular: " + validationError);
+            } else {
+                e.bindTime = true;
+                e.bindOmega = true;
+                emitPiecewise(*angularExpr, e, "p", "f32", throwaway);
+                e.bindOmega = false;
+                e.bindTime = false;
+            }
         }
     }
 
@@ -1806,7 +1848,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* colorExpr,
                 const OntoMath::Piecewise* radianceExpr,
                 const OntoMath::Piecewise* chromaExpr,
-                const OntoMath::Piecewise* angularExpr) {
+                const OntoMath::Piecewise* angularExpr,
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1915,63 +1958,207 @@ Program compile(const geom::SdfNode& root,
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
-    std::string radianceBody;
-    if (radianceExpr && !radianceExpr->pieces.empty()) {
-        e.bindTime = true;
-        emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
-        e.bindTime = false;
-    } else {
-        radianceBody = "    return 1.0;\n";
-    }
-    prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
-
-    std::string chromaBody;
-    if (chromaExpr && !chromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
-            e.refuse("chroma: " + validationError);
-        } else {
+    const bool multiSource = radianceSources && radianceSources->size() > 1;
+    if (!multiSource) {
+        std::string radianceBody;
+        if (radianceExpr && !radianceExpr->pieces.empty()) {
             e.bindTime = true;
-            emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", chromaBody);
+            emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
             e.bindTime = false;
-        }
-    } else {
-        // Multiplicative identity. EngineRender preserves legacy light.color in
-        // the historical light uniforms when chi is absent.
-        chromaBody = "    return vec3<f32>(1.0);\n";
-    }
-    prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
-    prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
-                 ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
-
-    std::string angularBody;
-    bool angularReadsOmega = false;
-    if (angularExpr && !angularExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateAngularPiecewise(*angularExpr, validationError)) {
-            e.refuse("angular: " + validationError);
         } else {
-            e.bindTime = true;
-            e.bindOmega = true;
-            e.readOmega = false;
-            emitPiecewise(*angularExpr, e, "p", "f32", angularBody);
-            angularReadsOmega = e.readOmega;
-            e.bindOmega = false;
-            e.bindTime = false;
+            radianceBody = "    return 1.0;\n";
         }
-    } else {
-        angularBody = "    return 1.0;\n";
-    }
-    prog.wgsl += "\nfn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
-                 angularBody + "}\n";
-    prog.wgsl += std::string("\nconst HAS_AUTHORED_ANGULAR: bool = ") +
-                 ((angularExpr && !angularExpr->pieces.empty()) ? "true;\n" : "false;\n");
-    prog.wgsl += std::string("const ANGULAR_READS_OMEGA: bool = ") +
-                 (angularReadsOmega ? "true;\n" : "false;\n");
-    prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
-                 wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+        prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
 
-    prog.wgsl += kMarcher;
+        std::string chromaBody;
+        if (chromaExpr && !chromaExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+                e.refuse("chroma: " + validationError);
+            } else {
+                e.bindTime = true;
+                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", chromaBody);
+                e.bindTime = false;
+            }
+        } else {
+            chromaBody = "    return vec3<f32>(1.0);\n";
+        }
+        prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+        prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
+                     ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
+
+        std::string angularBody;
+        bool angularReadsOmega = false;
+        if (angularExpr && !angularExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateAngularPiecewise(*angularExpr, validationError)) {
+                e.refuse("angular: " + validationError);
+            } else {
+                e.bindTime = true;
+                e.bindOmega = true;
+                e.readOmega = false;
+                emitPiecewise(*angularExpr, e, "p", "f32", angularBody);
+                angularReadsOmega = e.readOmega;
+                e.bindOmega = false;
+                e.bindTime = false;
+            }
+        } else {
+            angularBody = "    return 1.0;\n";
+        }
+        prog.wgsl += "\nfn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                     angularBody + "}\n";
+        prog.wgsl += std::string("\nconst HAS_AUTHORED_ANGULAR: bool = ") +
+                     ((angularExpr && !angularExpr->pieces.empty()) ? "true;\n" : "false;\n");
+        prog.wgsl += std::string("const ANGULAR_READS_OMEGA: bool = ") +
+                     (angularReadsOmega ? "true;\n" : "false;\n");
+        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+        prog.wgsl += kMarcher;
+    } else {
+        prog.wgsl +=
+            "\nstruct RadianceSourceData {\n"
+            "    position: vec4<f32>,\n"
+            "    ambient: vec4<f32>,\n"
+            "    diffuse: vec4<f32>,\n"
+            "    specular: vec4<f32>,\n"
+            "    coefficients: vec4<f32>,\n"
+            "    time: vec4<f32>,\n"
+            "    control: vec4<f32>,\n"
+            "};\n"
+            "@group(0) @binding(2) var<storage, read> RS: array<RadianceSourceData>;\n";
+
+        std::vector<bool> angularReadsOmega;
+        angularReadsOmega.reserve(radianceSources->size());
+
+        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+            const auto& source = (*radianceSources)[i];
+            const std::string suffix = std::to_string(i);
+            e.timeExpression = "RS[" + suffix + "u].time.x";
+
+            std::string radianceBody;
+            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+                e.bindTime = true;
+                emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
+                e.bindTime = false;
+            } else {
+                radianceBody = "    return 1.0;\n";
+            }
+            prog.wgsl += "\nfn lightRadiance_" + suffix +
+                         "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+            std::string chromaBody;
+            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
+                    e.refuse("source[" + suffix + "] chroma: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", chromaBody);
+                    e.bindTime = false;
+                }
+            } else {
+                chromaBody = "    return vec3<f32>(1.0);\n";
+            }
+            prog.wgsl += "\nfn lightChroma_" + suffix +
+                         "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+
+            std::string angularBody;
+            bool readsOmega = false;
+            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
+                    e.refuse("source[" + suffix + "] angular: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    e.bindOmega = true;
+                    e.readOmega = false;
+                    emitPiecewise(*source.angularExpr, e, "p", "f32", angularBody);
+                    readsOmega = e.readOmega;
+                    e.bindOmega = false;
+                    e.bindTime = false;
+                }
+            } else {
+                angularBody = "    return 1.0;\n";
+            }
+            angularReadsOmega.push_back(readsOmega);
+            prog.wgsl += "\nfn lightAngular_" + suffix +
+                         "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                         angularBody + "}\n";
+        }
+        e.timeExpression = "u.radianceTime.x";
+        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+
+        std::string marcher = kMarcher;
+        const std::string lightingBegin =
+            "    let L = normalize(u.lightPos.xyz - pw);\n";
+        const std::string lightingEnd =
+            "    let clip = u.viewProj * vec4<f32>(pw, 1.0);\n";
+        const std::size_t lightAt = marcher.find(lightingBegin);
+        const std::size_t clipAt = marcher.find(lightingEnd, lightAt);
+        if (lightAt == std::string::npos || clipAt == std::string::npos) {
+            e.refuse("Rung 7 compiler could not find the historical lighting seam");
+        } else {
+            std::string sum;
+            sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
+            sum += "    var ambientTerm = vec3<f32>(0.0);\n";
+            sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
+            sum += "    var specTerm = vec3<f32>(0.0);\n";
+
+            for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+                const auto& source = (*radianceSources)[i];
+                const std::string s = std::to_string(i);
+                sum += "    {\n";
+                sum += "        let source = RS[" + s + "u];\n";
+                sum += "        if (source.control.x > 0.5) {\n";
+                sum += "            let sourceDelta = pw - source.position.xyz;\n";
+                sum += "            let sourceDistance = length(sourceDelta);\n";
+                sum += "            var Ls = vec3<f32>(0.0);\n";
+                sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { Ls = -sourceDelta / sourceDistance; }\n";
+                sum += "            var Hs = V;\n";
+                sum += "            let halfVector = Ls + V;\n";
+                sum += "            let halfLength = length(halfVector);\n";
+                sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { Hs = halfVector / halfLength; }\n";
+                sum += "            let radialRadiance = max(lightRadiance_" + s + "(sourceDelta), 0.0);\n";
+                sum += "            var angularRadiance = 1.0;\n";
+
+                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                    if (angularReadsOmega[i]) {
+                        sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                        sum += "                angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
+                        sum += "            } else { angularRadiance = 0.0; }\n";
+                    } else {
+                        sum += "            angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
+                    }
+                }
+
+                sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
+                sum += "            let specShape = inst.shading.z * pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * step(0.0001, diff);\n";
+
+                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                    sum += "            let sourceChroma = lightChroma_" + s + "(sourceDelta);\n";
+                    sum += "            let c = source.coefficients;\n";
+                    sum += "            let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);\n";
+                    sum += "            let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);\n";
+                    sum += "            let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);\n";
+                } else {
+                    sum += "            let ambientEnvelope = source.ambient.rgb / vec3<f32>(0.2);\n";
+                    sum += "            let diffuseEnvelope = source.diffuse.rgb / vec3<f32>(0.8);\n";
+                    sum += "            let specularEnvelope = source.specular.rgb;\n";
+                }
+                sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
+                sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * diff * shapedRadiance;\n";
+                sum += "            specTerm += specularEnvelope * specShape * shapedRadiance;\n";
+                sum += "        }\n";
+                sum += "    }\n";
+            }
+            marcher.replace(lightAt, clipAt - lightAt, sum);
+        }
+        prog.wgsl += marcher;
+    }
     prog.params = std::move(e.params);
     prog.needsGradientStep = e.sawExpr;
 
