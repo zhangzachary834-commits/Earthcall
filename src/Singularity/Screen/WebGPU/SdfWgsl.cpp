@@ -305,6 +305,7 @@ struct Emit {
     std::vector<float> params;
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
+    bool               bindWorldTime = false; // expression-context capability, not authored state
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -373,10 +374,14 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
-    if (var == OntoMath::kWorldTimeVar) return "u.time.x";
+    if (var == OntoMath::kWorldTimeVar) {
+        if (e.bindWorldTime) return "u.time.x";
+        e.refuse("a field expression names world-time variable 't', but this shader "
+                 "expression context does not bind world time");
+        return "0.0";
+    }
     e.refuse("a field expression names the variable '" + var +
-             "', which has no binding in a shader; only the canonical ambient "
-             "inputs (p, x, y, z, t) are bound here");
+             "', which has no binding in this shader expression context");
     return "0.0";
 }
 
@@ -641,8 +646,7 @@ bool isDifferentiableAst(const OntoMath::MathNode& node) {
             return (node.variableName == OntoMath::kAmbientPointVar ||
                     node.variableName == "x" ||
                     node.variableName == "y" ||
-                    node.variableName == "z" ||
-                    node.variableName == OntoMath::kWorldTimeVar);
+                    node.variableName == "z");
         case OntoMath::MathNode::Op::VectorConstruct: {
             if (node.children.size() != 3) return false;
             for (const auto& c : node.children) {
@@ -714,11 +718,6 @@ JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
             }
             if (node.variableName == "z") {
                 return JetExpr{ JetKind::Scalar, "(" + pt + ").z", "vec3<f32>(0.0, 0.0, 1.0)", "", "", "" };
-            }
-            if (node.variableName == OntoMath::kWorldTimeVar) {
-                // World time is an ambient scalar input. Spatial differentiation
-                // treats it as constant, so its gradient with respect to p is zero.
-                return JetExpr{ JetKind::Scalar, "u.time.x", "vec3<f32>(0.0)", "", "", "" };
             }
             e.refuse("unsupported variable in analytic gradient emitter: " + node.variableName);
             return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
@@ -1338,8 +1337,10 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr) {
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                               bool bindWorldTime) {
     Emit e;
+    e.bindWorldTime = bindWorldTime;
     std::string body;
 
     // No authored expression is a real structural state: compile() emits the
@@ -1411,7 +1412,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
     if (radianceExpr && !radianceExpr->pieces.empty()) {
+        e.bindWorldTime = true;
         emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
+        e.bindWorldTime = false;
     }
 
     ParameterBlock block;
@@ -1536,7 +1539,9 @@ Program compile(const geom::SdfNode& root,
 
     std::string radianceBody;
     if (radianceExpr && !radianceExpr->pieces.empty()) {
+        e.bindWorldTime = true;
         emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
+        e.bindWorldTime = false;
     } else {
         radianceBody = "    return 1.0;\n";
     }
