@@ -191,6 +191,8 @@ fail either direction independently. See `docs/architecture/ontology/NO_BLACK_BO
 governable but unreachable from the authoring picker. Both are fixed — the channel is now
 *probed* into `knownPathOptions()` rather than hand-listed, so that drift cannot recur.
 
+**Authored Cathedral witness:** `webgpu_cathedral_open_hand_test` copies the native Cathedral identity and its Law roots into a temporary SaveRoot, checks the pearl gesture and real Person authors, renders the SDF/color/radiance path on a desktop GPU, and verifies geometry, Material identity, commission Relations, and light-field persistence. Optional arguments are `<source-save-root> <capture-directory>`; the source is never saved over. See [Court of the Open Hand](Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md). — Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-20T20:04:21-07:00.
+
 ### Two traps the suite now holds you to
 
 **Do not call `buildProperties()` from a constructor.** `Singular` builds the registry

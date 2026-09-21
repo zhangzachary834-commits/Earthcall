@@ -6,6 +6,8 @@
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
@@ -64,7 +66,7 @@ bool render(wgpu::Device& gpu, WebGpuRenderer& r, const std::vector<Object*>& ob
     bool compiled=true;
     for (Object* o:objects) {
         auto mat=resolveRenderMaterial(o->materialId(),{});
-        auto program=sdfwgsl::compile(o->getFieldData(),nullptr,mat.colorExpr.get());
+        auto program=sdfwgsl::compile(o->getFieldData(),nullptr,mat.colorExpr.get(),r.radianceExpr());
         if (!program.ok) {std::cerr<<o->getIdentifier()<<": "<<program.error<<'\n';compiled=false;}
         r.setModel(o->getTransform());
         r.drawImplicit(o->getFieldData(),o->getFieldExtent(),mat);
@@ -132,12 +134,51 @@ int main(int argc,char** argv) {
     for(const auto* suffix:{"gesture","approach","unfold"}) {
         auto* law=h.lawManager.find(std::string("law-astra-openhand-")+suffix);
         check(law && law->isAuthored() && law->isEnabled(),std::string("authored Law is live: ")+suffix);
+        check(law && law->authors().findMemberByIdentifier("Zach")==&h.player,
+              std::string("Law author resolves to the actual Person: ")+suffix);
     }
     auto tick=[&](double dt) {h.worldTime+=dt;Universe::instance().setClock(h.worldTime,dt);h.lawManager.tick();};
     tick(1./60);
     wgpu::Device gpu;
     check(gpu.init(),"WebGPU device available");if(failures)return 1;
     WebGpuRenderer renderer;check(renderer.init(gpu),"production renderer starts");setCurrentRenderer(&renderer);
+    // Match EngineRender's production light handoff, including the Cathedral's
+    // existing source position/chroma and authored scalar radiance definition.
+    auto* root=zone->spatialRoot();
+    Rendering::AuthorableLightState light;
+    check(root && Rendering::readAuthorableLight(*root,light),"Cathedral's authored illumination resolves");
+    if(root && Rendering::readAuthorableLight(*root,light)) {
+        renderer.setLight(light.position,Rendering::lightAmbientRadiance(light),
+                          Rendering::lightDiffuseRadiance(light),Rendering::lightSpecularRadiance(light));
+        renderer.setLightingEnabled(light.enabled);
+        if(root->field)renderer.setRadianceField(&root->field->astDefinition,1);
+    }
+    const bool hasCourtLight=original["world"]["objects"].end()!=std::find_if(
+        original["world"]["objects"].begin(),original["world"]["objects"].end(),[](const auto& o){
+            return o.value("objectID","")==prefix+"touchstone" && o["authoredProperties"].contains("courtLightAuthored");});
+    if(hasCourtLight && root && root->field) {
+        auto full=root->field->astDefinition;
+        auto base=full;
+        base.pieces[0].mathNode=std::make_shared<OntoMath::MathNode>(*full.pieces[0].mathNode->children[0]);
+        auto sample=[&](const OntoMath::Piecewise& f,glm::vec3 world)->double {
+            auto p=world-light.position;
+            auto v=f.evaluate({{"p",p},{"x",double(p.x)},{"y",double(p.y)},{"z",double(p.z)}});
+            if(!v)return -999;
+            if(auto n=std::get_if<double>(&*v))return *n;
+            if(auto n=std::get_if<float>(&*v))return *n;
+            return -998;
+        };
+        bool unchanged=true;size_t checked=0;
+        for(const auto& o:original["world"]["objects"])if(o.value("objectID","").rfind(prefix,0)!=0) {
+            const auto& t=o["transform"];glm::vec3 p(t[12].template get<float>(),t[13].template get<float>(),t[14].template get<float>());
+            double a=sample(base,p),b=sample(full,p);
+            unchanged &= a>=0 && std::isfinite(a) && a==b;++checked;
+        }
+        for(auto p:{glm::vec3(31,5,10),glm::vec3(57,5,10),glm::vec3(44,5,-1),glm::vec3(44,5,25),glm::vec3(44,13,10)})
+            unchanged &= sample(base,p)==sample(full,p);
+        check(unchanged && checked>1000,"light contribution is zero at every prior Object center and outside court bounds");
+        check(sample(full,{44,4.7,10})>sample(base,{44,4.7,10})+.5,"authored light strengthens the seed's surrounding region");
+    }
     check(render(gpu,renderer,ours,captures.empty()?fs::path{}:captures/"gathered.ppm"),"gathered court renders on GPU");
     auto click=[&](Object* o) {Core::EventBus::instance().publish(ECA::Event{"object-clicked",o,nullptr,std::time(nullptr)});tick(1./60);};
     click(touch);
@@ -159,6 +200,11 @@ int main(int argc,char** argv) {
     check(number(*touch,"intention")==1,"unrelated Cathedral click does not affect the court");
     check(h.zones.persistActiveZone(),"Save Zone succeeds inside temporary SaveRoot");
     auto saved=SaveSystem::readZoneIdentity(zoneId);
+    if(root && root->field) {
+        auto restoredRadiance=OntoMath::Piecewise::fromJson(saved["spatialRoot"]["field"]["astDefinition"]);
+        check(restoredRadiance.toJson()==root->field->astDefinition.toJson(),
+              "complete authored light field survives Save Zone and AST reload");
+    }
     size_t count=0;bool shapesPreserved=true,provenancePreserved=true;
     if(!captures.empty()) {std::ofstream f(captures/"saved-zone.json");f<<saved.dump(2);}
     for(const auto& o:saved["world"]["objects"])if(o.value("objectID","").rfind(prefix,0)==0) {

@@ -260,7 +260,50 @@ def object_bounds(o):
     return [[t[12+i]-h[i],t[12+i]+h[i]] for i in range(3)]
 
 
-def append_zone(z, package):
+def extend_court_light(root):
+    """Add one spatial envelope to the current source; never reinterpret rho.
+
+    Zach explicitly invited light-field authoring on 2026-09-20. The previous
+    AST is retained verbatim as the first child. The added scalar term is zero
+    outside the court, and never supplies chroma, shadows, or extra sources.
+    """
+    result=deepcopy(root)
+    field=result.get('field',{})
+    ast=field.get('astDefinition',{})
+    pieces=ast.get('pieces',[])
+    if field.get('mode')!='AST' or len(pieces)!=1 or 'mathNode' not in pieces[0]:
+        raise ValueError('Light authoring requires the inspected single-piece Cathedral AST; refusing a different field.')
+    if any(pieces[0].get(k) for k in ('hasLo','hasHi','guard','whereLEZero','call','fold')):
+        raise ValueError('Existing light piece is bounded; refusing to alter its domain.')
+    origin=root['origin']
+    def scalar(v):return {'op':0,'scalarForm':{'terms':[term(v)]}}
+    def op(kind,*args):return {'op':kind,'children':list(args)}
+    def axis(i,center):
+        return {'op':0,'scalarForm':{'terms':[term(1,{'xyz'[i]:1}),term(origin[i]-center)]}}
+    def squared(n):return op(24,n,scalar(2))
+    def dist2(center):
+        a=[squared(axis(i,center[i]))for i in range(3)]
+        return op(4,op(4,a[0],a[1]),a[2])
+    def lobe(center,gain,falloff):
+        return op(23,scalar(gain),op(4,scalar(1),op(6,scalar(falloff),dist2(center))))
+    # Smooth compact support in X=[32,56], Y=[-.3,12.7], Z=[0,24].
+    # All boundaries lie within the collision-checked reserved site.
+    masks=[]
+    for i,(center,radius) in enumerate(((44,12),(6.2,6.5),(12,12))):
+        normalized=op(23,axis(i,center),scalar(radius))
+        masks.append(squared(op(26,op(5,scalar(1),squared(normalized)),scalar(0),scalar(1))))
+    envelope=op(6,op(6,masks[0],masks[1]),masks[2])
+    # Three lobes of ONE existing source's envelope, centered on the sculpture,
+    # crown, and threshold. Colors remain on the separately authored Materials.
+    detail=op(4,scalar(.32),op(4,lobe((44,4.7,10),2.2,.18),
+              op(4,lobe((44,10.6,10),1.3,.12),lobe((44,1.47,19.35),1.4,.55))))
+    original=deepcopy(pieces[0]['mathNode'])
+    pieces[0]['mathNode']=op(4,original,op(6,envelope,detail))
+    assert pieces[0]['mathNode']['children'][0]==root['field']['astDefinition']['pieces'][0]['mathNode']
+    return result
+
+
+def append_zone(z, package, with_light=False):
     old=deepcopy(z)
     if any(o['objectID'].startswith(PREFIX) for o in z['world']['objects']):
         raise ValueError('Court already exists. Refusing to replace authored work.')
@@ -278,8 +321,14 @@ def append_zone(z, package):
     z.setdefault('formationRelations',[]).extend(deepcopy(package['relations']))
     z.setdefault('lexemes',[]).extend(deepcopy(package['lexemes']))
     z.setdefault('lawRefs',[]).extend(l['identifier'] for l in package['laws'])
+    if with_light:
+        z['spatialRoot']=extend_court_light(z['spatialRoot'])
+        touch=next(o for o in z['world']['objects'] if o['objectID']==PREFIX+'touchstone')
+        touch['authoredProperties']['courtLightAuthored']=pv(True)
+        touch['authoredProperties']['lightCommission']=pv('Zach invited authored light fields on 2026-09-20; Astra added a compact court-only scalar envelope to the existing source.')
     # Remove only our additions to prove the complete previous document survives.
     restored=deepcopy(z)
+    if with_light:restored['spatialRoot']=deepcopy(old['spatialRoot'])
     for path, key in [('objects','world'),('materials',None),('formationRelations',None),('lawRefs',None),('lexemes',None)]:
         source=old[key] if key else old
         dest=restored[key] if key else restored
@@ -288,14 +337,14 @@ def append_zone(z, package):
     assert restored==old, 'An existing authored value changed'
 
 
-def install(root):
+def install(root, with_light=False):
     package=build()
     paths=[root/'zones'/ZONE/'zone.json',root/'worlds/cathedral_of_the_living_logos.json']
     before={p:p.read_bytes() for p in paths}
     docs={p:json.loads(data) for p,data in before.items()}
-    append_zone(docs[paths[0]],package)
+    append_zone(docs[paths[0]],package,with_light)
     world=docs[paths[1]]
-    append_zone(next(z for z in world['zones'] if z['identifier']==ZONE),package)
+    append_zone(next(z for z in world['zones'] if z['identifier']==ZONE),package,with_light)
     authored=world['authoredLaws']
     for l in package['laws']:
         assert not any(x['id']==l['identifier'] for x in authored['laws'])
@@ -322,7 +371,7 @@ def install(root):
     for p in [p for p in staged if p not in paths]+[paths[1],paths[0]]:
         staged[p].replace(p)
     print(json.dumps({'addedObjects':len(package['objects']),'addedMaterials':len(package['materials']),
-                      'addedLaws':len(package['laws']),'backup':str(backup),
+                      'addedLaws':len(package['laws']),'boundedLightContribution':with_light,'backup':str(backup),
                       'beforeSha256':{str(p):hashlib.sha256(v).hexdigest() for p,v in before.items()}},indent=2))
 
 
@@ -330,8 +379,9 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--save-root',type=Path,default=ROOT/'saves')
     parser.add_argument('--package',type=Path,help='Export addition only; do not modify a Zone')
+    parser.add_argument('--with-light',action='store_true',help='Append the commissioned, court-bounded scalar radiance contribution')
     args=parser.parse_args()
     if args.package:
         args.package.write_text(json.dumps(build(),indent=2)+'\n')
     else:
-        install(args.save_root)
+        install(args.save_root,args.with_light)
