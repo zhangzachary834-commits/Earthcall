@@ -2836,7 +2836,7 @@ materials = [
     },
     # --- ONTOMATH CELESTIAL LIGHT SHOW COLOR FIELDS ---
     {
-        "name": "material.logos.colorfield.lightshow.aurora",
+        "name": "logos.colorfield.lightshow.aurora",
         "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.55, 0.45, 0.85], "roughness": 0.08, "metallic": 0.90,
         "faceTextures": [tex_core] * 6,
@@ -2859,7 +2859,7 @@ materials = [
         )
     },
     {
-        "name": "material.logos.colorfield.lightshow.prism",
+        "name": "logos.colorfield.lightshow.prism",
         "textureResolution": 256, "ambient": 0.55, "diffuse": 0.95, "specular": 1.0, "shininess": 120.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.45, 0.50, 0.70], "roughness": 0.10, "metallic": 0.85,
         "faceTextures": [tex_rose_sapphire] * 6,
@@ -2879,7 +2879,7 @@ materials = [
         )
     },
     {
-        "name": "material.logos.colorfield.lightshow.shekinah",
+        "name": "logos.colorfield.lightshow.shekinah",
         "textureResolution": 256, "ambient": 0.65, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.75, 0.60, 0.25], "roughness": 0.08, "metallic": 0.95,
         "faceTextures": [tex_filigree] * 6,
@@ -2899,7 +2899,7 @@ materials = [
         )
     },
     {
-        "name": "material.logos.colorfield.lightshow.aether",
+        "name": "logos.colorfield.lightshow.aether",
         "textureResolution": 256, "ambient": 0.55, "diffuse": 0.90, "specular": 0.95, "shininess": 96.0,
         "baseColor": [1.0, 1.0, 1.0], "emission": [0.20, 0.80, 0.90], "roughness": 0.12, "metallic": 0.80,
         "faceTextures": [tex_water_caustics] * 6,
@@ -2918,50 +2918,96 @@ materials = [
             ]
         )
     },
-    # --- ONTOMATH CELESTIAL SKY AURORA LIGHT FIELDS ---
+    # --- ONTOMATH CELESTIAL SKY AURORA LIGHT FIELDS (VIBRANT GLOWING EMISSION) ---
     {
-        "name": "material.logos.colorfield.lightshow.sky_aurora_canopy",
-        "textureResolution": 256, "ambient": 0.65, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
-        "baseColor": [1.0, 1.0, 1.0], "emission": [0.35, 0.92, 0.82], "roughness": 0.06, "metallic": 0.92,
-        "faceTextures": [tex_water_caustics] * 6,
+        "name": "logos.colorfield.lightshow.sky_aurora_emerald",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.15, 0.98, 0.70], "emission": [0.25, 0.98, 0.75], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
         "colorExpr": make_color_expr_piecewise(
             [
-                {"c": 0.45, "factors": {}},
-                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.08}, {"kind": 0, "var": "x", "scale": 0.06}]},
-                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.07}]}
+                {"c": 0.18, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.04}]},
+                {"c": 0.12, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.05}]}
             ],
             [
-                {"c": 0.88, "factors": {}},
-                {"c": 0.28, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.10}, {"kind": 1, "var": "z", "scale": 0.08}]},
-                {"c": 0.16, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.12}]}
+                {"c": 0.96, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}, {"kind": 1, "var": "y", "scale": 0.08}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.04}]}
             ],
             [
-                {"c": 0.82, "factors": {}},
-                {"c": 0.32, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.09}, {"kind": 1, "var": "x", "scale": 0.07}]},
-                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.10}]}
+                {"c": 0.65, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.07}]}
             ]
         )
     },
     {
-        "name": "material.logos.colorfield.lightshow.sky_aurora_curtains",
-        "textureResolution": 256, "ambient": 0.60, "diffuse": 0.95, "specular": 1.0, "shininess": 128.0,
-        "baseColor": [1.0, 1.0, 1.0], "emission": [0.82, 0.42, 0.98], "roughness": 0.08, "metallic": 0.90,
+        "name": "logos.colorfield.lightshow.sky_aurora_turquoise",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.10, 0.90, 0.98], "emission": [0.20, 0.92, 0.98], "roughness": 0.0, "metallic": 0.0,
         "faceTextures": [tex_core] * 6,
         "colorExpr": make_color_expr_piecewise(
             [
+                {"c": 0.15, "factors": {}},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.06}]},
+                {"c": 0.10, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.05}]}
+            ],
+            [
+                {"c": 0.88, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.05}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.07}]}
+            ],
+            [
+                {"c": 0.98, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.07}, {"kind": 1, "var": "y", "scale": 0.05}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.06}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_violet",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.85, 0.35, 0.98], "emission": [0.85, 0.38, 0.98], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.85, "factors": {}},
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}]},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.05}]}
+            ],
+            [
+                {"c": 0.35, "factors": {}},
+                {"c": 0.20, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.06}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.08}]}
+            ],
+            [
+                {"c": 0.96, "factors": {}},
+                {"c": 0.35, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}, {"kind": 0, "var": "z", "scale": 0.08}]},
+                {"c": 0.22, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.07}]}
+            ]
+        )
+    },
+    {
+        "name": "logos.colorfield.lightshow.sky_aurora_corona",
+        "textureResolution": 256, "ambient": 1.0, "diffuse": 0.20, "specular": 0.0, "shininess": 1.0,
+        "baseColor": [0.95, 0.82, 0.35], "emission": [0.95, 0.85, 0.40], "roughness": 0.0, "metallic": 0.0,
+        "faceTextures": [tex_core] * 6,
+        "colorExpr": make_color_expr_piecewise(
+            [
+                {"c": 0.95, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.05}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "y", "scale": 0.08}]}
+            ],
+            [
                 {"c": 0.82, "factors": {}},
-                {"c": 0.28, "factors": {}, "trans": [{"kind": 1, "var": "z", "scale": 0.06}, {"kind": 0, "var": "y", "scale": 0.09}]},
-                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "x", "scale": 0.08}]}
+                {"c": 0.30, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.06}, {"kind": 1, "var": "z", "scale": 0.05}]},
+                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.06}]}
             ],
             [
-                {"c": 0.52, "factors": {}},
-                {"c": 0.38, "factors": {}, "trans": [{"kind": 0, "var": "x", "scale": 0.07}, {"kind": 1, "var": "z", "scale": 0.10}]},
-                {"c": 0.18, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.12}]}
-            ],
-            [
-                {"c": 0.92, "factors": {}},
-                {"c": 0.25, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.07}, {"kind": 0, "var": "x", "scale": 0.09}]},
-                {"c": 0.15, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.11}]}
+                {"c": 0.45, "factors": {}},
+                {"c": 0.25, "factors": {}, "trans": [{"kind": 0, "var": "z", "scale": 0.07}]},
+                {"c": 0.15, "factors": {}, "trans": [{"kind": 1, "var": "y", "scale": 0.05}]}
             ]
         )
     },
@@ -3364,72 +3410,87 @@ objects.append(make_field(
     }
 ))
 
-# 5. Colossal Celestial Sky Aurora Borealis (Spanning the Heavens above Cathedral)
-sky_aurora_arc_major = sdf_leaf(6, [64.0, 5.2, 0.0]) # Colossal 128m-diameter main wave arc
-sky_aurora_arc_north = sdf_leaf(6, [82.0, 4.2, 0.0], offset=[0.0, 4.0, 32.0]) # Secondary sweeping crest to north
-sky_aurora_mantle = sdf_leaf(3, [70.0, 10.0, 35.0], offset=[0.0, 2.0, -12.0]) # Billowing radiant mantle
-sky_aurora_zenith_ring = sdf_leaf(6, [36.0, 3.2, 0.0], offset=[0.0, 8.0, 0.0]) # Zenith coronal ring
-sky_aurora_core = sdf_leaf(0, [26.0, 7.5, 26.0], offset=[0.0, 6.0, 0.0]) # Zenith radiant core orb
+# 5. CELESTIAL ONTOMATH SKY AURORA BOREALIS (DELICATE TRANSLUCENT LIGHT CURTAINS)
+# Ethereal, sweeping paper-thin harmonic curtains of emerald, cyan, violet, and solar gold
+# No thick dinosaur bones, toruses, or boulders — pure gossamer atmospheric waves!
 
-sky_aurora_tree = sdf_binary(
-    5,
-    sky_aurora_arc_major,
-    sdf_binary(
-        5,
-        sky_aurora_arc_north,
-        sdf_binary(
-            5,
-            sky_aurora_mantle,
-            sdf_binary(5, sky_aurora_zenith_ring, sky_aurora_core, 0.35),
-            0.40
-        ),
-        0.42
-    ),
-    0.45
-)
-
+# Curtain 1: The Great Polar Emerald Ribbon (Primary wave sweeping across the northern sky)
+aurora_emerald_tree = sdf_leaf(3, [125.0, 15.0, 0.35]) # 250m wide, 30m high, 0.70m thin ribbon
 objects.append(make_field(
-    "cathedral.lightshow.giant_sky_aurora", "Colossal Celestial Sky Aurora Borealis",
-    [0.0, 68.0, 10.0], sky_aurora_tree, [120.0, 26.0, 140.0],
-    "material.logos.colorfield.lightshow.sky_aurora_canopy", [0.35, 0.98, 0.82],
+    "cathedral.sky.aurora.emerald", "Celestial Emerald Aurora Curtain",
+    [0.0, 72.0, -15.0], aurora_emerald_tree, [130.0, 18.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_emerald", [0.15, 0.98, 0.70],
+    rot_deg=[0.0, -12.0, 0.0],
     extra_props={
         "isLightShow": {"t": "bool", "v": True},
         "isMonumentalSdf": {"t": "bool", "v": True},
         "light.source": {"t": "bool", "v": True},
-        "light.intensity": {"t": "float", "v": 9.5},
-        "light.color": {"t": "vec3", "x": 0.35, "y": 0.98, "z": 0.82},
-        "light.ambient": {"t": "float", "v": 0.50},
-        "light.diffuse": {"t": "float", "v": 0.92},
-        "light.specular": {"t": "float", "v": 1.0},
-        "description": {"t": "string", "v": "Colossal 240-meter celestial aurora borealis canopy spanning the sky with multi-octave OntoMath spectral radiance field"}
+        "light.intensity": {"t": "float", "v": 9.0},
+        "light.color": {"t": "vec3", "x": 0.20, "y": 0.98, "z": 0.72},
+        "light.ambient": {"t": "float", "v": 0.75},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Ethereal 250-meter sweeping curtain of polar emerald auroral light"}
     }
 ))
 
-# 6. High Stratospheric Aurora Borealis Curtains (Cascading Drapes of Light)
-curtain_fold_west = sdf_leaf(3, [24.0, 12.0, 70.0], offset=[-48.0, -2.0, 0.0])
-curtain_fold_east = sdf_leaf(3, [24.0, 12.0, 70.0], offset=[48.0, -2.0, 0.0])
-curtain_corona_crown = sdf_leaf(6, [52.0, 2.8, 0.0], offset=[0.0, 5.0, 0.0])
-sky_curtains_tree = sdf_binary(
-    5,
-    curtain_corona_crown,
-    sdf_binary(5, curtain_fold_west, curtain_fold_east, 0.38),
-    0.40
-)
-
+# Curtain 2: The Prismatic Turquoise & Aquamarine Wave (Secondary wave arching over nave)
+aurora_turquoise_tree = sdf_leaf(3, [140.0, 18.0, 0.35]) # 280m wide, 36m high, 0.70m thin ribbon
 objects.append(make_field(
-    "cathedral.lightshow.sky_aurora_curtains", "High Stratospheric Aurora Borealis Curtains",
-    [0.0, 80.0, 20.0], sky_curtains_tree, [105.0, 22.0, 125.0],
-    "material.logos.colorfield.lightshow.sky_aurora_curtains", [0.85, 0.45, 1.0],
+    "cathedral.sky.aurora.turquoise", "Prismatic Turquoise Aurora Curtain",
+    [15.0, 76.0, 15.0], aurora_turquoise_tree, [145.0, 20.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_turquoise", [0.10, 0.90, 0.98],
+    rot_deg=[0.0, 15.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 8.5},
+        "light.color": {"t": "vec3", "x": 0.15, "y": 0.92, "z": 0.98},
+        "light.ambient": {"t": "float", "v": 0.70},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Shimmering 280-meter curtain of celestial cyan and turquoise light"}
+    }
+))
+
+# Curtain 3: The High Celestial Violet & Amethyst Veil (High-altitude nitrogen glow)
+aurora_violet_tree = sdf_leaf(3, [115.0, 14.0, 0.35]) # 230m wide, 28m high, 0.70m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.violet", "High Celestial Violet Aurora Veil",
+    [-15.0, 81.0, 42.0], aurora_violet_tree, [120.0, 16.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_violet", [0.85, 0.35, 0.98],
+    rot_deg=[0.0, -22.0, 0.0],
     extra_props={
         "isLightShow": {"t": "bool", "v": True},
         "isMonumentalSdf": {"t": "bool", "v": True},
         "light.source": {"t": "bool", "v": True},
         "light.intensity": {"t": "float", "v": 8.0},
-        "light.color": {"t": "vec3", "x": 0.82, "y": 0.42, "z": 0.98},
-        "light.ambient": {"t": "float", "v": 0.38},
-        "light.diffuse": {"t": "float", "v": 0.88},
-        "light.specular": {"t": "float", "v": 0.95},
-        "description": {"t": "string", "v": "Cascading high-stratospheric draperies of violet, magenta, and celestial emerald aurora curtains"}
+        "light.color": {"t": "vec3", "x": 0.85, "y": 0.35, "z": 0.98},
+        "light.ambient": {"t": "float", "v": 0.65},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Cascading high-stratospheric veil of deep amethyst, royal violet, and magenta light"}
+    }
+))
+
+# Curtain 4: The Solar Gold & Prismatic Corona (Zenith crown hovering above the Crossing Tower)
+aurora_corona_tree = sdf_leaf(3, [95.0, 12.0, 0.30]) # 190m wide, 24m high, 0.60m thin ribbon
+objects.append(make_field(
+    "cathedral.sky.aurora.corona", "Solar Gold Aurora Zenith Corona",
+    [0.0, 87.0, 5.0], aurora_corona_tree, [100.0, 14.0, 4.0],
+    "material.logos.colorfield.lightshow.sky_aurora_corona", [0.95, 0.82, 0.35],
+    rot_deg=[0.0, 5.0, 0.0],
+    extra_props={
+        "isLightShow": {"t": "bool", "v": True},
+        "isMonumentalSdf": {"t": "bool", "v": True},
+        "light.source": {"t": "bool", "v": True},
+        "light.intensity": {"t": "float", "v": 7.5},
+        "light.color": {"t": "vec3", "x": 0.95, "y": 0.85, "z": 0.40},
+        "light.ambient": {"t": "float", "v": 0.65},
+        "light.diffuse": {"t": "float", "v": 0.20},
+        "light.specular": {"t": "float", "v": 0.0},
+        "description": {"t": "string", "v": "Crown of celestial solar gold and warm amber auroral light at the zenith"}
     }
 ))
 
@@ -4476,8 +4537,10 @@ world_doc = {
                 "actionModel": {
                     "kind": 5,
                     "children": [
-                        {"kind": 0, "path": "@cathedral.lightshow.giant_sky_aurora.light.intensity", "operand": {"t": "float", "v": 14.0}},
-                        {"kind": 0, "path": "@cathedral.lightshow.sky_aurora_curtains.light.intensity", "operand": {"t": "float", "v": 11.0}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.emerald.light.intensity", "operand": {"t": "float", "v": 12.5}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.turquoise.light.intensity", "operand": {"t": "float", "v": 11.5}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.violet.light.intensity", "operand": {"t": "float", "v": 11.0}},
+                        {"kind": 0, "path": "@cathedral.sky.aurora.corona.light.intensity", "operand": {"t": "float", "v": 10.5}},
                         {"kind": 0, "path": "@hud.logos.telemetry.season.label2D", "operand": {"t": "string", "v": "CELESTIAL SKY: AURORA BOREALIS (TRANSCENDENT GLORY)"}},
                         {"kind": 18, "path": "acoustic.frequency", "input": "acoustic.amplitude", "propertyName": "sine"}
                     ]

@@ -34,18 +34,34 @@
       "children": [
         {
           "kind": 0,
-          "path": "@cathedral.lightshow.giant_sky_aurora.light.intensity",
+          "path": "@cathedral.sky.aurora.emerald.light.intensity",
           "operand": {
             "t": "float",
-            "v": 14.0
+            "v": 12.5
           }
         },
         {
           "kind": 0,
-          "path": "@cathedral.lightshow.sky_aurora_curtains.light.intensity",
+          "path": "@cathedral.sky.aurora.turquoise.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 11.5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.violet.light.intensity",
           "operand": {
             "t": "float",
             "v": 11.0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@cathedral.sky.aurora.corona.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 10.5
           }
         },
         {
