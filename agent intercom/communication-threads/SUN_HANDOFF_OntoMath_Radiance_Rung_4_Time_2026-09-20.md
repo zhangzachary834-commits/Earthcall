@@ -2,7 +2,7 @@
 
 Date: 2026-09-20
 Branch: `sol/ontomath-radiance-rung4-time-20260920`
-PR: #273 — `OntoMath radiance Rung 4: canonical world-time input rho(p,t)`
+PR: #273 — `OntoMath radiance Rung 4: relative Timeline input rho(p,t)`
 Base: `sync-from-earthcall-main`
 Status at handoff: implementation and focused witnesses committed; PR opened as draft; CI verdict pending.
 
@@ -27,17 +27,19 @@ does not read `t`.
 
 OntoMath does not own or invent a clock, nor does the shared symbol decree that
 every modality uses the same temporal frame. A channel must explicitly bind
-`t`. The Screen/WebGPU radiance context binds it to Earthcall's existing
-`Universe::now()` simulation/world clock. `Universe::dt()` is carried beside
-it in the same global uniform for future explicitly-admitted consumers.
+`t`. Screen/WebGPU receives an admitted temporal coordinate through the Renderer
+boundary and does not know which Timeline or Singular supplied it. Production
+currently defaults that coordinate from the Universe-selected broad Timeline;
+the native witness uses a Timeline owned by the radiant Object.
 
-There is no wall clock, GPU frame counter, or renderer-local animation timer.
+There is no wall clock, GPU frame counter, renderer-local animation timer, or
+special radiance Timeline kind.
 
 ## Structural/value invariant
 
 Time is a runtime ambient input, not an authored parameter:
 
-- advancing `Universe::now()` does not mutate the radiance AST;
+- advancing the admitted Timeline coordinate does not mutate the radiance AST;
 - it does not recollect the SDF/radiance parameter block;
 - it does not regenerate WGSL;
 - it does not increment radiance content revision;
@@ -52,7 +54,7 @@ Why: doing so would silently enable time-dependent WebGPU geometry while the CPU
 geometry evaluator still binds only `p/x/y/z`. GPU geometry would acquire a
 semantic capability its CPU peer did not possess.
 
-The final implementation therefore makes world-time binding an explicit
+The final implementation therefore makes temporal-coordinate binding an explicit
 expression-context capability. Radiance opts in. Geometry does not.
 
 Future Rungs such as chroma `chi(p,t)` can opt into the same canonical binding
@@ -93,13 +95,26 @@ deliberately.
 `webgpu_object_test` uses the real
 Object -> drawFieldModel -> drawImplicit path.
 
-It changes radiance structure to `rho=t`, compiles once, then advances
-`Universe::now()` from 0.15 to 1.0 and requires:
+It changes radiance structure to `rho=t`, compiles once, then advances a Timeline owned by the radiant Object from 0.15 to 1.0 and requires:
 
 - visibly brighter center pixel;
 - zero SDF program compiles on the time-advance frame;
 - at least one memoized SDF program cache hit;
 - zero authored SDF parameter bytes uploaded due solely to advancing time.
+
+## Timeline relativity correction
+
+An earlier draft accidentally treated Timeline as though it were fundamentally
+a selectable global clock. Zach corrected that. Timeline is a relative temporal
+domain: any Singular may own one through ordinary Relation truth. The broad
+world/Ourverse clock is merely one Timeline at broad scope.
+
+The current Drive/Flow/`time.sinceApplied` machinery predates first-class
+Timeline and Moment ontology and remains compatibility machinery pending the
+future Law/Timeline/Moment architecture by Zach and Clawd Opus 5.
+
+See:
+`agent intercom/communication-threads/TO_CONSTITUTIONALIST_Timeline_Relativity_Correction_2026-09-20.md`.
 
 ## Base movement
 
