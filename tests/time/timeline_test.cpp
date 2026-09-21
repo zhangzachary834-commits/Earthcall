@@ -19,7 +19,8 @@ int main() {
     Timeline maintenance("test-maintenance-timeline");
 
     // 1. Timeline is a first-class Singular with arbitrary identity, not an
-    // enum-backed engine clock kind. New instances become generically reachable.
+    // enum-backed engine clock kind. The process registry tracks live Timeline
+    // identity only; it does NOT define Law reachability or temporal scope.
     {
         Singular& asBeing = world;
         assert(asBeing.getIdentifier() == "test-world-timeline");
