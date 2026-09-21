@@ -243,6 +243,60 @@ int main() {
               "light.chroma.ast exposes the complete authored tree rather than a hidden renderer copy");
     }
 
+
+    // Rung 6: angular emission is another first-order authored Piecewise on the
+    // radiant FieldNode. It owns mathematics, not a Spotlight/Beam kind.
+    {
+        auto omegaY = std::make_shared<OntoMath::MathNode>();
+        omegaY->op = OntoMath::MathNode::Op::ValueLeaf;
+        omegaY->variableName = OntoMath::kOmegaYVar;
+        *field.lightAngular = OntoMath::Piecewise::continuous(omegaY);
+
+        Property* angularProperty = field.findProperty("light.angular.ast");
+        check(angularProperty != nullptr,
+              "authored alpha is registered as reachable property light.angular.ast");
+        check(field.findProperty("light.chroma.ast") != angularProperty &&
+                  field.findProperty("vectorField.ast") != angularProperty,
+              "angular emission is independent from chroma and physical flow/force");
+
+        const nlohmann::json saved = field.toJson();
+        check(saved.contains("lightAngular"),
+              "FieldNode serialization persists authored angular emission");
+
+        geom::FieldNode restored("sun.light-field.angular-restored");
+        restored.applyJson(saved);
+        check(restored.lightAngular && !restored.lightAngular->pieces.empty(),
+              "FieldNode load restores authored angular emission");
+
+        // CPU witness of the exact Rung-6 coordinate convention. A receiver
+        // displaced by (3,4,0) from the source has normalized outgoing omega
+        // (0.6,0.8,0). The authored alpha=omega.y must therefore evaluate 0.8.
+        const glm::vec3 receiver = field.origin + glm::vec3(3.0f, 4.0f, 0.0f);
+        const glm::vec3 delta = receiver - field.origin;
+        const glm::vec3 omega = glm::normalize(delta);
+        std::map<std::string, PropertyValue> vars{
+            {"p", PropertyValue(delta)},
+            {"x", PropertyValue(static_cast<double>(delta.x))},
+            {"y", PropertyValue(static_cast<double>(delta.y))},
+            {"z", PropertyValue(static_cast<double>(delta.z))},
+            {OntoMath::kTimeVar, PropertyValue(0.0)},
+            {OntoMath::kOmegaXVar, PropertyValue(static_cast<double>(omega.x))},
+            {OntoMath::kOmegaYVar, PropertyValue(static_cast<double>(omega.y))},
+            {OntoMath::kOmegaZVar, PropertyValue(static_cast<double>(omega.z))}
+        };
+        const auto value = restored.lightAngular->evaluate(vars);
+        double numeric = -1.0;
+        check(value && propertyValueToNumber(*value, numeric) &&
+                  std::fabs(numeric - 0.8) < 1e-6,
+              "CPU alpha reads normalized world-space source-to-receiver omega");
+
+        PropertyValue propertyValue =
+            angularProperty ? angularProperty->value() : PropertyValue(std::string());
+        check(angularProperty && std::holds_alternative<std::string>(propertyValue) &&
+                  !std::get<std::string>(propertyValue).empty(),
+              "light.angular.ast exposes the complete authored tree to Law");
+    }
+
     // Wrongly typed authored state is visible but not silently guessed into a
     // different value. The resolver keeps its documented default.
     field.setDynamicProperty("light.intensity", PropertyValue(std::string("very bright")));
