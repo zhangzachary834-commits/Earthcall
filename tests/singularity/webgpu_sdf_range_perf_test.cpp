@@ -34,6 +34,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -111,6 +112,341 @@ struct Arm {
     size_t recurringRangeUploadBytes = 0;
     uint32_t traversalDraws = 0;
 };
+
+// CPU-side opportunity census for the exact regular proof bitmap consumed by
+// rangeCandidate(). This deliberately does NOT instrument the hot shader: the
+// native AB/BA GPU timing below remains unpolluted. The census walks the same
+// fixed-depth cells along a deterministic NDC ray sample and reports the
+// geometric tax/opportunity envelope. It is not claimed to be an exact count of
+// runtime rangeCandidate() calls because the authored marcher can step across
+// more than one clear cell between consultations.
+struct ProofGridCensus {
+    uint64_t sampledRays = 0;
+    uint64_t boxHitRays = 0;
+    uint64_t classifications = 0;
+    uint64_t positiveCells = 0;
+    uint64_t clearCells = 0;
+    uint64_t positiveRuns = 0;
+    uint64_t raysWithPositiveProof = 0;
+    uint64_t raysWithoutPositiveProof = 0;
+    uint64_t positiveBoundsHitRays = 0;
+    uint64_t upperCandidateCalls = 0;
+    double traversedDistance = 0.0;
+    double positiveDistance = 0.0;
+    double maxPositiveRunDistance = 0.0;
+};
+
+bool rayBoxInterval(const glm::vec3& ro, const glm::vec3& rd,
+                    const glm::vec3& extent, float& tEnter, float& tExit) {
+    tEnter = -std::numeric_limits<float>::infinity();
+    tExit = std::numeric_limits<float>::infinity();
+    for (int axis = 0; axis < 3; ++axis) {
+        const float e = std::abs(extent[axis]);
+        if (std::abs(rd[axis]) < 1e-8f) {
+            if (ro[axis] < -e || ro[axis] > e) return false;
+            continue;
+        }
+        const float a = (-e - ro[axis]) / rd[axis];
+        const float b = ( e - ro[axis]) / rd[axis];
+        const float lo = std::min(a, b);
+        const float hi = std::max(a, b);
+        tEnter = std::max(tEnter, lo);
+        tExit = std::min(tExit, hi);
+        if (tExit < tEnter) return false;
+    }
+    return true;
+}
+
+uint32_t proofAxisIndex(float coord, float halfExtent,
+                        float dir, uint32_t dim) {
+    const float e = std::abs(halfExtent);
+    const float denom = std::max(2.0f * e, 1e-8f);
+    const float scaled = std::clamp(
+        ((coord + e) / denom) * static_cast<float>(dim),
+        0.0f, static_cast<float>(dim));
+    const float floored = std::floor(scaled);
+    uint32_t idx = static_cast<uint32_t>(
+        std::min(floored, static_cast<float>(dim - 1u)));
+    if (scaled == floored && dir < 0.0f && idx > 0u) --idx;
+    return idx;
+}
+
+bool proofCellPositive(const geom::SdfPositiveProofGrid& grid,
+                       uint32_t x, uint32_t y, uint32_t z) {
+    const uint32_t linear = x + grid.dim * (y + grid.dim * z);
+    const uint32_t word = linear >> 5u;
+    if (word >= grid.words.size()) return false;
+    return (grid.words[word] & (1u << (linear & 31u))) != 0u;
+}
+
+void censusRay(const geom::SdfPositiveProofGrid& grid,
+               const glm::vec3& extent,
+               const glm::vec3& positiveBoundsMin,
+               const glm::vec3& positiveBoundsMax,
+               bool hasPositiveBounds,
+               const glm::vec3& ro,
+               const glm::vec3& rd,
+               float farField,
+               ProofGridCensus& out) {
+    ++out.sampledRays;
+    if (grid.dim == 0u || grid.words.empty()) return;
+
+    float boxEnter = 0.0f;
+    float boxExit = 0.0f;
+    if (!rayBoxInterval(ro, rd, extent, boxEnter, boxExit) ||
+        boxExit < 0.0f) {
+        return;
+    }
+
+    float t = std::max(boxEnter, 0.0f);
+    const float maxDim = std::max({extent.x, extent.y, extent.z});
+    const float tLimit =
+        std::min({boxExit, t + maxDim * 8.0f, farField});
+    if (!(tLimit > t)) return;
+    ++out.boxHitRays;
+
+    if (hasPositiveBounds) {
+        const glm::vec3 positiveCenter =
+            0.5f * (positiveBoundsMin + positiveBoundsMax);
+        const glm::vec3 positiveExtent =
+            0.5f * (positiveBoundsMax - positiveBoundsMin);
+        float positiveEnter = 0.0f;
+        float positiveExit = 0.0f;
+        if (rayBoxInterval(ro - positiveCenter, rd, positiveExtent,
+                           positiveEnter, positiveExit) &&
+            positiveExit >= t && positiveEnter <= tLimit) {
+            ++out.positiveBoundsHitRays;
+        }
+    }
+
+    const glm::vec3 cellSize =
+        (2.0f * glm::abs(extent)) / static_cast<float>(grid.dim);
+    bool inPositiveRun = false;
+    bool lastCellPositive = false;
+    bool sawPositiveProof = false;
+    double positiveRunDistance = 0.0;
+    uint64_t clearCellsThisRay = 0;
+
+    // Depth 6 has at most 190 crossed regular cells for a straight ray through
+    // a cube. Keep the shader's same 192-cell diagnostic horizon.
+    for (int guard = 0; guard < 192 && t < tLimit; ++guard) {
+        const glm::vec3 p = ro + rd * t;
+        if (glm::any(glm::lessThan(p, -extent)) ||
+            glm::any(glm::greaterThan(p, extent))) {
+            break;
+        }
+
+        const uint32_t ix = proofAxisIndex(p.x, extent.x, rd.x, grid.dim);
+        const uint32_t iy = proofAxisIndex(p.y, extent.y, rd.y, grid.dim);
+        const uint32_t iz = proofAxisIndex(p.z, extent.z, rd.z, grid.dim);
+        const bool positive = proofCellPositive(grid, ix, iy, iz);
+
+        const glm::vec3 cellMin =
+            -extent + glm::vec3(static_cast<float>(ix),
+                                static_cast<float>(iy),
+                                static_cast<float>(iz)) * cellSize;
+        const glm::vec3 cellMax = cellMin + cellSize;
+        glm::vec3 safeRd = rd;
+        for (int axis = 0; axis < 3; ++axis) {
+            if (std::abs(safeRd[axis]) < 1e-8f) safeRd[axis] = 1e-8f;
+        }
+        glm::vec3 exitFace;
+        for (int axis = 0; axis < 3; ++axis) {
+            exitFace[axis] =
+                safeRd[axis] >= 0.0f ? cellMax[axis] : cellMin[axis];
+        }
+        const glm::vec3 axisExit = (exitFace - ro) / safeRd;
+        const float cellExit =
+            std::min({axisExit.x, axisExit.y, axisExit.z, tLimit});
+        if (!(cellExit > t)) break;
+
+        const double segment = static_cast<double>(cellExit - t);
+        ++out.classifications;
+        out.traversedDistance += segment;
+        lastCellPositive = positive;
+
+        if (positive) {
+            sawPositiveProof = true;
+            ++out.positiveCells;
+            out.positiveDistance += segment;
+            if (!inPositiveRun) {
+                inPositiveRun = true;
+                positiveRunDistance = 0.0;
+                ++out.positiveRuns;
+            }
+            positiveRunDistance += segment;
+        } else {
+            ++out.clearCells;
+            ++clearCellsThisRay;
+            if (inPositiveRun) {
+                out.maxPositiveRunDistance =
+                    std::max(out.maxPositiveRunDistance, positiveRunDistance);
+                inPositiveRun = false;
+                positiveRunDistance = 0.0;
+            }
+        }
+
+        t = cellExit;
+    }
+
+    if (inPositiveRun) {
+        out.maxPositiveRunDistance =
+            std::max(out.maxPositiveRunDistance, positiveRunDistance);
+    }
+
+    if (sawPositiveProof) {
+        ++out.raysWithPositiveProof;
+    } else {
+        ++out.raysWithoutPositiveProof;
+    }
+
+    // If the exact marcher reached every regular-cell boundary, each clear cell
+    // would force a handoff; a terminal positive run needs one final candidate
+    // call of its own. Real runtime calls can be lower because exact authored
+    // steps may leap across clear-cell boundaries. This is therefore an explicit
+    // upper envelope, not a mislabeled shader counter.
+    out.upperCandidateCalls += clearCellsThisRay + (lastCellPositive ? 1u : 0u);
+}
+
+ProofGridCensus censusProofGrid(const geom::SdfPositiveProofGrid& grid,
+                                const glm::vec3& extent,
+                                const glm::vec3& eye,
+                                const glm::mat4& view,
+                                const glm::mat4& proj) {
+    constexpr uint32_t sampleW = 160;
+    constexpr uint32_t sampleH = 100;
+    constexpr float farField = 3000.0f;
+    ProofGridCensus out;
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
+
+    glm::vec3 positiveBoundsMin(std::numeric_limits<float>::infinity());
+    glm::vec3 positiveBoundsMax(-std::numeric_limits<float>::infinity());
+    bool hasPositiveBounds = false;
+    const glm::vec3 cellSize =
+        (2.0f * glm::abs(extent)) / static_cast<float>(grid.dim);
+    for (uint32_t z = 0; z < grid.dim; ++z) {
+        for (uint32_t y = 0; y < grid.dim; ++y) {
+            for (uint32_t x = 0; x < grid.dim; ++x) {
+                if (!proofCellPositive(grid, x, y, z)) continue;
+                const glm::vec3 cellMin =
+                    -extent + glm::vec3(static_cast<float>(x),
+                                        static_cast<float>(y),
+                                        static_cast<float>(z)) * cellSize;
+                positiveBoundsMin = glm::min(positiveBoundsMin, cellMin);
+                positiveBoundsMax = glm::max(positiveBoundsMax, cellMin + cellSize);
+                hasPositiveBounds = true;
+            }
+        }
+    }
+
+    for (uint32_t y = 0; y < sampleH; ++y) {
+        for (uint32_t x = 0; x < sampleW; ++x) {
+            const float sx =
+                (static_cast<float>(x) + 0.5f) / static_cast<float>(sampleW);
+            const float sy =
+                (static_cast<float>(y) + 0.5f) / static_cast<float>(sampleH);
+            const glm::vec4 ndc(
+                sx * 2.0f - 1.0f,
+                (1.0f - sy) * 2.0f - 1.0f,
+                1.0f,
+                1.0f);
+            const glm::vec4 worldH = invViewProj * ndc;
+            if (std::abs(worldH.w) < 1e-8f) {
+                ++out.sampledRays;
+                continue;
+            }
+            const glm::vec3 world =
+                glm::vec3(worldH) / worldH.w;
+            const glm::vec3 rd = glm::normalize(world - eye);
+            censusRay(grid, extent,
+                      positiveBoundsMin, positiveBoundsMax, hasPositiveBounds,
+                      eye, rd, farField, out);
+        }
+    }
+    return out;
+}
+
+void printProofGridCensus(const char* viewName,
+                          const geom::SdfPositiveProofGrid& grid,
+                          const ProofGridCensus& s) {
+    const double classificationsPerHit =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.classifications) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+    const double usefulClassificationRatio =
+        s.classifications > 0
+            ? static_cast<double>(s.positiveCells) /
+                  static_cast<double>(s.classifications)
+            : 0.0;
+    const double positiveDistanceFraction =
+        s.traversedDistance > 0.0
+            ? s.positiveDistance / s.traversedDistance
+            : 0.0;
+    const double usefulRayRatio =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.raysWithPositiveProof) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+    const double positiveBoundsHitRatio =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.positiveBoundsHitRays) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+    const double positiveBoundsPrecision =
+        s.positiveBoundsHitRays > 0
+            ? static_cast<double>(s.raysWithPositiveProof) /
+                  static_cast<double>(s.positiveBoundsHitRays)
+            : 0.0;
+    const double meanPositiveRunCells =
+        s.positiveRuns > 0
+            ? static_cast<double>(s.positiveCells) /
+                  static_cast<double>(s.positiveRuns)
+            : 0.0;
+    const double meanPositiveRunDistance =
+        s.positiveRuns > 0
+            ? s.positiveDistance / static_cast<double>(s.positiveRuns)
+            : 0.0;
+    const double upperCallsPerHit =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.upperCandidateCalls) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+
+    std::printf(
+        "SDF_RANGE_TAX_GEOMETRY view=%s depth=%u sampled_rays=%llu "
+        "box_hit_rays=%llu classifications=%llu positive_cells=%llu "
+        "clear_cells=%llu positive_runs=%llu rays_with_positive=%llu "
+        "rays_without_positive=%llu positive_bounds_hit_rays=%llu "
+        "upper_candidate_calls=%llu classifications_per_hit=%.4f "
+        "upper_calls_per_hit=%.4f useful_classification_ratio=%.6f "
+        "positive_distance_fraction=%.6f useful_ray_ratio=%.6f "
+        "positive_bounds_hit_ratio=%.6f positive_bounds_precision=%.6f "
+        "mean_positive_run_cells=%.4f mean_positive_run_distance=%.6f "
+        "max_positive_run_distance=%.6f\n",
+        viewName,
+        static_cast<unsigned>(grid.depth),
+        static_cast<unsigned long long>(s.sampledRays),
+        static_cast<unsigned long long>(s.boxHitRays),
+        static_cast<unsigned long long>(s.classifications),
+        static_cast<unsigned long long>(s.positiveCells),
+        static_cast<unsigned long long>(s.clearCells),
+        static_cast<unsigned long long>(s.positiveRuns),
+        static_cast<unsigned long long>(s.raysWithPositiveProof),
+        static_cast<unsigned long long>(s.raysWithoutPositiveProof),
+        static_cast<unsigned long long>(s.positiveBoundsHitRays),
+        static_cast<unsigned long long>(s.upperCandidateCalls),
+        classificationsPerHit,
+        upperCallsPerHit,
+        usefulClassificationRatio,
+        positiveDistanceFraction,
+        usefulRayRatio,
+        positiveBoundsHitRatio,
+        positiveBoundsPrecision,
+        meanPositiveRunCells,
+        meanPositiveRunDistance,
+        s.maxPositiveRunDistance);
+}
 
 } // namespace
 
@@ -226,8 +562,10 @@ int main() {
     // deliberately owns no duplicate selected-depth constant. Reporting the whole
     // neighboring ladder lets one run reveal the coalescing cliff without changing
     // shader behavior between measurements.
+    std::array<geom::SdfPositiveProofGrid, 4> proofGrids;
     for (uint8_t proofDepth = 3u; proofDepth <= 6u; ++proofDepth) {
-        const auto proofGrid =
+        auto& proofGrid = proofGrids[proofDepth - 3u];
+        proofGrid =
             geom::derivePositiveRangeProofGrid(proofHierarchy, proofDepth);
         const size_t proofDim = size_t{1} << proofDepth;
         const size_t proofCells = proofDim * proofDim * proofDim;
@@ -319,6 +657,15 @@ int main() {
         const glm::mat4 view = glm::lookAt(c.eye, c.target, c.up);
         offRenderer.setCamera(view, proj, c.eye);
         onRenderer.setCamera(view, proj, c.eye);
+
+        // The geometric census is intentionally outside the timed GPU samples.
+        // It measures the proof grid's opportunity/tax structure without
+        // perturbing either renderer arm.
+        for (const auto& proofGrid : proofGrids) {
+            const ProofGridCensus census =
+                censusProofGrid(proofGrid, proofExtent, c.eye, view, proj);
+            printProofGridCensus(c.name, proofGrid, census);
+        }
 
         Arm off;
         Arm on;
