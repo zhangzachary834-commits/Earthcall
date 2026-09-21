@@ -3,6 +3,7 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -121,9 +122,40 @@ namespace Core {
         radiantSources.reserve(candidateFields.size());
         std::string sourceSetIdentity;
 
+        std::vector<Rendering::VolumeDensityBinding> volumeDensities;
+        volumeDensities.reserve(candidateFields.size());
+        std::string volumeSetIdentity;
+
         for (geom::FieldNode* field : candidateFields) {
+            if (!field) continue;
+
+            // Volumetric truth is independent from source truth. A FieldNode may
+            // be fog without being a light, a light without being fog, or both.
+            // Therefore density discovery MUST happen before the light.source
+            // compatibility reader below.
+            if (field->volumeDensity && !field->volumeDensity->pieces.empty()) {
+                Rendering::VolumeDensityBinding medium;
+                medium.origin = field->origin;
+                medium.scale = field->scale;
+                medium.densityExpr = field->volumeDensity.get();
+                const std::string json = field->volumeDensity->toJson().dump();
+                medium.densityRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                // Compatibility projection only: the binding owns its temporal
+                // coordinate, so a later Singular-owned Timeline resolver can
+                // diverge media clocks without changing the renderer contract.
+                medium.temporalCoordinate = sourceTime;
+                medium.temporalDelta = sourceDelta;
+
+                volumeSetIdentity += field->getIdentifier();
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.densityRevision);
+                volumeSetIdentity += "\n";
+                volumeDensities.push_back(medium);
+            }
+
             Rendering::AuthorableLightState light;
-            if (!field || !Rendering::readAuthorableLight(*field, light)) continue;
+            if (!Rendering::readAuthorableLight(*field, light)) continue;
 
             Rendering::RadianceSourceBinding source;
             source.position = light.position;
@@ -172,6 +204,15 @@ namespace Core {
             sourceSetIdentity += std::to_string(source.angularRevision);
             sourceSetIdentity += "\n";
             radiantSources.push_back(source);
+        }
+
+        if (volumeDensities.empty()) {
+            currentRenderer().setVolumeDensitySources({}, 0);
+        } else {
+            const uint64_t volumeSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(volumeSetIdentity));
+            currentRenderer().setVolumeDensitySources(
+                std::move(volumeDensities), volumeSetRevision);
         }
 
         const bool persistentLightPlaced = !radiantSources.empty();
