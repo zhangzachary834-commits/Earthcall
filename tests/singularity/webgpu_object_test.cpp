@@ -810,9 +810,7 @@ int main() {
         // Move only the blocker behind the receiver. This is a geometry VALUE
         // edit with identical Union/Sphere topology. The red path must return,
         // while all four source invariants remain byte-for-byte unchanged.
-        blocker.offset = glm::vec3(-0.4f, 0.0f, -0.8f);
-        shadowField = geom::SdfNode::binary(geom::SdfOp::Union, receiver, blocker);
-        radiant.setFieldShape(shadowField, glm::vec3(1.5f));
+        radiant.setFieldOperandBOffset(glm::vec3(-0.4f, 0.0f, -0.8f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
