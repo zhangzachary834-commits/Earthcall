@@ -67,7 +67,9 @@ private:
     // wasGrounded exist only so SPACE and landing publish on the transition,
     // not as a per-frame level. walkActive / idleActive keep clip clocks from
     // restarting every frame. routingInstalled is the EventBus subscribe-once
-    // latch (the bus has no unsubscribe). _wasActuating is the disable edge:
+    // latch for this channel instance. EventBus now supports owned unsubscription;
+    // LocomotionChannel teardown ownership is a separate lifecycle audit.
+    // _wasActuating is the disable edge:
     // dropping the first mover must clear clips it authored, once.
     bool _jumpKeyDownLast = false;
     bool _wasGrounded     = false;

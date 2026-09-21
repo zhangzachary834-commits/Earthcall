@@ -13,8 +13,8 @@ class Zone;
  * LocomotionChanged decouples "the vessel is moving at speed X" from the
  * walk/idle clips that react to it. Producers (LocomotionChannel, later AI
  * steering) publish it; LocomotionChannel::installRouting dispatches to the
- * named Person. The event carries the Person* so we need only one subscription
- * — Core::EventBus has no unsubscribe.
+ * named Person. The event carries the Person*, so one router can dispatch
+ * locomotion changes for every Person without a per-Person subscription.
  */
 struct LocomotionChanged {
     Person* person = nullptr;

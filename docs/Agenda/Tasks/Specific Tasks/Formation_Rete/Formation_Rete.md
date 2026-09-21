@@ -660,10 +660,12 @@ chess is written in, and the only shape that reaches `sweepSubjects`), the mutat
 `Any` being go deaf and the test catches it.
 
 **Two things found on the way, both recorded rather than worked around:**
-- `LawManager`'s EventBus subscription outlives the manager (Law.hpp says so: "a connected
-  LawManager must outlive all publishing"). Two connected managers in one process means the dead
-  one still hears every event: whichever arm of a two-manager test runs second counts everything
-  twice. The parity test therefore uses ONE manager and toggles the flag.
+- `LawManager`'s EventBus subscriptions originally outlived the manager. Two connected managers
+  in one process made the dead one's callbacks hear later events; the parity test exposed this as
+  doubled counts, and a referent-map experiment recorded a segfault. Resolved 2026-09-20 by
+  subscription tokens owned and revoked by `LawManager`, with
+  `law_manager_eventbus_lifetime_test` as the deterministic witness. The parity test still uses
+  ONE manager so adapter on/off remains its only experimental variable.
 - Route registration must not live in `compileConditionsToRete`: that runs only for laws that want
   Rete terminals (`activation() != OnEvent`), which is exactly the set of laws that never sweep. It
   is now `syncAdapterRoutes`, keyed on the law's condition revision, called for every law.
