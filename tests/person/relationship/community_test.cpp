@@ -64,6 +64,10 @@ static void testAddMemberAndInvolves() {
     check(comm.involves(alice), "Community involves Alice after adding her");
     check(comm.involves("Alice"), "Community involves 'Alice' string after adding her");
 
+    // Regression test: distinct Person with same display name ("Alice")
+    Person alice2 = createDummyPerson("Alice");
+    check(!comm.involves(alice2), "Community must NOT involve distinct Person 'alice2' sharing the same display name 'Alice'");
+
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
 
