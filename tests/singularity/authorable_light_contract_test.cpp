@@ -126,7 +126,7 @@ int main() {
                 {"x", PropertyValue(x)},
                 {"y", PropertyValue(y)},
                 {"z", PropertyValue(z)},
-                {OntoMath::kWorldTimeVar, PropertyValue(t)}
+                {OntoMath::kTimeVar, PropertyValue(t)}
             };
             const auto value = hydrated.field->astDefinition.evaluate(vars);
             if (!value) return -1.0;
@@ -146,10 +146,10 @@ int main() {
 
         auto timeNode = std::make_shared<OntoMath::MathNode>();
         timeNode->op = OntoMath::MathNode::Op::ValueLeaf;
-        timeNode->variableName = OntoMath::kWorldTimeVar;
+        timeNode->variableName = OntoMath::kTimeVar;
         OntoMath::Piecewise timed = OntoMath::Piecewise::continuous(timeNode);
         std::map<std::string, PropertyValue> timeVars{
-            {OntoMath::kWorldTimeVar, PropertyValue(2.5)}
+            {OntoMath::kTimeVar, PropertyValue(2.5)}
         };
         const auto timedValue = timed.evaluate(timeVars);
         double timedNumeric = -1.0;
