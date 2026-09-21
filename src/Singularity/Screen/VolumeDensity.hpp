@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <glm/glm.hpp>
+#include <string>
 
 namespace Rendering {
 
@@ -29,5 +32,27 @@ struct VolumeDensityBinding {
     double temporalCoordinate = 0.0;
     double temporalDelta = 0.0;
 };
+
+// Resolve authored density from one FieldNode into the renderer-facing bounded
+// projection. Sourcehood is intentionally irrelevant: fog need not illuminate,
+// and a radiant source need not be participating medium.
+inline bool readVolumeDensity(const geom::FieldNode& field,
+                              double temporalCoordinate,
+                              double temporalDelta,
+                              VolumeDensityBinding& out) {
+    if (!field.volumeDensity || field.volumeDensity->pieces.empty()) return false;
+
+    VolumeDensityBinding next;
+    next.origin = field.origin;
+    next.scale = field.scale;
+    next.densityExpr = field.volumeDensity.get();
+    const std::string json = field.volumeDensity->toJson().dump();
+    next.densityRevision =
+        static_cast<uint64_t>(std::hash<std::string>{}(json));
+    next.temporalCoordinate = temporalCoordinate;
+    next.temporalDelta = temporalDelta;
+    out = next;
+    return true;
+}
 
 } // namespace Rendering
