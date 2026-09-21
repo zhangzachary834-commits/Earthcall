@@ -184,14 +184,30 @@ section **Mandatory parallel substrate — authored volumetric density and trans
 
 PR #283 is Ready for Review and GitHub reports it mergeable.
 
-The documentation addenda advanced the PR head after the first CI run had started, so authoritative verification belongs to the newest PR-head workflow, not the superseded earlier run.
+The first PR-head code run, Earthcall focused CI #1957 at
+`1b8336a8d0ebd8c52bcc0b446433c1e51f9126c8`, completed the entire
+**SDF range-proxy verification (macOS) job successfully** before later
+documentation commits advanced the branch. That successful job includes:
+- build of the SDF proof and native GPU parity witnesses;
+- CPU SDF proof witnesses;
+- native WebGPU SDF parity witnesses;
+- `webgpu_object_test`, which contains the new directional, numeric-refresh,
+  rotating-Timeline, and refusal pixel witnesses for alpha.
 
-At handoff-writing time the newest run is:
-- Earthcall focused CI #1965
-- head `c26e95a16775400fbf9d55e64819667e401c5d5b`
-- status: pending/queued
+The Focused CPU and Slow Adapter jobs on #1957 were cancelled by the branch's
+subsequent documentation pushes, not by a test failure.
 
-Do not claim Rung 6 complete until the newest head's SDF/native WebGPU witness job has passed. If a failure appears, inspect the exact failing build/test before changing architecture.
+After recording the mandatory volumetric-authorability addenda and this handoff,
+the current PR head is newer but code-identical with respect to Rung 6. The
+authoritative newest workflow is Earthcall focused CI #1967 on the docs-updated
+head; it is queued at this recording epoch.
+
+Therefore:
+- the Rung-6 SDF/native-WebGPU implementation has a real green code-head witness;
+- the final PR-head workflow still needs to settle before claiming the entire
+  current head green.
+
+If the newest run fails, inspect the exact failing job before changing architecture.
 
 ## Next architectural rung after Rung 6
 
