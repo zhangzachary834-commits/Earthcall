@@ -1768,8 +1768,9 @@ void WebGpuRenderer::flushSdfDraws() {
     u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
-    u.volumeTime = glm::vec4(static_cast<float>(densityBinding.temporalCoordinate),
-                            static_cast<float>(densityBinding.temporalDelta), 0.0f, 0.0f);
+    const auto& activeDensity = volumeDensityBinding();
+    u.volumeTime = glm::vec4(static_cast<float>(activeDensity.temporalCoordinate),
+                            static_cast<float>(activeDensity.temporalDelta), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
