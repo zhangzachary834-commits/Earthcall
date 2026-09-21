@@ -46,6 +46,15 @@ struct ScalarExpressionLayout {
     std::string error;
 };
 
+// Same structure/value identity for an authored vec3 expression. Kept distinct
+// from ScalarExpressionLayout so rho and chi remain independently observable.
+struct VectorExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
+    bool ok = true;
+    std::string error;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -92,7 +101,8 @@ struct Program {
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
-                const OntoMath::Piecewise* radianceExpr = nullptr);
+                const OntoMath::Piecewise* radianceExpr = nullptr,
+                const OntoMath::Piecewise* chromaExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -100,7 +110,8 @@ Program compile(const geom::SdfNode& root,
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode = nullptr,
                              const OntoMath::Piecewise* colorExpr = nullptr,
-                             const OntoMath::Piecewise* radianceExpr = nullptr);
+                             const OntoMath::Piecewise* radianceExpr = nullptr,
+                             const OntoMath::Piecewise* chromaExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -110,6 +121,12 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 // bindTime admits the canonical temporal coordinate "t"; it says nothing
 // about which Timeline or Singular owner supplied that coordinate.
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime = false);
+
+// Inspect authored source chroma chi(p,t)->vec3 with the same production
+// emitter. Absent chi has a distinct legacy identity; an authored expression
+// must type-check as Vector and unsupported GPU semantics refuse.
+VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime = false);
 
 } // namespace sdfwgsl
