@@ -130,11 +130,13 @@ namespace Core {
                 if (root->field &&
                     root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
                     !root->field->astDefinition.pieces.empty()) {
-                    const std::string radianceJson = root->field->astDefinition.toJson().dump();
+                    const std::string radianceJson =
+                        root->field->astDefinition.toJson().dump();
                     const uint64_t radianceRevision =
-                        static_cast<uint64_t>(std::hash<std::string>{}(radianceJson));
-                    currentRenderer().setRadianceField(&root->field->astDefinition,
-                                                       radianceRevision);
+                        static_cast<uint64_t>(
+                            std::hash<std::string>{}(radianceJson));
+                    currentRenderer().setRadianceField(
+                        &root->field->astDefinition, radianceRevision);
                 } else {
                     currentRenderer().setRadianceField(nullptr, 0);
                 }
@@ -264,7 +266,9 @@ namespace Core {
                                   static_cast<double>(stats.sdfParameterBytesUploaded),
                                   static_cast<int>(stats.sdfRangeHierarchyBuilds),
                                   static_cast<int>(stats.sdfRangeProxyDraws),
-                                  static_cast<int>(stats.sdfRangeProxyCulledDraws));
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws),
+                                  static_cast<int>(stats.sdfRangeTraversalDraws),
+                                  static_cast<double>(stats.sdfRangeNodeBytesUploaded));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 if (recorder->isRecording()) {

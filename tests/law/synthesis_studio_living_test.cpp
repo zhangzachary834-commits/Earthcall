@@ -141,9 +141,16 @@ int main() {
     if(expression && resonator && cursor) {
         observe(*expression,true,0.05,0.95);
         check(near(number(*state,"bloom"),0.05) && near(number(*state,"motion"),0.05),"lower-left gesture authors intimate, quiet motion");
+        // The expression Law writes shared state in this round; continuous
+        // orbit/cursor Laws consume that authored state on the next ordinary
+        // Law round. Advance one frame before asserting downstream geometry.
+        time += 1.0/60.0;
+        tick();
         const double intimate=number(*resonator,"position.x");
         observe(*expression,true,0.95,0.05);
         check(near(number(*state,"bloom"),0.95) && near(number(*state,"motion"),0.95),"upper-right gesture authors expansion and motion");
+        time += 1.0/60.0;
+        tick();
         check(number(*resonator,"position.x")>intimate+0.5,"the same gesture actually opens the 3D constellation");
         check(number(*cursor,"x2D")>1200 && number(*cursor,"y2D")<440,"the field cursor shows the authored expression");
         observe(*expression,false,0.95,0.05);
