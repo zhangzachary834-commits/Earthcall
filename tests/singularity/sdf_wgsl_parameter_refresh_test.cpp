@@ -264,11 +264,16 @@ int main() {
         OntoMath::Piecewise timedRadiance =
             OntoMath::Piecewise::continuous(timeNode);
 
+        const sdfwgsl::ScalarExpressionLayout unboundLayout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance);
         const sdfwgsl::ScalarExpressionLayout layout =
             sdfwgsl::inspectScalarExpression(&timedRadiance, true);
         const sdfwgsl::Program timed =
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
 
+        check(!unboundLayout.ok &&
+                  unboundLayout.error.find("does not bind world time") != std::string::npos,
+              "t refuses in a shader expression context that did not opt into world time");
         check(layout.ok, "rho(p,t) structure inspection succeeds");
         check(timed.ok, "rho(p,t) WGSL compilation succeeds");
         check(layout.parameterCount == 0,
