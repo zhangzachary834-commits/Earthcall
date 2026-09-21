@@ -375,9 +375,9 @@ using TypeEnv = std::map<std::string, ValueKind>;
 // map, preserving one authored tree across execution channels.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
-//   "t"          world/simulation time in seconds when the channel binds it
+//   "t"          a scalar temporal coordinate whose meaning the channel binds
 inline constexpr const char* kAmbientPointVar = "p";
-inline constexpr const char* kWorldTimeVar = "t";
+inline constexpr const char* kTimeVar = "t";
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
