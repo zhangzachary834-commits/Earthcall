@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include "Singularity/Screen/RadianceSource.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -216,6 +217,19 @@ public:
     }
     uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
 
+    // Volumetric V0: authored participating media are projected as a collection
+    // above any individual density AST, exactly as Rung 7 composes light sources.
+    // Renderer receives world truth; it does not scan Zones or invent media.
+    void setVolumeDensitySources(std::vector<Rendering::VolumeDensityBinding> sources,
+                                 uint64_t revision) {
+        _volumeDensitySources = std::move(sources);
+        _volumeDensitySourcesRevision = revision;
+    }
+    const std::vector<Rendering::VolumeDensityBinding>& volumeDensitySources() const {
+        return _volumeDensitySources;
+    }
+    uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -408,6 +422,8 @@ private:
     double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
+    std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
+    uint64_t _volumeDensitySourcesRevision = 0;
     FrameStats _frameStats;
 };
 
