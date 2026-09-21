@@ -272,6 +272,7 @@ void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
     };
 
     admit(_spatialRootObject.get());
+    for (const auto& field : _additionalSpatialFields) admit(field.get());
     for (const auto& up : _objects) admit(up.get());
     for (auto* member : extraMembers) admit(member);
     for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
@@ -319,6 +320,13 @@ Zone::Zone(const Zone& other)
     _spatialVectorField = _spatialRootObject->vectorField;
 
     _formation.addMember(_spatialRootObject.get());
+    for (const auto& field : other._additionalSpatialFields) {
+        if (!field) continue;
+        auto clone = geom::FieldNode::fromJson(field->toJson());
+        if (!clone) continue;
+        _formation.addMember(clone.get());
+        _additionalSpatialFields.push_back(std::move(clone));
+    }
     if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 
@@ -336,6 +344,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_objects, tmp._objects);
     std::swap(_formation, tmp._formation);
     std::swap(_spatialRootObject, tmp._spatialRootObject);
+    std::swap(_additionalSpatialFields, tmp._additionalSpatialFields);
     std::swap(_spatialField, tmp._spatialField);
     std::swap(_spatialVectorField, tmp._spatialVectorField);
     std::swap(_lastUpdateTiming, tmp._lastUpdateTiming);
@@ -358,6 +367,32 @@ void Zone::describe() const {
             std::cout << "     - " << d.first << ": " << (d.second?"yes":"no") << std::endl;
         }
     }
+}
+
+void Zone::addSpatialField(std::shared_ptr<geom::FieldNode> field) {
+    if (!field || field.get() == _spatialRootObject.get()) return;
+
+    const std::string id = field->getIdentifier();
+    if (_spatialRootObject && _spatialRootObject->getIdentifier() == id) return;
+    const auto duplicate = std::find_if(
+        _additionalSpatialFields.begin(), _additionalSpatialFields.end(),
+        [&](const std::shared_ptr<geom::FieldNode>& existing) {
+            return existing && existing->getIdentifier() == id;
+        });
+    if (duplicate != _additionalSpatialFields.end()) return;
+
+    Universe::instance().bumpStructuralRevision();
+    _formation.addMember(field.get());
+    _additionalSpatialFields.push_back(std::move(field));
+}
+
+void Zone::clearAdditionalSpatialFields() {
+    if (_additionalSpatialFields.empty()) return;
+    Universe::instance().bumpStructuralRevision();
+    for (const auto& field : _additionalSpatialFields) {
+        if (field) _formation.removeMember(field.get());
+    }
+    _additionalSpatialFields.clear();
 }
 
 void Zone::addObject(std::shared_ptr<Object> obj) {
