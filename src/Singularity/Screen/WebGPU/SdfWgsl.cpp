@@ -1208,10 +1208,9 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 // ray point. Exact split-plane ownership follows ray direction so a boundary
 // cannot repeatedly select the cell the ray just exited.
 fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
-                      dir: f32, dim: u32) -> u32 {
+                      dir: f32, dim: u32, gridScale: f32) -> u32 {
     let e = abs(halfExtent);
-    let denom = max(2.0 * e, 1e-8);
-    let scaled = clamp(((coord + e) / denom) * f32(dim),
+    let scaled = clamp((coord + e) * gridScale,
                        0.0, f32(dim));
     let floored = floor(scaled);
     var idx = u32(min(floored, f32(dim - 1u)));
@@ -1222,6 +1221,7 @@ fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
 }
 
 fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                  gridScale: vec3<f32>,
                   tStart: f32, tMax: f32) -> vec3<f32> {
     if (inst.rangeTraversalEnabled == 0u ||
         inst.rangeProofWordCount == 0u ||
@@ -1257,9 +1257,9 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             return vec3<f32>(t, tMax, 1.0);
         }
 
-        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
-        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
-        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim, gridScale.x);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim, gridScale.y);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim, gridScale.z);
         let linear = ix + dim * (iy + dim * iz);
         let localWord = linear >> 5u;
         if (localWord >= inst.rangeProofWordCount) {
@@ -1405,6 +1405,22 @@ fn fs(in: VSOut) -> FSOut {
     var prev_d = 1e10;
     var candidate_step = 0.0;
 
+    // Convert field coordinates to regular proof-grid coordinates once per
+    // fragment. The old helper recomputed three divisions every time exact
+    // marching crossed a proof-cell boundary. Invalid metadata still fails open
+    // inside rangeCandidate(); this scale is consumed only on the validated path.
+    var rangeGridScale = vec3<f32>(0.0);
+    if (inst.rangeTraversalEnabled != 0u &&
+        inst.rangeProofDepth != 0u &&
+        inst.rangeProofDepth <= 10u) {
+        let rangeExtentForScale = abs(inst.extents.xyz);
+        if (!any(rangeExtentForScale <= vec3<f32>(0.0))) {
+            let rangeDimForScale = f32(1u << inst.rangeProofDepth);
+            rangeGridScale =
+                rangeDimForScale / max(2.0 * rangeExtentForScale, vec3<f32>(1e-8));
+        }
+    }
+
     // When range traversal is active, exact marching owns only the current
     // ambiguous leaf. Crossing its exit asks the hierarchy for the next
     // candidate interval; proved-empty cells between them are skipped without
@@ -1417,7 +1433,8 @@ fn fs(in: VSOut) -> FSOut {
 
         if (inst.rangeTraversalEnabled != 0u &&
             (!rangeCandidateActive || t >= rangeCellExit)) {
-            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            let candidate =
+                rangeCandidate(inst, ro, rd, rangeGridScale, t, maxDist);
             if (candidate.z < 0.5) {
                 t = maxDist + 1.0;
                 break;
