@@ -3,13 +3,13 @@
 > **STATUS, 2026-09-21 — this plan is live. Law-Direct's first executable rung is built and measured; the next bounded horizon is relevant-change-only maintenance of the higher tiers.** Sections 1–5 below are
 > Antigravity's original text of 2026-09-03 and are kept intact for provenance. Two of its
 > migration steps have since been **reversed by doctrine** (retiring the sweep, deleting Beta
-> nodes) — see §7. What to implement next is §8, which supersedes §5.
+> nodes) — see §7. The implementation ladder is §8; the 2026-09-21 relevant-change continuation is §9. Both supersede §5.
 >
 > **Current architecture docs, in reading order:**
 > `../architecture/law/FORMATION_RETE.md` (the rung ladder and §6's correctness floor) ·
 > `../architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md` (Zach's tiered model, recorded by
-> GPT-5.6 Sol, 2026-09-16) · `../architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md` (Zach's 2026-09-21 next-rung architecture) · `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md` ·
-> `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md` ·
+> GPT-5.6 Sol, 2026-09-16) · `../architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md` (Zach's 2026-09-21 next-rung architecture) · `../architecture/law/FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md` ·
+> `../architecture/law/PROPERTY_ADDRESSING_IN_FORMATION_RETE.md` ·
 > `../architecture/ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md` ·
 > `../architecture/law/PROPHETIC_RETE.md` §2 · `../architecture/law/DERIVED_STATE_LEDGER.md`.
 > **The record of what was actually built and measured:**
