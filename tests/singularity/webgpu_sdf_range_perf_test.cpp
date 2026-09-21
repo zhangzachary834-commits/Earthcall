@@ -184,14 +184,17 @@ bool proofCellPositive(const geom::SdfPositiveProofGrid& grid,
                        uint32_t x, uint32_t y, uint32_t z);
 
 struct alignas(16) DirectProofRun {
-    // xyz are field-local AABB bounds. w carries diagnostic provenance only:
-    // axis in bmin.w, positive-cell count in bmax.w.
+    // xyz are the field-local proved-positive run bounds.
     glm::vec4 bmin{0.0f};
     glm::vec4 bmax{0.0f};
+    // x/y/z = axis / first source proof-cell linear index / run cell count.
+    // That is sufficient to recover the exact dependency slice for a future
+    // incremental repair without storing the rich theorem twice.
+    glm::uvec4 provenance{0u};
 };
 
-static_assert(sizeof(DirectProofRun) == 32,
-              "direct proof-run ABI must match two WGSL vec4 fields");
+static_assert(sizeof(DirectProofRun) == 48,
+              "direct proof-run ABI must match two vec4 + one uvec4");
 
 struct DirectRunArtifact {
     uint32_t axis = 0;
@@ -280,9 +283,13 @@ DirectRunArtifact buildDirectRunArtifact(
             static_cast<float>(hi.z));
         const glm::vec3 bmin = -absExtent + loF * cellSize;
         const glm::vec3 bmax = -absExtent + hiF * cellSize;
+        const uint32_t sourceLinear =
+            lo.x + grid.dim * (lo.y + grid.dim * lo.z);
         DirectProofRun run;
-        run.bmin = glm::vec4(bmin, static_cast<float>(out.axis));
-        run.bmax = glm::vec4(bmax, static_cast<float>(runCells));
+        run.bmin = glm::vec4(bmin, 0.0f);
+        run.bmax = glm::vec4(bmax, 0.0f);
+        run.provenance =
+            glm::uvec4(out.axis, sourceLinear, runCells, 0u);
         out.runs.push_back(run);
         out.coveredPositiveCells += runCells;
     };
@@ -1168,6 +1175,7 @@ struct DirectTaxRay {
 struct DirectProofRun {
     bmin: vec4<f32>,
     bmax: vec4<f32>,
+    provenance: vec4<u32>,
 };
 struct DirectTaxOut {
     counts0: vec4<u32>,
