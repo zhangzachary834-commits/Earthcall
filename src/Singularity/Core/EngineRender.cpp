@@ -103,12 +103,14 @@ namespace Core {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
 
-        // Universe is the authority for simulation time. Rendering receives a
-        // frame snapshot through its boundary rather than backend code reaching
-        // into world/Law state.
+        // Compatibility/default temporal binding for Screen. Renderer itself
+        // is Timeline-agnostic: when Law/Timeline selection is authored, this
+        // projection can be supplied by that First Mover without changing the
+        // WebGPU/OntoMath path.
         const Universe& universe = Universe::instance();
-        currentRenderer().setWorldTime(universe.hasClock() ? universe.now() : 0.0,
-                                       universe.hasClock() ? universe.dt() : 0.0);
+        currentRenderer().setTemporalCoordinate(
+            universe.hasClock() ? universe.now() : 0.0,
+            universe.hasClock() ? universe.dt() : 0.0);
 
         bool persistentLightPlaced = false;
         if (auto* root = zone.spatialRoot()) {
