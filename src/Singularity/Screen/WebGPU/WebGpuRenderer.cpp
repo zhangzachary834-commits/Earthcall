@@ -953,6 +953,7 @@ struct SdfGlobalUniforms {
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
     glm::vec4 lightControl; // x = lighting enabled (0 or 1)
+    glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
 };
@@ -1081,6 +1082,22 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         _radianceLayoutExprPtr = radianceExpr();
     }
     const sdfwgsl::ScalarExpressionLayout& radianceLayout = _radianceLayout;
+
+    if (_chromaLayoutRevision != radianceChromaRevision() ||
+        _chromaLayoutExprPtr != radianceChromaExpr()) {
+        sdfwgsl::VectorExpressionLayout nextLayout =
+            sdfwgsl::inspectVectorExpression(radianceChromaExpr(), true);
+        const bool structureChanged =
+            _chromaLayoutRevision == 0xffffffffffffffffULL ||
+            nextLayout.ok != _chromaLayout.ok ||
+            nextLayout.structure != _chromaLayout.structure;
+        if (structureChanged) ++_chromaStructureRevision;
+        _chromaLayout = std::move(nextLayout);
+        _chromaLayoutRevision = radianceChromaRevision();
+        _chromaLayoutExprPtr = radianceChromaExpr();
+    }
+    const sdfwgsl::VectorExpressionLayout& chromaLayout = _chromaLayout;
+
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
         const bool firstOfReason =
@@ -1095,6 +1112,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("radiance: " + radianceLayout.error);
         return;
     }
+    if (!chromaLayout.ok) {
+        recordProgramRefusal("chroma: " + chromaLayout.error);
+        return;
+    }
 
     MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
@@ -1102,6 +1123,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             memo->radianceStructureRevision == _radianceStructureRevision &&
+            memo->chromaStructureRevision == _chromaStructureRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             // We have a structural hit unless parameter recollection proves that
             // the claimed structure identity is stale. Start on the cheap path;
@@ -1113,10 +1135,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             // recollection, but does NOT regenerate shader source.
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
-                memo->radianceRevision != radianceRevision();
+                memo->radianceRevision != radianceRevision() ||
+                memo->chromaRevision != radianceChromaRevision();
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
-                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr());
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
+                                           radianceChromaExpr());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1125,6 +1149,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->prog.params = std::move(refreshed.values);
                     memo->parameterRevision = memoParameterRevision;
                     memo->radianceRevision = radianceRevision();
+                    memo->chromaRevision = radianceChromaRevision();
                 } else {
                     // A parameter-count mismatch means our claimed structural
                     // identity is stale. Fail open to a full compile rather than
@@ -1143,7 +1168,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
-        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr(),
+                                     radianceChromaExpr());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1163,6 +1189,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->colorRevision = mat.colorRevision;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
+            memo->chromaRevision = radianceChromaRevision();
+            memo->chromaStructureRevision = _chromaStructureRevision;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -1448,6 +1476,7 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
