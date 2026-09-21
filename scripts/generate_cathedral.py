@@ -24,125 +24,104 @@ def make_color_expr_piecewise(r_terms, g_terms, b_terms, input_var="y"):
 
 def make_cathedral_radiance_ast():
     """
-    Authors the ethereal, rich, and profound OntoMath scalar radiance field
-    for the Cathedral of the Living Logos:
+    Authors the visually impressive multi-lobe OntoMath scalar radiance field
+    rho(p) for the Cathedral of the Living Logos:
 
-      rho(p) = Num(p) / Denom(p)
+      rho(p) = CentralShaft(p) + AltarSanctuaryLobe(p) + WestRoseLobe(p)
 
-    Where:
-      p = (x, y, z) is the source-relative coordinate vector from the Crossing
-          Lantern Tower apex origin (0.0, 24.0, 0.0).
+    Where all p = (x, y, z) are source-relative coordinates from the
+    Crossing Lantern Tower apex origin (0.0, 24.0, 0.0).
 
-      Denom(p) = 1.0 + 0.0016*x^2 + 0.0005*y^2 + 0.0012*z^2
-          Anisotropic continuous spatial falloff providing vertical shaft elongation
-          (0.0005 along Y) so heavenly illumination extends down to the floor,
-          along the longitudinal processional nave to the west (0.0012),
-          and through the transepts (0.0016).
-
-      Num(p) = Base(y) + Tracery(x, z) + LivingBreath(p)
-
-      Where:
-        Base(y) = 1.0 - 0.008*y
-            Provides gentle vertical warmth as light descends toward the sanctuary floor.
-
-        Tracery(x, z) = 0.12 * cos(0.28*x) * cos(0.28*z)
-                      + 0.08 * cos(0.56*z)
-                      + 0.06 * cos(0.56*x)
-            Harmonic Gothic vault bay clerestory ray lattice. Resonates with the
-            11-meter processional bay spacing and cruciform transept axes, casting
-            subtle geometric ribs of divine clarity across the Cosmati pavements.
-
-        LivingBreath(p) = 0.15 * Noise(0.05 * p)
-            Continuous 3D Perlin noise (Op::Noise = 29) evaluating cnoise3(0.05 * p).
-            Creates ethereal, organic, living atmospheric currents of luminous
-            presence throughout the cathedral volume.
+    Demonstrates:
+      * smooth spatial falloff (anisotropic quadratic denominators)
+      * multiple localized intensity regions (Crossing Tower, High Altar, West Portal)
+      * nontrivial procedural spatial variation (11m bay harmonic Gothic lattice + 3D Perlin noise)
+      * obvious near/far brightness differences (2.45 peak vs 0.35 ambient periphery)
+      * live numeric parameter edits changing results with zero shader recompilation
     """
-    denom_terms = [
+    # 1. Central Crossing Tower Shaft
+    denom_shaft_terms = [
         {"c": 1.0, "factors": {}},
-        {"c": 0.0016, "factors": {"x": 2.0}},
-        {"c": 0.0005, "factors": {"y": 2.0}},
-        {"c": 0.0012, "factors": {"z": 2.0}},
+        {"c": 0.0020, "factors": {"x": 2.0}},
+        {"c": 0.0006, "factors": {"y": 2.0}},
+        {"c": 0.0016, "factors": {"z": 2.0}},
     ]
-    denom_node = {
-        "op": 0,
-        "scalarForm": {"terms": denom_terms}
-    }
+    denom_shaft_node = {"op": 0, "scalarForm": {"terms": denom_shaft_terms}}
 
     lattice_terms = [
-        {"c": 1.0, "factors": {}},
-        {"c": -0.008, "factors": {"y": 1.0}},
+        {"c": 1.25, "factors": {}},
+        {"c": -0.010, "factors": {"y": 1.0}},
+        {
+            "c": 0.28,
+            "factors": {},
+            "trans": [
+                {"kind": 1, "var": "x", "scale": 0.284, "shift": 0.0},
+                {"kind": 1, "var": "z", "scale": 0.284, "shift": 0.0}
+            ]
+        },
+        {
+            "c": 0.18,
+            "factors": {},
+            "trans": [{"kind": 1, "var": "z", "scale": 0.568, "shift": 0.0}]
+        },
         {
             "c": 0.12,
             "factors": {},
-            "trans": [
-                {"kind": 1, "var": "x", "scale": 0.28, "shift": 0.0},
-                {"kind": 1, "var": "z", "scale": 0.28, "shift": 0.0}
-            ]
-        },
-        {
-            "c": 0.08,
-            "factors": {},
-            "trans": [
-                {"kind": 1, "var": "z", "scale": 0.56, "shift": 0.0}
-            ]
-        },
-        {
-            "c": 0.06,
-            "factors": {},
-            "trans": [
-                {"kind": 1, "var": "x", "scale": 0.56, "shift": 0.0}
-            ]
+            "trans": [{"kind": 1, "var": "x", "scale": 0.568, "shift": 0.0}]
         }
     ]
-    lattice_node = {
-        "op": 0,
-        "scalarForm": {"terms": lattice_terms}
-    }
+    lattice_node = {"op": 0, "scalarForm": {"terms": lattice_terms}}
 
     p_vector_node = {
-        "op": 2, # VectorConstruct
-        "children": [
-            {"op": 1, "var": "x"},
-            {"op": 1, "var": "y"},
-            {"op": 1, "var": "z"}
-        ]
+        "op": 2,
+        "children": [{"op": 1, "var": "x"}, {"op": 1, "var": "y"}, {"op": 1, "var": "z"}]
     }
-    freq_node = {
-        "op": 0,
-        "scalarForm": {"terms": [{"c": 0.05, "factors": {}}]}
-    }
-    scaled_p = {
-        "op": 6, # Scale (scalar * vec3)
-        "children": [freq_node, p_vector_node]
-    }
-    noise_node = {
-        "op": 29, # Noise
-        "children": [scaled_p]
-    }
-    noise_amp = {
-        "op": 0,
-        "scalarForm": {"terms": [{"c": 0.15, "factors": {}}]}
-    }
-    scaled_noise = {
-        "op": 6, # Scale (scalar * scalar)
-        "children": [noise_amp, noise_node]
-    }
+    freq_node = {"op": 0, "scalarForm": {"terms": [{"c": 0.045, "factors": {}}]}}
+    scaled_p = {"op": 6, "children": [freq_node, p_vector_node]}
+    noise_node = {"op": 29, "children": [scaled_p]}
+    noise_amp = {"op": 0, "scalarForm": {"terms": [{"c": 0.20, "factors": {}}]}}
+    scaled_noise = {"op": 6, "children": [noise_amp, noise_node]}
 
-    num_node = {
-        "op": 4, # Add
-        "children": [lattice_node, scaled_noise]
-    }
+    num_shaft_node = {"op": 4, "children": [lattice_node, scaled_noise]}
+    shaft_div = {"op": 23, "children": [num_shaft_node, denom_shaft_node]}
 
-    radiance_node = {
-        "op": 23, # Div
-        "children": [num_node, denom_node]
-    }
+    # 2. High Altar Sanctuary Sacred Lobe (world center 0, 4, -29.5 -> relative 0, -20, -29.5)
+    # Denominator: 1.0 + 0.008*x^2 + 0.006*(y+20)^2 + 0.005*(z+29.5)^2
+    denom_altar_terms = [
+        {"c": 7.75125, "factors": {}},
+        {"c": 0.24, "factors": {"y": 1.0}},
+        {"c": 0.295, "factors": {"z": 1.0}},
+        {"c": 0.008, "factors": {"x": 2.0}},
+        {"c": 0.006, "factors": {"y": 2.0}},
+        {"c": 0.005, "factors": {"z": 2.0}}
+    ]
+    denom_altar_node = {"op": 0, "scalarForm": {"terms": denom_altar_terms}}
+    num_altar_node = {"op": 0, "scalarForm": {"terms": [{"c": 1.80, "factors": {}}]}}
+    altar_div = {"op": 23, "children": [num_altar_node, denom_altar_node]}
+
+    # 3. West Portal Rose Window Sunbeam Shaft (world center 0, 14, 30 -> relative 0, -10, 30)
+    # Denominator: 1.0 + 0.010*x^2 + 0.008*(y+10)^2 + 0.0025*(z-30)^2
+    denom_west_terms = [
+        {"c": 4.05, "factors": {}},
+        {"c": 0.16, "factors": {"y": 1.0}},
+        {"c": -0.15, "factors": {"z": 1.0}},
+        {"c": 0.010, "factors": {"x": 2.0}},
+        {"c": 0.008, "factors": {"y": 2.0}},
+        {"c": 0.0025, "factors": {"z": 2.0}}
+    ]
+    denom_west_node = {"op": 0, "scalarForm": {"terms": denom_west_terms}}
+    num_west_node = {"op": 0, "scalarForm": {"terms": [{"c": 1.50, "factors": {}}]}}
+    west_div = {"op": 23, "children": [num_west_node, denom_west_node]}
+
+    # Sum all lobes into the complete scalar radiance field via binary Add
+    shaft_plus_altar = {"op": 4, "children": [shaft_div, altar_div]}
+    total_radiance_node = {"op": 4, "children": [shaft_plus_altar, west_div]}
 
     return {
         "input": "y",
         "pieces": [
             {
-                "mathNode": radiance_node
+                "mathNode": total_radiance_node
             }
         ]
     }
@@ -1831,14 +1810,14 @@ hud_bg = {
     "objectID": "hud.logos.dock",
     "shapeKind": 12,
     "geometryType": 12,
-    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 235.0],
+    "shapeParams": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 360.0, 275.0],
     "shape": {
         "kind": 12,
         "params": {
             "r": 0.0, "ry": 0.0, "rz": 0.0, "halfH": 0.0,
             "majorR": 0.0, "minorR": 0.0, "paraboloidA": 0.0,
             "ovoidAsym": 0.0, "fillet": 0.0,
-            "width2D": 360.0, "height2D": 235.0
+            "width2D": 360.0, "height2D": 275.0
         }
     },
     "x2D": 20.0,
@@ -1861,6 +1840,7 @@ objects.append(make_button2d("hud.btn.lux", "FIAT LUX", 205, 122, 155, 32, [0.92
 objects.append(make_button2d("hud.btn.chord", "SOUND CANON", 35, 160, 155, 32, [0.92, 0.55, 0.15]))
 objects.append(make_button2d("hud.btn.season", "CYCLE SEASON", 205, 160, 155, 32, [0.75, 0.25, 0.85]))
 objects.append(make_button2d("hud.btn.aurora", "CELESTIAL SKY AURORA", 35, 198, 325, 30, [0.15, 0.82, 0.72]))
+objects.append(make_button2d("hud.btn.radiance", "PULSE SACRED RADIANCE", 35, 236, 325, 30, [0.95, 0.72, 0.25]))
 
 # ==============================================================================
 # 12. TRANSCENDENT SDF MANIFOLDS & SACRED GEOMETRY SHOWCASE (ULTRA-DETAILED)
@@ -4362,7 +4342,8 @@ zone_doc = {
         "law-logos-unison",
         "law-logos-season-toggle",
         "law-logos-pillar-pulse",
-        "law-logos-sky-aurora"
+        "law-logos-sky-aurora",
+        "law-logos-radiance-pulse"
     ]
 }
 
@@ -4546,6 +4527,26 @@ world_doc = {
                     ]
                 },
                 "provenance": [{"entityA": "law-logos-sky-aurora", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
+            },
+            {
+                "id": "law-logos-radiance-pulse",
+                "name": "Logos: Pulse Cathedral Sacred Radiance",
+                "enabled": True, "authority": 0, "activation": 0, "scope": 1, "drives": False, "retrigger": 0, "conditionMode": "any",
+                "authors": ["Zach"], "conditionSubjects": [], "targets": [], "applicationLog": [],
+                "conditionModel": {
+                    "kind": 4,
+                    "children": [{"kind": 8, "otherId": "hud.btn.radiance"}]
+                },
+                "actionModel": {
+                    "kind": 5,
+                    "children": [
+                        {"kind": 0, "path": "@Cathedral of the Living Logos_spatialRoot.light.intensity", "operand": {"t": "float", "v": 2.8}},
+                        {"kind": 0, "path": "@Cathedral of the Living Logos_spatialRoot.light.ambient", "operand": {"t": "float", "v": 0.45}},
+                        {"kind": 0, "path": "@hud.logos.telemetry.season.label2D", "operand": {"t": "string", "v": "RADIANCE: SACRED MULTI-LOBE SURGE (ACTIVE)"}},
+                        {"kind": 18, "path": "acoustic.frequency", "input": "acoustic.amplitude", "propertyName": "sine"}
+                    ]
+                },
+                "provenance": [{"entityA": "law-logos-radiance-pulse", "entityB": "Zach", "directed": True, "weight": 1.0, "events": [], "type": "authored-by"}]
             }
         ],
         "triggers": {
@@ -4553,14 +4554,16 @@ world_doc = {
             "law-logos-fiat-lux": ["object-clicked"],
             "law-logos-celestial-chord": ["object-clicked"],
             "law-logos-season-toggle": ["object-clicked"],
-            "law-logos-sky-aurora": ["object-clicked"]
+            "law-logos-sky-aurora": ["object-clicked"],
+            "law-logos-radiance-pulse": ["object-clicked"]
         },
         "formationMembers": [
             "law-logos-breath",
             "law-logos-fiat-lux",
             "law-logos-celestial-chord",
             "law-logos-season-toggle",
-            "law-logos-sky-aurora"
+            "law-logos-sky-aurora",
+            "law-logos-radiance-pulse"
         ],
         "rete": {"alphaNodes": [], "betaNodes": [], "facts": [], "agenda": []}
     }
