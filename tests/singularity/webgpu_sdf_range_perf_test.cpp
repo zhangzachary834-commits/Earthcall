@@ -180,6 +180,9 @@ struct RuntimeTaxTotals {
     bool valid = false;
 };
 
+bool proofCellPositive(const geom::SdfPositiveProofGrid& grid,
+                       uint32_t x, uint32_t y, uint32_t z);
+
 struct alignas(16) DirectProofRun {
     // xyz are field-local AABB bounds. w carries diagnostic provenance only:
     // axis in bmin.w, positive-cell count in bmax.w.
