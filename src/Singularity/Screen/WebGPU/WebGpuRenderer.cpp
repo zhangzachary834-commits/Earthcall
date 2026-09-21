@@ -1643,6 +1643,73 @@ void WebGpuRenderer::flushSdfDraws() {
         return;
     }
     
+    // Rung 7 source records are shared across every SDF pipeline in the frame.
+    // Upload only when their byte representation changes; source time and
+    // placement are values, not reasons to rebuild WGSL.
+    WGPUBuffer sourceBuffer = nullptr;
+    uint64_t sourceOffset = 0;
+    uint64_t sourceBindingSize = 0;
+
+    if (radianceSources().size() > 1) {
+        std::vector<RadianceSourceGpuData> gpuSources;
+        gpuSources.reserve(radianceSources().size());
+        for (const auto& source : radianceSources()) {
+            RadianceSourceGpuData data{};
+            data.position = glm::vec4(source.position, 1.0f);
+            data.ambient = glm::vec4(source.ambientRadiance, 1.0f);
+            data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
+            data.specular = glm::vec4(source.specularRadiance, 1.0f);
+            data.coefficients = source.coefficients;
+            data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
+                                  static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
+            data.control =
+                glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+            gpuSources.push_back(data);
+        }
+
+        const uint64_t bytes =
+            static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
+        uint64_t capacity = 256;
+        while (capacity < bytes) capacity *= 2;
+
+        if (!_persistentRadianceSources.buffer ||
+            _persistentRadianceSources.capacityBytes < bytes) {
+            WGPUBufferDescriptor bd = {};
+            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+            bd.size = capacity;
+            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+            if (grown) {
+                if (_persistentRadianceSources.buffer) {
+                    wgpuBufferRelease(_persistentRadianceSources.buffer);
+                }
+                _persistentRadianceSources.buffer = grown;
+                _persistentRadianceSources.capacityBytes = capacity;
+                _persistentRadianceSources.mirror.clear();
+                _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
+            }
+        }
+
+        const auto* raw =
+            reinterpret_cast<const unsigned char*>(gpuSources.data());
+        const std::vector<unsigned char> bytesNow(raw, raw + bytes);
+        if (_persistentRadianceSources.buffer &&
+            _persistentRadianceSources.capacityBytes >= bytes) {
+            if (_persistentRadianceSources.mirror != bytesNow) {
+                wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
+                                     gpuSources.data(), bytes);
+                _persistentRadianceSources.mirror = bytesNow;
+            }
+            sourceBuffer = _persistentRadianceSources.buffer;
+            sourceBindingSize = bytes;
+        } else {
+            auto fallback =
+                bufferPool().suballocateStorage(gpuSources.data(), bytes);
+            sourceBuffer = fallback.buffer;
+            sourceOffset = fallback.offset;
+            sourceBindingSize = fallback.size;
+        }
+    }
+
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
@@ -1801,12 +1868,27 @@ void WebGpuRenderer::flushSdfDraws() {
 
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
-        // Group 0: Globals and Parameters
-        WGPUBindGroupEntry bge[2] = {};
-        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].buffer = paramBuffer; bge[1].offset = paramOffset; bge[1].size = paramBindingSize;
+        // Group 0: globals + authored parameter values + optional Rung 7 sources.
+        WGPUBindGroupEntry bge[3] = {};
+        bge[0].binding = 0;
+        bge[0].buffer = uAlloc.buffer;
+        bge[0].offset = uAlloc.offset;
+        bge[0].size = uAlloc.size;
+        bge[1].binding = 1;
+        bge[1].buffer = paramBuffer;
+        bge[1].offset = paramOffset;
+        bge[1].size = paramBindingSize;
+        if (sp->usesRadianceSources) {
+            if (!sourceBuffer || sourceBindingSize == 0) continue;
+            bge[2].binding = 2;
+            bge[2].buffer = sourceBuffer;
+            bge[2].offset = sourceOffset;
+            bge[2].size = sourceBindingSize;
+        }
         WGPUBindGroupDescriptor bgd = {};
-        bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
+        bgd.layout = sp->bgl;
+        bgd.entryCount = sp->usesRadianceSources ? 3 : 2;
+        bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
 
@@ -1877,7 +1959,8 @@ void WebGpuRenderer::endFrame() {
 
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
-                            _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes;
+                            _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes +
+                            _persistentRadianceSourceVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
