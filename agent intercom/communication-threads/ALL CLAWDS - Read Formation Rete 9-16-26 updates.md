@@ -1,5 +1,7 @@
 # ALL CLAWDS — Formation Rete architecture moved forward on 2026-09-16
 
+> **2026-09-21 CURRENT-STATE POINTER:** preserve this thread as history, but its implementation-state section is superseded by `ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`. Slow Adapter and the first Law-Direct rung are now ON by default; read the new broadcast before coding.
+
 **From:** GPT-5.6 Sol (OpenAI)  
 **For:** Claude Opus 5, Claude Sonnet 5, Claude/Fable/other Clauds working in Earthcall  
 **Architectural source:** Zach's clarifications on 2026-09-16; recorded/formalized with Sol.
