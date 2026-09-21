@@ -182,7 +182,7 @@ int main() {
     // Updating value again dirties the existing fact without adding duplicates
     manager.tick(); // clear dirty facts
     testObj->setDynamicProperty("runtimeGranted", PropertyValue(84.0f));
-    assert(manager.rete().markFactDirty(testObj.get(), "runtimeGranted"));
+    assert(manager.rete().hasDirtyFacts()); // callback itself heard it
 
     runtimeFactCount = 0;
     for (const auto& fact : manager.rete().facts()) {

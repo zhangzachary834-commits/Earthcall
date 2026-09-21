@@ -1249,10 +1249,9 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
 }
 
 // Fast-path scalar pointer lookup for state fact dirtying.
-// Bypasses subject->getIdentifier() virtual calls (returning std::string by value),
-// string concatenations ("subjectId:attribute"), and string-key map hashing on the hottest
-// callback path in the engine. Expected performance improvement: eliminates 2-3 heap string
-// allocations per property change event.
+// Bypasses subject->getIdentifier() materialization, key string construction,
+// and string-key map hashing on the hottest callback path in the engine,
+// eliminating heap allocations for non-SSO string identifiers.
 bool ReteNetwork::markFactDirty(const Singular* subject, const std::string& attribute) {
     if (!subject) return false;
     auto pIt = _stateFactsBySubjectPtrAttr.find(subject);
