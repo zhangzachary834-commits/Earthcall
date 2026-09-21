@@ -1131,66 +1131,26 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     if (any(extent <= vec3<f32>(0.0))) {
         return vec3<f32>(tStart, tMax, 1.0);
     }
-
-    // True 3D Amanatides/Woo traversal of the regular proof grid. Compute the
-    // containing cell and the three next-boundary times ONCE. Consecutive
-    // proved-positive cells then cost one bit read plus boundary comparisons,
-    // instead of rebuilding p->cell coordinates and a three-slab ray/AABB
-    // intersection for every skipped cell.
     let cellSize = (2.0 * extent) / f32(dim);
-    let p0 = ro + rd * tStart;
-    if (any(p0 < -extent) || any(p0 > extent)) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-
-    var ix = i32(rangeGridAxisIndex(p0.x, extent.x, rd.x, dim));
-    var iy = i32(rangeGridAxisIndex(p0.y, extent.y, rd.y, dim));
-    var iz = i32(rangeGridAxisIndex(p0.z, extent.z, rd.z, dim));
-
-    let stepX = select(-1, 1, rd.x >= 0.0);
-    let stepY = select(-1, 1, rd.y >= 0.0);
-    let stepZ = select(-1, 1, rd.z >= 0.0);
-
-    let hasRdX = abs(rd.x) > 1e-8;
-    let hasRdY = abs(rd.y) > 1e-8;
-    let hasRdZ = abs(rd.z) > 1e-8;
-    let invRdX = select(0.0, 1.0 / rd.x, hasRdX);
-    let invRdY = select(0.0, 1.0 / rd.y, hasRdY);
-    let invRdZ = select(0.0, 1.0 / rd.z, hasRdZ);
-
-    let nx = -extent.x +
-        f32(select(ix, ix + 1, stepX > 0)) * cellSize.x;
-    let ny = -extent.y +
-        f32(select(iy, iy + 1, stepY > 0)) * cellSize.y;
-    let nz = -extent.z +
-        f32(select(iz, iz + 1, stepZ > 0)) * cellSize.z;
-
-    var tNextX = select(1e30, (nx - ro.x) * invRdX, hasRdX);
-    var tNextY = select(1e30, (ny - ro.y) * invRdY, hasRdY);
-    var tNextZ = select(1e30, (nz - ro.z) * invRdZ, hasRdZ);
-    let tDeltaX = select(1e30, abs(cellSize.x * invRdX), hasRdX);
-    let tDeltaY = select(1e30, abs(cellSize.y * invRdY), hasRdY);
-    let tDeltaZ = select(1e30, abs(cellSize.z * invRdZ), hasRdZ);
-
     var t = tStart;
 
-    // A depth-6 regular grid admits at most 190 cell visits along a straight
-    // ray. If a future deeper proof grid outgrows this bounded guard, the
-    // remainder fails open to exact authored marching.
+    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
+    // deeper proof grid exceeds this guard, the unvisited remainder fails open
+    // to exact marching rather than silently disappearing.
     for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
         if (t >= tMax) {
             return vec3<f32>(tMax, tMax, 0.0);
         }
-        if (ix < 0 || ix >= i32(dim) ||
-            iy < 0 || iy >= i32(dim) ||
-            iz < 0 || iz >= i32(dim)) {
+
+        let p = ro + rd * t;
+        if (any(p < -extent) || any(p > extent)) {
             return vec3<f32>(t, tMax, 1.0);
         }
 
-        let ux = u32(ix);
-        let uy = u32(iy);
-        let uz = u32(iz);
-        let linear = ux + dim * (uy + dim * uz);
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let linear = ix + dim * (iy + dim * iz);
         let localWord = linear >> 5u;
         if (localWord >= inst.rangeProofWordCount) {
             return vec3<f32>(t, tMax, 1.0);
@@ -1200,39 +1160,24 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         let provedPositive =
             (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
 
-        let cellExit = min(min(min(tNextX, tNextY), tNextZ), tMax);
-        if (cellExit <= t) {
-            // Shared-edge/corner floating arithmetic must never authorize an
-            // epsilon jump. Fail open exactly where ownership became ambiguous.
+        let cellMin =
+            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
+        let cellMax = cellMin + cellSize;
+        let cell = rayAabbBounds(ro, rd, cellMin, cellMax);
+        if (cell.y <= t) {
             return vec3<f32>(t, tMax, 1.0);
         }
+        let cellExit = min(cell.y, tMax);
 
         if (!provedPositive) {
-            // Clear bit is absence of proof, never proof of occupancy/sign.
-            // Exact authored marching owns this whole current cell interval.
+            // A clear bit says only that the proof grid grants no skip here.
+            // Preserve the exact marcher's authority over this interval.
             return vec3<f32>(t, cellExit, 1.0);
         }
 
-        // f>0 is proved throughout this cell. Cross its exact forward boundary.
+        // The CPU theorem proved f>0 throughout this regular cell. Advance to
+        // its exact exit without evaluating the authored field.
         t = cellExit;
-        if (t >= tMax) {
-            return vec3<f32>(tMax, tMax, 0.0);
-        }
-
-        // Edge/corner crossings advance every axis whose boundary was reached.
-        // No epsilon or guessed tie tolerance is needed.
-        if (tNextX <= cellExit) {
-            ix = ix + stepX;
-            tNextX = tNextX + tDeltaX;
-        }
-        if (tNextY <= cellExit) {
-            iy = iy + stepY;
-            tNextY = tNextY + tDeltaY;
-        }
-        if (tNextZ <= cellExit) {
-            iz = iz + stepZ;
-            tNextZ = tNextZ + tDeltaZ;
-        }
     }
 
     return vec3<f32>(t, tMax, 1.0);
