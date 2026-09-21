@@ -223,6 +223,8 @@ private:
         uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
         uint64_t chromaRevision = 0xffffffffffffffffULL;
         uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
+        uint64_t angularRevision = 0xffffffffffffffffULL;
+        uint64_t angularStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
@@ -256,6 +258,13 @@ private:
     const OntoMath::Piecewise* _chromaLayoutExprPtr = nullptr;
     sdfwgsl::VectorExpressionLayout _chromaLayout;
     uint64_t _chromaStructureRevision = 0;
+
+    // alpha(p,omega,t) is a third independent source invariant. Numeric angular
+    // edits refresh only packed values; structural edits advance this identity.
+    uint64_t _angularLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _angularLayoutExprPtr = nullptr;
+    sdfwgsl::AngularExpressionLayout _angularLayout;
+    uint64_t _angularStructureRevision = 0;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
