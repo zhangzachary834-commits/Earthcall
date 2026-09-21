@@ -28,6 +28,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 extern MaterialManager materials;   // global Material beings (globals.cpp)
