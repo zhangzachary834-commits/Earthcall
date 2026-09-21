@@ -2251,4 +2251,198 @@ Program compile(const geom::SdfNode& root,
     return prog;
 }
 
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr) {
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    std::string throwaway;
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+    }
+
+    ParameterBlock block;
+    block.ok = !e.refused;
+    block.error = e.refusal;
+    block.values = std::move(e.params);
+    if (block.values.empty()) block.values.push_back(0.0f);
+    return block;
+}
+
+Program compileVolume(const OntoMath::Piecewise* densityExpr) {
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    Program prog;
+    prog.wgsl = R"WGSL(
+struct VolumeGlobals {
+    viewProj: mat4x4<f32>,
+    invViewProj: mat4x4<f32>,
+    eyePos: vec4<f32>,
+    viewport: vec4<f32>,
+};
+
+struct VolumeInstanceData {
+    origin: vec4<f32>,
+    halfExtent: vec4<f32>,
+    time: vec4<f32>,
+    paramOffset: u32,
+    _pad0: u32,
+    _pad1: u32,
+    _pad2: u32,
+};
+
+struct Params { v: array<f32> };
+
+@group(0) @binding(0) var<uniform> u: VolumeGlobals;
+@group(0) @binding(1) var<storage, read> P: Params;
+@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;
+@group(1) @binding(0) var<storage, read> instances: array<VolumeInstanceData>;
+
+var<private> g_instIdx: u32;
+
+struct VolumeVSOut {
+    @builtin(position) position: vec4<f32>,
+    @location(0) @interpolate(flat) instIdx: u32,
+};
+
+@vertex
+fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VolumeVSOut {
+    let inst = instances[instIdx];
+    let world = inst.origin.xyz + pos * inst.halfExtent.xyz;
+    var out: VolumeVSOut;
+    out.position = u.viewProj * vec4<f32>(world, 1.0);
+    if (out.position.w > 0.0) {
+        out.position.z = min(out.position.z, out.position.w * 0.999999);
+    }
+    out.instIdx = instIdx;
+    return out;
+}
+
+fn rayAabbWorld(ro: vec3<f32>, rd: vec3<f32>,
+                bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
+    let safeRd = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let a = (bmin - ro) / safeRd;
+    let b = (bmax - ro) / safeRd;
+    let lo = min(a, b);
+    let hi = max(a, b);
+    return vec2<f32>(
+        max(max(lo.x, lo.y), lo.z),
+        min(min(hi.x, hi.y), hi.z));
+}
+
+fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
+    let ndc = vec4<f32>(
+        (pixel.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - pixel.y / u.viewport.y) * 2.0 - 1.0,
+        depth,
+        1.0);
+    let h = u.invViewProj * ndc;
+    return h.xyz / h.w;
+}
+)WGSL";
+
+    std::string densityBody;
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitPiecewise(*densityExpr, e, "p", "f32", densityBody);
+    } else {
+        densityBody = "    return 0.0;\n";
+    }
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
+                 densityBody + "}\n";
+
+    prog.wgsl += R"WGSL(
+@fragment
+fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
+    g_instIdx = in.instIdx;
+    let inst = instances[in.instIdx];
+
+    let ro = u.eyePos.xyz;
+    let farNdc = vec4<f32>(
+        (in.position.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
+        1.0,
+        1.0);
+    let farH = u.invViewProj * farNdc;
+    let farWorld = farH.xyz / farH.w;
+    let rd = normalize(farWorld - ro);
+
+    let bounds = rayAabbWorld(
+        ro, rd,
+        inst.origin.xyz - inst.halfExtent.xyz,
+        inst.origin.xyz + inst.halfExtent.xyz);
+
+    var t0 = max(bounds.x, 0.0);
+    var t1 = bounds.y;
+    if (t1 <= t0) { discard; }
+
+    let maxX = max(i32(u.viewport.x), 1) - 1;
+    let maxY = max(i32(u.viewport.y), 1) - 1;
+    let px = vec2<i32>(
+        clamp(i32(floor(in.position.x)), 0, maxX),
+        clamp(i32(floor(in.position.y)), 0, maxY));
+    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+
+    if (sceneDepth < 0.999999) {
+        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
+        let opaqueT = dot(opaqueWorld - ro, rd);
+        t1 = min(t1, max(opaqueT, 0.0));
+    }
+    if (t1 <= t0) { discard; }
+
+    let span = t1 - t0;
+    let stepLength = span / 96.0;
+    if (stepLength <= 0.0) { discard; }
+
+    var transmittance = 1.0;
+    var volumetricScatter = 0.0;
+
+    for (var i = 0; i < 96; i = i + 1) {
+        let sampleT = t0 + (f32(i) + 0.5) * stepLength;
+        let worldP = ro + rd * sampleT;
+        let p = worldP - inst.origin.xyz;
+        let density = max(volumeDensityEval(p), 0.0);
+
+        if (density > 0.0) {
+            // V0 compatibility only. V1 replaces this with independently
+            // authored sigma_t(p,t).
+            let extinction = max(density * 0.5, 1e-6);
+            let oldT = transmittance;
+            transmittance *= exp(-extinction * stepLength);
+
+            // V0 compatibility only. V2 replaces white scattering with
+            // independently authored scattering/chroma.
+            volumetricScatter +=
+                (density / extinction) * (oldT - transmittance);
+        }
+
+        if (transmittance < 0.01) { break; }
+    }
+
+    let alpha = 1.0 - transmittance;
+    if (alpha <= 1e-5) { discard; }
+
+    let integratedRgb = vec3<f32>(1.0) * volumetricScatter;
+    // The pipeline uses ordinary SrcAlpha compositing. Convert the integrated
+    // premultiplied contribution to straight color so the blend performs:
+    // C_out = C_medium + T * C_scene.
+    return vec4<f32>(integratedRgb / alpha, alpha);
+}
+)WGSL";
+
+    prog.params = std::move(e.params);
+    prog.needsGradientStep = false;
+
+    if (e.refused) {
+        prog.ok = false;
+        prog.error = e.refusal;
+        prog.wgsl = "// REFUSED: " + e.refusal + "\n";
+    }
+
+    if (prog.params.empty()) prog.params.push_back(0.0f);
+    return prog;
+}
+
+
 } // namespace sdfwgsl
