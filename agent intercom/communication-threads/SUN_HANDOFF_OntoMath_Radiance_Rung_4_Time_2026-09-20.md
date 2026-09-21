@@ -60,16 +60,32 @@ expression-context capability. Radiance opts in. Geometry does not.
 Future Rungs such as chroma `chi(p,t)` can opt into the same canonical binding
 deliberately.
 
-## Files changed
+## Principal files changed
 
+Radiance / OntoMath:
 - `src/Singularity/OntoMath/ScalarForm.hpp`
-- `src/Singularity/Screen/WebGPU/SdfWgsl.cpp`
-- `src/Singularity/Screen/WebGPU/SdfWgsl.hpp`
+- `src/Singularity/Screen/Renderer.hpp`
+- `src/Singularity/Screen/WebGPU/SdfWgsl.cpp/.hpp`
 - `src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp`
+
+Time ontology:
+- removed empty `src/Time/Time.h/.cpp`;
+- added `src/Time/timeline.hpp/.cpp`;
+- `src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp/.cpp` now projects a borrowed Timeline;
+- Engine world-time compatibility state is backed by one broad Timeline instance.
+
+Witnesses:
+- `tests/time/timeline_test.cpp`
 - `tests/singularity/authorable_light_contract_test.cpp`
 - `tests/singularity/sdf_wgsl_parameter_refresh_test.cpp`
 - `tests/singularity/webgpu_object_test.cpp`
+
+Doctrine:
+- `AGENTS.md`
+- `docs/architecture/ontology/TIME_AND_MOMENT.md`
+- `docs/architecture/mathematics/ONTOMATH_FRAMEWORK.md`
 - `docs/plans/ONTOMATH_RADIANCE_NEXT_RUNGS_PLAN_2026-09-20.md`
+- Constitutionalist correction intercom note.
 
 ## Focused witnesses
 
@@ -118,9 +134,13 @@ See:
 
 ## Base movement
 
-While the branch was in progress, base advanced by one unrelated commit adding
-the Radiance Gallery save/generator artifacts. It did not touch any Rung-4
-implementation file. PR #273 therefore targets the new base directly.
+While the branch was in progress, base advanced by two commits containing the
+Radiance Gallery / Cathedral work plus guidance updates. The branch was brought
+forward with a real two-parent merge commit, not a fake ref move: the merged tree
+started from the latest base tree and then overlaid only this branch's intended
+26-file delta. Post-merge compare reports behind=0 and does not show Cathedral or
+Gallery files in the PR diff. This specifically guards against repeating the
+Sep-19 temporal rollback failure mode.
 
 ## What remains before merge
 
