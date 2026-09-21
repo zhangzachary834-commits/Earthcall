@@ -1,6 +1,7 @@
 #include "Relation/RelationManager.hpp"
 #include "Relation/Relation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "json.hpp"
 
 #include <iostream>
 #include <string>
@@ -135,6 +136,77 @@ void test_forget_being() {
     delete b;
 }
 
+void test_get_relations_of_type() {
+    std::cout << "--- test_get_relations_of_type ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    rm.add(std::make_shared<Relation>("type1", a, b, true));
+    rm.add(std::make_shared<Relation>("type2", a, b, true));
+
+    auto rels = rm.getRelationsOfType("type1");
+    check(rels.size() == 1, "Should find 1 relation of type1");
+    if (rels.size() > 0) {
+        check(rels[0]->type == "type1", "Found relation should be of type1");
+    }
+}
+
+void test_find_adjacent_entities() {
+    std::cout << "--- test_find_adjacent_entities ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    DummySingular c("nodeC");
+
+    rm.add(std::make_shared<Relation>("link", a, b, true));
+    rm.add(std::make_shared<Relation>("friend", b, c, false)); // undirected
+
+    auto adjA = rm.findAdjacentEntities("nodeA");
+    check(adjA.size() == 1 && adjA[0] == "nodeB", "nodeA should have nodeB as adjacent");
+
+    auto adjB = rm.findAdjacentEntities("nodeB");
+    // "link" is directed nodeA -> nodeB, so nodeB does not see nodeA via findAdjacentEntities since nodeB is not the source and relation is directed
+    // "friend" is undirected nodeB <-> nodeC, so nodeB sees nodeC. Total = 1.
+    check(adjB.size() == 1 && adjB[0] == "nodeC", "nodeB should have nodeC as adjacent");
+
+    auto adjB_link = rm.findAdjacentEntities("nodeB", "link");
+    check(adjB_link.size() == 0, "nodeB has no outgoing link relation");
+}
+
+void test_json_serialization() {
+    std::cout << "--- test_json_serialization ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    rm.add(std::make_shared<Relation>("type1", a, b, true));
+
+    nlohmann::json j = rm.toJson();
+    RelationManager rm2;
+    rm2.loadFromJson(j);
+
+    check(rm2.getAll().size() == 1, "Loaded manager should have 1 relation");
+    if (rm2.getAll().size() > 0) {
+        check(rm2.getAll()[0]->type == "type1", "Loaded relation should have type1");
+        check(rm2.getAll()[0]->aId() == "nodeA", "Loaded relation aId should match");
+    }
+}
+
+void test_relations_involving() {
+    std::cout << "--- test_relations_involving ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    auto rel = std::make_shared<Relation>("type1", a, b, true);
+    rm.add(rel);
+
+    std::vector<Relation*> out;
+    rm.relationsInvolving(a, out);
+    check(out.size() == 1, "relationsInvolving should find 1 relation for a");
+    if (out.size() > 0) {
+        check(out[0] == rel.get(), "relationsInvolving should return the correct relation pointer");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -147,6 +219,10 @@ int main() {
     test_remove_involving();
     test_cycle_detection();
     test_forget_being();
+    test_get_relations_of_type();
+    test_find_adjacent_entities();
+    test_json_serialization();
+    test_relations_involving();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "
