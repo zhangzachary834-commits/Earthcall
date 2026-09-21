@@ -320,6 +320,90 @@ int main() {
               "Piecewise t bounds read the admitted Timeline coordinate");
     }
 
+    // ---------------------------------------------------------------------
+    // 6. Rung 5: chi(p,t)->vec3 is independent authored source chroma.
+    //    Numeric edits refresh parameters; structure edits compile; t is an
+    //    ambient source coordinate; absence remains legacy light.color.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto rhoNode = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+
+        auto chiNode = std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.25, 0.0).release());
+        OntoMath::Piecewise chi = OntoMath::Piecewise::continuous(chiNode);
+
+        const auto legacyLayout = sdfwgsl::inspectVectorExpression(nullptr, true);
+        const auto layoutBefore = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto before = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(legacyLayout.ok &&
+                  legacyLayout.structure.find("legacy-chroma:light.color") != std::string::npos,
+              "absent chi has explicit legacy light.color structural identity");
+        check(layoutBefore.ok, "authored chi vector structure inspection succeeds");
+        check(before.ok && before.wgsl.find("fn lightChroma(p: vec3<f32>) -> vec3<f32>") != std::string::npos,
+              "authored chi lowers through the production OntoMath WGSL emitter");
+        check(before.wgsl.find("const HAS_AUTHORED_CHROMA: bool = true") != std::string::npos,
+              "authored chi selects the separated source-chroma lighting path");
+
+        // VALUE ONLY: mutate the red component's ScalarLeaf coefficient.
+        chiNode->children[0]->scalarForm.terms[0].coefficient = 0.2;
+        const auto layoutAfter = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto refreshed = sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, &chi);
+        const auto after = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(layoutAfter.ok && layoutAfter.structure == layoutBefore.structure,
+              "numeric chi edit preserves vector structure identity");
+        check(layoutAfter.parameterCount == layoutBefore.parameterCount,
+              "numeric chi edit preserves vector parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric chi edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric chi edit changes authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "chi parameter recollection exactly matches full compile");
+
+        // STRUCTURE/TIME: chi=(t,0,0). t is admitted but takes no authored slot.
+        auto timeVector = std::make_shared<OntoMath::MathNode>();
+        timeVector->op = OntoMath::MathNode::Op::VectorConstruct;
+        timeVector->children.push_back(variable(OntoMath::kTimeVar));
+        timeVector->children.push_back(number(0.0));
+        timeVector->children.push_back(number(0.0));
+        chi.pieces[0].mathNode = timeVector;
+        const auto timedUnbound = sdfwgsl::inspectVectorExpression(&chi, false);
+        const auto timedLayout = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto timed = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(!timedUnbound.ok,
+              "timed chi refuses in an expression context that did not admit source time");
+        check(timedLayout.ok && timedLayout.structure != layoutAfter.structure,
+              "structural chi edit changes emitted structure identity");
+        check(timed.ok && timed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "chi(p,t) binds the same admitted radiance-source Timeline coordinate");
+
+        // An authored scalar is NOT silently accepted as RGB merely because the
+        // caller expected chroma.
+        OntoMath::Piecewise scalarChi = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.5).release()));
+        const auto wrongType = sdfwgsl::inspectVectorExpression(&scalarChi, true);
+        check(!wrongType.ok && wrongType.error.find("Vector") != std::string::npos,
+              "non-vector authored chi refuses instead of falling back to a color");
+
+        auto badVector = std::make_shared<OntoMath::MathNode>();
+        badVector->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto raycast = std::make_unique<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        badVector->children.push_back(std::move(raycast));
+        badVector->children.push_back(number(0.0));
+        badVector->children.push_back(number(0.0));
+        OntoMath::Piecewise unsupportedChi = OntoMath::Piecewise::continuous(badVector);
+        const auto refused = sdfwgsl::inspectVectorExpression(&unsupportedChi, true);
+        check(!refused.ok && refused.error.find("Raycast") != std::string::npos,
+              "unsupported authored chroma math refuses explicitly");
+
+        const auto legacy = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr);
+        check(legacy.ok &&
+                  legacy.wgsl.find("const HAS_AUTHORED_CHROMA: bool = false") != std::string::npos,
+              "source without chi retains the exact legacy-color compatibility branch");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
