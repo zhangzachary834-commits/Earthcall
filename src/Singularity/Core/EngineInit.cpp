@@ -264,12 +264,11 @@ bool Engine::initLogic() {
         for (const auto& category : ::categories.getAll()) {
             if (category) beings.push_back(category.get());
         }
-        // Timeline reachability is generic: new temporal domains are ordinary
-        // Timeline beings. No render/physics/adapter timeline type list belongs
-        // here; construction/destruction updates Timeline::all().
-        for (Timeline* timeline : Timeline::all()) {
-            if (timeline) beings.push_back(timeline);
-        }
+        // Timelines are deliberately NOT swept into Universe merely because
+        // they exist. A relative Timeline's scope belongs to authored
+        // ownership/Zone relations; globally enumerating Timeline::all() here
+        // would turn every local clock into global Law-visible state. The
+        // future Law/Timeline architecture decides lawful reachability.
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
