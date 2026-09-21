@@ -547,6 +547,17 @@ void WebGpuRenderer::reloadShaders() {
     _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
+
+    for (auto& kv : _volumePipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
+        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
+    }
+    _volumePipes.clear();
+    _volumeProgramCache.clear();
+    _volumeBatches.clear();
+    _volumeParamBatches.clear();
+    _activeVolumePipelines.clear();
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -589,6 +600,16 @@ void WebGpuRenderer::shutdown() {
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
     _sdfPipes.clear();
+    for (auto& kv : _volumePipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
+        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
+    }
+    _volumePipes.clear();
+    _volumeProgramCache.clear();
+    _volumeBatches.clear();
+    _volumeParamBatches.clear();
+    _activeVolumePipelines.clear();
     if (_sdfCubeVerts) { wgpuBufferRelease(_sdfCubeVerts); _sdfCubeVerts = nullptr; }
     for (auto& kv : _textures) {
         wgpuTextureViewRelease(kv.second.view);
@@ -731,7 +752,10 @@ void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
     WGPUTextureDescriptor td = {};
-    td.usage = WGPUTextureUsage_RenderAttachment;
+    // V0c composites participating media in a second pass that samples the
+    // finished opaque depth. One texture serves both roles across distinct
+    // passes on the same command encoder; it is never sampled while attached.
+    td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding;
     td.dimension = WGPUTextureDimension_2D;
     td.size = { w, h, 1 };
     td.format = WGPUTextureFormat_Depth24Plus;
@@ -810,6 +834,7 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+    _frameColorView = target;
     beginGpuTimestampFrame();
     WGPURenderPassColorAttachment ca = {};
     ca.view = target;
@@ -996,6 +1021,28 @@ struct RadianceSourceGpuData {
     glm::vec4 control;
 };
 } // namespace
+
+void WebGpuRenderer::ensureSdfCubeVerts() {
+    if (_sdfCubeVerts) return;
+
+    const float h = 1.0f;
+    const glm::vec3 corners[8] = {
+        {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
+        {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
+    const int indices[36] = {
+        0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
+        3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
+    std::vector<glm::vec3> tris(36);
+    for (int i = 0; i < 36; ++i) tris[i] = corners[indices[i]];
+
+    WGPUBufferDescriptor bd = {};
+    bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+    bd.size = tris.size() * sizeof(glm::vec3);
+    _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
+    if (_sdfCubeVerts) {
+        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
+    }
+}
 
 // Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
 // cache key: two spheres of different radii generate identical source and share
@@ -1352,25 +1399,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (!sp || !prog) return;
 
-    // The bounding cube, shared by every field: the vertex shader scales it by the
-    // field extent, so one buffer serves all of them.
-    if (!_sdfCubeVerts) {
-        const float h = 1.0f;
-        const glm::vec3 c[8] = {
-            {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
-            {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
-        const int idx[36] = {
-            0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
-            3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
-        std::vector<glm::vec3> tris(36);
-        for (int i = 0; i < 36; ++i) tris[i] = c[idx[i]];
-
-        WGPUBufferDescriptor bd = {};
-        bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-        bd.size = tris.size() * sizeof(glm::vec3);
-        _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
-        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
-    }
+    // Surface and volumetric proxies share one immutable resident cube.
+    ensureSdfCubeVerts();
+    if (!_sdfCubeVerts) return;
 
     SdfInstanceData inst;
     inst.model = _model;
@@ -1972,6 +2003,7 @@ void WebGpuRenderer::endFrame() {
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;
+    _frameColorView = nullptr;
 
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
