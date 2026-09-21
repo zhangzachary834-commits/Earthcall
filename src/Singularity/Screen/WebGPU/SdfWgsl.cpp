@@ -1129,7 +1129,7 @@ struct FSOut {
 // Dual-Path WGSL Field Evaluator
 // This function is generated dynamically based on whether the Law system 
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
-// fieldEval is emitted before this block.
+// volumeDensityEval is emitted before this block.
 
 fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     // Slab method. A zero direction would NaN the inverse; nudge it.
