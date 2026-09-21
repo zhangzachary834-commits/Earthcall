@@ -251,10 +251,10 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
-    // 5. Rung 4 world time is an ambient input, not an authored parameter.
-    //    A rho(p,t) expression must compile to the shared Universe-time
-    //    uniform and therefore require no parameter slot or per-frame WGSL
-    //    regeneration merely because t advances.
+    // 5. Rung 4's admitted temporal coordinate is an ambient input, not an
+    //    authored parameter. rho(p,t) must compile to the shared temporal
+    //    uniform without knowing which Timeline supplied t, and therefore
+    //    requires no parameter slot or per-frame WGSL regeneration.
     // ---------------------------------------------------------------------
     {
         auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
@@ -272,14 +272,14 @@ int main() {
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
 
         check(!unboundLayout.ok &&
-                  unboundLayout.error.find("does not bind world time") != std::string::npos,
-              "t refuses in a shader expression context that did not opt into world time");
+                  unboundLayout.error.find("does not bind the temporal coordinate") != std::string::npos,
+              "t refuses in a shader expression context that did not opt into time");
         check(layout.ok, "rho(p,t) structure inspection succeeds");
         check(timed.ok, "rho(p,t) WGSL compilation succeeds");
         check(layout.parameterCount == 0,
-              "world time consumes no authored parameter slot");
+              "temporal coordinate consumes no authored parameter slot");
         check(timed.wgsl.find("u.time.x") != std::string::npos,
-              "canonical t binds to the shared SDF world-time uniform");
+              "canonical t binds to the shared SDF temporal uniform");
 
         auto scalarTime = std::make_shared<OntoMath::MathNode>();
         scalarTime->op = OntoMath::MathNode::Op::ScalarLeaf;
