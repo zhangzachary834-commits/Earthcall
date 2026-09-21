@@ -63,7 +63,9 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
                                  int sdfRefusals, std::string sdfLastRefusal,
                                  double sdfWgslBytes, double sdfParamBytes,
                                  int rangeBuilds, int rangeProxyDraws,
-                                 int rangeProxyCulledDraws) {
+                                 int rangeProxyCulledDraws,
+                                 int rangeTraversalDraws,
+                                 double rangeNodeBytesUploaded) {
     drawCalls = dCalls;
     trianglesDrawn = tris;
     vramAllocatedBytes = vramBytes;
@@ -81,6 +83,8 @@ void ScreenChannel::updateMetrics(int dCalls, int tris, double vramBytes,
     sdfRangeHierarchyBuilds = rangeBuilds;
     sdfRangeProxyDraws = rangeProxyDraws;
     sdfRangeProxyCulledDraws = rangeProxyCulledDraws;
+    sdfRangeTraversalDraws = rangeTraversalDraws;
+    sdfRangeNodeBytesUploaded = rangeNodeBytesUploaded;
 }
 
 void ScreenChannel::buildProperties() {
@@ -132,6 +136,8 @@ void ScreenChannel::buildProperties() {
     readOnlyInt("sdfRangeHierarchyBuilds", &ScreenChannel::getSdfRangeHierarchyBuilds);
     readOnlyInt("sdfRangeProxyDraws", &ScreenChannel::getSdfRangeProxyDraws);
     readOnlyInt("sdfRangeProxyCulledDraws", &ScreenChannel::getSdfRangeProxyCulledDraws);
+    readOnlyInt("sdfRangeTraversalDraws", &ScreenChannel::getSdfRangeTraversalDraws);
+    readOnlyDouble("sdfRangeNodeBytesUploaded", &ScreenChannel::getSdfRangeNodeBytesUploaded);
     boolean("wireframe", &ScreenChannel::wireframe);
     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);

@@ -57,7 +57,9 @@ public:
                        double sdfParameterBytesUploaded = 0.0,
                        int sdfRangeHierarchyBuilds = 0,
                        int sdfRangeProxyDraws = 0,
-                       int sdfRangeProxyCulledDraws = 0);
+                       int sdfRangeProxyCulledDraws = 0,
+                       int sdfRangeTraversalDraws = 0,
+                       double sdfRangeNodeBytesUploaded = 0.0);
 
     int       drawCalls = 0;
     int       trianglesDrawn = 0;
@@ -76,6 +78,8 @@ public:
     int       sdfRangeHierarchyBuilds = 0;
     int       sdfRangeProxyDraws = 0;
     int       sdfRangeProxyCulledDraws = 0;
+    int       sdfRangeTraversalDraws = 0;
+    double    sdfRangeNodeBytesUploaded = 0.0;
     bool      wireframe = false;
     bool      heightGridDdaEnabled = true;
     // Conservative generic zero-set proxy. Kept off until native GPU parity
@@ -144,6 +148,8 @@ private:
     int    getSdfRangeHierarchyBuilds() const { return sdfRangeHierarchyBuilds; }
     int    getSdfRangeProxyDraws() const { return sdfRangeProxyDraws; }
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
+    int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
+    double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
 
     std::string _name{"screen-channel"};
 };

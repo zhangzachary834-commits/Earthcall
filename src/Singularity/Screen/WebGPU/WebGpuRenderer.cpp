@@ -3,6 +3,7 @@
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -251,18 +252,21 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): the SDF per-instance storage array, plus (binding 1) the
-    // shared min/max heightfield-grid cells buffer (Phase C) -- fragment-only,
-    // since only the marcher's DDA skip (fs) ever reads it.
-    WGPUBindGroupLayoutEntry sdfInstEntry[2] = {};
+    // group(2): SDF instances plus two derived acceleration buffers:
+    // binding 1 is the proven-heightfield min/max grid; binding 2 is the
+    // conservative zero-set hierarchy. Both are read-only Kernel substrate.
+    WGPUBindGroupLayoutEntry sdfInstEntry[3] = {};
     sdfInstEntry[0].binding = 0;
     sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     sdfInstEntry[0].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     sdfInstEntry[1].binding = 1;
     sdfInstEntry[1].visibility = WGPUShaderStage_Fragment;
     sdfInstEntry[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    sdfInstEntry[2].binding = 2;
+    sdfInstEntry[2].visibility = WGPUShaderStage_Fragment;
+    sdfInstEntry[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor sdfInstBglDesc = {};
-    sdfInstBglDesc.entryCount = 2;
+    sdfInstBglDesc.entryCount = 3;
     sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
 
@@ -508,10 +512,19 @@ void WebGpuRenderer::releasePersistentSdfParams() {
     _persistentSdfParamVramBytes = 0;
 }
 
+void WebGpuRenderer::releasePersistentSdfRangeNodes() {
+    for (auto& kv : _persistentSdfRangeNodes) {
+        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
+    }
+    _persistentSdfRangeNodes.clear();
+    _persistentSdfRangeNodeVramBytes = 0;
+}
+
 void WebGpuRenderer::reloadShaders() {
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
+    releasePersistentSdfRangeNodes();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
@@ -520,6 +533,7 @@ void WebGpuRenderer::reloadShaders() {
     _sdfBatches.clear();
     _sdfParamsBatches.clear();
     _sdfHeightGridBatches.clear();
+    _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
 }
@@ -548,6 +562,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     releasePersistentSdfParams();
+    releasePersistentSdfRangeNodes();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -952,8 +967,8 @@ struct SdfGlobalUniforms {
     glm::vec4 lightAmbient;
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
-    glm::vec4 lightControl; // x = lighting enabled (0 or 1)
-    glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
+    glm::vec4 lightControl;
+    glm::vec4 limits;   // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
 };
 } // namespace
 
@@ -1174,6 +1189,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->rangeReady = false;
             memo->rangeHierarchy = {};
             memo->rangeProxy = {};
+            memo->rangeProofWords.clear();
+            memo->rangeHasPositiveSkip = false;
             memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
         } else {
@@ -1263,6 +1280,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
+
+            // Derive only proved-positive OUTSIDE knowledge into a compact
+            // fixed-depth bit grid. The complete adaptive hierarchy remains the
+            // CPU theorem. A zero GPU bit is deliberately non-authoritative:
+            // exact authored marching owns that regular cell.
+            static_assert(
+                kSdfRangeGpuProofDepth <= kSdfRangeProxyMaxDepth,
+                "GPU proof depth cannot exceed the CPU theorem depth");
+            auto proofGrid = geom::derivePositiveRangeProofGrid(
+                memo->rangeHierarchy, kSdfRangeGpuProofDepth);
+            memo->rangeHasPositiveSkip = proofGrid.hasPositiveCells();
+            memo->rangeProofWords = std::move(proofGrid.words);
+
             memo->rangeParameterRevision = memoParameterRevision;
             memo->rangeAuthoredExtent = baselineProxyExtent;
             memo->rangeReady = true;
@@ -1270,12 +1300,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
 
         if (!memo->rangeProxy.hasPossibleZero) {
-            // Every terminal cell in the complete authored render domain carries
-            // a finite proof excluding zero. There is no surface to rasterize.
-            mutableFrameStats().sdfRangeProxyCulledDraws++;
-            return;
+            // Zero-free is not by itself permission to erase the draw. The
+            // existing marcher treats entry into negative space as an immediate
+            // hit, so an all-negative authored domain must fail open for parity.
+            // Only a root theorem f>0 everywhere is truly empty outside space.
+            const bool rootPositiveOutside =
+                !memo->rangeHierarchy.nodes.empty() &&
+                geom::rangeNodeProvesPositiveOutside(memo->rangeHierarchy.nodes.front());
+            if (rootPositiveOutside) {
+                mutableFrameStats().sdfRangeProxyCulledDraws++;
+                return;
+            }
         }
-        if (memo->rangeProxy.tightened) {
+        if (kSdfRangeRasterTighteningVerified && memo->rangeProxy.tightened) {
             // Preserve a one-ULP outward raster guard at the derived boundary.
             // This is not a guessed world-space tolerance: it is the next
             // representable float, clamped to the already-authoritative baseline
@@ -1290,6 +1327,35 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             mutableFrameStats().sdfRangeProxyDraws++;
         }
     }
+
+    // Upload/traverse the proof grid only when it contains at least one
+    // positive-outside theorem. Zero-bit cells are exact-march fallback space.
+    // FieldNode draws remain excluded because zero-set emptiness says nothing
+    // about volumetric density.
+    const bool rangeTraversalMarcherVerified =
+        prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
+    if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
+        rangeTraversalMarcherVerified &&
+        memo->rangeReady && memo->rangeHasPositiveSkip &&
+        !memo->rangeProofWords.empty()) {
+        auto& rangeBatch = _sdfRangeNodeBatches[sp];
+        const uint64_t base = static_cast<uint64_t>(rangeBatch.size());
+        const uint64_t count =
+            static_cast<uint64_t>(memo->rangeProofWords.size());
+        const uint64_t u32Max =
+            static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
+        if (base <= u32Max && count <= u32Max && base + count <= u32Max) {
+            inst.rangeProofWordOffset = static_cast<uint32_t>(base);
+            inst.rangeProofWordCount = static_cast<uint32_t>(count);
+            inst.rangeTraversalEnabled = 1u;
+            inst.rangeProofDepth = kSdfRangeGpuProofDepth;
+            rangeBatch.insert(rangeBatch.end(),
+                              memo->rangeProofWords.begin(),
+                              memo->rangeProofWords.end());
+            mutableFrameStats().sdfRangeTraversalDraws++;
+        }
+    }
+
     inst.extents = glm::vec4(proxyExtent, 0.0f);
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
@@ -1432,6 +1498,7 @@ void WebGpuRenderer::flushSdfDraws() {
             _sdfBatches[sp].clear();
             _sdfParamsBatches[sp].clear();
             _sdfHeightGridBatches[sp].clear();
+            _sdfRangeNodeBatches[sp].clear();
         }
         _activeSdfPipelines.clear();
         return;
@@ -1525,6 +1592,71 @@ void WebGpuRenderer::flushSdfDraws() {
             mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
         }
 
+        // Keep the compact positive-proof words resident exactly like static
+        // SDF parameters. The CPU batch is rebuilt in instance order, but
+        // unchanged proof bytes are not re-uploaded after warmup.
+        const auto& rangeNodes = _sdfRangeNodeBatches[sp];
+        const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
+        auto& persistentRange = _persistentSdfRangeNodes[sp];
+        const uint64_t requiredRangeBytes =
+            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
+        if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
+            uint64_t capacity = 256;
+            while (capacity < requiredRangeBytes) capacity *= 2;
+
+            WGPUBufferDescriptor bd = {};
+            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+            bd.size = capacity;
+            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+            if (grown) {
+                if (persistentRange.buffer) {
+                    _persistentSdfRangeNodeVramBytes -=
+                        static_cast<size_t>(persistentRange.capacityBytes);
+                    wgpuBufferRelease(persistentRange.buffer);
+                }
+                persistentRange.buffer = grown;
+                persistentRange.capacityBytes = capacity;
+                persistentRange.mirror.clear();
+                _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
+            }
+        }
+
+        bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
+        if (!rangeChanged && !rangeNodes.empty()) {
+            rangeChanged = std::memcmp(
+                persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
+        }
+
+        const bool persistentRangeUsable =
+            persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
+        WGPUBuffer rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
+        uint64_t rangeOffset = 0;
+        uint64_t rangeBindingSize = requiredRangeBytes;
+
+        if (rangeBuffer) {
+            if (rangeChanged && !rangeNodes.empty()) {
+                wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
+                persistentRange.mirror = rangeNodes;
+                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
+            } else if (rangeChanged) {
+                persistentRange.mirror.clear();
+            }
+        } else {
+            // Binding 2 must remain valid even for a batch with no proof grid.
+            // A zeroed dummy is never read because each such instance has count=0.
+            const uint32_t dummy = 0u;
+            const void* src = rangeNodes.empty()
+                ? static_cast<const void*>(&dummy)
+                : static_cast<const void*>(rangeNodes.data());
+            auto fallback = bufferPool().suballocateStorage(src, requiredRangeBytes);
+            rangeBuffer = fallback.buffer;
+            rangeOffset = fallback.offset;
+            rangeBindingSize = fallback.size;
+            if (!rangeNodes.empty()) {
+                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
+            }
+        }
+
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: Globals and Parameters
@@ -1536,21 +1668,20 @@ void WebGpuRenderer::flushSdfDraws() {
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
 
-        // Group 1: Instances (binding 0) + min/max heightfield-grid cells
-        // (binding 1, Phase C). A storage array of length zero is invalid, same
-        // as the params buffer above -- when nothing in this pipeline's batch
-        // built a grid, one unused cell keeps the binding legal without the
-        // shader having to know (every instance's heightGridDimX/Z stay 0, so
-        // it is never indexed).
+        // Group 1: instances + heightfield cells + positive-proof bit words.
+        // Empty accelerators bind legal dummy storage but advertise zero count,
+        // so the shader cannot observe the dummy contents.
         auto& hgCells = _sdfHeightGridBatches[sp];
         if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
-        auto hgAlloc = bufferPool().suballocateStorage(hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+        auto hgAlloc = bufferPool().suballocateStorage(
+            hgCells.data(), hgCells.size() * sizeof(glm::vec2));
 
-        WGPUBindGroupEntry ibge[2] = {};
+        WGPUBindGroupEntry ibge[3] = {};
         ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
         ibge[1].binding = 1; ibge[1].buffer = hgAlloc.buffer; ibge[1].offset = hgAlloc.offset; ibge[1].size = hgAlloc.size;
+        ibge[2].binding = 2; ibge[2].buffer = rangeBuffer; ibge[2].offset = rangeOffset; ibge[2].size = rangeBindingSize;
         WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 2; ibgDesc.entries = ibge;
+        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 3; ibgDesc.entries = ibge;
         WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
@@ -1567,6 +1698,7 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfBatches[sp].clear();
         _sdfParamsBatches[sp].clear();
         _sdfHeightGridBatches[sp].clear();
+        _sdfRangeNodeBatches[sp].clear();
     }
     _activeSdfPipelines.clear();
 }
@@ -1603,7 +1735,7 @@ void WebGpuRenderer::endFrame() {
 
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
-                            _persistentSdfParamVramBytes;
+                            _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());
