@@ -159,4 +159,14 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
 // only scalar Screen context that admits omega.x/y/z.
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
 
+// Volumetric V0c: compile one authored density structure into a dedicated
+// depth-aware volume-composite shader. This is intentionally separate from
+// drawImplicit: a participating medium is not a hard surface and must not own
+// frag_depth merely because both paths use OntoMath.
+Program compileVolume(const OntoMath::Piecewise* densityExpr);
+
+// Value-only companion to compileVolume(). Recollects D's numeric parameter
+// slots without regenerating shader source when emitted structure is unchanged.
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr);
+
 } // namespace sdfwgsl
