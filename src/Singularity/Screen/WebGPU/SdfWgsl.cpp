@@ -1005,6 +1005,10 @@ struct RU {
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
     lightControl:   vec4<f32>,
+    // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
+    // only when authored chi is present; the no-chi branch keeps the exact
+    // pre-Rung-5 color-bearing light uniforms below.
+    radianceSourceCoefficients: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
@@ -1342,25 +1346,39 @@ fn fs(in: VSOut) -> FSOut {
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
 
-    // Evaluate the Person-authored radiance field in source-relative world
-    // coordinates. Negative radiance is clamped only at the rendering seam.
-    let sourceChroma = lightChroma(pw - u.lightPos.xyz);
+    // Evaluate the Person-authored source invariants in source-relative world
+    // coordinates. rho remains scalar; chi is an independent vec3 channel.
     let radialRadiance = max(lightRadiance(pw - u.lightPos.xyz), 0.0);
     let diff = max(dot(nw, L), 0.0);
-
-    // Normalize the renderer's historical .2/.8/1 source defaults to an
-    // envelope of 1, preserving legacy SDF appearance when no custom source
-    // channels are authored instead of multiplying those coefficients twice.
-    let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
-    let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
-    let specularEnvelope = u.lightSpecular.rgb;
-
-    let ambientTerm = inst.shading.x * ambientEnvelope * sourceChroma;
-    let diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance * sourceChroma;
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
-    let specTerm = specularEnvelope * specShape * radialRadiance * sourceChroma;
+
+    var ambientTerm: vec3<f32>;
+    var diffuseTerm: vec3<f32>;
+    var specTerm: vec3<f32>;
+    if (HAS_AUTHORED_CHROMA) {
+        let sourceChroma = lightChroma(pw - u.lightPos.xyz);
+        let c = u.radianceSourceCoefficients;
+        // Separate the legacy scalar coefficients from chroma only on this new
+        // path. This realizes rho * chi without multiplying legacy light.color
+        // a second time, including when one legacy color channel is exactly zero.
+        let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
+        let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
+        let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
+        ambientTerm = inst.shading.x * ambientEnvelope;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
+        specTerm = specularEnvelope * specShape * radialRadiance;
+    } else {
+        // EXACT compatibility branch from Rung 4. No authored chi means
+        // constant legacy light.color, already carried by these uniforms.
+        let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
+        let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
+        let specularEnvelope = u.lightSpecular.rgb;
+        ambientTerm = inst.shading.x * ambientEnvelope;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
+        specTerm = specularEnvelope * specShape * radialRadiance;
+    }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
@@ -1652,6 +1670,8 @@ Program compile(const geom::SdfNode& root,
         chromaBody = "    return vec3<f32>(1.0);\n";
     }
     prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+    prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
+                 ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
 
     prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
