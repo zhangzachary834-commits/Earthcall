@@ -753,6 +753,115 @@ SdfRangeHierarchy buildRangeHierarchy(const SdfNode& n,
     return hierarchy;
 }
 
+bool refreshRangeHierarchy(SdfRangeHierarchy& hierarchy,
+                           const SdfNode& n,
+                           const glm::vec3& extent,
+                           uint8_t maxDepth,
+                           uint32_t maxNodes,
+                           SdfRangeRefreshStats* stats) {
+    SdfRangeRefreshStats localStats;
+    SdfRangeRefreshStats& s = stats ? *stats : localStats;
+    s = {};
+
+    if (maxNodes == 0 || hierarchy.nodes.empty()) return false;
+
+    const glm::vec3 e = glm::abs(extent);
+    const SdfRangeNode& root = hierarchy.nodes.front();
+    const auto sameVec = [](const glm::vec3& a, const glm::vec3& b) {
+        return a.x == b.x && a.y == b.y && a.z == b.z;
+    };
+    if (!sameVec(root.boxMin, -e) || !sameVec(root.boxMax, e)) {
+        return false;
+    }
+
+    hierarchy.provedEmptyNodes = 0;
+    hierarchy.ambiguousLeaves = 0;
+    hierarchy.unknownLeaves = 0;
+    hierarchy.maxDepthReached = 0;
+
+    auto refresh = [&](auto& self, uint32_t nodeIndex, uint8_t depth) -> bool {
+        if (nodeIndex >= hierarchy.nodes.size()) return false;
+
+        // Never retain a node reference across possible child insertion.
+        const glm::vec3 boxMin = hierarchy.nodes[nodeIndex].boxMin;
+        const glm::vec3 boxMax = hierarchy.nodes[nodeIndex].boxMax;
+        const OntoMath::Interval range = evalRange(n, boxMin, boxMax);
+        const bool finite = std::isfinite(range.lo) && std::isfinite(range.hi);
+        const bool excludesZero = finite && (range.lo > 0.0f || range.hi < 0.0f);
+
+        ++s.evaluatedNodes;
+        hierarchy.nodes[nodeIndex].rangeLo = range.lo;
+        hierarchy.nodes[nodeIndex].rangeHi = range.hi;
+        hierarchy.nodes[nodeIndex].boundFinite = finite;
+        hierarchy.nodes[nodeIndex].provedNoZero = excludesZero;
+        hierarchy.nodes[nodeIndex].depth = depth;
+        hierarchy.maxDepthReached = std::max(hierarchy.maxDepthReached, depth);
+
+        // A child block, once allocated, is retained through later collapses.
+        // childCount means "active now"; firstChild remembers reusable topology.
+        if (!finite) {
+            hierarchy.nodes[nodeIndex].childCount = 0;
+            ++hierarchy.unknownLeaves;
+            return true;
+        }
+        if (excludesZero) {
+            hierarchy.nodes[nodeIndex].childCount = 0;
+            ++hierarchy.provedEmptyNodes;
+            return true;
+        }
+        if (depth >= maxDepth) {
+            hierarchy.nodes[nodeIndex].childCount = 0;
+            ++hierarchy.ambiguousLeaves;
+            return true;
+        }
+
+        uint32_t firstChild = hierarchy.nodes[nodeIndex].firstChild;
+        if (firstChild != 0u) {
+            if (firstChild + 7u >= hierarchy.nodes.size()) return false;
+            hierarchy.nodes[nodeIndex].childCount = 8;
+            ++s.reusedChildBlocks;
+        } else {
+            if (hierarchy.nodes.size() + 8u > maxNodes) {
+                hierarchy.nodes[nodeIndex].childCount = 0;
+                ++hierarchy.ambiguousLeaves;
+                return true;
+            }
+
+            const glm::vec3 mid = 0.5f * (boxMin + boxMax);
+            firstChild = static_cast<uint32_t>(hierarchy.nodes.size());
+            hierarchy.nodes[nodeIndex].firstChild = firstChild;
+            hierarchy.nodes[nodeIndex].childCount = 8;
+            ++s.allocatedChildBlocks;
+
+            for (uint32_t child = 0; child < 8; ++child) {
+                const bool hiX = (child & 1u) != 0;
+                const bool hiY = (child & 2u) != 0;
+                const bool hiZ = (child & 4u) != 0;
+
+                SdfRangeNode node;
+                node.boxMin = glm::vec3(hiX ? mid.x : boxMin.x,
+                                        hiY ? mid.y : boxMin.y,
+                                        hiZ ? mid.z : boxMin.z);
+                node.boxMax = glm::vec3(hiX ? boxMax.x : mid.x,
+                                        hiY ? boxMax.y : mid.y,
+                                        hiZ ? boxMax.z : mid.z);
+                node.depth = static_cast<uint8_t>(depth + 1);
+                hierarchy.nodes.push_back(node);
+            }
+        }
+
+        for (uint32_t child = 0; child < 8; ++child) {
+            if (!self(self, firstChild + child,
+                      static_cast<uint8_t>(depth + 1))) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    return refresh(refresh, 0u, 0u);
+}
+
 SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
                                    const glm::vec3& authoredExtent) {
     SdfZeroSetProxy out;
@@ -764,15 +873,35 @@ SdfZeroSetProxy deriveZeroSetProxy(const SdfRangeHierarchy& hierarchy,
 
     bool foundPossibleLeaf = false;
     glm::vec3 maxAbs(0.0f);
-    for (const SdfRangeNode& node : hierarchy.nodes) {
-        if (node.childCount != 0 || node.provedNoZero) continue;
+    std::vector<uint32_t> stack{0u};
+    while (!stack.empty()) {
+        const uint32_t idx = stack.back();
+        stack.pop_back();
+        if (idx >= hierarchy.nodes.size()) {
+            return out; // malformed topology: fail open to authored coverage
+        }
+
+        const SdfRangeNode& node = hierarchy.nodes[idx];
+        if (node.childCount != 0) {
+            if (node.childCount != 8 || node.firstChild + 7u >= hierarchy.nodes.size()) {
+                return out; // malformed topology: never tighten from partial knowledge
+            }
+            for (uint32_t child = 0; child < 8; ++child) {
+                stack.push_back(node.firstChild + child);
+            }
+            continue;
+        }
+
+        if (node.provedNoZero) continue;
         foundPossibleLeaf = true;
-        maxAbs = glm::max(maxAbs, glm::max(glm::abs(node.boxMin), glm::abs(node.boxMax)));
+        maxAbs = glm::max(maxAbs,
+                          glm::max(glm::abs(node.boxMin), glm::abs(node.boxMax)));
     }
 
     if (!foundPossibleLeaf) {
-        // Every terminal region was proved zero-free. The hierarchy partitions
-        // the authored extent, so there is no zero set to rasterize there.
+        // Every ACTIVE terminal region was proved zero-free. Retained inactive
+        // child blocks from incremental refresh are cache topology, not current
+        // theorem leaves, and therefore carry no authority here.
         out.hasPossibleZero = false;
         out.halfExtent = glm::vec3(0.0f);
         return out;
