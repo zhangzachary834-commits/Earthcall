@@ -23,7 +23,6 @@ struct VolumeDensityBinding {
     std::uint64_t revision = 0;
     double temporalCoordinate = 0.0;
     double temporalDelta = 0.0;
-    bool enabled = true;
 
     static VolumeDensityBinding legacy() {
         return {};
@@ -32,8 +31,7 @@ struct VolumeDensityBinding {
     static VolumeDensityBinding none() {
         VolumeDensityBinding b;
         b.kind = Kind::None;
-        b.enabled = false;
-        return b;
+         return b;
     }
 
     static VolumeDensityBinding authored(const OntoMath::Piecewise* expr,
@@ -46,8 +44,7 @@ struct VolumeDensityBinding {
         b.revision = contentRevision;
         b.temporalCoordinate = t;
         b.temporalDelta = dt;
-        b.enabled = true;
-        return b;
+         return b;
     }
 };
 
