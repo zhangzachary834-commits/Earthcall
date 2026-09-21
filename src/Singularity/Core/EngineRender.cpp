@@ -157,13 +157,19 @@ namespace Core {
                     static_cast<uint64_t>(std::hash<std::string>{}(json));
             }
 
-            // The complete authored FieldNode record is the source-set content
-            // identity. It captures membership-order-preserving placement,
-            // coefficients, enablement, rho, chi and alpha without making
-            // renderer pointer identity an authorial fact.
+            // Rung 7 structural/value invalidation is intentionally bounded.
+            // Source membership/order plus authored rho/chi/alpha content is the
+            // parameter/compiler identity. Position, light coefficients,
+            // enablement and temporal coordinates live in the persistent source
+            // storage buffer and must NOT serialize an entire FieldNode merely
+            // to move/recolor/enable a source.
             sourceSetIdentity += field->getIdentifier();
-            sourceSetIdentity += "\n";
-            sourceSetIdentity += field->toJson().dump();
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.radianceRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.chromaRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.angularRevision);
             sourceSetIdentity += "\n";
             radiantSources.push_back(source);
         }
