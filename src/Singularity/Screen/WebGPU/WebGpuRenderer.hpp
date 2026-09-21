@@ -312,7 +312,7 @@ private:
     // f>0 OR all eight depth-6 children jointly prove f>0. That union is a
     // genuine proof because the children partition the parent; omitted finer
     // positive fragments simply fall back to exact authored marching.
-    static constexpr uint8_t kSdfRangeGpuProofDepth = 5;
+    static constexpr uint8_t kSdfRangeGpuProofDepth = 4;
     // A complete depth-6 octree contains
     // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
     // Keep enough headroom for a complete proof tree; partial-tree budget
