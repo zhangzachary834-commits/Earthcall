@@ -312,12 +312,17 @@ private:
     // authored Expr fields use the gradient-corrected marcher and remain the
     // intended acceleration target.
     static constexpr bool kSdfRangeDistanceTraversalVerified = false;
-    static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
-    // A complete depth-5 octree contains at most
-    // 1+8+64+512+4096+32768 = 37,449 nodes. Keep headroom so the real
-    // Perlin floor cannot become a partial-tree authority merely because the
-    // renderer's cache budget was smaller than the mathematical hierarchy.
-    static constexpr uint32_t kSdfRangeProxyMaxNodes = 65536;
+    // The real authored Perlin floor cannot prove positive outside space
+    // at depth 5: the 0.008-scaled x/z cells are still ~0.525 lattice units
+    // wide, and interval dependency keeps zero possible. Depth 6 halves that
+    // footprint and is the first rung where conservative positive cells appear.
+    static constexpr uint8_t kSdfRangeProxyMaxDepth = 6;
+    // A complete depth-6 octree contains
+    // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
+    // Keep enough headroom for a complete proof tree; partial-tree budget
+    // exhaustion remains correct but can accidentally hide the useful positive
+    // cells this rung exists to discover.
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 327680;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
