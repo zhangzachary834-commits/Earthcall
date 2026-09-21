@@ -286,6 +286,12 @@ public:
     // be a large regression. Hence a query rather than always preferring one.
     virtual bool rendersImplicitExactly() const { return false; }
 
+    // Sensory staging seam for participating media. The default is a no-op:
+    // backends without authored volumetric transport simply continue rendering.
+    // WebGPU overrides this to finish opaque world depth, composite the current
+    // Zone's density fields, then reopen a load-preserving pass for HUD/2D.
+    virtual void composeVolumes() {}
+
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
     // Object draw path — which is why it is render STATE rather than a draw verb.
