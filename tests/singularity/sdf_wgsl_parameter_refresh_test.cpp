@@ -260,7 +260,7 @@ int main() {
         auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
 
         auto timeNode = std::shared_ptr<OntoMath::MathNode>(
-            variable(OntoMath::kWorldTimeVar).release());
+            variable(OntoMath::kTimeVar).release());
         OntoMath::Piecewise timedRadiance =
             OntoMath::Piecewise::continuous(timeNode);
 
@@ -279,7 +279,7 @@ int main() {
         auto scalarTime = std::make_shared<OntoMath::MathNode>();
         scalarTime->op = OntoMath::MathNode::Op::ScalarLeaf;
         scalarTime->scalarForm.terms.push_back(
-            OntoMath::Term(2.0, {{OntoMath::kWorldTimeVar, 1.0}}));
+            OntoMath::Term(2.0, {{OntoMath::kTimeVar, 1.0}}));
         timedRadiance.pieces[0].mathNode = scalarTime;
         const sdfwgsl::Program scalarTimed =
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
