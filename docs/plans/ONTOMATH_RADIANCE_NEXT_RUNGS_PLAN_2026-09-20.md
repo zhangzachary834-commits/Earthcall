@@ -176,10 +176,11 @@ rho(p, t) -> scalar
 
 Existing spatial-only expressions simply do not read `t`.
 
-The canonical name is `OntoMath::kWorldTimeVar == "t"`. OntoMath itself does
-not manufacture a clock: an execution channel must explicitly bind the name.
-For Screen radiance, WebGPU binds it to Earthcall's existing
-`Universe::now()` world/simulation clock, with `Universe::dt()` traveling in
+The canonical temporal-coordinate name is `OntoMath::kTimeVar == "t"`.
+OntoMath itself does not manufacture a clock or decree what temporal frame
+`t` means: an execution channel must explicitly bind the name. For Screen
+radiance, WebGPU binds `t` to Earthcall's existing `Universe::now()`
+world/simulation clock, with `Universe::dt()` traveling in
 the same global uniform for future explicitly-admitted use. No wall clock, GPU
 frame counter, or renderer-local animation time is introduced.
 
