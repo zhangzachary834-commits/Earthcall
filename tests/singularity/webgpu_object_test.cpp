@@ -716,7 +716,11 @@ int main() {
         // update the source storage buffer without regenerating WGSL or touching
         // the packed OntoMath parameter buffer.
         blueSource.enabled = false;
-        renderer.setRadianceSources({redSource, blueSource}, 4202);
+        // Enablement is source-buffer state, not authored rho/chi/alpha identity.
+        // Keep the source-set revision unchanged: WebGpuRenderer must observe the
+        // byte change through the persistent source buffer without recollecting
+        // OntoMath parameters or recompiling WGSL.
+        renderer.setRadianceSources({redSource, blueSource}, 4201);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
