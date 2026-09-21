@@ -1,6 +1,8 @@
 #include "Time/timeline.hpp"
 #include "Time/Event/Event.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Relation/Relation.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -32,7 +34,30 @@ int main() {
         assert(sawWorld && sawMaintenance);
     }
 
-    // 2. Temporal domains advance independently. An occurrence in one Timeline
+    // 2. Timeline is relative: ANY Singular may own its own temporal domain.
+    // Ownership is Relation truth, not a Timeline subclass/member slot.
+    {
+        Object ownerA;
+        Object ownerB;
+        Timeline ownedA;
+        Timeline ownedB;
+
+        Relation ownsA("owned-by", ownedA, ownerA, true, 1.0f);
+        Relation ownsB("owned-by", ownedB, ownerB, true, 1.0f);
+
+        assert(ownsA.a() == &ownedA && ownsA.b() == &ownerA);
+        assert(ownsB.a() == &ownedB && ownsB.b() == &ownerB);
+        assert(ownsA.typeLabel() == "owned-by");
+        assert(ownsB.typeLabel() == "owned-by");
+
+        assert(ownedA.setClock(4.0, 0.5));
+        assert(ownedB.setClock(100.0, 2.0));
+        assert(ownedA.advanceBy(1.0));
+        assert(ownedA.now() == 5.0);
+        assert(ownedB.now() == 100.0);
+    }
+
+    // 3. Temporal domains advance independently. An occurrence in one Timeline
     // does not, merely by occurring, constitute an occurrence in another.
     {
         assert(world.setClock(10.0, 0.5));
@@ -47,7 +72,7 @@ int main() {
         assert(maintenance.delta() == 0.25);
     }
 
-    // 3. Timeline contains Moments polymorphically. Event IS a Moment, so it
+    // 4. Timeline contains Moments polymorphically. Event IS a Moment, so it
     // enters the same container without a parallel event-timeline mechanism.
     auto later = std::make_shared<Moment>(30.0);
     auto earlier = std::make_shared<Moment>(5.0);
@@ -72,7 +97,7 @@ int main() {
         assert(eventAsMoment->asSeconds() == 20.0);
     }
 
-    // 4. Refusal #6: containment and clock head are ordinary discoverable
+    // 5. Refusal #6: containment and clock head are ordinary discoverable
     // properties, rather than private arrays/fields only C++ can inspect.
     {
         auto* count = world.findProperty("momentCount");
@@ -95,7 +120,7 @@ int main() {
         assert(hasClock && std::get<bool>(hasClock->value()));
     }
 
-    // 5. Universe remains kernel working context, not a competing clock being:
+    // 6. Universe remains kernel working context, not a competing clock being:
     // it borrows one Timeline and its compatibility clock API projects that head.
     {
         Universe& universe = Universe::instance();
@@ -119,7 +144,7 @@ int main() {
         assert(universe.dt() == 0.75);
     }
 
-    // 6. Membership is mutable without destroying the Moment being.
+    // 7. Membership is mutable without destroying the Moment being.
     {
         assert(world.removeMoment(event.get()));
         assert(world.moments().size() == 2);
@@ -129,7 +154,7 @@ int main() {
         assert(!world.latestMoment());
     }
 
-    // 7. Identity collisions refuse rather than silently creating two beings
+    // 8. Identity collisions refuse rather than silently creating two beings
     // whose Law path would spell the same.
     {
         bool refusedDuplicate = false;
