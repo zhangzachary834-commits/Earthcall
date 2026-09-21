@@ -8,6 +8,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace {
 class TimelineOwnerProbe final : public Singular {
