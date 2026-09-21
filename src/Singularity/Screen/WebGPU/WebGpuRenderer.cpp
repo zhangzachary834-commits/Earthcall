@@ -4,6 +4,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
@@ -954,6 +955,7 @@ struct SdfGlobalUniforms {
     glm::vec4 lightSpecular;
     glm::vec4 lightControl; // x = lighting enabled (0 or 1)
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
+    glm::vec4 time;         // x = Universe::now(), y = Universe::dt(), z/w reserved
 };
 } // namespace
 
@@ -1447,6 +1449,11 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    const Universe& universe = Universe::instance();
+    u.time = universe.hasClock()
+        ? glm::vec4(static_cast<float>(universe.now()),
+                    static_cast<float>(universe.dt()), 0.0f, 0.0f)
+        : glm::vec4(0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
