@@ -7,6 +7,7 @@
 // never suppress a sampled sign crossing.
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <algorithm>
@@ -294,6 +295,85 @@ int main() {
         check(h.ambiguousLeaves > 0,
               "budget exhaustion remains explicit ambiguity");
         verifyStructure(h);
+    }
+
+    // Positive-proof coalescing is derived acceleration permission. It may
+    // discard theorem knowledge, but it must never create a skip across any
+    // negative, ambiguous, unknown, or structurally missing partition.
+    {
+        geom::SdfRangeHierarchy siblings;
+        siblings.nodes.resize(9);
+        auto& root = siblings.nodes[0];
+        root.depth = 0;
+        root.boundFinite = true;
+        root.rangeLo = -1.0f;
+        root.rangeHi = 1.0f;
+        root.firstChild = 1;
+        root.childCount = 8;
+
+        for (uint32_t i = 1; i <= 8; ++i) {
+            auto& child = siblings.nodes[i];
+            child.depth = 1;
+            child.boundFinite = true;
+            child.rangeLo = 1.0f;
+            child.rangeHi = 2.0f;
+            child.provedNoZero = true;
+        }
+
+        const auto coalescedRoot =
+            geom::derivePositiveRangeProofGrid(siblings, /*targetDepth=*/0);
+        check(coalescedRoot.positiveCells == 1,
+              "eight positive partition children coalesce into one parent proof");
+        check(coalescedRoot.words.size() == 1 &&
+                  (coalescedRoot.words[0] & 1u) != 0u,
+              "coalesced parent proof sets the regular-grid bit");
+
+        const auto directChildren =
+            geom::derivePositiveRangeProofGrid(siblings, /*targetDepth=*/1);
+        check(directChildren.positiveCells == 8,
+              "target-depth positive children remain eight independent proofs");
+
+        auto withNegative = siblings;
+        withNegative.nodes[8].rangeLo = -2.0f;
+        withNegative.nodes[8].rangeHi = -1.0f;
+        const auto negativeRefusal =
+            geom::derivePositiveRangeProofGrid(withNegative, /*targetDepth=*/0);
+        check(!negativeRefusal.hasPositiveCells() &&
+                  negativeRefusal.words.empty(),
+              "one proved-negative child refuses positive parent coalescing");
+
+        auto withAmbiguous = siblings;
+        withAmbiguous.nodes[8].rangeLo = -1.0f;
+        withAmbiguous.nodes[8].rangeHi = 1.0f;
+        withAmbiguous.nodes[8].provedNoZero = false;
+        const auto ambiguousRefusal =
+            geom::derivePositiveRangeProofGrid(withAmbiguous, /*targetDepth=*/0);
+        check(!ambiguousRefusal.hasPositiveCells(),
+              "one ambiguous child refuses positive parent coalescing");
+
+        auto malformed = siblings;
+        malformed.nodes.pop_back();
+        const auto missingChildRefusal =
+            geom::derivePositiveRangeProofGrid(malformed, /*targetDepth=*/0);
+        check(!missingChildRefusal.hasPositiveCells(),
+              "missing partition child fails open instead of inventing proof");
+
+        geom::SdfRangeHierarchy positiveAncestor;
+        positiveAncestor.nodes.resize(1);
+        positiveAncestor.nodes[0].depth = 0;
+        positiveAncestor.nodes[0].boundFinite = true;
+        positiveAncestor.nodes[0].rangeLo = 3.0f;
+        positiveAncestor.nodes[0].rangeHi = 4.0f;
+        positiveAncestor.nodes[0].provedNoZero = true;
+
+        const auto filled =
+            geom::derivePositiveRangeProofGrid(positiveAncestor, /*targetDepth=*/2);
+        check(filled.dim == 4 && filled.positiveCells == 64,
+              "positive ancestor authorizes every target-depth descendant");
+        check(filled.words.size() == 2 &&
+                  filled.words[0] == 0xFFFFFFFFu &&
+                  filled.words[1] == 0xFFFFFFFFu,
+              "positive ancestor fills the exact descendant bitmap");
     }
 
     if (failures) {
