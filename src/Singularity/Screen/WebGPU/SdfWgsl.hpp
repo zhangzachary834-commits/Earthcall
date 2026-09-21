@@ -107,6 +107,7 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 // a value-only edit can refresh the shared parameter block without regenerating
 // WGSL; unequal structure means the shader source can have changed. Unsupported
 // mathematics refuses here for the same reason it refuses in compile().
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr);
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                                       bool bindWorldTime = false);
 
 } // namespace sdfwgsl
