@@ -127,6 +127,9 @@ struct ProofGridCensus {
     uint64_t positiveCells = 0;
     uint64_t clearCells = 0;
     uint64_t positiveRuns = 0;
+    uint64_t raysWithPositiveProof = 0;
+    uint64_t raysWithoutPositiveProof = 0;
+    uint64_t positiveBoundsHitRays = 0;
     uint64_t upperCandidateCalls = 0;
     double traversedDistance = 0.0;
     double positiveDistance = 0.0;
@@ -178,6 +181,9 @@ bool proofCellPositive(const geom::SdfPositiveProofGrid& grid,
 
 void censusRay(const geom::SdfPositiveProofGrid& grid,
                const glm::vec3& extent,
+               const glm::vec3& positiveBoundsMin,
+               const glm::vec3& positiveBoundsMax,
+               bool hasPositiveBounds,
                const glm::vec3& ro,
                const glm::vec3& rd,
                float farField,
@@ -199,10 +205,25 @@ void censusRay(const geom::SdfPositiveProofGrid& grid,
     if (!(tLimit > t)) return;
     ++out.boxHitRays;
 
+    if (hasPositiveBounds) {
+        const glm::vec3 positiveCenter =
+            0.5f * (positiveBoundsMin + positiveBoundsMax);
+        const glm::vec3 positiveExtent =
+            0.5f * (positiveBoundsMax - positiveBoundsMin);
+        float positiveEnter = 0.0f;
+        float positiveExit = 0.0f;
+        if (rayBoxInterval(ro - positiveCenter, rd, positiveExtent,
+                           positiveEnter, positiveExit) &&
+            positiveExit >= t && positiveEnter <= tLimit) {
+            ++out.positiveBoundsHitRays;
+        }
+    }
+
     const glm::vec3 cellSize =
         (2.0f * glm::abs(extent)) / static_cast<float>(grid.dim);
     bool inPositiveRun = false;
     bool lastCellPositive = false;
+    bool sawPositiveProof = false;
     double positiveRunDistance = 0.0;
     uint64_t clearCellsThisRay = 0;
 
@@ -245,6 +266,7 @@ void censusRay(const geom::SdfPositiveProofGrid& grid,
         lastCellPositive = positive;
 
         if (positive) {
+            sawPositiveProof = true;
             ++out.positiveCells;
             out.positiveDistance += segment;
             if (!inPositiveRun) {
@@ -272,6 +294,12 @@ void censusRay(const geom::SdfPositiveProofGrid& grid,
             std::max(out.maxPositiveRunDistance, positiveRunDistance);
     }
 
+    if (sawPositiveProof) {
+        ++out.raysWithPositiveProof;
+    } else {
+        ++out.raysWithoutPositiveProof;
+    }
+
     // If the exact marcher reached every regular-cell boundary, each clear cell
     // would force a handoff; a terminal positive run needs one final candidate
     // call of its own. Real runtime calls can be lower because exact authored
@@ -290,6 +318,26 @@ ProofGridCensus censusProofGrid(const geom::SdfPositiveProofGrid& grid,
     constexpr float farField = 3000.0f;
     ProofGridCensus out;
     const glm::mat4 invViewProj = glm::inverse(proj * view);
+
+    glm::vec3 positiveBoundsMin(std::numeric_limits<float>::infinity());
+    glm::vec3 positiveBoundsMax(-std::numeric_limits<float>::infinity());
+    bool hasPositiveBounds = false;
+    const glm::vec3 cellSize =
+        (2.0f * glm::abs(extent)) / static_cast<float>(grid.dim);
+    for (uint32_t z = 0; z < grid.dim; ++z) {
+        for (uint32_t y = 0; y < grid.dim; ++y) {
+            for (uint32_t x = 0; x < grid.dim; ++x) {
+                if (!proofCellPositive(grid, x, y, z)) continue;
+                const glm::vec3 cellMin =
+                    -extent + glm::vec3(static_cast<float>(x),
+                                        static_cast<float>(y),
+                                        static_cast<float>(z)) * cellSize;
+                positiveBoundsMin = glm::min(positiveBoundsMin, cellMin);
+                positiveBoundsMax = glm::max(positiveBoundsMax, cellMin + cellSize);
+                hasPositiveBounds = true;
+            }
+        }
+    }
 
     for (uint32_t y = 0; y < sampleH; ++y) {
         for (uint32_t x = 0; x < sampleW; ++x) {
@@ -310,7 +358,9 @@ ProofGridCensus censusProofGrid(const geom::SdfPositiveProofGrid& grid,
             const glm::vec3 world =
                 glm::vec3(worldH) / worldH.w;
             const glm::vec3 rd = glm::normalize(world - eye);
-            censusRay(grid, extent, eye, rd, farField, out);
+            censusRay(grid, extent,
+                      positiveBoundsMin, positiveBoundsMax, hasPositiveBounds,
+                      eye, rd, farField, out);
         }
     }
     return out;
@@ -333,6 +383,21 @@ void printProofGridCensus(const char* viewName,
         s.traversedDistance > 0.0
             ? s.positiveDistance / s.traversedDistance
             : 0.0;
+    const double usefulRayRatio =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.raysWithPositiveProof) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+    const double positiveBoundsHitRatio =
+        s.boxHitRays > 0
+            ? static_cast<double>(s.positiveBoundsHitRays) /
+                  static_cast<double>(s.boxHitRays)
+            : 0.0;
+    const double positiveBoundsPrecision =
+        s.positiveBoundsHitRays > 0
+            ? static_cast<double>(s.raysWithPositiveProof) /
+                  static_cast<double>(s.positiveBoundsHitRays)
+            : 0.0;
     const double meanPositiveRunCells =
         s.positiveRuns > 0
             ? static_cast<double>(s.positiveCells) /
@@ -351,9 +416,12 @@ void printProofGridCensus(const char* viewName,
     std::printf(
         "SDF_RANGE_TAX_GEOMETRY view=%s depth=%u sampled_rays=%llu "
         "box_hit_rays=%llu classifications=%llu positive_cells=%llu "
-        "clear_cells=%llu positive_runs=%llu upper_candidate_calls=%llu "
-        "classifications_per_hit=%.4f upper_calls_per_hit=%.4f "
-        "useful_classification_ratio=%.6f positive_distance_fraction=%.6f "
+        "clear_cells=%llu positive_runs=%llu rays_with_positive=%llu "
+        "rays_without_positive=%llu positive_bounds_hit_rays=%llu "
+        "upper_candidate_calls=%llu classifications_per_hit=%.4f "
+        "upper_calls_per_hit=%.4f useful_classification_ratio=%.6f "
+        "positive_distance_fraction=%.6f useful_ray_ratio=%.6f "
+        "positive_bounds_hit_ratio=%.6f positive_bounds_precision=%.6f "
         "mean_positive_run_cells=%.4f mean_positive_run_distance=%.6f "
         "max_positive_run_distance=%.6f\n",
         viewName,
@@ -364,11 +432,17 @@ void printProofGridCensus(const char* viewName,
         static_cast<unsigned long long>(s.positiveCells),
         static_cast<unsigned long long>(s.clearCells),
         static_cast<unsigned long long>(s.positiveRuns),
+        static_cast<unsigned long long>(s.raysWithPositiveProof),
+        static_cast<unsigned long long>(s.raysWithoutPositiveProof),
+        static_cast<unsigned long long>(s.positiveBoundsHitRays),
         static_cast<unsigned long long>(s.upperCandidateCalls),
         classificationsPerHit,
         upperCallsPerHit,
         usefulClassificationRatio,
         positiveDistanceFraction,
+        usefulRayRatio,
+        positiveBoundsHitRatio,
+        positiveBoundsPrecision,
         meanPositiveRunCells,
         meanPositiveRunDistance,
         s.maxPositiveRunDistance);
