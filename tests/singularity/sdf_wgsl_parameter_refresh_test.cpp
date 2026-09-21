@@ -625,6 +625,12 @@ int main() {
               "V0 density lowers through an explicitly named participating-medium evaluator");
         check(before.wgsl.find("fn fieldEval(") == std::string::npos,
               "new V0 shaders no longer expose generic fieldEval as density ontology");
+        check(before.wgsl.find("let sample_t = t;") != std::string::npos &&
+                  before.wgsl.find("max(min(t, maxDist) - sample_t, 0.0)") != std::string::npos &&
+                  before.wgsl.find("first_density_t = sample_t") != std::string::npos,
+              "V0 transport integrates the actual bounded marched interval from the sampled coordinate");
+        check(before.wgsl.find("max(abs(d), current_eps)") == std::string::npos,
+              "V0 transport no longer reinterprets SDF magnitude as optical path length");
 
         // VALUE ONLY: alter D while rho remains byte-identical.
         densityNode->scalarForm.terms[0].coefficient = 0.45;
