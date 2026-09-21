@@ -243,15 +243,4 @@ protected:
     std::string name;
     bool _propertiesBuilt = false;
     std::string _telosId;
-
-    /*
-     * RELATION AND FORMATION OWNERSHIP AND POINTERS
-     * Every Singular knows the Relations and Formations its part of */
-
-    // Parent Formation instances that this Singular is a part of
-    std::vector<Formation> parentFormationInstances;
-
-    // Child Formation instances that are within this Singular
-    std::vector<Formation> childFormationInstances;
-
 };
