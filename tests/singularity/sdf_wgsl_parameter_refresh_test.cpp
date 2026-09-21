@@ -290,6 +290,34 @@ int main() {
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
         check(scalarTimed.ok && scalarTimed.wgsl.find("u.time.x") != std::string::npos,
               "ScalarForm factors may use the same canonical t binding");
+
+        // Piecewise applicability must use the same admitted coordinate. Before
+        // Rung 4 this emitter recognized only x/y/z and silently used 0.0 for
+        // every other inputVariable, which would make a bounded rho(t) choose
+        // the wrong branch while still producing valid WGSL.
+        OntoMath::Piecewise boundedTime =
+            OntoMath::Piecewise::continuous(
+                std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        boundedTime.inputVariable = OntoMath::kTimeVar;
+        boundedTime.pieces[0].hasLo = true;
+        boundedTime.pieces[0].lo = 0.25;
+        boundedTime.pieces[0].hasHi = true;
+        boundedTime.pieces[0].hi = 0.75;
+
+        const auto boundedUnbound =
+            sdfwgsl::inspectScalarExpression(&boundedTime);
+        const auto boundedLayout =
+            sdfwgsl::inspectScalarExpression(&boundedTime, true);
+        const auto boundedProgram =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &boundedTime);
+
+        check(!boundedUnbound.ok,
+              "bounded rho(t) refuses when temporal coordinate is not admitted");
+        check(boundedLayout.ok && boundedProgram.ok,
+              "bounded rho(t) compiles when temporal coordinate is admitted");
+        check(boundedProgram.wgsl.find("u.time.x >=") != std::string::npos &&
+                  boundedProgram.wgsl.find("u.time.x <=") != std::string::npos,
+              "Piecewise t bounds read the admitted Timeline coordinate");
     }
 
     if (failures) {
