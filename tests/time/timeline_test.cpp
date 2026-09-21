@@ -1,7 +1,6 @@
 #include "Time/timeline.hpp"
 #include "Time/Event/Event.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Relation.hpp"
 
 #include <cassert>
@@ -9,6 +8,20 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+
+namespace {
+class TimelineOwnerProbe final : public Singular {
+public:
+    explicit TimelineOwnerProbe(std::string id) : _id(std::move(id)) {}
+    std::string getIdentifier() const override { return _id; }
+
+protected:
+    void buildProperties() override { _propertiesBuilt = true; }
+
+private:
+    std::string _id;
+};
+} // namespace
 
 int main() {
     std::cout << "Testing first-class Timeline ontology...\n";
@@ -38,8 +51,8 @@ int main() {
     // 2. Timeline is relative: ANY Singular may own its own temporal domain.
     // Ownership is Relation truth, not a Timeline subclass/member slot.
     {
-        Object ownerA;
-        Object ownerB;
+        TimelineOwnerProbe ownerA("timeline-owner-a");
+        TimelineOwnerProbe ownerB("timeline-owner-b");
         Timeline ownedA;
         Timeline ownedB;
 
