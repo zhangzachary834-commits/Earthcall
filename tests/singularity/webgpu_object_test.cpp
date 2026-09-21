@@ -298,6 +298,71 @@ int main() {
                "numeric D edit did not reuse the memoized volume shader");
     }
 
+    // --- Volumetric V0c production-composition witness -----------------------
+    // Exercise Renderer::composeVolumes(), not the isolated drawImplicit density
+    // seam above. The same bounded medium is rendered twice:
+    //
+    //   1. against clear depth, so the centre ray integrates z=+1 -> z=-1;
+    //   2. with the existing opaque green cube at the origin, whose front face
+    //      is near z=+0.5 and therefore MUST truncate the medium integral there.
+    //
+    // If the volume pass samples stale/empty depth, runs before deferred opaque
+    // draws are flushed, or writes/reads the same depth attachment illegally,
+    // the red/blue fog contribution will not fall in the blocked frame.
+    {
+        auto compositeDensityNode = scalarNode(0.8);
+        OntoMath::Piecewise compositeDensity =
+            OntoMath::Piecewise::continuous(compositeDensityNode);
+
+        Rendering::VolumeDensityBinding medium;
+        medium.origin = glm::vec3(0.0f);
+        medium.scale = glm::vec3(2.0f); // full authored span; renderer derives half-extent
+        medium.densityExpr = &compositeDensity;
+        medium.densityRevision = 5101;
+        medium.temporalCoordinate = 0.0;
+        medium.temporalDelta = 0.0;
+
+        renderer.setVolumeDensitySources({medium}, 5201);
+
+        // No opaque geometry: the medium owns the full bounded ray interval.
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char fullMedium[4];
+        readCentre(fullMedium);
+        std::printf("volume composite clear-depth = (%d,%d,%d,%d)\n",
+                    fullMedium[0], fullMedium[1], fullMedium[2], fullMedium[3]);
+
+        assert(fullMedium[0] > 120 && fullMedium[1] > 120 && fullMedium[2] > 120 &&
+               "production volume composite produced no full-depth medium");
+
+        // Opaque geometry is intentionally DEFERRED by drawMesh. composeVolumes
+        // must flush it before closing the world pass, then sample the finished
+        // depth in its separate no-depth-attachment pass.
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        green.drawObject();
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char depthClampedMedium[4];
+        readCentre(depthClampedMedium);
+        std::printf("volume composite opaque-clamped = (%d,%d,%d,%d)\n",
+                    depthClampedMedium[0], depthClampedMedium[1],
+                    depthClampedMedium[2], depthClampedMedium[3]);
+
+        assert(fullMedium[0] > depthClampedMedium[0] + 50 &&
+               fullMedium[2] > depthClampedMedium[2] + 50 &&
+               "opaque scene depth did not truncate participating-medium transport");
+        assert(depthClampedMedium[1] > depthClampedMedium[0] + 20 &&
+               depthClampedMedium[1] > depthClampedMedium[2] + 20 &&
+               "volume composition erased or replaced the opaque green receiver");
+
+        renderer.setVolumeDensitySources({}, 0);
+    }
+
     // Unhook before the renderer (a stack object) goes out of scope: globals such
     // as ZoneManager are destroyed after main returns and can still reach for the
     // active backend, which by then would be a dangling pointer.
