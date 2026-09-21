@@ -221,6 +221,8 @@ private:
         // changed is decided by radianceStructure below.
         uint64_t radianceRevision = 0xffffffffffffffffULL;
         uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
+        uint64_t chromaRevision = 0xffffffffffffffffULL;
+        uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
@@ -246,6 +248,14 @@ private:
     const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
     sdfwgsl::ScalarExpressionLayout _radianceLayout;
     uint64_t _radianceStructureRevision = 0;
+
+    // chi(p,t) has its own structural identity and content revision. A numeric
+    // recolor must not pretend rho changed, and a structural chi edit must not
+    // invalidate rho's independently memoized identity.
+    uint64_t _chromaLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _chromaLayoutExprPtr = nullptr;
+    sdfwgsl::VectorExpressionLayout _chromaLayout;
+    uint64_t _chromaStructureRevision = 0;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
