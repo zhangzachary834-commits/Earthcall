@@ -212,11 +212,10 @@ int main() {
         ambiguousLeafByDepth[6]);
 
     // Measure the exact same derived proof semantics consumed by the renderer.
-    // The selected renderer depth remains a profitability policy; the coalescing
-    // theorem itself has one implementation shared by production and this witness.
-    // Report neighboring depths too so one run reveals the coalescing cliff
-    // without changing shader behavior between measurements.
-    constexpr uint8_t gpuProofDepth = 4u;
+    // Renderer proof depth remains a production profitability policy; this witness
+    // deliberately owns no duplicate selected-depth constant. Reporting the whole
+    // neighboring ladder lets one run reveal the coalescing cliff without changing
+    // shader behavior between measurements.
     for (uint8_t proofDepth = 3u; proofDepth <= 6u; ++proofDepth) {
         const auto proofGrid =
             geom::derivePositiveRangeProofGrid(proofHierarchy, proofDepth);
@@ -225,12 +224,11 @@ int main() {
         const size_t proofBytes = (proofCells + 7u) / 8u;
         std::printf(
             "SDF_RANGE_PERF_GPU_PROOF depth=%u positive_cells=%u total_cells=%zu "
-            "proof_bytes=%zu selected=%d\n",
+            "proof_bytes=%zu\n",
             static_cast<unsigned>(proofDepth),
             proofGrid.positiveCells,
             proofCells,
-            proofBytes,
-            proofDepth == gpuProofDepth ? 1 : 0);
+            proofBytes);
     }
 
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
