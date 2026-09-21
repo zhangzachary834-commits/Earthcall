@@ -303,11 +303,16 @@ private:
     // authored Expr fields use the gradient-corrected marcher and remain the
     // intended acceleration target.
     static constexpr bool kSdfRangeDistanceTraversalVerified = false;
-    // The real authored Perlin floor cannot prove positive outside space
-    // at depth 5: the 0.008-scaled x/z cells are still ~0.525 lattice units
-    // wide, and interval dependency keeps zero possible. Depth 6 halves that
-    // footprint and is the first rung where conservative positive cells appear.
+    // The complete CPU theorem still refines to depth 6: convex Perlin
+    // interpolation now proves a small frontier at depth 5, but the overwhelming
+    // majority of useful sign proofs still appear one rung deeper.
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 6;
+    // GPU traversal intentionally consumes a coarser regular proof grid.
+    // A depth-5 cell is marked positive only when the CPU node itself proves
+    // f>0 OR all eight depth-6 children jointly prove f>0. That union is a
+    // genuine proof because the children partition the parent; omitted finer
+    // positive fragments simply fall back to exact authored marching.
+    static constexpr uint8_t kSdfRangeGpuProofDepth = 5;
     // A complete depth-6 octree contains
     // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
     // Keep enough headroom for a complete proof tree; partial-tree budget
