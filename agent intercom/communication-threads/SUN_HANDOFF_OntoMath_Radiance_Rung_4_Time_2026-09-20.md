@@ -23,10 +23,11 @@ does not read `t`.
 
 ## Canonical time
 
-`OntoMath::kWorldTimeVar == "t"` is the canonical variable name.
+`OntoMath::kTimeVar == "t"` is the canonical temporal-coordinate name.
 
-OntoMath does not own or invent a clock. A channel must explicitly bind `t`.
-The Screen/WebGPU radiance context binds it to Earthcall's existing
+OntoMath does not own or invent a clock, nor does the shared symbol decree that
+every modality uses the same temporal frame. A channel must explicitly bind
+`t`. The Screen/WebGPU radiance context binds it to Earthcall's existing
 `Universe::now()` simulation/world clock. `Universe::dt()` is carried beside
 it in the same global uniform for future explicitly-admitted consumers.
 
