@@ -1138,9 +1138,13 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             if (any(p < node.boxMin.xyz) || any(p > node.boxMax.xyz)) {
                 return vec3<f32>(t, tMax, 1.0);
             }
-            let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
 
             if (node.rangeInfo.z != 0u) {
+                // Internal ambiguous nodes need only octant selection. The slab
+                // intersection is required only once we actually intend to jump
+                // across a proved-positive cell, so avoid paying reciprocal/AABB
+                // arithmetic at every descent level.
+                let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
                 // The CPU interval theorem proves f > 0 throughout this entire
                 // closed cell: outside space only. Jump to its exact ray exit.
                 // Negative zero-free cells are never tagged here because the
@@ -1155,6 +1159,11 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
             }
 
             if (node.rangeInfo.y == 0u) {
+                // Terminal ambiguous/unknown cells likewise need their exact ray
+                // exit for hand-off, but no ancestor did. Computing the slab only
+                // here preserves the same interval contract with less traversal
+                // work.
+                let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
                 // Ambiguous or unknown terminal cell: exact authored evaluation
                 // owns this interval. A grazing/shared-face interval with no
                 // forward extent disables further skipping for this ray rather
