@@ -308,9 +308,9 @@ private:
     // majority of useful sign proofs still appear one rung deeper.
     static constexpr uint8_t kSdfRangeProxyMaxDepth = 6;
     // GPU traversal intentionally consumes a coarser regular proof grid.
-    // A depth-5 cell is marked positive only when the CPU node itself proves
-    // f>0 OR all eight depth-6 children jointly prove f>0. That union is a
-    // genuine proof because the children partition the parent; omitted finer
+    // A target cell is marked positive only when the corresponding CPU theorem
+    // subtree proves the ENTIRE region f>0: either an ancestor/node proves it
+    // directly, or every partitioning child recursively proves it. Omitted finer
     // positive fragments simply fall back to exact authored marching.
     static constexpr uint8_t kSdfRangeGpuProofDepth = 4;
     // A complete depth-6 octree contains
