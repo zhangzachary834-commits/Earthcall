@@ -124,6 +124,15 @@ void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
     }
 }
 
+void Relation::forgetTypeLexeme(const Singularity::Language::Lexeme* lexeme) {
+    if (!lexeme || _typeLexeme != lexeme) return;
+
+    // `type` already carries the Lexeme's stable Singular identifier. The
+    // kind-being leaving memory therefore changes only pointer grounding, not
+    // Relation identity; do not announce a semantic type change.
+    _typeLexeme = nullptr;
+}
+
 std::string Relation::typeLabel() const {
     return _typeLexeme ? _typeLexeme->getSymbol() : type;
 }
