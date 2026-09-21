@@ -209,6 +209,89 @@ int main() {
         ambiguousLeafByDepth[2], ambiguousLeafByDepth[3],
         ambiguousLeafByDepth[4], ambiguousLeafByDepth[5],
         ambiguousLeafByDepth[6]);
+
+    // Mirror the renderer's derived profitability question without touching GPU
+    // timing: how many depth-5 regular cells are wholly proved positive by the
+    // depth-6 CPU theorem? A direct positive ancestor authorizes every covered
+    // target cell; otherwise all eight partitioning children must recursively
+    // prove positive. Missing or malformed refinement fails open.
+    constexpr uint32_t gpuProofDepth = 5u;
+    constexpr uint32_t theoremDepth = 6u;
+    auto subtreeProvesPositive =
+        [&](auto&& self, uint32_t sourceIndex, uint32_t sourceDepth) -> bool {
+        if (sourceIndex >= proofHierarchy.nodes.size() ||
+            sourceDepth > theoremDepth) {
+            return false;
+        }
+        const auto& node = proofHierarchy.nodes[sourceIndex];
+        if (node.depth != sourceDepth) {
+            return false;
+        }
+        if (geom::rangeNodeProvesPositiveOutside(node)) {
+            return true;
+        }
+        if (sourceDepth == theoremDepth || node.childCount != 8u) {
+            return false;
+        }
+        for (uint32_t child = 0; child < 8u; ++child) {
+            const uint64_t childIndex =
+                static_cast<uint64_t>(node.firstChild) + child;
+            if (childIndex >= proofHierarchy.nodes.size() ||
+                !self(self,
+                      static_cast<uint32_t>(childIndex),
+                      sourceDepth + 1u)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    auto countGpuPositiveCells =
+        [&](auto&& self,
+            uint32_t sourceIndex,
+            uint32_t depth) -> size_t {
+        if (sourceIndex >= proofHierarchy.nodes.size() ||
+            depth > gpuProofDepth) {
+            return 0u;
+        }
+        const auto& node = proofHierarchy.nodes[sourceIndex];
+        if (node.depth != depth) {
+            return 0u;
+        }
+        if (geom::rangeNodeProvesPositiveOutside(node)) {
+            const uint32_t span = 1u << (gpuProofDepth - depth);
+            return static_cast<size_t>(span) * span * span;
+        }
+        if (depth == gpuProofDepth) {
+            return subtreeProvesPositive(
+                subtreeProvesPositive, sourceIndex, depth) ? 1u : 0u;
+        }
+        if (node.childCount != 8u) {
+            return 0u;
+        }
+
+        size_t count = 0u;
+        for (uint32_t child = 0; child < 8u; ++child) {
+            const uint64_t childIndex =
+                static_cast<uint64_t>(node.firstChild) + child;
+            if (childIndex >= proofHierarchy.nodes.size()) continue;
+            count += self(self,
+                          static_cast<uint32_t>(childIndex),
+                          depth + 1u);
+        }
+        return count;
+    };
+
+    const size_t gpuPositiveCells = proofHierarchy.nodes.empty()
+        ? 0u
+        : countGpuPositiveCells(countGpuPositiveCells, 0u, 0u);
+    constexpr size_t gpuProofCells =
+        (1u << gpuProofDepth) * (1u << gpuProofDepth) * (1u << gpuProofDepth);
+    constexpr size_t gpuProofBytes = (gpuProofCells + 7u) / 8u;
+    std::printf(
+        "SDF_RANGE_PERF_GPU_PROOF depth=%u positive_cells=%zu total_cells=%zu "
+        "proof_bytes=%zu\n",
+        gpuProofDepth, gpuPositiveCells, gpuProofCells, gpuProofBytes);
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
         return 1;
