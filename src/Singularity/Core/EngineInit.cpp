@@ -25,6 +25,7 @@
 #include "ZonesOfEarth/Physics/DefaultPhysicsLaws.hpp"
 #include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Relation/Relation.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/CategoryManager.hpp"
@@ -224,6 +225,12 @@ bool Engine::initLogic() {
     (void)_worldTimeline.setClock(_worldTimeline.now(), 0.0);
     Universe::instance().setTimeline(&_worldTimeline);
 
+    // Timeline is relative. The broad clock is not "global because Engine owns
+    // it"; Engine merely stores it. Its ontological ownership is an ordinary
+    // directed Relation to the broad Ourverse vessel.
+    _worldTimelineOwnership = std::make_shared<Relation>(
+        "owned-by", _worldTimeline, _ourverse, true, 1.0f);
+
     // The Universe: what continuous laws watch and quantified conditions
     // (ForAny/ForAll) range over — the active world's objects, the laws
     // themselves (so metalaws can quantify over laws), and the player.
@@ -267,8 +274,14 @@ bool Engine::initLogic() {
         // Timelines are deliberately NOT swept into Universe merely because
         // they exist. A relative Timeline's scope belongs to authored
         // ownership/Zone relations; globally enumerating Timeline::all() here
-        // would turn every local clock into global Law-visible state. The
-        // future Law/Timeline architecture decides lawful reachability.
+        // would turn every local clock into global Law-visible state.
+        //
+        // The one broad compatibility Timeline is intentionally visible here
+        // because its owner is Ourverse scope. Its ownership Relation is itself
+        // a first-class being; local Timelines must enter through their own
+        // authored owner/Zone reachability rather than this global seam.
+        beings.push_back(&_worldTimeline);
+        if (_worldTimelineOwnership) beings.push_back(_worldTimelineOwnership.get());
         // The transfer gate is a legible being: laws govern set-to-set
         // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
@@ -286,10 +299,11 @@ bool Engine::initLogic() {
 
     // The relation GRAPH — the edge view Related conditions query
     // ("is x related to y in type t?"): the active zone's Formation.
-    Universe::instance().setRelationProvider([](std::vector<Relation*>& relations) {
+    Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
         for (const auto& rel : mgr.active().formation().relations().getAll()) {
             if (rel) relations.push_back(rel.get());
         }
+        if (_worldTimelineOwnership) relations.push_back(_worldTimelineOwnership.get());
     });
     // ...and its write side: newborn relations (a concept's reborn
     // inter-member structure) join the same Formation.
@@ -303,8 +317,12 @@ bool Engine::initLogic() {
     // Zone switch needs no separate invalidation — each RelationManager keeps its
     // own index current.
     Universe::instance().setRelationsInvolvingProvider(
-        [](const Singular& being, std::vector<Relation*>& out) {
+        [this](const Singular& being, std::vector<Relation*>& out) {
             mgr.active().formation().relations().relationsInvolving(being, out);
+            if (_worldTimelineOwnership &&
+                _worldTimelineOwnership->involves(being)) {
+                out.push_back(_worldTimelineOwnership.get());
+            }
         });
     // ...and how many times that graph has changed, so anything derived from it
     // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
