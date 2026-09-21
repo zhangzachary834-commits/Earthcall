@@ -19,6 +19,7 @@
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/Camera.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
@@ -111,6 +112,34 @@ int main() {
         OntoMath::MathNode::fromLegacyExpression(
             OntoMath::ScalarForm::variable("z", 0.25, 0.6)));
     const std::string densityAstJson = densityAst.toJson().dump();
+
+    // V0c projection witness: sourcehood and mediumhood are independent. This
+    // FieldNode has authored density but deliberately has NO light.source.
+    {
+        geom::FieldNode fogOnly("fog-only-medium");
+        fogOnly.origin = glm::vec3(2.0f, 4.0f, 6.0f);
+        fogOnly.scale = glm::vec3(8.0f, 10.0f, 12.0f);
+        *fogOnly.volumeDensity = densityAst;
+
+        Rendering::VolumeDensityBinding projected;
+        check(Rendering::readVolumeDensity(fogOnly, 3.25, 0.125, projected),
+              "density-only FieldNode projects as participating medium without light.source");
+        check(projected.densityExpr == fogOnly.volumeDensity.get(),
+              "volume projection borrows the authored D AST rather than copying or aliasing rho");
+        check(nearf(projected.origin.x, 2.0f) &&
+                  nearf(projected.origin.y, 4.0f) &&
+                  nearf(projected.origin.z, 6.0f) &&
+                  nearf(projected.scale.x, 8.0f) &&
+                  nearf(projected.scale.y, 10.0f) &&
+                  nearf(projected.scale.z, 12.0f),
+              "volume projection preserves authored medium placement and bounds");
+        check(std::fabs(projected.temporalCoordinate - 3.25) < 1e-9 &&
+                  std::fabs(projected.temporalDelta - 0.125) < 1e-9,
+              "volume projection carries its own admitted temporal coordinate");
+        PropertyValue lightSource;
+        check(!fogOnly.getDynamicProperty("light.source", lightSource),
+              "participating medium projection does not fabricate sourcehood");
+    }
 
     {
         ZoneManager writer;
