@@ -450,6 +450,7 @@ void Engine::shutdown() {
     if (Universe::instance().timeline() == &_worldTimeline) {
         Universe::instance().setTimeline(nullptr);
     }
+    _worldTimelineOwnership.reset();
 
     if (_window) {
         glfwDestroyWindow(_window);
