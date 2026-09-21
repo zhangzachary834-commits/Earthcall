@@ -11,12 +11,15 @@ If a `FieldNode` in Geometry needs a procedural density map, it does not define 
 Coordinates are **named by the mathematics but bound by the consuming channel**.
 Spatial field channels conventionally bind `p` and its scalar components
 `x/y/z`. `OntoMath::kTimeVar == "t"` names a temporal scalar coordinate, but
-OntoMath does not own a clock and the name does not force every modality onto
-one temporal frame. Screen radiance Rung 4 binds `t` to the world's
-`Universe::now()` simulation time; the audio channel may instead sample an
-authored `timeVariable` in waveform time. A channel that does not explicitly
-admit a coordinate must refuse an expression that names it rather than silently
-substituting zero or borrowing another channel's meaning.
+OntoMath does not own a clock, a Timeline, or a scheduling policy. Screen
+radiance Rung 4 accepts an admitted temporal coordinate through the Renderer
+boundary; the current production First Mover defaults that coordinate from the
+Universe-selected Timeline, while the native witness proves that an independent
+Timeline can supply the same `t` without changing WebGPU or OntoMath. The audio
+channel may instead sample an authored `timeVariable` in waveform time. A
+channel that does not explicitly admit a coordinate must refuse an expression
+that names it rather than silently substituting zero or borrowing another
+channel's meaning.
 
 ## 2. Representation: The `MathNode` AST and `Piecewise` Functions
 
