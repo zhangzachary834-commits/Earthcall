@@ -316,9 +316,16 @@ namespace Core {
             Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
-        // Draw player avatar and nametag when not in first-person
+        // Draw the embodied Person as world geometry before volumetric
+        // composition. Nametags/UI remain sensory overlays and are drawn only
+        // after the medium pass so fog never becomes a screen-space filter.
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->draw();
+        }
+
+        currentRenderer().composeVolumes();
+
+        if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
         }
 
