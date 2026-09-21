@@ -696,6 +696,43 @@ int main() {
         check(!refusedDensity.ok &&
                   refusedDensity.error.find("Raycast") != std::string::npos,
               "unsupported authored density math refuses instead of fabricating empty medium");
+
+        // V0c dedicated composite shader: density is no longer piggy-backed on
+        // a surface shader. It samples finished scene depth, owns no frag_depth,
+        // and binds each medium's relative Timeline independently.
+        const auto volumeBefore = sdfwgsl::compileVolume(&density);
+        const auto volumeLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
+        check(volumeBefore.ok &&
+                  volumeBefore.wgsl.find("texture_depth_2d") != std::string::npos &&
+                  volumeBefore.wgsl.find("textureLoad(sceneDepthTex") != std::string::npos,
+              "dedicated volume shader samples the finished opaque depth texture");
+        check(volumeBefore.wgsl.find("@builtin(frag_depth)") == std::string::npos,
+              "participating-medium composite owns no opaque fragment depth");
+        check(volumeBefore.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "dedicated volume shader reads the current medium's relative Timeline coordinate");
+        check(volumeBefore.wgsl.find("worldP - inst.origin.xyz") != std::string::npos,
+              "D(p,t) receives FieldNode-local offset coordinates");
+        check(volumeBefore.wgsl.find("opaqueT") != std::string::npos &&
+                  volumeBefore.wgsl.find("t1 = min(t1") != std::string::npos,
+              "volume integration is truncated at finished scene depth");
+
+        densityNode->scalarForm.terms[0].coefficient = 0.7;
+        const auto volumeLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
+        const auto volumeParams = sdfwgsl::collectVolumeParams(&density);
+        const auto volumeAfter = sdfwgsl::compileVolume(&density);
+        check(volumeLayoutAfter.ok &&
+                  volumeLayoutAfter.structure == volumeLayoutBefore.structure &&
+                  volumeBefore.wgsl == volumeAfter.wgsl,
+              "numeric D edit preserves dedicated volume shader structure");
+        check(volumeParams.ok &&
+                  sameFloats(volumeParams.values, volumeAfter.params) &&
+                  !sameFloats(volumeBefore.params, volumeAfter.params),
+              "numeric D edit refreshes dedicated volume parameters without shader regeneration");
+
+        const auto refusedVolume = sdfwgsl::compileVolume(&unsupportedDensity);
+        check(!refusedVolume.ok &&
+                  refusedVolume.error.find("Raycast") != std::string::npos,
+              "dedicated volume shader refuses unsupported density math with no stale fallback");
     }
 
     if (failures) {
