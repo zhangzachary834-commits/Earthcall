@@ -1118,6 +1118,17 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     const bool multiSource = radianceSources().size() > 1;
     const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
 
+    // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
+    // seam. Production Zone media are projected separately and are NOT consumed
+    // here until depth-aware volume composition exists. When this explicit seam
+    // is used, volume.density.ast outranks the legacy generic ScalarField inside
+    // sdfwgsl::compile/collectParams.
+    const OntoMath::Piecewise* densityExpr =
+        (fieldNode && fieldNode->volumeDensity &&
+         !fieldNode->volumeDensity->pieces.empty())
+            ? fieldNode->volumeDensity.get()
+            : nullptr;
+
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
             std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
@@ -1266,7 +1277,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
-                                           radianceAngularExpr(), sourceSet);
+                                           radianceAngularExpr(), sourceSet,
+                                           densityExpr);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1296,7 +1308,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         mutableFrameStats().sdfProgramCacheMisses++;
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
-                                     radianceAngularExpr(), sourceSet);
+                                     radianceAngularExpr(), sourceSet,
+                                     densityExpr);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
