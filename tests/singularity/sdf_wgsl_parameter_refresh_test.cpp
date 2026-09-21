@@ -599,6 +599,99 @@ int main() {
               "source 1 temporal mathematics reads source 1's relative Timeline coordinate");
     }
 
+    // ---------------------------------------------------------------------
+    // V0. Density sovereignty: D(p,t) is an explicit compiler input with its
+    //     own structure/value identity and its own temporal coordinate.
+    //     It must never borrow rho merely because both are scalar Piecewise.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto rhoNode = std::shared_ptr<OntoMath::MathNode>(number(0.9).release());
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.2).release());
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+
+        const std::string rhoBeforeDensityEdit = rho.toJson().dump();
+        const auto densityLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+
+        check(densityLayoutBefore.ok,
+              "V0 authored density structure inspection succeeds");
+        check(before.ok &&
+                  before.wgsl.find("fn volumeDensityEval(p: vec3<f32>) -> f32") != std::string::npos &&
+                  before.wgsl.find("let density = volumeDensityEval(p)") != std::string::npos,
+              "V0 density lowers through an explicitly named participating-medium evaluator");
+        check(before.wgsl.find("fn fieldEval(") == std::string::npos,
+              "new V0 shaders no longer expose generic fieldEval as density ontology");
+
+        // VALUE ONLY: alter D while rho remains byte-identical.
+        densityNode->scalarForm.terms[0].coefficient = 0.45;
+        const auto densityLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+        const auto after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+
+        check(densityLayoutAfter.ok &&
+                  densityLayoutAfter.structure == densityLayoutBefore.structure &&
+                  densityLayoutAfter.parameterCount == densityLayoutBefore.parameterCount,
+              "numeric D edit preserves density structure and parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric D edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric D edit changes only packed authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "density parameter recollection exactly matches full compile");
+        check(rho.toJson().dump() == rhoBeforeDensityEdit,
+              "editing D leaves rho byte-identical");
+
+        // Explicit density must outrank the old generic FieldNode density path.
+        geom::FieldNode legacy("legacy-density-projection");
+        legacy.field->mode = OntoMath::ScalarField::EvaluationMode::Procedural;
+        legacy.field->baseDensity = 8.0f;
+        legacy.field->frequency = 3.0f;
+        legacy.field->amplitude = 2.0f;
+        const auto explicitOverLegacy =
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+        check(explicitOverLegacy.ok &&
+                  explicitOverLegacy.wgsl.find("V0: explicit authored D(p,t)") != std::string::npos &&
+                  explicitOverLegacy.wgsl.find("rawDensity") == std::string::npos,
+              "explicit volume.density.ast outranks legacy generic-field density");
+
+        const auto legacyOnly = sdfwgsl::compile(sphere, &legacy);
+        check(legacyOnly.ok &&
+                  legacyOnly.wgsl.find("LEGACY procedural density projection") != std::string::npos,
+              "legacy generic density remains quarantined as an explicit compatibility path");
+
+        // TIME: rho(t) and D(t) receive distinct ambient coordinates.
+        OntoMath::Piecewise timedRho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kTimeVar).release()));
+        OntoMath::Piecewise timedDensity = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kTimeVar).release()));
+        const auto timedDensityLayout = sdfwgsl::inspectDensityExpression(&timedDensity);
+        const auto timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity);
+        check(timedDensityLayout.ok && timed.ok,
+              "D(p,t) is admitted through the production OntoMath emitter");
+        check(timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
+                  timed.wgsl.find("u.volumeTime.x") != std::string::npos,
+              "rho(t) and D(t) bind independent renderer temporal coordinates");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedDensity =
+            OntoMath::Piecewise::continuous(raycast);
+        const auto refusedDensity =
+            sdfwgsl::inspectDensityExpression(&unsupportedDensity);
+        check(!refusedDensity.ok &&
+                  refusedDensity.error.find("Raycast") != std::string::npos,
+              "unsupported authored density math refuses instead of fabricating empty medium");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
