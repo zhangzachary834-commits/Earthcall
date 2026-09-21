@@ -518,6 +518,87 @@ int main() {
               "source without alpha retains exact multiplicative-identity compatibility");
     }
 
+    // ---------------------------------------------------------------------
+    // 8. Rung 7: multiple source ASTs remain independent and are composed
+    //    above the source invariants. Numeric edits refresh the packed values;
+    //    changing emitted structure changes WGSL. Source time is per-source.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto rho0Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto rho1Node = std::shared_ptr<OntoMath::MathNode>(number(0.5).release());
+        OntoMath::Piecewise rho0 = OntoMath::Piecewise::continuous(rho0Node);
+        OntoMath::Piecewise rho1 = OntoMath::Piecewise::continuous(rho1Node);
+
+        auto chi0Node = std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.0, 0.0).release());
+        auto chi1Node = std::shared_ptr<OntoMath::MathNode>(vector3(0.0, 0.0, 1.0).release());
+        OntoMath::Piecewise chi0 = OntoMath::Piecewise::continuous(chi0Node);
+        OntoMath::Piecewise chi1 = OntoMath::Piecewise::continuous(chi1Node);
+
+        Rendering::RadianceSourceBinding s0;
+        s0.radianceExpr = &rho0;
+        s0.chromaExpr = &chi0;
+        s0.temporalCoordinate = 0.25;
+
+        Rendering::RadianceSourceBinding s1;
+        s1.radianceExpr = &rho1;
+        s1.chromaExpr = &chi1;
+        s1.temporalCoordinate = 0.75;
+
+        std::vector<Rendering::RadianceSourceBinding> sources{s0, s1};
+
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(before.ok, "two-source WGSL compilation succeeds");
+        check(before.wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos,
+              "multi-source WGSL admits a dedicated authored-source storage binding");
+        check(before.wgsl.find("fn lightRadiance_0") != std::string::npos &&
+                  before.wgsl.find("fn lightRadiance_1") != std::string::npos,
+              "each source keeps its own rho function instead of enumerating the world inside one AST");
+        check(before.wgsl.find("ambientTerm +=") != std::string::npos &&
+                  before.wgsl.find("diffuseTerm +=") != std::string::npos,
+              "source emission is aggregated additively above the individual invariants");
+
+        // VALUE ONLY: same ScalarLeaf structure on source 1.
+        rho1Node->scalarForm.terms[0].coefficient = 0.2;
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        const auto valueEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(refreshed.ok && valueEdited.ok,
+              "multi-source numeric parameter refresh succeeds");
+        check(before.wgsl == valueEdited.wgsl,
+              "numeric edit in one source leaves multi-source WGSL byte-identical");
+        check(!sameFloats(before.params, valueEdited.params),
+              "numeric edit in one source changes packed authored parameters");
+        check(sameFloats(refreshed.values, valueEdited.params),
+              "multi-source parameter recollection exactly matches full compile");
+
+        // STRUCTURE ONLY: source 1 becomes Add(number, number).
+        auto add = std::make_shared<OntoMath::MathNode>();
+        add->op = OntoMath::MathNode::Op::Add;
+        add->children.push_back(number(0.1));
+        add->children.push_back(number(0.1));
+        rho1.pieces[0].mathNode = add;
+        const auto structureEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural edit in one source changes the composed WGSL structure");
+
+        // Per-source relative time: only source 1 reads t, and it must bind that
+        // source's own record rather than the historical global radianceTime.
+        auto timed = std::make_shared<OntoMath::MathNode>();
+        timed->op = OntoMath::MathNode::Op::ValueLeaf;
+        timed->variableName = OntoMath::kTimeVar;
+        rho1.pieces[0].mathNode = timed;
+        const auto timedProgram =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(timedProgram.ok &&
+                  timedProgram.wgsl.find("RS[1u].time.x") != std::string::npos,
+              "source 1 temporal mathematics reads source 1's relative Timeline coordinate");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
