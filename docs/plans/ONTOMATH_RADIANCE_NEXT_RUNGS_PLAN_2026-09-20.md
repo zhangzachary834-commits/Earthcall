@@ -163,6 +163,9 @@ The native pixel witness is wired into the existing macOS SDF verification job. 
 
 ## Rung 4 — Time as an optional input: rho(p,t)
 
+**Implementation status: branch-complete, CI verdict pending.** Branch:
+`sol/ontomath-radiance-rung4-time-20260920`.
+
 Introduce a canonical authored time binding to the same OntoMath expression environment.
 
 The model becomes:
@@ -173,6 +176,41 @@ rho(p, t) -> scalar
 
 Existing spatial-only expressions simply do not read `t`.
 
+The canonical name is `OntoMath::kWorldTimeVar == "t"`. OntoMath itself does
+not manufacture a clock: an execution channel must explicitly bind the name.
+For Screen radiance, WebGPU binds it to Earthcall's existing
+`Universe::now()` world/simulation clock, with `Universe::dt()` traveling in
+the same global uniform for future explicitly-admitted use. No wall clock, GPU
+frame counter, or renderer-local animation time is introduced.
+
+The structure/value rule is preserved:
+
+- `t` is not an authored parameter slot;
+- advancing world time does not mutate the radiance AST;
+- advancing world time does not recollect the SDF/radiance parameter buffer;
+- advancing world time does not regenerate WGSL;
+- a structural edit that introduces/removes/rewrites a `t`-reading expression
+  still changes emitted shader structure in the normal way.
+
+The Screen binding is intentionally scoped to the radiance expression context.
+The first implementation briefly made `t` visible to every SDF-side OntoMath
+expression; that was narrowed before review because GPU geometry would then have
+gained temporal semantics before the CPU geometry evaluator had the same
+binding. Canonical vocabulary is shared, but each channel must opt in
+deliberately so one execution path cannot outrun the ontology.
+
+Focused witnesses added on the branch:
+
+- `sdf_wgsl_parameter_refresh_test`: `rho(p,t)` compiles, `t` consumes zero
+  authored parameter slots, and generated WGSL reads the shared time uniform;
+- `authorable_light_contract_test`: old spatial Sun `rho(p)` evaluates
+  identically for different optional `t` bindings, while a CPU OntoMath
+  `ValueLeaf(t)` resolves the supplied time exactly;
+- native `webgpu_object_test`: after one structural compile of `rho=t`,
+  advancing `Universe::now()` changes the rendered pixel while requiring zero
+  SDF program compiles, preserving the memoized program, and uploading zero
+  authored SDF parameter bytes.
+
 This unlocks:
 
 - breathing/pulsing light;
@@ -182,7 +220,9 @@ This unlocks:
 
 Time must be an input variable, not a new "animated light" kind.
 
-**Compatibility:** exact. Old ASTs remain valid because an expression that ignores `t` has identical output.
+**Compatibility:** exact by construction for old ASTs: an expression that does
+not read `t` has identical output. Final verification evidence belongs to the
+PR/CI run and must not be claimed here before those checks finish.
 
 ---
 
