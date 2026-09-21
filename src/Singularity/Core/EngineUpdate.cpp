@@ -212,9 +212,9 @@ namespace Core {
         // Evict unreferenced smooth tessellation caches from destroyed or modified objects
         Object::gcSmoothTessellationCache();
 
-        // Advance time
-        _worldTime += static_cast<double>(dt);
-        Universe::instance().setClock(_worldTime, static_cast<double>(dt));
+        // Advance the world's first-class Timeline. Universe borrows this
+        // being as temporal authority, so Laws and rendering read the same head.
+        (void)_worldTimeline.advanceBy(static_cast<double>(dt));
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
 
