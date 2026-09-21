@@ -95,7 +95,8 @@ public:
         : _id(std::move(id)), 
           field(std::make_shared<OntoMath::ScalarField>()),
           vectorField(std::make_shared<OntoMath::VectorField>()),
-          lightChroma(std::make_shared<OntoMath::Piecewise>()) {}
+          lightChroma(std::make_shared<OntoMath::Piecewise>()),
+          lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
 
     std::string getIdentifier() const override { return _id; }
 
@@ -112,6 +113,11 @@ public:
     // case the historical authored light.color remains the constant chroma.
     // This is deliberately not VectorField: that existing vessel means flow/force.
     const std::shared_ptr<OntoMath::Piecewise> lightChroma;
+
+    // Optional source-side angular factor alpha(p,omega,t) -> scalar. Empty is
+    // exactly the multiplicative identity alpha=1. Direction is bound by the
+    // consuming radiance channel, never stored here as a renderer preset.
+    const std::shared_ptr<OntoMath::Piecewise> lightAngular;
 
     nlohmann::json toJson() const;
     void applyJson(const nlohmann::json& j);
@@ -157,6 +163,10 @@ protected:
         if (lightChroma) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "light.chroma.ast", lightChroma.get()));
+        }
+        if (lightAngular) {
+            registerProperty(std::make_unique<PiecewiseAstBridge>(
+                "light.angular.ast", lightAngular.get()));
         }
     }
 };
