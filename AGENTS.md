@@ -161,7 +161,7 @@ widening the baseline.
 - **Mention the things human developers told you that you're drawing from.** Don't just write a document; address what the Person said so authorial intent and progress toward the human telos remain traceable.
   You may write in a register as if the idea is your own—it is good to internalize and fulfill ideas—but make origination clear: what came from real people, what you originated, and where you extended the Person's idea.
   Leave room for independently re-derived work, which may originate with you while remaining within the human thread.
-- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons.
+- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons. **Patch, never regenerate:** every save generator and injection makes targeted edits to the file as it exists on disk. It stages a new file holding the old contents plus your edits, keeps the old file, verifies nothing in either was erased, then renames atomically. Scratch builds are allowed only for a first seed. → `law/FIRST_MOVER_AUTHORING.md` §7 rule 8.
 
 ---
 
