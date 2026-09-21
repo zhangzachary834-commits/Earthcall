@@ -180,7 +180,7 @@
         "entityA": "law-studio-living-pad-light",
         "entityB": "studio.author.astra",
         "directed": true,
-        "weight": 1,
+        "weight": 1.0,
         "events": []
       }
     ],
