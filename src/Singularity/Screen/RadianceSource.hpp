@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 
-namespace OntoMath { class Piecewise; }
+namespace OntoMath { struct Piecewise; }
 
 namespace Rendering {
 
