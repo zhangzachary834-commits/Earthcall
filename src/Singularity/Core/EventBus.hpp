@@ -12,6 +12,8 @@
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <atomic>
+#include <cstdint>
 
 // Forward declarations
 class Formation;
@@ -39,7 +41,13 @@ public:
     // Public types
     // ------------------------------------------------------------------
     using Listener = std::function<void(const void*)>;
-    struct ListenerEntry { int priority; Listener listener; };
+    using SubscriptionId = std::uint64_t;
+    struct ListenerEntry {
+        SubscriptionId id;
+        int priority;
+        Listener listener;
+        std::shared_ptr<std::atomic<bool>> active;
+    };
     
     // Lightweight metadata automatically attached to each event. Can be
     // extended later without breaking the templated interface.
@@ -63,26 +71,40 @@ public:
     // Subscription ------------------------------------------------------
     // ------------------------------------------------------------------
     template<typename Event>
-    void subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
+    SubscriptionId subscribe(const std::function<void(const Event&)>& handler, int priority = 0)
     {
         std::lock_guard<std::mutex> lock(_mutex);
+        const SubscriptionId id = _nextSubscriptionId++;
         auto it = _listeners.find(typeid(Event));
         auto newVec = std::make_shared<std::vector<ListenerEntry>>();
         if (it != _listeners.end() && it->second) {
             *newVec = *it->second;
         }
-        newVec->emplace_back(ListenerEntry{priority, [handler](const void* ePtr){
+        auto active = std::make_shared<std::atomic<bool>>(true);
+        newVec->emplace_back(ListenerEntry{id, priority, [handler](const void* ePtr){
             handler(*static_cast<const Event*>(ePtr));
-        }});
+        }, std::move(active)});
         // Keep highest priority first for deterministic ordering.
         std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
             return a.priority > b.priority;
         });
         _listeners[typeid(Event)] = newVec;
+        return id;
     }
 
-    // Non-template version for internal use
-    void subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+    // Non-template version for internal use.
+    SubscriptionId subscribe(const std::type_index& type, const Listener& listener, int priority = 0);
+
+    // Revoke one listener without disturbing other listeners of the same type.
+    // Revocation also marks snapshots captured by publishAsync inactive, so
+    // queued work skips a listener whose owner has already torn down.
+    void unsubscribe(const std::type_index& type, SubscriptionId id);
+
+    template<typename Event>
+    void unsubscribe(SubscriptionId id)
+    {
+        unsubscribe(std::type_index(typeid(Event)), id);
+    }
 
     // ------------------------------------------------------------------
     // Publication (synchronous) -----------------------------------------
@@ -100,7 +122,9 @@ public:
         }
         if (!listenersCopy) return;
         for (auto& entry : *listenersCopy) {
-            entry.listener(&event);
+            if (entry.active && entry.active->load(std::memory_order_acquire)) {
+                entry.listener(&event);
+            }
         }
     }
 
@@ -122,7 +146,9 @@ public:
         auto ePtr = std::make_shared<Event>(event); // shared to outlive lambda
         auto job  = [listenersCopy, ePtr]() {
             for (auto& entry : *listenersCopy) {
-                entry.listener(ePtr.get());
+                if (entry.active && entry.active->load(std::memory_order_acquire)) {
+                    entry.listener(ePtr.get());
+                }
             }
         };
 
@@ -157,6 +183,7 @@ private:
     // Listener registry keyed by event type ---------------------------------
     std::unordered_map<std::type_index, std::shared_ptr<const std::vector<ListenerEntry>>> _listeners;
     std::mutex   _mutex;
+    SubscriptionId _nextSubscriptionId = 1;
 
     // Async queue -----------------------------------------------------------
     using Job = std::function<void()>;
