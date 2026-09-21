@@ -36,9 +36,11 @@ public:
 
     std::string getIdentifier() const override { return _identifier; }
 
-    // Generic reachability registry. It records Timeline BEINGS, not timeline
-    // kinds: constructing a new Timeline is sufficient for the engine's generic
-    // Universe provider to expose it without another hardcoded branch.
+    // Process-local lifecycle/identity registry. This is bookkeeping only:
+    // it MUST NOT define temporal scope, ownership, Law reachability, or
+    // authority. Those are authored relational truths. In particular, the
+    // Universe provider must not globally expose every entry merely because it
+    // exists.
     static const std::vector<Timeline*>& all();
 
     bool setClock(double now, double delta);
