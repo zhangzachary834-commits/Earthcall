@@ -72,7 +72,7 @@ Time ontology:
 - removed empty `src/Time/Time.h/.cpp`;
 - added `src/Time/timeline.hpp/.cpp`;
 - `src/ZonesOfEarth/AuthorsOfLaw/Universe.hpp/.cpp` now projects a borrowed Timeline;
-- Engine compatibility storage is backed by one broad Timeline instance whose ontological owner is explicitly the Ourverse through an `owned-by` Relation.
+- Engine compatibility storage is backed by one broad Timeline instance whose ontological owner is explicitly the Ourverse through the first-class Relation `world-timeline --owned-by--> Ourverse`; Engine storage is not ownership.
 
 Witnesses:
 - `tests/time/timeline_test.cpp`
@@ -96,7 +96,8 @@ Doctrine:
 - `rho(p,t)` compiles;
 - `t` consumes zero authored parameter slots;
 - WGSL reads `u.time.x`;
-- ScalarForm factors can use the same canonical `t` binding.
+- ScalarForm factors can use the same canonical `t` binding;
+- Piecewise interval bounds whose `inputVariable == "t"` read the same admitted temporal coordinate and refuse when that coordinate is not admitted. This closes a bug where non-x/y/z Piecewise inputs previously fell through to literal `0.0`.
 
 ### Compatibility witness
 
