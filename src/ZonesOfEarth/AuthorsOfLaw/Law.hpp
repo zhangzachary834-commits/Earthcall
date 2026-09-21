@@ -875,9 +875,9 @@ public:
     // evaluates the network and drains the agenda into applyTo. Event facts
     // are transient: consumed by the round that evaluates them.
     //
-    // NOTE: the EventBus has no unsubscribe, so a connected LawManager must
-    // outlive all publishing (engine-lifetime object). Handlers run on the
-    // publishing thread; keep publishing on the main thread for now.
+    // The manager owns the two EventBus roads installed below and closes them
+    // during teardown. This is what makes block-scoped managers safe: the bus
+    // may outlive the manager, but its roads may not.
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
@@ -1241,6 +1241,8 @@ private:
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
     bool _connected = false;
+    Core::EventBus::SubscriptionId _ecaEventSubscription = 0;
+    Core::EventBus::SubscriptionId _customEventSubscription = 0;
     bool _dirty = false;
     TickTiming _tickTiming;
 
