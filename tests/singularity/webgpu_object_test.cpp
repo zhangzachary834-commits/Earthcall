@@ -51,6 +51,15 @@ std::shared_ptr<OntoMath::MathNode> scalarNode(double value) {
     return node;
 }
 
+std::shared_ptr<OntoMath::MathNode> vectorNode(double x, double y, double z) {
+    auto node = std::make_shared<OntoMath::MathNode>();
+    node->op = OntoMath::MathNode::Op::VectorConstruct;
+    node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(x)));
+    node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(y)));
+    node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(z)));
+    return node;
+}
+
 // Test-only stand-in for the production radiant FieldNode. The important
 // distinction is source vs receiver: rho's Timeline belongs to the Singular
 // whose conditional process emits radiance, not to whichever surface is shaded.
@@ -400,6 +409,124 @@ int main() {
         assert(refusedPixel[0] < 12 && refusedPixel[1] < 12 && refusedPixel[2] < 12 &&
                "refused authored rho left stale rendered radiance on screen");
 
+        // RUNG 5 CHROMA: restore rho, then prove chi is source-side RGB
+        // mathematics received by this white surface. The legacy source color is
+        // GREEN on purpose; authored RED chi must replace it rather than multiply
+        // it, which would otherwise collapse to black in the red channel.
+        auto rhoRestored = scalarNode(1.0);
+        rho.pieces[0].mathNode = rhoRestored;
+        renderer.setRadianceField(&rho, 1006);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f, 0.2f, 0.0f),
+                          glm::vec3(0.0f, 0.8f, 0.0f),
+                          glm::vec3(0.0f, 1.0f, 0.0f));
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char legacyGreen[4];
+        readCentre(legacyGreen);
+        assert(legacyGreen[1] > legacyGreen[0] + 60 &&
+               "source without chi no longer uses legacy light.color");
+
+        auto chiNode = vectorNode(1.0, 0.0, 0.0);
+        OntoMath::Piecewise chi = OntoMath::Piecewise::continuous(chiNode);
+        renderer.setRadianceChroma(&chi, 2001);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char chiRed[4];
+        readCentre(chiRed);
+        const Renderer::FrameStats chiCompileStats = renderer.frameStats();
+        std::printf("chroma legacy G=%d authored red=(%d,%d,%d) compiles=%u\n",
+                    legacyGreen[1], chiRed[0], chiRed[1], chiRed[2],
+                    chiCompileStats.sdfProgramCompiles);
+        assert(chiRed[0] > chiRed[1] + 60 && chiRed[0] > chiRed[2] + 60 &&
+               "authored chi did not replace legacy source chroma on the receiver");
+        assert(chiCompileStats.sdfProgramCompiles == 1 &&
+               "introducing authored chi should compile its new structure once");
+
+        // VALUE ONLY: red -> blue without changing VectorConstruct structure.
+        chiNode->children[0]->scalarForm.terms[0].coefficient = 0.0;
+        chiNode->children[2]->scalarForm.terms[0].coefficient = 1.0;
+        renderer.setRadianceChroma(&chi, 2002);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char chiBlue[4];
+        readCentre(chiBlue);
+        const Renderer::FrameStats chiValueStats = renderer.frameStats();
+        assert(chiBlue[2] > chiBlue[0] + 60 && chiBlue[2] > chiBlue[1] + 60 &&
+               "numeric chi edit did not visibly recolor received illumination");
+        assert(chiValueStats.sdfProgramCompiles == 0 &&
+               chiValueStats.sdfProgramCacheHits >= 1 &&
+               chiValueStats.sdfParameterBytesUploaded > 0 &&
+               "numeric chi edit did not take the parameter-refresh cache path");
+
+        // STRUCTURE + RELATIVE TIME: chi=(t,0,0). The SAME source-owned
+        // Timeline used above drives chroma; the receiving Object owns no clock.
+        auto timedChiNode = std::make_shared<OntoMath::MathNode>();
+        timedChiNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto chiTime = std::make_unique<OntoMath::MathNode>();
+        chiTime->op = OntoMath::MathNode::Op::ValueLeaf;
+        chiTime->variableName = OntoMath::kTimeVar;
+        timedChiNode->children.push_back(std::move(chiTime));
+        timedChiNode->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        timedChiNode->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        chi.pieces[0].mathNode = timedChiNode;
+        assert(localTimeline.setClock(0.15, 0.15));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(), localTimeline.delta());
+        renderer.setRadianceChroma(&chi, 2003);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char chiTimeDim[4];
+        readCentre(chiTimeDim);
+        const Renderer::FrameStats chiTimeCompileStats = renderer.frameStats();
+        assert(chiTimeCompileStats.sdfProgramCompiles == 1 &&
+               "introducing timed chi should compile the new chroma structure once");
+
+        assert(localTimeline.setClock(1.0, 0.85));
+        renderer.setRadianceTemporalCoordinate(localTimeline.now(), localTimeline.delta());
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char chiTimeBright[4];
+        readCentre(chiTimeBright);
+        const Renderer::FrameStats chiTimeAdvanceStats = renderer.frameStats();
+        assert(chiTimeBright[0] > chiTimeDim[0] + 60 &&
+               "advancing the source Timeline did not visibly change chi(p,t)");
+        assert(chiTimeAdvanceStats.sdfProgramCompiles == 0 &&
+               chiTimeAdvanceStats.sdfProgramCacheHits >= 1 &&
+               chiTimeAdvanceStats.sdfParameterBytesUploaded == 0 &&
+               "advancing chi time mutated authored parameters or recompiled WGSL");
+
+        // REFUSAL: authored chroma exists but is malformed/unsupported. It may
+        // NOT fall back to legacy green or reuse the previously compiled red chi.
+        auto badChi = std::make_shared<OntoMath::MathNode>();
+        badChi->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto badRay = std::make_unique<OntoMath::MathNode>();
+        badRay->op = OntoMath::MathNode::Op::Raycast;
+        badChi->children.push_back(std::move(badRay));
+        badChi->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        badChi->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        chi.pieces[0].mathNode = badChi;
+        renderer.setRadianceChroma(&chi, 2004);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char chiRefused[4];
+        readCentre(chiRefused);
+        const Renderer::FrameStats chiRefusalStats = renderer.frameStats();
+        assert(chiRefusalStats.sdfProgramRefusals >= 1 &&
+               chiRefusalStats.sdfLastProgramRefusal.find("chroma") != std::string::npos &&
+               chiRefusalStats.sdfLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "unsupported authored chi did not surface a named chroma refusal");
+        assert(chiRefused[0] < 12 && chiRefused[1] < 12 && chiRefused[2] < 12 &&
+               "refused authored chi fell back or left stale rendered illumination");
+
+        renderer.setRadianceChroma(nullptr, 0);
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceTemporalCoordinate(0.0, 0.0);
     }
