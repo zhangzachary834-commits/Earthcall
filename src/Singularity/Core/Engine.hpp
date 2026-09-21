@@ -130,9 +130,11 @@ private:
     std::unique_ptr<Chat> _chat;
     std::unique_ptr<::ElementalToolHandler> _elementalToolHandler;
 
-    // The ordinary world clock is one Timeline being, not a privileged time
-    // class. Additional temporal domains are ordinary Timeline instances and
-    // require no new Engine enum/member kind.
+    // Compatibility storage for the broad world Timeline. This member's C++
+    // location does NOT mean Engine ontologically owns it: Timeline ownership
+    // is relative and belongs in Relations among Singulars. Additional local
+    // clocks are ordinary Timeline beings owned by whatever Singular authors
+    // them; no new Engine enum/member kind is required.
     Timeline _worldTimeline{"world-timeline"};
 
     bool _mouseLeftPressedLast = false;
