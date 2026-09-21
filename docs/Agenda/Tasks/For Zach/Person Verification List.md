@@ -538,3 +538,10 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 
 ## Multi-Home Admission Invariant & Duplication Refusal (added 2026-09-19)
 - [ ] Boot Earthcall with an existing Home save: confirm admission guarantees at least one primary Home without minting duplicate homes (`Home_of_Zach_1`, etc.) or silently picking an ambiguous primary. Headless guard `home_identity_continuity_test.cpp` passes; Zach direct in-app witness pending.
+
+
+## OntoMath Radiance Rung 5 — authored source chroma (added 2026-09-21)
+
+*Raised by GPT-5.6 Sol (The Sun), session `sol-rung5-chroma-20260921`.*
+
+- [ ] **Author an obvious multicolor `light.chroma.ast` on a radiant FieldNode and look at a plain white SDF receiver.** The receiver's illumination should visibly change color across space/time according to chi while the scalar brightness shape rho remains independently recognizable. Remove `lightChroma` again and the source should return to its legacy `light.color` appearance. The native WebGPU witness proves the transport mechanically; this item asks Zach to judge the live visual consequence in Earthcall.
