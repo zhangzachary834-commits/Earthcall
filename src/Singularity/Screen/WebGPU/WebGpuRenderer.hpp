@@ -325,8 +325,45 @@ private:
     size_t _persistentRadianceSourceVramBytes = 0;
     void releasePersistentRadianceSources();
 
-    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
+    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by SDF + volume proxies
+    void ensureSdfCubeVerts();
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
+
+    // ---- Volumetric V0c composite pass ----
+    // A participating medium is composited AFTER opaque world depth is final
+    // and BEFORE HUD/2D. It therefore has its own pipeline family and never
+    // borrows the hard-surface SDF depth-writing pipeline.
+    struct VolumePipeline {
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout globalBgl = nullptr;
+        WGPUBindGroupLayout instanceBgl = nullptr;
+    };
+    std::map<std::string, VolumePipeline> _volumePipes;
+
+    struct VolumeProgramMemo {
+        uint64_t contentRevision = 0xffffffffffffffffULL;
+        std::string structure;
+        bool ok = false;
+        std::string error;
+        sdfwgsl::Program prog;
+        const VolumePipeline* pipeline = nullptr;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeProgramMemo> _volumeProgramCache;
+
+    struct VolumeInstanceData {
+        glm::vec4 origin;
+        glm::vec4 halfExtent;
+        glm::vec4 time;
+        uint32_t paramOffset = 0;
+        uint32_t pad0 = 0;
+        uint32_t pad1 = 0;
+        uint32_t pad2 = 0;
+    };
+    std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
+    std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
+    std::vector<const VolumePipeline*> _activeVolumePipelines;
+    const VolumePipeline* volumePipeline(const std::string& wgsl);
+    void flushVolumeComposite();
 
     // setWireframe: meshes draw as edges instead of filled triangles.
     bool _wireframe = false;
@@ -400,6 +437,11 @@ private:
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
     WGPUTextureView _surfaceView = nullptr;
+
+    // Borrowed color target for the currently recorded frame. Offscreen callers
+    // own the view; live rendering aliases _surfaceView. Held only until
+    // endFrame() so composeVolumes() can open load-preserving secondary passes.
+    WGPUTextureView _frameColorView = nullptr;
 
     // Current frame state.
     WGPUCommandEncoder   _encoder = nullptr;
