@@ -38,24 +38,18 @@ struct SdfInstanceData {
     heightGridOffset: u32,
     heightGridDimX: u32,
     heightGridDimZ: u32,
-    // Generic conservative zero-set hierarchy. count==0 or enabled==0 means
-    // exact baseline marching with no hierarchy reads.
-    rangeNodeOffset: u32,
-    rangeNodeCount: u32,
+    // Fixed-depth conservative positive-proof bit grid. A zero bit means
+    // "no GPU skip proof; exact authored marching owns this cell."
+    rangeProofWordOffset: u32,
+    rangeProofWordCount: u32,
     rangeTraversalEnabled: u32,
-    rangeReserved: u32,
+    rangeProofDepth: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
 @group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
-struct SdfRangeNode {
-    boxMin: vec4<f32>,
-    boxMax: vec4<f32>,
-    // x first retained child, y retained-child mask (bits 0..7),
-    // z provedPositiveOutside, w boundFinite.
-    rangeInfo: vec4<u32>,
-};
-@group(1) @binding(2) var<storage, read> rangeNodes: array<SdfRangeNode>;
+// Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
+@group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
 
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
@@ -1093,122 +1087,97 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
 }
 
-// Generic spatial-Prophetic traversal. Starting at tStart, descend the cached
-// octree to the leaf containing the current ray point. A proved-positive
-// OUTSIDE leaf may be crossed without evaluating the authored SDF. A
-// proved-negative leaf is deliberately NOT skipped: entering negative space is
-// the baseline marcher's surface-hit signal. Ambiguous/unknown leaves hand
-// back a candidate interval to the exact marcher unchanged.
+// Generic spatial-Prophetic traversal over a fixed-depth proof bitmap.
+// The CPU adaptive hierarchy is still the theorem. Its proved-positive cells
+// are conservatively expanded into regular depth-N cells before upload.
+// Therefore a set bit permits skipping exactly one regular cell; a clear bit
+// carries no negative information and hands that cell to the exact marcher.
 //
-// Boundary ownership is deliberately conservative. If a proved-empty leaf's
-// exit is not strictly ahead of t (for example, the ray lies exactly on a shared
-// face), traversal fails open at that point instead of adding an epsilon that
-// could step over a root in the neighboring cell.
+// This removes root-to-leaf pointer chasing from every hierarchy query. The
+// only slab intersection is for the one regular cell containing the current
+// ray point. Exact split-plane ownership follows ray direction so a boundary
+// cannot repeatedly select the cell the ray just exited.
+fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
+                      dir: f32, dim: u32) -> u32 {
+    let e = abs(halfExtent);
+    let denom = max(2.0 * e, 1e-8);
+    let scaled = clamp(((coord + e) / denom) * f32(dim),
+                       0.0, f32(dim));
+    let floored = floor(scaled);
+    var idx = u32(min(floored, f32(dim - 1u)));
+    if (scaled == floored && dir < 0.0 && idx > 0u) {
+        idx = idx - 1u;
+    }
+    return idx;
+}
+
 fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
                   tStart: f32, tMax: f32) -> vec3<f32> {
-    if (inst.rangeTraversalEnabled == 0u || inst.rangeNodeCount == 0u) {
+    if (inst.rangeTraversalEnabled == 0u ||
+        inst.rangeProofWordCount == 0u ||
+        inst.rangeProofDepth == 0u ||
+        inst.rangeProofDepth > 10u) {
         return vec3<f32>(tStart, tMax, 1.0);
     }
 
-    let begin = inst.rangeNodeOffset;
-    let end = begin + inst.rangeNodeCount;
+    let dim = 1u << inst.rangeProofDepth;
+    let cellCount = dim * dim * dim;
+    let neededWords = (cellCount + 31u) >> 5u;
+    if (inst.rangeProofWordCount < neededWords) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let extent = abs(inst.extents.xyz);
+    if (any(extent <= vec3<f32>(0.0))) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+    let cellSize = (2.0 * extent) / f32(dim);
     var t = tStart;
 
-    // A depth-6 octree has 64 cells per axis. A straight ray through a
-    // regular 64^3 subdivision can visit at most (63+63+63)+1 = 190 cells, so
-    // 192 covers the configured hierarchy completely. If a future deeper tree
-    // exceeds this bounded guard, the remainder fails open to exact marching.
+    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
+    // deeper proof grid exceeds this guard, the unvisited remainder fails open
+    // to exact marching rather than silently disappearing.
     for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
-        if (t >= tMax) { return vec3<f32>(tMax, tMax, 0.0); }
+        if (t >= tMax) {
+            return vec3<f32>(tMax, tMax, 0.0);
+        }
 
         let p = ro + rd * t;
-        var idx = begin;
-        var skippedEmpty = false;
-
-        // Current producer depth is <=5; keep spare fail-open headroom for a
-        // future deeper tree without making this an unbounded shader loop.
-        for (var depthGuard = 0; depthGuard < 8; depthGuard = depthGuard + 1) {
-            if (idx < begin || idx >= end) {
-                return vec3<f32>(t, tMax, 1.0);
-            }
-
-            let node = rangeNodes[idx];
-            // The chosen node must actually own the current point. Floating
-            // slab arithmetic at a shared face may disagree by an ulp; that is
-            // not permission to skip the gap. Fail open to exact marching.
-            if (any(p < node.boxMin.xyz) || any(p > node.boxMax.xyz)) {
-                return vec3<f32>(t, tMax, 1.0);
-            }
-
-            if (node.rangeInfo.z != 0u) {
-                // Internal ambiguous nodes need only octant selection. The slab
-                // intersection is required only once we actually intend to jump
-                // across a proved-positive cell, so avoid paying reciprocal/AABB
-                // arithmetic at every descent level.
-                let cell = rayAabbBounds(ro, rd, node.boxMin.xyz, node.boxMax.xyz);
-                // The CPU interval theorem proves f > 0 throughout this entire
-                // closed cell: outside space only. Jump to its exact ray exit.
-                // Negative zero-free cells are never tagged here because the
-                // exact marcher must observe d <= 0 to register the surface.
-                if (cell.y > t) {
-                    t = min(cell.y, tMax);
-                    skippedEmpty = true;
-                } else {
-                    return vec3<f32>(t, tMax, 1.0);
-                }
-                break;
-            }
-
-            let childMask = node.rangeInfo.y;
-            if (childMask == 0u) {
-                // Defensive fail-open terminal. Positive terminals were handled
-                // above; a non-positive sparse terminal carries no permission to
-                // skip any further space.
-                return vec3<f32>(t, tMax, 1.0);
-            }
-
-            let mid = 0.5 * (node.boxMin.xyz + node.boxMax.xyz);
-            var child = 0u;
-            // At an exact split plane, ownership follows the ray direction.
-            // Without this tie-break a negative-going ray reselects the octant
-            // it just exited and loses acceleration at every boundary.
-            if (p.x > mid.x || (p.x == mid.x && rd.x >= 0.0)) { child = child | 1u; }
-            if (p.y > mid.y || (p.y == mid.y && rd.y >= 0.0)) { child = child | 2u; }
-            if (p.z > mid.z || (p.z == mid.z && rd.z >= 0.0)) { child = child | 4u; }
-
-            let childBit = 1u << child;
-            if ((childMask & childBit) == 0u) {
-                // This octant was omitted because its CPU subtree contains no
-                // positive-outside proof. Omission is NOT an emptiness claim.
-                // Derive the missing child's box from the retained parent, let
-                // the exact marcher own that interval, then permit a fresh
-                // hierarchy query after its exit.
-                var childMin = node.boxMin.xyz;
-                var childMax = node.boxMax.xyz;
-                if ((child & 1u) != 0u) { childMin.x = mid.x; }
-                else { childMax.x = mid.x; }
-                if ((child & 2u) != 0u) { childMin.y = mid.y; }
-                else { childMax.y = mid.y; }
-                if ((child & 4u) != 0u) { childMin.z = mid.z; }
-                else { childMax.z = mid.z; }
-
-                let cell = rayAabbBounds(ro, rd, childMin, childMax);
-                if (cell.y <= t) {
-                    return vec3<f32>(t, tMax, 1.0);
-                }
-                return vec3<f32>(t, min(cell.y, tMax), 1.0);
-            }
-
-            // Retained children are compacted in child-bit order.
-            let lowerBits = childMask & (childBit - 1u);
-            let childRank = countOneBits(lowerBits);
-            idx = node.rangeInfo.x + childRank;
-        }
-
-        if (!skippedEmpty) {
-            // Malformed/deeper-than-supported tree: exact marcher is the floor.
+        if (any(p < -extent) || any(p > extent)) {
             return vec3<f32>(t, tMax, 1.0);
         }
+
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let linear = ix + dim * (iy + dim * iz);
+        let localWord = linear >> 5u;
+        if (localWord >= inst.rangeProofWordCount) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        let bit = 1u << (linear & 31u);
+        let provedPositive =
+            (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
+
+        let cellMin =
+            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
+        let cellMax = cellMin + cellSize;
+        let cell = rayAabbBounds(ro, rd, cellMin, cellMax);
+        if (cell.y <= t) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+        let cellExit = min(cell.y, tMax);
+
+        if (!provedPositive) {
+            // A clear bit says only that the proof grid grants no skip here.
+            // Preserve the exact marcher's authority over this interval.
+            return vec3<f32>(t, cellExit, 1.0);
+        }
+
+        // The CPU theorem proved f>0 throughout this regular cell. Advance to
+        // its exact exit without evaluating the authored field.
+        t = cellExit;
     }
 
     return vec3<f32>(t, tMax, 1.0);
