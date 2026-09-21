@@ -376,8 +376,14 @@ using TypeEnv = std::map<std::string, ValueKind>;
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
 //   "t"          a scalar temporal coordinate whose meaning the channel binds
+//   "omega.x/y/z" components of an explicitly admitted normalized direction.
+//                  Rung 6 Screen radiance binds them as world-space source ->
+//                  receiver direction; OntoMath itself does not invent a frame.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kTimeVar = "t";
+inline constexpr const char* kOmegaXVar = "omega.x";
+inline constexpr const char* kOmegaYVar = "omega.y";
+inline constexpr const char* kOmegaZVar = "omega.z";
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
