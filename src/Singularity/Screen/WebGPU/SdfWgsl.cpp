@@ -1089,6 +1089,9 @@ struct RU {
     // x = admitted radiance-source temporal coordinate; y = its delta.
     // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
     radianceTime: vec4<f32>,
+    // Independent participating-medium coordinate. D(p,t) never borrows
+    // radianceTime merely because both channels happen to read canonical t.
+    volumeTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -1510,7 +1513,7 @@ fn fs(in: VSOut) -> FSOut {
         }
         
         // Volumetric Field Accumulation
-        let density = fieldEval(p);
+        let density = volumeDensityEval(p);
         if (density > 0.0) {
             if (first_hit_t < 0.0) { first_hit_t = t; }
             let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
@@ -1665,6 +1668,25 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
     return layout;
 }
 
+ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-density:none>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     // Absence is not refusal: it means the historical authored light.color is
@@ -1722,7 +1744,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* radianceExpr,
                              const OntoMath::Piecewise* chromaExpr,
                              const OntoMath::Piecewise* angularExpr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                             const OntoMath::Piecewise* densityExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1745,7 +1768,16 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     }
 
     std::string throwaway;
-    if (fieldNode && fieldNode->field) {
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (fieldNode && fieldNode->field) {
+        // LEGACY ONLY: old callers may still project generic ScalarField
+        // mathematics as density. New V0 authorship must pass densityExpr.
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
         } else {
@@ -1849,7 +1881,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* radianceExpr,
                 const OntoMath::Piecewise* chromaExpr,
                 const OntoMath::Piecewise* angularExpr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                const OntoMath::Piecewise* densityExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1906,18 +1939,28 @@ Program compile(const geom::SdfNode& root,
                      "}\n";
     }
 
-    // --- Dual-Path Field Compiler ---
-    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
-    if (fieldNode && fieldNode->field) {
+    // --- Volumetric V0 Density Compiler ---
+    // Explicit volume.density.ast wins. The generic FieldNode scalar path below
+    // is retained only as named legacy compatibility until saves migrate.
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V0: explicit authored D(p,t)\n";
+        emitPiecewise(*densityExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            prog.wgsl += "    // LEGACY density projection from generic field.ast\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
             std::string amp = e.param(fieldNode->field->amplitude);
-            
-            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+
+            prog.wgsl += "    // LEGACY procedural density projection\n";
             prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
             prog.wgsl += "    return max(rawDensity, 0.0);\n";
         }
