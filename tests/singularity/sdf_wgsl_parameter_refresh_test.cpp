@@ -196,7 +196,10 @@ int main() {
 
         const sdfwgsl::Program before =
             sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::ScalarExpressionLayout layoutBefore =
+            sdfwgsl::inspectScalarExpression(&radiance);
         check(before.ok, "authored radiance program compiles");
+        check(layoutBefore.ok, "authored radiance structure inspection succeeds");
         check(before.wgsl.find("fn lightRadiance(p: vec3<f32>) -> f32") != std::string::npos,
               "authored radiance emits the shared OntoMath WGSL function");
 
@@ -205,8 +208,15 @@ int main() {
             sdfwgsl::collectParams(sphere, nullptr, nullptr, &radiance);
         const sdfwgsl::Program after =
             sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::ScalarExpressionLayout layoutAfter =
+            sdfwgsl::inspectScalarExpression(&radiance);
 
         check(refreshed.ok, "radiance parameter recollection succeeds");
+        check(layoutAfter.ok, "mutated radiance structure inspection succeeds");
+        check(layoutBefore.structure == layoutAfter.structure,
+              "numeric radiance edit preserves emitted structure identity");
+        check(layoutBefore.parameterCount == layoutAfter.parameterCount,
+              "numeric radiance edit preserves parameter layout");
         check(after.ok, "mutated radiance full compile succeeds");
         check(before.wgsl == after.wgsl,
               "radiance value edit leaves WGSL byte-identical");
@@ -214,6 +224,25 @@ int main() {
               "radiance value edit changes the parameter block");
         check(sameFloats(refreshed.values, after.params),
               "radiance recollection exactly matches full-compile parameters");
+
+        auto add = std::make_shared<OntoMath::MathNode>();
+        add->op = OntoMath::MathNode::Op::Add;
+        add->children.push_back(number(0.10));
+        add->children.push_back(number(0.15));
+        radiance.pieces[0].mathNode = add;
+        const sdfwgsl::ScalarExpressionLayout structural =
+            sdfwgsl::inspectScalarExpression(&radiance);
+        check(structural.ok, "structurally changed radiance remains compilable");
+        check(structural.structure != layoutAfter.structure,
+              "radiance operator-tree edit changes emitted structure identity");
+
+        auto unsupported = std::make_shared<OntoMath::MathNode>();
+        unsupported->op = OntoMath::MathNode::Op::Raycast;
+        radiance.pieces[0].mathNode = unsupported;
+        const sdfwgsl::ScalarExpressionLayout refused =
+            sdfwgsl::inspectScalarExpression(&radiance);
+        check(!refused.ok && !refused.error.empty(),
+              "unsupported authored radiance refuses during structure inspection");
 
         const sdfwgsl::Program legacy = sdfwgsl::compile(sphere);
         check(legacy.ok, "legacy no-radiance program still compiles");

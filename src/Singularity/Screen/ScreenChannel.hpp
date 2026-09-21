@@ -33,6 +33,8 @@ namespace Screen {
 //   - @screen-channel.bufferSuballocations: number of suballocations served from the buffer pool
 //   - @screen-channel.pipelineSwitches: number of pipeline state transitions
 //   - @screen-channel.cachedMeshesCount: number of persistent VBO meshes retained in VRAM
+//   - @screen-channel.sdfProgramRefusals: SDF/WGSL draws refused this frame
+//   - @screen-channel.sdfLastProgramRefusal: latest legible refusal reason
 class ScreenChannel : public Law {
 public:
     ScreenChannel();
@@ -49,6 +51,8 @@ public:
                        double uniformBytes, int suballocations, int pipelineSwitches,
                        int cachedMeshes, int sdfProgramCompiles = 0,
                        int sdfProgramCacheHits = 0, int sdfProgramCacheMisses = 0,
+                       int sdfProgramRefusals = 0,
+                       std::string sdfLastProgramRefusal = {},
                        double sdfWgslBytesGenerated = 0.0,
                        double sdfParameterBytesUploaded = 0.0,
                        int sdfRangeHierarchyBuilds = 0,
@@ -65,6 +69,8 @@ public:
     int       sdfProgramCompiles = 0;
     int       sdfProgramCacheHits = 0;
     int       sdfProgramCacheMisses = 0;
+    int       sdfProgramRefusals = 0;
+    std::string sdfLastProgramRefusal;
     double    sdfWgslBytesGenerated = 0.0;
     double    sdfParameterBytesUploaded = 0.0;
     int       sdfRangeHierarchyBuilds = 0;
@@ -110,8 +116,8 @@ private:
     void buildProperties() override;
 
     // Getters for the derived metrics below: NO_BLACK_BOX.md §3 says a Law may
-    // read anything, but "writable unless genuinely derived" — these seven are
-    // the definition of derived (the renderer computes them; nothing upstream
+    // read anything, but "writable unless genuinely derived" — these are
+    // definitionally derived (the renderer computes them; nothing upstream
     // of it should get to override what actually happened last frame). Each is
     // registered as a ComputedProperty with a null setter, which resolves to a
     // refused write rather than a value a Law could quietly clobber and have
@@ -131,6 +137,8 @@ private:
     int    getSdfProgramCompiles() const { return sdfProgramCompiles; }
     int    getSdfProgramCacheHits() const { return sdfProgramCacheHits; }
     int    getSdfProgramCacheMisses() const { return sdfProgramCacheMisses; }
+    int    getSdfProgramRefusals() const { return sdfProgramRefusals; }
+    std::string getSdfLastProgramRefusal() const { return sdfLastProgramRefusal; }
     double getSdfWgslBytesGenerated() const { return sdfWgslBytesGenerated; }
     double getSdfParameterBytesUploaded() const { return sdfParameterBytesUploaded; }
     int    getSdfRangeHierarchyBuilds() const { return sdfRangeHierarchyBuilds; }

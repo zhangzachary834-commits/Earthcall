@@ -241,6 +241,248 @@
         "x2D": 100,
         "y2D": 100,
         "zOrder2D": 0
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -1.2,
+          3.2,
+          -5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "sun.witness.white",
+        "objectID": "sun-radiance-witness-near-sdf",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -1.2,
+          3.2,
+          -5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1,
+          1,
+          1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Radiance Witness — Near"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "near"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          1.2,
+          0.2,
+          -5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "sun.witness.white",
+        "objectID": "sun-radiance-witness-far-sdf",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1.2,
+          0.2,
+          -5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1,
+          1,
+          1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Radiance Witness — Far"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "far"
+          }
+        }
       }
     ],
     "relations": []
@@ -248,5 +490,5 @@
   "authors": [
     "Zach"
   ],
-  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Field Phase 2, directed by Zach"
+  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved"
 }

@@ -18,6 +18,7 @@
 // Consequence: `wgsl` is a complete cache key for the pipeline, and `params` is
 // per-instance data. Two spheres of different radii share one pipeline.
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,18 @@ namespace sdfwgsl {
 
 struct ParameterBlock {
     std::vector<float> values;
+    bool ok = true;
+    std::string error;
+};
+
+// Isolated authored scalar-expression layout. This deliberately reuses the
+// production emitter: numeric values become parameter slots, while every choice
+// that changes generated WGSL remains in `structure`. That makes it an exact
+// structural identity for a Piecewise under this compiler rather than a second
+// hand-maintained AST classifier.
+struct ScalarExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
     bool ok = true;
     std::string error;
 };
@@ -88,5 +101,12 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode = nullptr,
                              const OntoMath::Piecewise* colorExpr = nullptr,
                              const OntoMath::Piecewise* radianceExpr = nullptr);
+
+// Inspect one authored scalar Piecewise with the SAME emission rules compile()
+// uses, but with its parameter numbering starting at zero. Equal structure means
+// a value-only edit can refresh the shared parameter block without regenerating
+// WGSL; unequal structure means the shader source can have changed. Unsupported
+// mathematics refuses here for the same reason it refuses in compile().
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr);
 
 } // namespace sdfwgsl

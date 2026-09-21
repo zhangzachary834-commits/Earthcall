@@ -148,7 +148,8 @@ jobs:
             channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
-            webgpu_sdf_color_expr_test
+            webgpu_sdf_color_expr_test \
+            webgpu_object_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -168,6 +169,7 @@ jobs:
           ./build/webgpu_sdf_parity_test
           ./build/webgpu_sdf_distance_test
           ./build/webgpu_sdf_color_expr_test
+          ./build/webgpu_object_test
 
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)

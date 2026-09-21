@@ -245,6 +245,8 @@ namespace Core {
                                   static_cast<int>(stats.sdfProgramCompiles),
                                   static_cast<int>(stats.sdfProgramCacheHits),
                                   static_cast<int>(stats.sdfProgramCacheMisses),
+                                  static_cast<int>(stats.sdfProgramRefusals),
+                                  stats.sdfLastProgramRefusal,
                                   static_cast<double>(stats.sdfWgslBytesGenerated),
                                   static_cast<double>(stats.sdfParameterBytesUploaded),
                                   static_cast<int>(stats.sdfRangeHierarchyBuilds),

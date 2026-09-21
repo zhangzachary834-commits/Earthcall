@@ -139,6 +139,46 @@ int main() {
         check(nearSource > 0.99, "Sun radiance is approximately unit strength at its source");
         check(farther >= 0.0 && farther < nearSource,
               "Sun authored radiance decreases with distance on the CPU");
+
+        // Rung 3 persists two identical SDF witnesses at different
+        // source-relative positions. This proves the saved world contains an
+        // actual drawImplicit path, not merely a mesh cube that can never call
+        // lightRadiance().
+        const nlohmann::json* nearWitness = nullptr;
+        const nlohmann::json* farWitness = nullptr;
+        if (sun.contains("world") && sun["world"].contains("objects")) {
+            for (const auto& obj : sun["world"]["objects"]) {
+                const std::string id = obj.value("objectID", "");
+                if (id == "sun-radiance-witness-near-sdf") nearWitness = &obj;
+                if (id == "sun-radiance-witness-far-sdf") farWitness = &obj;
+            }
+        }
+        check(nearWitness != nullptr && farWitness != nullptr,
+              "Sun save carries near/far SDF radiance witnesses");
+        if (nearWitness && farWitness) {
+            check(nearWitness->value("shapeKind", -1) == 10 &&
+                  farWitness->value("shapeKind", -1) == 10 &&
+                  nearWitness->contains("field") && farWitness->contains("field"),
+                  "both radiance witnesses are persisted Field shapes");
+            check((*nearWitness)["field"] == (*farWitness)["field"] &&
+                  nearWitness->value("materialId", "") == farWitness->value("materialId", ""),
+                  "near/far witnesses use the same surface recipe and material");
+
+            auto worldPosition = [](const nlohmann::json& obj) {
+                const auto& m = obj["transform"];
+                return glm::vec3(m[12].get<float>(), m[13].get<float>(), m[14].get<float>());
+            };
+            const glm::vec3 nearPos = worldPosition(*nearWitness);
+            const glm::vec3 farPos = worldPosition(*farWitness);
+            const glm::vec3 nearRel = nearPos - hydratedLight.position;
+            const glm::vec3 farRel = farPos - hydratedLight.position;
+            const double nearWitnessRho = eval(nearRel.x, nearRel.y, nearRel.z);
+            const double farWitnessRho = eval(farRel.x, farRel.y, farRel.z);
+            check(glm::length(nearRel) < glm::length(farRel),
+                  "near SDF witness is geometrically closer to the authored source");
+            check(nearWitnessRho > farWitnessRho,
+                  "the same saved SDF surface receives stronger authored rho at the near position");
+        }
     }
 
     // Wrongly typed authored state is visible but not silently guessed into a

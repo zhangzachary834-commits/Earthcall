@@ -216,9 +216,12 @@ private:
         uint32_t revision = 0xffffffff;
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
+        // Full authored radiance content identity. A change here means at least
+        // the parameter block must be reconsidered; whether WGSL structure also
+        // changed is decided by radianceStructure below.
         uint64_t radianceRevision = 0xffffffffffffffffULL;
+        uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
-        const OntoMath::Piecewise* radianceExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
         // Derived solely from SDF tree structure. Compute it when this memo is
@@ -234,6 +237,15 @@ private:
         bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
+
+    // The active Zone radiance expression is shared across every SDF draw in a
+    // frame. Inspect its emitted structure once per authored content revision,
+    // not once per Object: thousands of surfaces must not mean thousands of
+    // redundant walks of the same source AST.
+    uint64_t _radianceLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
+    sdfwgsl::ScalarExpressionLayout _radianceLayout;
+    uint64_t _radianceStructureRevision = 0;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an

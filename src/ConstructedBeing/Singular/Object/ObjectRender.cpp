@@ -682,13 +682,17 @@ void Object::drawSmoothModel() const {
     // path only tessellated meshes get.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
@@ -717,13 +721,17 @@ void Object::drawComplexModel() const {
     // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
@@ -775,13 +783,17 @@ void Object::drawFieldModel() const {
     // always calling drawImplicit.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
