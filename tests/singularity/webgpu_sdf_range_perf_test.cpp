@@ -525,7 +525,18 @@ RuntimeTaxTotals runRuntimeTaxDiagnostic(
     const glm::mat4& proj) {
     constexpr uint32_t sampleW = 160;
     constexpr uint32_t sampleH = 100;
-    constexpr float farField = 3000.0f;
+
+    // Match WebGpuRenderer::flushSdfDraws(): derive the camera far plane from
+    // the projection actually supplied instead of trusting a duplicated literal.
+    float farField = 1e6f;
+    {
+        const glm::vec4 farPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(farPt.w) > 1e-9f) {
+            const float d = -(farPt.z / farPt.w);
+            if (std::isfinite(d) && d > 0.0f) farField = d;
+        }
+    }
 
     RuntimeTaxTotals totals;
     if (!program.ok || proofGrid.dim == 0u || proofGrid.words.empty()) {
