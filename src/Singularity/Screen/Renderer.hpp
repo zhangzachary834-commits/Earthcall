@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <string>
 #include <utility>
-#include <vector>
+#include <vector>\n#include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -190,6 +190,20 @@ public:
     }
     double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
     double radianceTemporalDelta() const { return _radianceTemporalDelta; }
+
+    // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
+    // them together instead of forcing one source AST to enumerate the world.
+    // One-source worlds intentionally keep using the historical scalar setters
+    // above, making the one-element sum an exact compatibility path.
+    void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
+                            uint64_t revision) {
+        _radianceSources = std::move(sources);
+        _radianceSourcesRevision = revision;
+    }
+    const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
+        return _radianceSources;
+    }
+    uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
