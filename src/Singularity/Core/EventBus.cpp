@@ -31,26 +31,100 @@ EventBus& EventBus::instance() {
 // The priority is an integer that determines the order in which the subscribers are called.
 // The higher the priority, the earlier the subscriber is called.
 // The default priority is 0.
-void EventBus::subscribe(const std::type_index& type, const Listener& listener, int priority)
+EventBus::SubscriptionId EventBus::subscribe(const std::type_index& type,
+                                                   const Listener& listener,
+                                                   int priority)
 {
     std::lock_guard<std::mutex> lock(_mutex);
+    const SubscriptionId id = _nextSubscriptionId++;
+    auto state = std::make_shared<SubscriptionState>();
     auto it = _listeners.find(type);
     auto newVec = std::make_shared<std::vector<ListenerEntry>>();
     if (it != _listeners.end() && it->second) {
         *newVec = *it->second;
     }
-    newVec->emplace_back(ListenerEntry{priority, listener});
+    newVec->emplace_back(ListenerEntry{priority, id, std::move(state), listener});
     // Keep highest priority first for deterministic ordering.
     std::sort(newVec->begin(), newVec->end(), [](const ListenerEntry& a, const ListenerEntry& b){
         return a.priority > b.priority;
     });
     _listeners[type] = newVec;
+    return id;
+}
+
+bool EventBus::unsubscribe(SubscriptionId id)
+{
+    if (id == 0) return false;
+
+    // Do not wait on a per-road gate while holding _mutex: a listener is
+    // allowed to subscribe or close another road while it is being delivered.
+    std::shared_ptr<SubscriptionState> state;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        for (const auto& [type, listeners] : _listeners) {
+            (void)type;
+            if (!listeners) continue;
+            auto it = std::find_if(listeners->begin(), listeners->end(),
+                                   [&](const ListenerEntry& entry) { return entry.id == id; });
+            if (it != listeners->end()) {
+                state = it->state;
+                break;
+            }
+        }
+    }
+    if (!state) return false;
+
+    {
+        std::lock_guard<std::recursive_mutex> gate(state->mutex);
+        if (!state->active) return false;
+        state->active = false;
+    }
+
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (auto it = _listeners.begin(); it != _listeners.end(); ++it) {
+        const auto& listeners = it->second;
+        if (!listeners) continue;
+        const bool contains = std::any_of(listeners->begin(), listeners->end(),
+                                          [&](const ListenerEntry& entry) { return entry.id == id; });
+        if (!contains) continue;
+
+        auto newVec = std::make_shared<std::vector<ListenerEntry>>();
+        newVec->reserve(listeners->size());
+        for (const auto& entry : *listeners) {
+            if (entry.id != id) newVec->push_back(entry);
+        }
+        if (newVec->empty()) {
+            _listeners.erase(it);
+        } else {
+            it->second = std::move(newVec);
+        }
+        return true;
+    }
+
+    // The road was already removed after we closed its shared state.
+    return true;
 }
 
 void EventBus::clear()
 {
-    std::lock_guard<std::mutex> lock(_mutex);
-    _listeners.clear();
+    std::vector<std::shared_ptr<SubscriptionState>> states;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        for (const auto& [type, listeners] : _listeners) {
+            (void)type;
+            if (!listeners) continue;
+            for (const auto& entry : *listeners) {
+                if (entry.state) states.push_back(entry.state);
+            }
+        }
+        _listeners.clear();
+    }
+
+    // Invalidate already-copied listener snapshots too.
+    for (const auto& state : states) {
+        std::lock_guard<std::recursive_mutex> gate(state->mutex);
+        state->active = false;
+    }
 }
 
 void EventBus::shutdown()
