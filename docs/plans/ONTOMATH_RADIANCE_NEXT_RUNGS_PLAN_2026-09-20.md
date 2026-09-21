@@ -177,19 +177,23 @@ rho(p, t) -> scalar
 Existing spatial-only expressions simply do not read `t`.
 
 The canonical temporal-coordinate name is `OntoMath::kTimeVar == "t"`.
-OntoMath itself does not manufacture a clock or decree what temporal frame
-`t` means: an execution channel must explicitly bind the name. For Screen
-radiance, WebGPU binds `t` to Earthcall's existing `Universe::now()`
-world/simulation clock, with `Universe::dt()` traveling in
-the same global uniform for future explicitly-admitted use. No wall clock, GPU
-frame counter, or renderer-local animation time is introduced.
+OntoMath itself does not manufacture a clock, select a Timeline, or decree what
+temporal frame `t` means. Screen/WebGPU accepts only an admitted temporal
+coordinate through the Renderer boundary.
+
+Timeline is relative: any Singular may own an independent Timeline through
+ordinary Relation truth. The current production First Mover supplies Screen's
+default coordinate from the Universe-selected broad Timeline for compatibility,
+but the renderer does not know whether the value came from that Timeline, an
+Object-owned Timeline, a Field-owned Timeline, or some future Law-selected one.
+No wall clock, GPU frame counter, or renderer-local animation time is introduced.
 
 The structure/value rule is preserved:
 
 - `t` is not an authored parameter slot;
-- advancing world time does not mutate the radiance AST;
-- advancing world time does not recollect the SDF/radiance parameter buffer;
-- advancing world time does not regenerate WGSL;
+- advancing the admitted Timeline coordinate does not mutate the radiance AST;
+- advancing the admitted Timeline coordinate does not recollect the SDF/radiance parameter buffer;
+- advancing the admitted Timeline coordinate does not regenerate WGSL;
 - a structural edit that introduces/removes/rewrites a `t`-reading expression
   still changes emitted shader structure in the normal way.
 
@@ -207,10 +211,11 @@ Focused witnesses added on the branch:
 - `authorable_light_contract_test`: old spatial Sun `rho(p)` evaluates
   identically for different optional `t` bindings, while a CPU OntoMath
   `ValueLeaf(t)` resolves the supplied time exactly;
-- native `webgpu_object_test`: after one structural compile of `rho=t`,
-  advancing `Universe::now()` changes the rendered pixel while requiring zero
-  SDF program compiles, preserving the memoized program, and uploading zero
-  authored SDF parameter bytes.
+- native `webgpu_object_test`: the radiant Object owns an ordinary Timeline
+  through an `owned-by` Relation; after one structural compile of `rho=t`,
+  advancing that Object-owned Timeline changes the rendered pixel while
+  requiring zero SDF program compiles, preserving the memoized program, and
+  uploading zero authored SDF parameter bytes.
 
 This unlocks:
 
