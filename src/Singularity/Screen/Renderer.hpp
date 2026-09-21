@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include "Singularity/Screen/RadianceSource.hpp"
+#include "Singularity/Screen/VolumeDensityBinding.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -206,6 +207,16 @@ public:
     }
     uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
 
+    // V0 participating-medium projection. The three-state binding preserves
+    // legacy field density explicitly while allowing callers to say either
+    // "no medium" or "execute this authored D(p,t)" without null ambiguity.
+    void setVolumeDensityBinding(Rendering::VolumeDensityBinding binding) {
+        _volumeDensityBinding = std::move(binding);
+    }
+    const Rendering::VolumeDensityBinding& volumeDensityBinding() const {
+        return _volumeDensityBinding;
+    }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -396,6 +407,8 @@ private:
     double _radianceTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
+    Rendering::VolumeDensityBinding _volumeDensityBinding =
+        Rendering::VolumeDensityBinding::legacy();
     FrameStats _frameStats;
 };
 
