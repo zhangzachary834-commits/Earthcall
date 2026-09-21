@@ -217,7 +217,7 @@ int main() {
     // Report neighboring depths too so one run reveals the coalescing cliff
     // without changing shader behavior between measurements.
     constexpr uint8_t gpuProofDepth = 4u;
-    for (const uint8_t proofDepth : {uint8_t{3}, uint8_t{4}, uint8_t{5}, uint8_t{6}}) {
+    for (uint8_t proofDepth = 3u; proofDepth <= 6u; ++proofDepth) {
         const auto proofGrid =
             geom::derivePositiveRangeProofGrid(proofHierarchy, proofDepth);
         const size_t proofDim = size_t{1} << proofDepth;
