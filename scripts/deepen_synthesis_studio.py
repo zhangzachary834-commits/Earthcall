@@ -258,8 +258,12 @@ def upgrade(document):
     add("cursor", "The expression field shows the hand's intention", equal("livingCursor", True),
         seq(map_path("x2D", {"b": "@state.studio.bloom"}, [term(1000), term(222, b=1)]),
             map_path("y2D", {"m": "@state.studio.motion"}, [term(525), term(-106, m=1)])), scope=1)
-    add("pad-light", "A pad reverberates in its own color", equal("livingPad", True),
-        seq(*(map_path("color." + c.lower(), {"p": "pigment" + c, "e": "resonanceEnergy"},
+    # The Living pad itself rides the note envelope. Keep this on the 65x68
+    # pad body; the separate 3px resonance meter is only a secondary readout.
+    add("pad-light", "A pad reverberates in color and rises with its note", equal("livingPad", True),
+        seq(map_path("y2D", {"r": "restY2D", "e": "resonanceEnergy"},
+                     [term(1, r=1), term(-12, e=1)]),
+            *(map_path("color." + c.lower(), {"p": "pigment" + c, "e": "resonanceEnergy"},
                       [term(1, p=1), term(0.22, e=1), term(-0.22, p=1, e=1)]) for c in "RGB")), scope=1)
     # Immediate visual touch; audio retains the established click/release contract.
     add("touch-light", "The pressed pad receives the hand", equal("livingPad", True),
