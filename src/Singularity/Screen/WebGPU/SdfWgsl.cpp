@@ -1753,8 +1753,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         ? volumeDensity->kind
         : Rendering::VolumeDensityBinding::Kind::LegacyField;
     if (densityKind == Rendering::VolumeDensityBinding::Kind::Authored) {
-        if (volumeDensity && volumeDensity->enabled &&
-            volumeDensity->densityExpr && !volumeDensity->densityExpr->pieces.empty()) {
+        if (volumeDensity && volumeDensity->densityExpr &&
+            !volumeDensity->densityExpr->pieces.empty()) {
             e.timeExpression = "u.volumeTime.x";
             e.bindTime = true;
             emitPiecewise(*volumeDensity->densityExpr, e, "p", "f32", throwaway);
@@ -1934,8 +1934,8 @@ Program compile(const geom::SdfNode& root,
         ? volumeDensity->kind
         : Rendering::VolumeDensityBinding::Kind::LegacyField;
     if (densityKind == Rendering::VolumeDensityBinding::Kind::Authored) {
-        if (volumeDensity && volumeDensity->enabled &&
-            volumeDensity->densityExpr && !volumeDensity->densityExpr->pieces.empty()) {
+        if (volumeDensity && volumeDensity->densityExpr &&
+            !volumeDensity->densityExpr->pieces.empty()) {
             prog.wgsl += "    // Authored V0 D(p,t)\n";
             e.timeExpression = "u.volumeTime.x";
             e.bindTime = true;
