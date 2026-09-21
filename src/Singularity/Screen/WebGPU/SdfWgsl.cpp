@@ -38,10 +38,18 @@ struct SdfInstanceData {
     heightGridOffset: u32,
     heightGridDimX: u32,
     heightGridDimZ: u32,
+    // Fixed-depth conservative positive-proof bit grid. A zero bit means
+    // "no GPU skip proof; exact authored marching owns this cell."
+    rangeProofWordOffset: u32,
+    rangeProofWordCount: u32,
+    rangeTraversalEnabled: u32,
+    rangeProofDepth: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
 @group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
+// Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
+@group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
 
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
@@ -997,8 +1005,8 @@ bool validateVectorPiecewise(const OntoMath::Piecewise& pw, bool bindTime,
 // and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
-    viewProj:    mat4x4<f32>,
-    invViewProj: mat4x4<f32>,
+    viewProj:       mat4x4<f32>,
+    invViewProj:    mat4x4<f32>,
     lightPos:       vec4<f32>,
     eyePos:         vec4<f32>,
     lightAmbient:   vec4<f32>,
@@ -1129,6 +1137,115 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
 }
 
+// Generic spatial-Prophetic traversal over a fixed-depth proof bitmap.
+// The CPU adaptive hierarchy is still the theorem. Its proved-positive cells
+// are conservatively expanded into regular depth-N cells before upload.
+// Therefore a set bit permits skipping exactly one regular cell; a clear bit
+// carries no negative information and hands that cell to the exact marcher.
+//
+// This removes root-to-leaf pointer chasing from every hierarchy query. The
+// only slab intersection is for the one regular cell containing the current
+// ray point. Exact split-plane ownership follows ray direction so a boundary
+// cannot repeatedly select the cell the ray just exited.
+fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
+                      dir: f32, dim: u32) -> u32 {
+    let e = abs(halfExtent);
+    let denom = max(2.0 * e, 1e-8);
+    let scaled = clamp(((coord + e) / denom) * f32(dim),
+                       0.0, f32(dim));
+    let floored = floor(scaled);
+    var idx = u32(min(floored, f32(dim - 1u)));
+    if (scaled == floored && dir < 0.0 && idx > 0u) {
+        idx = idx - 1u;
+    }
+    return idx;
+}
+
+fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                  tStart: f32, tMax: f32) -> vec3<f32> {
+    if (inst.rangeTraversalEnabled == 0u ||
+        inst.rangeProofWordCount == 0u ||
+        inst.rangeProofDepth == 0u ||
+        inst.rangeProofDepth > 10u) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let dim = 1u << inst.rangeProofDepth;
+    let cellCount = dim * dim * dim;
+    let neededWords = (cellCount + 31u) >> 5u;
+    if (inst.rangeProofWordCount < neededWords) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let extent = abs(inst.extents.xyz);
+    if (any(extent <= vec3<f32>(0.0))) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+    let cellSize = (2.0 * extent) / f32(dim);
+    var t = tStart;
+
+    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
+    // deeper proof grid exceeds this guard, the unvisited remainder fails open
+    // to exact marching rather than silently disappearing.
+    for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
+        if (t >= tMax) {
+            return vec3<f32>(tMax, tMax, 0.0);
+        }
+
+        let p = ro + rd * t;
+        if (any(p < -extent) || any(p > extent)) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let linear = ix + dim * (iy + dim * iz);
+        let localWord = linear >> 5u;
+        if (localWord >= inst.rangeProofWordCount) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        let bit = 1u << (linear & 31u);
+        let provedPositive =
+            (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
+
+        let cellMin =
+            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
+        let cellMax = cellMin + cellSize;
+
+        // We need only the selected cell's EXIT. The old slab helper computed
+        // both entry and exit even though this ray point already owns the cell.
+        // Per axis, max((bmin-ro)/rd, (bmax-ro)/rd) is exactly the forward
+        // face: bmax for a positive safe direction, bmin for a negative one.
+        // Keep the same near-zero substitution and arithmetic order, but skip
+        // the unused entry-face work. This is not a DDA; one classified cell
+        // still hands a clear bit straight back to the exact authored marcher.
+        let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+        let invRd = 1.0 / rds;
+        let exitFace = select(cellMin, cellMax, rds >= vec3<f32>(0.0));
+        let axisExit = (exitFace - ro) * invRd;
+        let cellExit = min(
+            min(min(axisExit.x, axisExit.y), axisExit.z),
+            tMax);
+        if (cellExit <= t) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        if (!provedPositive) {
+            // A clear bit says only that the proof grid grants no skip here.
+            // Preserve the exact marcher's authority over this interval.
+            return vec3<f32>(t, cellExit, 1.0);
+        }
+
+        // The CPU theorem proved f>0 throughout this regular cell. Advance to
+        // its exact exit without evaluating the authored field.
+        t = cellExit;
+    }
+
+    return vec3<f32>(t, tMax, 1.0);
+}
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
@@ -1227,9 +1344,40 @@ fn fs(in: VSOut) -> FSOut {
     var omega = select(1.0, 1.4, damping > 0.5);
     var prev_d = 1e10;
     var candidate_step = 0.0;
+
+    // When range traversal is active, exact marching owns only the current
+    // ambiguous leaf. Crossing its exit asks the hierarchy for the next
+    // candidate interval; proved-empty cells between them are skipped without
+    // calling sdfEval/sdfSampleStep.
+    var rangeCellExit = t;
+    var rangeCandidateActive = false;
     
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
+
+        if (inst.rangeTraversalEnabled != 0u &&
+            (!rangeCandidateActive || t >= rangeCellExit)) {
+            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            if (candidate.z < 0.5) {
+                t = maxDist + 1.0;
+                break;
+            }
+            let oldT = t;
+            t = max(t, candidate.x);
+            if (t > oldT) {
+                // A proof-authorized spatial jump is not a marcher step. Any
+                // secant / over-relaxation history describes the old sample
+                // pair and must not be reused as though candidate_step bridged
+                // this larger distance.
+                prev_d = 1e10;
+                candidate_step = 0.0;
+                omega = select(1.0, 1.4, damping > 0.5);
+            }
+            rangeCellExit = max(t, candidate.y);
+            rangeCandidateActive = true;
+            if (t > maxDist) { break; }
+        }
+
         let p = ro + rd * t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
@@ -1265,6 +1413,9 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             candidate_step = max(d, current_eps);
+            // Do not clamp the exact marcher's lawful step to octree-cell
+            // boundaries. The hierarchy may skip cells it proved zero-free,
+            // but ambiguous space must preserve the baseline march trajectory.
             prev_d = d;
             t = t + candidate_step;
         } else {
@@ -1289,6 +1440,8 @@ fn fs(in: VSOut) -> FSOut {
 
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
+            // Same rule for distance-field marching: cell boundaries are not
+            // authored geometry and may not perturb the exact baseline step.
             t = t + candidate_step;
         }
         
@@ -1382,7 +1535,6 @@ fn fs(in: VSOut) -> FSOut {
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    // Combine hard surface with accumulated volumetric scatter.
     let surfaceColor = sdfColor(pf);
     let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
