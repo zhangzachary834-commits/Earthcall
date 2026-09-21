@@ -18,6 +18,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Time/timeline.hpp"
+#include "Relation/Relation.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -299,19 +300,26 @@ int main() {
         assert(valueStats.sdfParameterBytesUploaded > 0 &&
                "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
-        // RUNG 4 TIME: make rho read the canonical temporal coordinate. This
-        // native witness deliberately uses a separate hardcoded FIRST-MOVER
-        // Timeline rather than Universe/world time. Renderer must not care
-        // which Timeline supplied t; future Law ontology may choose that.
+        // RUNG 4 TIME: make rho read the canonical temporal coordinate.
+        // Timeline is RELATIVE: any Singular may own one. The radiant Object
+        // owns an ordinary Timeline through the same generic owned-by Relation
+        // used elsewhere in Earthcall. Renderer must not care which being owns
+        // the Timeline or which future Law selects it.
         auto timeLeaf = std::make_shared<OntoMath::MathNode>();
         timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
         timeLeaf->variableName = OntoMath::kTimeVar;
         rho.pieces[0].mathNode = timeLeaf;
 
-        Timeline radianceTestTimeline("radiance-test-timeline");
-        assert(radianceTestTimeline.setClock(0.15, 0.15));
-        renderer.setTemporalCoordinate(radianceTestTimeline.now(),
-                                       radianceTestTimeline.delta());
+        Timeline localTimeline;
+        Relation localTimelineOwnership(
+            "owned-by", localTimeline, radiant, true, 1.0f);
+        assert(localTimelineOwnership.a() == &localTimeline);
+        assert(localTimelineOwnership.b() == &radiant);
+        assert(localTimelineOwnership.typeLabel() == "owned-by");
+
+        assert(localTimeline.setClock(0.15, 0.15));
+        renderer.setTemporalCoordinate(localTimeline.now(),
+                                       localTimeline.delta());
         renderer.setRadianceField(&rho, 1003);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
@@ -322,9 +330,9 @@ int main() {
         assert(timeCompileStats.sdfProgramCompiles == 1 &&
                "introducing canonical t should compile the new rho structure once");
 
-        assert(radianceTestTimeline.setClock(1.0, 0.85));
-        renderer.setTemporalCoordinate(radianceTestTimeline.now(),
-                                       radianceTestTimeline.delta());
+        assert(localTimeline.setClock(1.0, 0.85));
+        renderer.setTemporalCoordinate(localTimeline.now(),
+                                       localTimeline.delta());
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
