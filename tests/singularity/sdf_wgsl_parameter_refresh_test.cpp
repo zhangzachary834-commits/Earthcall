@@ -278,7 +278,7 @@ int main() {
         check(timed.ok, "rho(p,t) WGSL compilation succeeds");
         check(layout.parameterCount == 0,
               "temporal coordinate consumes no authored parameter slot");
-        check(timed.wgsl.find("u.time.x") != std::string::npos,
+        check(timed.wgsl.find("u.radianceTime.x") != std::string::npos,
               "canonical t binds to the shared SDF temporal uniform");
 
         auto scalarTime = std::make_shared<OntoMath::MathNode>();
@@ -288,7 +288,7 @@ int main() {
         timedRadiance.pieces[0].mathNode = scalarTime;
         const sdfwgsl::Program scalarTimed =
             sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
-        check(scalarTimed.ok && scalarTimed.wgsl.find("u.time.x") != std::string::npos,
+        check(scalarTimed.ok && scalarTimed.wgsl.find("u.radianceTime.x") != std::string::npos,
               "ScalarForm factors may use the same canonical t binding");
 
         // Piecewise applicability must use the same admitted coordinate. Before
@@ -315,8 +315,8 @@ int main() {
               "bounded rho(t) refuses when temporal coordinate is not admitted");
         check(boundedLayout.ok && boundedProgram.ok,
               "bounded rho(t) compiles when temporal coordinate is admitted");
-        check(boundedProgram.wgsl.find("u.time.x >=") != std::string::npos &&
-                  boundedProgram.wgsl.find("u.time.x <=") != std::string::npos,
+        check(boundedProgram.wgsl.find("u.radianceTime.x >=") != std::string::npos &&
+                  boundedProgram.wgsl.find("u.radianceTime.x <=") != std::string::npos,
               "Piecewise t bounds read the admitted Timeline coordinate");
     }
 
