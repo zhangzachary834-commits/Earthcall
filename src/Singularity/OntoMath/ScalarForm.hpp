@@ -384,6 +384,7 @@ inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
 inline constexpr const char* kOmegaZVar = "omega.z";
+inline constexpr float kDirectionEpsilon = 1e-8f;
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
