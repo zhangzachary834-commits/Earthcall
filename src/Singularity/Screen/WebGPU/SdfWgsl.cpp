@@ -374,7 +374,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
-    if (var == OntoMath::kWorldTimeVar) {
+    if (var == OntoMath::kTimeVar) {
         if (e.bindWorldTime) return "u.time.x";
         e.refuse("a field expression names world-time variable 't', but this shader "
                  "expression context does not bind world time");
