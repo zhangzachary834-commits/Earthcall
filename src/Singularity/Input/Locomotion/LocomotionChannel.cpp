@@ -23,6 +23,14 @@ namespace Input {
 
 LocomotionChannel::LocomotionChannel() = default;
 
+LocomotionChannel::~LocomotionChannel() {
+    if (_routingSubscription != Core::EventBus::InvalidSubscription) {
+        Core::EventBus::instance().unsubscribe<LocomotionChanged>(_routingSubscription);
+        _routingSubscription = Core::EventBus::InvalidSubscription;
+    }
+    _routingInstalled = false;
+}
+
 void LocomotionChannel::syncRegister(LawManager& laws) {
     if (find(laws)) return;
     laws.add(std::make_shared<LocomotionChannel>());
@@ -167,10 +175,11 @@ void LocomotionChannel::setLocomotion(Person& person, bool isMoving, float trave
 
 void LocomotionChannel::installRouting() {
     if (_routingInstalled) return;
+    _routingSubscription = Core::EventBus::instance().subscribe<LocomotionChanged>(
+        [this](const LocomotionChanged& e) {
+            if (e.person) setLocomotion(*e.person, e.moving, e.speed);
+        });
     _routingInstalled = true;
-    Core::EventBus::instance().subscribe<LocomotionChanged>([this](const LocomotionChanged& e) {
-        if (e.person) setLocomotion(*e.person, e.moving, e.speed);
-    });
 }
 
 // Order each frame:
