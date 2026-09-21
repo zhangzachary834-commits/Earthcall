@@ -343,7 +343,7 @@ private:
     // subtree proves the ENTIRE region f>0: either an ancestor/node proves it
     // directly, or every partitioning child recursively proves it. Omitted finer
     // positive fragments simply fall back to exact authored marching.
-    static constexpr uint8_t kSdfRangeGpuProofDepth = 4;
+    static constexpr uint8_t kSdfRangeGpuProofDepth = 5;
     // A complete depth-6 octree contains
     // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
     // Keep enough headroom for a complete proof tree; partial-tree budget
