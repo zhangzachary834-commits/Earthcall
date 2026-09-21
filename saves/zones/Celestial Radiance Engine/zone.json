@@ -1,0 +1,9655 @@
+{
+  "identifier": "Celestial Radiance Engine",
+  "name": "Celestial Radiance Engine",
+  "owner": "zacharyzhang",
+  "parentZone": "",
+  "scope": "public",
+  "deletable": true,
+  "spatialRoot": {
+    "position": [
+      0.0,
+      52.0,
+      87.5
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "authoredProperties": {
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.enabled": {
+        "t": "bool",
+        "v": true
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 3.2
+      },
+      "light.color": {
+        "t": "vec3",
+        "x": 1.0,
+        "y": 0.94,
+        "z": 0.82
+      },
+      "light.ambient": {
+        "t": "float",
+        "v": 0.28
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.85
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 1.2
+      },
+      "light.attenuation.constant": {
+        "t": "float",
+        "v": 1.0
+      },
+      "light.attenuation.linear": {
+        "t": "float",
+        "v": 0.0
+      },
+      "light.attenuation.quadratic": {
+        "t": "float",
+        "v": 0.0
+      }
+    },
+    "field": {
+      "mode": "AST",
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "amplitude": 1.0,
+      "astDefinition": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 23,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 6.8,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {}
+                          },
+                          {
+                            "c": 0.006,
+                            "factors": {
+                              "x": 2.0
+                            }
+                          },
+                          {
+                            "c": 0.006,
+                            "factors": {
+                              "y": 2.0
+                            }
+                          },
+                          {
+                            "c": 0.006,
+                            "factors": {
+                              "z": 2.0
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.35,
+                        "factors": {},
+                        "trans": [
+                          {
+                            "kind": 0,
+                            "scale": 2.4,
+                            "var": "t"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "lightChroma": {
+      "input": "x",
+      "pieces": [
+        {
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.85,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.35,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "scale": 1.5,
+                          "var": "t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.65,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.25,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "scale": 1.5,
+                          "var": "t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.95,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.35,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "scale": 1.5,
+                          "shift": 3.14159,
+                          "var": "t"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "lightAngular": {
+      "input": "x",
+      "pieces": [
+        {
+          "mathNode": {
+            "op": 4,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.5,
+                      "factors": {}
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 3.0,
+                      "factors": {
+                        "omega.y": 2.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "materials": [
+    {
+      "ambient": 0.1,
+      "baseColor": [
+        0.06,
+        0.05,
+        0.08
+      ],
+      "diffuse": 0.4,
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "name": "celestial.obsidian.core",
+      "roughness": 0.05,
+      "specular": 1.6
+    },
+    {
+      "ambient": 0.25,
+      "baseColor": [
+        0.98,
+        0.85,
+        0.42
+      ],
+      "diffuse": 0.9,
+      "emissive": [
+        0.15,
+        0.12,
+        0.05
+      ],
+      "name": "celestial.gold.stellar",
+      "roughness": 0.2,
+      "specular": 1.4
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        0.82,
+        0.58,
+        0.35
+      ],
+      "diffuse": 0.85,
+      "emissive": [
+        0.05,
+        0.03,
+        0.01
+      ],
+      "name": "celestial.bronze.armillary",
+      "roughness": 0.25,
+      "specular": 1.0
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        0.22,
+        0.55,
+        0.98
+      ],
+      "diffuse": 0.8,
+      "emissive": [
+        0.1,
+        0.2,
+        0.4
+      ],
+      "name": "celestial.crystal.sapphire",
+      "roughness": 0.1,
+      "specular": 1.5
+    },
+    {
+      "ambient": 0.2,
+      "baseColor": [
+        0.94,
+        0.94,
+        0.98
+      ],
+      "diffuse": 0.85,
+      "emissive": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "name": "celestial.marble.astral",
+      "roughness": 0.15,
+      "specular": 0.9
+    },
+    {
+      "ambient": 0.3,
+      "baseColor": [
+        0.95,
+        0.15,
+        0.28
+      ],
+      "diffuse": 0.9,
+      "emissive": [
+        0.35,
+        0.05,
+        0.1
+      ],
+      "name": "celestial.ruby.nodal",
+      "roughness": 0.1,
+      "specular": 1.6
+    }
+  ],
+  "world": {
+    "objects": [
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.obsidian.core",
+        "objectID": "celestial-nucleus-core",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            4.5,
+            4.5,
+            4.5
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 4.5,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          5.5,
+          5.5,
+          5.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Astral Singularity Nucleus"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "singularity-core"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "celestial-nucleus-corona",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            5.6,
+            5.6,
+            5.6
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 5.6,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          6.5,
+          6.5,
+          6.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Radiant Singularity Corona"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "singularity-corona"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "celestial-ring-alpha-equatorial",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.123233995736766e-17,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            20.0,
+            0.85,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          22.0,
+          22.0,
+          2.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Astrolabe Ring Alpha \u2014 Equatorial Accretion"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "armillary-ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.bronze.armillary",
+        "objectID": "celestial-ring-beta-ecliptic",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          0.7071067811865476,
+          0.7071067811865475,
+          0.0,
+          0.0,
+          -4.329780281177466e-17,
+          4.329780281177467e-17,
+          1.0,
+          0.0,
+          0.7071067811865475,
+          -0.7071067811865476,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            26.0,
+            0.7,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          28.5,
+          28.5,
+          2.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Astrolabe Ring Beta \u2014 Ecliptic Chrono-Ring"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "armillary-ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "celestial-ring-gamma-meridian",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7071067811865476,
+          0.7071067811865475,
+          0.0,
+          0.0,
+          -0.7071067811865475,
+          0.7071067811865476,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            32.0,
+            0.65,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          34.5,
+          34.5,
+          2.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Astrolabe Ring Gamma \u2014 Polar Meridian Gyro"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "armillary-ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.marble.astral",
+        "objectID": "celestial-ring-delta-zodiac",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          6.123233995736766e-17,
+          0.0,
+          -1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            38.0,
+            0.9,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          41.0,
+          41.0,
+          3.0
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Astrolabe Ring Delta \u2014 Great Outer Zodiac Ring"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "armillary-ring"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          90.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-01",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          90.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 1"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          84.90896534380867,
+          106.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-02",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          84.90896534380867,
+          106.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 2"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          71.0,
+          120.40896534380866
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-03",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          71.0,
+          120.40896534380866,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 3"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          52.0,
+          125.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-04",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          52.0,
+          125.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 4"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          33.00000000000001,
+          120.40896534380867
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-05",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          33.00000000000001,
+          120.40896534380867,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 5"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          19.09103465619134,
+          106.50000000000001
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-06",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          19.09103465619134,
+          106.50000000000001,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 6"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          14.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-07",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          14.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 7"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          19.091034656191326,
+          68.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-08",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          19.091034656191326,
+          68.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 8"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          32.999999999999986,
+          54.59103465619134
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-09",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          32.999999999999986,
+          54.59103465619134,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 9"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          51.99999999999999,
+          49.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-10",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          51.99999999999999,
+          49.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 10"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          70.99999999999997,
+          54.59103465619132
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-11",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          70.99999999999997,
+          54.59103465619132,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 11"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          84.90896534380866,
+          68.49999999999999
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.ruby.nodal",
+        "objectID": "celestial-zodiac-node-12",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          84.90896534380866,
+          68.49999999999999,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zodiac Marker Nodal Prism 12"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "zodiac-node"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          27.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-01",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          27.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 1"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          19.091883092036785,
+          52.0,
+          106.59188309203678
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-02",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          0.7071067811865476,
+          0.0,
+          0.7071067811865475,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.7071067811865475,
+          0.0,
+          0.7071067811865476,
+          0.0,
+          19.091883092036785,
+          52.0,
+          106.59188309203678,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 2"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          1.6532731788489269e-15,
+          52.0,
+          114.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-03",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          6.123233995736766e-17,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          0.0,
+          6.123233995736766e-17,
+          0.0,
+          1.6532731788489269e-15,
+          52.0,
+          114.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 3"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -19.09188309203678,
+          52.0,
+          106.59188309203678
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-04",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          -0.7071067811865475,
+          0.0,
+          0.7071067811865476,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.7071067811865476,
+          0.0,
+          -0.7071067811865475,
+          0.0,
+          -19.09188309203678,
+          52.0,
+          106.59188309203678,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 4"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -27.0,
+          52.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-05",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          -1.0,
+          0.0,
+          1.2246467991473532e-16,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -1.2246467991473532e-16,
+          0.0,
+          -1.0,
+          0.0,
+          -27.0,
+          52.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 5"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -19.091883092036788,
+          52.0,
+          68.40811690796322
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-06",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          -0.7071067811865477,
+          0.0,
+          -0.7071067811865475,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.7071067811865475,
+          0.0,
+          -0.7071067811865477,
+          0.0,
+          -19.091883092036788,
+          52.0,
+          68.40811690796322,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 6"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -4.95981953654678e-15,
+          52.0,
+          60.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-07",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          -1.8369701987210297e-16,
+          0.0,
+          -1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -1.8369701987210297e-16,
+          0.0,
+          -4.95981953654678e-15,
+          52.0,
+          60.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 7"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          19.091883092036777,
+          52.0,
+          68.4081169079632
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.crystal.sapphire",
+        "objectID": "celestial-pylon-08",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          0.7071067811865474,
+          0.0,
+          -0.7071067811865477,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.7071067811865477,
+          0.0,
+          0.7071067811865474,
+          0.0,
+          19.091883092036777,
+          52.0,
+          68.4081169079632,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            3.5,
+            0.9,
+            0.9
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          4.5,
+          1.6,
+          1.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Resonant Gravitational Pylon 8"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "gravitational-pylon"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          68.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "celestial-jet-collar-zenith",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.123233995736766e-17,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          68.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            9.0,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          11.0,
+          11.0,
+          2.0
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Zenith Relativistic Jet Collar"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "jet-collar"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          36.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "celestial-jet-collar-nadir",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.123233995736766e-17,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          36.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            9.0,
+            0.6,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          11.0,
+          11.0,
+          2.0
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Nadir Relativistic Jet Collar"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "jet-collar"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          22.0,
+          105.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.marble.astral",
+        "objectID": "skybridge-deck-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          22.0,
+          105.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            3.0,
+            0.35,
+            7.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          3.5,
+          0.85,
+          7.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Firmament Dais Deck \u2014 North"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-deck"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          22.75,
+          111.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "skybridge-pedestal-north",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          22.75,
+          111.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.75,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2,
+          1.2,
+          1.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Observation Dais \u2014 North"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          22.0,
+          69.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.marble.astral",
+        "objectID": "skybridge-deck-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          22.0,
+          69.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            3.0,
+            0.35,
+            7.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          3.5,
+          0.85,
+          7.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Firmament Dais Deck \u2014 South"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-deck"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          22.75,
+          64.0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "skybridge-pedestal-south",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          22.75,
+          64.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.75,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2,
+          1.2,
+          1.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Observation Dais \u2014 South"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          18.0,
+          22.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.marble.astral",
+        "objectID": "skybridge-deck-east",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          18.0,
+          22.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            7.0,
+            0.35,
+            3.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          7.5,
+          0.85,
+          3.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Firmament Dais Deck \u2014 East"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-deck"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          23.5,
+          22.75,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "skybridge-pedestal-east",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          23.5,
+          22.75,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.75,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2,
+          1.2,
+          1.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Observation Dais \u2014 East"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -18.0,
+          22.0,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.marble.astral",
+        "objectID": "skybridge-deck-west",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -18.0,
+          22.0,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            7.0,
+            0.35,
+            3.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          7.5,
+          0.85,
+          3.5
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Firmament Dais Deck \u2014 West"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-deck"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -23.5,
+          22.75,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "skybridge-pedestal-west",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -23.5,
+          22.75,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.8,
+            0.75,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.2,
+          1.2,
+          1.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Observation Dais \u2014 West"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-pedestal"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          21.8,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.bronze.armillary",
+        "objectID": "skybridge-central-aperture-ring",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.123233995736766e-17,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          21.8,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            12.0,
+            1.2,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.5,
+          14.5,
+          2.2
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Firmament Dais Central Oculus Rim"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "skybridge-rim"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0.0,
+          0.2,
+          87.5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "celestial.gold.stellar",
+        "objectID": "gallery-sky-oculus-architrave",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "drawFieldModel": true,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.123233995736766e-17,
+          1.0,
+          0.0,
+          0.0,
+          -1.0,
+          6.123233995736766e-17,
+          0.0,
+          0.0,
+          0.2,
+          87.5,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 6,
+          "dims": [
+            8.5,
+            0.8,
+            0.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          10.5,
+          10.5,
+          2.0
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Grand Celestial Oculus Architrave"
+          },
+          "celestial.role": {
+            "t": "string",
+            "v": "oculus-architrave"
+          }
+        }
+      }
+    ],
+    "laws": [],
+    "relations": []
+  },
+  "objects": [
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.obsidian.core",
+      "objectID": "celestial-nucleus-core",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 0,
+        "dims": [
+          4.5,
+          4.5,
+          4.5
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 4.5,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        5.5,
+        5.5,
+        5.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Astral Singularity Nucleus"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "singularity-core"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "celestial-nucleus-corona",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 0,
+        "dims": [
+          5.6,
+          5.6,
+          5.6
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 5.6,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        6.5,
+        6.5,
+        6.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Radiant Singularity Corona"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "singularity-corona"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "celestial-ring-alpha-equatorial",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          20.0,
+          0.85,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        22.0,
+        22.0,
+        2.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Astrolabe Ring Alpha \u2014 Equatorial Accretion"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "armillary-ring"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.bronze.armillary",
+      "objectID": "celestial-ring-beta-ecliptic",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        0.7071067811865476,
+        0.7071067811865475,
+        0.0,
+        0.0,
+        -4.329780281177466e-17,
+        4.329780281177467e-17,
+        1.0,
+        0.0,
+        0.7071067811865475,
+        -0.7071067811865476,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          26.0,
+          0.7,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        28.5,
+        28.5,
+        2.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Astrolabe Ring Beta \u2014 Ecliptic Chrono-Ring"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "armillary-ring"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "celestial-ring-gamma-meridian",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.7071067811865476,
+        0.7071067811865475,
+        0.0,
+        0.0,
+        -0.7071067811865475,
+        0.7071067811865476,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          32.0,
+          0.65,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        34.5,
+        34.5,
+        2.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Astrolabe Ring Gamma \u2014 Polar Meridian Gyro"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "armillary-ring"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.marble.astral",
+      "objectID": "celestial-ring-delta-zodiac",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        6.123233995736766e-17,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          38.0,
+          0.9,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        41.0,
+        41.0,
+        3.0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Astrolabe Ring Delta \u2014 Great Outer Zodiac Ring"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "armillary-ring"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        90.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-01",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        90.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 1"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        84.90896534380867,
+        106.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-02",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        84.90896534380867,
+        106.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 2"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        71.0,
+        120.40896534380866
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-03",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        71.0,
+        120.40896534380866,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 3"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        52.0,
+        125.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-04",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        52.0,
+        125.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 4"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        33.00000000000001,
+        120.40896534380867
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-05",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        33.00000000000001,
+        120.40896534380867,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 5"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        19.09103465619134,
+        106.50000000000001
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-06",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        19.09103465619134,
+        106.50000000000001,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 6"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        14.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-07",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        14.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 7"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        19.091034656191326,
+        68.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-08",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        19.091034656191326,
+        68.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 8"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        32.999999999999986,
+        54.59103465619134
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-09",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        32.999999999999986,
+        54.59103465619134,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 9"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        51.99999999999999,
+        49.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-10",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        51.99999999999999,
+        49.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 10"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        70.99999999999997,
+        54.59103465619132
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-11",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        70.99999999999997,
+        54.59103465619132,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 11"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        84.90896534380866,
+        68.49999999999999
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.ruby.nodal",
+      "objectID": "celestial-zodiac-node-12",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        84.90896534380866,
+        68.49999999999999,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          0.9,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.4,
+        1.4,
+        1.4
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zodiac Marker Nodal Prism 12"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "zodiac-node"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        27.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-01",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        27.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 1"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        19.091883092036785,
+        52.0,
+        106.59188309203678
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-02",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        0.7071067811865476,
+        0.0,
+        0.7071067811865475,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.7071067811865475,
+        0.0,
+        0.7071067811865476,
+        0.0,
+        19.091883092036785,
+        52.0,
+        106.59188309203678,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 2"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        1.6532731788489269e-15,
+        52.0,
+        114.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-03",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        6.123233995736766e-17,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        6.123233995736766e-17,
+        0.0,
+        1.6532731788489269e-15,
+        52.0,
+        114.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 3"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -19.09188309203678,
+        52.0,
+        106.59188309203678
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-04",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        -0.7071067811865475,
+        0.0,
+        0.7071067811865476,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -0.7071067811865476,
+        0.0,
+        -0.7071067811865475,
+        0.0,
+        -19.09188309203678,
+        52.0,
+        106.59188309203678,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 4"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -27.0,
+        52.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-05",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        -1.0,
+        0.0,
+        1.2246467991473532e-16,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        -1.2246467991473532e-16,
+        0.0,
+        -1.0,
+        0.0,
+        -27.0,
+        52.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 5"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -19.091883092036788,
+        52.0,
+        68.40811690796322
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-06",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        -0.7071067811865477,
+        0.0,
+        -0.7071067811865475,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.7071067811865475,
+        0.0,
+        -0.7071067811865477,
+        0.0,
+        -19.091883092036788,
+        52.0,
+        68.40811690796322,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 6"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -4.95981953654678e-15,
+        52.0,
+        60.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-07",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        -1.8369701987210297e-16,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -1.8369701987210297e-16,
+        0.0,
+        -4.95981953654678e-15,
+        52.0,
+        60.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 7"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        19.091883092036777,
+        52.0,
+        68.4081169079632
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.crystal.sapphire",
+      "objectID": "celestial-pylon-08",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        0.7071067811865474,
+        0.0,
+        -0.7071067811865477,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.7071067811865477,
+        0.0,
+        0.7071067811865474,
+        0.0,
+        19.091883092036777,
+        52.0,
+        68.4081169079632,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 2,
+        "dims": [
+          3.5,
+          0.9,
+          0.9
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        4.5,
+        1.6,
+        1.6
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Resonant Gravitational Pylon 8"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "gravitational-pylon"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        68.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "celestial-jet-collar-zenith",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        68.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          9.0,
+          0.6,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        11.0,
+        11.0,
+        2.0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Zenith Relativistic Jet Collar"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "jet-collar"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        36.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "celestial-jet-collar-nadir",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        36.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          9.0,
+          0.6,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        11.0,
+        11.0,
+        2.0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Nadir Relativistic Jet Collar"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "jet-collar"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        22.0,
+        105.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.marble.astral",
+      "objectID": "skybridge-deck-north",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        22.0,
+        105.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          3.0,
+          0.35,
+          7.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        3.5,
+        0.85,
+        7.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Firmament Dais Deck \u2014 North"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-deck"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        22.75,
+        111.0
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "skybridge-pedestal-north",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        22.75,
+        111.0,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 4,
+        "dims": [
+          0.8,
+          0.75,
+          0.8
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Celestial Observation Dais \u2014 North"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-pedestal"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        22.0,
+        69.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.marble.astral",
+      "objectID": "skybridge-deck-south",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        22.0,
+        69.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          3.0,
+          0.35,
+          7.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        3.5,
+        0.85,
+        7.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Firmament Dais Deck \u2014 South"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-deck"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        22.75,
+        64.0
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "skybridge-pedestal-south",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        22.75,
+        64.0,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 4,
+        "dims": [
+          0.8,
+          0.75,
+          0.8
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Celestial Observation Dais \u2014 South"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-pedestal"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        18.0,
+        22.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.marble.astral",
+      "objectID": "skybridge-deck-east",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        18.0,
+        22.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          7.0,
+          0.35,
+          3.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        7.5,
+        0.85,
+        3.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Firmament Dais Deck \u2014 East"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-deck"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        23.5,
+        22.75,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "skybridge-pedestal-east",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        23.5,
+        22.75,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 4,
+        "dims": [
+          0.8,
+          0.75,
+          0.8
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Celestial Observation Dais \u2014 East"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-pedestal"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -18.0,
+        22.0,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.marble.astral",
+      "objectID": "skybridge-deck-west",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -18.0,
+        22.0,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 1,
+        "dims": [
+          7.0,
+          0.35,
+          3.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        7.5,
+        0.85,
+        3.5
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Firmament Dais Deck \u2014 West"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-deck"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        -23.5,
+        22.75,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "skybridge-pedestal-west",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -23.5,
+        22.75,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 4,
+        "dims": [
+          0.8,
+          0.75,
+          0.8
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        1.2,
+        1.2,
+        1.2
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Celestial Observation Dais \u2014 West"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-pedestal"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        21.8,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.bronze.armillary",
+      "objectID": "skybridge-central-aperture-ring",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        21.8,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          12.0,
+          1.2,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        14.5,
+        14.5,
+        2.2
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Firmament Dais Central Oculus Rim"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "skybridge-rim"
+        }
+      }
+    },
+    {
+      "authoritativeAxis": [
+        0,
+        1,
+        0
+      ],
+      "center": [
+        0.0,
+        0.2,
+        87.5
+      ],
+      "faceColors": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "geometryType": 10,
+      "materialId": "celestial.gold.stellar",
+      "objectID": "gallery-sky-oculus-architrave",
+      "renderMode": 0,
+      "rotationResponsiveness": 10,
+      "shapeKind": 10,
+      "drawFieldModel": true,
+      "shapeParams": [
+        1,
+        1,
+        1,
+        0.5,
+        0.35,
+        0.15,
+        2,
+        0.25,
+        0.12,
+        100,
+        100
+      ],
+      "targetRotation": [
+        0,
+        0,
+        0
+      ],
+      "transform": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        6.123233995736766e-17,
+        1.0,
+        0.0,
+        0.0,
+        -1.0,
+        6.123233995736766e-17,
+        0.0,
+        0.0,
+        0.2,
+        87.5,
+        1.0
+      ],
+      "x2D": 100,
+      "y2D": 100,
+      "zOrder2D": 0,
+      "field": {
+        "op": 0,
+        "prim": 6,
+        "dims": [
+          8.5,
+          0.8,
+          0.0
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "p0": 0,
+        "p1": 0,
+        "t": 0.5
+      },
+      "fieldExtent": [
+        10.5,
+        10.5,
+        2.0
+      ],
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Grand Celestial Oculus Architrave"
+        },
+        "celestial.role": {
+          "t": "string",
+          "v": "oculus-architrave"
+        }
+      }
+    }
+  ],
+  "authoredLaws": {},
+  "formationRelations": [],
+  "lexemes": [],
+  "authors": [
+    "Gemini Spark"
+  ],
+  "injected_by": "Gemini Spark"
+}

@@ -24,6 +24,7 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <functional>
+#include <vector>
 
 extern ZoneManager mgr;
 
@@ -103,74 +104,127 @@ namespace Core {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
 
-        bool persistentLightPlaced = false;
-        if (auto* root = zone.spatialRoot()) {
+        const Universe& universe = Universe::instance();
+        const double sourceTime = universe.hasClock() ? universe.now() : 0.0;
+        const double sourceDelta = universe.hasClock() ? universe.dt() : 0.0;
+
+        // Rung 7 source discovery is over the Zone's direct FieldNode ownership
+        // index, not over every Object. The canonical spatialRoot is first so a
+        // one-source Zone remains byte-for-byte ordered like the historical path.
+        std::vector<geom::FieldNode*> candidateFields;
+        if (auto* root = zone.spatialRoot()) candidateFields.push_back(root);
+        for (const auto& field : zone.additionalSpatialFields()) {
+            if (field) candidateFields.push_back(field.get());
+        }
+
+        std::vector<Rendering::RadianceSourceBinding> radiantSources;
+        radiantSources.reserve(candidateFields.size());
+        std::string sourceSetIdentity;
+
+        for (geom::FieldNode* field : candidateFields) {
             Rendering::AuthorableLightState light;
-            if (Rendering::readAuthorableLight(*root, light)) {
-                currentRenderer().setLight(light.position,
-                                           Rendering::lightAmbientRadiance(light),
-                                           Rendering::lightDiffuseRadiance(light),
-                                           Rendering::lightSpecularRadiance(light));
-                currentRenderer().setLightingEnabled(light.enabled);
-                currentRenderer().setRadianceSourceCoefficients(
-                    light.intensity, light.ambient, light.diffuse, light.specular);
+            if (!field || !Rendering::readAuthorableLight(*field, light)) continue;
 
-                // Compatibility/default binding for THIS radiance source.
-                // Renderer and OntoMath see only a temporal coordinate; they do
-                // not decide which Timeline owns the source's process. Until
-                // authored Law/Timeline selection supplies root's relative
-                // Timeline, the broad Universe-selected Timeline is the First
-                // Mover fallback.
-                const Universe& universe = Universe::instance();
-                currentRenderer().setRadianceTemporalCoordinate(
-                    universe.hasClock() ? universe.now() : 0.0,
-                    universe.hasClock() ? universe.dt() : 0.0);
+            Rendering::RadianceSourceBinding source;
+            source.position = light.position;
+            source.ambientRadiance = Rendering::lightAmbientRadiance(light);
+            source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
+            source.specularRadiance = Rendering::lightSpecularRadiance(light);
+            source.coefficients =
+                glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
+            source.temporalCoordinate = sourceTime;
+            source.temporalDelta = sourceDelta;
+            source.enabled = light.enabled;
 
-                // The radiant FieldNode's exact authored scalar AST is the
-                // spatial radiance function. Content identity, not pointer
-                // identity, governs invalidation when field.ast is edited.
-                if (root->field &&
-                    root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
-                    !root->field->astDefinition.pieces.empty()) {
-                    const std::string radianceJson =
-                        root->field->astDefinition.toJson().dump();
-                    const uint64_t radianceRevision =
-                        static_cast<uint64_t>(
-                            std::hash<std::string>{}(radianceJson));
-                    currentRenderer().setRadianceField(
-                        &root->field->astDefinition, radianceRevision);
-                } else {
-                    currentRenderer().setRadianceField(nullptr, 0);
-                }
-
-                // Rung 5: chi is a separate authored source invariant. It lives
-                // on the radiant FieldNode, not in the flow/force VectorField and
-                // not on the receiving Material. Absence means legacy light.color.
-                if (root->lightChroma && !root->lightChroma->pieces.empty()) {
-                    const std::string chromaJson = root->lightChroma->toJson().dump();
-                    const uint64_t chromaRevision =
-                        static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
-                    currentRenderer().setRadianceChroma(root->lightChroma.get(), chromaRevision);
-                } else {
-                    currentRenderer().setRadianceChroma(nullptr, 0);
-                }
-
-                // Rung 6: alpha is a third independent authored source invariant.
-                // Its omega coordinate is supplied by Screen from source origin
-                // to each receiver sample; FieldNode owns only the mathematics.
-                if (root->lightAngular && !root->lightAngular->pieces.empty()) {
-                    const std::string angularJson = root->lightAngular->toJson().dump();
-                    const uint64_t angularRevision =
-                        static_cast<uint64_t>(std::hash<std::string>{}(angularJson));
-                    currentRenderer().setRadianceAngular(root->lightAngular.get(), angularRevision);
-                } else {
-                    currentRenderer().setRadianceAngular(nullptr, 0);
-                }
-                persistentLightPlaced = true;
+            if (field->field &&
+                field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                !field->field->astDefinition.pieces.empty()) {
+                const std::string json = field->field->astDefinition.toJson().dump();
+                source.radianceExpr = &field->field->astDefinition;
+                source.radianceRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
             }
+            if (field->lightChroma && !field->lightChroma->pieces.empty()) {
+                const std::string json = field->lightChroma->toJson().dump();
+                source.chromaExpr = field->lightChroma.get();
+                source.chromaRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+            }
+            if (field->lightAngular && !field->lightAngular->pieces.empty()) {
+                const std::string json = field->lightAngular->toJson().dump();
+                source.angularExpr = field->lightAngular.get();
+                source.angularRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+            }
+
+            // Rung 7 structural/value invalidation is intentionally bounded.
+            // Source membership/order plus authored rho/chi/alpha content is the
+            // parameter/compiler identity. Position, light coefficients,
+            // enablement and temporal coordinates live in the persistent source
+            // storage buffer and must NOT serialize an entire FieldNode merely
+            // to move/recolor/enable a source.
+            sourceSetIdentity += field->getIdentifier();
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.radianceRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.chromaRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.angularRevision);
+            sourceSetIdentity += "\n";
+            radiantSources.push_back(source);
+        }
+
+        const bool persistentLightPlaced = !radiantSources.empty();
+        if (radiantSources.size() == 1) {
+            // Exact Rungs 3-6 compatibility: one source uses the pre-Rung-7
+            // renderer state and generated shader path without multi-source code.
+            const auto& source = radiantSources.front();
+            currentRenderer().setRadianceSources({}, 0);
+            currentRenderer().setLight(source.position, source.ambientRadiance,
+                                       source.diffuseRadiance, source.specularRadiance);
+            currentRenderer().setLightingEnabled(source.enabled);
+            currentRenderer().setRadianceSourceCoefficients(
+                source.coefficients.x, source.coefficients.y,
+                source.coefficients.z, source.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                source.temporalCoordinate, source.temporalDelta);
+            currentRenderer().setRadianceField(source.radianceExpr, source.radianceRevision);
+            currentRenderer().setRadianceChroma(source.chromaExpr, source.chromaRevision);
+            currentRenderer().setRadianceAngular(source.angularExpr, source.angularRevision);
+        } else if (radiantSources.size() > 1) {
+            const uint64_t sourceSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
+            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
+
+            // Legacy fixed/mesh lighting has only one source-shaped slot. Keep
+            // it deterministic by projecting the first ENABLED source there;
+            // WebGPU SDF transport below receives and sums the complete set.
+            const auto it = std::find_if(
+                radiantSources.begin(), radiantSources.end(),
+                [](const Rendering::RadianceSourceBinding& source) {
+                    return source.enabled;
+                });
+            const auto& compatibility =
+                it != radiantSources.end() ? *it : radiantSources.front();
+            currentRenderer().setLight(
+                compatibility.position, compatibility.ambientRadiance,
+                compatibility.diffuseRadiance, compatibility.specularRadiance);
+            currentRenderer().setLightingEnabled(it != radiantSources.end());
+            currentRenderer().setRadianceSourceCoefficients(
+                compatibility.coefficients.x, compatibility.coefficients.y,
+                compatibility.coefficients.z, compatibility.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                compatibility.temporalCoordinate, compatibility.temporalDelta);
+            currentRenderer().setRadianceField(
+                compatibility.radianceExpr, compatibility.radianceRevision);
+            currentRenderer().setRadianceChroma(
+                compatibility.chromaExpr, compatibility.chromaRevision);
+            currentRenderer().setRadianceAngular(
+                compatibility.angularExpr, compatibility.angularRevision);
         }
 
         if (!persistentLightPlaced) {
+            currentRenderer().setRadianceSources({}, 0);
             currentRenderer().setRadianceField(nullptr, 0);
             currentRenderer().setRadianceChroma(nullptr, 0);
             currentRenderer().setRadianceAngular(nullptr, 0);

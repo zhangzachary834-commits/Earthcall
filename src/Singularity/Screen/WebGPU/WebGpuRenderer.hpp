@@ -210,6 +210,7 @@ private:
     struct SdfPipeline {
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout bgl = nullptr;
+        bool usesRadianceSources = false;
     };
 
     // GPU proof representation for conservative SDF range traversal.
@@ -232,6 +233,9 @@ private:
         uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
         uint64_t angularRevision = 0xffffffffffffffffULL;
         uint64_t angularStructureRevision = 0xffffffffffffffffULL;
+        bool multiSource = false;
+        uint64_t sourceSetRevision = 0xffffffffffffffffULL;
+        uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
@@ -277,6 +281,15 @@ private:
     sdfwgsl::AngularExpressionLayout _angularLayout;
     uint64_t _angularStructureRevision = 0;
 
+    // Composite structural identity for Rung 7. Source positions, colors,
+    // enablement and numeric AST parameters are values; source count and each
+    // rho/chi/alpha emitted shape are structure.
+    uint64_t _radianceSourcesLayoutRevision = 0xffffffffffffffffULL;
+    std::string _radianceSourcesLayoutStructure;
+    bool _radianceSourcesLayoutOk = true;
+    std::string _radianceSourcesLayoutError;
+    uint64_t _radianceSourcesStructureRevision = 0;
+
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
     // unchanged vector is not uploaded again. This is the first persistent-GPU
@@ -301,6 +314,15 @@ private:
     std::unordered_map<const SdfPipeline*, PersistentSdfRangeNodes> _persistentSdfRangeNodes;
     size_t _persistentSdfRangeNodeVramBytes = 0;
     void releasePersistentSdfRangeNodes();
+
+    struct PersistentRadianceSources {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<unsigned char> mirror;
+    };
+    PersistentRadianceSources _persistentRadianceSources;
+    size_t _persistentRadianceSourceVramBytes = 0;
+    void releasePersistentRadianceSources();
 
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);

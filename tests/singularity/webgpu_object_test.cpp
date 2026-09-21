@@ -664,6 +664,81 @@ int main() {
         renderer.setRadianceChroma(nullptr, 0);
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceTemporalCoordinate(0.0, 0.0);
+
+        // RUNG 7 WORLD COMPOSITION: two independent authored sources illuminate
+        // the SAME receiver. Source 0 is red, source 1 blue. The shader must sum
+        // their contributions above rho/chi/alpha, not fuse the ASTs into one
+        // source or let the second source overwrite the first.
+        auto rhoRedNode = scalarNode(0.45);
+        auto rhoBlueNode = scalarNode(0.45);
+        auto chiRedNode = vectorNode(1.0, 0.0, 0.0);
+        auto chiBlueNode = vectorNode(0.0, 0.0, 1.0);
+        OntoMath::Piecewise rhoRed = OntoMath::Piecewise::continuous(rhoRedNode);
+        OntoMath::Piecewise rhoBlue = OntoMath::Piecewise::continuous(rhoBlueNode);
+        OntoMath::Piecewise chiRedSource = OntoMath::Piecewise::continuous(chiRedNode);
+        OntoMath::Piecewise chiBlueSource = OntoMath::Piecewise::continuous(chiBlueNode);
+
+        Rendering::RadianceSourceBinding redSource;
+        redSource.position = glm::vec3(-0.25f, 0.0f, 2.0f);
+        redSource.coefficients = glm::vec4(1.0f, 0.2f, 0.8f, 1.0f);
+        redSource.radianceExpr = &rhoRed;
+        redSource.radianceRevision = 4001;
+        redSource.chromaExpr = &chiRedSource;
+        redSource.chromaRevision = 4101;
+
+        Rendering::RadianceSourceBinding blueSource;
+        blueSource.position = glm::vec3(0.25f, 0.0f, 2.0f);
+        blueSource.coefficients = glm::vec4(1.0f, 0.2f, 0.8f, 1.0f);
+        blueSource.radianceExpr = &rhoBlue;
+        blueSource.radianceRevision = 4002;
+        blueSource.chromaExpr = &chiBlueSource;
+        blueSource.chromaRevision = 4102;
+
+        renderer.setRadianceSources({redSource, blueSource}, 4201);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char twoSourcePixel[4];
+        readCentre(twoSourcePixel);
+        const Renderer::FrameStats twoSourceCompileStats = renderer.frameStats();
+
+        std::printf("two-source radiance centre=(%d,%d,%d) compiles=%u\n",
+                    twoSourcePixel[0], twoSourcePixel[1], twoSourcePixel[2],
+                    twoSourceCompileStats.sdfProgramCompiles);
+        assert(twoSourcePixel[0] > 30 && twoSourcePixel[2] > 30 &&
+               twoSourcePixel[1] + 20 < twoSourcePixel[0] &&
+               twoSourcePixel[1] + 20 < twoSourcePixel[2] &&
+               "two independent red/blue sources did not both contribute to the receiver");
+        assert(twoSourceCompileStats.sdfProgramCompiles == 1 &&
+               "entering a two-source structural world should compile exactly once");
+
+        // VALUE ONLY OUTSIDE AST PARAMETERS: disable the blue source. This must
+        // update the source storage buffer without regenerating WGSL or touching
+        // the packed OntoMath parameter buffer.
+        blueSource.enabled = false;
+        // Enablement is source-buffer state, not authored rho/chi/alpha identity.
+        // Keep the source-set revision unchanged: WebGpuRenderer must observe the
+        // byte change through the persistent source buffer without recollecting
+        // OntoMath parameters or recompiling WGSL.
+        renderer.setRadianceSources({redSource, blueSource}, 4201);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char redOnlyPixel[4];
+        readCentre(redOnlyPixel);
+        const Renderer::FrameStats enableValueStats = renderer.frameStats();
+
+        assert(twoSourcePixel[2] > redOnlyPixel[2] + 25 &&
+               "disabling source 1 did not remove its blue contribution");
+        assert(redOnlyPixel[0] > redOnlyPixel[2] + 30 &&
+               "disabling source 1 damaged source 0's independent red contribution");
+        assert(enableValueStats.sdfProgramCompiles == 0 &&
+               enableValueStats.sdfProgramCacheHits >= 1 &&
+               "source enablement value edit recompiled the composed shader");
+        assert(enableValueStats.sdfParameterBytesUploaded == 0 &&
+               "source enablement incorrectly rewrote authored OntoMath parameters");
+
+        renderer.setRadianceSources({}, 0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face

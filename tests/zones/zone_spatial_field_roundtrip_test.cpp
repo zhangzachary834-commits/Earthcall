@@ -125,6 +125,25 @@ int main() {
                   "the radiant field's OntoMath AST is authored through PropertyPath");
         }
 
+        auto second = std::make_shared<geom::FieldNode>(zoneId + "_secondRadiantField");
+        second->origin = glm::vec3(-5.0f, 3.0f, 9.0f);
+        second->setDynamicProperty("light.source", PropertyValue(true));
+        second->setDynamicProperty("light.intensity", PropertyValue(0.75f));
+        second->field->mode = OntoMath::ScalarField::EvaluationMode::AST;
+        second->field->astDefinition = OntoMath::Piecewise::continuous(
+            OntoMath::MathNode::fromLegacyExpression(
+                OntoMath::ScalarForm::variable("y", 2.0, 1.0)));
+        zone->addSpatialField(second);
+
+        check(zone->additionalSpatialFields().size() == 1,
+              "Zone directly indexes an additional authored FieldNode");
+        bool secondInFormation = false;
+        for (Singular* member : zone->formation().getMembers()) {
+            if (member == second.get()) secondInFormation = true;
+        }
+        check(secondInFormation,
+              "additional authored FieldNode enters the Zone Formation");
+
         writer.addZone(zone);
         writer.persistZones();
     }
@@ -141,6 +160,38 @@ int main() {
 
         auto* root = zone ? zone->spatialRoot() : nullptr;
         check(root != nullptr, "fresh hydration restores the Zone's FieldNode substrate");
+
+        check(zone && zone->additionalSpatialFields().size() == 1,
+              "fresh hydration restores the additional FieldNode source collection");
+        if (zone && zone->additionalSpatialFields().size() == 1) {
+            const auto& second = zone->additionalSpatialFields().front();
+            PropertyValue source;
+            PropertyValue intensity;
+            check(second &&
+                      second->getIdentifier() == zoneId + "_secondRadiantField",
+                  "additional FieldNode identity survives save -> hydration");
+            check(second &&
+                      second->getDynamicProperty("light.source", source) &&
+                      std::get_if<bool>(&source) && *std::get_if<bool>(&source),
+                  "additional source's authored light.source survives persistence");
+            check(second &&
+                      second->getDynamicProperty("light.intensity", intensity) &&
+                      std::get_if<float>(&intensity) &&
+                      nearf(*std::get_if<float>(&intensity), 0.75f),
+                  "additional source's authored scalar light state survives persistence");
+            check(second && nearf(second->origin.x, -5.0f) &&
+                      nearf(second->origin.y, 3.0f) && nearf(second->origin.z, 9.0f),
+                  "additional source placement survives persistence");
+
+            bool secondInFormation = false;
+            if (second) {
+                for (Singular* member : zone->formation().getMembers()) {
+                    if (member == second.get()) secondInFormation = true;
+                }
+            }
+            check(secondInFormation,
+                  "hydrated additional FieldNode is immediately Formation-reachable");
+        }
         if (root) {
             check(nearf(root->origin.x, authoredOrigin.x) &&
                       nearf(root->origin.y, authoredOrigin.y) &&
