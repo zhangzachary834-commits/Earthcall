@@ -44,6 +44,10 @@ struct SdfInstanceData {
     rangeProofWordCount: u32,
     rangeTraversalEnabled: u32,
     rangeProofDepth: u32,
+    // Conservative AOT admission box enclosing every proved-positive proof
+    // cell. Rays outside this box stay entirely on the exact baseline marcher.
+    rangePositiveMin: vec4<f32>,
+    rangePositiveMax: vec4<f32>,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
@@ -1415,11 +1419,35 @@ fn fs(in: VSOut) -> FSOut {
     // calling sdfEval/sdfSampleStep.
     var rangeCellExit = t;
     var rangeCandidateActive = false;
+
+    // Prophetic proof is compiled knowledge, not frame state. The CPU derives
+    // this admission box only when the theorem invalidates; the hot path pays
+    // one conservative box test, then consults the proof grid only while the
+    // exact ray actually lies in the region where a positive proof can exist.
+    var rangeAdmissionEnter = t;
+    var rangeAdmissionExit = maxDist;
+    var rangeTraversalAdmitted = false;
+    if (inst.rangeTraversalEnabled != 0u) {
+        let positiveMin = inst.rangePositiveMin.xyz;
+        let positiveMax = inst.rangePositiveMax.xyz;
+        let positiveCenter = 0.5 * (positiveMin + positiveMax);
+        // A degenerate component should fail open by slightly enlarging the
+        // admission region, never by excluding a potentially useful proof cell.
+        let positiveHalf =
+            max(0.5 * (positiveMax - positiveMin), vec3<f32>(1e-8));
+        let admission = rayAabb(ro - positiveCenter, rd, positiveHalf);
+        rangeAdmissionEnter = max(t, admission.x);
+        rangeAdmissionExit = min(maxDist, admission.y);
+        rangeTraversalAdmitted =
+            admission.y >= rangeAdmissionEnter &&
+            admission.x <= maxDist;
+    }
     
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
 
-        if (inst.rangeTraversalEnabled != 0u &&
+        if (rangeTraversalAdmitted &&
+            t >= rangeAdmissionEnter && t <= rangeAdmissionExit &&
             (!rangeCandidateActive || t >= rangeCellExit)) {
             let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
             if (candidate.z < 0.5) {
