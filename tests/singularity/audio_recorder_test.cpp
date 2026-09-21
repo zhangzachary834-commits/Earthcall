@@ -44,6 +44,10 @@ int main() {
     check(mic != nullptr, "AudioRecorder first mover registered successfully as @microphone");
     if (!mic) return 1;
 
+    // Verify properties are registered exactly once without double-building
+    auto props = mic->listProperties();
+    check(props.size() == 30, "AudioRecorder properties registered exactly once without duplicates (expected 30, got " + std::to_string(props.size()) + ")");
+
     // -----------------------------------------------------------------------
     // Case 1: macOS Permissions & Telemetry Inspection
     // -----------------------------------------------------------------------
