@@ -3,8 +3,12 @@
 // This is a measurement witness, not a fixed performance gate. It renders the
 // authored Perlin Noise Floor expression at the same 2880x1800 resolution and
 // the same horizon / 45-degree cameras used by the maintained native camera
-// corpus. OFF and ON run in the same process/device so machine drift mostly
-// divides out in the ratio.
+// corpus. OFF and ON run in the same process/device in separate warmed renderer
+// states, then interleave in alternating AB/BA pairs. Keeping the two renderer
+// states persistent avoids measuring feature-toggle cache churn while ensuring
+// clock/thermal drift cannot systematically make one mode the later arm.
+// Historical ratio-of-medians output is retained alongside paired ratios/deltas
+// for continuity and a tighter decision signal.
 //
 // Correctness remains guarded elsewhere by webgpu_perlin_exact_gradient_test:
 // this file refuses only if the accelerator never activates or if supposedly
@@ -116,7 +120,7 @@ int main() {
     constexpr uint32_t W = 2880;
     constexpr uint32_t H = 1800;
     constexpr int kWarmupFrames = 6;
-    constexpr int kSampleFrames = 9;
+    constexpr int kSamplePairs = 10;
     constexpr uint64_t kMemoId = 0x5045524c494e5046ULL; // "PERLINPF"
 
     wgpu::Device gpu;
@@ -125,12 +129,18 @@ int main() {
         return 1;
     }
 
-    WebGpuRenderer renderer;
-    if (!renderer.init(gpu)) {
+    WebGpuRenderer offRenderer;
+    WebGpuRenderer onRenderer;
+    if (!offRenderer.init(gpu) || !onRenderer.init(gpu)) {
         std::printf("SDF_RANGE_PERF FAIL renderer init\n");
         return 1;
     }
-    setCurrentRenderer(&renderer);
+    offRenderer.setSdfRangeProxyEnabled(false);
+    onRenderer.setSdfRangeProxyEnabled(true);
+    // Some shared helpers still expect a current renderer, but this benchmark
+    // invokes both renderers directly. Point the global compatibility handle at
+    // the accelerated renderer and never switch it as part of measurement.
+    setCurrentRenderer(&onRenderer);
 
     WGPUTextureDescriptor td = {};
     td.usage = WGPUTextureUsage_RenderAttachment;
@@ -258,8 +268,7 @@ int main() {
     bool sawHierarchyBuild = false;
     bool measurementWarnings = false;
 
-    auto renderOne = [&](bool enabled) -> Sample {
-        renderer.setSdfRangeProxyEnabled(enabled);
+    auto renderOne = [&](WebGpuRenderer& renderer) -> Sample {
         renderer.setModel(glm::mat4(1.0f));
 
         const auto t0 = std::chrono::steady_clock::now();
@@ -281,27 +290,26 @@ int main() {
         return s;
     };
 
-    auto runArm = [&](bool enabled) {
-        Arm arm;
+    auto observeSample = [&](const Sample& s) {
+        if (s.stats.sdfRangeTraversalDraws > 0) sawTraversal = true;
+        if (s.stats.sdfRangeHierarchyBuilds > 0) sawHierarchyBuild = true;
+    };
 
-        for (int i = 0; i < kWarmupFrames; ++i) {
-            const Sample s = renderOne(enabled);
-            if (s.stats.sdfRangeTraversalDraws > 0) sawTraversal = true;
-            if (s.stats.sdfRangeHierarchyBuilds > 0) sawHierarchyBuild = true;
-        }
+    auto warmupOne = [&](WebGpuRenderer& renderer) {
+        const Sample s = renderOne(renderer);
+        observeSample(s);
+    };
 
-        for (int i = 0; i < kSampleFrames; ++i) {
-            const Sample s = renderOne(enabled);
-            arm.wallMs.push_back(s.wallMs);
-            if (s.stats.gpuMainPassTimingValid) {
-                arm.gpuMs.push_back(static_cast<double>(s.stats.gpuMainPassMs));
-            }
-            arm.recurringRangeUploadBytes += s.stats.sdfRangeNodeBytesUploaded;
-            arm.traversalDraws += s.stats.sdfRangeTraversalDraws;
-            if (s.stats.sdfRangeTraversalDraws > 0) sawTraversal = true;
-            if (s.stats.sdfRangeHierarchyBuilds > 0) sawHierarchyBuild = true;
+    auto recordSample = [&](WebGpuRenderer& renderer, Arm& arm) {
+        const Sample s = renderOne(renderer);
+        arm.wallMs.push_back(s.wallMs);
+        if (s.stats.gpuMainPassTimingValid) {
+            arm.gpuMs.push_back(static_cast<double>(s.stats.gpuMainPassMs));
         }
-        return arm;
+        arm.recurringRangeUploadBytes += s.stats.sdfRangeNodeBytesUploaded;
+        arm.traversalDraws += s.stats.sdfRangeTraversalDraws;
+        observeSample(s);
+        return s;
     };
 
     for (const CameraCase& c : cameras) {
@@ -309,10 +317,82 @@ int main() {
         const glm::mat4 proj =
             glm::perspectiveZO(glm::radians(c.fovDeg), aspect, 0.1f, 3000.0f);
         const glm::mat4 view = glm::lookAt(c.eye, c.target, c.up);
-        renderer.setCamera(view, proj, c.eye);
+        offRenderer.setCamera(view, proj, c.eye);
+        onRenderer.setCamera(view, proj, c.eye);
 
-        const Arm off = runArm(false);
-        const Arm on = runArm(true);
+        Arm off;
+        Arm on;
+
+        // Preserve the historical warm-up cost (six frames per arm), but
+        // alternate order so neither mode is always warmed later.
+        for (int i = 0; i < kWarmupFrames; ++i) {
+            const bool abOrder = (i % 2) == 0;
+            if (abOrder) {
+                warmupOne(offRenderer);
+                warmupOne(onRenderer);
+            } else {
+                warmupOne(onRenderer);
+                warmupOne(offRenderer);
+            }
+        }
+
+        std::vector<double> pairedWallRatios;
+        std::vector<double> pairedWallDeltas;
+        std::vector<double> pairedGpuRatios;
+        std::vector<double> pairedGpuDeltas;
+
+        // Each pair contains exactly one OFF and one ON sample. Alternate AB
+        // and BA order so a monotonic runner drift cannot systematically favor
+        // either mode. Total sample count remains close to historical cost at ten frames per arm,
+        // with exactly five AB and five BA pairs.
+        for (int i = 0; i < kSamplePairs; ++i) {
+            const bool abOrder = (i % 2) == 0;
+            Sample offSample;
+            Sample onSample;
+            if (abOrder) {
+                offSample = recordSample(offRenderer, off);
+                onSample = recordSample(onRenderer, on);
+            } else {
+                onSample = recordSample(onRenderer, on);
+                offSample = recordSample(offRenderer, off);
+            }
+
+            const double wallPairRatio =
+                offSample.wallMs > 0.0 ? onSample.wallMs / offSample.wallMs : 0.0;
+            const double wallPairDelta = onSample.wallMs - offSample.wallMs;
+            pairedWallRatios.push_back(wallPairRatio);
+            pairedWallDeltas.push_back(wallPairDelta);
+
+            const bool gpuPairValid =
+                offSample.stats.gpuMainPassTimingValid &&
+                onSample.stats.gpuMainPassTimingValid;
+            const double offGpuSample = gpuPairValid
+                ? static_cast<double>(offSample.stats.gpuMainPassMs) : 0.0;
+            const double onGpuSample = gpuPairValid
+                ? static_cast<double>(onSample.stats.gpuMainPassMs) : 0.0;
+            const double gpuPairRatio =
+                gpuPairValid && offGpuSample > 0.0
+                    ? onGpuSample / offGpuSample : 0.0;
+            const double gpuPairDelta =
+                gpuPairValid ? onGpuSample - offGpuSample : 0.0;
+            if (gpuPairValid) {
+                pairedGpuRatios.push_back(gpuPairRatio);
+                pairedGpuDeltas.push_back(gpuPairDelta);
+            }
+
+            std::printf(
+                "SDF_RANGE_PERF_PAIR view=%s pair=%d order=%s "
+                "off_wall_ms=%.6f on_wall_ms=%.6f wall_ratio=%.4f "
+                "wall_delta_ms=%.6f gpu_valid=%d off_gpu_ms=%.6f "
+                "on_gpu_ms=%.6f gpu_ratio=%.4f gpu_delta_ms=%.6f\n",
+                c.name, i,
+                abOrder ? "AB" : "BA",
+                offSample.wallMs, onSample.wallMs,
+                wallPairRatio, wallPairDelta,
+                gpuPairValid ? 1 : 0,
+                offGpuSample, onGpuSample,
+                gpuPairRatio, gpuPairDelta);
+        }
 
         const double offWall = median(off.wallMs);
         const double onWall = median(on.wallMs);
@@ -320,16 +400,26 @@ int main() {
         const double offGpu = median(off.gpuMs);
         const double onGpu = median(on.gpuMs);
         const double gpuRatio = offGpu > 0.0 ? onGpu / offGpu : 0.0;
+        const double pairedWallRatio = median(pairedWallRatios);
+        const double pairedWallDelta = median(pairedWallDeltas);
+        const double pairedGpuRatio = median(pairedGpuRatios);
+        const double pairedGpuDelta = median(pairedGpuDeltas);
 
         std::printf(
             "SDF_RANGE_PERF view=%s resolution=%ux%u "
             "off_wall_median_ms=%.6f on_wall_median_ms=%.6f wall_ratio=%.4f "
             "off_gpu_median_ms=%.6f on_gpu_median_ms=%.6f gpu_ratio=%.4f "
+            "paired_wall_ratio_median=%.4f paired_wall_delta_median_ms=%.6f "
+            "paired_gpu_ratio_median=%.4f paired_gpu_delta_median_ms=%.6f "
+            "paired_gpu_samples=%zu "
             "timestamp_samples_off=%zu timestamp_samples_on=%zu "
             "traversal_draws=%u recurring_range_upload_bytes=%zu\n",
             c.name, W, H,
             offWall, onWall, wallRatio,
             offGpu, onGpu, gpuRatio,
+            pairedWallRatio, pairedWallDelta,
+            pairedGpuRatio, pairedGpuDelta,
+            pairedGpuRatios.size(),
             off.gpuMs.size(), on.gpuMs.size(),
             on.traversalDraws,
             on.recurringRangeUploadBytes);
@@ -356,7 +446,8 @@ int main() {
     }
 
     setCurrentRenderer(nullptr);
-    renderer.shutdown();
+    onRenderer.shutdown();
+    offRenderer.shutdown();
     wgpuTextureViewRelease(target);
     wgpuTextureRelease(tex);
 
