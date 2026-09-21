@@ -17,6 +17,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
+#include "Time/timeline.hpp"
 
 #include <webgpu/wgpu.h>
 #include <glm/glm.hpp>
@@ -298,15 +299,19 @@ int main() {
         assert(valueStats.sdfParameterBytesUploaded > 0 &&
                "numeric authored rho edit reused stale GPU parameters instead of uploading refreshed values");
 
-        // RUNG 4 TIME: make rho read the canonical world-time input. The first
-        // transition is structural and compiles once; advancing the pushed world-time
-        // snapshot afterward must change pixels through the shared uniform only.
+        // RUNG 4 TIME: make rho read the canonical temporal coordinate. This
+        // native witness deliberately uses a separate hardcoded FIRST-MOVER
+        // Timeline rather than Universe/world time. Renderer must not care
+        // which Timeline supplied t; future Law ontology may choose that.
         auto timeLeaf = std::make_shared<OntoMath::MathNode>();
         timeLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
         timeLeaf->variableName = OntoMath::kTimeVar;
         rho.pieces[0].mathNode = timeLeaf;
 
-        renderer.setWorldTime(0.15, 0.15);
+        Timeline radianceTestTimeline("radiance-test-timeline");
+        assert(radianceTestTimeline.setClock(0.15, 0.15));
+        renderer.setTemporalCoordinate(radianceTestTimeline.now(),
+                                       radianceTestTimeline.delta());
         renderer.setRadianceField(&rho, 1003);
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
@@ -317,7 +322,9 @@ int main() {
         assert(timeCompileStats.sdfProgramCompiles == 1 &&
                "introducing canonical t should compile the new rho structure once");
 
-        renderer.setWorldTime(1.0, 0.85);
+        assert(radianceTestTimeline.setClock(1.0, 0.85));
+        renderer.setTemporalCoordinate(radianceTestTimeline.now(),
+                                       radianceTestTimeline.delta());
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         radiant.drawObject();
         renderer.endFrame();
@@ -325,12 +332,12 @@ int main() {
         readCentre(timeBright);
         const Renderer::FrameStats timeAdvanceStats = renderer.frameStats();
 
-        std::printf("radiance world-time centre t=.15:%d t=1:%d compiles=%u cacheHits=%u paramBytes=%zu\n",
+        std::printf("radiance timeline centre t=.15:%d t=1:%d compiles=%u cacheHits=%u paramBytes=%zu\n",
                     timeDim[0], timeBright[0], timeAdvanceStats.sdfProgramCompiles,
                     timeAdvanceStats.sdfProgramCacheHits,
                     timeAdvanceStats.sdfParameterBytesUploaded);
         assert(timeBright[0] > timeDim[0] + 80 &&
-               "advancing renderer world time did not visibly change rho(p,t)");
+               "advancing an admitted Timeline did not visibly change rho(p,t)");
         assert(timeAdvanceStats.sdfProgramCompiles == 0 &&
                "advancing t recompiled WGSL instead of updating the shared uniform");
         assert(timeAdvanceStats.sdfProgramCacheHits >= 1 &&
@@ -371,7 +378,7 @@ int main() {
                "refused authored rho left stale rendered radiance on screen");
 
         renderer.setRadianceField(nullptr, 0);
-        renderer.setWorldTime(0.0, 0.0);
+        renderer.setTemporalCoordinate(0.0, 0.0);
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face
