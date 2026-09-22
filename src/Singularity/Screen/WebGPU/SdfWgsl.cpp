@@ -2526,10 +2526,10 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (alpha <= 1e-5) { discard; }
 
     let integratedRgb = vec3<f32>(1.0) * volumetricScatter;
-    // The pipeline uses ordinary SrcAlpha compositing. Convert the integrated
-    // premultiplied contribution to straight color so the blend performs:
+    // Keep the analytically integrated medium contribution premultiplied.
+    // The volume pipeline blends (ONE, ONE_MINUS_SRC_ALPHA), yielding exactly:
     // C_out = C_medium + T * C_scene.
-    return vec4<f32>(integratedRgb / alpha, alpha);
+    return vec4<f32>(integratedRgb, alpha);
 }
 )WGSL";
 

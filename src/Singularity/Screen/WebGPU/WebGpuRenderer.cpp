@@ -1222,7 +1222,9 @@ WebGpuRenderer::volumePipeline(const std::string& wgsl) {
 
     WGPUBlendState blend = {};
     blend.color.operation = WGPUBlendOperation_Add;
-    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    // V0 returns analytically integrated medium radiance in premultiplied form.
+    // Preserve it directly so blending computes C_out = C_medium + T * C_scene.
+    blend.color.srcFactor = WGPUBlendFactor_One;
     blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
     blend.alpha.operation = WGPUBlendOperation_Add;
     blend.alpha.srcFactor = WGPUBlendFactor_One;
