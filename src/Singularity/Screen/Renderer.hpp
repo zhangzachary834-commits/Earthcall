@@ -206,6 +206,15 @@ public:
     }
     uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
 
+    // Rung 8 execution seam: visibility is DERIVED transport truth, never an
+    // authored property of rho/chi/alpha. Keeping this as renderer state makes
+    // V=1 an exact compatibility mode and lets transport change at runtime
+    // without regenerating source WGSL or mutating any source AST. The default
+    // remains false until Screen can truthfully query the complete scene, not
+    // merely the SDF geometry owned by the currently executing pipeline.
+    void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
+    bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -396,6 +405,7 @@ private:
     double _radianceTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
+    bool _radianceVisibilityEnabled = false;
     FrameStats _frameStats;
 };
 
