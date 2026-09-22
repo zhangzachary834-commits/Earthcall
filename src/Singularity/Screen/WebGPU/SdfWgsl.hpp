@@ -121,7 +121,9 @@ struct Program {
 // needs to borrow source-radiance or generic-field identity by accident.
 // colorExpr is optional; if provided, it replaces the uniform base color.
 // radianceExpr is optional; if provided, it supplies authored spatial light radiance.
-// densityExpr is optional; if present, it is the explicit V0 D(p,t) authority.
+// densityKind is the authority for interpreting this input: LegacyField admits
+// the old generic FieldNode fallback, None means no participating medium, and
+// Authored makes densityExpr the sole V0 D(p,t) authority.
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
