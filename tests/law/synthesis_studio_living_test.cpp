@@ -65,7 +65,10 @@ int main() {
     for (auto& l:h.lawManager.getAll()) if (!l->isFirstMover() && !l->isAuthored()) authored=false;
     check(authored,"all saved Laws reattach to their actual recorded authors");
     std::vector<Note> sounds;
-    registerAudioSink([&](Singular&,double f,double a,const std::string& v){sounds.push_back({f,a,v});});
+    registerAudioSink([&](Singular&, double f, double a, const std::string& v, std::string&) {
+        sounds.push_back({f, a, v});
+        return true;
+    });
     double time=20;
     auto tick=[&]{Universe::instance().setClock(time,1.0/60);h.lawManager.tick();};
     auto observe=[&](Object& obj,bool down,double u=0.5,double v=0.5) {
