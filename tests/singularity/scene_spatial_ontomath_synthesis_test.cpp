@@ -271,19 +271,51 @@ int main() {
            compiler.sourceToCompiled.at(sharedB));
     assert(compiler.nodes.size() < sourceNodes);
 
-    const double exactBefore = exactMathNode(*scene, 7.0);
-    std::unordered_map<uint32_t, double> memo;
-    uint64_t visited = 0, cacheHits = 0;
-    const double compiledBefore =
-        evalCompiled(compiler, root, {{"x", 7.0}},
-                     memo, visited, cacheHits);
-    assert(std::abs(exactBefore - compiledBefore) < 1e-12);
-    assert(cacheHits > 0);
-
     const uint32_t sharedCompiledBefore =
         compiler.sourceToCompiled.at(sharedA);
     const uint32_t sdfBCompiledBefore =
         compiler.sourceToCompiled.at(sdfB);
+    const size_t semanticNodesBeforeAmbient = compiler.nodes.size();
+    const size_t canonicalNodesBeforeAmbient = compiler.canonical.size();
+
+    // Runtime/camera sample changes are evaluation state, not authored semantic
+    // changes. Exercise several samples while explicitly invalidating the value
+    // memo between samples. The semantic DAG and canonical identities must stay
+    // byte-for-byte structurally untouched.
+    const std::vector<double> ambientSamples{
+        -13.0, -1.25, 0.0, 7.0, 42.5
+    };
+    std::unordered_map<uint32_t, double> ambientMemo;
+    size_t ambientCacheEntriesInvalidated = 0;
+    uint64_t ambientNodesVisited = 0;
+    uint64_t ambientCacheHits = 0;
+    for (double x : ambientSamples) {
+        if (!ambientMemo.empty()) {
+            ambientCacheEntriesInvalidated += ambientMemo.size();
+            ambientMemo.clear();
+        }
+        uint64_t visited = 0, cacheHits = 0;
+        const double exact = exactMathNode(*scene, x);
+        const double compiled =
+            evalCompiled(compiler, root, {{"x", x}},
+                         ambientMemo, visited, cacheHits);
+        assert(std::abs(exact - compiled) < 1e-12);
+        assert(cacheHits > 0);
+        ambientNodesVisited += visited;
+        ambientCacheHits += cacheHits;
+
+        assert(compiler.nodes.size() == semanticNodesBeforeAmbient);
+        assert(compiler.canonical.size() == canonicalNodesBeforeAmbient);
+        assert(compiler.sourceToCompiled.at(scene.get()) == root);
+        assert(compiler.sourceToCompiled.at(sharedA) ==
+               sharedCompiledBefore);
+        assert(compiler.sourceToCompiled.at(sharedB) ==
+               sharedCompiledBefore);
+        assert(compiler.sourceToCompiled.at(sdfB) ==
+               sdfBCompiledBefore);
+    }
+    assert(ambientCacheEntriesInvalidated > 0);
+
     const size_t compiledNodesBeforeRepair = compiler.nodes.size();
 
     // Local authored edit on the real MathNode tree.
@@ -324,19 +356,71 @@ int main() {
         compiler.nodes.size() - compiledNodesBeforeRepair;
     assert(newCompiledNodes == 3);
 
+    // A second authored mutation returns the same source leaf to its original
+    // semantics. This must repair the same three-source frontier but reuse the
+    // already-canonicalized biasA/sdfA/scene artifact rather than append another
+    // structural copy.
+    const size_t compiledNodesBeforeRevert = compiler.nodes.size();
+    biasA->scalarForm = ScalarForm::constant(5.0);
+
+    CompileCounters revertCounters;
+    const auto revertedSources =
+        compiler.repairFrom(*biasA, revertCounters);
+    assert(revertedSources.size() == 3);
+    assert(revertedSources.count(biasA) == 1);
+    assert(revertedSources.count(sdfA) == 1);
+    assert(revertedSources.count(scene.get()) == 1);
+    assert(revertCounters.sourceNodesVisited == 3);
+    assert(revertCounters.nodesCreated == 0);
+    assert(revertCounters.canonicalHits == 3);
+    assert(compiler.nodes.size() == compiledNodesBeforeRevert);
+    assert(compiler.sourceToCompiled.at(scene.get()) == root);
+    assert(compiler.sourceToCompiled.at(sharedA) ==
+           sharedCompiledBefore);
+    assert(compiler.sourceToCompiled.at(sharedB) ==
+           sharedCompiledBefore);
+    assert(compiler.sourceToCompiled.at(sdfB) ==
+           sdfBCompiledBefore);
+
+    uint64_t revertParitySamples = 0;
+    for (double x : ambientSamples) {
+        std::unordered_map<uint32_t, double> memo;
+        uint64_t nodesVisited = 0, cacheHits = 0;
+        const double exact = exactMathNode(*scene, x);
+        const double compiled =
+            evalCompiled(compiler, root, {{"x", x}},
+                         memo, nodesVisited, cacheHits);
+        assert(std::abs(exact - compiled) < 1e-12);
+        ++revertParitySamples;
+    }
+    assert(revertParitySamples == ambientSamples.size());
+
     std::printf(
         "SCENE_SPATIAL_ONTOMATH_SYNTHESIS parity=1 "
         "source_nodes=%zu compiled_nodes_initial=%zu canonical_hits=%llu "
         "source_nodes_visited_initial=%llu shared_subtree_identity=1 "
-        "mutation_biasA=1 repaired_source_nodes=%zu repair_source_visits=%llu "
+        "ambient_samples=%zu ambient_cache_entries_invalidated=%zu "
+        "ambient_nodes_visited=%llu ambient_cache_hits=%llu "
+        "semantic_nodes_rebuilt_for_ambient=0 "
+        "mutation_biasA_to17=1 repaired_source_nodes=%zu repair_source_visits=%llu "
         "new_compiled_nodes=%zu shared_compiled_id_preserved=1 "
         "sdfB_compiled_id_preserved=1 whole_scene_rescan_for_repair=0 "
+        "mutation_biasA_revert=1 revert_source_visits=%llu "
+        "revert_nodes_created=%llu revert_canonical_hits=%llu "
+        "prior_artifact_reused_on_revert=1 revert_parity_samples=%llu "
         "pretty_print_identity=0 production_wgsl_changed=0\n",
         sourceNodes, compiledNodesBeforeRepair,
         static_cast<unsigned long long>(initialCompile.canonicalHits),
         static_cast<unsigned long long>(initialCompile.sourceNodesVisited),
+        ambientSamples.size(), ambientCacheEntriesInvalidated,
+        static_cast<unsigned long long>(ambientNodesVisited),
+        static_cast<unsigned long long>(ambientCacheHits),
         repairedSources.size(),
         static_cast<unsigned long long>(repairCounters.sourceNodesVisited),
-        newCompiledNodes);
+        newCompiledNodes,
+        static_cast<unsigned long long>(revertCounters.sourceNodesVisited),
+        static_cast<unsigned long long>(revertCounters.nodesCreated),
+        static_cast<unsigned long long>(revertCounters.canonicalHits),
+        static_cast<unsigned long long>(revertParitySamples));
     return 0;
 }
