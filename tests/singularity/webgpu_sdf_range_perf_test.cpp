@@ -1669,6 +1669,74 @@ void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
 }
 
 
+void printDirectDispatchOracleCeiling(
+    const char* viewName,
+    const RuntimeTaxTotals& genericBaseline,
+    const std::vector<DirectRuntimeTax>& candidates) {
+    const int64_t genericSaved =
+        static_cast<int64_t>(genericBaseline.offSampleSteps) -
+        static_cast<int64_t>(genericBaseline.onSampleSteps);
+    const double baselineEconomics =
+        genericBaseline.candidateCalls > 0u && genericSaved > 0
+            ? static_cast<double>(genericSaved) /
+                  static_cast<double>(genericBaseline.candidateCalls)
+            : 0.0;
+
+    for (const auto& candidate : candidates) {
+        const int64_t saved =
+            static_cast<int64_t>(candidate.offSampleSteps) -
+            static_cast<int64_t>(candidate.directSampleSteps);
+        if (!candidate.valid || candidate.perRayHitMismatches != 0u ||
+            candidate.artifactRecords == 0u || candidate.skipCalls == 0u ||
+            saved <= 0) {
+            continue;
+        }
+
+        // This is deliberately an oracle CEILING, not a production claim.
+        // It charges exactly one hypothetical direct dispatch for each query
+        // that actually produced a proof-authorized skip and charges no
+        // irrelevant queries. A real stable-key atlas must approach this
+        // ceiling without using camera/frame-derived state.
+        const double savedPerUsefulDispatch =
+            static_cast<double>(saved) /
+            static_cast<double>(candidate.skipCalls);
+        const double usefulDispatchesPerRay =
+            candidate.rays > 0u
+                ? static_cast<double>(candidate.skipCalls) /
+                      static_cast<double>(candidate.rays)
+                : 0.0;
+        const double irrelevantQueryFraction =
+            candidate.artifactQueries > 0u
+                ? 1.0 -
+                      static_cast<double>(candidate.skipCalls) /
+                          static_cast<double>(candidate.artifactQueries)
+                : 0.0;
+        const double oracleGain =
+            baselineEconomics > 0.0
+                ? savedPerUsefulDispatch / baselineEconomics
+                : 0.0;
+
+        std::printf(
+            "SDF_DIRECT_DISPATCH_ORACLE view=%s axis=%s min_run_cells=%u "
+            "useful_dispatches=%llu rays=%llu saved_sample_steps=%lld "
+            "saved_per_useful_dispatch=%.6f useful_dispatches_per_ray=%.8f "
+            "irrelevant_query_fraction=%.8f baseline_samples_per_call=%.6f "
+            "oracle_gain=%.2f camera_independent=0 production_eligible=0\n",
+            viewName,
+            directAxisName(candidate.axis),
+            candidate.minRunCells,
+            static_cast<unsigned long long>(candidate.skipCalls),
+            static_cast<unsigned long long>(candidate.rays),
+            static_cast<long long>(saved),
+            savedPerUsefulDispatch,
+            usefulDispatchesPerRay,
+            irrelevantQueryFraction,
+            baselineEconomics,
+            oracleGain);
+    }
+}
+
+
 void printDirectProfitabilityVerdict(
     const char* viewName,
     const RuntimeTaxTotals& genericBaseline,
@@ -2051,6 +2119,7 @@ int main() {
             }
         }
 
+        printDirectDispatchOracleCeiling(c.name, runtimeTax, directTaxes);
         printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
 
         Arm off;
