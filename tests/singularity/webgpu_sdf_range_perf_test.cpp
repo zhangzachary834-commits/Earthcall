@@ -229,6 +229,70 @@ struct DirectRuntimeTax {
     bool valid = false;
 };
 
+
+struct DispatchAtlasArtifact {
+    uint32_t minRunCells = 1;
+    uint32_t entryBins = 1;
+    uint32_t slopeBins = 1;
+    uint32_t routeWidth = 1;
+    uint32_t populatedKeys = 0;
+    uint32_t coveredPositiveCells = 0;
+    bool representable = true;
+    std::vector<DirectProofRun> runs;
+    std::vector<uint32_t> table;
+};
+
+struct DispatchAtlasRuntimeTax {
+    uint32_t minRunCells = 1;
+    uint32_t entryBins = 1;
+    uint32_t slopeBins = 1;
+    uint32_t routeWidth = 1;
+    uint32_t populatedKeys = 0;
+    uint32_t coveredPositiveCells = 0;
+    size_t atlasEntries = 0;
+    size_t atlasBytes = 0;
+    size_t runRecords = 0;
+    size_t runBytes = 0;
+    size_t totalArtifactBytes = 0;
+    uint64_t rays = 0;
+    uint64_t keyComputations = 0;
+    uint64_t atlasLookups = 0;
+    uint64_t nonEmptyDispatches = 0;
+    uint64_t selectedRouteSlots = 0;
+    uint64_t selectedRunTests = 0;
+    uint64_t skipCalls = 0;
+    uint64_t directSampleSteps = 0;
+    uint64_t directFallbackEvals = 0;
+    uint64_t directHits = 0;
+    uint64_t directIterations = 0;
+    uint64_t offSampleSteps = 0;
+    uint64_t offFallbackEvals = 0;
+    uint64_t offHits = 0;
+    uint64_t offIterations = 0;
+    uint64_t perRayHitMismatches = 0;
+    double skippedDistance = 0.0;
+    bool representable = true;
+    bool valid = false;
+};
+
+struct alignas(16) DispatchAtlasConfig {
+    // x/y/z/w = entry bins / slope bins / route width / atlas enabled.
+    glm::uvec4 dims{1u, 1u, 1u, 0u};
+};
+
+struct alignas(16) DispatchAtlasTaxOut {
+    // key computations / atlas lookups / non-empty dispatches / selected slots
+    glm::uvec4 counts0{0u};
+    // selected run tests / useful skips / sdfSampleStep calls / fallback evals
+    glm::uvec4 counts1{0u};
+    // hit / iterations / reserved / reserved
+    glm::uvec4 counts2{0u};
+    glm::vec4 distances{0.0f};
+};
+
+static_assert(sizeof(DispatchAtlasTaxOut) == 64,
+              "dispatch atlas tax ABI must match four vec4 values");
+
 const char* directAxisName(uint32_t axis) {
     return axis == 0u ? "x" : (axis == 1u ? "y" : "z");
 }
@@ -314,6 +378,193 @@ DirectRunArtifact buildDirectRunArtifact(
             }
         }
     }
+    return out;
+}
+
+
+bool cpuRayAabb(
+    const glm::vec3& ro,
+    const glm::vec3& rd,
+    const glm::vec3& bmin,
+    const glm::vec3& bmax,
+    float& enter,
+    float& exit) {
+    enter = 0.0f;
+    exit = std::numeric_limits<float>::infinity();
+    for (uint32_t axis = 0u; axis < 3u; ++axis) {
+        if (std::abs(rd[axis]) < 1e-8f) {
+            if (ro[axis] < bmin[axis] || ro[axis] > bmax[axis]) {
+                return false;
+            }
+            continue;
+        }
+        float t0 = (bmin[axis] - ro[axis]) / rd[axis];
+        float t1 = (bmax[axis] - ro[axis]) / rd[axis];
+        if (t0 > t1) std::swap(t0, t1);
+        enter = std::max(enter, t0);
+        exit = std::min(exit, t1);
+        if (exit <= enter) return false;
+    }
+    return exit > enter;
+}
+
+DispatchAtlasArtifact buildDispatchAtlasArtifact(
+    const geom::SdfPositiveProofGrid& grid,
+    const glm::vec3& extent,
+    uint32_t minRunCells,
+    uint32_t entryBins,
+    uint32_t slopeBins,
+    uint32_t routeWidth) {
+    DispatchAtlasArtifact out;
+    out.minRunCells = std::max(minRunCells, 1u);
+    out.entryBins = std::max(entryBins, 1u);
+    out.slopeBins = std::max(slopeBins, 1u);
+    out.routeWidth = std::min(std::max(routeWidth, 1u), 4u);
+
+    // The rich theorem stays authoritative. The atlas reuses only derived
+    // positive runs and never upgrades unknown/clear space into skip authority.
+    for (uint32_t axis = 0u; axis < 3u; ++axis) {
+        DirectRunArtifact axisArtifact =
+            buildDirectRunArtifact(grid, extent, axis, out.minRunCells);
+        out.coveredPositiveCells += axisArtifact.coveredPositiveCells;
+        out.runs.insert(
+            out.runs.end(),
+            axisArtifact.runs.begin(),
+            axisArtifact.runs.end());
+    }
+
+    const uint64_t entries64 =
+        6ull *
+        static_cast<uint64_t>(out.entryBins) *
+        static_cast<uint64_t>(out.entryBins) *
+        static_cast<uint64_t>(out.slopeBins) *
+        static_cast<uint64_t>(out.slopeBins);
+    if (entries64 == 0u ||
+        entries64 > static_cast<uint64_t>(
+            std::numeric_limits<uint32_t>::max())) {
+        out.representable = false;
+        return out;
+    }
+    out.table.assign(static_cast<size_t>(entries64), 0u);
+
+    // One byte uses zero as the empty sentinel. Keep one value unused so this
+    // first experiment obeys the architecture document's <=254-run cap.
+    if (out.runs.size() > 254u) {
+        out.representable = false;
+        return out;
+    }
+
+    const glm::vec3 absExtent = glm::abs(extent);
+    const uint32_t uAxis[3] = {1u, 0u, 0u};
+    const uint32_t vAxis[3] = {2u, 2u, 1u};
+
+    auto tableIndex = [&](uint32_t axis, uint32_t sign,
+                          uint32_t entryU, uint32_t entryV,
+                          uint32_t slopeU, uint32_t slopeV) -> size_t {
+        size_t idx = static_cast<size_t>(axis * 2u + sign);
+        idx = idx * out.entryBins + entryU;
+        idx = idx * out.entryBins + entryV;
+        idx = idx * out.slopeBins + slopeU;
+        idx = idx * out.slopeBins + slopeV;
+        return idx;
+    };
+
+    struct Hit {
+        float enter = 0.0f;
+        float exit = 0.0f;
+        uint32_t runIndex = 0u;
+    };
+
+    for (uint32_t axis = 0u; axis < 3u; ++axis) {
+        const uint32_t u = uAxis[axis];
+        const uint32_t v = vAxis[axis];
+        for (uint32_t sign = 0u; sign < 2u; ++sign) {
+            for (uint32_t entryU = 0u; entryU < out.entryBins; ++entryU) {
+                for (uint32_t entryV = 0u; entryV < out.entryBins; ++entryV) {
+                    for (uint32_t slopeU = 0u; slopeU < out.slopeBins; ++slopeU) {
+                        for (uint32_t slopeV = 0u; slopeV < out.slopeBins; ++slopeV) {
+                            glm::vec3 ro(0.0f);
+                            ro[axis] = sign == 0u ? -absExtent[axis]
+                                                  : absExtent[axis];
+                            ro[u] =
+                                -absExtent[u] +
+                                (static_cast<float>(entryU) + 0.5f) *
+                                    (2.0f * absExtent[u] /
+                                     static_cast<float>(out.entryBins));
+                            ro[v] =
+                                -absExtent[v] +
+                                (static_cast<float>(entryV) + 0.5f) *
+                                    (2.0f * absExtent[v] /
+                                     static_cast<float>(out.entryBins));
+
+                            glm::vec3 rd(0.0f);
+                            rd[axis] = sign == 0u ? 1.0f : -1.0f;
+                            rd[u] =
+                                -1.0f +
+                                (static_cast<float>(slopeU) + 0.5f) *
+                                    (2.0f / static_cast<float>(out.slopeBins));
+                            rd[v] =
+                                -1.0f +
+                                (static_cast<float>(slopeV) + 0.5f) *
+                                    (2.0f / static_cast<float>(out.slopeBins));
+                            rd = glm::normalize(rd);
+
+                            std::vector<Hit> hits;
+                            hits.reserve(out.runs.size());
+                            for (uint32_t i = 0u;
+                                 i < static_cast<uint32_t>(out.runs.size());
+                                 ++i) {
+                                const DirectProofRun& run = out.runs[i];
+                                if (run.provenance.x != axis) continue;
+                                float enter = 0.0f;
+                                float exit = 0.0f;
+                                if (!cpuRayAabb(
+                                        ro, rd,
+                                        glm::vec3(run.bmin),
+                                        glm::vec3(run.bmax),
+                                        enter, exit)) {
+                                    continue;
+                                }
+                                if (exit <= std::max(enter, 0.0f)) continue;
+                                hits.push_back({enter, exit, i});
+                            }
+
+                            std::sort(
+                                hits.begin(), hits.end(),
+                                [](const Hit& a, const Hit& b) {
+                                    if (a.enter != b.enter) {
+                                        return a.enter < b.enter;
+                                    }
+                                    if (a.exit != b.exit) {
+                                        return a.exit > b.exit;
+                                    }
+                                    return a.runIndex < b.runIndex;
+                                });
+
+                            uint32_t packed = 0u;
+                            const uint32_t retained =
+                                std::min(
+                                    out.routeWidth,
+                                    static_cast<uint32_t>(hits.size()));
+                            for (uint32_t slot = 0u; slot < retained; ++slot) {
+                                const uint32_t encoded =
+                                    hits[slot].runIndex + 1u;
+                                packed |=
+                                    (encoded & 0xffu) << (slot * 8u);
+                            }
+                            const size_t idx =
+                                tableIndex(
+                                    axis, sign, entryU, entryV,
+                                    slopeU, slopeV);
+                            out.table[idx] = packed;
+                            if (packed != 0u) ++out.populatedKeys;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return out;
 }
 
@@ -1600,6 +1851,646 @@ fn cs_direct_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
     return results;
 }
 
+
+std::vector<DispatchAtlasRuntimeTax> runDispatchAtlasDiagnostic(
+    wgpu::Device& gpu,
+    const sdfwgsl::Program& program,
+    const std::vector<DispatchAtlasArtifact>& artifacts,
+    const RuntimeTaxTotals& genericBaseline,
+    const glm::vec3& extent,
+    const glm::vec3& eye,
+    const glm::mat4& view,
+    const glm::mat4& proj) {
+    constexpr uint32_t sampleW = 160;
+    constexpr uint32_t sampleH = 100;
+
+    std::vector<DispatchAtlasRuntimeTax> results;
+    results.reserve(artifacts.size());
+    if (!program.ok) return results;
+
+    float farField = 1e6f;
+    {
+        const glm::vec4 farPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(farPt.w) > 1e-9f) {
+            const float d = -(farPt.z / farPt.w);
+            if (std::isfinite(d) && d > 0.0f) farField = d;
+        }
+    }
+
+    std::vector<RuntimeTaxRay> rays;
+    rays.reserve(static_cast<size_t>(sampleW) * sampleH);
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
+    for (uint32_t y = 0; y < sampleH; ++y) {
+        for (uint32_t x = 0; x < sampleW; ++x) {
+            const float sx =
+                (static_cast<float>(x) + 0.5f) / static_cast<float>(sampleW);
+            const float sy =
+                (static_cast<float>(y) + 0.5f) / static_cast<float>(sampleH);
+            const glm::vec4 ndc(
+                sx * 2.0f - 1.0f,
+                (1.0f - sy) * 2.0f - 1.0f,
+                1.0f,
+                1.0f);
+            const glm::vec4 worldH = invViewProj * ndc;
+            glm::vec3 rd(0.0f, 0.0f, 1.0f);
+            if (std::abs(worldH.w) >= 1e-8f) {
+                const glm::vec3 world = glm::vec3(worldH) / worldH.w;
+                rd = glm::normalize(world - eye);
+            }
+            rays.push_back({glm::vec4(eye, 1.0f), glm::vec4(rd, farField)});
+        }
+    }
+
+    const char* diagnosticWgsl = R"WGSL(
+struct AtlasTaxRay {
+    ro: vec4<f32>,
+    rdFar: vec4<f32>,
+};
+struct DirectProofRun {
+    bmin: vec4<f32>,
+    bmax: vec4<f32>,
+    provenance: vec4<u32>,
+};
+struct AtlasConfig {
+    dims: vec4<u32>,
+};
+struct AtlasTaxOut {
+    counts0: vec4<u32>,
+    counts1: vec4<u32>,
+    counts2: vec4<u32>,
+    distances: vec4<f32>,
+};
+@group(2) @binding(0) var<storage, read> atlasTaxRays: array<AtlasTaxRay>;
+@group(2) @binding(1) var<storage, read_write> atlasTaxOut: array<AtlasTaxOut>;
+@group(2) @binding(2) var<storage, read> atlasRuns: array<DirectProofRun>;
+@group(2) @binding(3) var<storage, read> dispatchAtlas: array<u32>;
+@group(2) @binding(4) var<storage, read> atlasConfig: AtlasConfig;
+
+fn transverse(v: vec3<f32>, axis: u32) -> vec2<f32> {
+    if (axis == 0u) { return v.yz; }
+    if (axis == 1u) { return vec2<f32>(v.x, v.z); }
+    return v.xy;
+}
+
+fn dominantAxis(rd: vec3<f32>) -> u32 {
+    let a = abs(rd);
+    if (a.x >= a.y && a.x >= a.z) { return 0u; }
+    if (a.y >= a.z) { return 1u; }
+    return 2u;
+}
+
+fn quantize01(x: f32, bins: u32) -> u32 {
+    if (bins <= 1u) { return 0u; }
+    let q = clamp(x, 0.0, 0.99999994);
+    return min(u32(q * f32(bins)), bins - 1u);
+}
+
+fn dispatchKey(
+    pEntry: vec3<f32>,
+    rd: vec3<f32>,
+    extent: vec3<f32>,
+    entryBins: u32,
+    slopeBins: u32) -> u32 {
+    let axis = dominantAxis(rd);
+    let sign = select(0u, 1u, rd[axis] < 0.0);
+    let entryUV = transverse(pEntry, axis);
+    let extentUV = max(transverse(extent, axis), vec2<f32>(1e-8));
+    let rdUV = transverse(rd, axis);
+    let dominant = max(abs(rd[axis]), 1e-8);
+    let slopes = clamp(rdUV / dominant, vec2<f32>(-1.0), vec2<f32>(1.0));
+
+    let entryU = quantize01(
+        0.5 * (entryUV.x / extentUV.x + 1.0), entryBins);
+    let entryV = quantize01(
+        0.5 * (entryUV.y / extentUV.y + 1.0), entryBins);
+    let slopeU = quantize01(0.5 * (slopes.x + 1.0), slopeBins);
+    let slopeV = quantize01(0.5 * (slopes.y + 1.0), slopeBins);
+
+    var idx = axis * 2u + sign;
+    idx = idx * entryBins + entryU;
+    idx = idx * entryBins + entryV;
+    idx = idx * slopeBins + slopeU;
+    idx = idx * slopeBins + slopeV;
+    return idx;
+}
+
+fn atlasTaxMarch(ray: AtlasTaxRay) -> AtlasTaxOut {
+    var out: AtlasTaxOut;
+    g_instIdx = 0u;
+    let inst = instances[0u];
+    let ro = ray.ro.xyz;
+    let rd = normalize(ray.rdFar.xyz);
+    let box = rayAabb(ro, rd, inst.extents.xyz);
+    if (box.y < box.x || box.y < 0.0) {
+        return out;
+    }
+
+    var t = max(box.x, 0.0);
+    let maxDist = min(min(box.y, t + inst.misc.z), ray.rdFar.w);
+    let useAtlas = atlasConfig.dims.w != 0u;
+
+    var keyComputations = 0u;
+    var atlasLookups = 0u;
+    var nonEmptyDispatches = 0u;
+    var selectedSlots = 0u;
+    var runTests = 0u;
+    var skipCalls = 0u;
+    var sampleSteps = 0u;
+    var fallbackEvals = 0u;
+    var iterations = 0u;
+    var hit = false;
+    var skippedDistance = 0.0;
+
+    var intervals: array<vec2<f32>, 4>;
+    var intervalCount = 0u;
+
+    if (useAtlas) {
+        keyComputations = 1u;
+        let pEntry = ro + rd * t;
+        let key = dispatchKey(
+            pEntry, rd, inst.extents.xyz,
+            atlasConfig.dims.x, atlasConfig.dims.y);
+        atlasLookups = 1u;
+        if (key < arrayLength(&dispatchAtlas)) {
+            let packed = dispatchAtlas[key];
+            if (packed != 0u) {
+                nonEmptyDispatches = 1u;
+                for (var slot = 0u; slot < 4u; slot = slot + 1u) {
+                    if (slot >= atlasConfig.dims.z) { break; }
+                    let encoded = (packed >> (slot * 8u)) & 0xffu;
+                    if (encoded == 0u) { continue; }
+                    selectedSlots = selectedSlots + 1u;
+                    let runIndex = encoded - 1u;
+                    if (runIndex >= arrayLength(&atlasRuns)) { continue; }
+                    runTests = runTests + 1u;
+                    let run = atlasRuns[runIndex];
+                    let center = 0.5 * (run.bmin.xyz + run.bmax.xyz);
+                    let halfExtent =
+                        max(0.5 * (run.bmax.xyz - run.bmin.xyz),
+                            vec3<f32>(1e-8));
+                    let interval = rayAabb(ro - center, rd, halfExtent);
+                    let enter = max(interval.x, t);
+                    let exit = min(interval.y, maxDist);
+                    if (exit > enter && intervalCount < 4u) {
+                        intervals[intervalCount] = vec2<f32>(enter, exit);
+                        intervalCount = intervalCount + 1u;
+                    }
+                }
+
+                // Route width is <=4. Sort the exact actual-ray intervals once;
+                // no global search or neighboring-key walk occurs at runtime.
+                for (var i = 0u; i < 4u; i = i + 1u) {
+                    for (var j = i + 1u; j < 4u; j = j + 1u) {
+                        if (i < intervalCount && j < intervalCount &&
+                            intervals[j].x < intervals[i].x) {
+                            let tmp = intervals[i];
+                            intervals[i] = intervals[j];
+                            intervals[j] = tmp;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    var intervalIndex = 0u;
+    var prev_d = 1e10;
+    var candidate_step = 0.0;
+
+    for (var i = 0; i < 192; i = i + 1) {
+        if (t > maxDist) { break; }
+        iterations = iterations + 1u;
+
+        loop {
+            if (intervalIndex >= intervalCount) { break; }
+            if (t < intervals[intervalIndex].y) { break; }
+            intervalIndex = intervalIndex + 1u;
+        }
+
+        if (intervalIndex < intervalCount &&
+            t >= intervals[intervalIndex].x &&
+            t < intervals[intervalIndex].y) {
+            let oldT = t;
+            t = intervals[intervalIndex].y;
+            intervalIndex = intervalIndex + 1u;
+            if (t > oldT) {
+                skipCalls = skipCalls + 1u;
+                skippedDistance = skippedDistance + (t - oldT);
+                prev_d = 1e10;
+                candidate_step = 0.0;
+            }
+            if (t > maxDist) { break; }
+        }
+
+        let p = ro + rd * t;
+        let current_eps = max(inst.misc.y, t * 0.001);
+        let sample = sdfSampleStep(p);
+        sampleSteps = sampleSteps + 1u;
+        let raw = sample.raw;
+        var gl = sample.gradLen;
+        if (gl <= 1e-6) {
+            let ge = 1e-3;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            fallbackEvals = fallbackEvals + 3u;
+            gl = length(g);
+        }
+        let d = select(raw, raw / gl, gl > 1e-6);
+
+        if (d <= 0.0 || abs(d) < current_eps) {
+            hit = true;
+            if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                t = (t - candidate_step) + candidate_step * frac;
+            }
+            break;
+        }
+
+        candidate_step = max(d, current_eps);
+        prev_d = d;
+        t = t + candidate_step;
+    }
+
+    out.counts0 =
+        vec4<u32>(
+            keyComputations, atlasLookups,
+            nonEmptyDispatches, selectedSlots);
+    out.counts1 =
+        vec4<u32>(
+            runTests, skipCalls, sampleSteps, fallbackEvals);
+    out.counts2 =
+        vec4<u32>(select(0u, 1u, hit), iterations, 0u, 0u);
+    out.distances = vec4<f32>(skippedDistance, 0.0, 0.0, 0.0);
+    return out;
+}
+
+@compute @workgroup_size(64)
+fn cs_atlas_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let idx = gid.x;
+    if (idx >= arrayLength(&atlasTaxRays)) { return; }
+    atlasTaxOut[idx] = atlasTaxMarch(atlasTaxRays[idx]);
+}
+)WGSL";
+
+    const std::string shaderCode = program.wgsl + diagnosticWgsl;
+    WGPUShaderSourceWGSL wgslSrc = {};
+    wgslSrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    wgslSrc.code = wgpu::Device::str(shaderCode.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &wgslSrc.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(gpu.device, &smd);
+    if (!shader) return results;
+
+    WGPUComputePipelineDescriptor cpd = {};
+    cpd.compute.module = shader;
+    cpd.compute.entryPoint = wgpu::Device::str("cs_atlas_tax");
+    WGPUComputePipeline pipeline =
+        wgpuDeviceCreateComputePipeline(gpu.device, &cpd);
+    if (!pipeline) {
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    RuntimeTaxInstance inst;
+    inst.extents = glm::vec4(extent, 0.0f);
+    inst.misc = glm::vec4(0.0f, 1e-4f, 8000.0f, 0.25f);
+
+    const size_t rayBytes = rays.size() * sizeof(RuntimeTaxRay);
+    const size_t outBytes = rays.size() * sizeof(DispatchAtlasTaxOut);
+    const size_t paramBytes =
+        std::max(program.params.size() * sizeof(float), sizeof(float));
+
+    size_t maxRunBytes = sizeof(DirectProofRun);
+    size_t maxAtlasBytes = sizeof(uint32_t);
+    for (const auto& artifact : artifacts) {
+        maxRunBytes = std::max(
+            maxRunBytes,
+            artifact.runs.size() * sizeof(DirectProofRun));
+        maxAtlasBytes = std::max(
+            maxAtlasBytes,
+            artifact.table.size() * sizeof(uint32_t));
+    }
+
+    auto makeBuffer = [&](uint64_t size, WGPUBufferUsage usage) {
+        WGPUBufferDescriptor desc = {};
+        desc.size = size;
+        desc.usage = usage;
+        return wgpuDeviceCreateBuffer(gpu.device, &desc);
+    };
+
+    WGPUBuffer rayBuffer = makeBuffer(
+        rayBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer outBuffer = makeBuffer(
+        outBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+    WGPUBuffer readback = makeBuffer(
+        outBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+    WGPUBuffer paramBuffer = makeBuffer(
+        paramBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer instBuffer = makeBuffer(
+        sizeof(RuntimeTaxInstance),
+        WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer runBuffer = makeBuffer(
+        maxRunBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer atlasBuffer = makeBuffer(
+        maxAtlasBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer configBuffer = makeBuffer(
+        sizeof(DispatchAtlasConfig),
+        WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+
+    if (!rayBuffer || !outBuffer || !readback || !paramBuffer ||
+        !instBuffer || !runBuffer || !atlasBuffer || !configBuffer) {
+        if (configBuffer) wgpuBufferRelease(configBuffer);
+        if (atlasBuffer) wgpuBufferRelease(atlasBuffer);
+        if (runBuffer) wgpuBufferRelease(runBuffer);
+        if (instBuffer) wgpuBufferRelease(instBuffer);
+        if (paramBuffer) wgpuBufferRelease(paramBuffer);
+        if (readback) wgpuBufferRelease(readback);
+        if (outBuffer) wgpuBufferRelease(outBuffer);
+        if (rayBuffer) wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    wgpuQueueWriteBuffer(gpu.queue, rayBuffer, 0, rays.data(), rayBytes);
+    if (!program.params.empty()) {
+        wgpuQueueWriteBuffer(
+            gpu.queue, paramBuffer, 0, program.params.data(),
+            program.params.size() * sizeof(float));
+    } else {
+        const float zero = 0.0f;
+        wgpuQueueWriteBuffer(gpu.queue, paramBuffer, 0, &zero, sizeof(zero));
+    }
+    wgpuQueueWriteBuffer(
+        gpu.queue, instBuffer, 0, &inst, sizeof(RuntimeTaxInstance));
+
+    WGPUBindGroupLayout bgl0 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
+    WGPUBindGroupLayout bgl1 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 1);
+    WGPUBindGroupLayout bgl2 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 2);
+
+    WGPUBindGroupEntry g0e = {};
+    g0e.binding = 1;
+    g0e.buffer = paramBuffer;
+    g0e.size = paramBytes;
+    WGPUBindGroupDescriptor g0d = {};
+    g0d.layout = bgl0;
+    g0d.entryCount = 1;
+    g0d.entries = &g0e;
+    WGPUBindGroup g0 = wgpuDeviceCreateBindGroup(gpu.device, &g0d);
+
+    WGPUBindGroupEntry g1e = {};
+    g1e.binding = 0;
+    g1e.buffer = instBuffer;
+    g1e.size = sizeof(RuntimeTaxInstance);
+    WGPUBindGroupDescriptor g1d = {};
+    g1d.layout = bgl1;
+    g1d.entryCount = 1;
+    g1d.entries = &g1e;
+    WGPUBindGroup g1 = wgpuDeviceCreateBindGroup(gpu.device, &g1d);
+
+    if (!g0 || !g1) {
+        if (g1) wgpuBindGroupRelease(g1);
+        if (g0) wgpuBindGroupRelease(g0);
+        wgpuBindGroupLayoutRelease(bgl2);
+        wgpuBindGroupLayoutRelease(bgl1);
+        wgpuBindGroupLayoutRelease(bgl0);
+        wgpuBufferRelease(configBuffer);
+        wgpuBufferRelease(atlasBuffer);
+        wgpuBufferRelease(runBuffer);
+        wgpuBufferRelease(instBuffer);
+        wgpuBufferRelease(paramBuffer);
+        wgpuBufferRelease(readback);
+        wgpuBufferRelease(outBuffer);
+        wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    const DirectProofRun dummyRun{};
+    const uint32_t dummyAtlas = 0u;
+    std::vector<DispatchAtlasTaxOut> baselineOut;
+
+    auto runPass = [&](const DispatchAtlasArtifact* artifact,
+                       bool enabled,
+                       std::vector<DispatchAtlasTaxOut>& hostOut) -> bool {
+        size_t runBytes = sizeof(DirectProofRun);
+        size_t atlasBytes = sizeof(uint32_t);
+        DispatchAtlasConfig config;
+        if (enabled && artifact) {
+            if (!artifact->representable ||
+                artifact->runs.empty() || artifact->table.empty()) {
+                return false;
+            }
+            runBytes = artifact->runs.size() * sizeof(DirectProofRun);
+            atlasBytes = artifact->table.size() * sizeof(uint32_t);
+            wgpuQueueWriteBuffer(
+                gpu.queue, runBuffer, 0, artifact->runs.data(), runBytes);
+            wgpuQueueWriteBuffer(
+                gpu.queue, atlasBuffer, 0, artifact->table.data(), atlasBytes);
+            config.dims = glm::uvec4(
+                artifact->entryBins,
+                artifact->slopeBins,
+                artifact->routeWidth,
+                1u);
+        } else {
+            wgpuQueueWriteBuffer(
+                gpu.queue, runBuffer, 0, &dummyRun, sizeof(dummyRun));
+            wgpuQueueWriteBuffer(
+                gpu.queue, atlasBuffer, 0, &dummyAtlas, sizeof(dummyAtlas));
+            config.dims = glm::uvec4(1u, 1u, 1u, 0u);
+        }
+        wgpuQueueWriteBuffer(
+            gpu.queue, configBuffer, 0, &config, sizeof(config));
+
+        WGPUBindGroupEntry g2e[5] = {};
+        g2e[0].binding = 0;
+        g2e[0].buffer = rayBuffer;
+        g2e[0].size = rayBytes;
+        g2e[1].binding = 1;
+        g2e[1].buffer = outBuffer;
+        g2e[1].size = outBytes;
+        g2e[2].binding = 2;
+        g2e[2].buffer = runBuffer;
+        g2e[2].size = runBytes;
+        g2e[3].binding = 3;
+        g2e[3].buffer = atlasBuffer;
+        g2e[3].size = atlasBytes;
+        g2e[4].binding = 4;
+        g2e[4].buffer = configBuffer;
+        g2e[4].size = sizeof(DispatchAtlasConfig);
+        WGPUBindGroupDescriptor g2d = {};
+        g2d.layout = bgl2;
+        g2d.entryCount = 5;
+        g2d.entries = g2e;
+        WGPUBindGroup g2 =
+            wgpuDeviceCreateBindGroup(gpu.device, &g2d);
+        if (!g2) return false;
+
+        WGPUCommandEncoder encoder =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUComputePassEncoder pass =
+            wgpuCommandEncoderBeginComputePass(encoder, nullptr);
+        wgpuComputePassEncoderSetPipeline(pass, pipeline);
+        wgpuComputePassEncoderSetBindGroup(pass, 0, g0, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 1, g1, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 2, g2, 0, nullptr);
+        const uint32_t workgroups =
+            static_cast<uint32_t>((rays.size() + 63u) / 64u);
+        wgpuComputePassEncoderDispatchWorkgroups(pass, workgroups, 1, 1);
+        wgpuComputePassEncoderEnd(pass);
+        wgpuComputePassEncoderRelease(pass);
+        wgpuCommandEncoderCopyBufferToBuffer(
+            encoder, outBuffer, 0, readback, 0, outBytes);
+        WGPUCommandBuffer command =
+            wgpuCommandEncoderFinish(encoder, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &command);
+        wgpuCommandBufferRelease(command);
+        wgpuCommandEncoderRelease(encoder);
+
+        RuntimeTaxMapResult mapResult;
+        WGPUBufferMapCallbackInfo mapInfo = {};
+        mapInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+        mapInfo.callback = onRuntimeTaxMap;
+        mapInfo.userdata1 = &mapResult;
+        wgpuBufferMapAsync(
+            readback, WGPUMapMode_Read, 0, outBytes, mapInfo);
+        while (!mapResult.done) {
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        }
+
+        bool ok = false;
+        if (mapResult.ok) {
+            const auto* out =
+                static_cast<const DispatchAtlasTaxOut*>(
+                    wgpuBufferGetConstMappedRange(
+                        readback, 0, outBytes));
+            if (out) {
+                hostOut.assign(out, out + rays.size());
+                ok = true;
+            }
+            wgpuBufferUnmap(readback);
+        }
+        wgpuBindGroupRelease(g2);
+        return ok;
+    };
+
+    const bool baselineOk = runPass(nullptr, false, baselineOut);
+    if (!baselineOk || baselineOut.size() != rays.size()) {
+        wgpuBindGroupRelease(g1);
+        wgpuBindGroupRelease(g0);
+        wgpuBindGroupLayoutRelease(bgl2);
+        wgpuBindGroupLayoutRelease(bgl1);
+        wgpuBindGroupLayoutRelease(bgl0);
+        wgpuBufferRelease(configBuffer);
+        wgpuBufferRelease(atlasBuffer);
+        wgpuBufferRelease(runBuffer);
+        wgpuBufferRelease(instBuffer);
+        wgpuBufferRelease(paramBuffer);
+        wgpuBufferRelease(readback);
+        wgpuBufferRelease(outBuffer);
+        wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    uint64_t baselineSamples = 0u;
+    uint64_t baselineFallbacks = 0u;
+    uint64_t baselineHits = 0u;
+    uint64_t baselineIterations = 0u;
+    for (const auto& off : baselineOut) {
+        baselineSamples += off.counts1.z;
+        baselineFallbacks += off.counts1.w;
+        baselineHits += off.counts2.x;
+        baselineIterations += off.counts2.y;
+    }
+
+    for (const auto& artifact : artifacts) {
+        DispatchAtlasRuntimeTax totals;
+        totals.minRunCells = artifact.minRunCells;
+        totals.entryBins = artifact.entryBins;
+        totals.slopeBins = artifact.slopeBins;
+        totals.routeWidth = artifact.routeWidth;
+        totals.populatedKeys = artifact.populatedKeys;
+        totals.coveredPositiveCells = artifact.coveredPositiveCells;
+        totals.atlasEntries = artifact.table.size();
+        totals.atlasBytes = artifact.table.size() * sizeof(uint32_t);
+        totals.runRecords = artifact.runs.size();
+        totals.runBytes = artifact.runs.size() * sizeof(DirectProofRun);
+        totals.totalArtifactBytes = totals.atlasBytes + totals.runBytes;
+        totals.rays = rays.size();
+        totals.representable = artifact.representable;
+        totals.offSampleSteps = baselineSamples;
+        totals.offFallbackEvals = baselineFallbacks;
+        totals.offHits = baselineHits;
+        totals.offIterations = baselineIterations;
+
+        if (!artifact.representable ||
+            artifact.runs.empty() || artifact.table.empty()) {
+            totals.directSampleSteps = baselineSamples;
+            totals.directFallbackEvals = baselineFallbacks;
+            totals.directHits = baselineHits;
+            totals.directIterations = baselineIterations;
+            totals.valid = true;
+            results.push_back(totals);
+            continue;
+        }
+
+        std::vector<DispatchAtlasTaxOut> directOut;
+        if (!runPass(&artifact, true, directOut) ||
+            directOut.size() != rays.size()) {
+            results.push_back(totals);
+            continue;
+        }
+
+        for (size_t i = 0; i < rays.size(); ++i) {
+            const auto& direct = directOut[i];
+            const auto& off = baselineOut[i];
+            totals.keyComputations += direct.counts0.x;
+            totals.atlasLookups += direct.counts0.y;
+            totals.nonEmptyDispatches += direct.counts0.z;
+            totals.selectedRouteSlots += direct.counts0.w;
+            totals.selectedRunTests += direct.counts1.x;
+            totals.skipCalls += direct.counts1.y;
+            totals.directSampleSteps += direct.counts1.z;
+            totals.directFallbackEvals += direct.counts1.w;
+            totals.directHits += direct.counts2.x;
+            totals.directIterations += direct.counts2.y;
+            totals.skippedDistance +=
+                static_cast<double>(direct.distances.x);
+            if (direct.counts2.x != off.counts2.x) {
+                ++totals.perRayHitMismatches;
+            }
+        }
+        totals.valid = true;
+        results.push_back(totals);
+    }
+
+    wgpuBindGroupRelease(g1);
+    wgpuBindGroupRelease(g0);
+    wgpuBindGroupLayoutRelease(bgl2);
+    wgpuBindGroupLayoutRelease(bgl1);
+    wgpuBindGroupLayoutRelease(bgl0);
+    wgpuBufferRelease(configBuffer);
+    wgpuBufferRelease(atlasBuffer);
+    wgpuBufferRelease(runBuffer);
+    wgpuBufferRelease(instBuffer);
+    wgpuBufferRelease(paramBuffer);
+    wgpuBufferRelease(readback);
+    wgpuBufferRelease(outBuffer);
+    wgpuBufferRelease(rayBuffer);
+    wgpuComputePipelineRelease(pipeline);
+    wgpuShaderModuleRelease(shader);
+    return results;
+}
+
 void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
     const int64_t savedSampleSteps =
         static_cast<int64_t>(t.offSampleSteps) -
@@ -1666,6 +2557,154 @@ void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
         recordTestsPerRay,
         samplesSavedPerQuery,
         samplesSavedPerRecordTest);
+}
+
+
+void printDispatchAtlasRuntimeTax(
+    const char* viewName,
+    const DispatchAtlasRuntimeTax& t) {
+    const int64_t saved =
+        static_cast<int64_t>(t.offSampleSteps) -
+        static_cast<int64_t>(t.directSampleSteps);
+    const uint64_t chargedOps =
+        t.keyComputations + t.atlasLookups +
+        t.selectedRouteSlots + t.selectedRunTests;
+    const double savedPerLookup =
+        t.atlasLookups > 0u
+            ? static_cast<double>(saved) /
+                  static_cast<double>(t.atlasLookups)
+            : 0.0;
+    const double savedPerRunTest =
+        t.selectedRunTests > 0u
+            ? static_cast<double>(saved) /
+                  static_cast<double>(t.selectedRunTests)
+            : 0.0;
+    const double savedPerChargedOp =
+        chargedOps > 0u
+            ? static_cast<double>(saved) /
+                  static_cast<double>(chargedOps)
+            : 0.0;
+    const double lookupPerRay =
+        t.rays > 0u
+            ? static_cast<double>(t.atlasLookups) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+
+    std::printf(
+        "SDF_DISPATCH_ATLAS_TAX view=%s valid=%d representable=%d "
+        "min_run_cells=%u entry_bins=%u slope_bins=%u route_width=%u "
+        "atlas_entries=%zu populated_keys=%u atlas_bytes=%zu "
+        "run_records=%zu run_bytes=%zu total_artifact_bytes=%zu "
+        "covered_positive_cells=%u rays=%llu key_computations=%llu "
+        "atlas_lookups=%llu non_empty_dispatches=%llu "
+        "selected_route_slots=%llu selected_run_tests=%llu "
+        "useful_skip_calls=%llu direct_sample_steps=%llu "
+        "off_sample_steps=%llu saved_sample_steps=%lld "
+        "direct_fallback_evals=%llu off_fallback_evals=%llu "
+        "direct_iterations=%llu off_iterations=%llu "
+        "direct_hits=%llu off_hits=%llu per_ray_hit_mismatches=%llu "
+        "skipped_distance=%.6f lookups_per_ray=%.6f "
+        "saved_per_lookup=%.6f saved_per_run_test=%.6f "
+        "saved_per_charged_dispatch_op=%.6f\n",
+        viewName,
+        t.valid ? 1 : 0,
+        t.representable ? 1 : 0,
+        t.minRunCells,
+        t.entryBins,
+        t.slopeBins,
+        t.routeWidth,
+        t.atlasEntries,
+        t.populatedKeys,
+        t.atlasBytes,
+        t.runRecords,
+        t.runBytes,
+        t.totalArtifactBytes,
+        t.coveredPositiveCells,
+        static_cast<unsigned long long>(t.rays),
+        static_cast<unsigned long long>(t.keyComputations),
+        static_cast<unsigned long long>(t.atlasLookups),
+        static_cast<unsigned long long>(t.nonEmptyDispatches),
+        static_cast<unsigned long long>(t.selectedRouteSlots),
+        static_cast<unsigned long long>(t.selectedRunTests),
+        static_cast<unsigned long long>(t.skipCalls),
+        static_cast<unsigned long long>(t.directSampleSteps),
+        static_cast<unsigned long long>(t.offSampleSteps),
+        static_cast<long long>(saved),
+        static_cast<unsigned long long>(t.directFallbackEvals),
+        static_cast<unsigned long long>(t.offFallbackEvals),
+        static_cast<unsigned long long>(t.directIterations),
+        static_cast<unsigned long long>(t.offIterations),
+        static_cast<unsigned long long>(t.directHits),
+        static_cast<unsigned long long>(t.offHits),
+        static_cast<unsigned long long>(t.perRayHitMismatches),
+        t.skippedDistance,
+        lookupPerRay,
+        savedPerLookup,
+        savedPerRunTest,
+        savedPerChargedOp);
+}
+
+void printDispatchAtlasVerdict(
+    const char* viewName,
+    const RuntimeTaxTotals& genericBaseline,
+    const std::vector<DispatchAtlasRuntimeTax>& candidates) {
+    const int64_t genericSaved =
+        static_cast<int64_t>(genericBaseline.offSampleSteps) -
+        static_cast<int64_t>(genericBaseline.onSampleSteps);
+    const double baselineEconomics =
+        genericBaseline.candidateCalls > 0u && genericSaved > 0
+            ? static_cast<double>(genericSaved) /
+                  static_cast<double>(genericBaseline.candidateCalls)
+            : 0.0;
+
+    const DispatchAtlasRuntimeTax* best = nullptr;
+    double bestEconomics = 0.0;
+    for (const auto& candidate : candidates) {
+        const int64_t saved =
+            static_cast<int64_t>(candidate.offSampleSteps) -
+            static_cast<int64_t>(candidate.directSampleSteps);
+        const uint64_t chargedOps =
+            candidate.keyComputations + candidate.atlasLookups +
+            candidate.selectedRouteSlots + candidate.selectedRunTests;
+        if (!candidate.valid || !candidate.representable ||
+            candidate.perRayHitMismatches != 0u ||
+            saved <= 0 || chargedOps == 0u) {
+            continue;
+        }
+        const double economics =
+            static_cast<double>(saved) /
+            static_cast<double>(chargedOps);
+        if (!best || economics > bestEconomics) {
+            best = &candidate;
+            bestEconomics = economics;
+        }
+    }
+
+    const double gain =
+        baselineEconomics > 0.0
+            ? bestEconomics / baselineEconomics
+            : 0.0;
+    const bool passes10x =
+        best != nullptr &&
+        baselineEconomics > 0.0 &&
+        bestEconomics >= baselineEconomics * 10.0;
+
+    std::printf(
+        "SDF_DISPATCH_ATLAS_VERDICT view=%s baseline_samples_per_call=%.6f "
+        "candidate_found=%d best_min_run_cells=%u best_entry_bins=%u "
+        "best_slope_bins=%u best_route_width=%u "
+        "best_samples_per_charged_dispatch_op=%.6f complete_gain=%.2f "
+        "passes_10x=%d production_eligible=0 camera_independent=1\n",
+        viewName,
+        baselineEconomics,
+        best ? 1 : 0,
+        best ? best->minRunCells : 0u,
+        best ? best->entryBins : 0u,
+        best ? best->slopeBins : 0u,
+        best ? best->routeWidth : 0u,
+        bestEconomics,
+        gain,
+        passes10x ? 1 : 0);
 }
 
 
@@ -1957,6 +2996,24 @@ int main() {
         }
     }
 
+
+    // Camera-independent AOT ray-entry dispatch candidates. The builder sees
+    // only field-local proof geometry and fixed quantization; no camera rays.
+    std::vector<DispatchAtlasArtifact> dispatchAtlases;
+    for (uint32_t minRunCells : {1u, 2u}) {
+        for (uint32_t entryBins : {4u, 8u}) {
+            for (uint32_t slopeBins : {2u, 4u}) {
+                for (uint32_t routeWidth : {1u, 2u}) {
+                    dispatchAtlases.push_back(
+                        buildDispatchAtlasArtifact(
+                            proofGrids[1], proofExtent,
+                            minRunCells, entryBins,
+                            slopeBins, routeWidth));
+                }
+            }
+        }
+    }
+
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
         return 1;
@@ -2121,6 +3178,66 @@ int main() {
 
         printDirectDispatchOracleCeiling(c.name, runtimeTax, directTaxes);
         printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
+
+        const auto atlasTaxes =
+            runDispatchAtlasDiagnostic(
+                gpu, probeProgram, dispatchAtlases, runtimeTax,
+                proofExtent, c.eye, view, proj);
+        if (atlasTaxes.size() != dispatchAtlases.size()) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL dispatch atlas diagnostic result count "
+                "for %s: got=%zu expected=%zu\n",
+                c.name, atlasTaxes.size(), dispatchAtlases.size());
+            measurementWarnings = true;
+        }
+        for (const auto& atlasTax : atlasTaxes) {
+            printDispatchAtlasRuntimeTax(c.name, atlasTax);
+            if (!atlasTax.valid) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL dispatch atlas diagnostic invalid "
+                    "for %s min_run=%u entry_bins=%u slope_bins=%u "
+                    "route_width=%u\n",
+                    c.name,
+                    atlasTax.minRunCells,
+                    atlasTax.entryBins,
+                    atlasTax.slopeBins,
+                    atlasTax.routeWidth);
+                measurementWarnings = true;
+                continue;
+            }
+            if (atlasTax.perRayHitMismatches != 0u) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL dispatch atlas per-ray hit mismatch "
+                    "for %s min_run=%u entry_bins=%u slope_bins=%u "
+                    "route_width=%u mismatches=%llu\n",
+                    c.name,
+                    atlasTax.minRunCells,
+                    atlasTax.entryBins,
+                    atlasTax.slopeBins,
+                    atlasTax.routeWidth,
+                    static_cast<unsigned long long>(
+                        atlasTax.perRayHitMismatches));
+                measurementWarnings = true;
+            }
+            if (runtimeTax.valid &&
+                atlasTax.offSampleSteps != runtimeTax.offSampleSteps) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL dispatch atlas OFF baseline drift "
+                    "for %s min_run=%u entry_bins=%u slope_bins=%u "
+                    "route_width=%u atlas_off=%llu generic_off=%llu\n",
+                    c.name,
+                    atlasTax.minRunCells,
+                    atlasTax.entryBins,
+                    atlasTax.slopeBins,
+                    atlasTax.routeWidth,
+                    static_cast<unsigned long long>(
+                        atlasTax.offSampleSteps),
+                    static_cast<unsigned long long>(
+                        runtimeTax.offSampleSteps));
+                measurementWarnings = true;
+            }
+        }
+        printDispatchAtlasVerdict(c.name, runtimeTax, atlasTaxes);
 
         Arm off;
         Arm on;
