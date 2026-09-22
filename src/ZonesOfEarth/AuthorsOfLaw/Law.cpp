@@ -16,6 +16,7 @@
 #include <unordered_set>
 
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include "Person/Person.hpp"
 
 namespace {
@@ -375,6 +376,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
             return nullptr;
         });
     }
+
+    Singularity::Storage::readSingularProperties(
+        j, *law, [law](const std::string& id) -> Singular* {
+            if (id == law->getIdentifier()) return law.get();
+            for (Singular* being : Universe::instance().beings()) {
+                if (being && being->getIdentifier() == id) return being;
+            }
+            return nullptr;
+        });
     return law;
 }
 
@@ -664,6 +674,7 @@ nlohmann::json Law::toJson() const {
     // survive save/load.
     if (_conditionModel) j["conditionModel"] = _conditionModel->toJson();
     if (_actionModel) j["actionModel"] = _actionModel->toJson();
+    Singularity::Storage::writeSingularProperties(j, *this);
     return j;
 }
 
@@ -3436,6 +3447,26 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
             Law* law = find(it.key());
             if (!law || !law->isFirstMover()) continue;
             if (it.value().is_boolean()) law->setEnabled(it.value().get<bool>());
+        }
+    }
+
+    // Every authored Law now exists. Bind any property references that were
+    // preserve-first deferred because they named a Law appearing later in the
+    // file. The same resolver also reaches world beings through Universe.
+    const auto resolveLoadedBeing = [&](const std::string& id) -> Singular* {
+        if (Law* loadedLaw = find(id)) return loadedLaw;
+        return findBeing(id);
+    };
+    for (const auto& law : _laws) {
+        if (law) {
+            Singularity::Storage::resolveDeferredSingularProperties(
+                *law, resolveLoadedBeing);
+        }
+    }
+    for (Singular* being : Universe::instance().beings()) {
+        if (being) {
+            Singularity::Storage::resolveDeferredSingularProperties(
+                *being, resolveLoadedBeing);
         }
     }
 

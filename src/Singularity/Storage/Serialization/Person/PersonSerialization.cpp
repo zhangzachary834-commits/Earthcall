@@ -2,6 +2,7 @@
 
 #include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 nlohmann::json personToJson(const Person& person) {
     nlohmann::json j;
@@ -15,6 +16,22 @@ nlohmann::json personToJson(const Person& person) {
     j["position"] = {position.x, position.y, position.z};
     j["velocity"] = {velocity.x, velocity.y, velocity.z};
     j["body"] = bodyToJson(person.getBody());
+
+    Singularity::Storage::writeSingularProperties(j, person);
+
+    nlohmann::json soulSemantic = nlohmann::json::object();
+    Singularity::Storage::writeSingularProperties(soulSemantic, person.soul());
+    if (!soulSemantic.empty()) j["soulSemantic"] = std::move(soulSemantic);
+
+    nlohmann::json joysSemantic = nlohmann::json::object();
+    Singularity::Storage::writeSingularProperties(joysSemantic, person.joys());
+    if (!joysSemantic.empty()) j["joysSemantic"] = std::move(joysSemantic);
+
+    if (person.called()) {
+        nlohmann::json calledSemantic = nlohmann::json::object();
+        Singularity::Storage::writeSingularProperties(calledSemantic, *person.called());
+        if (!calledSemantic.empty()) j["calledLexemeSemantic"] = std::move(calledSemantic);
+    }
     return j;
 }
 
@@ -44,6 +61,18 @@ void personFromJson(const nlohmann::json& j, Person& person) {
     }
     if (j.contains("body")) {
         bodyFromJson(j["body"], person.getBody());
+    }
+
+    Singularity::Storage::readSingularProperties(j, person);
+    if (j.contains("soulSemantic")) {
+        Singularity::Storage::readSingularProperties(j["soulSemantic"], person.soul());
+    }
+    if (j.contains("joysSemantic")) {
+        Singularity::Storage::readSingularProperties(j["joysSemantic"], person.joys());
+    }
+    if (person.called() && j.contains("calledLexemeSemantic")) {
+        Singularity::Storage::readSingularProperties(
+            j["calledLexemeSemantic"], *person.called());
     }
 }
 
