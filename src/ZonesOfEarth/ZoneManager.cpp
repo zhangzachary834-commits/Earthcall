@@ -840,11 +840,6 @@ std::size_t liveObjectCount(const ZoneManager& mgr) {
     return n;
 }
 
-bool isObservationZone(const Zone& zone) {
-    const auto& q = zone.getQualities();
-    auto it = q.find("kind");
-    return it != q.end() && it->second == "test-observation";
-}
 
 // zoneIdFromJson now lives in ZoneSerialization.cpp/.hpp — the single
 // shared resolution makeZoneFromJson and every admission check here must
@@ -3142,4 +3137,10 @@ std::vector<uint8_t> ZoneManager::buildSaveChunkFlatBuffer() {
 
 void ZoneManager::loadSaveChunkFlatBuffer(const std::vector<uint8_t>& buffer) {
     applyMatterFlatBuffer(buffer);
+}
+
+bool isObservationZone(const Zone& zone) {
+    const auto& q = zone.getQualities();
+    auto it = q.find("kind");
+    return it != q.end() && it->second == "test-observation";
 }
