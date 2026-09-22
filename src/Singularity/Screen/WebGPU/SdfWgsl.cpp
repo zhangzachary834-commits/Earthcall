@@ -1758,7 +1758,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* chromaExpr,
                              const OntoMath::Piecewise* angularExpr,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
-                             const OntoMath::Piecewise* densityExpr) {
+                             const OntoMath::Piecewise* densityExpr,
+                             DensityInputKind densityKind) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1781,16 +1782,18 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     }
 
     std::string throwaway;
-    if (densityExpr && !densityExpr->pieces.empty()) {
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
         const std::string previousTimeExpression = e.timeExpression;
         e.timeExpression = "u.volumeTime.x";
         e.bindTime = true;
         emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
         e.bindTime = false;
         e.timeExpression = previousTimeExpression;
-    } else if (fieldNode && fieldNode->field) {
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
         // LEGACY ONLY: old callers may still project generic ScalarField
-        // mathematics as density. New V0 authorship must pass densityExpr.
+        // mathematics as density. Explicit None must never fall through here.
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
         } else {
@@ -1895,7 +1898,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* chromaExpr,
                 const OntoMath::Piecewise* angularExpr,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
-                const OntoMath::Piecewise* densityExpr) {
+                const OntoMath::Piecewise* densityExpr,
+                DensityInputKind densityKind) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1956,7 +1960,8 @@ Program compile(const geom::SdfNode& root,
     // Explicit volume.density.ast wins. The generic FieldNode scalar path below
     // is retained only as named legacy compatibility until saves migrate.
     prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
-    if (densityExpr && !densityExpr->pieces.empty()) {
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
         const std::string previousTimeExpression = e.timeExpression;
         e.timeExpression = "u.volumeTime.x";
         e.bindTime = true;
@@ -1964,7 +1969,8 @@ Program compile(const geom::SdfNode& root,
         emitPiecewise(*densityExpr, e, "p", "f32", prog.wgsl);
         e.bindTime = false;
         e.timeExpression = previousTimeExpression;
-    } else if (fieldNode && fieldNode->field) {
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             prog.wgsl += "    // LEGACY density projection from generic field.ast\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
