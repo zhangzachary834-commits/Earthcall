@@ -722,8 +722,17 @@ int main() {
               "dedicated volume shader samples the finished opaque depth texture");
         check(volumeBefore.wgsl.find("@builtin(frag_depth)") == std::string::npos,
               "participating-medium composite owns no opaque fragment depth");
-        check(volumeBefore.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
-              "dedicated volume shader reads the current medium's relative Timeline coordinate");
+
+        auto dedicatedTimeNode = std::make_shared<OntoMath::MathNode>();
+        dedicatedTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        dedicatedTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise dedicatedTimedDensity =
+            OntoMath::Piecewise::continuous(dedicatedTimeNode);
+        const auto timedVolume = sdfwgsl::compileVolume(&dedicatedTimedDensity);
+        check(timedVolume.ok &&
+                  timedVolume.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "dedicated D(p,t) volume shader reads the current medium's relative Timeline coordinate");
+
         check(volumeBefore.wgsl.find("worldP - inst.origin.xyz") != std::string::npos,
               "D(p,t) receives FieldNode-local offset coordinates");
         check(volumeBefore.wgsl.find("opaqueT") != std::string::npos &&
@@ -747,6 +756,89 @@ int main() {
         check(!refusedVolume.ok &&
                   refusedVolume.error.find("Raycast") != std::string::npos,
               "dedicated volume shader refuses unsupported density math with no stale fallback");
+    }
+
+    // 9. Rung 8: visibility is derived transport below source authorship.
+    //    The shader must expose an exact V=1 compatibility gate and multiply
+    //    each source's direct radiance AFTER rho*chi*alpha composition.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto rho0Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto rho1Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        OntoMath::Piecewise rho0 = OntoMath::Piecewise::continuous(rho0Node);
+        OntoMath::Piecewise rho1 = OntoMath::Piecewise::continuous(rho1Node);
+
+        const auto oneSource = sdfwgsl::compile(sphere, nullptr, nullptr, &rho0);
+        check(oneSource.ok &&
+                  oneSource.wgsl.find("fn sourceVisibility") != std::string::npos,
+              "Rung-8 shader exposes derived geometric visibility transport");
+        check(oneSource.wgsl.find("u.lightControl.y < 0.5") != std::string::npos &&
+                  oneSource.wgsl.find("return 1.0") != std::string::npos,
+              "visibility-disabled compatibility path is explicit V=1");
+        check(oneSource.wgsl.find(
+                  "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
+              "one-source direct transport multiplies visibility after authored emission");
+
+        Rendering::RadianceSourceBinding s0;
+        s0.radianceExpr = &rho0;
+        Rendering::RadianceSourceBinding s1;
+        s1.radianceExpr = &rho1;
+        std::vector<Rendering::RadianceSourceBinding> sources{s0, s1};
+        const auto multiSource =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(multiSource.ok &&
+                  multiSource.wgsl.find(
+                      "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
+              "each composed source derives visibility from its own source-receiver path");
+        check(multiSource.wgsl.find(
+                  "diff * directRadiance") != std::string::npos &&
+                  multiSource.wgsl.find(
+                      "specShape * directRadiance") != std::string::npos,
+              "multi-source diffuse/specular transport consumes per-source visibility");
+        check(multiSource.wgsl.find(
+                  "ambientTerm += inst.shading.x") != std::string::npos,
+              "legacy ambient compatibility remains outside direct-path visibility");
+    }
+
+    // Prism integration: V_transport and D_medium coexist without semantic aliasing.
+    // The combined shader may contain both sourceVisibility() and volumeDensityEval(),
+    // but visibility is a geometry query; participating-medium D is not promoted
+    // into a binary opaque blocker merely because both are transport phenomena.
+    {
+        auto bridgeSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto bridgeRhoNode =
+            std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto bridgeDensityNode =
+            std::shared_ptr<OntoMath::MathNode>(number(0.3).release());
+        OntoMath::Piecewise bridgeRho =
+            OntoMath::Piecewise::continuous(bridgeRhoNode);
+        OntoMath::Piecewise bridgeDensity =
+            OntoMath::Piecewise::continuous(bridgeDensityNode);
+
+        const auto bridge = sdfwgsl::compile(
+            bridgeSphere, nullptr, nullptr, &bridgeRho, nullptr, nullptr, nullptr,
+            &bridgeDensity, sdfwgsl::DensityInputKind::Authored);
+        check(bridge.ok &&
+                  bridge.wgsl.find("fn sourceVisibility") != std::string::npos &&
+                  bridge.wgsl.find("fn volumeDensityEval") != std::string::npos &&
+                  bridge.wgsl.find(
+                      "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
+              "combined V+D shader preserves distinct visibility and density channels");
+
+        const auto visibilityStart = bridge.wgsl.find("fn sourceVisibility");
+        const auto visibilityEnd =
+            visibilityStart == std::string::npos
+                ? std::string::npos
+                : bridge.wgsl.find("@fragment", visibilityStart);
+        const bool visibilityIsGeometryOnly =
+            visibilityStart != std::string::npos &&
+            visibilityEnd != std::string::npos &&
+            bridge.wgsl.substr(visibilityStart, visibilityEnd - visibilityStart)
+                    .find("volumeDensityEval") == std::string::npos;
+        check(visibilityIsGeometryOnly,
+              "Rung-8 V does not reinterpret participating-medium D as opaque geometry");
     }
 
     if (failures) {
