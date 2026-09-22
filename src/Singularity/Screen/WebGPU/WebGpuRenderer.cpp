@@ -1467,14 +1467,25 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    // Upload/traverse the proof grid only when it contains at least one
-    // positive-outside theorem. Zero-bit cells are exact-march fallback space.
+    // Upload the positive-proof grid when at least one independently verified
+    // consumer can use it. rangeTraversalEnabled is an admission MASK:
+    //   bit 0 (1u): primary-ray traversal
+    //   bit 1 (2u): Rung-8 source->receiver visibility traversal
+    //
+    // The primary distance-field marcher remains quarantined because proof jumps
+    // perturb its over-relaxed sample history. Visibility uses a monotone
+    // secondary march with no such history, so it may consume the same theorem
+    // independently. A clear proof bit is still exact-march fallback space.
     // FieldNode draws remain excluded because zero-set emptiness says nothing
-    // about volumetric density.
-    const bool rangeTraversalMarcherVerified =
+    // about participating-medium density.
+    const bool primaryRangeTraversalVerified =
         prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
+    const bool visibilityRangeTraversalVerified = radianceVisibilityEnabled();
+    const uint32_t rangeTraversalMask =
+        (primaryRangeTraversalVerified ? 1u : 0u) |
+        (visibilityRangeTraversalVerified ? 2u : 0u);
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
-        rangeTraversalMarcherVerified &&
+        rangeTraversalMask != 0u &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
         !memo->rangeProofWords.empty()) {
         auto& rangeBatch = _sdfRangeNodeBatches[sp];
@@ -1486,7 +1497,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         if (base <= u32Max && count <= u32Max && base + count <= u32Max) {
             inst.rangeProofWordOffset = static_cast<uint32_t>(base);
             inst.rangeProofWordCount = static_cast<uint32_t>(count);
-            inst.rangeTraversalEnabled = 1u;
+            inst.rangeTraversalEnabled = rangeTraversalMask;
             inst.rangeProofDepth = kSdfRangeGpuProofDepth;
             rangeBatch.insert(rangeBatch.end(),
                               memo->rangeProofWords.begin(),
