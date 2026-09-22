@@ -2153,8 +2153,10 @@ void WebGpuRenderer::flushVolumeComposite() {
     for (const auto& medium : volumeDensitySources()) {
         if (!medium.densityExpr || medium.densityExpr->pieces.empty()) continue;
 
-        const glm::vec3 span = glm::abs(medium.scale);
-        const glm::vec3 halfExtent = 0.5f * span;
+        // FieldNode's existing spatial convention is origin ± scale (the
+        // particle modality samples local [-1,+1] and multiplies by scale).
+        // Do not reinterpret this shared authored property as a full span.
+        const glm::vec3 halfExtent = glm::abs(medium.scale);
         if (halfExtent.x <= 1e-6f || halfExtent.y <= 1e-6f || halfExtent.z <= 1e-6f) {
             continue;
         }
