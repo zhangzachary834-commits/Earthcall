@@ -1006,7 +1006,7 @@ struct SdfGlobalUniforms {
     glm::vec4 lightAmbient;
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
-    glm::vec4 lightControl; // x = lighting enabled (0 or 1)
+    glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
     glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
@@ -1935,7 +1935,9 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
-    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
+                               radianceVisibilityEnabled() ? 1.0f : 0.0f,
+                               0.0f, 0.0f);
     u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
@@ -2170,15 +2172,11 @@ void WebGpuRenderer::flushVolumeComposite() {
                 memo.ok = false;
                 memo.error = layout.error;
                 memo.pipeline = nullptr;
-                ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal = memo.error;
                 continue;
             }
 
             if (!memo.ok || memo.structure != layout.structure || !memo.pipeline) {
                 memo.prog = sdfwgsl::compileVolume(medium.densityExpr);
-                ++mutableFrameStats().volumeProgramCompiles;
-                mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = layout.structure;
                 memo.ok = memo.prog.ok;
                 memo.error = memo.prog.error;
@@ -2190,18 +2188,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
             }
-        } else {
-            ++mutableFrameStats().volumeProgramCacheHits;
         }
 
         // Refusal never falls back to stale compiled density.
-        if (!memo.ok || !memo.pipeline) {
-            if (!memo.error.empty()) {
-                ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal = memo.error;
-            }
-            continue;
-        }
+        if (!memo.ok || !memo.pipeline) continue;
 
         auto& instances = _volumeBatches[memo.pipeline];
         auto& params = _volumeParamBatches[memo.pipeline];
