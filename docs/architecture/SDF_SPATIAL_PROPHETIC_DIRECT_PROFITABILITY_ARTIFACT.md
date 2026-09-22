@@ -76,7 +76,7 @@ If the diagnostic cannot improve consultation economics by at least an order of 
 
 ## PR #301 empirical verdict
 
-The first candidate has now been run on the same maintained authored-Perlin witness in CI run **35668839695**, commit **11ce8ca293ca6d532d9c4c9a07fa648f57c65635**. All focused jobs passed, including zero direct-vs-OFF per-ray hit mismatches and zero recurring proof uploads.
+The first candidate has now been run on the same maintained authored-Perlin witness. All focused jobs passed, including zero direct-vs-OFF per-ray hit mismatches and zero recurring proof uploads.
 
 That means the experiment is **correct enough to judge**. It does not mean the representation is profitable.
 
@@ -90,7 +90,7 @@ Generic baseline:
 - 144 exact sample steps saved;
 - 0.001721 samples saved per consultation.
 
-Most favorable headline direct candidate (\`z\`, minimum run 1):
+Most favorable headline direct candidate (`z`, minimum run 1):
 
 - 16,015 artifact queries;
 - 144,135 individual run-record tests;
@@ -98,7 +98,7 @@ Most favorable headline direct candidate (\`z\`, minimum run 1):
 - 0.008679 samples saved per artifact query, about **5.04x** the generic baseline;
 - 0.000964 samples saved per record test, only about **0.56x** the generic baseline.
 
-Best candidate when **both** query economics and record-discovery economics are charged (\`x\`, minimum run 2):
+Best candidate when **both** query economics and record-discovery economics are charged (`x`, minimum run 2):
 
 - 1 retained record / 48 bytes;
 - 16,014 artifact queries;
@@ -115,7 +115,7 @@ Generic baseline:
 - 157 exact sample steps saved;
 - 0.002102 samples saved per consultation.
 
-Most favorable headline direct candidate (\`z\`, minimum run 1):
+Most favorable headline direct candidate (`z`, minimum run 1):
 
 - 15,924 artifact queries;
 - 143,316 individual run-record tests;
@@ -123,7 +123,7 @@ Most favorable headline direct candidate (\`z\`, minimum run 1):
 - 0.011492 samples saved per artifact query, about **5.47x** the generic baseline;
 - 0.001277 samples saved per record test, only about **0.61x** the generic baseline.
 
-Best candidate when both costs are charged (\`x\`, minimum run 2):
+Best candidate when both costs are charged (`x`, minimum run 2):
 
 - 1 retained record / 48 bytes;
 - 15,874 artifact queries;
@@ -142,23 +142,19 @@ Do not mutate the production renderer to consume these run records.
 
 Retain the diagnostic because it is now a reusable falsification harness for the next direct artifact.
 
-The next rung must move upward in directness: runtime needs a stable dispatch key that selects only the already-proved relevant consequence set, with no scan over the global possibility set. A candidate such as an AOT conservative ray-route dispatch atlas may be explored test-only, but it must prove its own discovery cost and must not become a disguised DDA, tree walk, or per-frame rebuild.
-
-The governing requirement is now sharper:
+The governing requirement is:
 
 > A direct road is not "a smaller structure to search." It is a precompiled answer to which structure matters.
 
 ## Incremental repair is a hard architectural constraint
 
-The direct artifact is derived state, not a second source of truth.
-
-Ordinary frames do not rebuild it.
+The direct artifact is derived state, not a second source of truth. Ordinary frames do not rebuild it.
 
 When a relevant semantic edit invalidates proof cells, repair must operate on the dependency frontier:
 
 1. determine affected proof regions from Prophetic dependencies;
 2. recompute only those theorem regions;
-3. identify direct run records whose provenance overlaps the changed regions;
+3. identify direct records whose provenance overlaps the changed regions;
 4. delete/split/extend/rebuild only those records;
 5. preserve all unaffected proof nodes, proof cells, direct records, and GPU-resident state.
 
@@ -168,121 +164,53 @@ A whole-grid rebuild may remain a temporary bootstrap/fallback implementation, b
 
 Failure to find a profitable direct record means **fall open to the exact baseline marcher**. Absence of a direct artifact is never proof of emptiness. Only the existing positive theorem can authorize skipping authored evaluation.
 
-## Falsification criteria
+## Direct-dispatch ceiling and stable route keys
 
-Reject this run artifact if any of the following occurs:
+The useful-skip counts expose an important distinction that aggregate artifact-query counts hid. The retained positive theorem still contains useful work. If an ideal AOT dispatcher could ask the direct artifact **only on rays for which a proved interval is actually relevant**, the upper-bound economics of the same authority are thousands of times better than generic consultation economics.
 
-- a per-ray hit mismatch;
-- consultation count remains of the same order as the regular bitmap;
-- saved authored evaluations remain negligible relative to consultations;
-- the representation requires per-frame rebuild/upload;
-- correctness depends on treating clear/unknown space as empty;
-- the representation becomes another generic hierarchy whose interpretation recreates the tax #298 measured.
-
-If rejected, retain the measurement and move upward in directness rather than sideways into another lookup structure.
-
-## Next rung after the run-scan falsification: direct-dispatch ceiling and stable route keys
-
-CI #2335 sharpened the #2228 verdict after the branch was synchronized with current main. The useful-skip counts expose an important distinction that aggregate artifact-query counts hid:
-
-- horizon, Z/min-run-1: 16,015 artifact queries, 21 useful skip calls, 139 exact samples saved;
-- 45 degrees, Z/min-run-1: 15,924 artifact queries, 83 useful skip calls, 183 exact samples saved.
-
-Therefore the retained positive theorem still contains useful work. If an ideal AOT dispatcher could ask the direct artifact **only on rays for which a proved interval is actually relevant**, the upper-bound economics of this same authority would be about 6.62 exact samples saved per useful horizon dispatch and 2.20 per useful 45-degree dispatch. The failure is not merely that each query scans records. The larger tax is that almost every ray asks a question whose answer is "nothing relevant."
-
-This changes the next experiment. Do not build another container for the same global run set. Measure whether a **stable direct dispatch key** can suppress irrelevant queries before any theorem/run interpretation occurs.
-
-### Candidate shape: conservative ray-route dispatch atlas
-
-The next test-only candidate may compile a small dispatch atlas from the existing positive theorem. It is not a DDA and must not march a grid at runtime.
-
-A runtime key should be computable in bounded arithmetic from stable ray facts such as:
-
-- SDF-instance entry face / conservative entry region;
-- a coarse quantization of entry coordinates on that face;
-- a coarse direction class.
-
-The key maps directly to a precompiled consequence set: zero or a very small number of proof-authorized intervals. Runtime must not scan the global run set, walk a tree, step cell-by-cell, or search neighboring keys.
-
-The atlas is derived state. The positive theorem remains authority. An empty/missing atlas entry means exact fallback, never proof of emptiness.
-
-### Why this experiment is different from the rejected directions
-
-The purpose is not to approximate distance, tighten raster bounds, add proof density, or traverse spatial cells faster. It is to test whether the expensive relevance relation
-
-`ray class -> proof intervals that can matter`
-
-can itself be crystallized ahead of time, as Formation-Rete Direct crystallizes event/law relevance.
-
-The diagnostic must charge all costs honestly:
-
-- dispatch-key computations;
-- atlas lookups;
-- consequence records fetched/tested after lookup;
-- useful proof-authorized skips;
-- exact authored sample steps saved versus OFF;
-- bytes per atlas and per dependency frontier;
-- zero per-ray hit mismatches.
-
-A key that returns a bucket requiring a broad scan is a failure, even if the top-level lookup is O(1).
+That motivated a test-only stable route key from SDF-instance entry face, quantized entry coordinates, and octahedral direction class. A route key maps directly to a precompiled consequence set; runtime does not walk a grid, tree, neighboring keys, or global run set.
 
 ### Camera independence is a graduation requirement
 
-A per-frame or per-camera ray table can be useful only as an **oracle ceiling diagnostic**. It cannot graduate to production because moving the camera would turn AOT proof into recurring frame work.
+The first census had a material measurement leak: its key was camera-independent, but its route buckets were populated from the same camera rays later used to score them. Those numbers are retained only as an optimistic oracle ceiling.
 
-The production-shaped artifact must be compiled from proof plus stable route classes and remain resident across ordinary camera motion. Camera rays select an existing route; they do not rebuild routes.
+The corrected census compiles buckets before scoring camera rays, using only theorem-authorized positive-run consequences, entry-face/entry-cell route classes, octahedral direction classes, and a fixed object-local compiler probe basis. Camera rays then select already-compiled routes and score them. They never populate the atlas.
 
-### Incremental repair
+The corrected major gate therefore requires both `camera_independent_key=1` and `camera_independent_atlas=1`.
 
-Each atlas entry must carry or be reversibly associated with proof provenance. A semantic change repairs only entries whose consequence sets overlap the invalidated proof dependency frontier. Unaffected atlas entries and GPU-resident state remain untouched.
+## Corrected major-gate verdict: stable geometric route atlas rejected
 
-### Decision sequence
+Focused CI run **#2464** on commit `dbca59738d62ad94e0f2b7ab938b6ef94e43e499` passed all four jobs. The authored-Perlin witness preserved zero per-ray hit mismatches for every direct-run candidate. The corrected camera-independent atlas nevertheless fails the graduation requirement.
 
-1. Use the existing useful-skip counts as the zero-discovery oracle ceiling.
-2. Implement the smallest test-only stable-key atlas capable of approaching that ceiling.
-3. Reject it if irrelevant dispatches remain of the same order as total rays, or if hidden consequence tests recreate global search.
-4. Only after zero hit mismatches and dramatically improved exact-evaluation economics should a separate production A/B be considered.
+Horizon is decisive. The maintained camera contains 22 rays with theorem-authorized useful positive runs. At entry-side 2 / direction-side 32, the atlas captures only 7/22 useful rays (31.8%), while requiring 24,576 route slots, 3,752 resident consequence records, about 212 KB of estimated state, and 0.226562 consequence tests per ray. Every other tested entry/direction combination captures 0/22 horizon useful rays, including entry-side 8 / direction-side 32, whose 393,216 route slots cost about 3.25 MB.
 
-The governing question is no longer "how cheaply can runtime search proof?" It is:
+The 45-degree camera shows that the representation can sometimes approximate relevance but does not converge robustly. Entry-side 8 / direction-side 4 captures 81/84 useful rays (96.4%) at 0.021562 consequence tests/ray and about 51 KB. Refining direction to side 8 preserves the same 81/84 capture while growing to about 204 KB. Side 16 still captures 81/84 but worsens to 0.030187 tests/ray and about 814 KB; side 32 still captures 81/84 while worsening to 0.038250 tests/ray and about 3.25 MB.
 
-> **Can AOT Prophetic derivation compile enough ray relevance that runtime mostly never asks irrelevant proof questions at all?**
+This is the promised falsification condition: finer geometric classification increases resident state and can increase runtime consequence work without recovering the missing relevance relation. Therefore **entry-face + entry-cell + quantized direction is rejected as a production direct-dispatch family**. Do not build the GPU atlas marcher for this representation. Do not reinterpret the failure as permission to add neighboring-key search, a DDA, a tree, or another spatial lookup layer.
 
+The oracle result remains important: the theorem's useful consequences are profitable when relevance is already known. What failed is reconstructing relevance externally from coarse ray geometry.
 
-## Major-gate direction-discrimination sweep
+## Next architectural rung: synthesized scene-spatial execution DAG
 
-CI #2441 established that the first stable route key family is not uniformly weak. On the 45-degree camera, entry-side 8 / direction-side 8 captured all useful rays with only 0.018 consequence tests per ray, while horizon remained at 0.236437 tests per ray. Increasing entry resolution alone did not improve the horizon result; increasing direction discrimination from side 4 to side 8 did.
+The next research direction should move the relevance relation into the compiled spatial program itself rather than invent another external proof lookup structure.
 
-The next falsification step therefore changes only the implicated variable. The test-only census now preserves the original entry-side {2,4,8} x direction-side {2,4,8} matrix and adds direction-side {16,32} at each entry resolution.
+The hypothesis is:
 
-This is the major gate before a GPU atlas exists.
+> Compile the collective authored spatial semantics into an incrementally repairable execution/dependency DAG, and attach Prophetic consequences to the exact compiled branches from which those consequences are derived.
 
-Graduation requires all of the following:
+This must **not** mean evaluating every SDF in one giant loop. The intended synthesis performs shared-expression elimination and relevance compilation so a runtime point/ray touches only surviving relevant branches. SDFs remain exact field kernels; meshes or other geometry may expose different exact kernels behind a common spatial-program contract rather than being forcibly converted to SDFs.
 
-- 100% capture of theorem-authorized useful rays on the maintained cameras;
-- a sharp continued reduction in false-positive routes and consequence tests, especially at horizon;
-- no broad bucket whose hidden consequence scan recreates the generic discovery tax;
-- resident artifact size that remains plausible for AOT derived state;
-- the same camera-independent key construction: entry face/region plus object-local direction class;
-- no runtime grid walk, hierarchy walk, neighboring-key search, or per-camera rebuild.
+A future test-only prototype should establish the following before production mutation:
 
-If direction refinement plateaus while horizon still requires many irrelevant consequence tests, reject this stable-route key family. If it continues toward the oracle ceiling with bounded direct lookup, the next rung is a separate test-only GPU marcher consuming the stable atlas and comparing exact direct vs OFF sample steps with zero per-ray hit mismatches.
+1. represent a small authored scene as a canonical spatial expression/dependency DAG;
+2. preserve exact generated-WGSL semantics for each leaf/kernel;
+3. deduplicate shared transforms/OntoMath subexpressions where semantics permit;
+4. associate each compiled branch with conservative support and proof provenance;
+5. attach positive Prophetic consequences to the branch that derives/owns them, rather than discovering them through an external runtime search;
+6. instrument exact leaf evaluations, branch visits, proof-authorized skips, and fallback work against the current OFF marcher;
+7. demonstrate zero hit mismatches;
+8. demonstrate that an edit invalidates and recompiles only the affected dependency frontier while unaffected compiled nodes and resident state remain stable.
 
-No production renderer or production WGSL change is authorized by this sweep itself.
+The critical falsification test is whether this synthesis actually removes repeated relevance discovery. A DAG that merely evaluates all leaves, or whose branch selection recreates a generic spatial search, fails even if it is structurally elegant.
 
-
-### Measurement correction: atlas population must also be camera-independent
-
-The first stable-route census had a subtle but material leakage: the route key was object-local and camera-independent, but route buckets were populated from the same maintained camera rays later used to score them. That makes the initial #2441 atlas numbers useful as an optimistic routing ceiling, not sufficient evidence for an AOT production-shaped atlas.
-
-The corrected census compiles buckets before scoring camera rays. It uses only:
-
-- theorem-authorized positive-run consequences;
-- entry-face/entry-cell route classes;
-- octahedral direction classes;
-- a fixed object-local compiler probe basis.
-
-The maintained camera rays then select already-compiled routes and score capture, false positives, and consequence tests. They do not add consequences to the atlas.
-
-The compiler probe basis may under-approximate relevance. That is safe for this optimization because a missing route consequence only loses an optional skip and falls back to the exact marcher. Every retained consequence still carries positive-proof authority, and an actual runtime ray must intersect the retained proved interval before a skip could be authorized.
-
-Accordingly, the corrected major gate requires both `camera_independent_key=1` and `camera_independent_atlas=1`. The #2441 numbers should not by themselves authorize a GPU implementation.
+No production renderer/WGSL change is authorized by #301. The next rung should begin as a separate test/architecture witness after #301 is synchronized with base and merged as the permanent record of the rejected run-scan and geometric-route families.
