@@ -557,6 +557,7 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 ## Prism Cathedral — Full Ascension of Authored Light through Rung 8 & Parallel Substrates (added 2026-09-22)
 
 *Created by GPT-5.6 Sol (The Sun) & Gemini Spark · 2026-09-22.*
+*Pass 2: Complex-Shaped Mathematical Light Fields & Volumetric Media.*
 *Zone identity: `saves/zones/Prism Cathedral/zone.json`.*
 *Generator / patch script: `scripts/generate_prism_cathedral.py`.*
 *Verification test: `tests/zones/prism_cathedral_validation.py`.*
@@ -567,28 +568,49 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
   Inspect the Altar of First Light and witness sphere. Confirm illumination obeys stored `AuthorableLight` properties on the persistent `FieldNode` rather than hardcoded shader constants.
 - [ ] **Walk to Station 2 (Z = 75): Foundation 2 / Phase 2 — Authored Spatial Radiance rho(p):**
   Inspect the 5 distinct mathematical exhibits across X: inverse-distance falloff, asymmetric linear ramp, harmonic ripples, bipolar lobes, and nested halo shells. Confirm each displays a distinct spatial light envelope.
-- [ ] **Walk to Station 3 (Z = 110): Rung 3 — Truthful Live Visual Consequence:**
-  Inspect the Near witness (d=3) and Far witness (d=9) sharing identical geometry and material; confirm the Near sphere visibly glows significantly brighter than the Far sphere.
+- [ ] **Walk to Station 3 (Z = 110): Rung 3 — Spatial Radiance Has Complex Shape:**
+  - [ ] Inspect the **Hollow Luminous Shell** at $X = -8$: confirm the source emits strongly in a spherical shell while its core is hollow.
+  - [ ] Inspect the **Near vs Far Witnesses** at $X = 0$: Near sphere ($d=3$) visibly glows significantly brighter than Far sphere ($d=9$).
+  - [ ] Inspect the **Toroidal Luminous Ring** at $X = +8$: confirm radiance radiates from a donut ring in the XZ plane with zero emission at the center hole.
   - [ ] **Step West into Parallel Wing C (X = -45 to -65, Z = 110):** Inspect the Live Authoring Laboratory comparing Value edits (parameter refresh), Structural edits (WGSL recompile), and Runtime Time (0 AST edits).
   - [ ] **Step East into Parallel Wing D (X = 45 to 65, Z = 110):** Inspect the Compatibility & Refusal monument, showing how legacy light survives via identity (`alpha=1`, `V=1`) and unsupported math refuses cleanly.
-- [ ] **Walk to Station 4 (Z = 145): Rung 4 — Relative Time rho(p,t):**
-  Observe the central breathing luminous heart, traveling wave, and oscillating lobes pulsating smoothly as the source Timeline advances, with zero AST mutations and zero recompiles.
-- [ ] **Walk to Station 5 (Z = 180): Rung 5 — Independent Source Chroma chi(p,t):**
-  Observe how scalar intensity rho remains completely steady while source chroma chi(p,t) paints space with crimson/cyan hemispheres, traveling spectral waves, and celestial aurora plasma.
+- [ ] **Walk to Station 4 (Z = 145): Rung 4 — Animated Shapes via Relative Time rho(p,t):**
+  Observe the **Breathing Shell Radius** ($R(t) = 2.8 + 1.2\sin(1.6t)$), the central **Breathing Luminous Heart** with traveling wave, and the **Rotating Quadrant Lobes** pulsating and rotating smoothly as the source Timeline advances, with zero AST mutations and zero recompiles.
+- [ ] **Walk to Station 5 (Z = 180): Rung 5 — Chroma Following Complex Spatial Structure:**
+  - [ ] Inspect the **Bipolar North/South Chroma** at $X = -8$: upper hemisphere emits warm gold while lower hemisphere emits cyan azure.
+  - [ ] Inspect the **Spectral Traveling Wave** at $X = 0$: phase-shifted RGB waves sweep through space.
+  - [ ] Inspect the **Concentric Shells Chroma** at $X = +8$: emerald core transitioning into an amethyst outer shell, proving `rho shape != chi shape`.
   - [ ] **Step West into Parallel Wing A (X = -45 to -70, Z = 180):** Inspect authored SDF surface color fields (`Material::colorExpr` / `sdfColor(p)`). Crucially, inspect the **Paired Proof**: blue light on white surface vs white light on blue surface vs red light on blue surface (absorbs to dark!), proving `surface appearance != source chroma`.
-- [ ] **Walk to Station 6 (Z = 215): Rung 6 — Authored Angular Emission alpha(p,omega,t):**
-  Inspect the Equidistant Witness Pair: two spheres at the exact same radial distance (d=7.0), one brilliantly illuminated by the directed spotlight beam, the other resting in darkness. Observe the rotating lighthouse beam sweeping across space without recompiling.
-- [ ] **Walk to Station 7 (Z = 250): Rung 7 — Multiple Independent Sources:**
-  Observe the Choir of Light: three coexisting sources (Golden Hearth, Sapphire Lantern, Amethyst Pulsar) blending additively upon the central altar (`E_total = Σ E_i`).
-- [ ] **Walk to Station 8 (Z = 285): Rung 8 — Derived Visibility / Shadows:**
-  - [ ] Exhibit A: Inspect the floating obsidian occluder casting a sharp shadow onto the receiver plinth.
-  - [ ] Exhibit B: Inspect the selective blocker on the red source path: the receiver visibly glows pure blue from the unblocked sapphire source, proving independent path transport (`direct = E * V`).
-  - [ ] Step East into **Parallel Wing B (X = 45 to 80, Z = 285): Volumetric V0: Density Sovereignty:**
-    - Observe the freestanding nebular cloud in open space (`volume.density.ast`) with NO light source, proving no implicit radiant fog.
-    - Observe the Dual Sovereign Being, proving `rho_source != D_medium` on the same entity.
-    - Observe the opaque pillar inside/behind the medium truncating the volume integral cleanly on opaque scene depth.
+- [ ] **Walk to Station 6 (Z = 215): Rung 6 — Angular Emission on Complex Spatial Forms:**
+  - [ ] Observe the **Outward Radial Ring Emission**: the toroidal source emits predominantly outward from the ring plane.
+  - [ ] Inspect the **Equidistant Witness Pair**: two spheres at the exact same radial distance ($d=7.0$), one brilliantly illuminated by the directed spotlight beam, the other resting in darkness. Observe the rotating lighthouse beam sweeping across space without recompiling.
+- [ ] **Walk to Station 7 (Z = 250): Rung 7 — Four Independent Sources of Dramatically Different Shape:**
+  Observe the Choir of Light: four coexisting sources with independent mathematical shapes:
+  1. *Source A:* Spherical Luminous Shell
+  2. *Source B:* Sapphire Toroidal Ring Field ($R=2.5, r=0.8$)
+  3. *Source C:* Amethyst Organic Noise-Warped Lobed Pulsar
+  4. *Source D:* Emerald Narrow Vertical Pillar Filament ($r=0.6, h=3.5$)
+  Confirm all four blend additively upon the central altar (`E_total = Σ E_i`).
+- [ ] **Walk to Station 8 (Z = 285): Rung 8 — Visibility Against Complex Source Fields:**
+  - [ ] Inspect the floating obsidian occluder casting a sharp geometric shadow across the receiving plinth.
+  - [ ] Inspect the selective blocker on the emerald filament path: the dual-path receiver glows pure blue from the unblocked sapphire toroidal source, proving independent path transport (`direct = E * V`).
+- [ ] **Step East into Parallel Wing B (X = 40 to 105, Z = 285): Volumetric V0: Density Sovereignty Gallery:**
+  Witness the full gallery of 8 non-box participating media:
+  - [ ] **Exhibit B1 (X = 45):** Soft Spherical Cloud ($R=2.2$, zero outside).
+  - [ ] **Exhibit B2 (X = 55):** Hollow Shell Nebular Membrane ($R=2.6$, thickness $0.6$; completely hollow core and empty exterior).
+  - [ ] **Exhibit B3 (X = 65):** Toroidal Donut Fog Ring ($R=2.4, r=0.6$; empty center hole).
+  - [ ] **Exhibit B4 (X = 75):** CSG-Subtracted Crescent Cloud (Base sphere minus carved spherical hole cavity).
+  - [ ] **Exhibit B5 (X = 85):** Noise-Warped Organic Cloud (Wispy, undulating cumulus puff with bounded envelope).
+  - [ ] **Exhibit B6 (X = 95):** Time-Breathing Hollow Nebula ($R(t) = 2.4 + 0.8\sin(1.8t)$ expanding/contracting dynamically in open space).
+  - [ ] **Exhibit B7 (X = 65, Z = 268): PROOF THE PROXY IS NOT THE SHAPE:**
+    A **colossal $20 \times 8 \times 20$ meter rectangular proxy box** containing only a **tiny slender donut ring ($R=1.8, r=0.4$)**. Confirm that over 95% of the AABB is completely clear space with zero density; only the slender ring is visible, proving implementation bounding boxes do NOT dictate visible medium shape!
+  - [ ] **Exhibit B8 (X = 65, Z = 302):** Dual Sovereign Being ($\rho_{\text{source}} \neq D_{\text{medium}}$) + Opaque Depth Truncation Pillar.
 - [ ] **Ascend to The Summit: THE PRISM (Z = 330 to 380):**
-  Enter the soaring rotunda. Stand before the Colossal Crystal Prism on the High Altar of Synthesis. Observe the full synthesis: multiple elevated radiant suns (Sol Primus, Secundus, Tertius), directional beams, celestial volumetric atmosphere, authored surface colors, and geometric shadows coexisting without any single invariant pretending to be another.
+  Enter the soaring rotunda. Stand before the Colossal Crystal Prism on the High Altar of Synthesis:
+  - Observe three elevated radiant suns of distinct mathematical shape: Sol Primus (concentric breathing shells), Sol Secundus (sapphire toroidal ring beam), and Sol Tertius (amethyst noise-lobed pulsar).
+  - Observe the **Toroidal Fog Medium Ring** ($R=5.0, r=1.0$) encircling the Colossal Crystal Prism.
+  - Observe the celestial rotunda atmosphere softly filling the sanctuary and truncating against the altar and crystal prism.
+  - Confirm all substrates coexist in complete mathematical unity: $\rho_{\text{source}} \neq V_{\text{transport}} \neq D_{\text{medium}} \neq \text{sdfColor}(p)$.
 
 
 ## Clawd's Monastery and other zones that may be collapsed at the origin (added 2026-09-22)
@@ -598,3 +620,6 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] Fresh-launch Earthcall and enter **Clawd's Monastery**. Confirm what the file says: the four pillars, altar, orbits, crown gem, halo, and `clawd-was-here` overlap at one point, with the floor and foundation about 8 units away. If they are spread out instead, positions are coming from somewhere the file scan missed. Please note where.
 - [ ] Enter **Cavern of Light** and **Ourverse Gathering**. Every object translation in their `zone.json` is the origin. Say whether they look collapsed or correctly laid out.
 - [ ] If you still have Claude Desktop's Sept 9 conversation with Clawd, check whether its `earthcall_spawn_object` calls (with positions) are still visible. They are the only surviving record of the Monastery's intended layout.
+
+
+BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW 
