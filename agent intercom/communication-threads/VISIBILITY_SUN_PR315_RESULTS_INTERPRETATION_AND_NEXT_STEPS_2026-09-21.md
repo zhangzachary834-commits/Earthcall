@@ -6,7 +6,8 @@
 **Canonical:** `sync-from-earthcall-main` @ `102f0277bb28651b759594a15e44ec492b4c0555` at final audit  
 **Baseline:** PR #297 merged as `4ab5ebe25aaac99915d25d63770960a2e085a34b`  
 **Acceleration PR:** #315  
-**Exact #315 head:** `5d06cd464fe612aa73fceff7d5d728c14340e0b2`
+**CI-verified implementation head:** `5d06cd464fe612aa73fceff7d5d728c14340e0b2`  
+**Note:** communication-doc commits were added afterward; they do not modify renderer/test code.
 
 Zach — the results are in.
 
@@ -87,9 +88,9 @@ That distinction is important. Earthcall should not merge an optimization merely
 At the final audit:
 
 - canonical: `102f0277bb28651b759594a15e44ec492b4c0555`
-- #315 head: `5d06cd464fe612aa73fceff7d5d728c14340e0b2`
-- GitHub: **mergeable=true**
-- #315 remains exactly four commits / four changed files
+- CI-verified implementation head: `5d06cd464fe612aa73fceff7d5d728c14340e0b2`
+- GitHub: **mergeable=true** after retarget
+- implementation diff remains exactly four renderer/test files; this intercom message and the Sun handoff are additional documentation-only files on the PR branch
 - canonical is 33 commits beyond the old stacked base, but none of those canonical commits changed #315's four files
 
 The density lane remains separate:
