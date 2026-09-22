@@ -425,7 +425,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - ⚑ AUTHOR — **Archetypes: the tradeoffs doc decides against them in §1 and requires them in §3.** §1 rejects ECS on archetype fragmentation under authored heterogeneity; §3's 1.0x JIT proof needs "`@position.y` lives at byte offset +16 for the current target archetype." Both cannot stand. Worth noting Refusal 1 forbids a *C++ class* for a domain noun, not a runtime archetype table keyed by authored property sets — so the real objection is the empirical fragmentation claim, which is untested. Zach's call, and it gates the JIT horizon.
 
 <a id="essential-singularity-substrate"></a>
-## Essential Singularity substrate
+### Essential Singularity substrate
 - **Split-substrate serialization: Phases 1 and 3 landed, Phase 2 and most of Phase 4 did not — and the plan doc says otherwise** — (2026-09-02, measured; from [The Week the Chorus Became a Queue](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_Week_The_Chorus_Became_A_Queue.md) §4) → [full task](Specific%20Tasks/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2/Split_substrate_serialization_Phases_1_and_3_landed_Phase_2.md)
 - FaceTextures must work, be visible, and handle edge cases. Add Face Texture tests if not there yet. After the refactor I used the Pottery tool on a square, and instead of the FaceTexture becoming larger in pixel scope to accmodate, it physically stretched every individual pixel's appearance. Seems like a classic bug for something like this. (We're all looking at you, Mistral, for forgetting to add back functionality 😤😂🤖😭) - Zach.
 - ✅ **Implement CPU-GPU micro-mastery management substrate & WebGPU-to-Singular Graphics Mastery** — **done and verified (2026-08-25)**: Implemented high-performance dynamic GPU memory sub-allocator ring buffer (`GpuBufferPool` with 256-byte WebGPU/Metal … → [full task](Specific%20Tasks/Implement_CPU_GPU_micro_mastery_management_substrate_WebGPU/Implement_CPU_GPU_micro_mastery_management_substrate_WebGPU.md)
@@ -437,8 +437,17 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Deeper and more intricate Metal Mastery over the WebGPU Singularity.
 - Earthcall for Python.
 
+## Unified Opcode-Property Substrate
+- 
+
+## OntoMath
+- Rework OntoMath so the variables themselves are Properties of any data type rather than black box variables. 
+- Say I have something I'm holding in my hand that's red. I want OntoMath to be able to draw .
+- Memory management and ownership so Properties can point to any memory and share the same memory as properties. For example,   
+- We thus need a OntoMath compiler to cache those properties .
+
 <a id="feature-sized"></a>
-## Feature-sized (split out of Housekeeping 2026-08-13):
+### Feature-sized (split out of Housekeeping 2026-08-13):
 - ✅ **Restore legacy 3D create tool & author Law counterpart** — done and verified (2026-08-13): Restored `Tool::ShapeGenerator3D` in ImGui as First Mover (`CreationChannel`); authored Law version (`saves/tests/shape_generator_3d_law.json`) activated by `L` key; fixed `Engine::initLogic()` null dereference. See [Specific Tasks/Legacy_3D_Create_Tool_Restoration.md](Specific%20Tasks/Legacy_3D_Create_Tool_Restoration.md).
 - ✅ **Make the booted Shape Generator 3D law able to fire at all** — done and verified (2026-08-17): the law `Engine::initLogic` instantiated (added 2026-08-16, `aa6bf9ba`) could never fire for three independent reasons, … → [full task](Specific%20Tasks/Make_the_booted_Shape_Generator_3D_law_able_to_fire_at_all/Make_the_booted_Shape_Generator_3D_law_able_to_fire_at_all.md)
 - Personally test 3D shape law and other laws. **(Still open — everything above was verified headlessly; nobody has clicked in the running app.)** Headless audit 2026-08-18 reproduced origin-spawn, twin-law double-spawn, and channel-down not stopping the spawn law (`scratch/probes/shape_generator_law_audit_probe.cpp`). In-app click still required after §4 of the audit.
