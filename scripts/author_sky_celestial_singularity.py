@@ -5,9 +5,11 @@ author_sky_celestial_singularity.py
 Authors the Masterwork Celestial Radiance Engine & Astral Orrery in the sky
 above the 28-Room Radiance Gallery using ultra-detailed, ornate SDF geometry:
 - Regular & Semi-Regular Convex Polyhedra (Octahedra, Dodecahedra, Icosahedra, Rhombic Dodecahedra)
-- Intricate CSG Carving (Hollow Coronal Shells, Slotted Astrolabe Retes, Cassini Rings, Crucibles)
+- Intricate CSG Carving (Hollow Coronal Shells, Slotted Astrolabe Retes, Cassini Rings, Crucibles, Bezels)
 - Architectural & Astronomical Micro-Details (Balustrades, Vernier Scales, Gnomons, Gimbals, Diopters)
 - Planetary Epicyclic Moons, Stator Coils, and Infall Spiral Streams
+- Ultra-Detailed Embellishments on the BIG HUGE RINGS (Polar Gimbal Housings, Gates of the Equinox,
+  Rete Star Pointers, Hour Studs, Declination Graduations, Precessional Gyros, Escapement Ratchets)
 """
 
 import json, math, os
@@ -179,7 +181,6 @@ def build_sky_celestial_apparatus():
     # =========================================================================
     # 1. CORE ASTRAL SINGULARITY & ERGOSPHERE (Advanced Organic & CSG Shapes)
     # =========================================================================
-    # Nucleus: Smooth Union (sminK) of an obsidian sphere with 3 orthogonal pulsating lobes
     core_sph = sdf_leaf(0, [4.2, 4.2, 4.2], p0=4.2)
     lobe_x = sdf_leaf(3, [5.4, 2.8, 2.8])
     lobe_y = sdf_leaf(3, [2.8, 5.4, 2.8])
@@ -253,7 +254,7 @@ def build_sky_celestial_apparatus():
         ))
 
     # =========================================================================
-    # 2. THE GRAND KEPLERIAN ARMILLARY ORRERY (7 Concentric Gyro Rings & Retes)
+    # 2. THE GRAND KEPLERIAN ARMILLARY ORRERY (The 7 Giant Concentric Rings)
     # =========================================================================
     # Ring 1: Equatorial Accretion Ring (Torus CSG-slotted with radial graduations)
     ring1_torus = sdf_leaf(6, [20.0, 0.88, 0.0])
@@ -367,7 +368,385 @@ def build_sky_celestial_apparatus():
     ))
 
     # =========================================================================
-    # 3. 12 ZODIAC STATIONS WITH GIMBAL CLASPS & POINTERS
+    # 3. ULTRA-DETAILED ORNATE EMBELLISHMENTS ON THE BIG RINGS
+    # =========================================================================
+
+    # --- A. CELESTIAL NORTH & SOUTH POLAR GIMBAL PIVOT ASSEMBLIES ---
+    # Intersection of Prime Meridian (R=32) and Colure (R=32) at Y = OY +/- 32
+    for p_sign, p_label in [(1.0, "north"), (-1.0, "south")]:
+        pole_y = OY + p_sign * 32.0
+        T_pole = mat4_translate(OX, pole_y, OZ)
+
+        # 1. Ornate Gimbal Bearing Housing: RoundBox carved with cylindrical socket
+        p_box = sdf_leaf(2, [1.8, 1.2, 1.8], p0=0.25)
+        p_hole = sdf_leaf(4, [1.1, 1.5, 0.0]) # Cylinder socket along Z
+        p_housing = sdf_binary(4, p_box, p_hole)
+        objects.append(make_sdf_object(
+            f"celestial-polar-gimbal-{p_label}",
+            "celestial.bronze.armillary",
+            [OX, pole_y, OZ],
+            T_pole,
+            p_housing,
+            extent=[2.2, 1.8, 2.2],
+            display_name=f"Celestial {p_label.capitalize()} Polar Gimbal Bearing Housing",
+            role="polar-gimbal"
+        ))
+
+        # 2. Golden Pivot Axle Pin
+        T_axle = mat4_mul(mat4_translate(OX, pole_y, OZ), rx90)
+        objects.append(make_sdf_object(
+            f"celestial-polar-axle-{p_label}",
+            "celestial.gold.stellar",
+            [OX, pole_y, OZ],
+            T_axle,
+            sdf_leaf(4, [0.65, 1.6, 0.0]), # Cylinder along Z
+            extent=[1.0, 1.0, 2.0],
+            display_name=f"Celestial {p_label.capitalize()} Axis Pivot Pin",
+            role="polar-axle"
+        ))
+
+        # 3. Mounted Polar Jewel Indicator Needle
+        T_needle = mat4_translate(OX, pole_y + p_sign * 1.8, OZ)
+        mat_needle = "celestial.ruby.nodal" if p_sign > 0 else "celestial.crystal.sapphire"
+        objects.append(make_sdf_object(
+            f"celestial-polar-needle-{p_label}",
+            mat_needle,
+            [OX, pole_y + p_sign * 1.8, OZ],
+            T_needle,
+            sdf_leaf(5, [0.55, 1.6 * p_sign, 0.0]), # Cone
+            extent=[0.9, 2.0, 0.9],
+            display_name=f"Polar Axis Magnetic Indicator Needle — {p_label.capitalize()}",
+            role="polar-needle"
+        ))
+
+    # --- B. THE 4 GATES OF THE EQUINOX & SOLSTICE NODES ---
+    # Intersection of Ring I (Equator R=20) and Ring II (Ecliptic R=26)
+    equinox_nodes = [
+        ("vernal-aries", 0.0, "Vernal Equinox Gate (0 deg Aries)", "celestial.crystal.cyan"),
+        ("autumnal-libra", math.pi, "Autumnal Equinox Gate (180 deg Libra)", "celestial.ruby.nodal"),
+        ("summer-solstice", math.pi / 2.0, "Summer Solstice Apex Node (90 deg Cancer)", "celestial.gold.stellar"),
+        ("winter-solstice", 3.0 * math.pi / 2.0, "Winter Solstice Nadir Node (270 deg Capricorn)", "celestial.amethyst.resonance")
+    ]
+    for ename, eang, edesc, emat in equinox_nodes:
+        # Position on Ecliptic Ring
+        local_v = [26.0 * math.cos(eang), 26.0 * math.sin(eang), 0.0]
+        rad23 = math.radians(23.4)
+        c23, s23 = math.cos(rad23), math.sin(rad23)
+        ex = OX + (local_v[0] * c23 - local_v[1] * s23)
+        ey = OY + (local_v[0] * s23 + local_v[1] * c23)
+        ez = OZ
+        T_eq_gate = mat4_translate(ex, ey, ez)
+
+        # Caliper Bridge Bracket clamping Ecliptic & Equator together
+        c_bracket = sdf_leaf(2, [1.5, 1.1, 1.1], p0=0.20)
+        c_aperture = sdf_leaf(4, [0.65, 0.8, 0.0])
+        c_gate_shape = sdf_binary(4, c_bracket, c_aperture)
+        objects.append(make_sdf_object(
+            f"celestial-equinox-gate-{ename}",
+            "celestial.bronze.armillary",
+            [ex, ey, ez],
+            T_eq_gate,
+            c_gate_shape,
+            extent=[1.8, 1.5, 1.5],
+            display_name=f"Chrono-Gate Clasp — {edesc}",
+            role="equinox-gate"
+        ))
+
+        # Levitating Octahedral Gate Diamond inside each Equinox clasp
+        T_eq_gem = mat4_translate(ex, ey + 1.2, ez)
+        objects.append(make_sdf_object(
+            f"celestial-equinox-gem-{ename}",
+            emat,
+            [ex, ey + 1.2, ez],
+            T_eq_gem,
+            sdf_convex(make_polyhedron_planes("octahedron", 0.75)),
+            extent=[1.0, 1.0, 1.0],
+            display_name=f"Solstitial Focus Diamond — {edesc}",
+            role="equinox-gem"
+        ))
+
+    # --- C. RING I (EQUATOR): 24 HOUR GRADUATION STUDS & 8 INWARD RETE STRUTS ---
+    # 24 Sidereal Hour Studs (spaced every 15 deg)
+    for h in range(24):
+        h_ang = h * (2.0 * math.pi / 24.0)
+        hx = OX + 20.0 * math.cos(h_ang)
+        hz = OZ + 20.0 * math.sin(h_ang)
+        hy = OY
+        T_h = mat4_translate(hx, hy, hz)
+        h_mat = "celestial.gold.electrum" if (h % 6 == 0) else "celestial.silver.quicksilver"
+        h_shape = sdf_leaf(2, [0.32, 0.25, 0.32], p0=0.08) # RoundBox stud
+        objects.append(make_sdf_object(
+            f"celestial-equator-hour-stud-{h+1:02d}",
+            h_mat,
+            [hx, hy, hz],
+            T_h,
+            h_shape,
+            extent=[0.6, 0.5, 0.6],
+            display_name=f"Equatorial Sidereal Hour Stud {h}:00",
+            role="hour-stud"
+        ))
+
+    # 8 Inward-Facing Rete Struts (filigree spokes bridging Equator R=20 inward to R=10)
+    for s_i in range(8):
+        s_ang = s_i * (2.0 * math.pi / 8.0) + (math.pi / 8.0)
+        mid_r = 15.0 # midpoint of spoke
+        sp_x = OX + mid_r * math.cos(s_ang)
+        sp_z = OZ + mid_r * math.sin(s_ang)
+        sp_y = OY
+        T_spoke = mat4_mul(mat4_translate(sp_x, sp_y, sp_z), mat4_rotate_y(-s_ang))
+
+        # Spoke: Chamfered strut with circular central aperture (CSG Subtract)
+        strut = sdf_leaf(2, [4.8, 0.28, 0.32], p0=0.08)
+        strut_hole = sdf_leaf(4, [0.45, 0.5, 0.0]) # Cylinder
+        spoke_shape = sdf_binary(4, strut, strut_hole)
+
+        objects.append(make_sdf_object(
+            f"celestial-equator-rete-spoke-{s_i+1:02d}",
+            "celestial.bronze.armillary",
+            [sp_x, sp_y, sp_z],
+            T_spoke,
+            spoke_shape,
+            extent=[5.2, 0.6, 0.8],
+            display_name=f"Equatorial Filigree Rete Spoke #{s_i+1}",
+            role="rete-spoke"
+        ))
+
+        # Central Sapphire Medallion inside the spoke aperture
+        T_med = mat4_translate(sp_x, sp_y, sp_z)
+        objects.append(make_sdf_object(
+            f"celestial-spoke-medallion-{s_i+1:02d}",
+            "celestial.crystal.sapphire",
+            [sp_x, sp_y, sp_z],
+            T_med,
+            sdf_leaf(4, [0.35, 0.18, 0.0]), # Cylinder
+            extent=[0.6, 0.4, 0.6],
+            display_name=f"Rete Spoke Sapphire Medallion #{s_i+1}",
+            role="spoke-medallion"
+        ))
+
+    # --- D. RING II (ECLIPTIC): 12 DECAN CLASPS & 8 RETE STAR-POINTER NEEDLES ---
+    # 12 Astrological Decan Clasp Plates (spaced every 30 deg along tilted Ecliptic)
+    for d in range(12):
+        d_ang = d * (2.0 * math.pi / 12.0)
+        local_v = [26.0 * math.cos(d_ang), 26.0 * math.sin(d_ang), 0.0]
+        rad23 = math.radians(23.4)
+        c23, s23 = math.cos(rad23), math.sin(rad23)
+        dx = OX + (local_v[0] * c23 - local_v[1] * s23)
+        dy = OY + (local_v[0] * s23 + local_v[1] * c23)
+        dz = OZ
+        T_decan = mat4_translate(dx, dy, dz)
+
+        # Tiered Decan Clasp Mount
+        decan_base = sdf_leaf(2, [0.95, 0.35, 0.75], p0=0.10)
+        objects.append(make_sdf_object(
+            f"celestial-ecliptic-decan-clasp-{d+1:02d}",
+            "celestial.gold.electrum",
+            [dx, dy, dz],
+            T_decan,
+            decan_base,
+            extent=[1.2, 0.6, 1.0],
+            display_name=f"Ecliptic Decan Mounting Clasp #{d+1}",
+            role="decan-clasp"
+        ))
+
+        # Embedded Cabochon Gemstone in each decan plate
+        T_gem = mat4_translate(dx, dy + 0.42, dz)
+        gem_mat = "celestial.ruby.nodal" if (d % 3 == 0) else "celestial.crystal.cyan"
+        objects.append(make_sdf_object(
+            f"celestial-ecliptic-decan-gem-{d+1:02d}",
+            gem_mat,
+            [dx, dy + 0.42, dz],
+            T_gem,
+            sdf_leaf(0, [0.28, 0.28, 0.28], p0=0.28),
+            extent=[0.5, 0.5, 0.5],
+            display_name=f"Decan Astronomical Cabochon #{d+1}",
+            role="decan-gem"
+        ))
+
+    # 8 Astrolabe Rete Star-Pointer Needles (pointing to fixed stars)
+    star_names = ["Sirius", "Vega", "Aldebaran", "Arcturus", "Rigel", "Spica", "Antares", "Polaris"]
+    for sn_i, star_n in enumerate(star_names):
+        star_ang = sn_i * (2.0 * math.pi / 8.0) + 0.22
+        local_v = [26.0 * math.cos(star_ang), 26.0 * math.sin(star_ang), 0.0]
+        rad23 = math.radians(23.4)
+        c23, s23 = math.cos(rad23), math.sin(rad23)
+        sx = OX + (local_v[0] * c23 - local_v[1] * s23)
+        sy = OY + (local_v[0] * s23 + local_v[1] * c23)
+        sz = OZ
+
+        # Flame-pointer needle: Smooth-Union of spherical root and projecting cone needle
+        T_star_root = mat4_translate(sx, sy, sz)
+        s_root_orb = sdf_leaf(0, [0.45, 0.45, 0.45], p0=0.45)
+        s_needle_cone = sdf_leaf(5, [0.35, 1.8, 0.0]) # Cone
+        flame_needle = sdf_binary(5, s_root_orb, s_needle_cone, t=0.25)
+        objects.append(make_sdf_object(
+            f"celestial-rete-star-pointer-{star_n.lower()}",
+            "celestial.gold.stellar",
+            [sx, sy, sz],
+            T_star_root,
+            flame_needle,
+            extent=[1.0, 2.2, 1.0],
+            display_name=f"Astrolabe Rete Star Pointer — {star_n}",
+            role="star-pointer"
+        ))
+
+        # Cyan Ether Star Bead perched on the pointer tip
+        T_tip_bead = mat4_translate(sx, sy + 2.1, sz)
+        objects.append(make_sdf_object(
+            f"celestial-rete-star-bead-{star_n.lower()}",
+            "celestial.crystal.cyan",
+            [sx, sy + 2.1, sz],
+            T_tip_bead,
+            sdf_convex(make_polyhedron_planes("octahedron", 0.35)),
+            extent=[0.6, 0.6, 0.6],
+            display_name=f"Fixed Star Celestial Nodule — {star_n}",
+            role="star-bead"
+        ))
+
+    # --- E. RING III (PRIME MERIDIAN): 18 DECLINATION LATITUDE INDEX TABS ---
+    # Vertical Y-Z circle (R = 32.0): angle from -90 deg (south) to +90 deg (north)
+    for lat_i in range(18):
+        decl_ang = -math.pi / 2.0 + (lat_i + 0.5) * (math.pi / 18.0)
+        my = OY + 32.0 * math.sin(decl_ang)
+        mz = OZ + 32.0 * math.cos(decl_ang)
+        mx = OX
+        T_decl = mat4_translate(mx, my, mz)
+
+        # Inward-pointing index tooth
+        decl_shape = sdf_leaf(5, [0.32, 0.95, 0.0]) # Cone
+        objects.append(make_sdf_object(
+            f"celestial-meridian-decl-tab-{lat_i+1:02d}",
+            "celestial.gold.electrum",
+            [mx, my, mz],
+            T_decl,
+            decl_shape,
+            extent=[0.6, 1.2, 0.6],
+            display_name=f"Prime Meridian Declination Index {int(math.degrees(decl_ang))} deg",
+            role="declination-tab"
+        ))
+
+    # --- F. RINGS V & VI (TROPICS): 8 RIGIDIFYING ARMILLARY STRUT BRACKETS ---
+    # 4 struts on Cancer (Y = OY + 10.5), 4 struts on Capricorn (Y = OY - 10.5)
+    for t_idx, (t_sign, t_name) in enumerate([(1.0, "cancer"), (-1.0, "capricorn")]):
+        ty = OY + t_sign * 10.5
+        for b_i, b_ang in enumerate([0.0, math.pi / 2.0, math.pi, 3.0 * math.pi / 2.0]):
+            bx = OX + r_tropic * math.cos(b_ang)
+            bz = OZ + r_tropic * math.sin(b_ang)
+            T_tb = mat4_translate(bx, ty, bz)
+
+            # Vertical strut bracket clamping Tropic to vertical meridian/colure
+            bracket_shape = sdf_leaf(2, [0.35, 1.2, 0.35], p0=0.08)
+            objects.append(make_sdf_object(
+                f"celestial-tropic-{t_name}-bracket-{b_i+1}",
+                "celestial.bronze.armillary",
+                [bx, ty, bz],
+                T_tb,
+                bracket_shape,
+                extent=[0.6, 1.5, 0.6],
+                display_name=f"Armillary Structural Tie Bracket — {t_name.capitalize()} #{b_i+1}",
+                role="tropic-bracket"
+            ))
+
+    # --- G. RING VII (PRECESSIONAL GYRO R=36): 16 INERTIAL BALANCER SPHERULES ---
+    # Positioned along the 45-deg precessional ring
+    for g_i in range(16):
+        g_ang = g_i * (2.0 * math.pi / 16.0)
+        # Point on local circle [36*cos, 36*sin, 0], rotated by rx45 and ry45
+        local_v = [36.0 * math.cos(g_ang), 36.0 * math.sin(g_ang), 0.0]
+        # rx45: y' = y*c - z*s, z' = y*s + z*c
+        rad45 = math.radians(45.0)
+        c45, s45 = math.cos(rad45), math.sin(rad45)
+        rx_v = [local_v[0], local_v[1] * c45, local_v[1] * s45]
+        # ry45: x'' = x'*c + z'*s, z'' = -x'*s + z'*c
+        gx = OX + (rx_v[0] * c45 + rx_v[2] * s45)
+        gy = OY + rx_v[1]
+        gz = OZ + (-rx_v[0] * s45 + rx_v[2] * c45)
+        T_gyro_spherule = mat4_translate(gx, gy, gz)
+
+        # Quicksilver Inertial Balance Orb
+        objects.append(make_sdf_object(
+            f"celestial-precession-spherule-{g_i+1:02d}",
+            "celestial.silver.quicksilver",
+            [gx, gy, gz],
+            T_gyro_spherule,
+            sdf_leaf(0, [0.55, 0.55, 0.55], p0=0.55),
+            extent=[0.8, 0.8, 0.8],
+            display_name=f"Precessional Inertial Counter-Weight Spherule #{g_i+1}",
+            role="precessional-spherule"
+        ))
+
+        # Bronze Gimbal Hoop around each spherule
+        T_ghoop = mat4_mul(mat4_translate(gx, gy, gz), rx90)
+        objects.append(make_sdf_object(
+            f"celestial-precession-hoop-{g_i+1:02d}",
+            "celestial.bronze.armillary",
+            [gx, gy, gz],
+            T_ghoop,
+            sdf_leaf(6, [0.92, 0.08, 0.0]),
+            extent=[1.2, 1.2, 0.4],
+            display_name=f"Inertial Spherule Gimbal Hoop #{g_i+1}",
+            role="precessional-hoop"
+        ))
+
+    # --- H. RING VIII (OUTER ZODIAC R=42): 24 ESCAPEMENT RATCHETS & 8 SIGHTING GIMBALS ---
+    for r_i in range(24):
+        r_ang = r_i * (2.0 * math.pi / 24.0)
+        rx = OX + 42.0 * math.cos(r_ang)
+        rz = OZ + 42.0 * math.sin(r_ang)
+        ry = OY
+        T_ratchet = mat4_mul(mat4_translate(rx, ry, rz), mat4_rotate_y(-r_ang))
+        # Escapement Ratchet Cog: Chamfered tooth
+        cog_shape = sdf_leaf(2, [0.45, 0.65, 0.35], p0=0.08)
+        objects.append(make_sdf_object(
+            f"celestial-escapement-cog-{r_i+1:02d}",
+            "celestial.gold.stellar",
+            [rx, ry, rz],
+            T_ratchet,
+            cog_shape,
+            extent=[0.8, 0.9, 0.6],
+            display_name=f"Zodiac Perimeter Escapement Cog #{r_i+1}",
+            role="escapement-cog"
+        ))
+
+    # 8 Outrigger Astrolabe Sighting Gimbals extending into deep space
+    for o_i in range(8):
+        o_ang = o_i * (2.0 * math.pi / 8.0) + (math.pi / 8.0)
+        ox_p = OX + 45.5 * math.cos(o_ang)
+        oz_p = OZ + 45.5 * math.sin(o_ang)
+        oy_p = OY
+        T_outrig = mat4_mul(mat4_translate(ox_p, oy_p, oz_p), mat4_rotate_y(-o_ang))
+
+        # Outrigger Arm: Chamfered strut extending outward from Ring VIII
+        outrig_arm = sdf_leaf(2, [2.4, 0.35, 0.45], p0=0.10)
+        objects.append(make_sdf_object(
+            f"celestial-outrigger-arm-{o_i+1:02d}",
+            "celestial.bronze.armillary",
+            [ox_p, oy_p, oz_p],
+            T_outrig,
+            outrig_arm,
+            extent=[2.8, 0.6, 0.8],
+            display_name=f"Deep-Space Sighting Outrigger Arm #{o_i+1}",
+            role="outrigger-arm"
+        ))
+
+        # Levitating Octahedral Sighting Lens mounted on each outrigger tip
+        tip_x = OX + 47.5 * math.cos(o_ang)
+        tip_z = OZ + 47.5 * math.sin(o_ang)
+        T_tip_lens = mat4_translate(tip_x, oy_p + 0.85, tip_z)
+        lens_shape = sdf_convex(make_polyhedron_planes("octahedron", 0.75))
+        objects.append(make_sdf_object(
+            f"celestial-sighting-lens-{o_i+1:02d}",
+            "celestial.crystal.cyan",
+            [tip_x, oy_p + 0.85, tip_z],
+            T_tip_lens,
+            lens_shape,
+            extent=[1.1, 1.1, 1.1],
+            display_name=f"Outrigger Refractive Sighting Crystal #{o_i+1}",
+            role="sighting-lens"
+        ))
+
+    # =========================================================================
+    # 4. 12 ZODIAC STATIONS WITH GIMBAL CLASPS & POINTERS
     # =========================================================================
     octa_planes = make_polyhedron_planes("octahedron", 1.25)
     dodeca_planes = make_polyhedron_planes("dodecahedron", 1.20)
@@ -404,7 +783,7 @@ def build_sky_celestial_apparatus():
         T_zclasp = mat4_mul(mat4_translate(zx, zy, zz), mat4_rotate_y(-angle))
         clasp_ring = sdf_leaf(6, [1.65, 0.18, 0.0])
         clasp_box = sdf_leaf(1, [1.8, 1.8, 1.0], offset=[0.0, 0.9, 0.0])
-        clasp_c = sdf_binary(3, clasp_ring, clasp_box) # C-clasp bracket
+        clasp_c = sdf_binary(3, clasp_ring, clasp_box)
         objects.append(make_sdf_object(
             f"celestial-zodiac-clasp-{i+1:02d}",
             "celestial.gold.stellar",
@@ -437,7 +816,7 @@ def build_sky_celestial_apparatus():
         ))
 
     # =========================================================================
-    # 4. SACRED GEOMETRIC KEPLERIAN PLANETARY SATELLITES & MOONLETS
+    # 5. SACRED GEOMETRIC KEPLERIAN PLANETARY SATELLITES & MOONLETS
     # =========================================================================
     planets_data = [
         ("mercury", "celestial.silver.quicksilver", 13.5,  30.0,
@@ -471,7 +850,6 @@ def build_sky_celestial_apparatus():
             role="celestial-planet"
         ))
 
-        # Close-up Gimbal Pivot Ring around each planet
         p_gimbal_r = pext * 1.35
         p_gimbal_shape = sdf_leaf(6, [p_gimbal_r, 0.12, 0.0])
         T_pgim = mat4_mul(mat4_translate(px, py, pz), mat4_mul(mat4_rotate_y(prad), rx90))
@@ -577,7 +955,7 @@ def build_sky_celestial_apparatus():
             "celestial.gold.stellar",
             [s_rx, sol_y, s_rz],
             T_sray,
-            sdf_leaf(5, [0.45, 1.2, 0.0]), # Cone
+            sdf_leaf(5, [0.45, 1.2, 0.0]),
             extent=[0.8, 1.5, 0.8],
             display_name=f"Solar Coronal Ray Spicule {s_ri+1}",
             role="solar-spicule"
@@ -612,7 +990,7 @@ def build_sky_celestial_apparatus():
             ))
 
     # =========================================================================
-    # 5. TOWERING RELATIVISTIC BIPOLAR JET SPIRE & STATOR CHOKES
+    # 6. TOWERING RELATIVISTIC BIPOLAR JET SPIRE & STATOR CHOKES
     # =========================================================================
     zenith_chokes = [
         (62.0, 11.5, 0.68),
@@ -635,7 +1013,6 @@ def build_sky_celestial_apparatus():
             display_name=f"Zenith Magnetic Collimation Choke Y={int(cy)}",
             role="jet-choke"
         ))
-        # 4 Stator Clamps on each Magnetic Choke Torus
         for sti, st_ang in enumerate([0.0, math.pi/2.0, math.pi, 3.0*math.pi/2.0]):
             st_x = OX + cr * math.cos(st_ang)
             st_z = OZ + cr * math.sin(st_ang)
@@ -651,7 +1028,7 @@ def build_sky_celestial_apparatus():
                 role="stator-clamp"
             ))
 
-    # Zenith Collimation Pylons (4 vertical faceted guide obelisks)
+    # Zenith Collimation Pylons
     for pi, (pdx, pdz) in enumerate([(6.5, 0.0), (-6.5, 0.0), (0.0, 6.5), (0.0, -6.5)]):
         py_center = 88.0
         T_zpylon = mat4_translate(OX + pdx, py_center, OZ + pdz)
@@ -667,7 +1044,7 @@ def build_sky_celestial_apparatus():
             role="jet-guide"
         ))
 
-    # Zenith Apex Spire: Morphing Needle + Crown Starlight Diamond at Y = 126.0m!
+    # Zenith Apex Spire Needle + Crown Diamond at Y = 126.0m!
     T_apex = mat4_translate(OX, 126.0, OZ)
     apex_cone = sdf_leaf(5, [1.8, 8.0, 0.0])
     apex_octa = sdf_convex(make_polyhedron_planes("octahedron", 4.0))
@@ -683,7 +1060,6 @@ def build_sky_celestial_apparatus():
         role="zenith-apex"
     ))
 
-    # Floating Crown Starlight Diamond above apex tip (Y = 135.5m)
     T_crown = mat4_translate(OX, 135.5, OZ)
     crown_shape = sdf_convex(make_polyhedron_planes("octahedron", 1.85))
     objects.append(make_sdf_object(
@@ -735,7 +1111,7 @@ def build_sky_celestial_apparatus():
     ))
 
     # =========================================================================
-    # 6. 8 RESONANT GRAVITATIONAL PYLONS & FLOATING HALO RINGS
+    # 7. 8 RESONANT GRAVITATIONAL PYLONS & FLOATING HALO RINGS
     # =========================================================================
     for i in range(8):
         angle = i * (2.0 * math.pi / 8.0)
@@ -760,7 +1136,6 @@ def build_sky_celestial_apparatus():
             role="gravitational-pylon"
         ))
 
-        # Levitating Slotted Toroidal Halo above each Pylon
         halo_torus = sdf_leaf(6, [1.8, 0.24, 0.0])
         halo_slot = sdf_leaf(1, [2.2, 0.15, 0.15])
         halo_shape = sdf_binary(4, halo_torus, halo_slot)
@@ -776,21 +1151,20 @@ def build_sky_celestial_apparatus():
             role="pylon-halo"
         ))
 
-        # Fine Focus Needle Pinion perched atop each pylon halo
         T_pneedle = mat4_translate(px, py + 4.9, pz)
         objects.append(make_sdf_object(
             f"celestial-pylon-needle-{i+1:02d}",
             "celestial.gold.electrum",
             [px, py + 4.9, pz],
             T_pneedle,
-            sdf_leaf(5, [0.35, 0.85, 0.0]), # Cone
+            sdf_leaf(5, [0.35, 0.85, 0.0]),
             extent=[0.6, 1.1, 0.6],
             display_name=f"Pylon Harmonic Focus Needle {i+1}",
             role="pylon-needle"
         ))
 
     # =========================================================================
-    # 7. THE FIRMAMENT DAIS & HIGH CELESTIAL PROMENADE (Y = 22.0)
+    # 8. THE FIRMAMENT DAIS & HIGH CELESTIAL PROMENADE (Y = 22.0)
     # =========================================================================
     DY = 22.0
     cardinal_decks = [
@@ -813,21 +1187,17 @@ def build_sky_celestial_apparatus():
             role="skybridge-deck"
         ))
 
-        # Detailed Balustrade Railings along both outer edges of the deck
         half_w = 1.45
         half_l = 6.8
         for side_sign in [-1.0, 1.0]:
             if main_axis == "z":
                 rx_rail = bcenter[0] + side_sign * half_w
                 rz_rail = bcenter[2]
-                rail_dims = [0.12, 0.12, half_l] # Rail along Z
-                rail_shape = sdf_leaf(4, [0.12, half_l, 0.0]) # Cylinder along Z
                 T_rail = mat4_translate(rx_rail, DY + 0.95, rz_rail)
+                rail_shape = sdf_leaf(2, [0.12, 0.12, half_l], p0=0.04)
             else:
                 rx_rail = bcenter[0]
                 rz_rail = bcenter[2] + side_sign * half_w
-                rail_shape = mat4_mul(mat4_translate(rx_rail, DY + 0.95, rz_rail), ry90)
-                # Let's use RoundBox for rail along X to be exact and clean!
                 T_rail = mat4_translate(rx_rail, DY + 0.95, rz_rail)
                 rail_shape = sdf_leaf(2, [half_l, 0.12, 0.12], p0=0.04)
 
@@ -836,13 +1206,12 @@ def build_sky_celestial_apparatus():
                 "celestial.gold.electrum",
                 [rx_rail, DY + 0.95, rz_rail],
                 T_rail,
-                rail_shape if main_axis == "x" else sdf_leaf(2, [0.12, 0.12, half_l], p0=0.04),
+                rail_shape,
                 extent=[half_l + 0.5, 0.5, half_l + 0.5],
                 display_name=f"Balustrade Railing — {bname.capitalize()} Side",
                 role="skybridge-railing"
             ))
 
-            # Baluster Posts along each edge (3 posts per side)
             for post_i in [-4.5, 0.0, 4.5]:
                 if main_axis == "z":
                     px_post = rx_rail
@@ -856,20 +1225,18 @@ def build_sky_celestial_apparatus():
                     "celestial.bronze.armillary",
                     [px_post, DY + 0.50, pz_post],
                     T_post,
-                    sdf_leaf(4, [0.10, 0.45, 0.0]), # Cylinder
+                    sdf_leaf(4, [0.10, 0.45, 0.0]),
                     extent=[0.3, 0.6, 0.3],
                     display_name=f"Baluster Post — {bname.capitalize()}",
                     role="baluster-post"
                 ))
 
-        # Pedestal & Tiered Observation Altar on Cardinal Wings
         p_offset = 6.2
         if bname == "north": px, pz = OX, OZ + 18.0 + p_offset
         elif bname == "south": px, pz = OX, OZ - 18.0 - p_offset
         elif bname == "east": px, pz = OX + 18.0 + p_offset, OZ
         elif bname == "west": px, pz = OX - 18.0 - p_offset, OZ
 
-        # Stepped Plinth Base (Radius 1.4, Height 0.25)
         Tp_base = mat4_translate(px, DY + 0.15, pz)
         objects.append(make_sdf_object(
             f"skybridge-plinth-{bname}",
@@ -882,7 +1249,6 @@ def build_sky_celestial_apparatus():
             role="altar-plinth"
         ))
 
-        # Main Fluted Altar Column
         Tp = mat4_translate(px, DY + 0.85, pz)
         pedestal_shape = sdf_leaf(4, [0.85, 0.65, 0.0])
         objects.append(make_sdf_object(
@@ -896,7 +1262,6 @@ def build_sky_celestial_apparatus():
             role="skybridge-pedestal"
         ))
 
-        # Azimuth Calibrated Dial Plate on top of pedestal
         Tp_dial = mat4_translate(px, DY + 1.55, pz)
         dial_shape = sdf_leaf(4, [0.92, 0.06, 0.0])
         objects.append(make_sdf_object(
@@ -910,7 +1275,6 @@ def build_sky_celestial_apparatus():
             role="azimuth-dial"
         ))
 
-        # Sextant Astrolabe Quadrant mounted on pedestal
         T_sex = mat4_mul(mat4_translate(px, DY + 2.15, pz), mat4_rotate_y(math.pi / 4.0))
         sex_torus = sdf_leaf(6, [0.85, 0.14, 0.0])
         sex_box = sdf_leaf(1, [1.0, 1.0, 0.5], offset=[0.5, 0.5, 0.0])
@@ -926,7 +1290,6 @@ def build_sky_celestial_apparatus():
             role="observation-sextant"
         ))
 
-        # Sighting Diopter Needle on Sextant Pivot
         T_diop = mat4_mul(mat4_translate(px, DY + 2.15, pz), mat4_mul(mat4_rotate_y(math.pi / 4.0), mat4_rotate_x(math.radians(35.0))))
         diop_shape = sdf_leaf(4, [0.06, 0.95, 0.0])
         objects.append(make_sdf_object(
@@ -940,7 +1303,7 @@ def build_sky_celestial_apparatus():
             role="sighting-diopter"
         ))
 
-    # Intercardinal Connecting Skybridges (NE, NW, SE, SW)
+    # Intercardinal Connecting Skybridges
     intercardinals = [
         ("northeast", [OX + 12.8, DY, OZ + 12.8], math.radians(-45.0)),
         ("northwest", [OX - 12.8, DY, OZ + 12.8], math.radians(45.0)),
@@ -961,7 +1324,7 @@ def build_sky_celestial_apparatus():
             role="octagonal-bridge"
         ))
 
-    # 8 Astral Brazier Beacons with Urn Calyx, Gem Cages & Floating Fire Crystals
+    # 8 Astral Brazier Beacons with Urn Calyx, Gem Cages & Fire Crystals
     octa_flame = sdf_convex(make_polyhedron_planes("octahedron", 0.55))
     for bi in range(8):
         b_angle = bi * (2.0 * math.pi / 8.0) + (math.pi / 8.0)
@@ -969,7 +1332,6 @@ def build_sky_celestial_apparatus():
         bz = OZ + 21.0 * math.sin(b_angle)
         by = DY + 0.9
 
-        # Brazier Stepped Plinth
         T_bplinth = mat4_translate(bx, by - 0.55, bz)
         objects.append(make_sdf_object(
             f"skybridge-brazier-plinth-{bi+1:02d}",
@@ -982,7 +1344,6 @@ def build_sky_celestial_apparatus():
             role="brazier-plinth"
         ))
 
-        # Fluted Bronze Calyx Base
         T_br = mat4_translate(bx, by, bz)
         brazier_base = sdf_leaf(4, [0.48, 0.55, 0.0])
         objects.append(make_sdf_object(
@@ -996,7 +1357,6 @@ def build_sky_celestial_apparatus():
             role="brazier-beacon"
         ))
 
-        # Calyx Crucible Bowl (CSG: Outer cone minus inner cone)
         T_bowl = mat4_translate(bx, by + 0.65, bz)
         outer_cup = sdf_leaf(5, [0.75, 0.45, 0.0])
         inner_cup = sdf_leaf(5, [0.62, 0.48, 0.0])
@@ -1012,7 +1372,6 @@ def build_sky_celestial_apparatus():
             role="brazier-bowl"
         ))
 
-        # Floating Faceted Octahedral Flame Crystal
         T_flame = mat4_translate(bx, by + 1.45, bz)
         mat_fl = "celestial.ruby.nodal" if (bi % 2 == 0) else "celestial.crystal.cyan"
         objects.append(make_sdf_object(
@@ -1026,7 +1385,6 @@ def build_sky_celestial_apparatus():
             role="brazier-flame"
         ))
 
-        # Levitating Bronze Halo Cage Ring hovering around each fire crystal
         T_bcage = mat4_mul(mat4_translate(bx, by + 1.45, bz), rx90)
         objects.append(make_sdf_object(
             f"skybridge-brazier-cage-{bi+1:02d}",
@@ -1039,7 +1397,7 @@ def build_sky_celestial_apparatus():
             role="brazier-halo"
         ))
 
-    # Firmament Dais Central Oculus Architrave Rim (CSG Fluted Double-Torus)
+    # Firmament Dais Central Oculus Architrave Rim
     T_dais_ring = mat4_mul(mat4_translate(OX, DY - 0.2, OZ), rx90)
     dais_t1 = sdf_leaf(6, [12.5, 1.25, 0.0])
     dais_t2 = sdf_leaf(6, [11.0, 0.50, 0.0])
@@ -1055,7 +1413,7 @@ def build_sky_celestial_apparatus():
         role="skybridge-rim"
     ))
 
-    # Ground-level Grand Celestial Oculus Architrave (Roof of 28-Room Central Gallery)
+    # Ground-level Grand Celestial Oculus Architrave
     T_oculus_rim = mat4_mul(mat4_translate(OX, 0.2, OZ), rx90)
     oculus_t1 = sdf_leaf(6, [8.8, 0.90, 0.0])
     oculus_t2 = sdf_leaf(6, [7.8, 0.40, 0.0])
@@ -1072,7 +1430,7 @@ def build_sky_celestial_apparatus():
     ))
 
     # =========================================================================
-    # 8. ASCENDING SPIRAL LEVITATION DISKS & BEAD HUBS (Gallery to Dais)
+    # 9. ASCENDING SPIRAL LEVITATION DISKS & BEAD HUBS (Gallery to Dais)
     # =========================================================================
     num_steps = 16
     for st in range(num_steps):
@@ -1083,7 +1441,6 @@ def build_sky_celestial_apparatus():
         sz = OZ + s_rad * math.sin(s_ang)
         sy = 1.5 + s_prog * (DY - 2.5)
 
-        # Main Chamfered Levitation Step
         T_step = mat4_translate(sx, sy, sz)
         step_shape = sdf_leaf(2, [1.4, 0.15, 1.4], p0=0.08)
         objects.append(make_sdf_object(
@@ -1097,7 +1454,6 @@ def build_sky_celestial_apparatus():
             role="ascension-step"
         ))
 
-        # Inlaid Concentric Rune Torus on each step
         T_sring = mat4_mul(mat4_translate(sx, sy + 0.14, sz), rx90)
         objects.append(make_sdf_object(
             f"celestial-ascension-rune-{st+1:02d}",
@@ -1110,7 +1466,6 @@ def build_sky_celestial_apparatus():
             role="step-rune"
         ))
 
-        # Hovering Antigravity Focus Crystal Bead beneath each step
         T_sbead = mat4_translate(sx, sy - 0.35, sz)
         objects.append(make_sdf_object(
             f"celestial-ascension-bead-{st+1:02d}",
@@ -1123,7 +1478,7 @@ def build_sky_celestial_apparatus():
             role="step-bead"
         ))
 
-    # 4 Grand Vertical Flux Colonnades (Fluted Base, Capital & Core)
+    # 4 Grand Vertical Flux Colonnades
     col_coords = [
         (OX + 14.0, OZ + 14.0),
         (OX - 14.0, OZ + 14.0),
@@ -1132,7 +1487,6 @@ def build_sky_celestial_apparatus():
     ]
     for ci, (cx, cz) in enumerate(col_coords):
         cy = DY / 2.0
-        # Main Pillar Column
         T_col = mat4_translate(cx, cy, cz)
         col_shape = sdf_leaf(4, [0.65, cy - 0.8, 0.0])
         objects.append(make_sdf_object(
@@ -1145,7 +1499,6 @@ def build_sky_celestial_apparatus():
             display_name=f"Celestial Flux Colonnade Shaft {ci+1}",
             role="flux-colonnade"
         ))
-        # Column Base Plinth at Y = 0.5m
         T_cbase = mat4_translate(cx, 0.5, cz)
         objects.append(make_sdf_object(
             f"celestial-col-base-{ci+1}",
@@ -1157,7 +1510,6 @@ def build_sky_celestial_apparatus():
             display_name=f"Colonnade Molded Base Plinth {ci+1}",
             role="col-base"
         ))
-        # Column Capital Molding at Y = DY - 0.5m
         T_ccap = mat4_translate(cx, DY - 0.5, cz)
         objects.append(make_sdf_object(
             f"celestial-col-capital-{ci+1}",
@@ -1446,7 +1798,7 @@ def get_celestial_materials():
     ]
 
 def main():
-    print("Generating Masterwork Sky Celestial Apparatus with High-Density Ornate SDF Details...")
+    print("Generating Masterwork Sky Celestial Apparatus with Ultra-Detailed Ring Embellishments...")
     sky_objects = build_sky_celestial_apparatus()
     print(f"Generated {len(sky_objects)} celestial sky objects.")
 
@@ -1484,8 +1836,8 @@ def main():
         "description": "The 28-Room OntoMath Radiance Demonstration Gallery beneath the Celestial Astral Orrery in the Sky.",
         "currentZone": 0,
         "currentZoneId": "Radiance Gallery",
-        "cameraPos": [0.0, 24.5, 65.0],      # Situated on the Firmament Dais Skybridge
-        "cameraFront": [0.0, 0.45, 0.89],     # Looking up at pitch ~27 deg into the turning celestial rings
+        "cameraPos": [0.0, 24.5, 65.0],
+        "cameraFront": [0.0, 0.45, 0.89],
         "cameraUp": [0.0, 1.0, 0.0],
         "flying": True,
         "pitch": 27.0,
