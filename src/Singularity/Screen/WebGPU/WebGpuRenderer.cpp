@@ -2,6 +2,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -11,6 +12,7 @@
 #include <cstdio>
 #include <cstring>
 #include <limits>
+#include <functional>
 #include <set>
 #include <string>
 #include <utility>
@@ -547,6 +549,17 @@ void WebGpuRenderer::reloadShaders() {
     _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
+
+    for (auto& kv : _volumePipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
+        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
+    }
+    _volumePipes.clear();
+    _volumeProgramCache.clear();
+    _volumeBatches.clear();
+    _volumeParamBatches.clear();
+    _activeVolumePipelines.clear();
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -589,6 +602,16 @@ void WebGpuRenderer::shutdown() {
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
     _sdfPipes.clear();
+    for (auto& kv : _volumePipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
+        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
+    }
+    _volumePipes.clear();
+    _volumeProgramCache.clear();
+    _volumeBatches.clear();
+    _volumeParamBatches.clear();
+    _activeVolumePipelines.clear();
     if (_sdfCubeVerts) { wgpuBufferRelease(_sdfCubeVerts); _sdfCubeVerts = nullptr; }
     for (auto& kv : _textures) {
         wgpuTextureViewRelease(kv.second.view);
@@ -731,7 +754,10 @@ void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
     WGPUTextureDescriptor td = {};
-    td.usage = WGPUTextureUsage_RenderAttachment;
+    // V0c composites participating media in a second pass that samples the
+    // finished opaque depth. One texture serves both roles across distinct
+    // passes on the same command encoder; it is never sampled while attached.
+    td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding;
     td.dimension = WGPUTextureDimension_2D;
     td.size = { w, h, 1 };
     td.format = WGPUTextureFormat_Depth24Plus;
@@ -810,6 +836,7 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+    _frameColorView = target;
     beginGpuTimestampFrame();
     WGPURenderPassColorAttachment ca = {};
     ca.view = target;
@@ -983,6 +1010,7 @@ struct SdfGlobalUniforms {
     glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
+    glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
 };
 
 struct RadianceSourceGpuData {
@@ -994,7 +1022,36 @@ struct RadianceSourceGpuData {
     glm::vec4 time;
     glm::vec4 control;
 };
+
+struct VolumeGlobalUniforms {
+    glm::mat4 viewProj;
+    glm::mat4 invViewProj;
+    glm::vec4 eyePos;
+    glm::vec4 viewport;
+};
 } // namespace
+
+void WebGpuRenderer::ensureSdfCubeVerts() {
+    if (_sdfCubeVerts) return;
+
+    const float h = 1.0f;
+    const glm::vec3 corners[8] = {
+        {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
+        {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
+    const int indices[36] = {
+        0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
+        3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
+    std::vector<glm::vec3> tris(36);
+    for (int i = 0; i < 36; ++i) tris[i] = corners[indices[i]];
+
+    WGPUBufferDescriptor bd = {};
+    bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+    bd.size = tris.size() * sizeof(glm::vec3);
+    _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
+    if (_sdfCubeVerts) {
+        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
+    }
+}
 
 // Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
 // cache key: two spheres of different radii generate identical source and share
@@ -1092,6 +1149,127 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     return &(_sdfPipes[wgsl] = out);
 }
 
+const WebGpuRenderer::VolumePipeline*
+WebGpuRenderer::volumePipeline(const std::string& wgsl) {
+    auto it = _volumePipes.find(wgsl);
+    if (it != _volumePipes.end()) return &it->second;
+
+    WGPUShaderSourceWGSL src = {};
+    src.chain.sType = WGPUSType_ShaderSourceWGSL;
+    src.code = wgpu::Device::str(wgsl.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &src.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smd);
+    if (!shader) {
+        std::fprintf(stderr, "[WebGpuRenderer] volume shader failed to compile\n");
+        return nullptr;
+    }
+
+    WGPUBindGroupLayoutEntry globalEntries[3] = {};
+    globalEntries[0].binding = 0;
+    globalEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    globalEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
+    globalEntries[0].buffer.minBindingSize = sizeof(VolumeGlobalUniforms);
+
+    globalEntries[1].binding = 1;
+    globalEntries[1].visibility = WGPUShaderStage_Fragment;
+    globalEntries[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+
+    globalEntries[2].binding = 2;
+    globalEntries[2].visibility = WGPUShaderStage_Fragment;
+    globalEntries[2].texture.sampleType = WGPUTextureSampleType_Depth;
+    globalEntries[2].texture.viewDimension = WGPUTextureViewDimension_2D;
+    globalEntries[2].texture.multisampled = false;
+
+    WGPUBindGroupLayoutDescriptor globalDesc = {};
+    globalDesc.entryCount = 3;
+    globalDesc.entries = globalEntries;
+
+    WGPUBindGroupLayoutEntry instanceEntry = {};
+    instanceEntry.binding = 0;
+    instanceEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
+    instanceEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    instanceEntry.buffer.minBindingSize = sizeof(VolumeInstanceData);
+    WGPUBindGroupLayoutDescriptor instanceDesc = {};
+    instanceDesc.entryCount = 1;
+    instanceDesc.entries = &instanceEntry;
+
+    VolumePipeline out;
+    out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
+    out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
+    if (!out.globalBgl || !out.instanceBgl) {
+        if (out.globalBgl) wgpuBindGroupLayoutRelease(out.globalBgl);
+        if (out.instanceBgl) wgpuBindGroupLayoutRelease(out.instanceBgl);
+        wgpuShaderModuleRelease(shader);
+        return nullptr;
+    }
+
+    WGPUBindGroupLayout layouts[2] = {out.globalBgl, out.instanceBgl};
+    WGPUPipelineLayoutDescriptor pld = {};
+    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayouts = layouts;
+    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
+
+    WGPUVertexAttribute attr = {};
+    attr.format = WGPUVertexFormat_Float32x3;
+    attr.offset = 0;
+    attr.shaderLocation = 0;
+    WGPUVertexBufferLayout vbl = {};
+    vbl.arrayStride = sizeof(glm::vec3);
+    vbl.stepMode = WGPUVertexStepMode_Vertex;
+    vbl.attributeCount = 1;
+    vbl.attributes = &attr;
+
+    WGPUBlendState blend = {};
+    blend.color.operation = WGPUBlendOperation_Add;
+    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blend.alpha.operation = WGPUBlendOperation_Add;
+    blend.alpha.srcFactor = WGPUBlendFactor_One;
+    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+
+    WGPUColorTargetState target = {};
+    target.format = _colorFormat;
+    target.writeMask = WGPUColorWriteMask_All;
+    target.blend = &blend;
+
+    WGPUFragmentState frag = {};
+    frag.module = shader;
+    frag.entryPoint = wgpu::Device::str("fs");
+    frag.targetCount = 1;
+    frag.targets = &target;
+
+    WGPURenderPipelineDescriptor pd = {};
+    pd.layout = layout;
+    pd.vertex.module = shader;
+    pd.vertex.entryPoint = wgpu::Device::str("vs");
+    pd.vertex.bufferCount = 1;
+    pd.vertex.buffers = &vbl;
+    pd.fragment = &frag;
+    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    // Same inward-wound unit cube used by the SDF proxy. Back-face culling
+    // leaves one covering face for inside and outside camera positions without
+    // double-compositing the same medium ray.
+    pd.primitive.cullMode = WGPUCullMode_Back;
+    pd.multisample.count = 1;
+    pd.multisample.mask = 0xFFFFFFFFu;
+    // Deliberately NO depthStencil attachment/state. The shader samples the
+    // completed opaque depth texture and never claims frag_depth itself.
+
+    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+
+    wgpuPipelineLayoutRelease(layout);
+    wgpuShaderModuleRelease(shader);
+
+    if (!out.pipe) {
+        wgpuBindGroupLayoutRelease(out.globalBgl);
+        wgpuBindGroupLayoutRelease(out.instanceBgl);
+        return nullptr;
+    }
+
+    return &(_volumePipes[wgsl] = out);
+}
+
 void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& mat,
                                   const geom::FieldNode* fieldNode,
@@ -1116,6 +1294,41 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // coordinates and numeric AST coefficients are values.
     const bool multiSource = radianceSources().size() > 1;
     const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
+
+    // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
+    // seam. Production Zone media are projected separately and are NOT consumed
+    // here until depth-aware volume composition exists. When this explicit seam
+    // is used, volume.density.ast outranks the legacy generic ScalarField inside
+    // sdfwgsl::compile/collectParams.
+    const OntoMath::Piecewise* densityExpr =
+        (fieldNode && fieldNode->volumeDensity &&
+         !fieldNode->volumeDensity->pieces.empty())
+            ? fieldNode->volumeDensity.get()
+            : nullptr;
+
+    sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
+    if (densityExpr) {
+        densityKind = sdfwgsl::DensityInputKind::Authored;
+    } else if (fieldNode) {
+        Rendering::AuthorableLightState authoredLight;
+        if (Rendering::readAuthorableLight(*fieldNode, authoredLight)) {
+            // rho is source truth, never an implicit participating-medium fallback.
+            densityKind = sdfwgsl::DensityInputKind::None;
+        }
+    }
+
+    uint64_t densityRevision = 0;
+    sdfwgsl::ScalarExpressionLayout densityLayout;
+    std::string densityStructure =
+        densityKind == sdfwgsl::DensityInputKind::None
+            ? "<density:none>"
+            : "<density:legacy-field>";
+    if (densityKind == sdfwgsl::DensityInputKind::Authored) {
+        const std::string densityJson = densityExpr->toJson().dump();
+        densityRevision = static_cast<uint64_t>(std::hash<std::string>{}(densityJson));
+        densityLayout = sdfwgsl::inspectDensityExpression(densityExpr);
+        densityStructure = "<density:authored>\n" + densityLayout.structure;
+    }
 
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
@@ -1216,6 +1429,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     };
 
+    if (densityKind == sdfwgsl::DensityInputKind::Authored && !densityLayout.ok) {
+        recordProgramRefusal("volume density: " + densityLayout.error);
+        return;
+    }
+
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
             recordProgramRefusal(_radianceSourcesLayoutError);
@@ -1246,10 +1464,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceStructureRevision == _radianceStructureRevision &&
                    memo->chromaStructureRevision == _chromaStructureRevision &&
                    memo->angularStructureRevision == _angularStructureRevision));
+        const bool densityStructureMatches =
+            memo->densityKind == densityKind &&
+            memo->densityStructure == densityStructure;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
+            densityStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1258,14 +1480,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceRevision != radianceRevision() ||
                    memo->chromaRevision != radianceChromaRevision() ||
                    memo->angularRevision != radianceAngularRevision());
+            const bool densityValuesChanged =
+                densityKind == sdfwgsl::DensityInputKind::Authored &&
+                memo->densityRevision != densityRevision;
             const bool valuesChanged =
-                memo->parameterRevision != memoParameterRevision || sourceValuesChanged;
+                memo->parameterRevision != memoParameterRevision ||
+                sourceValuesChanged || densityValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
-                                           radianceAngularExpr(), sourceSet);
+                                           radianceAngularExpr(), sourceSet,
+                                           densityExpr, densityKind);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1277,6 +1504,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->chromaRevision = radianceChromaRevision();
                     memo->angularRevision = radianceAngularRevision();
                     memo->sourceSetRevision = radianceSourcesRevision();
+                    memo->densityRevision = densityRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1295,7 +1523,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         mutableFrameStats().sdfProgramCacheMisses++;
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
-                                     radianceAngularExpr(), sourceSet);
+                                     radianceAngularExpr(), sourceSet,
+                                     densityExpr, densityKind);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1320,6 +1549,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->angularStructureRevision = _angularStructureRevision;
             memo->sourceSetRevision = radianceSourcesRevision();
             memo->sourceSetStructureRevision = _radianceSourcesStructureRevision;
+            memo->densityRevision = densityRevision;
+            memo->densityKind = densityKind;
+            memo->densityStructure = densityStructure;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -1338,25 +1570,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (!sp || !prog) return;
 
-    // The bounding cube, shared by every field: the vertex shader scales it by the
-    // field extent, so one buffer serves all of them.
-    if (!_sdfCubeVerts) {
-        const float h = 1.0f;
-        const glm::vec3 c[8] = {
-            {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
-            {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
-        const int idx[36] = {
-            0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
-            3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
-        std::vector<glm::vec3> tris(36);
-        for (int i = 0; i < 36; ++i) tris[i] = c[idx[i]];
-
-        WGPUBufferDescriptor bd = {};
-        bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-        bd.size = tris.size() * sizeof(glm::vec3);
-        _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
-        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
-    }
+    // Surface and volumetric proxies share one immutable resident cube.
+    ensureSdfCubeVerts();
+    if (!_sdfCubeVerts) return;
 
     SdfInstanceData inst;
     inst.model = _model;
@@ -1725,6 +1941,8 @@ void WebGpuRenderer::flushSdfDraws() {
     u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
+    u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
+                            static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
@@ -1929,6 +2147,216 @@ void WebGpuRenderer::flushSdfDraws() {
     _activeSdfPipelines.clear();
 }
 
+void WebGpuRenderer::flushVolumeComposite() {
+    if (!_encoder || !_frameColorView || !_depthView) return;
+
+    // Build batches only from the bounded projection EngineRender handed to the
+    // renderer. No Zone/Object scan occurs here.
+    for (const auto& medium : volumeDensitySources()) {
+        if (!medium.densityExpr || medium.densityExpr->pieces.empty()) continue;
+
+        // FieldNode's existing spatial convention is origin ± scale (the
+        // particle modality samples local [-1,+1] and multiplies by scale).
+        // Do not reinterpret this shared authored property as a full span.
+        const glm::vec3 halfExtent = glm::abs(medium.scale);
+        if (halfExtent.x <= 1e-6f || halfExtent.y <= 1e-6f || halfExtent.z <= 1e-6f) {
+            continue;
+        }
+
+        auto& memo = _volumeProgramCache[medium.densityExpr];
+        if (memo.contentRevision != medium.densityRevision) {
+            const auto layout = sdfwgsl::inspectDensityExpression(medium.densityExpr);
+            memo.contentRevision = medium.densityRevision;
+
+            if (!layout.ok) {
+                memo.ok = false;
+                memo.error = layout.error;
+                memo.pipeline = nullptr;
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal = memo.error;
+                continue;
+            }
+
+            if (!memo.ok || memo.structure != layout.structure || !memo.pipeline) {
+                memo.prog = sdfwgsl::compileVolume(medium.densityExpr);
+                ++mutableFrameStats().volumeProgramCompiles;
+                mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
+                memo.structure = layout.structure;
+                memo.ok = memo.prog.ok;
+                memo.error = memo.prog.error;
+                memo.pipeline = memo.ok ? volumePipeline(memo.prog.wgsl) : nullptr;
+                if (!memo.pipeline) memo.ok = false;
+            } else {
+                const auto params = sdfwgsl::collectVolumeParams(medium.densityExpr);
+                memo.ok = params.ok;
+                memo.error = params.error;
+                if (params.ok) memo.prog.params = params.values;
+            }
+        } else {
+            ++mutableFrameStats().volumeProgramCacheHits;
+        }
+
+        // Refusal never falls back to stale compiled density.
+        if (!memo.ok || !memo.pipeline) {
+            if (!memo.error.empty()) {
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal = memo.error;
+            }
+            continue;
+        }
+
+        auto& instances = _volumeBatches[memo.pipeline];
+        auto& params = _volumeParamBatches[memo.pipeline];
+        if (instances.empty()) _activeVolumePipelines.push_back(memo.pipeline);
+
+        VolumeInstanceData instance;
+        instance.origin = glm::vec4(medium.origin, 1.0f);
+        instance.halfExtent = glm::vec4(halfExtent, 0.0f);
+        instance.time = glm::vec4(static_cast<float>(medium.temporalCoordinate),
+                                  static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
+        instance.paramOffset = static_cast<uint32_t>(params.size());
+
+        instances.push_back(instance);
+        params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
+    }
+
+    if (_activeVolumePipelines.empty()) return;
+
+    ensureSdfCubeVerts();
+    if (!_sdfCubeVerts) {
+        for (const VolumePipeline* pipeline : _activeVolumePipelines) {
+            _volumeBatches[pipeline].clear();
+            _volumeParamBatches[pipeline].clear();
+        }
+        _activeVolumePipelines.clear();
+        return;
+    }
+
+    // Opaque meshes/SDFs were deferred; make their depth authoritative before
+    // any medium samples it.
+    flushMeshDraws();
+    flushSdfDraws();
+
+    // Close the world pass. The color/depth attachments remain stored.
+    wgpuRenderPassEncoderEnd(_pass);
+    wgpuRenderPassEncoderRelease(_pass);
+    _pass = nullptr;
+    _boundPipeline = nullptr;
+
+    WGPURenderPassColorAttachment color = {};
+    color.view = _frameColorView;
+    color.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    color.loadOp = WGPULoadOp_Load;
+    color.storeOp = WGPUStoreOp_Store;
+    WGPURenderPassDescriptor volumePassDesc = {};
+    volumePassDesc.colorAttachmentCount = 1;
+    volumePassDesc.colorAttachments = &color;
+    // No depth attachment: finished depth is read as a texture instead.
+    _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
+    _boundPipeline = nullptr;
+
+    VolumeGlobalUniforms globals;
+    globals.viewProj = _viewProj;
+    globals.invViewProj = glm::inverse(_viewProj);
+    globals.eyePos = glm::vec4(_eyePos, 1.0f);
+    globals.viewport = glm::vec4(static_cast<float>(_depthW),
+                                 static_cast<float>(_depthH), 0.0f, 0.0f);
+    auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
+
+    for (const VolumePipeline* pipeline : _activeVolumePipelines) {
+        const auto& instances = _volumeBatches[pipeline];
+        const auto& params = _volumeParamBatches[pipeline];
+        if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
+
+        auto paramAlloc =
+            bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
+        auto instanceAlloc =
+            bufferPool().suballocateStorage(instances.data(),
+                                            instances.size() * sizeof(VolumeInstanceData));
+
+        WGPUBindGroupEntry globalEntries[3] = {};
+        globalEntries[0].binding = 0;
+        globalEntries[0].buffer = globalAlloc.buffer;
+        globalEntries[0].offset = globalAlloc.offset;
+        globalEntries[0].size = globalAlloc.size;
+        globalEntries[1].binding = 1;
+        globalEntries[1].buffer = paramAlloc.buffer;
+        globalEntries[1].offset = paramAlloc.offset;
+        globalEntries[1].size = paramAlloc.size;
+        globalEntries[2].binding = 2;
+        globalEntries[2].textureView = _depthView;
+
+        WGPUBindGroupDescriptor globalBgDesc = {};
+        globalBgDesc.layout = pipeline->globalBgl;
+        globalBgDesc.entryCount = 3;
+        globalBgDesc.entries = globalEntries;
+        WGPUBindGroup globalBg = wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
+        _frameBindGroups.push_back(globalBg);
+
+        WGPUBindGroupEntry instanceEntry = {};
+        instanceEntry.binding = 0;
+        instanceEntry.buffer = instanceAlloc.buffer;
+        instanceEntry.offset = instanceAlloc.offset;
+        instanceEntry.size = instanceAlloc.size;
+        WGPUBindGroupDescriptor instanceBgDesc = {};
+        instanceBgDesc.layout = pipeline->instanceBgl;
+        instanceBgDesc.entryCount = 1;
+        instanceBgDesc.entries = &instanceEntry;
+        WGPUBindGroup instanceBg = wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
+        _frameBindGroups.push_back(instanceBg);
+
+        bindPipeline(pipeline->pipe);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 0, globalBg, 0, nullptr);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
+        wgpuRenderPassEncoderSetVertexBuffer(
+            _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+        wgpuRenderPassEncoderDraw(
+            _pass, 36, static_cast<uint32_t>(instances.size()), 0, 0);
+
+        mutableFrameStats().drawCalls++;
+        mutableFrameStats().trianglesDrawn +=
+            static_cast<uint32_t>(12 * instances.size());
+    }
+
+    wgpuRenderPassEncoderEnd(_pass);
+    wgpuRenderPassEncoderRelease(_pass);
+    _pass = nullptr;
+    _boundPipeline = nullptr;
+
+    for (const VolumePipeline* pipeline : _activeVolumePipelines) {
+        _volumeBatches[pipeline].clear();
+        _volumeParamBatches[pipeline].clear();
+    }
+    _activeVolumePipelines.clear();
+
+    // Reopen the ordinary pass for nametags, menus and 2D authored overlays.
+    // Load both attachments exactly; volume color is now part of the world, while
+    // opaque depth remains available to any later world-space overlay.
+    WGPURenderPassColorAttachment continueColor = {};
+    continueColor.view = _frameColorView;
+    continueColor.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    continueColor.loadOp = WGPULoadOp_Load;
+    continueColor.storeOp = WGPUStoreOp_Store;
+
+    WGPURenderPassDepthStencilAttachment continueDepth = {};
+    continueDepth.view = _depthView;
+    continueDepth.depthLoadOp = WGPULoadOp_Load;
+    continueDepth.depthStoreOp = WGPUStoreOp_Store;
+
+    WGPURenderPassDescriptor continueDesc = {};
+    continueDesc.colorAttachmentCount = 1;
+    continueDesc.colorAttachments = &continueColor;
+    continueDesc.depthStencilAttachment = &continueDepth;
+
+    _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &continueDesc);
+    _boundPipeline = nullptr;
+}
+
+void WebGpuRenderer::composeVolumes() {
+    if (!_pass || volumeDensitySources().empty()) return;
+    flushVolumeComposite();
+}
+
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
     // Every drawMesh() call this frame only queued into _meshBatches; this is
@@ -1958,6 +2386,7 @@ void WebGpuRenderer::endFrame() {
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;
+    _frameColorView = nullptr;
 
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
