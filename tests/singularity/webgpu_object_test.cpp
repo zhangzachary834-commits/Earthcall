@@ -337,7 +337,10 @@ int main() {
 
         Rendering::VolumeDensityBinding medium;
         medium.origin = glm::vec3(0.0f);
-        medium.scale = glm::vec3(2.0f); // full authored span; renderer derives half-extent
+        // Existing FieldNode convention: scale is the box half-span, so scale=1
+        // owns z in [-1,+1]. The previous V0 implementation incorrectly halved
+        // this again and integrated only [-0.5,+0.5].
+        medium.scale = glm::vec3(1.0f);
         medium.densityExpr = &compositeDensity;
         medium.densityRevision = 5101;
         medium.temporalCoordinate = 0.0;
@@ -356,8 +359,8 @@ int main() {
         std::printf("volume composite clear-depth = (%d,%d,%d,%d)\n",
                     fullMedium[0], fullMedium[1], fullMedium[2], fullMedium[3]);
 
-        assert(fullMedium[0] > 120 && fullMedium[1] > 120 && fullMedium[2] > 120 &&
-               "production volume composite produced no full-depth medium");
+        assert(fullMedium[0] > 220 && fullMedium[1] > 220 && fullMedium[2] > 220 &&
+               "FieldNode scale was not honored as the established origin±scale volume domain");
 
         // Opaque geometry is intentionally DEFERRED by drawMesh. composeVolumes
         // must flush it before closing the world pass, then sample the finished
