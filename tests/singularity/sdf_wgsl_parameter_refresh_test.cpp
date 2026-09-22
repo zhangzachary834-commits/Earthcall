@@ -616,7 +616,8 @@ int main() {
         const std::string rhoBeforeDensityEdit = rho.toJson().dump();
         const auto densityLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
         const auto before =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
 
         check(densityLayoutBefore.ok,
               "V0 authored density structure inspection succeeds");
@@ -637,9 +638,11 @@ int main() {
         densityNode->scalarForm.terms[0].coefficient = 0.45;
         const auto densityLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
         const auto refreshed =
-            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                                 sdfwgsl::DensityInputKind::Authored);
         const auto after =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
 
         check(densityLayoutAfter.ok &&
                   densityLayoutAfter.structure == densityLayoutBefore.structure &&
@@ -661,7 +664,8 @@ int main() {
         legacy.field->frequency = 3.0f;
         legacy.field->amplitude = 2.0f;
         const auto explicitOverLegacy =
-            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
         check(explicitOverLegacy.ok &&
                   explicitOverLegacy.wgsl.find("V0: explicit authored D(p,t)") != std::string::npos &&
                   explicitOverLegacy.wgsl.find("rawDensity") == std::string::npos,
@@ -672,6 +676,14 @@ int main() {
                   legacyOnly.wgsl.find("LEGACY procedural density projection") != std::string::npos,
               "legacy generic density remains quarantined as an explicit compatibility path");
 
+        const auto explicitNone =
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr,
+                             nullptr, sdfwgsl::DensityInputKind::None);
+        check(explicitNone.ok &&
+                  explicitNone.wgsl.find("LEGACY procedural density projection") == std::string::npos &&
+                  explicitNone.wgsl.find("return 0.0;") != std::string::npos,
+              "explicit no-medium state cannot reinterpret generic field.ast as density");
+
         // TIME: rho(t) and D(t) receive distinct ambient coordinates.
         OntoMath::Piecewise timedRho = OntoMath::Piecewise::continuous(
             std::shared_ptr<OntoMath::MathNode>(
@@ -681,7 +693,8 @@ int main() {
                 variable(OntoMath::kTimeVar).release()));
         const auto timedDensityLayout = sdfwgsl::inspectDensityExpression(&timedDensity);
         const auto timed =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity,
+                             sdfwgsl::DensityInputKind::Authored);
         check(timedDensityLayout.ok && timed.ok,
               "D(p,t) is admitted through the production OntoMath emitter");
         check(timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
