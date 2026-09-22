@@ -1323,6 +1323,24 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 // pipelines elsewhere in the Zone. Scene-wide transport needs a shared scene
 // geometry representation rather than pretending those other beings are visible
 // here. Until that exists, this function is not enabled globally by EngineRender.
+fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
+    if (damping < 0.5) {
+        let s = sdfSampleStep(p);
+        var gradLen = s.gradLen;
+        if (gradLen <= 1e-6) {
+            let ge = 1e-3;
+            let raw = s.raw;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            gradLen = length(g);
+        }
+        return select(s.raw, s.raw / gradLen, gradLen > 1e-6);
+    }
+    return sdfEval(p);
+}
+
 fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     if (u.lightControl.y < 0.5) { return 1.0; }
 
@@ -1335,7 +1353,22 @@ fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     if (sourceDistance <= bias * 2.0) { return 1.0; }
 
     let initialDir = toSource / sourceDistance;
-    let origin = surfacePoint + initialDir * bias;
+    let damping = inst.misc.w;
+
+    // The primary marcher may terminate just inside the zero set (for example,
+    // over-relaxation followed by secant correction). A tiny ray-direction bias
+    // then begins the transport query inside its own receiver and manufactures a
+    // self-shadow. Escape only when the source ray points outward through the
+    // receiver's local SDF normal. Back-facing/inward rays remain inside real
+    // geometry and are therefore still blocked by the receiver itself.
+    let surfaceNormal = sdfNormal(surfacePoint);
+    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
+    var origin = surfacePoint + initialDir * bias;
+    if (dot(surfaceNormal, initialDir) > 0.0) {
+        let penetration = max(-surfaceSignedStep, 0.0);
+        origin = surfacePoint + surfaceNormal * (penetration + bias);
+    }
+
     let remaining = sourceField - origin;
     let rayLength = length(remaining);
     if (rayLength <= bias) { return 1.0; }
@@ -1351,7 +1384,6 @@ fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     let maxShadow = min(bounds.y, rayLength - bias);
     if (maxShadow <= tShadow) { return 1.0; }
 
-    let damping = inst.misc.w;
     // Match the primary renderer's finite exact-march budget. This baseline uses
     // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
     for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
@@ -1359,24 +1391,7 @@ fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
 
         let pShadow = origin + shadowDir * tShadow;
         let currentEps = max(surfaceEps, tShadow * 0.001);
-        var dShadow = 0.0;
-
-        if (damping < 0.5) {
-            let s = sdfSampleStep(pShadow);
-            var gradLen = s.gradLen;
-            if (gradLen <= 1e-6) {
-                let ge = 1e-3;
-                let raw = s.raw;
-                let g = vec3<f32>(
-                    sdfEval(pShadow + vec3<f32>(ge, 0.0, 0.0)) - raw,
-                    sdfEval(pShadow + vec3<f32>(0.0, ge, 0.0)) - raw,
-                    sdfEval(pShadow + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
-                gradLen = length(g);
-            }
-            dShadow = select(s.raw, s.raw / gradLen, gradLen > 1e-6);
-        } else {
-            dShadow = sdfEval(pShadow);
-        }
+        let dShadow = sourceTransportSignedStep(pShadow, damping);
 
         if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
         tShadow = tShadow + max(dShadow, currentEps);
