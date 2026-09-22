@@ -616,7 +616,8 @@ int main() {
         const std::string rhoBeforeDensityEdit = rho.toJson().dump();
         const auto densityLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
         const auto before =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
 
         check(densityLayoutBefore.ok,
               "V0 authored density structure inspection succeeds");
@@ -637,9 +638,11 @@ int main() {
         densityNode->scalarForm.terms[0].coefficient = 0.45;
         const auto densityLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
         const auto refreshed =
-            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                                 sdfwgsl::DensityInputKind::Authored);
         const auto after =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
 
         check(densityLayoutAfter.ok &&
                   densityLayoutAfter.structure == densityLayoutBefore.structure &&
@@ -661,7 +664,8 @@ int main() {
         legacy.field->frequency = 3.0f;
         legacy.field->amplitude = 2.0f;
         const auto explicitOverLegacy =
-            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density);
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
         check(explicitOverLegacy.ok &&
                   explicitOverLegacy.wgsl.find("V0: explicit authored D(p,t)") != std::string::npos &&
                   explicitOverLegacy.wgsl.find("rawDensity") == std::string::npos,
@@ -689,7 +693,8 @@ int main() {
                 variable(OntoMath::kTimeVar).release()));
         const auto timedDensityLayout = sdfwgsl::inspectDensityExpression(&timedDensity);
         const auto timed =
-            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity);
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity,
+                             sdfwgsl::DensityInputKind::Authored);
         check(timedDensityLayout.ok && timed.ok,
               "D(p,t) is admitted through the production OntoMath emitter");
         check(timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
@@ -785,6 +790,44 @@ int main() {
         check(multiSource.wgsl.find(
                   "ambientTerm += inst.shading.x") != std::string::npos,
               "legacy ambient compatibility remains outside direct-path visibility");
+    }
+
+    // Prism integration: V_transport and D_medium coexist without semantic aliasing.
+    // The combined shader may contain both sourceVisibility() and volumeDensityEval(),
+    // but visibility is a geometry query; participating-medium D is not promoted
+    // into a binary opaque blocker merely because both are transport phenomena.
+    {
+        auto bridgeRhoNode =
+            std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto bridgeDensityNode =
+            std::shared_ptr<OntoMath::MathNode>(number(0.3).release());
+        OntoMath::Piecewise bridgeRho =
+            OntoMath::Piecewise::continuous(bridgeRhoNode);
+        OntoMath::Piecewise bridgeDensity =
+            OntoMath::Piecewise::continuous(bridgeDensityNode);
+
+        const auto bridge = sdfwgsl::compile(
+            sphere, nullptr, nullptr, &bridgeRho, nullptr, nullptr, nullptr,
+            &bridgeDensity, sdfwgsl::DensityInputKind::Authored);
+        check(bridge.ok &&
+                  bridge.wgsl.find("fn sourceVisibility") != std::string::npos &&
+                  bridge.wgsl.find("fn volumeDensityEval") != std::string::npos &&
+                  bridge.wgsl.find(
+                      "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
+              "combined V+D shader preserves distinct visibility and density channels");
+
+        const auto visibilityStart = bridge.wgsl.find("fn sourceVisibility");
+        const auto visibilityEnd =
+            visibilityStart == std::string::npos
+                ? std::string::npos
+                : bridge.wgsl.find("@fragment", visibilityStart);
+        const bool visibilityIsGeometryOnly =
+            visibilityStart != std::string::npos &&
+            visibilityEnd != std::string::npos &&
+            bridge.wgsl.substr(visibilityStart, visibilityEnd - visibilityStart)
+                    .find("volumeDensityEval") == std::string::npos;
+        check(visibilityIsGeometryOnly,
+              "Rung-8 V does not reinterpret participating-medium D as opaque geometry");
     }
 
     if (failures) {
