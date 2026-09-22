@@ -1668,6 +1668,84 @@ void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
         samplesSavedPerRecordTest);
 }
 
+
+void printDirectProfitabilityVerdict(
+    const char* viewName,
+    const RuntimeTaxTotals& genericBaseline,
+    const std::vector<DirectRuntimeTax>& candidates) {
+    const int64_t genericSaved =
+        static_cast<int64_t>(genericBaseline.offSampleSteps) -
+        static_cast<int64_t>(genericBaseline.onSampleSteps);
+    const double baselineEconomics =
+        genericBaseline.candidateCalls > 0u && genericSaved > 0
+            ? static_cast<double>(genericSaved) /
+                  static_cast<double>(genericBaseline.candidateCalls)
+            : 0.0;
+
+    bool found = false;
+    uint32_t bestAxis = 0u;
+    uint32_t bestMinRunCells = 0u;
+    double bestQueryGain = 0.0;
+    double bestRecordGain = 0.0;
+    double bestCombinedGain = 0.0;
+
+    if (genericBaseline.valid && baselineEconomics > 0.0) {
+        for (const auto& candidate : candidates) {
+            const int64_t saved =
+                static_cast<int64_t>(candidate.offSampleSteps) -
+                static_cast<int64_t>(candidate.directSampleSteps);
+            if (!candidate.valid ||
+                candidate.perRayHitMismatches != 0u ||
+                candidate.artifactRecords == 0u ||
+                candidate.artifactQueries == 0u ||
+                candidate.recordTests == 0u ||
+                saved <= 0) {
+                continue;
+            }
+
+            const double savedPerQuery =
+                static_cast<double>(saved) /
+                static_cast<double>(candidate.artifactQueries);
+            const double savedPerRecord =
+                static_cast<double>(saved) /
+                static_cast<double>(candidate.recordTests);
+            const double queryGain = savedPerQuery / baselineEconomics;
+            const double recordGain = savedPerRecord / baselineEconomics;
+            const double combinedGain = std::min(queryGain, recordGain);
+            if (!found || combinedGain > bestCombinedGain) {
+                found = true;
+                bestAxis = candidate.axis;
+                bestMinRunCells = candidate.minRunCells;
+                bestQueryGain = queryGain;
+                bestRecordGain = recordGain;
+                bestCombinedGain = combinedGain;
+            }
+        }
+    }
+
+    constexpr double kRequiredEconomicsGain = 10.0;
+    const bool graduates =
+        found &&
+        bestQueryGain >= kRequiredEconomicsGain &&
+        bestRecordGain >= kRequiredEconomicsGain;
+
+    std::printf(
+        "SDF_DIRECT_PROFITABILITY_VERDICT view=%s baseline=%.6f "
+        "candidate_found=%d best_axis=%s best_min_run_cells=%u "
+        "best_query_gain=%.4f best_record_gain=%.4f "
+        "best_combined_gain=%.4f required_gain=%.1f graduation=%s\n",
+        viewName,
+        baselineEconomics,
+        found ? 1 : 0,
+        directAxisName(bestAxis),
+        bestMinRunCells,
+        bestQueryGain,
+        bestRecordGain,
+        bestCombinedGain,
+        kRequiredEconomicsGain,
+        graduates ? "PASS" : "REJECT");
+}
+
 } // namespace
 
 int main() {
@@ -1972,6 +2050,8 @@ int main() {
                 measurementWarnings = true;
             }
         }
+
+        printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
 
         Arm off;
         Arm on;
