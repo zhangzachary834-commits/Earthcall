@@ -5,6 +5,43 @@
 **Branch:** `sol/volumetric-v0-density-sovereignty-20260921`  
 **Canonical base:** `sync-from-earthcall-main`
 
+## Implementation status — Density Sun, 2026-09-21/22
+
+V0a, V0b, and V0c are implemented on draft PR #299. The original plan below
+remains the constitutional rationale; this status section records what the code
+now actually does so later work does not restart the rung.
+
+Landed on the Density Sun branch:
+
+- independent `FieldNode::volumeDensity` and PropertyPath `volume.density.ast`;
+- independent save/load and rho/D mutation witnesses;
+- explicit `DensityInputKind::{LegacyField,None,Authored}` at the legacy SDF compiler seam;
+- `volumeDensityEval(p)` and an independent density temporal coordinate;
+- density-owned memo structure/content invalidation;
+- Zone-owned `VolumeDensityBinding` projection independent from `light.source`;
+- dedicated WebGPU participating-medium pipeline and `Renderer::composeVolumes()`;
+- composition after world geometry and before HUD/2D;
+- sampling of completed opaque depth to truncate the medium integral;
+- no volume `frag_depth` claim;
+- actual marched-interval optical-length bookkeeping;
+- native volumetric-only and depth-clamped surface+volume witnesses;
+- native numeric-D refresh witness;
+- native `D(p,t)` Timeline witness proving pixel change with no shader regeneration;
+- native unsupported-density refusal witness proving no stale fog survives;
+- volume-specific compile/cache/refusal observability.
+
+Prism Sun's isolated reconciliation (#304) was reviewed and merged into #299.
+It closes the legacy null-pointer ambiguity: explicit absence can no longer fall
+through to generic `field.ast`, so a radiant FieldNode without authored
+`volume.density.ast` cannot become fog implicitly.
+
+All eleven §10 witness categories now have executable coverage in the branch.
+Focused CI is still the authority for whether this implementation is ready to
+leave draft status.
+
+V1+ remain intentionally unimplemented here: authored extinction, scattering,
+volumetric chroma, phase, emission, and full multiple-medium transport semantics.
+
 ## 1. Why V0 exists
 
 Earthcall already possesses two individually valuable mechanisms:
