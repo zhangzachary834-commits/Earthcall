@@ -797,6 +797,8 @@ int main() {
     // but visibility is a geometry query; participating-medium D is not promoted
     // into a binary opaque blocker merely because both are transport phenomena.
     {
+        auto bridgeSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
         auto bridgeRhoNode =
             std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
         auto bridgeDensityNode =
@@ -807,7 +809,7 @@ int main() {
             OntoMath::Piecewise::continuous(bridgeDensityNode);
 
         const auto bridge = sdfwgsl::compile(
-            sphere, nullptr, nullptr, &bridgeRho, nullptr, nullptr, nullptr,
+            bridgeSphere, nullptr, nullptr, &bridgeRho, nullptr, nullptr, nullptr,
             &bridgeDensity, sdfwgsl::DensityInputKind::Authored);
         check(bridge.ok &&
                   bridge.wgsl.find("fn sourceVisibility") != std::string::npos &&
