@@ -1,6 +1,7 @@
 #include "Identity/FirstMoverRegister.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -69,7 +70,7 @@ std::string FirstMover::grantPredicate() const {
 }
 
 nlohmann::json FirstMover::toJson() const {
-    return nlohmann::json{
+    nlohmann::json j{
         {"id", id.toString()},
         {"kind", kindName(kind)},
         {"displayName", displayName},
@@ -77,6 +78,8 @@ nlohmann::json FirstMover::toJson() const {
         {"scopes", scopes},
         {"grant", grant.toJson()},
     };
+    Singularity::Storage::writeSingularProperties(j, *this);
+    return j;
 }
 
 FirstMover FirstMover::fromJson(const nlohmann::json& j) {
@@ -98,6 +101,10 @@ FirstMover FirstMover::fromJson(const nlohmann::json& j) {
     auto grantIt = j.find("grant");
     if (grantIt != j.end()) m.grant = Claim::fromJson(*grantIt);
 
+    // FirstMover records can be restored before world beings exist. Preserve
+    // identity-valued semantic Properties raw; the ordinary post-load resolver
+    // can bind them later if this mover enters the live Universe domain.
+    Singularity::Storage::readSingularProperties(j, m);
     return m;
 }
 
@@ -313,6 +320,19 @@ void FirstMoverRegister::loadFromJson(const nlohmann::json& j) {
         // discarded -- a world you cannot inspect is worse than a world with a
         // refused entry in it. mayWrite() is what keeps it inert.
         if (m.id.canAuthenticate()) _movers.push_back(std::move(m));
+    }
+
+    // All register members now exist. Resolve mover-to-mover authored
+    // Properties without depending on file order; references to beings outside
+    // the register remain preserve-first deferred for the broader world pass.
+    const auto resolveMover = [&](const std::string& identifier) -> Singular* {
+        for (auto& mover : _movers) {
+            if (mover.getIdentifier() == identifier) return &mover;
+        }
+        return nullptr;
+    };
+    for (auto& mover : _movers) {
+        Singularity::Storage::resolveDeferredSingularProperties(mover, resolveMover);
     }
 }
 
