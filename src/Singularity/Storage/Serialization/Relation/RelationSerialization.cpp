@@ -1,6 +1,7 @@
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -23,6 +24,10 @@ glm::mat4 vectorToMat4(const std::vector<float>& values) {
 }
 
 } // namespace
+
+bool relationRegisteredPropertyNeedsEnvelope(const std::string& propertyName) {
+    return propertyName.rfind("attachment.", 0) != 0;
+}
 
 nlohmann::json Relation::AttachmentData::toJson() const {
     return nlohmann::json{
@@ -76,6 +81,8 @@ nlohmann::json relationToJson(const Relation& relation) {
     if (relation.hasGroundedType()) {
         out["typeId"] = relation.type;
     }
+    Singularity::Storage::writeSingularProperties(
+        out, relation, relationRegisteredPropertyNeedsEnvelope);
     return out;
 }
 
@@ -122,5 +129,8 @@ Relation relationFromJson(const nlohmann::json& json,
                 relation.typeLabel().c_str(), savedA.c_str(), savedB.c_str());
         }
     }
+
+    Singularity::Storage::readSingularProperties(
+        json, relation, resolve, relationRegisteredPropertyNeedsEnvelope);
     return relation;
 }
