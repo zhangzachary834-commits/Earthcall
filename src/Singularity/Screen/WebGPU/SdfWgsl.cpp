@@ -1076,6 +1076,8 @@ struct RU {
     lightAmbient:   vec4<f32>,
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
+    // x = lighting enabled; y = Rung-8 derived visibility enabled.
+    // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
     // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
     // only when authored chi is present; the no-chi branch keeps the exact
@@ -1089,6 +1091,9 @@ struct RU {
     // x = admitted radiance-source temporal coordinate; y = its delta.
     // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
     radianceTime: vec4<f32>,
+    // Independent participating-medium coordinate. D(p,t) never borrows
+    // radianceTime merely because both channels happen to read canonical t.
+    volumeTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -1126,7 +1131,7 @@ struct FSOut {
 // Dual-Path WGSL Field Evaluator
 // This function is generated dynamically based on whether the Law system 
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
-// fieldEval is emitted before this block.
+// volumeDensityEval is emitted before this block.
 
 fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     // Slab method. A zero direction would NaN the inverse; nudge it.
@@ -1310,6 +1315,67 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     return vec3<f32>(t, tMax, 1.0);
 }
 
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.lightControl.y < 0.5) { return 1.0; }
+
+    let inst = instances[g_instIdx];
+    let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+    let toSource = sourceField - surfacePoint;
+    let sourceDistance = length(toSource);
+    let surfaceEps = max(inst.misc.y, 1e-4);
+    let bias = surfaceEps * 4.0;
+    if (sourceDistance <= bias * 2.0) { return 1.0; }
+
+    let initialDir = toSource / sourceDistance;
+    let damping = inst.misc.w;
+
+    // The primary marcher may terminate just inside the zero set (for example,
+    // over-relaxation followed by secant correction). A tiny ray-direction bias
+    // then begins the transport query inside its own receiver and manufactures a
+    // self-shadow. Escape only when the source ray points outward through the
+    // receiver's local SDF normal. Back-facing/inward rays remain inside real
+    // geometry and are therefore still blocked by the receiver itself.
+    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
+    var origin = surfacePoint + initialDir * bias;
+    if (dot(surfaceNormal, initialDir) > 0.0) {
+        let penetration = max(-surfaceSignedStep, 0.0);
+        origin = surfacePoint + surfaceNormal * (penetration + bias);
+    }
+
+    let remaining = sourceField - origin;
+    let rayLength = length(remaining);
+    if (rayLength <= bias) { return 1.0; }
+    let shadowDir = remaining / rayLength;
+
+    // Restrict the query to authored geometry inside this instance's domain.
+    // A source outside the box is fine: leaving the box unobstructed proves this
+    // instance contributes no blocker beyond that exit.
+    let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+
+    var tShadow = max(bounds.x, 0.0);
+    let maxShadow = min(bounds.y, rayLength - bias);
+    if (maxShadow <= tShadow) { return 1.0; }
+
+    // Match the primary renderer's finite exact-march budget. This baseline uses
+    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
+    for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        if (tShadow >= maxShadow) { return 1.0; }
+
+        let pShadow = origin + shadowDir * tShadow;
+        let currentEps = max(surfaceEps, tShadow * 0.001);
+        let dShadow = sourceTransportSignedStep(pShadow, damping);
+
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        tShadow = tShadow + max(dShadow, currentEps);
+    }
+
+    // The primary marcher uses the same bounded iteration contract. If the
+    // budget is exhausted before the segment is decided, fail conservatively:
+    // never invent an unobstructed path that was not actually traversed.
+    return 0.0;
+}
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
@@ -1402,7 +1468,9 @@ fn fs(in: VSOut) -> FSOut {
     var hit = false;
     var transmittance = 1.0;
     var volumetric_scatter = 0.0;
-    var first_hit_t = -1.0;
+    // First ray coordinate at which the authored medium was actually sampled
+    // with positive density. This is NOT a hard-surface hit.
+    var first_density_t = -1.0;
     
     // Enhanced Sphere Tracing (Over-Relaxation) state:
     var omega = select(1.0, 1.4, damping > 0.5);
@@ -1442,7 +1510,12 @@ fn fs(in: VSOut) -> FSOut {
             if (t > maxDist) { break; }
         }
 
-        let p = ro + rd * t;
+        // Keep the coordinate at which this iteration's medium sample is
+        // evaluated. Surface marching may advance t by a gradient-corrected,
+        // damped, or over-relaxed amount below; transport must integrate the
+        // interval that was ACTUALLY traversed, not reuse raw SDF magnitude.
+        let sample_t = t;
+        let p = ro + rd * sample_t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
         if (isHeightfield && rd.y > 1e-4 && p.y > inst.extents.y) {
@@ -1510,14 +1583,18 @@ fn fs(in: VSOut) -> FSOut {
         }
         
         // Volumetric Field Accumulation
-        let density = fieldEval(p);
-        if (density > 0.0) {
-            if (first_hit_t < 0.0) { first_hit_t = t; }
-            let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
-            let extinction = max(density * 0.5, 1e-6); // Tunable constant
+        let density = volumeDensityEval(p);
+        // t may advance beyond maxDist on the last surface-march step. Medium
+        // transport owns only the bounded interval [sample_t, maxDist].
+        let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
+        if (density > 0.0 && marched_field_distance > 0.0) {
+            if (first_density_t < 0.0) { first_density_t = sample_t; }
+            // V0 compatibility extinction. The 0.5 coefficient is intentionally
+            // still a fossil until V1 authors sigma_t independently.
+            let extinction = max(density * 0.5, 1e-6);
             
             let old_t = transmittance;
-            transmittance *= exp(-extinction * step_size);
+            transmittance *= exp(-extinction * marched_field_distance);
             
             // Analytical integration prevents double attenuation across large steps
             volumetric_scatter += (density / extinction) * (old_t - transmittance);
@@ -1532,8 +1609,10 @@ fn fs(in: VSOut) -> FSOut {
     var out: FSOut;
     
     if (!hit) {
-        // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
-        // Set depth to the first volumetric hit so it occludes correctly
+        // Volumetric-only output still uses the legacy shared SDF pipeline.
+        // first_density_t records the sampled medium coordinate truthfully, but
+        // V0c MUST NOT activate this path in production until volume composition
+        // no longer treats a translucent sample as an opaque depth owner.
         let final_alpha = 1.0 - transmittance;
         let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
         if (final_alpha > 0.0) {
@@ -1541,8 +1620,8 @@ fn fs(in: VSOut) -> FSOut {
         } else {
             out.color = vec4<f32>(0.0);
         }
-        if (first_hit_t >= 0.0) {
-            let hit_p = ro + rd * first_hit_t;
+        if (first_density_t >= 0.0) {
+            let hit_p = ro + rd * first_density_t;
             let hit_w = (inst.model * vec4<f32>(hit_p, 1.0)).xyz;
             let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
             out.depth = hit_c.z / hit_c.w;
@@ -1586,6 +1665,8 @@ fn fs(in: VSOut) -> FSOut {
         }
     }
     let shapedRadiance = radialRadiance * angularRadiance;
+    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
+    let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
@@ -1604,8 +1685,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     } else {
         // EXACT compatibility branch from Rung 4. No authored chi means
         // constant legacy light.color, already carried by these uniforms.
@@ -1613,8 +1694,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -1655,6 +1736,25 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
         return ScalarExpressionLayout{"<legacy-radiance:1.0>", 0, true, ""};
     }
 
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-density:none>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
     emitPiecewise(*expr, e, "p", "f32", body);
 
     ScalarExpressionLayout layout;
@@ -1722,7 +1822,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* radianceExpr,
                              const OntoMath::Piecewise* chromaExpr,
                              const OntoMath::Piecewise* angularExpr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                             const OntoMath::Piecewise* densityExpr,
+                             DensityInputKind densityKind) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1745,7 +1847,18 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     }
 
     std::string throwaway;
-    if (fieldNode && fieldNode->field) {
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
+        // LEGACY ONLY: old callers may still project generic ScalarField
+        // mathematics as density. Explicit None must never fall through here.
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
         } else {
@@ -1849,7 +1962,9 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* radianceExpr,
                 const OntoMath::Piecewise* chromaExpr,
                 const OntoMath::Piecewise* angularExpr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources) {
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                const OntoMath::Piecewise* densityExpr,
+                DensityInputKind densityKind) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1906,18 +2021,30 @@ Program compile(const geom::SdfNode& root,
                      "}\n";
     }
 
-    // --- Dual-Path Field Compiler ---
-    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
-    if (fieldNode && fieldNode->field) {
+    // --- Volumetric V0 Density Compiler ---
+    // Explicit volume.density.ast wins. The generic FieldNode scalar path below
+    // is retained only as named legacy compatibility until saves migrate.
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V0: explicit authored D(p,t)\n";
+        emitPiecewise(*densityExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            prog.wgsl += "    // LEGACY density projection from generic field.ast\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
             std::string amp = e.param(fieldNode->field->amplitude);
-            
-            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+
+            prog.wgsl += "    // LEGACY procedural density projection\n";
             prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
             prog.wgsl += "    return max(rawDensity, 0.0);\n";
         }
@@ -2144,6 +2271,8 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
                        "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
@@ -2168,9 +2297,9 @@ Program compile(const geom::SdfNode& root,
                 }
                 sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
                 sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * shapedRadiance;\n";
+                       "diff * directRadiance;\n";
                 sum += "            specTerm += specularEnvelope * specShape * "
-                       "shapedRadiance;\n";
+                       "directRadiance;\n";
                 sum += "        }\n";
                 sum += "    }\n";
             }
@@ -2194,5 +2323,199 @@ Program compile(const geom::SdfNode& root,
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
 }
+
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr) {
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    std::string throwaway;
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+    }
+
+    ParameterBlock block;
+    block.ok = !e.refused;
+    block.error = e.refusal;
+    block.values = std::move(e.params);
+    if (block.values.empty()) block.values.push_back(0.0f);
+    return block;
+}
+
+Program compileVolume(const OntoMath::Piecewise* densityExpr) {
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    Program prog;
+    prog.wgsl = R"WGSL(
+struct VolumeGlobals {
+    viewProj: mat4x4<f32>,
+    invViewProj: mat4x4<f32>,
+    eyePos: vec4<f32>,
+    viewport: vec4<f32>,
+};
+
+struct VolumeInstanceData {
+    origin: vec4<f32>,
+    halfExtent: vec4<f32>,
+    time: vec4<f32>,
+    paramOffset: u32,
+    _pad0: u32,
+    _pad1: u32,
+    _pad2: u32,
+};
+
+struct Params { v: array<f32> };
+
+@group(0) @binding(0) var<uniform> u: VolumeGlobals;
+@group(0) @binding(1) var<storage, read> P: Params;
+@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;
+@group(1) @binding(0) var<storage, read> instances: array<VolumeInstanceData>;
+
+var<private> g_instIdx: u32;
+
+struct VolumeVSOut {
+    @builtin(position) position: vec4<f32>,
+    @location(0) @interpolate(flat) instIdx: u32,
+};
+
+@vertex
+fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VolumeVSOut {
+    let inst = instances[instIdx];
+    let world = inst.origin.xyz + pos * inst.halfExtent.xyz;
+    var out: VolumeVSOut;
+    out.position = u.viewProj * vec4<f32>(world, 1.0);
+    if (out.position.w > 0.0) {
+        out.position.z = min(out.position.z, out.position.w * 0.999999);
+    }
+    out.instIdx = instIdx;
+    return out;
+}
+
+fn rayAabbWorld(ro: vec3<f32>, rd: vec3<f32>,
+                bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
+    let safeRd = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let a = (bmin - ro) / safeRd;
+    let b = (bmax - ro) / safeRd;
+    let lo = min(a, b);
+    let hi = max(a, b);
+    return vec2<f32>(
+        max(max(lo.x, lo.y), lo.z),
+        min(min(hi.x, hi.y), hi.z));
+}
+
+fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
+    let ndc = vec4<f32>(
+        (pixel.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - pixel.y / u.viewport.y) * 2.0 - 1.0,
+        depth,
+        1.0);
+    let h = u.invViewProj * ndc;
+    return h.xyz / h.w;
+}
+)WGSL";
+
+    std::string densityBody;
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitPiecewise(*densityExpr, e, "p", "f32", densityBody);
+    } else {
+        densityBody = "    return 0.0;\n";
+    }
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
+                 densityBody + "}\n";
+
+    prog.wgsl += R"WGSL(
+@fragment
+fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
+    g_instIdx = in.instIdx;
+    let inst = instances[in.instIdx];
+
+    let ro = u.eyePos.xyz;
+    let farNdc = vec4<f32>(
+        (in.position.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
+        1.0,
+        1.0);
+    let farH = u.invViewProj * farNdc;
+    let farWorld = farH.xyz / farH.w;
+    let rd = normalize(farWorld - ro);
+
+    let bounds = rayAabbWorld(
+        ro, rd,
+        inst.origin.xyz - inst.halfExtent.xyz,
+        inst.origin.xyz + inst.halfExtent.xyz);
+
+    var t0 = max(bounds.x, 0.0);
+    var t1 = bounds.y;
+    if (t1 <= t0) { discard; }
+
+    let maxX = max(i32(u.viewport.x), 1) - 1;
+    let maxY = max(i32(u.viewport.y), 1) - 1;
+    let px = vec2<i32>(
+        clamp(i32(floor(in.position.x)), 0, maxX),
+        clamp(i32(floor(in.position.y)), 0, maxY));
+    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+
+    if (sceneDepth < 0.999999) {
+        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
+        let opaqueT = dot(opaqueWorld - ro, rd);
+        t1 = min(t1, max(opaqueT, 0.0));
+    }
+    if (t1 <= t0) { discard; }
+
+    let span = t1 - t0;
+    let stepLength = span / 96.0;
+    if (stepLength <= 0.0) { discard; }
+
+    var transmittance = 1.0;
+    var volumetricScatter = 0.0;
+
+    for (var i = 0; i < 96; i = i + 1) {
+        let sampleT = t0 + (f32(i) + 0.5) * stepLength;
+        let worldP = ro + rd * sampleT;
+        let p = worldP - inst.origin.xyz;
+        let density = max(volumeDensityEval(p), 0.0);
+
+        if (density > 0.0) {
+            // V0 compatibility only. V1 replaces this with independently
+            // authored sigma_t(p,t).
+            let extinction = max(density * 0.5, 1e-6);
+            let oldT = transmittance;
+            transmittance *= exp(-extinction * stepLength);
+
+            // V0 compatibility only. V2 replaces white scattering with
+            // independently authored scattering/chroma.
+            volumetricScatter +=
+                (density / extinction) * (oldT - transmittance);
+        }
+
+        if (transmittance < 0.01) { break; }
+    }
+
+    let alpha = 1.0 - transmittance;
+    if (alpha <= 1e-5) { discard; }
+
+    let integratedRgb = vec3<f32>(1.0) * volumetricScatter;
+    // The pipeline uses ordinary SrcAlpha compositing. Convert the integrated
+    // premultiplied contribution to straight color so the blend performs:
+    // C_out = C_medium + T * C_scene.
+    return vec4<f32>(integratedRgb / alpha, alpha);
+}
+)WGSL";
+
+    prog.params = std::move(e.params);
+    prog.needsGradientStep = false;
+
+    if (e.refused) {
+        prog.ok = false;
+        prog.error = e.refusal;
+        prog.wgsl = "// REFUSED: " + e.refusal + "\n";
+    }
+
+    if (prog.params.empty()) prog.params.push_back(0.0f);
+    return prog;
+}
+
 
 } // namespace sdfwgsl
