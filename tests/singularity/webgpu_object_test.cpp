@@ -270,16 +270,16 @@ int main() {
         assert(lowStats.sdfProgramCompiles >= 1 &&
                "first authored density draw must compile its structure");
 
-        // VALUE ONLY: mutate the coefficient in-place, preserve AST topology,
-        // and advance only the parameter revision. The next draw must refresh
-        // packed values while reusing the exact compiled WGSL/pipeline.
+        // VALUE ONLY: mutate D in-place while keeping geometry's parameter
+        // revision unchanged. Density must refresh on its own authored identity,
+        // not because an unrelated geometry revision was manually advanced.
         densityNode->scalarForm.terms[0].coefficient = 0.8;
 
         renderer.setModel(glm::mat4(1.0f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
                               kVolumeMemoId, kVolumeStructureRevision, nullptr,
-                              /*memoParameterRevision=*/2u);
+                              /*memoParameterRevision=*/1u);
         renderer.endFrame();
 
         unsigned char highDensity[4];
