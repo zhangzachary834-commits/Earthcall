@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -222,6 +223,248 @@ int main() {
            "painting an object must give it its own material, not repaint the shared one");
     assert(tint->faceTextures.empty() &&
            "the shared material took paint meant for one object");
+
+    // --- Volumetric V0 native witness ---------------------------------------
+    // Use an implicit f(p)=1: it is positive everywhere, so there is NO hard
+    // zero-surface inside the proxy. Any non-black pixel therefore comes from
+    // participating-medium integration alone, not from surface shading.
+    //
+    // This is intentionally an isolated offscreen composition witness. Production
+    // Zone media are not activated through this path until the renderer has a
+    // depth-aware volume-composition pass that can clamp transport against opaque
+    // scene depth without letting translucent samples become depth owners.
+    {
+        geom::SdfNode noSurface = geom::makeImplicit("1");
+        geom::FieldNode medium("webgpu-volume-density-probe");
+        auto densityNode = scalarNode(0.08);
+        *medium.volumeDensity = OntoMath::Piecewise::continuous(densityNode);
+
+        RenderMaterial volumeMat;
+        volumeMat.baseColor = glm::vec3(0.0f);
+        volumeMat.opacity = 0.0f;
+
+        constexpr uint64_t kVolumeMemoId = 0xD3115179ULL;
+        constexpr uint32_t kVolumeStructureRevision = 1u;
+
+        renderer.setVolumeDensityTemporalCoordinate(0.0, 0.0);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/1u);
+        renderer.endFrame();
+
+        unsigned char lowDensity[4];
+        readCentre(lowDensity);
+        const Renderer::FrameStats lowStats = renderer.frameStats();
+        std::printf("volume low density  = (%d,%d,%d,%d), compiles=%llu hits=%llu\n",
+                    lowDensity[0], lowDensity[1], lowDensity[2], lowDensity[3],
+                    static_cast<unsigned long long>(lowStats.sdfProgramCompiles),
+                    static_cast<unsigned long long>(lowStats.sdfProgramCacheHits));
+
+        assert(lowDensity[0] > 0 &&
+               "authored volume density produced no native WebGPU contribution");
+        assert(abs(int(lowDensity[0]) - int(lowDensity[1])) < 8 &&
+               abs(int(lowDensity[1]) - int(lowDensity[2])) < 8 &&
+               "V0 compatibility scatter should still be neutral/white");
+        assert(lowStats.sdfProgramCompiles >= 1 &&
+               "first authored density draw must compile its structure");
+
+        // VALUE ONLY: mutate D in-place while keeping geometry's parameter
+        // revision unchanged. Density must refresh on its own authored identity,
+        // not because an unrelated geometry revision was manually advanced.
+        densityNode->scalarForm.terms[0].coefficient = 0.8;
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/1u);
+        renderer.endFrame();
+
+        unsigned char highDensity[4];
+        readCentre(highDensity);
+        const Renderer::FrameStats highStats = renderer.frameStats();
+        std::printf("volume high density = (%d,%d,%d,%d), compiles=%llu hits=%llu\n",
+                    highDensity[0], highDensity[1], highDensity[2], highDensity[3],
+                    static_cast<unsigned long long>(highStats.sdfProgramCompiles),
+                    static_cast<unsigned long long>(highStats.sdfProgramCacheHits));
+
+        assert(highDensity[0] > lowDensity[0] + 10 &&
+               "numeric volume-density edit did not visibly change native pixels");
+        assert(highStats.sdfProgramCompiles == 0 &&
+               "numeric D edit regenerated WGSL instead of refreshing parameters");
+        assert(highStats.sdfProgramCacheHits >= 1 &&
+               "numeric D edit did not reuse the memoized volume shader");
+
+        // STRUCTURE ONLY: replace ScalarLeaf with Add(ScalarLeaf, ScalarLeaf)
+        // while geometry revisions remain untouched. Density structure itself
+        // must invalidate WGSL exactly once.
+        auto densityAdd = std::make_shared<OntoMath::MathNode>();
+        densityAdd->op = OntoMath::MathNode::Op::Add;
+        densityAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.4)));
+        densityAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.4)));
+        medium.volumeDensity->pieces[0].mathNode = densityAdd;
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/1u);
+        renderer.endFrame();
+        const Renderer::FrameStats densityStructureStats = renderer.frameStats();
+        assert(densityStructureStats.sdfProgramCompiles == 1 &&
+               "density operator-tree edit failed to regenerate WGSL structure");
+    }
+
+    // --- Volumetric V0c production-composition witness -----------------------
+    // Exercise Renderer::composeVolumes(), not the isolated drawImplicit density
+    // seam above. The same bounded medium is rendered twice:
+    //
+    //   1. against clear depth, so the centre ray integrates z=+1 -> z=-1;
+    //   2. with the existing opaque green cube at the origin, whose front face
+    //      is near z=+0.5 and therefore MUST truncate the medium integral there.
+    //
+    // If the volume pass samples stale/empty depth, runs before deferred opaque
+    // draws are flushed, or writes/reads the same depth attachment illegally,
+    // the red/blue fog contribution will not fall in the blocked frame.
+    {
+        auto compositeDensityNode = scalarNode(0.8);
+        OntoMath::Piecewise compositeDensity =
+            OntoMath::Piecewise::continuous(compositeDensityNode);
+
+        Rendering::VolumeDensityBinding medium;
+        medium.origin = glm::vec3(0.0f);
+        // Existing FieldNode convention: scale is the box half-span, so scale=1
+        // owns z in [-1,+1]. The previous V0 implementation incorrectly halved
+        // this again and integrated only [-0.5,+0.5].
+        medium.scale = glm::vec3(1.0f);
+        medium.densityExpr = &compositeDensity;
+        medium.densityRevision = 5101;
+        medium.temporalCoordinate = 0.0;
+        medium.temporalDelta = 0.0;
+
+        renderer.setVolumeDensitySources({medium}, 5201);
+
+        // No opaque geometry: the medium owns the full bounded ray interval.
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char fullMedium[4];
+        readCentre(fullMedium);
+        std::printf("volume composite clear-depth = (%d,%d,%d,%d)\n",
+                    fullMedium[0], fullMedium[1], fullMedium[2], fullMedium[3]);
+
+        assert(fullMedium[0] > 220 && fullMedium[1] > 220 && fullMedium[2] > 220 &&
+               "FieldNode scale was not honored as the established origin±scale volume domain");
+
+        // Opaque geometry is intentionally DEFERRED by drawMesh. composeVolumes
+        // must flush it before closing the world pass, then sample the finished
+        // depth in its separate no-depth-attachment pass.
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        green.drawObject();
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char depthClampedMedium[4];
+        readCentre(depthClampedMedium);
+        std::printf("volume composite opaque-clamped = (%d,%d,%d,%d)\n",
+                    depthClampedMedium[0], depthClampedMedium[1],
+                    depthClampedMedium[2], depthClampedMedium[3]);
+
+        assert(fullMedium[0] > depthClampedMedium[0] + 50 &&
+               fullMedium[2] > depthClampedMedium[2] + 50 &&
+               "opaque scene depth did not truncate participating-medium transport");
+        assert(depthClampedMedium[1] > depthClampedMedium[0] + 20 &&
+               depthClampedMedium[1] > depthClampedMedium[2] + 20 &&
+               "volume composition erased or replaced the opaque green receiver");
+
+        // TIMELINE: D(p,t)=t is the same authored structure across both frames.
+        // Only this medium's admitted Timeline coordinate changes. The second
+        // frame must visibly brighten while reusing the already-compiled volume
+        // program; time is runtime data, never an AST mutation.
+        auto densityTimeNode = std::make_shared<OntoMath::MathNode>();
+        densityTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        densityTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedDensity =
+            OntoMath::Piecewise::continuous(densityTimeNode);
+
+        Rendering::VolumeDensityBinding timedMedium = medium;
+        timedMedium.densityExpr = &timedDensity;
+        timedMedium.densityRevision = 5301;
+        timedMedium.temporalCoordinate = 0.05;
+        timedMedium.temporalDelta = 0.05;
+        renderer.setVolumeDensitySources({timedMedium}, 5401);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char timedDensityDim[4];
+        readCentre(timedDensityDim);
+        const Renderer::FrameStats timedDensityCompileStats = renderer.frameStats();
+        assert(timedDensityCompileStats.volumeProgramCompiles == 1 &&
+               "introducing D(p,t) did not compile its density structure exactly once");
+
+        timedMedium.temporalCoordinate = 1.0;
+        timedMedium.temporalDelta = 0.95;
+        // Membership and authored density content are unchanged. Keep the set
+        // and density revisions fixed so only runtime Timeline data advances.
+        renderer.setVolumeDensitySources({timedMedium}, 5401);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char timedDensityBright[4];
+        readCentre(timedDensityBright);
+        const Renderer::FrameStats timedDensityAdvanceStats = renderer.frameStats();
+        std::printf("volume density timeline t=.05:%d t=1:%d compiles=%u cacheHits=%u\n",
+                    timedDensityDim[0], timedDensityBright[0],
+                    timedDensityAdvanceStats.volumeProgramCompiles,
+                    timedDensityAdvanceStats.volumeProgramCacheHits);
+        assert(timedDensityBright[0] > timedDensityDim[0] + 60 &&
+               "advancing the medium Timeline did not visibly change D(p,t)");
+        assert(timedDensityAdvanceStats.volumeProgramCompiles == 0 &&
+               "advancing density time regenerated the volume shader");
+        assert(timedDensityAdvanceStats.volumeProgramCacheHits >= 1 &&
+               "advancing density time failed to reuse the memoized volume program");
+
+        // REFUSAL: replace only D's authored structure with unsupported Raycast.
+        // The production composite must surface a named refusal and render no
+        // stale medium from the previously valid timed density program.
+        auto unsupportedDensityNode = std::make_shared<OntoMath::MathNode>();
+        unsupportedDensityNode->op = OntoMath::MathNode::Op::Raycast;
+        timedDensity.pieces[0].mathNode = unsupportedDensityNode;
+        timedMedium.densityRevision = 5302;
+        renderer.setVolumeDensitySources({timedMedium}, 5402);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char refusedDensityPixel[4];
+        readCentre(refusedDensityPixel);
+        const Renderer::FrameStats refusedDensityStats = renderer.frameStats();
+        assert(refusedDensityStats.volumeProgramRefusals >= 1 &&
+               "unsupported authored density did not surface a production volume refusal");
+        assert(refusedDensityStats.volumeLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "production density refusal did not name the unsupported authored operation");
+        assert(refusedDensityPixel[0] < 12 &&
+               refusedDensityPixel[1] < 12 &&
+               refusedDensityPixel[2] < 12 &&
+               "refused authored density left stale volumetric output on screen");
+
+        renderer.setVolumeDensitySources({}, 0);
+    }
 
     // Unhook before the renderer (a stack object) goes out of scope: globals such
     // as ZoneManager are destroyed after main returns and can still reach for the
@@ -738,6 +981,140 @@ int main() {
         assert(enableValueStats.sdfParameterBytesUploaded == 0 &&
                "source enablement incorrectly rewrote authored OntoMath parameters");
 
+        // RUNG 8 DERIVED VISIBILITY: geometry may stand between a source and
+        // receiver without becoming part of rho/chi/alpha. This first truthful
+        // baseline is deliberately scoped to geometry owned by the executing SDF
+        // pipeline; the renderer leaves it disabled by default until arbitrary
+        // cross-pipeline scene transport has a shared geometry representation.
+        //
+        // Build one authored SDF containing the receiver sphere plus a small
+        // blocker on ONLY the red-source path. The camera ray through the centre
+        // still hits the receiver, while the blue path remains unobstructed.
+        blueSource.enabled = true;
+        redSource.position = glm::vec3(-0.8f, 0.0f, 1.6f);
+        blueSource.position = glm::vec3(0.8f, 0.0f, 1.6f);
+        redSource.coefficients = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+        blueSource.coefficients = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+        renderer.setRadianceSources({redSource, blueSource}, 4201);
+
+        const std::string rhoRedBeforeVisibility = rhoRed.toJson().dump();
+        const std::string rhoBlueBeforeVisibility = rhoBlue.toJson().dump();
+        const std::string chiRedBeforeVisibility = chiRedSource.toJson().dump();
+        const std::string chiBlueBeforeVisibility = chiBlueSource.toJson().dump();
+
+        auto receiver =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f));
+
+        // Establish the exact V=1 pixel baseline with the SAME source values
+        // before any blocker exists. Adding off-axis blocker geometry while
+        // visibility remains disabled must not perturb this receiver sample.
+        radiant.setFieldShape(receiver, glm::vec3(1.5f));
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char visibilityBaseline[4];
+        readCentre(visibilityBaseline);
+
+        // Visibility with no blocker must be observationally identical to V=1.
+        // This specifically guards against the primary marcher terminating a hair
+        // inside the receiver and the secondary transport ray then shadowing the
+        // receiver against itself.
+        renderer.setRadianceVisibilityEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char receiverOnlyVisibility[4];
+        readCentre(receiverOnlyVisibility);
+        const Renderer::FrameStats receiverOnlyVisibilityStats = renderer.frameStats();
+        assert(abs(int(receiverOnlyVisibility[0]) - int(visibilityBaseline[0])) <= 2 &&
+               abs(int(receiverOnlyVisibility[1]) - int(visibilityBaseline[1])) <= 2 &&
+               abs(int(receiverOnlyVisibility[2]) - int(visibilityBaseline[2])) <= 2 &&
+               "visibility query self-shadowed the receiver with no blocker present");
+        assert(receiverOnlyVisibilityStats.sdfProgramCompiles == 0 &&
+               receiverOnlyVisibilityStats.sdfProgramCacheHits >= 1 &&
+               "enabling receiver-only visibility regenerated shader structure");
+
+        auto blocker =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
+        blocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
+        auto shadowField =
+            geom::SdfNode::binary(geom::SdfOp::Union, receiver, blocker);
+        radiant.setFieldShape(shadowField, glm::vec3(1.5f));
+
+        // Compatibility law: transport disabled is exactly V=1. The blocker is
+        // real geometry, but it must not alter source emission while this derived
+        // query is disabled.
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char visibilityOff[4];
+        readCentre(visibilityOff);
+        const Renderer::FrameStats visibilityOffStats = renderer.frameStats();
+        assert(visibilityOff[0] > 35 && visibilityOff[2] > 35 &&
+               "V=1 compatibility did not preserve both direct source contributions");
+        assert(abs(int(visibilityOff[0]) - int(visibilityBaseline[0])) <= 2 &&
+               abs(int(visibilityOff[1]) - int(visibilityBaseline[1])) <= 2 &&
+               abs(int(visibilityOff[2]) - int(visibilityBaseline[2])) <= 2 &&
+               "visibility-disabled V=1 changed the pre-shadow receiver pixel");
+        assert(visibilityOffStats.sdfProgramCompiles == 1 &&
+               "new receiver+blocker SDF structure should compile exactly once");
+
+        // Value-only execution change: enable derived transport. The red path
+        // intersects the blocker; blue does not. Source ASTs and shader structure
+        // remain untouched.
+        renderer.setRadianceVisibilityEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char redBlocked[4];
+        readCentre(redBlocked);
+        const Renderer::FrameStats visibilityOnStats = renderer.frameStats();
+        std::printf("Rung-8 visibility off=(%d,%d,%d) on=(%d,%d,%d) compiles=%u cacheHits=%u\n",
+                    visibilityOff[0], visibilityOff[1], visibilityOff[2],
+                    redBlocked[0], redBlocked[1], redBlocked[2],
+                    visibilityOnStats.sdfProgramCompiles,
+                    visibilityOnStats.sdfProgramCacheHits);
+        assert(visibilityOff[0] > redBlocked[0] + 25 &&
+               "blocker on source 0 path did not suppress the red direct contribution");
+        assert(redBlocked[2] > 35 &&
+               abs(int(redBlocked[2]) - int(visibilityOff[2])) < 25 &&
+               "blocking source 0 damaged independent source 1 transport");
+        assert(visibilityOnStats.sdfProgramCompiles == 0 &&
+               visibilityOnStats.sdfProgramCacheHits >= 1 &&
+               "enabling derived visibility regenerated source/SDF shader structure");
+
+        // Move only the blocker behind the receiver. This is a geometry VALUE
+        // edit with identical Union/Sphere topology. The red path must return,
+        // while all four source invariants remain byte-for-byte unchanged.
+        const auto blockerStructureBefore = radiant.getSdfStructureRevision();
+        const auto blockerParamsBefore = radiant.getSdfParameterRevision();
+        radiant.setFieldOperandBOffset(glm::vec3(-0.4f, 0.0f, -0.8f));
+        assert(radiant.getSdfStructureRevision() == blockerStructureBefore &&
+               "blocker value motion incorrectly invalidated SDF structure");
+        assert(radiant.getSdfParameterRevision() != blockerParamsBefore &&
+               "blocker value motion did not advance SDF parameter revision");
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char blockerMoved[4];
+        readCentre(blockerMoved);
+        const Renderer::FrameStats blockerMoveStats = renderer.frameStats();
+        assert(blockerMoved[0] > redBlocked[0] + 25 &&
+               "moving the blocker away left a stale shadow");
+        assert(blockerMoved[2] > 35 &&
+               "moving the red blocker damaged the blue source contribution");
+        assert(blockerMoveStats.sdfProgramCompiles == 0 &&
+               blockerMoveStats.sdfProgramCacheHits >= 1 &&
+               "numeric blocker motion regenerated WGSL instead of refreshing geometry values");
+        assert(rhoRed.toJson().dump() == rhoRedBeforeVisibility &&
+               rhoBlue.toJson().dump() == rhoBlueBeforeVisibility &&
+               chiRedSource.toJson().dump() == chiRedBeforeVisibility &&
+               chiBlueSource.toJson().dump() == chiBlueBeforeVisibility &&
+               "derived visibility leaked blocker state into authored source invariants");
+
+        renderer.setRadianceVisibilityEnabled(false);
         renderer.setRadianceSources({}, 0);
     }
 
