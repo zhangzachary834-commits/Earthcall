@@ -441,17 +441,11 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - OntoMath and ActionNode and possibly more should all be unified under a fundamental set of opcode invariants.
 
 ## OntoMath, Opcodes, and Properties
-{ Zach: So recall the foundational definition of Property: Machine-level substrate ordered as predicates of a Singular.
-- OntoMath Rework OntoMath to have more precise metal capacities so there is an option where the variables themselves can directly reference/point to Properties, so the specific data types of *values* they calculate are not engine-locked to just being a standard "double" or "float" and you aren't restricted to deep-copying just to calculate.
-- If we haven't already done this—cpp data structures should also be authorable properties. Not full Singulars in themselves (we don't give new domain nouns for Graph or Hash Map or something)
-- Data structures as Properties mean complex Property operations can be stored in a data type so we do not need to create new Singulars for everything cpp-level data structure. 
-- Some processes need to stay machine level though. It's about being fluidly govern how data is stored rather than forcing Persons to handle metal-level cpp management themselves.
-- Say I have something I'm holding in my hand that's red. I want to be able to use OntoMath to make a building that derives exactly from that PropertyPath, and the PropertyPaths themselves need robust authorable memory management.
-- This is a very low level memory management interface (thats still needs to be fundamentally safe and not allow segfaults) that will take a lot of skill to operate in-world.
-- Also, different properties should be able to access the same memory. The power of shared/unique/weak-pointers by Property should not be an inaccessible machine process and be authorable direction.
-- Memory management and ownership so Properties can point to any memory (I don't literally mean ANY) and share the same memory as properties. For example, sharing "red" could either mean a Property path that is distinct yet shares the same memory as another (but could also be rewritten or referenced differently), or it could mean sharing the PropertyPath itself (that would inherently share memory), or it could be a deep copy. Obviously, cpp level things like dereferencing, address, pointer managemnet should remain in the cpp, but deciding which noun to point to.
-- We thus need a Property cache those properties very efficiently. I'm wondering if we should keep using SingularId Interning or if SoA would be better.
-  (move this section to Specific Tasks, replace with smaller bullets.) - Zach}
+- Specify authorable path-following, shared/unique/weak value-cell relationships, copies, and derivation while preserving Property as a predicate of a Singular. → [full task](Specific%20Tasks/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Make nested and shared Property writes safely observable to Law, OntoMath, and channel consumers. → [full task](Specific%20Tasks/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Govern memory and Property access with authored Laws, seeded through a First Mover because Law text itself occupies memory. → [full task](Specific%20Tasks/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Extend live OntoMath bindings to preserve supported Property value types and refuse unsupported operations explicitly. → [full task](Specific%20Tasks/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
+- Benchmark checked Property storage and selective dense layouts against the existing interned-name lookup before choosing a cache design. → [full task](Specific%20Tasks/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md)
 
 <a id="feature-sized"></a>
 ### Feature-sized (split out of Housekeeping 2026-08-13):
