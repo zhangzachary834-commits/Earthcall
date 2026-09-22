@@ -62,6 +62,14 @@ public:
         std::string sdfLastProgramRefusal;
         size_t   sdfWgslBytesGenerated = 0;
         size_t   sdfParameterBytesUploaded = 0;
+        // Volumetric V0 observability. Density time belongs to per-medium
+        // instance data, so advancing only t must hit the memo and never
+        // regenerate the authored density shader.
+        uint32_t volumeProgramCompiles = 0;
+        uint32_t volumeProgramCacheHits = 0;
+        uint32_t volumeProgramRefusals = 0;
+        std::string volumeLastProgramRefusal;
+        size_t volumeWgslBytesGenerated = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
