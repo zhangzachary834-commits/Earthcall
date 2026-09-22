@@ -1,6 +1,6 @@
 # SDF Spatial Prophetic: Direct Profitability Artifact
 
-Status: next experimental rung after PR #298 runtime-tax verdict.
+Status: first direct-run candidate implemented and falsified in PR #301; retain as a test-only witness, not a production optimization.
 
 ## Evidence boundary
 
@@ -73,6 +73,80 @@ A candidate representation graduates to a production A/B only if all of these ho
 5. no change to proof authority or fallback semantics.
 
 If the diagnostic cannot improve consultation economics by at least an order of magnitude, reject the representation before production mutation.
+
+## PR #301 empirical verdict
+
+The first candidate has now been run on the same maintained authored-Perlin witness in CI run **35668839695**, commit **11ce8ca293ca6d532d9c4c9a07fa648f57c65635**. All focused jobs passed, including zero direct-vs-OFF per-ray hit mismatches and zero recurring proof uploads.
+
+That means the experiment is **correct enough to judge**. It does not mean the representation is profitable.
+
+The direct-run arm does cut the visible query count from roughly 4.7-5.2 generic consultations per ray to roughly one artifact query per ray. But the hidden discovery work remains too large.
+
+### Horizon camera
+
+Generic baseline:
+
+- 83,649 generic consultations;
+- 144 exact sample steps saved;
+- 0.001721 samples saved per consultation.
+
+Most favorable headline direct candidate (\`z\`, minimum run 1):
+
+- 16,015 artifact queries;
+- 144,135 individual run-record tests;
+- 139 exact sample steps saved;
+- 0.008679 samples saved per artifact query, about **5.04x** the generic baseline;
+- 0.000964 samples saved per record test, only about **0.56x** the generic baseline.
+
+Best candidate when **both** query economics and record-discovery economics are charged (\`x\`, minimum run 2):
+
+- 1 retained record / 48 bytes;
+- 16,014 artifact queries;
+- 16,014 record tests;
+- 65 exact sample steps saved;
+- 0.004059 samples saved per query and per record test;
+- only **2.36x** the generic consultation economics.
+
+### 45-degree camera
+
+Generic baseline:
+
+- 74,686 generic consultations;
+- 157 exact sample steps saved;
+- 0.002102 samples saved per consultation.
+
+Most favorable headline direct candidate (\`z\`, minimum run 1):
+
+- 15,924 artifact queries;
+- 143,316 individual run-record tests;
+- 183 exact sample steps saved;
+- 0.011492 samples saved per artifact query, about **5.47x** the generic baseline;
+- 0.001277 samples saved per record test, only about **0.61x** the generic baseline.
+
+Best candidate when both costs are charged (\`x\`, minimum run 2):
+
+- 1 retained record / 48 bytes;
+- 15,874 artifact queries;
+- 15,874 record tests;
+- 91 exact sample steps saved;
+- 0.005733 samples saved per query and per record test;
+- only **2.73x** the generic consultation economics.
+
+### Verdict
+
+The positive-run representation is **rejected for production**.
+
+It preserves correctness and is tiny, but it fails the intentionally hard ~10x profitability bar. More importantly, the minimum-run-1 cases demonstrate the exact danger this experiment was built to expose: reducing top-level "queries" can merely hide a larger scan of candidate records underneath them.
+
+Do not mutate the production renderer to consume these run records.
+
+Retain the diagnostic because it is now a reusable falsification harness for the next direct artifact.
+
+The next rung must move upward in directness: runtime needs a stable dispatch key that selects only the already-proved relevant consequence set, with no scan over the global possibility set. A candidate such as an AOT conservative ray-route dispatch atlas may be explored test-only, but it must prove its own discovery cost and must not become a disguised DDA, tree walk, or per-frame rebuild.
+
+The governing requirement is now sharper:
+
+> A direct road is not "a smaller structure to search." It is a precompiled answer to which structure matters.
 
 ## Incremental repair is a hard architectural constraint
 
