@@ -180,3 +180,69 @@ Reject this run artifact if any of the following occurs:
 - the representation becomes another generic hierarchy whose interpretation recreates the tax #298 measured.
 
 If rejected, retain the measurement and move upward in directness rather than sideways into another lookup structure.
+
+## Next rung after the run-scan falsification: direct-dispatch ceiling and stable route keys
+
+CI #2335 sharpened the #2228 verdict after the branch was synchronized with current main. The useful-skip counts expose an important distinction that aggregate artifact-query counts hid:
+
+- horizon, Z/min-run-1: 16,015 artifact queries, 21 useful skip calls, 139 exact samples saved;
+- 45 degrees, Z/min-run-1: 15,924 artifact queries, 83 useful skip calls, 183 exact samples saved.
+
+Therefore the retained positive theorem still contains useful work. If an ideal AOT dispatcher could ask the direct artifact **only on rays for which a proved interval is actually relevant**, the upper-bound economics of this same authority would be about 6.62 exact samples saved per useful horizon dispatch and 2.20 per useful 45-degree dispatch. The failure is not merely that each query scans records. The larger tax is that almost every ray asks a question whose answer is "nothing relevant."
+
+This changes the next experiment. Do not build another container for the same global run set. Measure whether a **stable direct dispatch key** can suppress irrelevant queries before any theorem/run interpretation occurs.
+
+### Candidate shape: conservative ray-route dispatch atlas
+
+The next test-only candidate may compile a small dispatch atlas from the existing positive theorem. It is not a DDA and must not march a grid at runtime.
+
+A runtime key should be computable in bounded arithmetic from stable ray facts such as:
+
+- SDF-instance entry face / conservative entry region;
+- a coarse quantization of entry coordinates on that face;
+- a coarse direction class.
+
+The key maps directly to a precompiled consequence set: zero or a very small number of proof-authorized intervals. Runtime must not scan the global run set, walk a tree, step cell-by-cell, or search neighboring keys.
+
+The atlas is derived state. The positive theorem remains authority. An empty/missing atlas entry means exact fallback, never proof of emptiness.
+
+### Why this experiment is different from the rejected directions
+
+The purpose is not to approximate distance, tighten raster bounds, add proof density, or traverse spatial cells faster. It is to test whether the expensive relevance relation
+
+`ray class -> proof intervals that can matter`
+
+can itself be crystallized ahead of time, as Formation-Rete Direct crystallizes event/law relevance.
+
+The diagnostic must charge all costs honestly:
+
+- dispatch-key computations;
+- atlas lookups;
+- consequence records fetched/tested after lookup;
+- useful proof-authorized skips;
+- exact authored sample steps saved versus OFF;
+- bytes per atlas and per dependency frontier;
+- zero per-ray hit mismatches.
+
+A key that returns a bucket requiring a broad scan is a failure, even if the top-level lookup is O(1).
+
+### Camera independence is a graduation requirement
+
+A per-frame or per-camera ray table can be useful only as an **oracle ceiling diagnostic**. It cannot graduate to production because moving the camera would turn AOT proof into recurring frame work.
+
+The production-shaped artifact must be compiled from proof plus stable route classes and remain resident across ordinary camera motion. Camera rays select an existing route; they do not rebuild routes.
+
+### Incremental repair
+
+Each atlas entry must carry or be reversibly associated with proof provenance. A semantic change repairs only entries whose consequence sets overlap the invalidated proof dependency frontier. Unaffected atlas entries and GPU-resident state remain untouched.
+
+### Decision sequence
+
+1. Use the existing useful-skip counts as the zero-discovery oracle ceiling.
+2. Implement the smallest test-only stable-key atlas capable of approaching that ceiling.
+3. Reject it if irrelevant dispatches remain of the same order as total rays, or if hidden consequence tests recreate global search.
+4. Only after zero hit mismatches and dramatically improved exact-evaluation economics should a separate production A/B be considered.
+
+The governing question is no longer "how cheaply can runtime search proof?" It is:
+
+> **Can AOT Prophetic derivation compile enough ray relevance that runtime mostly never asks irrelevant proof questions at all?**
