@@ -765,10 +765,29 @@ std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2
 }
 
 void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath) {
+    if (directoryPath.empty()) return;
+
     std::error_code ec;
-    std::filesystem::create_directories(directoryPath, ec);
-    std::filesystem::create_directories(directoryPath + "/objects", ec);
-    
+    const std::filesystem::path finalPath(directoryPath);
+    const std::filesystem::path parentDir = finalPath.parent_path();
+    if (!parentDir.empty()) {
+        std::filesystem::create_directories(parentDir, ec);
+    }
+
+    const std::filesystem::path tempDir =
+        finalPath.string() + ".tmp_unpack-" + timestamp() + "-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+
+    std::filesystem::remove_all(tempDir, ec);
+    ec.clear();
+    std::filesystem::create_directories(tempDir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] unpackSaveToDirectory: failed to create temp dir " << tempDir << ": " << ec.message() << "\n";
+        return;
+    }
+
+    std::filesystem::create_directories(tempDir / "objects", ec);
+
     nlohmann::json meta = j;
     if (meta.contains("objects")) {
         const auto& objects = meta["objects"];
@@ -779,7 +798,7 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
             } else if (obj.contains("id")) {
                 objId = obj["id"].get<std::string>();
             }
-            std::string objPath = directoryPath + "/objects/object_" + sanitizeLabel(objId) + ".json";
+            std::filesystem::path objPath = tempDir / "objects" / ("object_" + sanitizeLabel(objId) + ".json");
             std::ofstream objFile(objPath);
             if (objFile.is_open()) {
                 objFile << std::setw(2) << obj << std::endl;
@@ -787,9 +806,9 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
         }
         meta.erase("objects");
     }
-    
+
     if (meta.contains("authoredLaws") && meta["authoredLaws"].contains("laws")) {
-        std::filesystem::create_directories(directoryPath + "/authored_laws", ec);
+        std::filesystem::create_directories(tempDir / "authored_laws", ec);
         const auto& laws = meta["authoredLaws"]["laws"];
         for (const auto& law : laws) {
             std::string lawId = "unknown";
@@ -798,7 +817,7 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
             } else if (law.contains("id")) {
                 lawId = law["id"].get<std::string>();
             }
-            std::string lawPath = directoryPath + "/authored_laws/law_" + sanitizeLabel(lawId) + ".json";
+            std::filesystem::path lawPath = tempDir / "authored_laws" / ("law_" + sanitizeLabel(lawId) + ".json");
             std::ofstream lawFile(lawPath);
             if (lawFile.is_open()) {
                 lawFile << std::setw(2) << law << std::endl;
@@ -806,16 +825,16 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
         }
         meta["authoredLaws"].erase("laws");
     }
-    
+
     if (meta.contains("zones")) {
-        std::filesystem::create_directories(directoryPath + "/zones", ec);
+        std::filesystem::create_directories(tempDir / "zones", ec);
         const auto& zones = meta["zones"];
         for (const auto& zone : zones) {
             std::string zoneId = "unknown";
             if (zone.contains("name")) {
                 zoneId = zone["name"].get<std::string>();
             }
-            std::string zonePath = directoryPath + "/zones/zone_" + sanitizeLabel(zoneId) + ".json";
+            std::filesystem::path zonePath = tempDir / "zones" / ("zone_" + sanitizeLabel(zoneId) + ".json");
             std::ofstream zoneFile(zonePath);
             if (zoneFile.is_open()) {
                 zoneFile << std::setw(2) << zone << std::endl;
@@ -823,11 +842,21 @@ void unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
         }
         meta.erase("zones");
     }
-    
-    std::string metaPath = directoryPath + "/world_meta.json";
+
+    std::filesystem::path metaPath = tempDir / "world_meta.json";
     std::ofstream metaFile(metaPath);
     if (metaFile.is_open()) {
         metaFile << std::setw(2) << meta << std::endl;
+    }
+    metaFile.close();
+
+    std::filesystem::remove_all(finalPath, ec);
+    ec.clear();
+    std::filesystem::rename(tempDir, finalPath, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] unpackSaveToDirectory rename failed: " << ec.message() << ", falling back to copy\n";
+        std::filesystem::copy(tempDir, finalPath, std::filesystem::copy_options::recursive, ec);
+        std::filesystem::remove_all(tempDir, ec);
     }
 }
 

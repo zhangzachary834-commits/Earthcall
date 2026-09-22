@@ -77,16 +77,30 @@ int main() {
     nlohmann::json readHome = SaveSystem::readHomeIdentity("AtomicHome");
     check(readHome.contains("active") && readHome["active"] == true, "readHomeIdentity matches written atomic home document");
 
-    // Verify no stray .tmp- files remain in sandbox
+    // Test 6: Atomic unpackSaveToDirectory via temporary directory staging
+    nlohmann::json unpackWorld = {
+        {"name", "UnpackWorld"},
+        {"version", 1},
+        {"objects", nlohmann::json::array({{{"id", "obj1"}, {"kind", "Cube"}}})},
+        {"zones", nlohmann::json::array({{{"name", "Zone1"}}})}
+    };
+    std::string unpackTarget = (sandbox / "worlds" / "unpacked_test").string();
+    SaveSystem::unpackSaveToDirectory(unpackWorld, unpackTarget);
+    check(std::filesystem::exists(unpackTarget + "/world_meta.json"), "unpackSaveToDirectory produces world_meta.json");
+    check(std::filesystem::exists(unpackTarget + "/objects/object_obj1.json"), "unpackSaveToDirectory produces object JSON");
+    check(std::filesystem::exists(unpackTarget + "/zones/zone_Zone1.json"), "unpackSaveToDirectory produces zone JSON");
+
+    // Verify no stray .tmp- or .tmp_unpack- files/directories remain in sandbox
     bool hasTempFiles = false;
     std::error_code ec;
     for (const auto& entry : std::filesystem::recursive_directory_iterator(sandbox, ec)) {
-        if (entry.path().filename().string().find(".tmp-") != std::string::npos) {
+        std::string fname = entry.path().filename().string();
+        if (fname.find(".tmp-") != std::string::npos || fname.find(".tmp_unpack-") != std::string::npos) {
             hasTempFiles = true;
             break;
         }
     }
-    check(!hasTempFiles, "No temporary .tmp- files left behind after atomic write commits");
+    check(!hasTempFiles, "No temporary .tmp- or .tmp_unpack- files left behind after atomic write commits");
 
     // Cleanup
     std::filesystem::remove_all(sandbox);
