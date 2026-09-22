@@ -10,7 +10,8 @@
 **#297 merge commit:** `4ab5ebe25aaac99915d25d63770960a2e085a34b`  
 **Active acceleration PR:** #315 — “Rung 8: accelerate visibility with positive proof cells”  
 **#315 branch:** `sol/rung8-visibility-proof-traversal-20260921`  
-**#315 exact head:** `5d06cd464fe612aa73fceff7d5d728c14340e0b2`  
+**#315 CI-verified implementation head:** `5d06cd464fe612aa73fceff7d5d728c14340e0b2`  
+**Documentation note:** the branch advances after this SHA only to add/update intercom handoff documents; re-check the live head before writing code.  
 **#315 state at handoff:** open, draft, retargeted to canonical, GitHub mergeable=true  
 **Focused CI:** run #2354 / Actions run `35677425561` — fully green
 
@@ -178,7 +179,7 @@ Relative to merged #297, #315 changes only:
 3. `tests/singularity/sdf_wgsl_parameter_refresh_test.cpp`
 4. `tests/singularity/webgpu_object_test.cpp`
 
-At handoff audit it is four commits / four files.
+At the verified implementation head it is four code/test commits across these four files. The PR branch also contains the results-interpretation and handoff documents added after CI; do not mistake those documentation commits for renderer changes.
 
 It does not expand the 224-byte `SdfInstanceData` ABI.
 
@@ -261,11 +262,11 @@ It is **not** evidence of profitability.
 At the final audit:
 
 - canonical = `102f0277bb28651b759594a15e44ec492b4c0555`
-- #315 head = `5d06cd464fe612aa73fceff7d5d728c14340e0b2`
-- GitHub reports `mergeable=true`
+- #315 CI-verified implementation head = `5d06cd464fe612aa73fceff7d5d728c14340e0b2`
+- GitHub reports `mergeable=true` after retarget
 - canonical is 33 commits beyond the old #297 feature head
-- none of those canonical advances changed #315's four files
-- canonical vs #315 therefore differs exactly in the intended four files
+- none of those canonical advances changed #315's four implementation/test files
+- the semantic implementation delta remains those intended four files; subsequent branch commits are communication-doc updates
 
 Leave the PR draft until the profitability question is answered, unless Zach explicitly chooses to merge a sound-but-unbenchmarked structural optimization.
 
