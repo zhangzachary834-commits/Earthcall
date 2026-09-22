@@ -21,15 +21,17 @@ struct Node {
     std::vector<uint32_t> children;  // exact execution dependencies
     std::string authoredDependency;  // non-empty only for authored inputs
     double literal = 0.0;
-    bool propheticPositive = false;  // derived annotation, never authority
-    bool propheticValid = false;
+    bool supportProofValid = false;   // derived annotation, never authority
+    uint32_t supportWinnerChild = 0;  // meaningful only for a proved Min node
 };
 
 struct Counters {
     uint64_t leafEvaluations = 0;
     uint64_t nodesVisited = 0;
     uint64_t cacheHits = 0;
-    uint64_t proofAnnotationsConsulted = 0;
+    uint64_t supportProofConsultations = 0;
+    uint64_t supportProofBypasses = 0;
+    uint64_t supportProofFallbacks = 0;
 };
 
 struct SceneSpatialDag {
@@ -45,7 +47,7 @@ struct SceneSpatialDag {
         if (it != canonical.end()) return it->second;
         const uint32_t id = static_cast<uint32_t>(nodes.size());
         nodes.push_back(Node{id, op, key, std::move(children),
-                             std::move(authoredDependency), literal, false, false});
+                             std::move(authoredDependency), literal, false, 0});
         canonical[key] = id;
         if (!nodes[id].authoredDependency.empty())
             reverseAuthored[nodes[id].authoredDependency].insert(id);
@@ -89,7 +91,8 @@ struct SceneSpatialDag {
 };
 
 double evalDag(const SceneSpatialDag& dag, uint32_t id,
-               std::unordered_map<uint32_t, double>& memo, Counters& c) {
+               std::unordered_map<uint32_t, double>& memo, Counters& c,
+               bool allowSupportProof = false) {
     auto m = memo.find(id);
     if (m != memo.end()) {
         ++c.cacheHits;
@@ -97,15 +100,32 @@ double evalDag(const SceneSpatialDag& dag, uint32_t id,
     }
     const Node& n = dag.nodes[id];
     ++c.nodesVisited;
-    if (n.propheticPositive && n.propheticValid)
-        ++c.proofAnnotationsConsulted;
     double v = n.literal;
     if (n.op == Op::Input) {
         ++c.leafEvaluations;
     } else {
         assert(n.children.size() == 2);
-        const double a = evalDag(dag, n.children[0], memo, c);
-        const double b = evalDag(dag, n.children[1], memo, c);
+
+        // A conservative support proof may select the exact Min winner before
+        // either branch is interpreted. Missing/stale proof never has authority:
+        // it falls open to ordinary exact evaluation of both children.
+        if (allowSupportProof && n.op == Op::Min) {
+            ++c.supportProofConsultations;
+            if (n.supportProofValid) {
+                assert(n.supportWinnerChild == n.children[0] ||
+                       n.supportWinnerChild == n.children[1]);
+                ++c.supportProofBypasses;
+                v = evalDag(dag, n.supportWinnerChild, memo, c, true);
+                memo[id] = v;
+                return v;
+            }
+            ++c.supportProofFallbacks;
+        }
+
+        const double a =
+            evalDag(dag, n.children[0], memo, c, allowSupportProof);
+        const double b =
+            evalDag(dag, n.children[1], memo, c, allowSupportProof);
         if (n.op == Op::Add) v = a + b;
         else if (n.op == Op::Sub) v = a - b;
         else if (n.op == Op::Mul) v = a * b;
@@ -128,12 +148,44 @@ size_t invalidateDirtyProofAnnotations(
     size_t invalidated = 0;
     for (uint32_t id : dirty) {
         Node& n = dag.nodes[id];
-        if (n.propheticPositive && n.propheticValid) {
-            n.propheticValid = false;
+        if (n.supportProofValid) {
+            n.supportProofValid = false;
             ++invalidated;
         }
     }
     return invalidated;
+}
+
+// This deliberately tiny proof builder recognizes one exact algebraic shape:
+// min(shared - biasA, shared - biasB). Because both branches have the identical
+// shared child, the branch with the larger bias is <= the other branch for every
+// runtime value of shared. If the shape is not exactly recognized, it refuses to
+// prove anything and execution must fall back to exact evaluation.
+bool rebuildMinSupportProof(SceneSpatialDag& dag, uint32_t minId,
+                            uint32_t leftId, uint32_t rightId,
+                            uint32_t leftBiasId, uint32_t rightBiasId) {
+    Node& root = dag.nodes[minId];
+    root.supportProofValid = false;
+    if (root.op != Op::Min || root.children.size() != 2 ||
+        root.children[0] != leftId || root.children[1] != rightId)
+        return false;
+
+    const Node& left = dag.nodes[leftId];
+    const Node& right = dag.nodes[rightId];
+    if (left.op != Op::Sub || right.op != Op::Sub ||
+        left.children.size() != 2 || right.children.size() != 2)
+        return false;
+    if (left.children[0] != right.children[0] ||
+        left.children[1] != leftBiasId ||
+        right.children[1] != rightBiasId)
+        return false;
+
+    const double leftBias = dag.nodes[leftBiasId].literal;
+    const double rightBias = dag.nodes[rightBiasId].literal;
+    root.supportWinnerChild =
+        (leftBias >= rightBias) ? leftId : rightId;
+    root.supportProofValid = true;
+    return true;
 }
 
 // Reference evaluator intentionally repeats the shared authored expression for
@@ -185,10 +237,12 @@ int main() {
     const uint32_t scene = dag.intern(
         Op::Min, "min(sdfA,sdfB)", {sdfA, sdfB});
 
-    // A proof fact lives on the execution branch that derives it. It remains
-    // derived state: exact evaluation is authoritative even if this is invalid.
-    dag.nodes[sdfA].propheticPositive = true;
-    dag.nodes[sdfA].propheticValid = true;
+    // A conservative support proof lives directly on the Min execution road.
+    // Here both branches are (the same shared expression - bias), so the larger
+    // bias is the exact Min winner for every runtime value of the shared term.
+    assert(rebuildMinSupportProof(
+        dag, scene, sdfA, sdfB, biasA, biasB));
+    assert(dag.nodes[scene].supportWinnerChild == sdfB);
 
     Counters naiveCounters;
     const double expected =
@@ -199,7 +253,23 @@ int main() {
     assert(std::abs(expected - actual) < 1e-12);
     assert(dagCounters.leafEvaluations < naiveCounters.leafEvaluations);
     assert(dagCounters.cacheHits >= 1);
-    assert(dagCounters.proofAnnotationsConsulted == 1);
+
+    // Compare the same exact DAG with its conservative support road enabled.
+    // This is the first witness where a proof changes execution: sdfA is not
+    // interpreted at all because sdfB is proved to be the Min winner.
+    Counters supportCounters;
+    std::unordered_map<uint32_t, double> supportMemo;
+    const double supported =
+        evalDag(dag, scene, supportMemo, supportCounters, true);
+    assert(std::abs(expected - supported) < 1e-12);
+    assert(supportCounters.supportProofConsultations == 1);
+    assert(supportCounters.supportProofBypasses == 1);
+    assert(supportCounters.supportProofFallbacks == 0);
+    assert(supportCounters.nodesVisited < dagCounters.nodesVisited);
+    assert(supportCounters.leafEvaluations < dagCounters.leafEvaluations);
+    const uint64_t initialNodesAvoided =
+        dagCounters.nodesVisited - supportCounters.nodesVisited;
+
     const size_t semanticNodeCount = dag.nodes.size();
     const size_t canonicalCount = dag.canonical.size();
 
@@ -222,8 +292,19 @@ int main() {
     assert(std::abs(ambientRepaired - ambientExpected) < 1e-12);
     assert(dag.nodes.size() == semanticNodeCount);
     assert(dag.canonical.size() == canonicalCount);
-    assert(dag.nodes[sdfA].propheticValid);
+    assert(dag.nodes[scene].supportProofValid);
     assert(ambientRepairCounters.leafEvaluations == 1);
+
+    // Runtime movement preserves the proof artifact. Re-run through the support
+    // road at the new sample and prove exact parity without rebuilding proof.
+    std::unordered_map<uint32_t, double> ambientSupportMemo;
+    Counters ambientSupportCounters;
+    const double ambientSupported =
+        evalDag(dag, scene, ambientSupportMemo, ambientSupportCounters, true);
+    assert(std::abs(ambientSupported - ambientExpected) < 1e-12);
+    assert(ambientSupportCounters.supportProofConsultations == 1);
+    assert(ambientSupportCounters.supportProofBypasses == 1);
+    assert(ambientSupportCounters.supportProofFallbacks == 0);
 
     // Local authored semantic edit. Unlike ambient movement, this invalidates
     // the affected proof annotation in addition to dependent cached values.
@@ -240,14 +321,17 @@ int main() {
     const size_t erased = eraseDirtyMemo(dirty, memo);
     const size_t authoredPayloadsWritten =
         dag.setAuthoredLiteral("sdfA.bias", 17.0);
-    const size_t proofAnnotationsInvalidated =
+    const size_t supportProofsInvalidated =
         invalidateDirtyProofAnnotations(dag, dirty);
     assert(authoredPayloadsWritten == 1);
-    assert(proofAnnotationsInvalidated == 1);
-    assert(!dag.nodes[sdfA].propheticValid);
+    assert(supportProofsInvalidated == 1);
+    assert(!dag.nodes[scene].supportProofValid);
 
+    // Stale proof does not guess. It falls open to exact evaluation while the
+    // semantic repair reuses unaffected cached state.
     Counters repairCounters;
-    const double repaired = evalDag(dag, scene, memo, repairCounters);
+    const double repaired =
+        evalDag(dag, scene, memo, repairCounters, true);
 
     // Fresh exact authority after the mutation: no reuse from the synthesized
     // cache is allowed in this comparison.
@@ -268,10 +352,30 @@ int main() {
     // reuse the untouched shared subtree + independent sdfB branch.
     assert(repairCounters.nodesVisited == dirty.size());
     assert(repairCounters.leafEvaluations == 1);
+    assert(repairCounters.supportProofConsultations == 1);
+    assert(repairCounters.supportProofBypasses == 0);
+    assert(repairCounters.supportProofFallbacks == 1);
     assert(memo.at(shared) == sharedBefore);
     assert(memo.at(sdfB) == sdfBBefore);
     assert(dag.nodes.size() == semanticNodeCount);
     assert(dag.canonical.size() == canonicalCount);
+
+    // Re-prove only after the authored semantic change. The winner reverses:
+    // with biasA=17 and biasB=11, sdfA is now <= sdfB for every shared value.
+    assert(rebuildMinSupportProof(
+        dag, scene, sdfA, sdfB, biasA, biasB));
+    assert(dag.nodes[scene].supportWinnerChild == sdfA);
+    std::unordered_map<uint32_t, double> postProofMemo;
+    Counters postProofCounters;
+    const double postProofValue =
+        evalDag(dag, scene, postProofMemo, postProofCounters, true);
+    assert(std::abs(postProofValue - mutatedExpected) < 1e-12);
+    assert(postProofCounters.supportProofConsultations == 1);
+    assert(postProofCounters.supportProofBypasses == 1);
+    assert(postProofCounters.supportProofFallbacks == 0);
+    assert(postProofCounters.nodesVisited < freshDagCounters.nodesVisited);
+    const uint64_t postProofNodesAvoided =
+        freshDagCounters.nodesVisited - postProofCounters.nodesVisited;
 
     const size_t preserved = dag.nodes.size() - dirty.size();
     const size_t estimatedBytes = dag.nodes.size() * sizeof(Node);
@@ -282,15 +386,21 @@ int main() {
     std::printf(
         "SCENE_SPATIAL_SYNTHESIS parity=1 nodes=%zu artifact_bytes_est=%zu "
         "naive_leaf_evals=%llu dag_leaf_evals=%llu shared_evals_avoided=%llu "
-        "dag_nodes_visited=%llu cache_hits=%llu proof_annotations_consulted=%llu "
+        "dag_nodes_visited=%llu cache_hits=%llu "
+        "support_consultations=%llu support_bypasses=%llu "
+        "support_nodes_visited=%llu support_nodes_avoided=%llu "
         "ambient_sample_change=1 ambient_cache_invalidated=%zu "
         "ambient_repair_nodes=%llu ambient_leaf_evals=%llu "
-        "semantic_nodes_rebuilt_for_ambient=0 proof_artifacts_rebuilt_for_ambient=0 "
+        "ambient_support_bypasses=%llu semantic_nodes_rebuilt_for_ambient=0 "
+        "proof_artifacts_rebuilt_for_ambient=0 "
         "mutation=sdfA.bias invalidated=%zu cache_entries_repaired=%zu "
-        "repair_nodes_visited=%llu repair_leaf_evals=%llu preserved=%zu "
+        "repair_nodes_visited=%llu repair_leaf_evals=%llu "
+        "invalid_support_fallbacks=%llu preserved=%zu "
         "authored_payload_bytes_written=%zu repaired_cache_bytes=%zu "
-        "proof_annotations_invalidated=%zu structural_nodes_rebuilt=0 "
-        "whole_scene_rebuild=0 camera_rebuild=0 global_relevance_search=0\n",
+        "support_proofs_invalidated=%zu proof_artifacts_rebuilt_after_authored=1 "
+        "post_repair_support_bypasses=%llu post_repair_nodes_avoided=%llu "
+        "structural_nodes_rebuilt=0 whole_scene_rebuild=0 camera_rebuild=0 "
+        "global_relevance_search=0\n",
         dag.nodes.size(), estimatedBytes,
         static_cast<unsigned long long>(naiveCounters.leafEvaluations),
         static_cast<unsigned long long>(dagCounters.leafEvaluations),
@@ -299,15 +409,26 @@ int main() {
         static_cast<unsigned long long>(dagCounters.nodesVisited),
         static_cast<unsigned long long>(dagCounters.cacheHits),
         static_cast<unsigned long long>(
-            dagCounters.proofAnnotationsConsulted),
+            supportCounters.supportProofConsultations),
+        static_cast<unsigned long long>(
+            supportCounters.supportProofBypasses),
+        static_cast<unsigned long long>(supportCounters.nodesVisited),
+        static_cast<unsigned long long>(initialNodesAvoided),
         ambientErased,
         static_cast<unsigned long long>(ambientRepairCounters.nodesVisited),
         static_cast<unsigned long long>(
             ambientRepairCounters.leafEvaluations),
+        static_cast<unsigned long long>(
+            ambientSupportCounters.supportProofBypasses),
         dirty.size(), erased,
         static_cast<unsigned long long>(repairCounters.nodesVisited),
         static_cast<unsigned long long>(repairCounters.leafEvaluations),
+        static_cast<unsigned long long>(
+            repairCounters.supportProofFallbacks),
         preserved, authoredPayloadBytesWritten, repairedCacheBytes,
-        proofAnnotationsInvalidated);
+        supportProofsInvalidated,
+        static_cast<unsigned long long>(
+            postProofCounters.supportProofBypasses),
+        static_cast<unsigned long long>(postProofNodesAvoided));
     return 0;
 }
