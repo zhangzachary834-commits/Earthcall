@@ -631,7 +631,7 @@ int main() {
             sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
         check(multiSource.ok &&
                   multiSource.wgsl.find(
-                      "sourceVisibility(pf, source.position.xyz)") != std::string::npos,
+                      "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
               "each composed source derives visibility from its own source-receiver path");
         check(multiSource.wgsl.find(
                   "diff * directRadiance") != std::string::npos &&
