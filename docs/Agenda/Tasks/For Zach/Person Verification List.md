@@ -12,7 +12,7 @@
 
 ## Cathedral — Court of the Open Hand
 
-*Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
+*Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-19T12:21:43-07:00. [Commission, placement, authorship, and witness](../Specific%20Tasks/Architecture%20and%20Ontology/Cathedral_Open_Hand/Cathedral_Open_Hand.md).*
 
 - [ ] From a fresh launch, enter **Cathedral of the Living Logos** and fly to **(44, 2, 26)** facing negative Z: confirm the new circular court appears on the positive-X side while the original Cathedral, pond, and color-field cloister remain as you left them.
 - [ ] Click the **pearl at (44, 1.47, 19.35)**: twelve bronze/verdigris leaves should spread and incline smoothly around the blue seed; click again to gather, including a reversal halfway through.
@@ -53,7 +53,7 @@ The automated witness is `chess_zone_native_boot_test`: its temporary SaveRoot i
 
 ## Second-Nature Forge — future experience acceptance (not implemented by this spec)
 
-*Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00. [Task](../Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md) · [full specification](../../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md).*
+*Codex (GPT-6 Astra), session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-18T12:47:50-07:00. [Task](../Specific%20Tasks/Zones%20and%20Ourverse/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md) · [full specification](../../../plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md).*
 
 Zach has already loaded the current Forge and reported a sparse surface stamping gold/blue Laws. This records feedback, not successful acceptance. The following checks become actionable as the specified increments land; no app changes were made in this documentation pass.
 
@@ -226,7 +226,7 @@ this list — that is what it is for. See [The Week the Chorus Became a Queue](.
 
 ## Attribution in the Synthesis Studio saves — resolved
 
-- [x] ~~**Which Synthesis Studio pass was Astra, not Codex?**~~ **Answered by Zach's own Broadcast #5**, restored 2026-09-07: he asked Astra *"make the Synthesis Studio cooler"*, which is the `## 2026-09-04 — Play the room: resonance Studio` pass. Astra ran **through the Codex harness**, so `studio.author.codex` in the saves is truthful and stays; only the prose needs the model added. → [full task](../Specific%20Tasks/Resolve_the_Codex_signature_into_named_models/Resolve_the_Codex_signature_into_named_models.md)
+- [x] ~~**Which Synthesis Studio pass was Astra, not Codex?**~~ **Answered by Zach's own Broadcast #5**, restored 2026-09-07: he asked Astra *"make the Synthesis Studio cooler"*, which is the `## 2026-09-04 — Play the room: resonance Studio` pass. Astra ran **through the Codex harness**, so `studio.author.codex` in the saves is truthful and stays; only the prose needs the model added. → [full task](../Specific%20Tasks/First%20Movers%20and%20Persons/Resolve_the_Codex_signature_into_named_models/Resolve_the_Codex_signature_into_named_models.md)
 
 ## Synthesis Studio — Astra's pass, from Broadcast #5 (2026-09-07)
 
@@ -244,7 +244,7 @@ only in an intercom file. Marked done where Zach has already stated the verdict.
 *Raised 2026-09-08, Claude Opus 5, session `session_01K1PtKNZtSDU9XGwKZQ7ZzF`. The spec's §1.2(a)
 says the deafness hit **"every 'every instance of this category, every tick' law in the tree, the
 Synthesis Studio's slider among them."** A green suite is not a witness for that — the fix is in
-what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+what a hand feels. → [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 - [ ] **Synthesis Studio — laws that watch relations formed during play.** Open the Studio in `earthcall_webgpu` (`Run Earthcall.command`). Any behaviour that depends on a relation being formed *while you play* — the slider, note-reactive lights, ink reaching a newly drawn stroke — should now respond on the tick the relation forms, where before it would have stayed dead for the rest of the session. Confirm nothing that already worked has started firing *too* eagerly.
 - [ ] **Chess and Go — no over-firing.** Both are relation-heavy. Play a few moves in each and confirm pieces behave as before: rung 0 makes laws hear *more*, so the risk to look for is a law that now fires when it should not, not one that stays quiet.
@@ -252,13 +252,13 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 
 ## Robust Native File I/O & File Types (FileChannel)
 
-*Landed 2026-09-08, Gemini Spark. Hardened `@file-channel` with atomic write swaps, append mode, DoS bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](../Specific%20Tasks/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)*
+*Landed 2026-09-08, Gemini Spark. Hardened `@file-channel` with atomic write swaps, append mode, DoS bounds, MIME type/magic sniffing across images/audio/models/substrates, and Base64/Hex binary pipelines. → [full task](../Specific%20Tasks/Serialization%20and%20Storage/Robust_File_IO_and_Wide_File_Type_Support/Robust_File_IO_and_Wide_File_Type_Support.md)*
 
 - [ ] **Author Law interacting with `@file-channel`.** Open the Law Authoring / Creator Console. Point `@file-channel.path` at a file (e.g. `saves/test.json` or an image/sound) and verify that `@file-channel.mimeType`, `@file-channel.fileType`, `@file-channel.size`, and `@file-channel.jsonValid` reflect the file's properties accurately.
 
 ## Screen Recorder in the Singularity (@screen-recorder)
 
-*Landed 2026-09-08, Gemini Spark. Added `@screen-recorder` Sense-Act first mover with in-engine viewport, host display, and window modes, PPM/PNG/raw stream output, and automatic fallback to viewport when OS screen capture is unpermitted. → [full task](../Specific%20Tasks/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)*
+*Landed 2026-09-08, Gemini Spark. Added `@screen-recorder` Sense-Act first mover with in-engine viewport, host display, and window modes, PPM/PNG/raw stream output, and automatic fallback to viewport when OS screen capture is unpermitted. → [full task](../Specific%20Tasks/Channels%20and%20Language/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)*
 
 - [ ] **Record In-Engine Frame Sequence or Snapshot.** In the Creator Console, inspect `@screen-recorder`:
   - Set `@screen-recorder.recording := true` to capture live rendering frames to `saves/recordings/`.
@@ -266,19 +266,19 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 
 ## Streaming Pipes and Process Pipelines (@stream-channel)
 
-*Landed 2026-09-08, Gemini Spark. Added `@stream-channel` with POSIX FIFO named pipes, process stream execution (`popen`/`pclose`), chunked streaming, and Base64 stream transport. → [full task](../Specific%20Tasks/Streaming_Pipes_and_FIFOs/Streaming_Pipes_and_FIFOs.md)*
+*Landed 2026-09-08, Gemini Spark. Added `@stream-channel` with POSIX FIFO named pipes, process stream execution (`popen`/`pclose`), chunked streaming, and Base64 stream transport. → [full task](../Specific%20Tasks/Channels%20and%20Language/Streaming_Pipes_and_FIFOs/Streaming_Pipes_and_FIFOs.md)*
 
 - [ ] **Test Process Pipe or FIFO.** In the Creator Console, point `@stream-channel.target` at a pipe or command (e.g. `cat > /tmp/test_pipe.txt`), trigger `@stream-channel.open := true`, write via `@stream-channel.chunkData`, and verify direct data flow without intermediate file polling.
 
 ## Virtual File System (@vfs)
 
-*Landed 2026-09-08, Gemini Spark. Built `@vfs` resolving `save://`, `zone://`, `home://`, `recording://`, custom prefix mounts, and `memory://` zero-disk ephemeral RAM files, transparently integrated into `FileChannel`. → [full task](../Specific%20Tasks/Virtual_File_System_VFS/Virtual_File_System_VFS.md)*
+*Landed 2026-09-08, Gemini Spark. Built `@vfs` resolving `save://`, `zone://`, `home://`, `recording://`, custom prefix mounts, and `memory://` zero-disk ephemeral RAM files, transparently integrated into `FileChannel`. → [full task](../Specific%20Tasks/Serialization%20and%20Storage/Virtual_File_System_VFS/Virtual_File_System_VFS.md)*
 
 - [ ] **Test Universal URI Resolution & In-RAM Files.** In Creator Console, point `@file-channel.path := "memory://test_scratch"` or `"save://worlds/my_world.json"` and execute read/write; verify `memory://` files never touch disk while `save://` resolves portably across platforms.
 
 ## File Watcher & Live Hot-Reloading (@file-watcher)
 
-*Landed 2026-09-08, Gemini Spark. Built `@file-watcher` Sense-Act first mover with configurable directory scanning, extension filters, and ECA edge events (`file-modified`, `file-created`, `file-deleted`) for real-time asset, shader, and rule hot-reloading. → [full task](../Specific%20Tasks/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md)*
+*Landed 2026-09-08, Gemini Spark. Built `@file-watcher` Sense-Act first mover with configurable directory scanning, extension filters, and ECA edge events (`file-modified`, `file-created`, `file-deleted`) for real-time asset, shader, and rule hot-reloading. → [full task](../Specific%20Tasks/Serialization%20and%20Storage/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md)*
 
 - [ ] **Live File Hot-Reloading.** In the Creator Console, inspect `@file-watcher`:
   - Set `@file-watcher.watchPath := "saves"` (or a specific directory/file).
@@ -287,7 +287,7 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 
 ## Microphone Audio Capture & Recording (@microphone)
 
-*Landed 2026-09-09, Gemini Spark. Built `@microphone` (`@audio-recorder`) Sense-Act first mover with macOS CoreAudio capture, hardware device enumeration (built-in, USB, AirPods), TCC permission status checks, live RMS/peak metering, speech/silence detection ECA events, and canonical 16-bit PCM WAV recording. → [full task](../Specific%20Tasks/Microphone_Audio_Recording_Subsystem/Microphone_Audio_Recording_Subsystem.md)*
+*Landed 2026-09-09, Gemini Spark. Built `@microphone` (`@audio-recorder`) Sense-Act first mover with macOS CoreAudio capture, hardware device enumeration (built-in, USB, AirPods), TCC permission status checks, live RMS/peak metering, speech/silence detection ECA events, and canonical 16-bit PCM WAV recording. → [full task](../Specific%20Tasks/Channels%20and%20Language/Microphone_Audio_Recording_Subsystem/Microphone_Audio_Recording_Subsystem.md)*
 
 - [ ] **Test Live Microphone Recording & Telemetry.** In the Creator Console, inspect `@microphone`:
   - Verify `@microphone.devices` lists your Mac's connected inputs (e.g. "MacBook Pro Microphone", USB interfaces, AirPods).
@@ -304,7 +304,7 @@ what a hand feels. → [full task](../Specific%20Tasks/Formation_Rete/Formation_
 `ECA::Event` was destroying a `Moment` — which is a `Singular` — and each destruction scanned the
 whole Rete fact table. Measured at 320 beings: **593 ms/tick → 63 ms/tick**. This is a speed
 change to the tick every law application pays, so what needs a Person is that nothing MOVED
-differently, only faster. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+differently, only faster. → [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 - [ ] **A law-heavy world should feel faster, and behave identically.** Open `chess_app`, Synthesis Studio, and Far Lands in `earthcall_webgpu` (`Run Earthcall.command`). Watch the F3 `LawManager::tick` figure — it should be markedly lower than you remember on the same world. Then play: pieces move legally, pads sound, terrain loads. The risk to look for is a law that no longer fires, or one that fires when it should not.
 - [ ] **Beings that leave the world while laws watch them.** The fix makes "this being never had facts" an O(1) answer, so the check that matters is the opposite case: delete objects a law is actively targeting, in a busy zone, and confirm nothing crashes and no law keeps acting on the deleted thing. That path is where a wrong answer would show as a dangling read rather than a slow frame.
@@ -313,7 +313,7 @@ differently, only faster. → [full task](../Specific%20Tasks/Formation_Rete/For
 ## Formation Rete rung 2 — the sweep got ~1.8x faster, and a fourth deaf-law bug closed
 
 *Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`. Two changes a
-Person should feel. → [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+Person should feel. → [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 - [ ] **Laws that read a property granted DURING play.** This is the fixed bug, and it is the one worth walking. Any law watching a property that a *different* law grants at runtime — `AddProperty` actions, authored `warmth`-style grants, anything a tool adds mid-session — was permanently deaf to that being: the property existed, the law was enabled and compiled, and it simply never fired for it. Grant a property in-world and confirm a law watching it now takes hold on that being, in the same session, without a reload.
 - [ ] **Nothing over-fires.** Both rung 2 changes make laws reach *more*, so the risk is the opposite of deafness. Play chess, Go, and Synthesis Studio and confirm no law is now acting on beings it should not — especially anything with an `AddProperty` action.
@@ -322,7 +322,7 @@ Person should feel. → [full task](../Specific%20Tasks/Formation_Rete/Formation
 ## Zone identifier/name split — the "3 live objects across Zones (same name)" refusals
 
 *Raised 2026-09-09 by Zach pasting live console output; fixed same day, Claude Sonnet 5,
-session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
+session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zones%20and%20Ourverse/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
 
 - [ ] **Reload `synthesis_studio_living` (or whatever world showed the refusal spam) and watch the console.** Before this fix, loading it logged dozens of `applyMatterFlatBuffer: entity '...' has no exact owner match and matches 2/3 live objects across Zones (same name printed more than once)` lines — a real duplicate-live-Zone bug, not a cosmetic one. That spam should be gone or much reduced. Any REMAINING "matches N live objects" line naming genuinely different-named Zones is a separate, pre-existing ambiguity (Invariant 3 working as designed on legacy ownerless records) — not this bug.
 - [ ] **Objects that live in "Basic 2D Button Zone" or "Perlin Noise Floor Zone" should now show their authored geometry/position**, not a default transform — those were the two names actually colliding in what you pasted. If either still looks wrong, say so; it would mean a second, different cause in the same area.
@@ -330,7 +330,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 
 ## Model Context Protocol (MCP) Server Bridge (@modelcontextprotocol)
 
-*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 17 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). Upgraded to v2 following Claude & Zach's live field testing report. → [full task](../Specific%20Tasks/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
+*Landed 2026-09-09, Gemini Spark. Added Option A: Node.js/TypeScript MCP Server under `src/Singularity/Foreign/mcp/` and `scripts/mcp-server.js` exposing 17 Earthcall tools over standard stdio JSON-RPC to external AI models (Claude, Cursor, Gemini). Upgraded to v2 following Claude & Zach's live field testing report. → [full task](../Specific%20Tasks/Channels%20and%20Language/Model_Context_Protocol_MCP_Server_Bridge/Model_Context_Protocol_MCP_Server_Bridge.md)*
 
 - [x] **Wire the server into Claude Desktop's config.** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Added an `earthcall` entry under `mcpServers` in `~/Library/Application Support/Claude/claude_desktop_config.json` (backed up first to `claude_desktop_config.json.bak-20260909135837` alongside it), pointing at `scripts/mcp-server.js` with `EARTHCALL_WS_URL=ws://localhost:8080`. Verified `node scripts/mcp-server.js` starts cleanly and logs `Server initialized and listening over stdio.`; verified `@modelcontextprotocol/sdk` is present in `node_modules`; verified the edited config is still valid JSON and every pre-existing key survived untouched. **Quit and reopen Claude Desktop** for it to pick up the new server — it wasn't running when this was made, so no restart was forced on you.
 - [x] **Wire the server into Claude Code CLI (this tool).** *Done 2026-09-09, Claude Sonnet 5, session `01TM2LcwwRWs1qgnTxUXLfeA`.* Ran `claude mcp add earthcall -s local -e EARTHCALL_WS_URL=ws://localhost:8080 -- node /Users/zacharyzhang/Documents/GitHub/Earthcall/scripts/mcp-server.js`. Scoped `local` (private to you, stored in `~/.claude.json` under this project, not committed to git) rather than `project`, since the config's absolute path is machine-specific. `claude mcp get earthcall` confirms `Status: ✔ Connected`. Only a **new** Claude Code session in this project directory will see the tools — this already-running session started before the server was registered.
@@ -348,7 +348,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 
 ## Zone identity boundary (Invariant 6, Stage 1) — found a real duplicate on your own Home
 
-*Landed 2026-09-09, Claude Sonnet 5, session `01MsayKP3NYfQAyBtyQ8xeA1`, per Sol's staged plan on the agent intercom. → [full task](../Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
+*Landed 2026-09-09, Claude Sonnet 5, session `01MsayKP3NYfQAyBtyQ8xeA1`, per Sol's staged plan on the agent intercom. → [full task](../Specific%20Tasks/Zones%20and%20Ourverse/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md)*
 
 - [ ] **Reload your world and confirm Home looks exactly as it did before** — all 104 objects, nothing missing. While implementing this, I found `saves/zones/Home/zone.json` (a stale, 32-object duplicate) sitting alongside the real `saves/homes/Home/home.json` (104 objects, the one your saves have actually been updating). Both claimed the identity "Home" — harmless before because the old code silently ignored the second one it saw, but the new validation this pass adds would have made your ACTUAL Home refuse to load entirely. You authorized moving the stale one aside (not deleting it): it's now at `saves/backups/Home.orphaned-2026-09-09/zone.json`, fully intact and recoverable, just no longer claiming the "Home" identity. Nothing about your live Home should look any different — please confirm.
 - [ ] **The Basic Pixel Changer canvas should still work exactly as before.** You separately authorized a one-line fix to `saves/zones/BasicPixelChanger/zone.json`'s `identifier` field (was `"Basic Pixel Changer"` with a space, mismatching its folder; now `"BasicPixelChanger"`, matching). This was the same class of bug Sol originally found in this file back on 2026-09-08. Reload it and confirm the canvas still opens and paints as it did after that first fix.
@@ -357,7 +357,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 ## Formation Rete rung 3 — a fifth deaf-law bug, and the oldest one yet
 
 *Raised 2026-09-09, Claude Opus 5, session `session_01F9nK3FZ7VR4PFPTUWfYyvm`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 - [ ] **Laws that touch `shape.*` and are NOT `WhileTrue`.** This is the big one. A law's required vocabulary is the path's root (`shape`), but the property is registered as `shape.fillet` — there is no property called `shape` — so `couldApplyTo` refused every being and **any sweep-path law touching a shape parameter reached nobody at all**, silently. That means `OnBecomeTrue` laws, and any law without compiled Rete terminals, that set or test `shape.fillet`, `shape.r`, `shape.kind` and friends. If you have ever authored such a law and quietly concluded it "didn't work", try it again — it should work now. This is the check most likely to change something you actually see.
 - [ ] **Laws gated on a state being or channel.** Anything conditioned on an `@`-rooted referent (the ambient theme, the draw-mode indicator, the slider clamp, the crystal's pulse) is now skipped wholesale while its gate is shut, instead of being tested against every being. Toggle those gates off and on repeatedly in Synthesis Studio and confirm the laws stop and **restart** — the restart is the risky half, because a hoist that forgot to release its held subjects would never re-fire.
@@ -375,7 +375,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 
 ## IDE Docking Mode for First Mover Window Tools
 
-*Landed 2026-09-11, Antigravity. Added IDE Docking Mode attaching ImGui windows to screen edges (Left sidebar, Right sidebar, Bottom bar drawer), keeping the central 3D viewport clear and unoccluded. → [full task](../Specific%20Tasks/IDE_Docking_Mode/IDE_Docking_Mode.md)*
+*Landed 2026-09-11, Antigravity. Added IDE Docking Mode attaching ImGui windows to screen edges (Left sidebar, Right sidebar, Bottom bar drawer), keeping the central 3D viewport clear and unoccluded. → [full task](../Specific%20Tasks/Interaction%20and%20Interface/IDE_Docking_Mode/IDE_Docking_Mode.md)*
 
 - [x] **Toggle IDE Mode (`F10` or Menu `M`)**: | Zach tested, expanded, and verified in-app window layout and IDE docking manager in commits c72d97d8 ("YAYYYY NEW WINDOW LAYOUT AND BAISC PIXEL CANVAS BUG FIX") and 3b3f343d (Left Sidebar, Right Sidebar, Bottom Drawer, Center Viewport, corner dynamic priority, and stacked multiple window layout).
   1. Launch Earthcall WebGPU: `Run Earthcall.command` or `./build/earthcall_webgpu`.
@@ -411,7 +411,7 @@ session `01MsayKP3NYfQAyBtyQ8xeA1`. → [full task](../Specific%20Tasks/Zone_ide
 ## `OnBecomeTrue` laws fire once again — this one you will SEE
 
 *Raised 2026-09-14, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 From `698059e0 Rete performance sweep hunt` (2026-09-13) until this fix, **every `OnBecomeTrue` law in the running app fired every frame for as long as its condition held**, instead of once when it became true. The test harness hid it because tests often run the law engine disconnected; the app never does.
 
@@ -426,7 +426,7 @@ From `698059e0 Rete performance sweep hunt` (2026-09-13) until this fix, **every
 ## Category-scoped laws: faster, and they hear relations come and go
 
 *Raised 2026-09-14, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 Laws scoped as "every instance of category X" (`Related(instance-of, category.X)`, the idiom 132 chess laws use) cost ~17x an ordinary law at 400 beings. They now cost the same. The fix also closed two ways such a law could stay silent.
 
@@ -437,7 +437,7 @@ Laws scoped as "every instance of category X" (`Related(instance-of, category.X)
 ## Clicking a chess piece should feel lighter
 
 *Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 Every click in chess runs ~30 "every piece" move laws, each checking every candidate piece. Checking a piece that didn't match cost 49 µs, and 45 µs of that was a temporary event object walking every relation in the world when it was thrown away. It now costs 8.7 µs (Debug build, headless).
 
@@ -447,7 +447,7 @@ Every click in chess runs ~30 "every piece" move laws, each checking every candi
 ## "Became true" laws fire again every time, not just the first time
 
 *Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 Before this fix, an `OnBecomeTrue` law in the running app could fire **once in its lifetime** if its condition went false through something other than the property it was first woken by. Examples: a being entering a region, a comparison between two properties, an OntoMath zone, or losing a relation to one specific category. Leaving and coming back did nothing.
 
@@ -462,7 +462,7 @@ not fully verified though beyond the initial spawnpoint also its super laggy
 ## Synthesis Studio should stop hitching when a property is granted
 
 *Raised 2026-09-15, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 In Synthesis Studio Living (535 beings, 68 laws), the law engine rebuilt its "which beings carry which property" index whenever a property was granted or a being admitted — and one rebuild took 132–208 ms. That is a visible freeze, and it happens during play, because playing grants properties (a mark remembering its note, for instance). It now takes about 14 ms.
 
@@ -490,7 +490,7 @@ A new Zone of Actualization demonstrating what only Earthcall can do: an archite
 ## A long play session should not get slower on its own
 
 *Raised 2026-09-16, Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`.
-→ [full task](../Specific%20Tasks/Formation_Rete/Formation_Rete.md)*
+→ [full task](../Specific%20Tasks/Law%20and%20Reasoning/Formation_Rete/Formation_Rete.md)*
 
 The law engine kept a note of which relation facts it already held, so it would not store the same one twice. Any being being destroyed wiped that note for *every* being, so duplicates accumulated: measured, a being that should have had 1 fact had 5 after four other beings came and went. Laws still behaved correctly — there was simply more and more for the engine to walk through, and it never went back down.
 

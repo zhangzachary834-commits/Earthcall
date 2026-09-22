@@ -134,7 +134,7 @@ This is one of the places where Earthcall's breadth can become cheaper through c
 
 The image thread reported a dramatic performance improvement, eventually 0.39 ms, and described bypassing the change feed for projected writes. Those figures belong to the reporting agent. I did not reproduce them.
 
-The source routes I read did distinguish batch projection writes from single-pixel writes: the latter announced affected elevated observations, while the inspected projection route reached sample mutation without the corresponding owner-level announcement. The existing [follow-up record](../Agenda/Tasks/Specific%20Tasks/Intercom_Galaxy_Expedition/Intercom_Galaxy_Expedition.md#projected-region-continuity-follow-up) preserves the specific reproduction questions.
+The source routes I read did distinguish batch projection writes from single-pixel writes: the latter announced affected elevated observations, while the inspected projection route reached sample mutation without the corresponding owner-level announcement. The existing [follow-up record](../Agenda/Tasks/Specific%20Tasks/Channels%20and%20Language/Intercom_Galaxy_Expedition/Intercom_Galaxy_Expedition.md#projected-region-continuity-follow-up) preserves the specific reproduction questions.
 
 The architectural point is independent of the eventual bug verdict. A Law's ability to read a changed value does not guarantee its opportunity to evaluate that value. A condition initially absent from terminal memory may not be rescued by the promise that active Laws can poll.
 

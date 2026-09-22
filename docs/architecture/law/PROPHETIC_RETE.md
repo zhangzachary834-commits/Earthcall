@@ -4,7 +4,7 @@
 
 **Origin.** The realization is Zach's, written 2026-09-01 in `docs/architecture/law/B-time Rete.md`
 and structured into a specification by ChatGPT 5.6 Luna as
-`docs/Agenda/Tasks/Specific Tasks/Rete_Truth_Seeking_Focus.md`. Zach named both
+`docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Rete_Truth_Seeking_Focus/Rete_Truth_Seeking_Focus.md`. Zach named both
 **Prophetic Rete** (what it does) and **B-Time Rete** (how its temporal structure is
 conceived). This document records what has been **built** as of 2026-09-01, what the
 implementation deliberately does **not** yet do, and which decisions are marked ⚑ AUTHOR

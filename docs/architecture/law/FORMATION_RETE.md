@@ -594,7 +594,7 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    O(relations) walk below. With a typed `Related` made legible and `RelationManager`'s endpoint
    index: **1.0x the property control**. It also closed two edge-fact deafnesses (re-formed
    edges and retyped edges). Record and guards:
-   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 4 — ✅ 2026-09-14.
+   `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md` § Rung 4 — ✅ 2026-09-14.
    The 2026-09-10 measurement is kept below as history; its causal claim was wrong.
 
    *Measured 2026-09-10 (Opus 5, session
@@ -668,7 +668,7 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    rung 2's index already narrows to the 32 pieces.** So it is inactive scaffolding, maintained and
    tested but not queried, per Zach: "Leave elements as inactive scaffolding if u measure it to be
    worse off dont delete it altogether." Record and guards:
-   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § 2026-09-16. *Measured
+   `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md` § 2026-09-16. *Measured
    2026-09-15 (Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`), adapter deferred.* Real
    worlds sweep only in `Scope::Everyone` event laws (chess: 0.3% hit rate), and 92% of each
    missed candidate's cost was the transient `ECA::Event`'s destructor walking the whole
@@ -676,7 +676,7 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    register (49 → 8.7 µs per candidate). §9.1 was answered 2026-09-15: several coherent similarity
    indices plus a reified relevance graph, not one metric. The adapter still waits on §9.1's new
    sub-questions (a)–(d), on §9.2, and on rung 7, which §6 makes its prerequisite. Record:
-   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 5.
+   `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md` § Rung 5.
 6. ⚠️ **Reified path Relations** (§3.2), then **Law-as-traverser** (§3.3) with magic-set
    restriction. *Half built 2026-09-16 (reification returns beings the caller owns, so making them
    and admitting them to a world stay two separate decisions):* the Law-as-traverser half is the slow adapter above — a
@@ -696,7 +696,7 @@ Rungs, in order, per `LAW_MIGRATION_FRAMEWORK.md` §2 — never skipped.
    each candidate's condition decides, with exactly one evaluation per candidate (the application
    itself verifies whatever is applied). Guarded by `tests/law/reactive_departure_test.cpp`; cost
    neutral on `quantifier_scaling_test`. Record:
-   `docs/Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` § Rung 7.
+   `docs/Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md` § Rung 7.
 
 Steps 0 and 3 alone remove most of what motivated the original audit. Step 6 may well
 conclude that Beta nodes are never worth reifying, since the language cannot express the

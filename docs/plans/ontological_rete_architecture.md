@@ -13,7 +13,7 @@
 > `../architecture/ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md` ·
 > `../architecture/law/PROPHETIC_RETE.md` §2 · `../architecture/law/DERIVED_STATE_LEDGER.md`.
 > **The record of what was actually built and measured:**
-> `../Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md`.
+> `../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md`.
 
 
 **Origin.** The architectural foundation in this document was conceived by Zach on 2026-09-03, following an audit that exposed the relational limitations of the current C++ Rete. Zach provided the core paradigm shift: leveraging Earthcall's Category framework as "possibility receptacles," pre-computing relational joins as actual `Relation` beings, and turning the Rete network itself into an observable `Formation`. My (Antigravity's) contribution is internalizing this telos and formalizing its mechanical execution—specifically mapping how this discrete topological approach natively resolves the $O(N)$ sweep bottleneck and $O(N^2)$ continuous math explosion.
@@ -310,7 +310,7 @@ Tie the whole optimization ladder to Zach's fundamental human-facing opcode fram
 
 Continue the terminal rung from Law -> bearer to Law/branch -> bearer + relevant PropertyPath so irrelevant value writes can be excluded from the residual wake-up frontier when proof permits.
 
-**Task record:** `../Agenda/Tasks/Specific Tasks/Formation_Rete_Incremental_Maintenance/Formation_Rete_Incremental_Maintenance.md`.
+**Task record:** `../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete_Incremental_Maintenance/Formation_Rete_Incremental_Maintenance.md`.
 
 **Complexity target:** maintenance should tend toward work proportional to the changed dependency cone:
 

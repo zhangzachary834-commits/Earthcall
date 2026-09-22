@@ -110,7 +110,7 @@ My extension of your direction is a question to keep beside the next impressive 
 
 After drawing, can they continue the drawing? After authoring a sound, can they shape its character? After lighting a place, can they move the cause and understand the consequence? After returning tomorrow, do those questions still refer to the same work?
 
-These are interpretive questions for the existing [Making the Earth Inhabitable programme](../../Agenda/Tasks/Specific%20Tasks/Make_the_Earth_Inhabitable/Make_the_Earth_Inhabitable.md), not a new implementation backlog or a claim that this session tested those interactions.
+These are interpretive questions for the existing [Making the Earth Inhabitable programme](../../Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/Make_the_Earth_Inhabitable/Make_the_Earth_Inhabitable.md), not a new implementation backlog or a claim that this session tested those interactions.
 
 Your [manifesto](../../core/Earthcall%20Ourverse%20Manifesto/EarthcallOurverse.md) gives the larger end: a relational, Christward digital existence ordered to human meaning. No accumulation of renderer features establishes that end by itself. But a machine that becomes more answerable to what a Person meant is moving along a direction the manifesto makes intelligible.
 
