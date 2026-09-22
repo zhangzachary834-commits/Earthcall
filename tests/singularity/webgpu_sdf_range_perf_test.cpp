@@ -1783,22 +1783,133 @@ void printStableRouteAtlasCensus(
     const DirectRunArtifact& authority,
     uint32_t faceBins,
     uint32_t directionBins) {
-    // This is a CPU-side census of a production-shaped key, not a runtime
-    // optimization. It asks whether stable ray facts can isolate relevance
-    // before we build a GPU atlas. A route may only name source runs already
-    // authorized by the positive theorem.
+    // CPU-side census of a production-shaped key. The atlas itself is compiled
+    // from theorem-authorized runs plus a fixed object-local compiler probe
+    // basis. Camera rays score the finished atlas but never populate it.
     const uint32_t entrySide = std::max(1u, faceBins);
     const uint32_t dirSide = std::max(1u, directionBins);
     const uint64_t entryCells = static_cast<uint64_t>(entrySide) * entrySide;
     const uint64_t dirCells = static_cast<uint64_t>(dirSide) * dirSide;
     const uint64_t routeCount = 6ull * entryCells * dirCells;
     std::vector<std::vector<uint32_t>> routeConsequences(routeCount);
-    std::vector<uint8_t> routeUseful(routeCount, 0u);
-    std::vector<uint8_t> rayUseful(rays.size(), 0u);
-    std::vector<uint64_t> rayKeys(rays.size(), 0u);
 
-    auto routeKey = [&](const RuntimeTaxRay& ray, glm::vec3& ro, glm::vec3& rd,
-                        float& enter, float& exit) -> uint64_t {
+    auto tangentAxes = [](uint32_t axis, uint32_t& a, uint32_t& b) {
+        if (axis == 0u) {
+            a = 1u; b = 2u;
+        } else if (axis == 1u) {
+            a = 0u; b = 2u;
+        } else {
+            a = 0u; b = 1u;
+        }
+    };
+
+    auto decodeDirection = [&](uint32_t dirIndex,
+                               float ox, float oy) -> glm::vec3 {
+        const uint32_t dx = dirIndex % dirSide;
+        const uint32_t dy = dirIndex / dirSide;
+        const float fx = glm::clamp(
+            (static_cast<float>(dx) + 0.5f + ox) /
+                static_cast<float>(dirSide),
+            0.0f, 0.999999f);
+        const float fy = glm::clamp(
+            (static_cast<float>(dy) + 0.5f + oy) /
+                static_cast<float>(dirSide),
+            0.0f, 0.999999f);
+        glm::vec3 n(fx * 2.0f - 1.0f,
+                    fy * 2.0f - 1.0f,
+                    1.0f);
+        n.z = 1.0f - std::abs(n.x) - std::abs(n.y);
+        const float t = glm::clamp(-n.z, 0.0f, 1.0f);
+        n.x += n.x >= 0.0f ? -t : t;
+        n.y += n.y >= 0.0f ? -t : t;
+        const float len = glm::length(n);
+        return len > 1e-8f ? n / len : glm::vec3(0.0f, 0.0f, 1.0f);
+    };
+
+    auto entryPoint = [&](uint32_t face, uint32_t entryIndex,
+                          float ou, float ov) -> glm::vec3 {
+        const uint32_t axis = face / 2u;
+        const bool positive = (face & 1u) != 0u;
+        uint32_t a = 0u, b = 0u;
+        tangentAxes(axis, a, b);
+        const uint32_t eu = entryIndex % entrySide;
+        const uint32_t ev = entryIndex / entrySide;
+        const float fu = glm::clamp(
+            (static_cast<float>(eu) + 0.5f + ou) /
+                static_cast<float>(entrySide),
+            0.0f, 0.999999f);
+        const float fv = glm::clamp(
+            (static_cast<float>(ev) + 0.5f + ov) /
+                static_cast<float>(entrySide),
+            0.0f, 0.999999f);
+        const glm::vec3 e = glm::abs(extent);
+        glm::vec3 p(0.0f);
+        p[axis] = positive ? e[axis] : -e[axis];
+        p[a] = (fu * 2.0f - 1.0f) * e[a];
+        p[b] = (fv * 2.0f - 1.0f) * e[b];
+        return p;
+    };
+
+    auto intersectsRun = [&](const glm::vec3& ro, const glm::vec3& rd,
+                             const DirectProofRun& run) {
+        float re = 0.0f, rx = 0.0f;
+        const glm::vec3 center =
+            0.5f * (glm::vec3(run.bmin) + glm::vec3(run.bmax));
+        const glm::vec3 half = glm::max(
+            0.5f * (glm::vec3(run.bmax) - glm::vec3(run.bmin)),
+            glm::vec3(1e-8f));
+        if (!rayBoxInterval(ro - center, rd, half, re, rx)) return false;
+        return rx > std::max(re, 0.0f);
+    };
+
+    // Five fixed probes per route: center + four paired subcell diagonals.
+    // This basis is deliberately object-local and camera-independent. Missing
+    // a consequence only loses an optimization opportunity; every retained
+    // consequence still carries positive-proof authority and is re-tested
+    // against the actual runtime ray before it can authorize a skip.
+    constexpr std::array<glm::vec2, 5> kCompilerOffsets = {{
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(-0.35f, -0.35f),
+        glm::vec2(0.35f, -0.35f),
+        glm::vec2(-0.35f, 0.35f),
+        glm::vec2(0.35f, 0.35f),
+    }};
+
+    uint64_t compilerProbeRays = 0u;
+    for (uint32_t face = 0u; face < 6u; ++face) {
+        const uint32_t axis = face / 2u;
+        const float normalSign = (face & 1u) ? 1.0f : -1.0f;
+        glm::vec3 normal(0.0f);
+        normal[axis] = normalSign;
+        for (uint32_t entry = 0u; entry < entryCells; ++entry) {
+            for (uint32_t dir = 0u; dir < dirCells; ++dir) {
+                const uint64_t key =
+                    (static_cast<uint64_t>(face) * entryCells + entry) *
+                        dirCells +
+                    dir;
+                auto& bucket = routeConsequences[key];
+                for (const glm::vec2& offset : kCompilerOffsets) {
+                    const glm::vec3 rd =
+                        decodeDirection(dir, offset.x, offset.y);
+                    if (glm::dot(rd, normal) >= -1e-6f) continue;
+                    const glm::vec3 ro =
+                        entryPoint(face, entry, offset.x, offset.y);
+                    ++compilerProbeRays;
+                    for (uint32_t r = 0u; r < authority.runs.size(); ++r) {
+                        if (!intersectsRun(ro, rd, authority.runs[r])) continue;
+                        if (std::find(bucket.begin(), bucket.end(), r) ==
+                            bucket.end()) {
+                            bucket.push_back(r);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    auto routeKey = [&](const RuntimeTaxRay& ray, glm::vec3& ro,
+                        glm::vec3& rd, float& enter,
+                        float& exit) -> uint64_t {
         ro = glm::vec3(ray.ro);
         rd = glm::normalize(glm::vec3(ray.rdFar));
         if (!rayBoxInterval(ro, rd, extent, enter, exit) || exit < 0.0f)
@@ -1807,88 +1918,104 @@ void printStableRouteAtlasCensus(
         const glm::vec3 p = ro + rd * enter;
         const uint32_t face = stableRouteFace(p, extent);
         const uint32_t axis = face / 2u;
-        uint32_t a = axis == 0u ? 1u : 0u;
-        uint32_t b = axis == 2u ? 1u : 2u;
-        if (axis == 1u) b = 2u;
-        const glm::vec3 e = glm::max(glm::abs(extent), glm::vec3(1e-6f));
-        const float ua = glm::clamp(p[a] / e[a] * 0.5f + 0.5f, 0.0f, 0.999999f);
-        const float ub = glm::clamp(p[b] / e[b] * 0.5f + 0.5f, 0.0f, 0.999999f);
-        const uint32_t u = std::min(static_cast<uint32_t>(ua * entrySide), entrySide - 1u);
-        const uint32_t v = std::min(static_cast<uint32_t>(ub * entrySide), entrySide - 1u);
-        const uint64_t entry = static_cast<uint64_t>(v) * entrySide + u;
-        const uint64_t dir = stableRouteDirectionClass(rd, dirSide);
-        return (static_cast<uint64_t>(face) * entryCells + entry) * dirCells + dir;
+        uint32_t a = 0u, b = 0u;
+        tangentAxes(axis, a, b);
+        const glm::vec3 e =
+            glm::max(glm::abs(extent), glm::vec3(1e-6f));
+        const float ua =
+            glm::clamp(p[a] / e[a] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const float ub =
+            glm::clamp(p[b] / e[b] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const uint32_t u = std::min(
+            static_cast<uint32_t>(ua * entrySide), entrySide - 1u);
+        const uint32_t v = std::min(
+            static_cast<uint32_t>(ub * entrySide), entrySide - 1u);
+        const uint64_t entry =
+            static_cast<uint64_t>(v) * entrySide + u;
+        const uint64_t dir =
+            stableRouteDirectionClass(rd, dirSide);
+        return (static_cast<uint64_t>(face) * entryCells + entry) *
+                   dirCells +
+               dir;
     };
-
-    for (size_t i = 0; i < rays.size(); ++i) {
-        glm::vec3 ro, rd;
-        float enter = 0.0f, exit = 0.0f;
-        const uint64_t key = routeKey(rays[i], ro, rd, enter, exit);
-        rayKeys[i] = key;
-        if (key >= routeCount) continue;
-        for (uint32_t r = 0; r < authority.runs.size(); ++r) {
-            const auto& run = authority.runs[r];
-            float re = 0.0f, rx = 0.0f;
-            const glm::vec3 center = 0.5f * (glm::vec3(run.bmin) + glm::vec3(run.bmax));
-            const glm::vec3 half = glm::max(
-                0.5f * (glm::vec3(run.bmax) - glm::vec3(run.bmin)),
-                glm::vec3(1e-8f));
-            if (!rayBoxInterval(ro - center, rd, half, re, rx)) continue;
-            re = std::max(re, enter);
-            rx = std::min(rx, exit);
-            if (rx <= re) continue;
-            rayUseful[i] = 1u;
-            routeUseful[key] = 1u;
-            auto& bucket = routeConsequences[key];
-            if (std::find(bucket.begin(), bucket.end(), r) == bucket.end())
-                bucket.push_back(r);
-        }
-    }
 
     StableRouteAtlasStats s;
     s.faceBins = entrySide;
     s.directionBins = dirSide;
     s.routes = routeCount;
+    uint64_t atlasConsequenceRecords = 0u;
     for (const auto& bucket : routeConsequences) {
         if (!bucket.empty()) {
             ++s.occupiedRoutes;
+            atlasConsequenceRecords += bucket.size();
             if (bucket.size() > 1u) ++s.ambiguousRoutes;
         }
     }
-    for (size_t i = 0; i < rays.size(); ++i) {
-        if (rayUseful[i]) ++s.usefulRays;
-        const uint64_t key = rayKeys[i];
+
+    for (const auto& ray : rays) {
+        glm::vec3 ro, rd;
+        float enter = 0.0f, exit = 0.0f;
+        const uint64_t key = routeKey(ray, ro, rd, enter, exit);
         if (key >= routeCount) continue;
+
+        bool globallyUseful = false;
+        for (const auto& run : authority.runs) {
+            if (intersectsRun(ro, rd, run)) {
+                globallyUseful = true;
+                break;
+            }
+        }
+        if (globallyUseful) ++s.usefulRays;
+
         const auto& bucket = routeConsequences[key];
         s.consequenceTests += bucket.size();
-        if (rayUseful[i] && !bucket.empty()) ++s.capturedUsefulRays;
-        if (!rayUseful[i] && !bucket.empty()) ++s.falsePositiveRays;
+        bool captured = false;
+        for (uint32_t r : bucket) {
+            if (r < authority.runs.size() &&
+                intersectsRun(ro, rd, authority.runs[r])) {
+                captured = true;
+                break;
+            }
+        }
+        if (globallyUseful && captured) ++s.capturedUsefulRays;
+        if (!captured && !bucket.empty()) ++s.falsePositiveRays;
     }
 
-    const double capture = s.usefulRays > 0u
-        ? static_cast<double>(s.capturedUsefulRays) / s.usefulRays : 1.0;
-    const double falsePositivePerRay = !rays.empty()
-        ? static_cast<double>(s.falsePositiveRays) / rays.size() : 0.0;
-    const double testsPerRay = !rays.empty()
-        ? static_cast<double>(s.consequenceTests) / rays.size() : 0.0;
+    const double capture =
+        s.usefulRays > 0u
+            ? static_cast<double>(s.capturedUsefulRays) / s.usefulRays
+            : 1.0;
+    const double falsePositivePerRay =
+        !rays.empty()
+            ? static_cast<double>(s.falsePositiveRays) / rays.size()
+            : 0.0;
+    const double testsPerRay =
+        !rays.empty()
+            ? static_cast<double>(s.consequenceTests) / rays.size()
+            : 0.0;
     const uint64_t atlasBytes =
         s.routes * sizeof(uint32_t) * 2ull +
-        s.consequenceTests * sizeof(uint32_t);
+        atlasConsequenceRecords * sizeof(uint32_t);
 
     std::printf(
         "SDF_STABLE_ROUTE_ATLAS_CENSUS view=%s entry_side=%u dir_side=%u "
         "routes=%llu occupied_routes=%llu ambiguous_routes=%llu "
+        "atlas_consequence_records=%llu compiler_probe_rays=%llu "
         "useful_rays=%llu captured_useful_rays=%llu capture=%.6f "
         "false_positive_rays=%llu false_positive_per_ray=%.6f "
         "consequence_tests=%llu tests_per_ray=%.6f estimated_bytes=%llu "
-        "camera_independent_key=1 runtime_grid_walk=0 global_run_scan=0\n",
+        "camera_independent_key=1 camera_independent_atlas=1 "
+        "runtime_grid_walk=0 global_run_scan=0\\n",
         viewName, entrySide, dirSide,
         static_cast<unsigned long long>(s.routes),
         static_cast<unsigned long long>(s.occupiedRoutes),
         static_cast<unsigned long long>(s.ambiguousRoutes),
+        static_cast<unsigned long long>(atlasConsequenceRecords),
+        static_cast<unsigned long long>(compilerProbeRays),
         static_cast<unsigned long long>(s.usefulRays),
         static_cast<unsigned long long>(s.capturedUsefulRays), capture,
-        static_cast<unsigned long long>(s.falsePositiveRays), falsePositivePerRay,
+        static_cast<unsigned long long>(s.falsePositiveRays),
+        falsePositivePerRay,
         static_cast<unsigned long long>(s.consequenceTests), testsPerRay,
         static_cast<unsigned long long>(atlasBytes));
 }
