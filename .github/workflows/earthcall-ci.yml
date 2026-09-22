@@ -151,6 +151,8 @@ jobs:
             sdf_range_soundness_test \
             sdf_range_hierarchy_test \
             heightfield_predicate_test \
+            scene_spatial_synthesis_dag_test \
+            scene_spatial_ontomath_synthesis_test \
             channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
@@ -167,6 +169,8 @@ jobs:
           ./build/sdf_range_soundness_test
           ./build/sdf_range_hierarchy_test
           ./build/heightfield_predicate_test
+          ./build/scene_spatial_synthesis_dag_test
+          ./build/scene_spatial_ontomath_synthesis_test
           ./build/channel_paths_test
 
       - name: Verify generic WebGPU SDF parity
