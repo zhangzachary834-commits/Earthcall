@@ -246,3 +246,25 @@ Each atlas entry must carry or be reversibly associated with proof provenance. A
 The governing question is no longer "how cheaply can runtime search proof?" It is:
 
 > **Can AOT Prophetic derivation compile enough ray relevance that runtime mostly never asks irrelevant proof questions at all?**
+
+
+## Major-gate direction-discrimination sweep
+
+CI #2441 established that the first stable route key family is not uniformly weak. On the 45-degree camera, entry-side 8 / direction-side 8 captured all useful rays with only 0.018 consequence tests per ray, while horizon remained at 0.236437 tests per ray. Increasing entry resolution alone did not improve the horizon result; increasing direction discrimination from side 4 to side 8 did.
+
+The next falsification step therefore changes only the implicated variable. The test-only census now preserves the original entry-side {2,4,8} x direction-side {2,4,8} matrix and adds direction-side {16,32} at each entry resolution.
+
+This is the major gate before a GPU atlas exists.
+
+Graduation requires all of the following:
+
+- 100% capture of theorem-authorized useful rays on the maintained cameras;
+- a sharp continued reduction in false-positive routes and consequence tests, especially at horizon;
+- no broad bucket whose hidden consequence scan recreates the generic discovery tax;
+- resident artifact size that remains plausible for AOT derived state;
+- the same camera-independent key construction: entry face/region plus object-local direction class;
+- no runtime grid walk, hierarchy walk, neighboring-key search, or per-camera rebuild.
+
+If direction refinement plateaus while horizon still requires many irrelevant consequence tests, reject this stable-route key family. If it continues toward the oracle ceiling with bounded direct lookup, the next rung is a separate test-only GPU marcher consuming the stable atlas and comparing exact direct vs OFF sample steps with zero per-ray hit mismatches.
+
+No production renderer or production WGSL change is authorized by this sweep itself.
