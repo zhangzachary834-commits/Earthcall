@@ -29,6 +29,15 @@ namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
 
+// Density input is a resolved compiler fact, not a null-pointer convention.
+// LegacyField preserves old generic FieldNode behavior; None is explicit absence;
+// Authored means densityExpr is the sole D(p,t) authority.
+enum class DensityInputKind {
+    LegacyField,
+    None,
+    Authored
+};
+
 struct ParameterBlock {
     std::vector<float> values;
     bool ok = true;
@@ -120,7 +129,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* chromaExpr = nullptr,
                 const OntoMath::Piecewise* angularExpr = nullptr,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
-                const OntoMath::Piecewise* densityExpr = nullptr);
+                const OntoMath::Piecewise* densityExpr = nullptr,
+                DensityInputKind densityKind = DensityInputKind::LegacyField);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -132,7 +142,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* chromaExpr = nullptr,
                              const OntoMath::Piecewise* angularExpr = nullptr,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
-                             const OntoMath::Piecewise* densityExpr = nullptr);
+                             const OntoMath::Piecewise* densityExpr = nullptr,
+                             DensityInputKind densityKind = DensityInputKind::LegacyField);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
