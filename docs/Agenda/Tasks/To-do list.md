@@ -438,13 +438,20 @@ on a quiet machine) so the tripwire tightens behind the fix.
 - Earthcall for Python.
 
 ## Unified Opcode-Property Substrate
-- 
+- OntoMath and ActionNode and possibly more should all be unified under a fundamental set of opcode invariants.
 
-## OntoMath
-- Rework OntoMath so the variables themselves are Properties of any data type rather than black box variables. 
-- Say I have something I'm holding in my hand that's red. I want OntoMath to be able to draw .
-- Memory management and ownership so Properties can point to any memory and share the same memory as properties. For example,   
-- We thus need a OntoMath compiler to cache those properties .
+## OntoMath, Opcodes, and Properties
+{ Zach: So recall the foundational definition of Property: Machine-level substrate ordered as predicates of a Singular.
+- OntoMath Rework OntoMath to have more precise metal capacities so there is an option where the variables themselves can directly reference/point to Properties, so the specific data types of *values* they calculate are not engine-locked to just being a standard "double" or "float" and you aren't restricted to deep-copying just to calculate.
+- If we haven't already done this—cpp data structures should also be authorable properties. Not full Singulars in themselves (we don't give new domain nouns for Graph or Hash Map or something)
+- Data structures as Properties mean complex Property operations can be stored in a data type so we do not need to create new Singulars for everything cpp-level data structure. 
+- Some processes need to stay machine level though. It's about being fluidly govern how data is stored rather than forcing Persons to handle metal-level cpp management themselves.
+- Say I have something I'm holding in my hand that's red. I want to be able to use OntoMath to make a building that derives exactly from that PropertyPath, and the PropertyPaths themselves need robust authorable memory management.
+- This is a very low level memory management interface (thats still needs to be fundamentally safe and not allow segfaults) that will take a lot of skill to operate in-world.
+- Also, different properties should be able to access the same memory. The power of shared/unique/weak-pointers by Property should not be an inaccessible machine process and be authorable direction.
+- Memory management and ownership so Properties can point to any memory (I don't literally mean ANY) and share the same memory as properties. For example, sharing "red" could either mean a Property path that is distinct yet shares the same memory as another (but could also be rewritten or referenced differently), or it could mean sharing the PropertyPath itself (that would inherently share memory), or it could be a deep copy. Obviously, cpp level things like dereferencing, address, pointer managemnet should remain in the cpp, but deciding which noun to point to.
+- We thus need a Property cache those properties very efficiently. I'm wondering if we should keep using SingularId Interning or if SoA would be better.
+  (move this section to Specific Tasks, replace with smaller bullets.) - Zach}
 
 <a id="feature-sized"></a>
 ### Feature-sized (split out of Housekeeping 2026-08-13):
