@@ -1076,6 +1076,8 @@ struct RU {
     lightAmbient:   vec4<f32>,
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
+    // x = lighting enabled; y = Rung-8 derived visibility enabled.
+    // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
     // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
     // only when authored chi is present; the no-chi branch keeps the exact
@@ -1311,6 +1313,67 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     }
 
     return vec3<f32>(t, tMax, 1.0);
+}
+
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.lightControl.y < 0.5) { return 1.0; }
+
+    let inst = instances[g_instIdx];
+    let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+    let toSource = sourceField - surfacePoint;
+    let sourceDistance = length(toSource);
+    let surfaceEps = max(inst.misc.y, 1e-4);
+    let bias = surfaceEps * 4.0;
+    if (sourceDistance <= bias * 2.0) { return 1.0; }
+
+    let initialDir = toSource / sourceDistance;
+    let damping = inst.misc.w;
+
+    // The primary marcher may terminate just inside the zero set (for example,
+    // over-relaxation followed by secant correction). A tiny ray-direction bias
+    // then begins the transport query inside its own receiver and manufactures a
+    // self-shadow. Escape only when the source ray points outward through the
+    // receiver's local SDF normal. Back-facing/inward rays remain inside real
+    // geometry and are therefore still blocked by the receiver itself.
+    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
+    var origin = surfacePoint + initialDir * bias;
+    if (dot(surfaceNormal, initialDir) > 0.0) {
+        let penetration = max(-surfaceSignedStep, 0.0);
+        origin = surfacePoint + surfaceNormal * (penetration + bias);
+    }
+
+    let remaining = sourceField - origin;
+    let rayLength = length(remaining);
+    if (rayLength <= bias) { return 1.0; }
+    let shadowDir = remaining / rayLength;
+
+    // Restrict the query to authored geometry inside this instance's domain.
+    // A source outside the box is fine: leaving the box unobstructed proves this
+    // instance contributes no blocker beyond that exit.
+    let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+
+    var tShadow = max(bounds.x, 0.0);
+    let maxShadow = min(bounds.y, rayLength - bias);
+    if (maxShadow <= tShadow) { return 1.0; }
+
+    // Match the primary renderer's finite exact-march budget. This baseline uses
+    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
+    for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        if (tShadow >= maxShadow) { return 1.0; }
+
+        let pShadow = origin + shadowDir * tShadow;
+        let currentEps = max(surfaceEps, tShadow * 0.001);
+        let dShadow = sourceTransportSignedStep(pShadow, damping);
+
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        tShadow = tShadow + max(dShadow, currentEps);
+    }
+
+    // The primary marcher uses the same bounded iteration contract. If the
+    // budget is exhausted before the segment is decided, fail conservatively:
+    // never invent an unobstructed path that was not actually traversed.
+    return 0.0;
 }
 
 @fragment
@@ -1602,6 +1665,8 @@ fn fs(in: VSOut) -> FSOut {
         }
     }
     let shapedRadiance = radialRadiance * angularRadiance;
+    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
+    let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
@@ -1620,8 +1685,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     } else {
         // EXACT compatibility branch from Rung 4. No authored chi means
         // constant legacy light.color, already carried by these uniforms.
@@ -1629,8 +1694,8 @@ fn fs(in: VSOut) -> FSOut {
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
         ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * shapedRadiance;
-        specTerm = specularEnvelope * specShape * shapedRadiance;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -2206,6 +2271,8 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
                        "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
@@ -2230,9 +2297,9 @@ Program compile(const geom::SdfNode& root,
                 }
                 sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
                 sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * shapedRadiance;\n";
+                       "diff * directRadiance;\n";
                 sum += "            specTerm += specularEnvelope * specShape * "
-                       "shapedRadiance;\n";
+                       "directRadiance;\n";
                 sum += "        }\n";
                 sum += "    }\n";
             }
