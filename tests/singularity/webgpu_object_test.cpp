@@ -773,6 +773,25 @@ int main() {
         unsigned char visibilityBaseline[4];
         readCentre(visibilityBaseline);
 
+        // Visibility with no blocker must be observationally identical to V=1.
+        // This specifically guards against the primary marcher terminating a hair
+        // inside the receiver and the secondary transport ray then shadowing the
+        // receiver against itself.
+        renderer.setRadianceVisibilityEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char receiverOnlyVisibility[4];
+        readCentre(receiverOnlyVisibility);
+        const Renderer::FrameStats receiverOnlyVisibilityStats = renderer.frameStats();
+        assert(abs(int(receiverOnlyVisibility[0]) - int(visibilityBaseline[0])) <= 2 &&
+               abs(int(receiverOnlyVisibility[1]) - int(visibilityBaseline[1])) <= 2 &&
+               abs(int(receiverOnlyVisibility[2]) - int(visibilityBaseline[2])) <= 2 &&
+               "visibility query self-shadowed the receiver with no blocker present");
+        assert(receiverOnlyVisibilityStats.sdfProgramCompiles == 0 &&
+               receiverOnlyVisibilityStats.sdfProgramCacheHits >= 1 &&
+               "enabling receiver-only visibility regenerated shader structure");
+
         auto blocker =
             geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
         blocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
