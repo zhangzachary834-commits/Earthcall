@@ -10,6 +10,8 @@
 class LawManager;
 class Person;
 
+bool isObservationZone(const Zone& zone);
+
 // Persistence and UI state for save/load operations
 struct SaveLoadState {
     std::vector<std::string> files;
