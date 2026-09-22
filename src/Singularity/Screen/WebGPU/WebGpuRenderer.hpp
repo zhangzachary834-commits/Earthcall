@@ -237,6 +237,8 @@ private:
         uint64_t densityRevision = 0xffffffffffffffffULL;
         sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
         std::string densityStructure;
+        uint64_t extinctionRevision = 0xffffffffffffffffULL;
+        std::string extinctionStructure;
         bool multiSource = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
@@ -351,7 +353,13 @@ private:
         sdfwgsl::Program prog;
         const VolumePipeline* pipeline = nullptr;
     };
-    std::unordered_map<const OntoMath::Piecewise*, VolumeProgramMemo> _volumeProgramCache;
+    // V1 program identity is the authored medium pair, not density alone.
+    // Two media may intentionally share the same D AST while carrying different
+    // sigma_t ASTs; keeping separate memos prevents them from evicting each
+    // other's structure/value cache every frame.
+    using VolumeProgramKey =
+        std::pair<const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
+    std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     struct VolumeInstanceData {
         glm::vec4 origin;

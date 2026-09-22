@@ -1618,9 +1618,9 @@ fn fs(in: VSOut) -> FSOut {
         let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
         if (density > 0.0 && marched_field_distance > 0.0) {
             if (first_density_t < 0.0) { first_density_t = sample_t; }
-            // V0 compatibility extinction. The 0.5 coefficient is intentionally
-            // still a fossil until V1 authors sigma_t independently.
-            let extinction = max(density * 0.5, 1e-6);
+            // V1: sigma_t is independently authored when present; otherwise
+            // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
+            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
             
             let old_t = transmittance;
             transmittance *= exp(-extinction * marched_field_distance);
@@ -1794,6 +1794,25 @@ ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr)
     return layout;
 }
 
+ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-extinction:compat-0.5-density>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     // Absence is not refusal: it means the historical authored light.color is
@@ -1853,7 +1872,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* angularExpr,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
                              const OntoMath::Piecewise* densityExpr,
-                             DensityInputKind densityKind) {
+                             DensityInputKind densityKind,
+                             const OntoMath::Piecewise* extinctionExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1895,6 +1915,15 @@ ParameterBlock collectParams(const geom::SdfNode& root,
             (void)e.param(fieldNode->field->frequency);
             (void)e.param(fieldNode->field->amplitude);
         }
+    }
+
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
     }
 
     if (fieldNode && fieldNode->vectorField) {
@@ -1993,7 +2022,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* angularExpr,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
                 const OntoMath::Piecewise* densityExpr,
-                DensityInputKind densityKind) {
+                DensityInputKind densityKind,
+                const OntoMath::Piecewise* extinctionExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2079,6 +2109,23 @@ Program compile(const geom::SdfNode& root,
         }
     } else {
         prog.wgsl += "    return 0.0;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V1 Extinction Compiler ---
+    // Absence is the historical compatibility law; presence is sole sigma_t authority.
+    prog.wgsl += "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V1: explicit authored sigma_t(p,t)\n";
+        emitPiecewise(*extinctionExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else {
+        prog.wgsl += "    // V1 compatibility: preserve pre-V1 extinction exactly\n";
+        prog.wgsl += "    return compatibilityDensity * 0.5;\n";
     }
     prog.wgsl += "}\n";
 
@@ -2353,7 +2400,8 @@ Program compile(const geom::SdfNode& root,
     return prog;
 }
 
-ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr) {
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
+                                   const OntoMath::Piecewise* extinctionExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2361,6 +2409,9 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr) {
     std::string throwaway;
     if (densityExpr && !densityExpr->pieces.empty()) {
         emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+    }
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
     }
 
     ParameterBlock block;
@@ -2371,13 +2422,99 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr) {
     return block;
 }
 
-Program compileVolume(const OntoMath::Piecewise* densityExpr) {
+namespace {
+const char* kVolumePerlinNoise = R"WGSL(
+fn mod289(x: vec4<f32>) -> vec4<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn mod289_3(x: vec3<f32>) -> vec3<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn permute4(x: vec4<f32>) -> vec4<f32> {
+    return mod289(((x * 34.0) + 1.0) * x);
+}
+fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
+    return 1.79284291400159 - 0.85373472095314 * r;
+}
+fn cnoise3(P: vec3<f32>) -> f32 {
+    let Pi0 = floor(P);
+    let Pi1 = Pi0 + vec3<f32>(1.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
+    let Pf0 = fract(P);
+    let Pf1 = Pf0 - vec3<f32>(1.0);
+    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
+    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
+    let iz0 = vec4<f32>(Pi0_mod.z);
+    let iz1 = vec4<f32>(Pi1_mod.z);
+
+    let ixy = permute4(permute4(ix) + iy);
+    let ixy0 = permute4(ixy + iz0);
+    let ixy1 = permute4(ixy + iz1);
+
+    var gx0 = ixy0 / 7.0;
+    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
+    gx0 = fract(gx0);
+    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
+    let sz0 = step(gz0, vec4<f32>(0.0));
+    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
+    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
+
+    var gx1 = ixy1 / 7.0;
+    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
+    gx1 = fract(gx1);
+    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
+    let sz1 = step(gz1, vec4<f32>(0.0));
+    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
+    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
+
+    var g000 = vec3<f32>(gx0.x,gy0.x,gz0.x);
+    var g100 = vec3<f32>(gx0.y,gy0.y,gz0.y);
+    var g010 = vec3<f32>(gx0.z,gy0.z,gz0.z);
+    var g110 = vec3<f32>(gx0.w,gy0.w,gz0.w);
+    var g001 = vec3<f32>(gx1.x,gy1.x,gz1.x);
+    var g101 = vec3<f32>(gx1.y,gy1.y,gz1.y);
+    var g011 = vec3<f32>(gx1.z,gy1.z,gz1.z);
+    var g111 = vec3<f32>(gx1.w,gy1.w,gz1.w);
+
+    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+    g000 = g000 * norm0.x;
+    g010 = g010 * norm0.y;
+    g100 = g100 * norm0.z;
+    g110 = g110 * norm0.w;
+    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+    g001 = g001 * norm1.x;
+    g011 = g011 * norm1.y;
+    g101 = g101 * norm1.z;
+    g111 = g111 * norm1.w;
+
+    let n000 = dot(g000, Pf0);
+    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
+    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
+    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
+    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
+    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
+    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
+    let n111 = dot(g111, Pf1);
+
+    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
+    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
+    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+    return 2.2 * n_xyz;
+}
+)WGSL";
+} // namespace
+
+Program compileVolume(const OntoMath::Piecewise* densityExpr,
+                      const OntoMath::Piecewise* extinctionExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
 
     Program prog;
-    prog.wgsl = R"WGSL(
+    prog.wgsl = kVolumePerlinNoise;
+    prog.wgsl += R"WGSL(
 struct VolumeGlobals {
     viewProj: mat4x4<f32>,
     invViewProj: mat4x4<f32>,
@@ -2454,6 +2591,18 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
                  densityBody + "}\n";
 
+    std::string extinctionBody;
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        emitPiecewise(*extinctionExpr, e, "p", "f32", extinctionBody);
+    } else {
+        extinctionBody =
+            "    // V1 compatibility: exact pre-V1 extinction law\n"
+            "    return compatibilityDensity * 0.5;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
+        extinctionBody + "}\n";
+
     prog.wgsl += R"WGSL(
 @fragment
 fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
@@ -2507,9 +2656,9 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         let density = max(volumeDensityEval(p), 0.0);
 
         if (density > 0.0) {
-            // V0 compatibility only. V1 replaces this with independently
-            // authored sigma_t(p,t).
-            let extinction = max(density * 0.5, 1e-6);
+            // V1: authored sigma_t(p,t) is independent from D. If absent,
+            // the evaluator preserves the exact pre-V1 compatibility law.
+            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
             let oldT = transmittance;
             transmittance *= exp(-extinction * stepLength);
 
