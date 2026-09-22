@@ -381,6 +381,59 @@ int main() {
                depthClampedMedium[1] > depthClampedMedium[2] + 20 &&
                "volume composition erased or replaced the opaque green receiver");
 
+        // TIMELINE: D(p,t)=t is the same authored structure across both frames.
+        // Only this medium's admitted Timeline coordinate changes. The second
+        // frame must visibly brighten while reusing the already-compiled volume
+        // program; time is runtime data, never an AST mutation.
+        auto densityTimeNode = std::make_shared<OntoMath::MathNode>();
+        densityTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        densityTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedDensity =
+            OntoMath::Piecewise::continuous(densityTimeNode);
+
+        Rendering::VolumeDensityBinding timedMedium = medium;
+        timedMedium.densityExpr = &timedDensity;
+        timedMedium.densityRevision = 5301;
+        timedMedium.temporalCoordinate = 0.05;
+        timedMedium.temporalDelta = 0.05;
+        renderer.setVolumeDensitySources({timedMedium}, 5401);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char timedDensityDim[4];
+        readCentre(timedDensityDim);
+        const Renderer::FrameStats timedDensityCompileStats = renderer.frameStats();
+        assert(timedDensityCompileStats.volumeProgramCompiles == 1 &&
+               "introducing D(p,t) did not compile its density structure exactly once");
+
+        timedMedium.temporalCoordinate = 1.0;
+        timedMedium.temporalDelta = 0.95;
+        // Membership and authored density content are unchanged. Keep the set
+        // and density revisions fixed so only runtime Timeline data advances.
+        renderer.setVolumeDensitySources({timedMedium}, 5401);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char timedDensityBright[4];
+        readCentre(timedDensityBright);
+        const Renderer::FrameStats timedDensityAdvanceStats = renderer.frameStats();
+        std::printf("volume density timeline t=.05:%d t=1:%d compiles=%u cacheHits=%u\n",
+                    timedDensityDim[0], timedDensityBright[0],
+                    timedDensityAdvanceStats.volumeProgramCompiles,
+                    timedDensityAdvanceStats.volumeProgramCacheHits);
+        assert(timedDensityBright[0] > timedDensityDim[0] + 60 &&
+               "advancing the medium Timeline did not visibly change D(p,t)");
+        assert(timedDensityAdvanceStats.volumeProgramCompiles == 0 &&
+               "advancing density time regenerated the volume shader");
+        assert(timedDensityAdvanceStats.volumeProgramCacheHits >= 1 &&
+               "advancing density time failed to reuse the memoized volume program");
+
         renderer.setVolumeDensitySources({}, 0);
     }
 
