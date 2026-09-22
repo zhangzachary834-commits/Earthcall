@@ -183,7 +183,18 @@ jobs:
 
       - name: Verify WebGPU object/radiance parity
         shell: bash
-        run: ./build/webgpu_object_test
+        run: |
+          set -o pipefail
+          ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
+
+      - name: Upload WebGPU object/radiance diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgpu-object-parity-log
+          path: webgpu-object-parity.log
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Verify authored-Perlin core gradient/compiler gates
         shell: bash
