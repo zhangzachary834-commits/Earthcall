@@ -1777,12 +1777,10 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
-    auto existing = std::find_if(_laws.begin(), _laws.end(), [&](const std::shared_ptr<Law>& candidate) {
-        return candidate && candidate->getIdentifier() == id;
-    });
-    if (existing != _laws.end()) return;
+    if (_lawById.find(id) != _lawById.end()) return;
 
     _laws.push_back(law);
+    _lawById[id] = law.get();
     _lawFormation.addMember(law.get());
     // The register changed, so every conclusion the Prophetic index drew
     // about it is now about a different set of laws.
@@ -2982,6 +2980,7 @@ bool LawManager::remove(const std::string& lawId) {
     // half-destructed Law.
     std::shared_ptr<Law> removed = std::move(*it);
     _laws.erase(it);
+    _lawById.erase(lawId);
     removed.reset();
     _adapter.forgetLaw(lawId);
     Law::bumpTextRevision();
@@ -3369,6 +3368,10 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     }
     std::vector<std::shared_ptr<Law>> oldLaws = std::move(_laws);
     _laws = std::move(firstMovers);
+    _lawById.clear();
+    for (const auto& law : _laws) {
+        if (law) _lawById[law->getIdentifier()] = law.get();
+    }
     oldLaws.clear();
     _driveSessions.clear();
     Law::bumpTextRevision();
@@ -3448,9 +3451,8 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
 }
 
 Law* LawManager::find(const std::string& lawId) const {
-    for (const auto& law : _laws) {
-        if (law && law->getIdentifier() == lawId) return law.get();
-    }
+    auto it = _lawById.find(lawId);
+    if (it != _lawById.end()) return it->second;
     return nullptr;
 }
 
