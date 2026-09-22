@@ -434,6 +434,32 @@ int main() {
         assert(timedDensityAdvanceStats.volumeProgramCacheHits >= 1 &&
                "advancing density time failed to reuse the memoized volume program");
 
+        // REFUSAL: replace only D's authored structure with unsupported Raycast.
+        // The production composite must surface a named refusal and render no
+        // stale medium from the previously valid timed density program.
+        auto unsupportedDensityNode = std::make_shared<OntoMath::MathNode>();
+        unsupportedDensityNode->op = OntoMath::MathNode::Op::Raycast;
+        timedDensity.pieces[0].mathNode = unsupportedDensityNode;
+        timedMedium.densityRevision = 5302;
+        renderer.setVolumeDensitySources({timedMedium}, 5402);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+
+        unsigned char refusedDensityPixel[4];
+        readCentre(refusedDensityPixel);
+        const Renderer::FrameStats refusedDensityStats = renderer.frameStats();
+        assert(refusedDensityStats.volumeProgramRefusals >= 1 &&
+               "unsupported authored density did not surface a production volume refusal");
+        assert(refusedDensityStats.volumeLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "production density refusal did not name the unsupported authored operation");
+        assert(refusedDensityPixel[0] < 12 &&
+               refusedDensityPixel[1] < 12 &&
+               refusedDensityPixel[2] < 12 &&
+               "refused authored density left stale volumetric output on screen");
+
         renderer.setVolumeDensitySources({}, 0);
     }
 
