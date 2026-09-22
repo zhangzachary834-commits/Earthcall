@@ -268,3 +268,21 @@ Graduation requires all of the following:
 If direction refinement plateaus while horizon still requires many irrelevant consequence tests, reject this stable-route key family. If it continues toward the oracle ceiling with bounded direct lookup, the next rung is a separate test-only GPU marcher consuming the stable atlas and comparing exact direct vs OFF sample steps with zero per-ray hit mismatches.
 
 No production renderer or production WGSL change is authorized by this sweep itself.
+
+
+### Measurement correction: atlas population must also be camera-independent
+
+The first stable-route census had a subtle but material leakage: the route key was object-local and camera-independent, but route buckets were populated from the same maintained camera rays later used to score them. That makes the initial #2441 atlas numbers useful as an optimistic routing ceiling, not sufficient evidence for an AOT production-shaped atlas.
+
+The corrected census compiles buckets before scoring camera rays. It uses only:
+
+- theorem-authorized positive-run consequences;
+- entry-face/entry-cell route classes;
+- octahedral direction classes;
+- a fixed object-local compiler probe basis.
+
+The maintained camera rays then select already-compiled routes and score capture, false positives, and consequence tests. They do not add consequences to the atlas.
+
+The compiler probe basis may under-approximate relevance. That is safe for this optimization because a missing route consequence only loses an optional skip and falls back to the exact marcher. Every retained consequence still carries positive-proof authority, and an actual runtime ray must intersect the retained proved interval before a skip could be authorized.
+
+Accordingly, the corrected major gate requires both `camera_independent_key=1` and `camera_independent_atlas=1`. The #2441 numbers should not by themselves authorize a GPU implementation.
