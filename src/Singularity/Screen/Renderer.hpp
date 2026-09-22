@@ -445,6 +445,7 @@ private:
     double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
+    bool _radianceVisibilityEnabled = false;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
     FrameStats _frameStats;
