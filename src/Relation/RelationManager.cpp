@@ -461,6 +461,16 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
     if (!start || !target) return false;
     if (start == target) return true;
 
+    // Pre-build adjacency list to avoid O(E) scan per visited node
+    std::unordered_map<const Singular*, std::vector<const Singular*>> adj;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (rel.type == relationType && rel.a() && rel.b()) {
+            adj[rel.a()].push_back(rel.b());
+        }
+    }
+
     std::vector<const Singular*> queue = {target};
     std::unordered_set<const Singular*> visited = {target};
 
@@ -468,13 +478,12 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
         const Singular* current = queue.back();
         queue.pop_back();
 
-        for (const auto& relPtr : relations) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (rel.type == relationType && rel.a() == current) {
-                if (rel.b() == start) return true;
-                if (rel.b() && visited.insert(rel.b()).second) {
-                    queue.push_back(rel.b());
+        auto it = adj.find(current);
+        if (it != adj.end()) {
+            for (const Singular* next : it->second) {
+                if (next == start) return true;
+                if (visited.insert(next).second) {
+                    queue.push_back(next);
                 }
             }
         }
@@ -486,6 +495,20 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
     if (start.empty() || target.empty()) return false;
     if (start == target) return true;
     
+    // Pre-build adjacency list to avoid O(E) scan per visited node
+    std::unordered_map<std::string, std::vector<std::string>> adj;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (rel.type == relationType) {
+            std::string aId = rel.aId();
+            std::string bId = rel.bId();
+            if (!aId.empty() && !bId.empty()) {
+                adj[aId].push_back(bId);
+            }
+        }
+    }
+
     // Trace target's outgoing relations to see if we can reach start
     std::vector<std::string> queue = {target};
     std::unordered_set<std::string> visited = {target};
@@ -494,13 +517,12 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
         std::string current = queue.back();
         queue.pop_back();
         
-        for (const auto& relPtr : relations) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (rel.type == relationType && rel.aId() == current) {
-                if (rel.bId() == start) return true;
-                if (visited.insert(rel.bId()).second) {
-                    queue.push_back(rel.bId());
+        auto it = adj.find(current);
+        if (it != adj.end()) {
+            for (const std::string& next : it->second) {
+                if (next == start) return true;
+                if (visited.insert(next).second) {
+                    queue.push_back(next);
                 }
             }
         }
