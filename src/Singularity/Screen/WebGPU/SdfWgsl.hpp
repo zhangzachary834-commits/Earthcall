@@ -132,7 +132,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* angularExpr = nullptr,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
                 const OntoMath::Piecewise* densityExpr = nullptr,
-                DensityInputKind densityKind = DensityInputKind::LegacyField);
+                DensityInputKind densityKind = DensityInputKind::LegacyField,
+                const OntoMath::Piecewise* extinctionExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -145,7 +146,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* angularExpr = nullptr,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
                              const OntoMath::Piecewise* densityExpr = nullptr,
-                             DensityInputKind densityKind = DensityInputKind::LegacyField);
+                             DensityInputKind densityKind = DensityInputKind::LegacyField,
+                             const OntoMath::Piecewise* extinctionExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -162,6 +164,10 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
 // Absence is a real structural state and means no explicit V0 density channel.
 ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr);
 
+// V1 authored participating-medium extinction sigma_t(p,t). Absence is a
+// compatibility state, not a refusal: sigma_t falls back to 0.5 * D.
+ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr);
+
 // Inspect authored source chroma chi(p,t)->vec3 with the same production
 // emitter. Absent chi has a distinct legacy identity; an authored expression
 // must type-check as Vector and unsupported GPU semantics refuse.
@@ -176,10 +182,12 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // depth-aware volume-composite shader. This is intentionally separate from
 // drawImplicit: a participating medium is not a hard surface and must not own
 // frag_depth merely because both paths use OntoMath.
-Program compileVolume(const OntoMath::Piecewise* densityExpr);
+Program compileVolume(const OntoMath::Piecewise* densityExpr,
+                      const OntoMath::Piecewise* extinctionExpr = nullptr);
 
-// Value-only companion to compileVolume(). Recollects D's numeric parameter
-// slots without regenerating shader source when emitted structure is unchanged.
-ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr);
+// Value-only companion to compileVolume(). Recollects D and sigma_t numeric
+// parameter slots without regenerating shader source when structure is unchanged.
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
+                                   const OntoMath::Piecewise* extinctionExpr = nullptr);
 
 } // namespace sdfwgsl

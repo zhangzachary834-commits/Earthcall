@@ -1307,6 +1307,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
          !fieldNode->volumeDensity->pieces.empty())
             ? fieldNode->volumeDensity.get()
             : nullptr;
+    const OntoMath::Piecewise* extinctionExpr =
+        (fieldNode && fieldNode->volumeExtinction &&
+         !fieldNode->volumeExtinction->pieces.empty())
+            ? fieldNode->volumeExtinction.get()
+            : nullptr;
 
     sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
     if (densityExpr) {
@@ -1330,6 +1335,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         densityRevision = static_cast<uint64_t>(std::hash<std::string>{}(densityJson));
         densityLayout = sdfwgsl::inspectDensityExpression(densityExpr);
         densityStructure = "<density:authored>\n" + densityLayout.structure;
+    }
+
+    uint64_t extinctionRevision = 0;
+    const auto extinctionLayout = sdfwgsl::inspectExtinctionExpression(extinctionExpr);
+    const std::string extinctionStructure = extinctionLayout.structure;
+    if (extinctionExpr) {
+        const std::string extinctionJson = extinctionExpr->toJson().dump();
+        extinctionRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
     }
 
     if (multiSource) {
@@ -1435,6 +1449,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("volume density: " + densityLayout.error);
         return;
     }
+    if (!extinctionLayout.ok) {
+        recordProgramRefusal("volume extinction: " + extinctionLayout.error);
+        return;
+    }
 
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
@@ -1469,11 +1487,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         const bool densityStructureMatches =
             memo->densityKind == densityKind &&
             memo->densityStructure == densityStructure;
+        const bool extinctionStructureMatches =
+            memo->extinctionStructure == extinctionStructure;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
             densityStructureMatches &&
+            extinctionStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1485,16 +1506,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             const bool densityValuesChanged =
                 densityKind == sdfwgsl::DensityInputKind::Authored &&
                 memo->densityRevision != densityRevision;
+            const bool extinctionValuesChanged =
+                extinctionExpr && memo->extinctionRevision != extinctionRevision;
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
-                sourceValuesChanged || densityValuesChanged;
+                sourceValuesChanged || densityValuesChanged || extinctionValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
                                            radianceAngularExpr(), sourceSet,
-                                           densityExpr, densityKind);
+                                           densityExpr, densityKind, extinctionExpr);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1507,6 +1530,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->angularRevision = radianceAngularRevision();
                     memo->sourceSetRevision = radianceSourcesRevision();
                     memo->densityRevision = densityRevision;
+                    memo->extinctionRevision = extinctionRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1526,7 +1550,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
                                      radianceAngularExpr(), sourceSet,
-                                     densityExpr, densityKind);
+                                     densityExpr, densityKind, extinctionExpr);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1554,6 +1578,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->densityRevision = densityRevision;
             memo->densityKind = densityKind;
             memo->densityStructure = densityStructure;
+            memo->extinctionRevision = extinctionRevision;
+            memo->extinctionStructure = extinctionStructure;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -2165,31 +2191,47 @@ void WebGpuRenderer::flushVolumeComposite() {
             continue;
         }
 
-        auto& memo = _volumeProgramCache[medium.densityExpr];
-        if (memo.contentRevision != medium.densityRevision) {
-            const auto layout = sdfwgsl::inspectDensityExpression(medium.densityExpr);
-            memo.contentRevision = medium.densityRevision;
+        const VolumeProgramKey programKey{
+            medium.densityExpr, medium.extinctionExpr};
+        auto& memo = _volumeProgramCache[programKey];
+        const uint64_t mediumContentRevision =
+            medium.densityRevision ^
+            (medium.extinctionRevision + 0x9e3779b97f4a7c15ULL +
+             (medium.densityRevision << 6) + (medium.densityRevision >> 2));
+        if (memo.contentRevision != mediumContentRevision) {
+            const auto densityLayout =
+                sdfwgsl::inspectDensityExpression(medium.densityExpr);
+            const auto extinctionLayout =
+                sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
+            memo.contentRevision = mediumContentRevision;
 
-            if (!layout.ok) {
+            if (!densityLayout.ok || !extinctionLayout.ok) {
                 memo.ok = false;
-                memo.error = layout.error;
+                memo.error = !densityLayout.ok
+                    ? "density: " + densityLayout.error
+                    : "extinction: " + extinctionLayout.error;
                 memo.pipeline = nullptr;
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = memo.error;
                 continue;
             }
 
-            if (!memo.ok || memo.structure != layout.structure || !memo.pipeline) {
-                memo.prog = sdfwgsl::compileVolume(medium.densityExpr);
+            const std::string structure =
+                "density:\n" + densityLayout.structure +
+                "\nextinction:\n" + extinctionLayout.structure;
+            if (!memo.ok || memo.structure != structure || !memo.pipeline) {
+                memo.prog =
+                    sdfwgsl::compileVolume(medium.densityExpr, medium.extinctionExpr);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
-                memo.structure = layout.structure;
+                memo.structure = structure;
                 memo.ok = memo.prog.ok;
                 memo.error = memo.prog.error;
                 memo.pipeline = memo.ok ? volumePipeline(memo.prog.wgsl) : nullptr;
                 if (!memo.pipeline) memo.ok = false;
             } else {
-                const auto params = sdfwgsl::collectVolumeParams(medium.densityExpr);
+                const auto params =
+                    sdfwgsl::collectVolumeParams(medium.densityExpr, medium.extinctionExpr);
                 memo.ok = params.ok;
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
@@ -2198,7 +2240,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             ++mutableFrameStats().volumeProgramCacheHits;
         }
 
-        // Refusal never falls back to stale compiled density.
+        // Refusal never falls back to stale compiled density/extinction.
         if (!memo.ok || !memo.pipeline) {
             if (!memo.error.empty()) {
                 ++mutableFrameStats().volumeProgramRefusals;

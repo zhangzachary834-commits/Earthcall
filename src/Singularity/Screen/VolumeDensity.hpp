@@ -27,6 +27,11 @@ struct VolumeDensityBinding {
     const OntoMath::Piecewise* densityExpr = nullptr;
     uint64_t densityRevision = 0;
 
+    // Independent V1 extinction sigma_t(p,t). Null means the explicit
+    // compatibility law sigma_t = 0.5 * D; it never means "borrow rho".
+    const OntoMath::Piecewise* extinctionExpr = nullptr;
+    uint64_t extinctionRevision = 0;
+
     // Relative medium time is data beside THIS medium. EngineRender currently
     // supplies the broad compatibility Timeline to each binding until authored
     // Timeline ownership selection has a production resolver. WebGPU never
@@ -51,6 +56,12 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
     const std::string json = field.volumeDensity->toJson().dump();
     next.densityRevision =
         static_cast<uint64_t>(std::hash<std::string>{}(json));
+    if (field.volumeExtinction && !field.volumeExtinction->pieces.empty()) {
+        next.extinctionExpr = field.volumeExtinction.get();
+        const std::string extinctionJson = field.volumeExtinction->toJson().dump();
+        next.extinctionRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
+    }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;
     out = next;
