@@ -1737,6 +1737,163 @@ void printDirectDispatchOracleCeiling(
 }
 
 
+struct StableRouteAtlasStats {
+    uint32_t faceBins = 0;
+    uint32_t directionBins = 0;
+    uint64_t routes = 0;
+    uint64_t occupiedRoutes = 0;
+    uint64_t ambiguousRoutes = 0;
+    uint64_t usefulRays = 0;
+    uint64_t capturedUsefulRays = 0;
+    uint64_t falsePositiveRays = 0;
+    uint64_t consequenceTests = 0;
+};
+
+uint32_t stableRouteFace(const glm::vec3& p, const glm::vec3& extent) {
+    glm::vec3 q = glm::abs(p) / glm::max(glm::abs(extent), glm::vec3(1e-6f));
+    uint32_t axis = q.x >= q.y && q.x >= q.z ? 0u : (q.y >= q.z ? 1u : 2u);
+    const bool positive = p[axis] >= 0.0f;
+    return axis * 2u + (positive ? 1u : 0u);
+}
+
+uint32_t stableRouteDirectionClass(const glm::vec3& rd, uint32_t bins) {
+    // Stable object-local octahedral direction quantization. This is bounded
+    // arithmetic only: no theorem lookup, spatial walk, or camera-derived table.
+    const glm::vec3 n = glm::normalize(rd);
+    const float l1 = std::abs(n.x) + std::abs(n.y) + std::abs(n.z);
+    glm::vec2 o(n.x, n.y);
+    if (l1 > 1e-8f) o /= l1;
+    if (n.z < 0.0f) {
+        const glm::vec2 a = glm::abs(glm::vec2(o.y, o.x));
+        o = glm::vec2(1.0f - a.x, 1.0f - a.y) *
+            glm::vec2(o.x >= 0.0f ? 1.0f : -1.0f,
+                      o.y >= 0.0f ? 1.0f : -1.0f);
+    }
+    const uint32_t side = std::max(1u, bins);
+    const glm::vec2 uv = glm::clamp(o * 0.5f + 0.5f, 0.0f, 0.999999f);
+    const uint32_t x = std::min(static_cast<uint32_t>(uv.x * side), side - 1u);
+    const uint32_t y = std::min(static_cast<uint32_t>(uv.y * side), side - 1u);
+    return y * side + x;
+}
+
+void printStableRouteAtlasCensus(
+    const char* viewName,
+    const std::vector<RuntimeTaxRay>& rays,
+    const glm::vec3& extent,
+    const DirectRunArtifact& authority,
+    uint32_t faceBins,
+    uint32_t directionBins) {
+    // This is a CPU-side census of a production-shaped key, not a runtime
+    // optimization. It asks whether stable ray facts can isolate relevance
+    // before we build a GPU atlas. A route may only name source runs already
+    // authorized by the positive theorem.
+    const uint32_t entrySide = std::max(1u, faceBins);
+    const uint32_t dirSide = std::max(1u, directionBins);
+    const uint64_t entryCells = static_cast<uint64_t>(entrySide) * entrySide;
+    const uint64_t dirCells = static_cast<uint64_t>(dirSide) * dirSide;
+    const uint64_t routeCount = 6ull * entryCells * dirCells;
+    std::vector<std::vector<uint32_t>> routeConsequences(routeCount);
+    std::vector<uint8_t> routeUseful(routeCount, 0u);
+    std::vector<uint8_t> rayUseful(rays.size(), 0u);
+    std::vector<uint64_t> rayKeys(rays.size(), 0u);
+
+    auto routeKey = [&](const RuntimeTaxRay& ray, glm::vec3& ro, glm::vec3& rd,
+                        float& enter, float& exit) -> uint64_t {
+        ro = glm::vec3(ray.ro);
+        rd = glm::normalize(glm::vec3(ray.rdFar));
+        if (!rayBoxInterval(ro, rd, extent, enter, exit) || exit < 0.0f)
+            return routeCount;
+        enter = std::max(enter, 0.0f);
+        const glm::vec3 p = ro + rd * enter;
+        const uint32_t face = stableRouteFace(p, extent);
+        const uint32_t axis = face / 2u;
+        uint32_t a = axis == 0u ? 1u : 0u;
+        uint32_t b = axis == 2u ? 1u : 2u;
+        if (axis == 1u) b = 2u;
+        const glm::vec3 e = glm::max(glm::abs(extent), glm::vec3(1e-6f));
+        const float ua = glm::clamp(p[a] / e[a] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const float ub = glm::clamp(p[b] / e[b] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const uint32_t u = std::min(static_cast<uint32_t>(ua * entrySide), entrySide - 1u);
+        const uint32_t v = std::min(static_cast<uint32_t>(ub * entrySide), entrySide - 1u);
+        const uint64_t entry = static_cast<uint64_t>(v) * entrySide + u;
+        const uint64_t dir = stableRouteDirectionClass(rd, dirSide);
+        return (static_cast<uint64_t>(face) * entryCells + entry) * dirCells + dir;
+    };
+
+    for (size_t i = 0; i < rays.size(); ++i) {
+        glm::vec3 ro, rd;
+        float enter = 0.0f, exit = 0.0f;
+        const uint64_t key = routeKey(rays[i], ro, rd, enter, exit);
+        rayKeys[i] = key;
+        if (key >= routeCount) continue;
+        for (uint32_t r = 0; r < authority.runs.size(); ++r) {
+            const auto& run = authority.runs[r];
+            float re = 0.0f, rx = 0.0f;
+            const glm::vec3 center = 0.5f * (glm::vec3(run.bmin) + glm::vec3(run.bmax));
+            const glm::vec3 half = glm::max(
+                0.5f * (glm::vec3(run.bmax) - glm::vec3(run.bmin)),
+                glm::vec3(1e-8f));
+            if (!rayBoxInterval(ro - center, rd, half, re, rx)) continue;
+            re = std::max(re, enter);
+            rx = std::min(rx, exit);
+            if (rx <= re) continue;
+            rayUseful[i] = 1u;
+            routeUseful[key] = 1u;
+            auto& bucket = routeConsequences[key];
+            if (std::find(bucket.begin(), bucket.end(), r) == bucket.end())
+                bucket.push_back(r);
+        }
+    }
+
+    StableRouteAtlasStats s;
+    s.faceBins = entrySide;
+    s.directionBins = dirSide;
+    s.routes = routeCount;
+    for (const auto& bucket : routeConsequences) {
+        if (!bucket.empty()) {
+            ++s.occupiedRoutes;
+            if (bucket.size() > 1u) ++s.ambiguousRoutes;
+        }
+    }
+    for (size_t i = 0; i < rays.size(); ++i) {
+        if (rayUseful[i]) ++s.usefulRays;
+        const uint64_t key = rayKeys[i];
+        if (key >= routeCount) continue;
+        const auto& bucket = routeConsequences[key];
+        s.consequenceTests += bucket.size();
+        if (rayUseful[i] && !bucket.empty()) ++s.capturedUsefulRays;
+        if (!rayUseful[i] && !bucket.empty()) ++s.falsePositiveRays;
+    }
+
+    const double capture = s.usefulRays > 0u
+        ? static_cast<double>(s.capturedUsefulRays) / s.usefulRays : 1.0;
+    const double falsePositivePerRay = !rays.empty()
+        ? static_cast<double>(s.falsePositiveRays) / rays.size() : 0.0;
+    const double testsPerRay = !rays.empty()
+        ? static_cast<double>(s.consequenceTests) / rays.size() : 0.0;
+    const uint64_t atlasBytes =
+        s.routes * sizeof(uint32_t) * 2ull +
+        s.consequenceTests * sizeof(uint32_t);
+
+    std::printf(
+        "SDF_STABLE_ROUTE_ATLAS_CENSUS view=%s entry_side=%u dir_side=%u "
+        "routes=%llu occupied_routes=%llu ambiguous_routes=%llu "
+        "useful_rays=%llu captured_useful_rays=%llu capture=%.6f "
+        "false_positive_rays=%llu false_positive_per_ray=%.6f "
+        "consequence_tests=%llu tests_per_ray=%.6f estimated_bytes=%llu "
+        "camera_independent_key=1 runtime_grid_walk=0 global_run_scan=0\n",
+        viewName, entrySide, dirSide,
+        static_cast<unsigned long long>(s.routes),
+        static_cast<unsigned long long>(s.occupiedRoutes),
+        static_cast<unsigned long long>(s.ambiguousRoutes),
+        static_cast<unsigned long long>(s.usefulRays),
+        static_cast<unsigned long long>(s.capturedUsefulRays), capture,
+        static_cast<unsigned long long>(s.falsePositiveRays), falsePositivePerRay,
+        static_cast<unsigned long long>(s.consequenceTests), testsPerRay,
+        static_cast<unsigned long long>(atlasBytes));
+}
+
+
 void printDirectProfitabilityVerdict(
     const char* viewName,
     const RuntimeTaxTotals& genericBaseline,
@@ -2120,6 +2277,54 @@ int main() {
         }
 
         printDirectDispatchOracleCeiling(c.name, runtimeTax, directTaxes);
+
+        // Stable-key census: same deterministic 160x100 ray population as the
+        // direct GPU diagnostic, but CPU-only and test-only. This does not
+        // mutate production WGSL or renderer state.
+        std::vector<RuntimeTaxRay> stableRouteRays;
+        stableRouteRays.reserve(160u * 100u);
+        const glm::mat4 stableInvViewProj = glm::inverse(proj * view);
+        float stableFar = 1e6f;
+        const glm::vec4 stableFarPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(stableFarPt.w) > 1e-9f) {
+            const float d = -(stableFarPt.z / stableFarPt.w);
+            if (std::isfinite(d) && d > 0.0f) stableFar = d;
+        }
+        for (uint32_t sy = 0; sy < 100u; ++sy) {
+            for (uint32_t sx = 0; sx < 160u; ++sx) {
+                const float fx = (static_cast<float>(sx) + 0.5f) / 160.0f;
+                const float fy = (static_cast<float>(sy) + 0.5f) / 100.0f;
+                const glm::vec4 ndc(fx * 2.0f - 1.0f,
+                                    (1.0f - fy) * 2.0f - 1.0f, 1.0f, 1.0f);
+                const glm::vec4 wh = stableInvViewProj * ndc;
+                glm::vec3 rd(0.0f, 0.0f, 1.0f);
+                if (std::abs(wh.w) >= 1e-8f)
+                    rd = glm::normalize(glm::vec3(wh) / wh.w - c.eye);
+                stableRouteRays.push_back(
+                    {glm::vec4(c.eye, 1.0f), glm::vec4(rd, stableFar)});
+            }
+        }
+        // Use the most permissive Z artifact as authority so this census asks
+        // whether stable routing can eliminate discovery tax without reducing
+        // the theorem's existing positive opportunities.
+        const DirectRunArtifact* routeAuthority = nullptr;
+        for (const auto& artifact : directArtifacts) {
+            if (artifact.axis == 2u && artifact.minRunCells == 1u) {
+                routeAuthority = &artifact;
+                break;
+            }
+        }
+        if (routeAuthority) {
+            for (uint32_t entrySide : {2u, 4u, 8u}) {
+                for (uint32_t dirSide : {2u, 4u, 8u}) {
+                    printStableRouteAtlasCensus(
+                        c.name, stableRouteRays, proofExtent, *routeAuthority,
+                        entrySide, dirSide);
+                }
+            }
+        }
+
         printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
 
         Arm off;
