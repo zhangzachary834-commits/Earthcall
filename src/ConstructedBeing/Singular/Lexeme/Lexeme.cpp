@@ -21,6 +21,7 @@ public:
     std::string typeName() const override { return "PropertyValue"; }
 
     PropertyValue value() const override { return _owner->conceptualWeightValue(); }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         return _owner->setConceptualWeightValue(v);
     }
