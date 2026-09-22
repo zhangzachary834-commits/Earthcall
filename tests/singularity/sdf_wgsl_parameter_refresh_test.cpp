@@ -671,6 +671,14 @@ int main() {
                   legacyOnly.wgsl.find("LEGACY procedural density projection") != std::string::npos,
               "legacy generic density remains quarantined as an explicit compatibility path");
 
+        const auto explicitNone =
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr,
+                             nullptr, sdfwgsl::DensityInputKind::None);
+        check(explicitNone.ok &&
+                  explicitNone.wgsl.find("LEGACY procedural density projection") == std::string::npos &&
+                  explicitNone.wgsl.find("return 0.0;") != std::string::npos,
+              "explicit no-medium state cannot reinterpret generic field.ast as density");
+
         // TIME: rho(t) and D(t) receive distinct ambient coordinates.
         OntoMath::Piecewise timedRho = OntoMath::Piecewise::continuous(
             std::shared_ptr<OntoMath::MathNode>(
