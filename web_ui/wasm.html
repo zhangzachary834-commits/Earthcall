@@ -23,9 +23,9 @@
     </style>
 </head>
 <body>
-    <div id="start-overlay" role="button" tabindex="0" aria-label="Start Earthcall" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); color: white; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer; font-family: sans-serif;">
-        <h1>Click or press Enter to Start Earthcall</h1>
-    </div>
+    <button id="start-overlay" aria-label="Start Earthcall" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); color: white; display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer; font-family: sans-serif; border: none; padding: 0;">
+        <span style="font-size: 2em; font-weight: bold;">Click or press Enter to Start Earthcall</span>
+    </button>
     <canvas id="earthcall-canvas" tabindex="-1" oncontextmenu="event.preventDefault()" role="img" aria-label="Earthcall World View"></canvas>
     <script type='text/javascript'>
       var Module = {
@@ -48,13 +48,6 @@
       }
 
       startOverlay.addEventListener('click', startApp);
-
-      startOverlay.addEventListener('keydown', function(event) {
-          if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault(); // Prevent page scrolling on spacebar
-              startApp();
-          }
-      });
     </script>
     <script async type="text/javascript" src="../build-wasm/earthcall.js"></script>
 </body>
