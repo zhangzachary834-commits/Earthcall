@@ -842,6 +842,29 @@ int main() {
                visibilityOnStats.sdfProgramCacheHits >= 1 &&
                "enabling derived visibility regenerated source/SDF shader structure");
 
+        // PROPHETIC VISIBILITY ACCELERATION: enable the conservative positive-proof
+        // grid on the same primitive distance SDF. Primary distance traversal is
+        // still quarantined; only the independent visibility admission bit may
+        // consume proved-positive cells. The rendered transport answer must remain
+        // pixel-identical to the exact shadow march.
+        renderer.setSdfRangeProxyEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char redBlockedProved[4];
+        readCentre(redBlockedProved);
+        const Renderer::FrameStats visibilityProofBlockedStats = renderer.frameStats();
+        assert(abs(int(redBlockedProved[0]) - int(redBlocked[0])) <= 2 &&
+               abs(int(redBlockedProved[1]) - int(redBlocked[1])) <= 2 &&
+               abs(int(redBlockedProved[2]) - int(redBlocked[2])) <= 2 &&
+               "positive-proof visibility traversal changed the blocked transport pixel");
+        assert(visibilityProofBlockedStats.sdfRangeTraversalDraws > 0 &&
+               "visibility proof traversal did not admit the positive-proof grid");
+        assert(visibilityProofBlockedStats.sdfProgramCompiles == 0 &&
+               visibilityProofBlockedStats.sdfProgramCacheHits >= 1 &&
+               "enabling proof-derived visibility traversal regenerated WGSL");
+        renderer.setSdfRangeProxyEnabled(false);
+
         // Move only the blocker behind the receiver. This is a geometry VALUE
         // edit with identical Union/Sphere topology. The red path must return,
         // while all four source invariants remain byte-for-byte unchanged.
@@ -870,6 +893,28 @@ int main() {
                chiRedSource.toJson().dump() == chiRedBeforeVisibility &&
                chiBlueSource.toJson().dump() == chiBlueBeforeVisibility &&
                "derived visibility leaked blocker state into authored source invariants");
+
+        // Rebuild the proof from the moved parameter values and prove the clear
+        // transport result is also observationally identical. This witnesses both
+        // sides of V: a proof may skip empty space, but it cannot invent either a
+        // blocker or an unobstructed path.
+        renderer.setSdfRangeProxyEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char blockerMovedProved[4];
+        readCentre(blockerMovedProved);
+        const Renderer::FrameStats visibilityProofClearStats = renderer.frameStats();
+        assert(abs(int(blockerMovedProved[0]) - int(blockerMoved[0])) <= 2 &&
+               abs(int(blockerMovedProved[1]) - int(blockerMoved[1])) <= 2 &&
+               abs(int(blockerMovedProved[2]) - int(blockerMoved[2])) <= 2 &&
+               "positive-proof visibility traversal changed the clear transport pixel");
+        assert(visibilityProofClearStats.sdfRangeTraversalDraws > 0 &&
+               "moved-blocker proof traversal did not consume the rebuilt proof grid");
+        assert(visibilityProofClearStats.sdfProgramCompiles == 0 &&
+               visibilityProofClearStats.sdfProgramCacheHits >= 1 &&
+               "rebuilt visibility proof changed shader structure");
+        renderer.setSdfRangeProxyEnabled(false);
 
         renderer.setRadianceVisibilityEnabled(false);
         renderer.setRadianceSources({}, 0);
