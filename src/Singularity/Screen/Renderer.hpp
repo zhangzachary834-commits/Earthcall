@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include "Singularity/Screen/RadianceSource.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -61,6 +62,14 @@ public:
         std::string sdfLastProgramRefusal;
         size_t   sdfWgslBytesGenerated = 0;
         size_t   sdfParameterBytesUploaded = 0;
+        // Volumetric V0 observability. Density time belongs to per-medium
+        // instance data, so advancing only t must hit the memo and never
+        // regenerate the authored density shader.
+        uint32_t volumeProgramCompiles = 0;
+        uint32_t volumeProgramCacheHits = 0;
+        uint32_t volumeProgramRefusals = 0;
+        std::string volumeLastProgramRefusal;
+        size_t volumeWgslBytesGenerated = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -192,6 +201,16 @@ public:
     double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
     double radianceTemporalDelta() const { return _radianceTemporalDelta; }
 
+    // Volumetric V0: participating-medium density owns a temporal coordinate
+    // independent from source radiance. Renderer does not decide which Timeline
+    // supplies it; it merely transports the coordinate admitted by D(p,t).
+    void setVolumeDensityTemporalCoordinate(double t, double delta) {
+        _volumeDensityTemporalCoordinate = t;
+        _volumeDensityTemporalDelta = delta;
+    }
+    double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
+    double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
+
     // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
     // them together instead of forcing one source AST to enumerate the world.
     // One-source worlds intentionally keep using the historical scalar setters
@@ -205,6 +224,19 @@ public:
         return _radianceSources;
     }
     uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
+
+    // Volumetric V0: authored participating media are projected as a collection
+    // above any individual density AST, exactly as Rung 7 composes light sources.
+    // Renderer receives world truth; it does not scan Zones or invent media.
+    void setVolumeDensitySources(std::vector<Rendering::VolumeDensityBinding> sources,
+                                 uint64_t revision) {
+        _volumeDensitySources = std::move(sources);
+        _volumeDensitySourcesRevision = revision;
+    }
+    const std::vector<Rendering::VolumeDensityBinding>& volumeDensitySources() const {
+        return _volumeDensitySources;
+    }
+    uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
 
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
@@ -261,6 +293,12 @@ public:
     // tessellates on EVERY call, so routing a cached-mesh caller through it would
     // be a large regression. Hence a query rather than always preferring one.
     virtual bool rendersImplicitExactly() const { return false; }
+
+    // Sensory staging seam for participating media. The default is a no-op:
+    // backends without authored volumetric transport simply continue rendering.
+    // WebGPU overrides this to finish opaque world depth, composite the current
+    // Zone's density fields, then reopen a load-preserving pass for HUD/2D.
+    virtual void composeVolumes() {}
 
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
@@ -394,8 +432,12 @@ private:
     glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
     double _radianceTemporalCoordinate = 0.0;
     double _radianceTemporalDelta = 0.0;
+    double _volumeDensityTemporalCoordinate = 0.0;
+    double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
+    std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
+    uint64_t _volumeDensitySourcesRevision = 0;
     FrameStats _frameStats;
 };
 

@@ -9,6 +9,7 @@
 // Perlin path, because the latter has its own traversal order.
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
@@ -597,6 +598,155 @@ int main() {
         check(timedProgram.ok &&
                   timedProgram.wgsl.find("RS[1u].time.x") != std::string::npos,
               "source 1 temporal mathematics reads source 1's relative Timeline coordinate");
+    }
+
+    // ---------------------------------------------------------------------
+    // V0. Density sovereignty: D(p,t) is an explicit compiler input with its
+    //     own structure/value identity and its own temporal coordinate.
+    //     It must never borrow rho merely because both are scalar Piecewise.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto rhoNode = std::shared_ptr<OntoMath::MathNode>(number(0.9).release());
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.2).release());
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+
+        const std::string rhoBeforeDensityEdit = rho.toJson().dump();
+        const auto densityLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
+
+        check(densityLayoutBefore.ok,
+              "V0 authored density structure inspection succeeds");
+        check(before.ok &&
+                  before.wgsl.find("fn volumeDensityEval(p: vec3<f32>) -> f32") != std::string::npos &&
+                  before.wgsl.find("let density = volumeDensityEval(p)") != std::string::npos,
+              "V0 density lowers through an explicitly named participating-medium evaluator");
+        check(before.wgsl.find("fn fieldEval(") == std::string::npos,
+              "new V0 shaders no longer expose generic fieldEval as density ontology");
+        check(before.wgsl.find("let sample_t = t;") != std::string::npos &&
+                  before.wgsl.find("max(min(t, maxDist) - sample_t, 0.0)") != std::string::npos &&
+                  before.wgsl.find("first_density_t = sample_t") != std::string::npos,
+              "V0 transport integrates the actual bounded marched interval from the sampled coordinate");
+        check(before.wgsl.find("max(abs(d), current_eps)") == std::string::npos,
+              "V0 transport no longer reinterprets SDF magnitude as optical path length");
+
+        // VALUE ONLY: alter D while rho remains byte-identical.
+        densityNode->scalarForm.terms[0].coefficient = 0.45;
+        const auto densityLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                                 sdfwgsl::DensityInputKind::Authored);
+        const auto after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
+
+        check(densityLayoutAfter.ok &&
+                  densityLayoutAfter.structure == densityLayoutBefore.structure &&
+                  densityLayoutAfter.parameterCount == densityLayoutBefore.parameterCount,
+              "numeric D edit preserves density structure and parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric D edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric D edit changes only packed authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "density parameter recollection exactly matches full compile");
+        check(rho.toJson().dump() == rhoBeforeDensityEdit,
+              "editing D leaves rho byte-identical");
+
+        // Explicit density must outrank the old generic FieldNode density path.
+        geom::FieldNode legacy("legacy-density-projection");
+        legacy.field->mode = OntoMath::ScalarField::EvaluationMode::Procedural;
+        legacy.field->baseDensity = 8.0f;
+        legacy.field->frequency = 3.0f;
+        legacy.field->amplitude = 2.0f;
+        const auto explicitOverLegacy =
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr, &density,
+                             sdfwgsl::DensityInputKind::Authored);
+        check(explicitOverLegacy.ok &&
+                  explicitOverLegacy.wgsl.find("V0: explicit authored D(p,t)") != std::string::npos &&
+                  explicitOverLegacy.wgsl.find("rawDensity") == std::string::npos,
+              "explicit volume.density.ast outranks legacy generic-field density");
+
+        const auto legacyOnly = sdfwgsl::compile(sphere, &legacy);
+        check(legacyOnly.ok &&
+                  legacyOnly.wgsl.find("LEGACY procedural density projection") != std::string::npos,
+              "legacy generic density remains quarantined as an explicit compatibility path");
+
+        const auto explicitNone =
+            sdfwgsl::compile(sphere, &legacy, nullptr, &rho, nullptr, nullptr, nullptr,
+                             nullptr, sdfwgsl::DensityInputKind::None);
+        check(explicitNone.ok &&
+                  explicitNone.wgsl.find("LEGACY procedural density projection") == std::string::npos &&
+                  explicitNone.wgsl.find("return 0.0;") != std::string::npos,
+              "explicit no-medium state cannot reinterpret generic field.ast as density");
+
+        // TIME: rho(t) and D(t) receive distinct ambient coordinates.
+        OntoMath::Piecewise timedRho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kTimeVar).release()));
+        OntoMath::Piecewise timedDensity = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kTimeVar).release()));
+        const auto timedDensityLayout = sdfwgsl::inspectDensityExpression(&timedDensity);
+        const auto timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRho, nullptr, nullptr, nullptr, &timedDensity,
+                             sdfwgsl::DensityInputKind::Authored);
+        check(timedDensityLayout.ok && timed.ok,
+              "D(p,t) is admitted through the production OntoMath emitter");
+        check(timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
+                  timed.wgsl.find("u.volumeTime.x") != std::string::npos,
+              "rho(t) and D(t) bind independent renderer temporal coordinates");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedDensity =
+            OntoMath::Piecewise::continuous(raycast);
+        const auto refusedDensity =
+            sdfwgsl::inspectDensityExpression(&unsupportedDensity);
+        check(!refusedDensity.ok &&
+                  refusedDensity.error.find("Raycast") != std::string::npos,
+              "unsupported authored density math refuses instead of fabricating empty medium");
+
+        // V0c dedicated composite shader: density is no longer piggy-backed on
+        // a surface shader. It samples finished scene depth, owns no frag_depth,
+        // and binds each medium's relative Timeline independently.
+        const auto volumeBefore = sdfwgsl::compileVolume(&density);
+        const auto volumeLayoutBefore = sdfwgsl::inspectDensityExpression(&density);
+        check(volumeBefore.ok &&
+                  volumeBefore.wgsl.find("texture_depth_2d") != std::string::npos &&
+                  volumeBefore.wgsl.find("textureLoad(sceneDepthTex") != std::string::npos,
+              "dedicated volume shader samples the finished opaque depth texture");
+        check(volumeBefore.wgsl.find("@builtin(frag_depth)") == std::string::npos,
+              "participating-medium composite owns no opaque fragment depth");
+        check(volumeBefore.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "dedicated volume shader reads the current medium's relative Timeline coordinate");
+        check(volumeBefore.wgsl.find("worldP - inst.origin.xyz") != std::string::npos,
+              "D(p,t) receives FieldNode-local offset coordinates");
+        check(volumeBefore.wgsl.find("opaqueT") != std::string::npos &&
+                  volumeBefore.wgsl.find("t1 = min(t1") != std::string::npos,
+              "volume integration is truncated at finished scene depth");
+
+        densityNode->scalarForm.terms[0].coefficient = 0.7;
+        const auto volumeLayoutAfter = sdfwgsl::inspectDensityExpression(&density);
+        const auto volumeParams = sdfwgsl::collectVolumeParams(&density);
+        const auto volumeAfter = sdfwgsl::compileVolume(&density);
+        check(volumeLayoutAfter.ok &&
+                  volumeLayoutAfter.structure == volumeLayoutBefore.structure &&
+                  volumeBefore.wgsl == volumeAfter.wgsl,
+              "numeric D edit preserves dedicated volume shader structure");
+        check(volumeParams.ok &&
+                  sameFloats(volumeParams.values, volumeAfter.params) &&
+                  !sameFloats(volumeBefore.params, volumeAfter.params),
+              "numeric D edit refreshes dedicated volume parameters without shader regeneration");
+
+        const auto refusedVolume = sdfwgsl::compileVolume(&unsupportedDensity);
+        check(!refusedVolume.ok &&
+                  refusedVolume.error.find("Raycast") != std::string::npos,
+              "dedicated volume shader refuses unsupported density math with no stale fallback");
     }
 
     if (failures) {

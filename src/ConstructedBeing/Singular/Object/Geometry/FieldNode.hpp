@@ -95,6 +95,7 @@ public:
         : _id(std::move(id)), 
           field(std::make_shared<OntoMath::ScalarField>()),
           vectorField(std::make_shared<OntoMath::VectorField>()),
+          volumeDensity(std::make_shared<OntoMath::Piecewise>()),
           lightChroma(std::make_shared<OntoMath::Piecewise>()),
           lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
 
@@ -108,6 +109,12 @@ public:
     // Const pointer ensures the property registry doesn't dangle
     const std::shared_ptr<OntoMath::ScalarField> field;
     const std::shared_ptr<OntoMath::VectorField> vectorField;
+
+    // V0 participating-medium density D(p,t) -> scalar. This is deliberately
+    // independent from the generic scalar field and from source radiance rho.
+    // Empty means no explicitly authored volume-density channel; compatibility
+    // migration, where required, is resolved outside this storage boundary.
+    const std::shared_ptr<OntoMath::Piecewise> volumeDensity;
 
     // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
     // case the historical authored light.color remains the constant chroma.
@@ -158,6 +165,11 @@ protected:
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
             registerProperty(std::make_unique<AstBridge<OntoMath::VectorField>>(
                 "vectorField.ast", vectorField.get()));
+        }
+
+        if (volumeDensity) {
+            registerProperty(std::make_unique<PiecewiseAstBridge>(
+                "volume.density.ast", volumeDensity.get()));
         }
 
         if (lightChroma) {
