@@ -15,8 +15,10 @@ namespace Rendering {
 // FieldNode remains the authored Singular; this value is the Screen channel's
 // bounded view of the truths needed by volumetric transport.
 struct VolumeDensityBinding {
-    // FieldNode placement. scale is the authored full box span used by the
-    // existing FieldNode particle placement convention; origin is its center.
+    // FieldNode placement. The established particle/FieldNode convention uses
+    // local coordinates in [-1,+1], so scale is the origin-centred box
+    // half-span: authored world bounds are origin ± abs(scale). V0 must not
+    // silently redefine the same FieldNode property as a full span.
     glm::vec3 origin{0.0f};
     glm::vec3 scale{1.0f};
 
