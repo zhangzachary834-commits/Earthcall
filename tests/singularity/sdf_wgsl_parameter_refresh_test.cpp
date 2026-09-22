@@ -756,6 +756,20 @@ int main() {
         check(!refusedVolume.ok &&
                   refusedVolume.error.find("Raycast") != std::string::npos,
               "dedicated volume shader refuses unsupported density math with no stale fallback");
+
+        auto noiseNode = std::make_shared<OntoMath::MathNode>();
+        noiseNode->op = OntoMath::MathNode::Op::Noise;
+        auto noisePoint = std::make_shared<OntoMath::MathNode>();
+        noisePoint->op = OntoMath::MathNode::Op::ValueLeaf;
+        noisePoint->variableName = OntoMath::kAmbientPointVar;
+        noiseNode->children.push_back(std::make_unique<OntoMath::MathNode>(*noisePoint));
+        OntoMath::Piecewise noiseDensity =
+            OntoMath::Piecewise::continuous(noiseNode);
+        const auto noiseVolume = sdfwgsl::compileVolume(&noiseDensity);
+        check(noiseVolume.ok &&
+                  noiseVolume.wgsl.find("cnoise3(") != std::string::npos &&
+                  noiseVolume.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos,
+              "dedicated volume shader compiles noise expressions and defines cnoise3 in scope");
     }
 
     // 9. Rung 8: visibility is derived transport below source authorship.
