@@ -744,6 +744,49 @@ int main() {
               "dedicated volume shader refuses unsupported density math with no stale fallback");
     }
 
+    // 9. Rung 8: visibility is derived transport below source authorship.
+    //    The shader must expose an exact V=1 compatibility gate and multiply
+    //    each source's direct radiance AFTER rho*chi*alpha composition.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto rho0Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto rho1Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        OntoMath::Piecewise rho0 = OntoMath::Piecewise::continuous(rho0Node);
+        OntoMath::Piecewise rho1 = OntoMath::Piecewise::continuous(rho1Node);
+
+        const auto oneSource = sdfwgsl::compile(sphere, nullptr, nullptr, &rho0);
+        check(oneSource.ok &&
+                  oneSource.wgsl.find("fn sourceVisibility") != std::string::npos,
+              "Rung-8 shader exposes derived geometric visibility transport");
+        check(oneSource.wgsl.find("u.lightControl.y < 0.5") != std::string::npos &&
+                  oneSource.wgsl.find("return 1.0") != std::string::npos,
+              "visibility-disabled compatibility path is explicit V=1");
+        check(oneSource.wgsl.find(
+                  "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
+              "one-source direct transport multiplies visibility after authored emission");
+
+        Rendering::RadianceSourceBinding s0;
+        s0.radianceExpr = &rho0;
+        Rendering::RadianceSourceBinding s1;
+        s1.radianceExpr = &rho1;
+        std::vector<Rendering::RadianceSourceBinding> sources{s0, s1};
+        const auto multiSource =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(multiSource.ok &&
+                  multiSource.wgsl.find(
+                      "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
+              "each composed source derives visibility from its own source-receiver path");
+        check(multiSource.wgsl.find(
+                  "diff * directRadiance") != std::string::npos &&
+                  multiSource.wgsl.find(
+                      "specShape * directRadiance") != std::string::npos,
+              "multi-source diffuse/specular transport consumes per-source visibility");
+        check(multiSource.wgsl.find(
+                  "ambientTerm += inst.shading.x") != std::string::npos,
+              "legacy ambient compatibility remains outside direct-path visibility");
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;
