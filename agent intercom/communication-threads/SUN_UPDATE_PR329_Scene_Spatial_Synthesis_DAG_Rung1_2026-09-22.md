@@ -160,3 +160,64 @@ Do not graduate PR #329 based on earlier green runs.
 At this update, canonical default is `22756eb5` and the PR is three commits behind. The latest default commit is the docs-only “Property as metal” agenda update, which is conceptually aligned with the next dependency-addressing question but does not alter the implementation files in this rung.
 
 Reconcile current base after the test witness is green, then rerun exact-head CI before promoting the PR out of draft.
+
+
+## Rung 1C — multi-sample ambient stability + repeated authored repair
+
+Successor-Sun pass on 2026-09-22 advanced the real OntoMath witness in commit `76cdc885`.
+
+### Exact-head state before the change
+
+PR #329 head `a8336c8` had focused CI run **#2544** green. The workflow itself explicitly builds and executes both:
+
+- `scene_spatial_synthesis_dag_test`
+- `scene_spatial_ontomath_synthesis_test`
+
+So the earlier CI-integrity gap is closed at that head.
+
+### Real OntoMath ambient/runtime witness
+
+`scene_spatial_ontomath_synthesis_test.cpp` now evaluates the same compiled semantic DAG at five runtime samples:
+
+`-13.0, -1.25, 0.0, 7.0, 42.5`
+
+Between samples, evaluation memo values are explicitly invalidated. Every sample is compared against fresh `MathNode::evaluate()` exact authority.
+
+The test asserts throughout that runtime sample movement changes **evaluation values only**:
+
+- semantic node count is unchanged;
+- canonical table size is unchanged;
+- root compiled identity is unchanged;
+- shared compiled identity is unchanged;
+- independent `sdfB` identity is unchanged;
+- semantic nodes rebuilt for ambient movement = 0.
+
+This closes the real-OntoMath side of the rule that camera/runtime state must not rebuild authored semantic compilation.
+
+### Multiple authored mutations + canonical reuse
+
+The test still performs the local authored mutation:
+
+`sdfA.bias: 5 -> 17`
+
+and requires the repair frontier to remain exactly:
+
+`biasA -> sdfA -> scene`
+
+with three source visits and three new compiled nodes.
+
+It now performs a second authored mutation:
+
+`sdfA.bias: 17 -> 5`
+
+This traverses the same three-source dependency frontier, but because the original semantic artifact is still canonicalized, the repair must create **zero** new nodes and take exactly three canonical hits. The compiled root returns to the original root ID.
+
+The reverted graph is then checked for exact parity again across all five runtime samples.
+
+This is an important distinction: incremental repair is not merely “append a new compiled copy every time.” Returning to previously-seen semantics can reuse the prior crystallized artifact.
+
+### Boundary retained
+
+This remains test-only architecture work. No renderer, WGSL, production SDF runtime, or production proof runtime was changed.
+
+The next gate remains: exact-head CI for the new witness, followed by base reconciliation and then the first conservative proof/support annotation that can bypass exact DAG branch work while explicitly charging consultation and fallback costs.
