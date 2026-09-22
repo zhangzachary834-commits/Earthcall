@@ -288,7 +288,23 @@ int main() {
     geom::FieldNode fieldNode("field.persistence-matrix");
     seedSimple(fieldNode, 7);
     fieldNode.field->baseDensity = 8.0f;
+
+    auto chromaVec = std::make_shared<OntoMath::MathNode>();
+    chromaVec->op = OntoMath::MathNode::Op::VectorConstruct;
+    for (double componentValue : {0.8, 0.2, 0.6}) {
+        auto component = std::make_unique<OntoMath::MathNode>();
+        component->op = OntoMath::MathNode::Op::ScalarLeaf;
+        component->scalarForm.terms.push_back(OntoMath::Term(componentValue));
+        chromaVec->children.push_back(std::move(component));
+    }
+    *fieldNode.lightChroma = OntoMath::Piecewise::continuous(chromaVec);
+
     auto fieldJson = fieldNode.toJson();
+    check(fieldJson.contains("lightChroma"),
+          "FieldNode canonical lightChroma payload is emitted");
+    check(!fieldJson.contains("registeredProperties") ||
+              !fieldJson["registeredProperties"].contains("light.chroma.ast"),
+          "FieldNode canonical light.chroma.ast is not duplicated into fallback envelope");
     check(!fieldJson.contains("registeredProperties") ||
               !fieldJson["registeredProperties"].contains("field.baseDensity"),
           "FieldNode canonical field.baseDensity is not duplicated into fallback envelope");
