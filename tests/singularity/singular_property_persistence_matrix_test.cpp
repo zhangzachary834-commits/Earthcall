@@ -289,12 +289,25 @@ int main() {
     seedSimple(fieldNode, 7);
     fieldNode.field->baseDensity = 8.0f;
     auto fieldJson = fieldNode.toJson();
+    check(!fieldJson.contains("registeredProperties") ||
+              !fieldJson["registeredProperties"].contains("field.baseDensity"),
+          "FieldNode canonical field.* state is not duplicated into fallback envelope");
+    check(!fieldJson.contains("registeredProperties") ||
+              !fieldJson["registeredProperties"].contains("light.chroma.ast"),
+          "FieldNode canonical light.chroma.ast state is not duplicated into fallback envelope");
+    check(!fieldJson.contains("registeredProperties") ||
+              !fieldJson["registeredProperties"].contains("light.angular.ast"),
+          "FieldNode canonical light.angular.ast state is not duplicated into fallback envelope");
+    // Poison a historical fallback copy. The nested canonical field document
+    // must remain the single authority and restore 8.0, not this stale 99.0.
+    fieldJson["registeredProperties"]["field.baseDensity"] =
+        propertyValueToJson(PropertyValue(99.0f));
     auto restoredField = geom::FieldNode::fromJson(fieldJson);
     check(restoredField != nullptr, "FieldNode codec restored root");
     if (restoredField) {
         assertSimple(*restoredField, 7, "FieldNode");
         check(near(restoredField->field->baseDensity, 8.0),
-              "FieldNode canonical mathematical payload survived");
+              "FieldNode canonical mathematical payload outranks stale fallback duplicate");
     }
 
     Law law("persistence-matrix-law");
