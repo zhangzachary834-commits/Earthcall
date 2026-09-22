@@ -26,7 +26,8 @@ Landed on the Density Sun branch:
 - actual marched-interval optical-length bookkeeping;
 - native volumetric-only and depth-clamped surface+volume witnesses;
 - native numeric-D refresh witness;
-- native `D(p,t)` Timeline witness proving pixel change with no shader regeneration;
+- native `D(p,t)` Timeline witness proving an independently supplied medium-time coordinate changes pixels with no shader regeneration;
+- production currently uses the broad Universe-selected Timeline as the documented compatibility/default binding; per-process Timeline selection remains with the future Law/Timeline architecture, not Screen;
 - native unsupported-density refusal witness proving no stale fog survives;
 - volume-specific compile/cache/refusal observability.
 
@@ -249,11 +250,30 @@ Density is allowed to be time-dependent:
 D(p,t)
 ```
 
-The admitted `t` must come from the density-bearing Singular's resolved Timeline, not from a hardcoded radiance/global clock merely because an existing uniform happens to exist.
+The Renderer/WebGPU boundary must carry a temporal coordinate **per medium** and
+must never equate density time with radiance time merely because an existing
+uniform happens to exist.
 
-V0 therefore needs its own runtime density temporal coordinate/value channel.
+Which Timeline supplies that coordinate is intentionally a higher authored
+selection question. `TIME_AND_MOMENT.md` establishes that any Singular may own
+ordinary Timeline beings through Relations, but the future Law <-> Timeline
+architecture still owns the rule for selecting/relating one of those temporal
+domains to a particular changing process. Ownership alone is not a channel
+selection policy.
 
-Advancing time is a **value change**. It must not regenerate WGSL structure.
+Therefore V0 requires:
+
+- an independent runtime density temporal coordinate/value channel;
+- native proof that an independently supplied Timeline coordinate drives
+  `D(p,t)` without shader regeneration;
+- production compatibility may continue to project the Universe-selected broad
+  Timeline **until** authored temporal selection semantics land.
+
+V0 must not invent `field.timelineId`, a special VolumeTimeline kind, or an
+automatic "first owned Timeline wins" rule inside Screen.
+
+Advancing the admitted coordinate is a **value change**. It must not regenerate
+WGSL structure.
 
 ## 9. Structural / value invalidation
 
