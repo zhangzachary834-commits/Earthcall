@@ -2,6 +2,7 @@
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -234,10 +235,12 @@ nlohmann::json zoneToJson(const Zone& zone) {
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        nlohmann::json lexemeJson{
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        Singularity::Storage::writeSingularProperties(lexemeJson, *lexeme);
+        lexemes.push_back(std::move(lexemeJson));
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
@@ -259,6 +262,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         homeToJson(zj, *home);
     }
+    Singularity::Storage::writeSingularProperties(zj, zone);
     return zj;
 }
 
@@ -339,6 +343,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         homeFromJson(zj, *home);
     }
+    Singularity::Storage::readSingularProperties(zj, zone);
 }
 
 std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {

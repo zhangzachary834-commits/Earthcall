@@ -1,4 +1,5 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/OurverseSerialization.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 #include <iostream>
 
@@ -39,6 +40,7 @@ nlohmann::json ourverseToJson(const Ourverse& ourverse) {
     j["filaments"] = formationToJson(ourverse.filaments());
     j["metalaws"] = formationToJson(ourverse.getLaws());
     j["convenesToward"] = ourverse.convenesToward();
+    Singularity::Storage::writeSingularProperties(j, ourverse);
     return j;
 }
 
@@ -85,5 +87,12 @@ bool ourverseFromJson(Ourverse& ourverse,
         ourverse.loadConvenesToward(json["convenesToward"].get<std::string>());
         loadedAny = true;
     }
+
+    const bool hasSemanticProperties =
+        json.contains("authoredProperties") ||
+        json.contains("registeredProperties") ||
+        json.contains("designatedZones");
+    Singularity::Storage::readSingularProperties(json, ourverse, resolveMember);
+    if (hasSemanticProperties) loadedAny = true;
     return loadedAny;
 }
