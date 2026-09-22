@@ -3,6 +3,7 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -779,6 +780,7 @@ nlohmann::json Formation::toJsonAt(int depth, std::vector<const Formation*>& see
 
     // Relations
     j["relations"] = relationMgr.toJson();
+    Singularity::Storage::writeSingularProperties(j, *this);
     return j;
 }
 
@@ -826,6 +828,8 @@ std::shared_ptr<Formation> Formation::fromJson(const nlohmann::json& json,
     // Parsing them would mint a second set of Relations for the same bonds and
     // break that sharing; integrating is the faithful reconstruction. This is
     // also why fromJson has no recursion to bound.
+
+    Singularity::Storage::readSingularProperties(json, *f, resolve);
 
     const std::string rootId = json.value("root", std::string{});
     if (!rootId.empty()) {

@@ -3,6 +3,14 @@
 #include "json.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
+#include <string>
+
+// Registered Object properties already represented canonically by the Object,
+// Material, or Matter codecs must NOT also become a second authority inside
+// registeredProperties. Returns true only for registered state that needs the
+// universal Singular envelope as its persistence home.
+bool objectRegisteredPropertyNeedsEnvelope(const std::string& propertyName);
+
 // Semantic Object record.  Geometry-heavy state is hydrated by the matter
 // channel; this declaration remains compatible with the legacy ADL surface.
 void to_json(nlohmann::json& j, const Object& obj);

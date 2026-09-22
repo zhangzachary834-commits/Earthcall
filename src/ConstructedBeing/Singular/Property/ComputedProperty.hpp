@@ -45,6 +45,10 @@ public:
         }
     }
 
+    bool isSemanticallyWritable() const override {
+        return _setter != nullptr && is_property_value_alternative<T>;
+    }
+
     bool setValue(const PropertyValue& v) override {
         if constexpr (is_property_value_alternative<T>) {
             if (const T* typed = std::get_if<T>(&v)) {

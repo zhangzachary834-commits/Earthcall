@@ -1,5 +1,6 @@
 #include "Singularity/Storage/Serialization/Person/BodySerialization.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -96,6 +97,16 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
             subArr.push_back(std::move(sj));
         }
         j["subObjects"] = std::move(subArr);
+    }
+
+    Singularity::Storage::writeSingularProperties(j, part);
+    if (const Object* primary = part.getPrimaryObject()) {
+        nlohmann::json primarySemantic = nlohmann::json::object();
+        Singularity::Storage::writeSingularProperties(
+            primarySemantic, *primary, objectRegisteredPropertyNeedsEnvelope);
+        if (!primarySemantic.empty()) {
+            j["primaryObjectSemantic"] = std::move(primarySemantic);
+        }
     }
 
     return j;
@@ -208,6 +219,13 @@ void bodyPartFromJson(const nlohmann::json& j, BodyPart& part) {
             }
         }
     }
+
+    Singularity::Storage::readSingularProperties(j, part);
+    if (j.contains("primaryObjectSemantic") && part.getPrimaryObject()) {
+        Singularity::Storage::readSingularProperties(
+            j["primaryObjectSemantic"], *part.getPrimaryObject(), {},
+            objectRegisteredPropertyNeedsEnvelope);
+    }
 }
 
 nlohmann::json bodyToJson(const Body& body) {
@@ -223,6 +241,7 @@ nlohmann::json bodyToJson(const Body& body) {
         }
     }
     j["bodyParts"] = partsArr;
+    Singularity::Storage::writeSingularProperties(j, body);
 
     return j;
 }
@@ -257,4 +276,6 @@ void bodyFromJson(const nlohmann::json& j, Body& body) {
             }
         }
     }
+
+    Singularity::Storage::readSingularProperties(j, body);
 }
