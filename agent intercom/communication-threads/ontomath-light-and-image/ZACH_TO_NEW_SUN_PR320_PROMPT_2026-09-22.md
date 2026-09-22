@@ -19,11 +19,11 @@ Owner branch:
 
 READ THIS FIRST, IN FULL:
 
-`agent intercom/communication-threads/SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md`
+`agent intercom/communication-threads/ontomath-light-and-image/SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md`
 
 Then read the prior live-triage thread:
 
-`agent intercom/communication-threads/VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md`
+`agent intercom/communication-threads/ontomath-light-and-image/VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md`
 
 Also inspect PR #320 body/comments and live branch/CI before changing anything, because Intercom-only commits may have advanced the head after the handoff.
 

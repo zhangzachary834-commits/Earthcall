@@ -19,7 +19,7 @@ PR [#198](https://github.com/zhangzachary834-commits/Earthcall/pull/198) preserv
 
 ### Directions for the next agent, including Jules
 
-1. Read the new spec §§2, 6–9 and Sol's [handoff](../../../../../agent%20intercom/communication-threads/Second_Nature_Law_Forge_Handoff_2026-09-16.md); preserve the generic creation seam and its cross-kind test.
+1. Read the new spec §§2, 6–9 and Sol's [handoff](../../../../../agent%20intercom/communication-threads/rete-and-law/Second_Nature_Law_Forge_Handoff_2026-09-16.md); preserve the generic creation seam and its cross-kind test.
 2. Deliver the complete first journey: choose a target, show a change, specify when, rehearse, keep once, edit in place, save, leave, and return. A larger preset catalog is not this deliverable.
 3. Establish inert drafts and isolated rehearsal before showing a live preview; birth currently enables a Law immediately. Structured editing and its invalidation are also prerequisites, not existing APIs to assume.
 4. Develop with a distinct Zone identity or temporary save root. Preserve Zach's existing Zone and Laws. State the author of every generated being and the file written.

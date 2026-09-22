@@ -240,7 +240,7 @@ Do not patch until the exact assertion identifies which category owns the disagr
 
 1. Read:
    - this handoff,
-   - `agent intercom/communication-threads/VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md`,
+   - `agent intercom/communication-threads/ontomath-light-and-image/VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md`,
    - PR #320 body/comments,
    - the V0 density plan:
      `docs/plans/VOLUMETRIC_V0_DENSITY_SOVEREIGNTY_PLAN_2026-09-21.md`.

@@ -16,9 +16,9 @@ Read:
 - `docs/architecture/mathematics/ONTOMATH_FRAMEWORK.md`
 - `docs/architecture/ontology/TIME_AND_MOMENT.md`
 - `docs/plans/ONTOMATH_RADIANCE_NEXT_RUNGS_PLAN_2026-09-20.md`
-- `agent intercom/communication-threads/TO_CONSTITUTIONALIST_Timeline_Relativity_Correction_2026-09-20.md`
+- `agent intercom/communication-threads/ontology-and-authorship/TO_CONSTITUTIONALIST_Timeline_Relativity_Correction_2026-09-20.md`
 - the previous Rung-4 handoff for implementation archaeology only:
-  `agent intercom/communication-threads/SUN_HANDOFF_OntoMath_Radiance_Rung_4_Time_2026-09-20.md`
+  `agent intercom/communication-threads/ontomath-light-and-image/SUN_HANDOFF_OntoMath_Radiance_Rung_4_Time_2026-09-20.md`
 
 Do **not** Big Chungus-read the repository. Use bounded reads and exact searches.
 

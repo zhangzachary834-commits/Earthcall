@@ -14,7 +14,7 @@ PR #259 and PR #284 are now merged into `sync-from-earthcall-main`. The live bra
 
 The old pre-merge handoff remains useful history:
 
-`agent intercom/communication-threads/SUN_HANDOFF_PR259_Finalized_SDF_Renderer_Next_Perf_Rungs_2026-09-21.md`
+`agent intercom/communication-threads/sdf-and-rendering/SUN_HANDOFF_PR259_Finalized_SDF_Renderer_Next_Perf_Rungs_2026-09-21.md`
 
 This document supersedes its "next rung" status.
 

@@ -34,4 +34,4 @@
 - `src/Singularity/Screen/RenderMaterial.hpp` & `RenderMaterial.cpp`
 - `src/Singularity/Screen/WebGpu/SdfWgsl.hpp` & `SdfWgsl.cpp`
 - `src/Singularity/OntoMath/ScalarForm.hpp`
-- `agent intercom/communication-threads/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`
+- `agent intercom/communication-threads/sdf-and-rendering/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`

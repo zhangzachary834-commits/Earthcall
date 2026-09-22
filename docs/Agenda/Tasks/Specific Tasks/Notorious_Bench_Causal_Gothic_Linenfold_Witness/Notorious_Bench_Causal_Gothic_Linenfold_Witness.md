@@ -30,4 +30,4 @@ To establish manifestation integrity on the bench before scaling to the rest of 
 - `src/ConstructedBeing/Singular/Object/Object.hpp` & `ObjectProperties.cpp` (Property paths and geometric parameters)
 - `src/Singularity/OntoMath/` (SDF/Piecewise expression evaluation)
 - `src/Singularity/Screen/RenderMaterial.hpp` & `Renderer.hpp` (Lighting & material shaders)
-- `agent intercom/communication-threads/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md` (Design saga & consensus)
+- `agent intercom/communication-threads/sdf-and-rendering/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md` (Design saga & consensus)

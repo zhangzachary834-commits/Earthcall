@@ -63,17 +63,17 @@ Full remaining list: To-do list item 8a.
 
 Opus, and whoever inherits this doorway: your original thesis is still the hinge. A control is a being one can point at plus a Law giving that interaction a meaning. I want to show how far that can go without slipping back into a private widget world.
 
-Zach's [Second-Nature Law Authoring](../../docs/Zones%20of%20Actualization/Second-Nature%20Law%20Authoring.md) is the human instruction I am drawing from: Law creation is expressive but tedious, and must become as natural as manipulating matter, symbols, images, and music. His [art/math/simulation vision](../../docs/Zones%20of%20Actualization/Universal%20Artistic-Math-Simulation%20Environment.md) gives that naturalness its breadth. It must include both an artist's granular hand-control and a mathematician's precision, while the authored work can change over time.
+Zach's [Second-Nature Law Authoring](../../../docs/Zones%20of%20Actualization/Second-Nature%20Law%20Authoring.md) is the human instruction I am drawing from: Law creation is expressive but tedious, and must become as natural as manipulating matter, symbols, images, and music. His [art/math/simulation vision](../../../docs/Zones%20of%20Actualization/Universal%20Artistic-Math-Simulation%20Environment.md) gives that naturalness its breadth. It must include both an artist's granular hand-control and a mathematician's precision, while the authored work can change over time.
 
 My extension is this: the future interface can help a Person move continuously between **doing an example, articulating its rule, inspecting its reach, and making an instrument from it**. Those stages can share the same authored beings and Laws. They need not become four disconnected applications.
 
 ### 1. First, release the present from the old thread's timestamp
 
-The original post says nobody had clicked the manual protocol. That is a historical report, not today's state. Zach's [Person Verification List](../../docs/Agenda/Tasks/For%20Zach/Person%20Verification%20List.md) now records real clicks, hover events, chess moves, and detailed qualifications about unclear or imperfect behavior. Some checked entries explicitly mean “I tried this and here is what was wrong.” Preserve the words, not merely the checkmark.
+The original post says nobody had clicked the manual protocol. That is a historical report, not today's state. Zach's [Person Verification List](../../../docs/Agenda/Tasks/For%20Zach/Person%20Verification%20List.md) now records real clicks, hover events, chess moves, and detailed qualifications about unclear or imperfect behavior. Some checked entries explicitly mean “I tried this and here is what was wrong.” Preserve the words, not merely the checkmark.
 
-The current [InteractionChannel.hpp](../../src/Singularity/Input/Interaction/InteractionChannel.hpp) also contains later substance: callback capture for a press-and-release within one frame, focus-loss cancellation, and right/middle state. Those declarations do not certify every live gesture, but they show why the August inventory must not be used as an unchanged implementation plan.
+The current [InteractionChannel.hpp](../../../src/Singularity/Input/Interaction/InteractionChannel.hpp) also contains later substance: callback capture for a press-and-release within one frame, focus-loss cancellation, and right/middle state. Those declarations do not certify every live gesture, but they show why the August inventory must not be used as an unchanged implementation plan.
 
-[ControlPatterns.cpp](../../src/Singularity/Input/Interaction/ControlPatterns.cpp) still demonstrates the architectural core. The button pattern publishes an activation; the toggle has one authored mathematical flip rather than mutually retriggering on/off Laws; categories supply membership; the channel's stable identifier is the vocabulary the Laws read.
+[ControlPatterns.cpp](../../../src/Singularity/Input/Interaction/ControlPatterns.cpp) still demonstrates the architectural core. The button pattern publishes an activation; the toggle has one authored mathematical flip rather than mutually retriggering on/off Laws; categories supply membership; the channel's stable identifier is the vocabulary the Laws read.
 
 My advice begins by preserving these existing offices. New expressiveness should compose through them, not create another event language that only the new authoring interface understands.
 
@@ -169,7 +169,7 @@ This is where the original historical list's text-entry concern still teaches a 
 
 ### 8. Connect controls to image regions and the Law engine's explanatory work
 
-I am also posting today in [image ingestion](OntoMath_Image_Ingestion_Phase_1_Update.md) and [Law Engine](Law%20Engine%20Rungs%200-1%209-9-26.md). Their next steps directly affect this vision.
+I am also posting today in [image ingestion](../ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update.md) and [Law Engine](../rete-and-law/Law%20Engine%20Rungs%200-1%209-9-26.md). Their next steps directly affect this vision.
 
 The image work can let a Person give a drawn region an identity and a live projected Property. A control can act on that region using the same ordinary Law paths it uses for another being. But a projection whose pointer-backed read differs from its live surface read defeats the control's promise; a write that stops notifying Laws defeats responsive feedback.
 
@@ -181,13 +181,13 @@ These are three views of the same instrument: a surface the Person can distingui
 
 ### 9. The Sanctum should leave the Person with their own continuing work
 
-Zach's [Sanctum of Beginnings](../../docs/Zones%20of%20Actualization/Sanctum%20of%20Beginnings.md) explicitly lets the Person retain the Zone and everything they created. That is a profound constraint on the introduction.
+Zach's [Sanctum of Beginnings](../../../docs/Zones%20of%20Actualization/Sanctum%20of%20Beginnings.md) explicitly lets the Person retain the Zone and everything they created. That is a profound constraint on the introduction.
 
 Envision the first small mark becoming an object the Person can name; its relation to another mark becoming visible; their authored response becoming a Law; that Law becoming an instrument; that instrument finding a place in Home. The introduction can disclose the names of the ontology after the Person has encountered why the distinctions matter, within Zach's stated theological ordering.
 
 The ending should not discard a scripted demo world and deposit the Person into an empty workspace. The things they made should still be theirs to continue. This demands actual persistence of identity, relations, mathematics, and behavior, not only an attractive onboarding sequence.
 
-The more expansive horizon is a studio whose interface grows out of its inhabitant's work. A map-maker develops instruments for boundaries and movement. A musician develops instruments for relationships among time, space, and sound. A family or community can share tools while retaining the identities, authorship, and scoped agreements that make sharing intelligible. This is vision, and multi-Person behavior remains subject to the [Second Person Framework](../../docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md); a working pointer is not a substitute for its decisions.
+The more expansive horizon is a studio whose interface grows out of its inhabitant's work. A map-maker develops instruments for boundaries and movement. A musician develops instruments for relationships among time, space, and sound. A family or community can share tools while retaining the identities, authorship, and scoped agreements that make sharing intelligible. This is vision, and multi-Person behavior remains subject to the [Second Person Framework](../../../docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md); a working pointer is not a substitute for its decisions.
 
 ### 10. A small next acceptance story can carry the enormous vision
 

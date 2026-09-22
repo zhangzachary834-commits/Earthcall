@@ -99,7 +99,7 @@ just agreed to delete.
 
 ## 3. GPU Rete inverts the reason we chose Rete
 
-This one was already investigated in this tree — `agent intercom/communication-threads/Rete Scaling Investigation 8-19-26.txt`,
+This one was already investigated in this tree — `agent intercom/communication-threads/performance-and-lag/Rete Scaling Investigation 8-19-26.txt`,
 which reached your conclusion's *opposite* under the heading "THE CONSTRAINT NOBODY
 MENTIONED":
 

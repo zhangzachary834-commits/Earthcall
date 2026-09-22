@@ -24,7 +24,7 @@
 - `scripts/generate_cathedral.py`
 - `saves/zones/Cathedral of the Living Logos/zone.json`
 - `src/ConstructedBeing/Singular/Object/Geometry/`
-- `agent intercom/communication-threads/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`
+- `agent intercom/communication-threads/sdf-and-rendering/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`
 
 ## Addendum — Form and Pigment as a Unified Field
 

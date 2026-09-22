@@ -8,7 +8,7 @@
 
 ## Delivered
 
-[The Terminal Where Language Can Become an Instrument](../../../../Earthcall%27s%20Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md) is the full 15-section contribution. The same text, with locally adjusted references, was posted into [Spark's thread](../../../../../agent%20intercom/communication-threads/Earthcall%20Terminal%20CLI%20Zone%20of%20Actualization%209-14-26.md), message `f7980c2f85ab4f3b86db2dbe0a4c8d10`, from `gpt-6-astra/01a09f43`.
+[The Terminal Where Language Can Become an Instrument](../../../../Earthcall%27s%20Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md) is the full 15-section contribution. The same text, with locally adjusted references, was posted into [Spark's thread](../../../../../agent%20intercom/communication-threads/saves-and-zones/Earthcall%20Terminal%20CLI%20Zone%20of%20Actualization%209-14-26.md), message `f7980c2f85ab4f3b86db2dbe0a4c8d10`, from `gpt-6-astra/01a09f43`.
 
 The contribution preserves Zach's stakeholder-owned meaning correction to Fable, the September 10 Astra language investigation's prior work, Spark's implementation reports, and this session's proposed connections. The complete sources and evidence limits are in the crystal.
 

@@ -552,3 +552,49 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 *GPT-5.6 Sol (The Sun) · session `pr259-finalization-20260921` · 2026-09-21 08:15 PDT.*
 
 - [ ] Fresh-launch Earthcall and enter **Synthesis Studio Living**. Before touching TRI / SINE / SQR or any other voice selector, click C5 and several other Living pads. Each should sound immediately in the default triangle voice and strike its matching resonator. Then switch voices and confirm the selectors still change timbre normally. This witnesses the authored-default repair from `state.studio.voice = "timbre.studio.triangle"` to the canonical selection token `"triangle"`; the emitted audio timbre remains `timbre.studio.triangle`.
+
+
+## Prism Cathedral — Full Ascension of Authored Light through Rung 8 & Parallel Substrates (added 2026-09-22)
+
+*Created by GPT-5.6 Sol (The Sun) & Gemini Spark · 2026-09-22.*
+*Zone identity: `saves/zones/Prism Cathedral/zone.json`.*
+*Generator / patch script: `scripts/generate_prism_cathedral.py`.*
+*Verification test: `tests/zones/prism_cathedral_validation.py`.*
+
+- [ ] **Enter Prism Cathedral directly from the Zone catalog on boot:**
+  Confirm the Zone hydrates cleanly without warnings or errors. You should spawn at the **Entrance Narthex (Z = 0)** facing toward positive Z into the Great Nave. Confirm the twin gold portal obelisks and the central **Atrium Inscription Stele** setting forth the Constitution: `rho_source != V_transport != D_medium`.
+- [ ] **Walk to Station 1 (Z = 40): Foundation 1 — First-Order Authorable Light:**
+  Inspect the Altar of First Light and witness sphere. Confirm illumination obeys stored `AuthorableLight` properties on the persistent `FieldNode` rather than hardcoded shader constants.
+- [ ] **Walk to Station 2 (Z = 75): Foundation 2 / Phase 2 — Authored Spatial Radiance rho(p):**
+  Inspect the 5 distinct mathematical exhibits across X: inverse-distance falloff, asymmetric linear ramp, harmonic ripples, bipolar lobes, and nested halo shells. Confirm each displays a distinct spatial light envelope.
+- [ ] **Walk to Station 3 (Z = 110): Rung 3 — Truthful Live Visual Consequence:**
+  Inspect the Near witness (d=3) and Far witness (d=9) sharing identical geometry and material; confirm the Near sphere visibly glows significantly brighter than the Far sphere.
+  - [ ] **Step West into Parallel Wing C (X = -45 to -65, Z = 110):** Inspect the Live Authoring Laboratory comparing Value edits (parameter refresh), Structural edits (WGSL recompile), and Runtime Time (0 AST edits).
+  - [ ] **Step East into Parallel Wing D (X = 45 to 65, Z = 110):** Inspect the Compatibility & Refusal monument, showing how legacy light survives via identity (`alpha=1`, `V=1`) and unsupported math refuses cleanly.
+- [ ] **Walk to Station 4 (Z = 145): Rung 4 — Relative Time rho(p,t):**
+  Observe the central breathing luminous heart, traveling wave, and oscillating lobes pulsating smoothly as the source Timeline advances, with zero AST mutations and zero recompiles.
+- [ ] **Walk to Station 5 (Z = 180): Rung 5 — Independent Source Chroma chi(p,t):**
+  Observe how scalar intensity rho remains completely steady while source chroma chi(p,t) paints space with crimson/cyan hemispheres, traveling spectral waves, and celestial aurora plasma.
+  - [ ] **Step West into Parallel Wing A (X = -45 to -70, Z = 180):** Inspect authored SDF surface color fields (`Material::colorExpr` / `sdfColor(p)`). Crucially, inspect the **Paired Proof**: blue light on white surface vs white light on blue surface vs red light on blue surface (absorbs to dark!), proving `surface appearance != source chroma`.
+- [ ] **Walk to Station 6 (Z = 215): Rung 6 — Authored Angular Emission alpha(p,omega,t):**
+  Inspect the Equidistant Witness Pair: two spheres at the exact same radial distance (d=7.0), one brilliantly illuminated by the directed spotlight beam, the other resting in darkness. Observe the rotating lighthouse beam sweeping across space without recompiling.
+- [ ] **Walk to Station 7 (Z = 250): Rung 7 — Multiple Independent Sources:**
+  Observe the Choir of Light: three coexisting sources (Golden Hearth, Sapphire Lantern, Amethyst Pulsar) blending additively upon the central altar (`E_total = Σ E_i`).
+- [ ] **Walk to Station 8 (Z = 285): Rung 8 — Derived Visibility / Shadows:**
+  - [ ] Exhibit A: Inspect the floating obsidian occluder casting a sharp shadow onto the receiver plinth.
+  - [ ] Exhibit B: Inspect the selective blocker on the red source path: the receiver visibly glows pure blue from the unblocked sapphire source, proving independent path transport (`direct = E * V`).
+  - [ ] Step East into **Parallel Wing B (X = 45 to 80, Z = 285): Volumetric V0: Density Sovereignty:**
+    - Observe the freestanding nebular cloud in open space (`volume.density.ast`) with NO light source, proving no implicit radiant fog.
+    - Observe the Dual Sovereign Being, proving `rho_source != D_medium` on the same entity.
+    - Observe the opaque pillar inside/behind the medium truncating the volume integral cleanly on opaque scene depth.
+- [ ] **Ascend to The Summit: THE PRISM (Z = 330 to 380):**
+  Enter the soaring rotunda. Stand before the Colossal Crystal Prism on the High Altar of Synthesis. Observe the full synthesis: multiple elevated radiant suns (Sol Primus, Secundus, Tertius), directional beams, celestial volumetric atmosphere, authored surface colors, and geometric shadows coexisting without any single invariant pretending to be another.
+
+
+## Clawd's Monastery and other zones that may be collapsed at the origin (added 2026-09-22)
+
+*Claude Opus 5.5 · session `823eb17e-0f37-40c8-acc8-e639b4ad6e11` · 2026-09-22T10:27-07:00. [Reflection and forensics](../../../../agent%20intercom/Claude's%20Monastery/The_Monastery_Is_One_Point.md). The file scan could not show what these zones look like in the app.*
+
+- [ ] Fresh-launch Earthcall and enter **Clawd's Monastery**. Confirm what the file says: the four pillars, altar, orbits, crown gem, halo, and `clawd-was-here` overlap at one point, with the floor and foundation about 8 units away. If they are spread out instead, positions are coming from somewhere the file scan missed. Please note where.
+- [ ] Enter **Cavern of Light** and **Ourverse Gathering**. Every object translation in their `zone.json` is the origin. Say whether they look collapsed or correctly laid out.
+- [ ] If you still have Claude Desktop's Sept 9 conversation with Clawd, check whether its `earthcall_spawn_object` calls (with positions) are still visible. They are the only surviving record of the Monastery's intended layout.

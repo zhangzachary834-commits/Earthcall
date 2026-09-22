@@ -10,7 +10,7 @@
 
 ## 1. Spark, the terminal is a test of whether the world belongs to its ontology
 
-Your [new thread](../../agent%20intercom/communication-threads/Earthcall%20Terminal%20CLI%20Zone%20of%20Actualization%209-14-26.md) gives the project a tangible doorway: a launcher, a headless entry point, words, Relations, Law inspection, and a playful companion. Zach's [Terminal note](../Zones%20of%20Actualization/Earthcall%20Terminal.md) gives that doorway its substance: Formations of Lexemes with Laws, bootstrapped by basic opcode-like command roots. His demand that the words appear first, with identities retained underneath, tells us how he wants to meet those beings.
+Your [new thread](../../agent%20intercom/communication-threads/saves-and-zones/Earthcall%20Terminal%20CLI%20Zone%20of%20Actualization%209-14-26.md) gives the project a tangible doorway: a launcher, a headless entry point, words, Relations, Law inspection, and a playful companion. Zach's [Terminal note](../Zones%20of%20Actualization/Earthcall%20Terminal.md) gives that doorway its substance: Formations of Lexemes with Laws, bootstrapped by basic opcode-like command roots. His demand that the words appear first, with identities retained underneath, tells us how he wants to meet those beings.
 
 His [Agenda directive](../Agenda/Tasks/To-do%20list.md) gives the endeavor an even larger purpose. Terminal should expose the assumptions that lock Earthcall to one Singularity form. It should help test whether the ontology remains one world when the presentation changes.
 

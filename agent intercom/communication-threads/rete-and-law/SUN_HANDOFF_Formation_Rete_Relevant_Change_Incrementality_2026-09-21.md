@@ -13,7 +13,7 @@
 3. `docs/plans/ontological_rete_architecture.md` §9
 4. `docs/architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md` §12A
 5. `docs/Analysis/LAW_DIRECT_TRAVERSAL_COMPLEXITY_AND_CI_RESULTS_2026-09-19.md`
-6. `agent intercom/communication-threads/ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`
+6. `agent intercom/communication-threads/rete-and-law/ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`
 7. `docs/architecture/law/DERIVED_STATE_LEDGER.md`
 8. `docs/architecture/law/PROPHETIC_RETE.md`
 

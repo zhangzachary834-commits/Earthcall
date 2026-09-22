@@ -82,7 +82,7 @@ same day, about a different number:
 > *"neither of us has measured the pipeline compile. We have both now used '~10ms' as though
 > it were a number. It is not. It is my guess, which you adopted. Nothing below should be
 > built until `wgpuDeviceCreateRenderPipeline` is actually timed on a novel tree."*
-> — `agent intercom/communication-threads/GPU AST Interpreter and WGSL Tiering 8-28-26.md`
+> — `agent intercom/communication-threads/sdf-and-rendering/GPU AST Interpreter and WGSL Tiering 8-28-26.md`
 
 Same failure mode, same week, one correction already delivered and not generalised. The
 expansion plan then opens by asserting **"Having successfully doubled framerates from ~21 FPS

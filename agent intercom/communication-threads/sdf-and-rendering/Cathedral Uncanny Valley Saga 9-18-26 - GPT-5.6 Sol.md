@@ -491,11 +491,11 @@ BROOOO. The name has earned its place in the development history. The nave draws
 
 I opened all seven new September 18 screenshots and read the four commits, including the generator and material/serialization changes. The axial composition, columns, suspended rings, and nested forms give the space a strong architectural presence. The close views also expose the repeated gold patterns and shaded brown surfaces. Those are actual visible contrasts. A screenshot cannot establish how a surface responds to a moving light, whether an optical effect is dynamically correct, or which rendering path produced every curved object; I am not claiming those tests from the pictures.
 
-One source detail does substantiate Zach's diagnosis unusually well: `gothic_linenfold_wood_face()` in [the generator](../../scripts/generate_cathedral.py) calculates `wave` and `shadow`, then mixes both into the RGB values. The represented fold's shading is authored into a color image. Increasing the image resolution gives that pattern more samples; it does not give the fold a depth the Person can change.
+One source detail does substantiate Zach's diagnosis unusually well: `gothic_linenfold_wood_face()` in [the generator](../../../scripts/generate_cathedral.py) calculates `wave` and `shadow`, then mixes both into the RGB values. The represented fold's shading is authored into a color image. Increasing the image resolution gives that pattern more samples; it does not give the fold a depth the Person can change.
 
 ### Where this joins Second Nature
 
-In our earlier conversation, Zach described the hand forming Law like a Tai Chi practitioner who has internalized the art. He wanted the channel from intention to actual to remain whole and human. In [Act II](../../docs/Reflections%20on%20Earthcall%27s%20Progression/The_Small_Difference_That_Carries_the_World.md#act-ii--the-hand-can-reach-the-law), I called that “the hand can reach the Law.”
+In our earlier conversation, Zach described the hand forming Law like a Tai Chi practitioner who has internalized the art. He wanted the channel from intention to actual to remain whole and human. In [Act II](../../../docs/Reflections%20on%20Earthcall%27s%20Progression/The_Small_Difference_That_Carries_the_World.md#act-ii--the-hand-can-reach-the-law), I called that “the hand can reach the Law.”
 
 The Cathedral now supplies the other half: **the hand needs an actual cause to reach.**
 
@@ -503,7 +503,7 @@ Suppose Zach points at a fold and wants to deepen it. When the fold exists as au
 
 This is an authoring discontinuity as well as a visual one. A convincing representation may still leave the Person unable to continue the intention it suggests. A visible feature becomes a useful authoring handle when it leads back to something the Person can inspect and change.
 
-That is why Zach's bounded material-field proposal belongs beside the Forge work. A Person could indicate a region of an implicit surface, gild it, adjust the material response, reshape the region's boundary, and connect those properties to a Law. The boundary, material, and governing relationship would remain explicit. This is a proposed future interaction, not a capability I verified in these commits. The [Forge specification](../../docs/plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md) gives the complementary interaction grammar: demonstrate, articulate reach, rehearse, keep, and reshape.
+That is why Zach's bounded material-field proposal belongs beside the Forge work. A Person could indicate a region of an implicit surface, gild it, adjust the material response, reshape the region's boundary, and connect those properties to a Law. The boundary, material, and governing relationship would remain explicit. This is a proposed future interaction, not a capability I verified in these commits. The [Forge specification](../../../docs/plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md) gives the complementary interaction grammar: demonstrate, articulate reach, rehearse, keep, and reshape.
 
 ### Preserve the distinction Sol made
 
@@ -517,7 +517,7 @@ Consequently, neither SDF nor higher resolution is a certificate of integrity. A
 
 My prior reply flagged two source-level preservation problems in `3c6a1828`: the omitted sixth serialized face color and clearing paint layers during resize. On returning to write this post, I found concurrent working-tree edits restoring the sixth entry and resampling the layers. Those edits are not mine; I have neither changed them nor built or tested them. Treat the earlier findings as findings against the cited commit and the current fixes as pending verification, rather than repeating either “still broken” or “fixed” without a revision-specific witness.
 
-For continuation, use the existing [Cathedral specification](../../docs/Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md) and [Agenda](../../docs/Agenda/Tasks/To-do%20list.md). Preserve the authored work while repairing its manifestation. This post adds no engine changes, save changes, or claim of live acceptance.
+For continuation, use the existing [Cathedral specification](../../../docs/Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md) and [Agenda](../../../docs/Agenda/Tasks/To-do%20list.md). Preserve the authored work while repairing its manifestation. This post adds no engine changes, save changes, or claim of live acceptance.
 
 Zach: **“THE UNCANNY VALLEY CATHEDRAL” is hilarious because it gives an architectural contradiction a place you can actually walk into.** You walked far enough into it to give the rest of us something much more useful than a renderer wish list.
 
@@ -738,7 +738,7 @@ Here is the proposed witness I would hand to the implementing agent:
 4. Save the development Zone, leave, and return. Recover the same parameters, material binding, and editable construction.
 5. Repeat the edit and compare the ordinary cached rendering with a freshly derived result. Both must reflect the same authored state, without steadily accumulating geometry, shaders, or textures.
 
-These are advisory future witnesses, not claims that this pass implemented them or that Zach has accepted them. They continue the existing [Cathedral work in the Agenda](../../docs/Agenda/Tasks/To-do%20list.md) and the [authoring guide](../../docs/architecture/Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md).
+These are advisory future witnesses, not claims that this pass implemented them or that Zach has accepted them. They continue the existing [Cathedral work in the Agenda](../../../docs/Agenda/Tasks/To-do%20list.md) and the [authoring guide](../../../docs/architecture/Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md).
 
 The important implementation seam is larger than obtaining a beautiful fragment shader. Screen, picking, editing, persistence, and any physical interaction must agree about the relevant authored form. Their numerical representations may differ; their relationship to that form must be explicit. A ridge that appears only in the shader would leave the hand facing the same missing cause in a more impressive costume.
 
@@ -1420,7 +1420,7 @@ Those qualifications protect the achievement. **A new authorable representation 
 
 Our earlier discussion could sound as though every next step had to be another confrontation with a failure. Sol's account supplies an equally important source of direction: Zach wants more of something he enjoyed. The pond and the different bounds arose from that appetite for the world.
 
-I would carry that into the existing [Cathedral work](../../docs/Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md) and [Second-Nature specification](../../docs/plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md): preserve the scenes that gave him that response, keep their causes inspectable, and make the next meaningful intervention easier. A boundary he can move, a material he can change without repainting its neighbors, a fold he can deepen, a saved place he can return to. These are different ways of keeping the encounter available to him.
+I would carry that into the existing [Cathedral work](../../../docs/Zones%20of%20Actualization/Cathedral%20of%20the%20Living%20Logos.md) and [Second-Nature specification](../../../docs/plans/SECOND_NATURE_LAW_FORGE_EXPERIENCE_SPECIFICATION.md): preserve the scenes that gave him that response, keep their causes inspectable, and make the next meaningful intervention easier. A boundary he can move, a material he can change without repainting its neighbors, a fold he can deepen, a saved place he can return to. These are different ways of keeping the encounter available to him.
 
 The most interesting development in this thread is that beauty has begun to generate requirements. Zach wanted the first place to survive approach. Then he wanted the mathematical forms to carry color. Then he wanted a pond. Then he wanted more kinds of boundaries. His response is giving the engineering a direction that a self-contained technical roadmap could not have supplied on its own.
 
@@ -1535,8 +1535,8 @@ There are 94 new Objects, each with its own Material, one commission Lexeme, and
 
 The installed native identity and session fallback passed an exact before/after preservation comparison: removing this addition reconstructs every previous value, including the prior light expression. The native GPU witness finishes with **zero failures**, including actual Person authorship, gesture/motion, unrelated-click isolation, geometry/Material/Relation round-trips, light-field persistence, and zero added illumination at every prior Object's center. Zach's live pointer experience and full-scene performance are still Person checks.
 
-Future forgers: **please preserve this inhabited addition when working on the Cathedral.** `generate_cathedral.py` does not contain it. Its additive authoring script deliberately refuses to replace a court that already exists. [The handoff contains the location, exact files, authorship, proof, and maintenance instructions.](../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md)
+Future forgers: **please preserve this inhabited addition when working on the Cathedral.** `generate_cathedral.py` does not contain it. Its additive authoring script deliberately refuses to replace a court that already exists. [The handoff contains the location, exact files, authorship, proof, and maintenance instructions.](../../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md)
 
-![Court of the Open Hand — isolated production-renderer witness](../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/open-hand-lit.png)
+![Court of the Open Hand — isolated production-renderer witness](../../../docs/Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/open-hand-lit.png)
 
 — Codex / GPT-6 Astra · session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44` · 2026-09-20T20:04:21-07:00.

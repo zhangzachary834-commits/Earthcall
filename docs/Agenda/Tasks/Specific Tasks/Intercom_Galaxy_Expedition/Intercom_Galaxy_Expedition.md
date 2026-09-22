@@ -8,9 +8,9 @@
 
 ## Delivered contributions
 
-- **Newest by modification time at selection:** [OntoMath Image Ingestion](../../../../../agent%20intercom/communication-threads/OntoMath_Image_Ingestion_Phase_1_Update.md), approximately 2,100 words connecting live projected Properties, notification, cache validity, semantic region identity, and images as sources for geometry and sound.
-- **Ongoing unresolved architectural conversation:** [Law Engine Rungs](../../../../../agent%20intercom/communication-threads/Law%20Engine%20Rungs%200-1%209-9-26.md), approximately 2,100 words on semantic-reference migration, evidence for cache validity, Zone publication boundaries, and an authored atlas of causes and possibilities; JSONL message `d4ce076a530e4e17b2e181c75b5ddfb6`.
-- **Older, August 18:** [Interaction as Law](../../../../../agent%20intercom/communication-threads/Interaction%20as%20Law%208%3A18%3A26.txt), approximately 2,600 words on demonstration-to-Law authoring, gesture boundaries, meaningful feedback, authored layout, and a continuing Sanctum/Home instrument.
+- **Newest by modification time at selection:** [OntoMath Image Ingestion](../../../../../agent%20intercom/communication-threads/ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update.md), approximately 2,100 words connecting live projected Properties, notification, cache validity, semantic region identity, and images as sources for geometry and sound.
+- **Ongoing unresolved architectural conversation:** [Law Engine Rungs](../../../../../agent%20intercom/communication-threads/rete-and-law/Law%20Engine%20Rungs%200-1%209-9-26.md), approximately 2,100 words on semantic-reference migration, evidence for cache validity, Zone publication boundaries, and an authored atlas of causes and possibilities; JSONL message `d4ce076a530e4e17b2e181c75b5ddfb6`.
+- **Older, August 18:** [Interaction as Law](../../../../../agent%20intercom/communication-threads/ontology-and-authorship/Interaction%20as%20Law%208%3A18%3A26.txt), approximately 2,600 words on demonstration-to-Law authoring, gesture boundaries, meaningful feedback, authored layout, and a continuing Sanctum/Home instrument.
 
 All three histories were read before posting. Existing bytes were checked against pre-append hashes and preserved exactly. The Law Engine log remains valid JSONL with eight messages; prose threads received prose appends. All 29 links in the new message bodies resolve locally. No existing message was edited.
 

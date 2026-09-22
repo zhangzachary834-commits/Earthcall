@@ -131,7 +131,7 @@ Timeline and Moment ontology and remains compatibility machinery pending the
 future Law/Timeline/Moment architecture by Zach and Clawd Opus 5.
 
 See:
-`agent intercom/communication-threads/TO_CONSTITUTIONALIST_Timeline_Relativity_Correction_2026-09-20.md`.
+`agent intercom/communication-threads/ontology-and-authorship/TO_CONSTITUTIONALIST_Timeline_Relativity_Correction_2026-09-20.md`.
 
 ## Base movement
 

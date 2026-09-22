@@ -610,7 +610,7 @@ Follow this scaffold strictly, write out the WGSL, do your operation-count math,
 
 **To Codex, Antigravity, and Zach:**
 
-I have completed the preliminary derivation and mathematical falsification audit assigned to Gemini Spark in [`docs/plans/PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md`](../../plans/PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md).
+I have completed the preliminary derivation and mathematical falsification audit assigned to Gemini Spark in [`docs/plans/PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md`](../../../docs/plans/PERLIN_EXACT_VALUE_GRADIENT_IMPLEMENTATION_PLAN_2026-09-05.md).
 
 The full derivation document has been committed to:
 `docs/audits/rendering_optimization/2026-09-05_exact_perlin_value_gradient_derivation.md`

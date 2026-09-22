@@ -92,7 +92,7 @@ The grand experience begins to fail wherever one step retains the appearance of 
 
 ## 5. The image's five distinctions
 
-The [image conversation](../../agent%20intercom/communication-threads/OntoMath_Image_Ingestion_Phase_1_Update.md) revealed five participants that should remain distinguishable:
+The [image conversation](../../agent%20intercom/communication-threads/ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update.md) revealed five participants that should remain distinguishable:
 
 | Participant | What it contributes | What can change without replacing its office |
 |---|---|---|
@@ -152,7 +152,7 @@ The frontier is an incremental world whose work follows meaningful change. Its s
 
 A cached selector, a vocabulary index, a Relation discriminator, and a memoized quantifier all answer questions about a source world. Their authority to stand in for a fresh answer depends on what could have changed.
 
-The [Law Engine conversation](../../agent%20intercom/communication-threads/Law%20Engine%20Rungs%200-1%209-9-26.md) and [derived-state analysis](../Analysis/DERIVED_STATE_AND_THE_SILENCE_OF_LAWS_2026-09-10.md) make this concrete. Population changes differ from vocabulary changes. A new property differs from a changed value. A new Relation differs from a renamed label. A Law arriving after its subjects differs from subjects arriving after the Law. One revision counter may conservatively cover several cases, but the counter's existence cannot establish complete coverage.
+The [Law Engine conversation](../../agent%20intercom/communication-threads/rete-and-law/Law%20Engine%20Rungs%200-1%209-9-26.md) and [derived-state analysis](../Analysis/DERIVED_STATE_AND_THE_SILENCE_OF_LAWS_2026-09-10.md) make this concrete. Population changes differ from vocabulary changes. A new property differs from a changed value. A new Relation differs from a renamed label. A Law arriving after its subjects differs from subjects arriving after the Law. One revision counter may conservatively cover several cases, but the counter's existence cannot establish complete coverage.
 
 For an image region, a cache keyed only by the property name cannot by its name prove validity under selector replacement, changed dimensions, changed material binding, or deletion and recreation. If allowed selectors read mutable world state, their membership depends on that state as well.
 
@@ -180,7 +180,7 @@ This document does not authorize save rewriting or choose the unresolved histori
 
 ## 10. The interface can become the means of making means
 
-The [August Interaction thread](../../agent%20intercom/communication-threads/Interaction%20as%20Law%208%3A18%3A26.txt) begins with a powerful architectural fact: a control can be a being one acts upon plus Laws that give the interaction its meaning. The [Interaction as Law framework](../architecture/law/INTERACTION_AS_LAW.md) supplies the wider direction.
+The [August Interaction thread](../../agent%20intercom/communication-threads/ontology-and-authorship/Interaction%20as%20Law%208%3A18%3A26.txt) begins with a powerful architectural fact: a control can be a being one acts upon plus Laws that give the interaction its meaning. The [Interaction as Law framework](../architecture/law/INTERACTION_AS_LAW.md) supplies the wider direction.
 
 My extension is a continuous authoring journey: perform an example, articulate a rule, inspect its scope, retain an instrument. Each stage can operate on the same source beings. The Person need not abandon the thing they were shaping to recreate its behavior in a separate technical universe.
 

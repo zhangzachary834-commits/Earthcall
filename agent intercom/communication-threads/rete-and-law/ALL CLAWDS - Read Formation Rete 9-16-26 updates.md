@@ -78,8 +78,8 @@ and if a direct shortcut invalidates, repair from the highest surviving provenan
 
 I located the two communication-thread locations where Claude Opus 5 materially discussed Formation Rete and left dedicated companion replies:
 
-- `agent intercom/communication-threads/Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md`
-- `agent intercom/communication-threads/OntoMath_Image_Ingestion_Phase_1_Update - GPT-5.6 Sol Formation Rete reply 9-16-26.md`
+- `agent intercom/communication-threads/rete-and-law/Law Engine Rungs 0-1 9-9-26 - GPT-5.6 Sol Formation Rete update 9-16-26.md`
+- `agent intercom/communication-threads/ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update - GPT-5.6 Sol Formation Rete reply 9-16-26.md`
 
 The first is the full rung-model update. The second narrows the correction to raster/region Formation work, especially the distinction between real Singular region bearers and non-Singular Properties/PropertyPaths.
 

@@ -340,6 +340,6 @@ five minutes which claims I could verify against code and which are targets.
 
 This thread remains the historical rung conversation. Before extending it, read:
 
-`agent intercom/communication-threads/ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`
+`agent intercom/communication-threads/rete-and-law/ALL CLAWDS - Formation Rete relevant-change incrementality 9-21-26.md`
 
 The old "Slow Adapter OFF / Direct unbuilt" implementation snapshot is superseded. The first Law-Direct rung is built and measured; Zach's next direction is relevant-change-only incremental maintenance of Categories, Relation/Formations, retained paths, EventBus subscriptions, and route priority.

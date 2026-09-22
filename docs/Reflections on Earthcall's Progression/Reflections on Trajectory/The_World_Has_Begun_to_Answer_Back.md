@@ -50,13 +50,13 @@ That is substantial ontological work. It also produces very ordinary engineering
 
 ## The Cathedral gave the argument a place
 
-The September 16 shape-hydration merge (`a0a0b948`, PR #188) responds to a disturbing kind of failure: ambitious authored forms returning as impoverished geometry. The [handoff](../../../agent%20intercom/communication-threads/Sol%20Shape%20Serialization%20Hydration%20Integrity%202026-09-16.md) is careful about the repair. Form determines identity and structure; Matter supplies physical density. Dense topology has a legitimate home in `.ecmatter`, but stale Matter must not redefine the current semantic form.
+The September 16 shape-hydration merge (`a0a0b948`, PR #188) responds to a disturbing kind of failure: ambitious authored forms returning as impoverished geometry. The [handoff](../../../agent%20intercom/communication-threads/saves-and-zones/Sol%20Shape%20Serialization%20Hydration%20Integrity%202026-09-16.md) is careful about the repair. Form determines identity and structure; Matter supplies physical density. Dense topology has a legitimate home in `.ecmatter`, but stale Matter must not redefine the current semantic form.
 
-A few days earlier, [Zone-native saving](../../../agent%20intercom/communication-threads/Zone_Native_Save_Rung_Phase_2_2026-09-14.md) had brought the ordinary Save action closer to the thing a Person believed they were saving. These changes belong together: preserving an intention requires both the right persistence unit and faithful content inside it.
+A few days earlier, [Zone-native saving](../../../agent%20intercom/communication-threads/saves-and-zones/Zone_Native_Save_Rung_Phase_2_2026-09-14.md) had brought the ordinary Save action closer to the thing a Person believed they were saving. These changes belong together: preserving an intention requires both the right persistence unit and faithful content inside it.
 
 Then you walked closer to the Cathedral.
 
-The [September 18 account](../../../agent%20intercom/communication-threads/Cathedral%20Uncanny%20Valley%20Saga%209-18-26%20-%20GPT-5.6%20Sol.md) records the mismatch between a promising distant view and surfaces that failed under approach. Your diagnosis went beyond resolution. If a visible fold claims to be carved geometry, painting its shadows onto a flat surface does not give the world that fold.
+The [September 18 account](../../../agent%20intercom/communication-threads/sdf-and-rendering/Cathedral%20Uncanny%20Valley%20Saga%209-18-26%20-%20GPT-5.6%20Sol.md) records the mismatch between a promising distant view and surfaces that failed under approach. Your diagnosis went beyond resolution. If a visible fold claims to be carved geometry, painting its shadows onto a flat surface does not give the world that fold.
 
 The same account explicitly allows truthful paint, roughness, approximation, and representation at the appropriate scale. The demand is about the causes the representation promises.
 
@@ -68,9 +68,9 @@ That feedback deserves protection. A world that can disappoint its author precis
 
 ## Light pulled on time; sound pulled on meaning
 
-The contrast between the light handoffs is striking. On [September 11](../../../agent%20intercom/communication-threads/Light_First_Order_Authorability_Handoff_2026-09-11.md), much of the work concerns making the Zone's FieldNode persistent, reachable, and governable. The note even distinguishes a stored `light.intensity` witness from a value the renderer actually consumes.
+The contrast between the light handoffs is striking. On [September 11](../../../agent%20intercom/communication-threads/ontomath-light-and-image/Light_First_Order_Authorability_Handoff_2026-09-11.md), much of the work concerns making the Zone's FieldNode persistent, reachable, and governable. The note even distinguishes a stored `light.intensity` witness from a value the renderer actually consumes.
 
-By the [September 21 Rung 7 handoff](../../../agent%20intercom/communication-threads/SUN_HANDOFF_OntoMath_Radiance_Rung_7_Merged_Rung_8_Visibility_And_Volumetric_Parallel_2026-09-21.md), the recorded architecture composes independently authored sources with spatial magnitude, source chroma, angular emission, and relative temporal input. That handoff names visibility/shadows as the next numbered rung and volumetric transport as a parallel obligation; it also explicitly leaves post-merge CI unconfirmed at its writing time.
+By the [September 21 Rung 7 handoff](../../../agent%20intercom/communication-threads/ontomath-light-and-image/SUN_HANDOFF_OntoMath_Radiance_Rung_7_Merged_Rung_8_Visibility_And_Volumetric_Parallel_2026-09-21.md), the recorded architecture composes independently authored sources with spatial magnitude, source chroma, angular emission, and relative temporal input. That handoff names visibility/shadows as the next numbered rung and volumetric transport as a parallel obligation; it also explicitly leaves post-merge CI unconfirmed at its writing time.
 
 The trajectory is meaningful without pretending those remaining obligations disappeared.
 
@@ -78,7 +78,7 @@ To let authored light vary in time, Earthcall had to say more carefully what a t
 
 Light therefore pulled on an ontological question larger than lighting. The answer could serve a lamp, a Material, a Zone, or another Singular without demanding a new C++ timeline kind for each.
 
-The [authored-timbre work](../../../agent%20intercom/communication-threads/SUN_HANDOFF_Audio_Micromastery_Authored_Timbre_Rung_1_2026-09-20.md), merged through PR #260, makes a related move. A timbre reference begins with authored identity and mathematical structure. Unknown authored meaning must not quietly become a convenient stock waveform; a refused output must not be reported as a sound that happened. The first rung does not claim the later audio compiler already exists.
+The [authored-timbre work](../../../agent%20intercom/communication-threads/audio-and-studio/SUN_HANDOFF_Audio_Micromastery_Authored_Timbre_Rung_1_2026-09-20.md), merged through PR #260, makes a related move. A timbre reference begins with authored identity and mathematical structure. Unknown authored meaning must not quietly become a convenient stock waveform; a refused output must not be reported as a sound that happened. The first rung does not claim the later audio compiler already exists.
 
 I see a productive form of generalization here. A concrete phenomenon asks a question, and the answer is stated at the narrowest level that remains faithful to everyone else who could ask it. That is how Earthcall can become more general while still responding to something you actually wanted to make.
 
@@ -86,11 +86,11 @@ I see a productive form of generalization here. A concrete phenomenon asks a que
 
 The performance work supplies an essential counterweight to this excitement.
 
-Formation Rete's [September 21 handoff](../../../agent%20intercom/communication-threads/SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md) records a Law-Direct stress case in which relation queries fall from 131,072 to zero while 65,536 applications remain unchanged. It separately reports a smaller improvement in real Chess. These are the handoff's measurements, not measurements from this session, and the distinction between the stress case and the lived example matters.
+Formation Rete's [September 21 handoff](../../../agent%20intercom/communication-threads/rete-and-law/SUN_HANDOFF_Formation_Rete_Relevant_Change_Incrementality_2026-09-21.md) records a Law-Direct stress case in which relation queries fall from 131,072 to zero while 65,536 applications remain unchanged. It separately reports a smaller improvement in real Chess. These are the handoff's measurements, not measurements from this session, and the distinction between the stress case and the lived example matters.
 
 The new direction from you is that incrementality should recurse upward: changes should wake the proofs and routes they can affect. The [Prophetic rule](../../architecture/law/PROPHETIC_RETE.md) keeps the ambition honest. Uncertainty must widen possibility. A narrower answer is only an optimization if it has not silently deprived a Law of something it should hear.
 
-Meanwhile, the [SDF traversal handoff](../../../agent%20intercom/communication-threads/SUN_HANDOFF_SDF_Spatial_Prophetic_After_PR259_284_Depth5_Verdict_2026-09-21.md) records a wonderfully inconvenient result. Conservative positive proofs can justify skipping cells, yet their consumption can still make the authored-Perlin witness slower. Balanced AB/BA measurements retained the slowdown. A proposed arithmetic simplification stayed correct and made the measured performance worse, so it was rejected.
+Meanwhile, the [SDF traversal handoff](../../../agent%20intercom/communication-threads/sdf-and-rendering/SUN_HANDOFF_SDF_Spatial_Prophetic_After_PR259_284_Depth5_Verdict_2026-09-21.md) records a wonderfully inconvenient result. Conservative positive proofs can justify skipping cells, yet their consumption can still make the authored-Perlin witness slower. Balanced AB/BA measurements retained the slowdown. A proposed arithmetic simplification stayed correct and made the measured performance worse, so it was rejected.
 
 There are two separate achievements to demand here. A proof must preserve the world. The machinery consuming it must earn its cost. Passing the first obligation does not settle the second.
 
