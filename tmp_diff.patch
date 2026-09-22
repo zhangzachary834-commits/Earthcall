@@ -1,0 +1,218 @@
+diff --git a/scripts/author_chess.py b/scripts/author_chess.py
+index df94827b..b126e257 100644
+--- a/scripts/author_chess.py
++++ b/scripts/author_chess.py
+@@ -888,18 +888,8 @@ def build_laws():
+         ["object-drag-started"],
+         IS_PIECE,   # NOT the board — starting a drag on empty board must not move anything
+         seq(
+-            {
+-                "kind": 8,
+-                "path": "@state.chess.targetX",
+-                "bindings": {"ptrX": "@interaction-channel.pointerWorld.x"},
+-                "function": {"input": "ptrX", "pieces": pointer_bins()},
+-            },
+-            {
+-                "kind": 8,
+-                "path": "@state.chess.targetY",
+-                "bindings": {"ptrZ": "@interaction-channel.pointerWorld.z"},
+-                "function": {"input": "ptrZ", "pieces": pointer_bins()},
+-            },
++            map_path("@state.chess.targetX", {"gx": "gridX"}, copy_terms("gx")),
++            map_path("@state.chess.targetY", {"gy": "gridY"}, copy_terms("gy")),
+             publish("square-clicked"),
+         ),
+         scope=0,
+diff --git a/src/Singularity/Core/EngineRender.cpp b/src/Singularity/Core/EngineRender.cpp
+index 51ffc1ed..6202f6e9 100644
+--- a/src/Singularity/Core/EngineRender.cpp
++++ b/src/Singularity/Core/EngineRender.cpp
+@@ -136,6 +136,7 @@ namespace Core {
+                 clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
+                 currentRenderer().setWireframe(screenChannel->wireframe);
+                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
++                currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
+             }
+             auto tB0 = std::chrono::steady_clock::now();
+             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
+diff --git a/src/Singularity/Screen/Renderer.hpp b/src/Singularity/Screen/Renderer.hpp
+index 13a7dda0..d382b31f 100644
+--- a/src/Singularity/Screen/Renderer.hpp
++++ b/src/Singularity/Screen/Renderer.hpp
+@@ -178,6 +178,7 @@ public:
+     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
+     // is honoured.
+     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
++    virtual void setSpaceDistortion(float /*d*/) {}
+     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
+                              float scale, bool additive) = 0;
+ 
+diff --git a/src/Singularity/Screen/ScreenChannel.cpp b/src/Singularity/Screen/ScreenChannel.cpp
+index 45d8db25..2bb7fa64 100644
+--- a/src/Singularity/Screen/ScreenChannel.cpp
++++ b/src/Singularity/Screen/ScreenChannel.cpp
+@@ -89,6 +89,10 @@ void ScreenChannel::buildProperties() {
+         registerProperty(
+             std::make_unique<PropertyRef<ScreenChannel, glm::vec3>>(name, this, member));
+     };
++    const auto floating = [this](const char* name, double ScreenChannel::*member) {
++        registerProperty(
++            std::make_unique<PropertyRef<ScreenChannel, double>>(name, this, member));
++    };
+ 
+     readOnlyInt("drawCalls", &ScreenChannel::getDrawCalls);
+     readOnlyInt("trianglesDrawn", &ScreenChannel::getTrianglesDrawn);
+@@ -99,6 +103,7 @@ void ScreenChannel::buildProperties() {
+     readOnlyInt("cachedMeshesCount", &ScreenChannel::getCachedMeshesCount);
+     boolean("wireframe", &ScreenChannel::wireframe);
+     boolean("heightGridDdaEnabled", &ScreenChannel::heightGridDdaEnabled);
++    floating("spaceDistortion", &ScreenChannel::spaceDistortion);
+     vector3("backgroundColor", &ScreenChannel::backgroundColor);
+ 
+     // Illumination placement is first-order authored state. These names are
+diff --git a/src/Singularity/Screen/ScreenChannel.hpp b/src/Singularity/Screen/ScreenChannel.hpp
+index fe0e383e..59ace809 100644
+--- a/src/Singularity/Screen/ScreenChannel.hpp
++++ b/src/Singularity/Screen/ScreenChannel.hpp
+@@ -79,9 +79,10 @@ public:
+     // light follows the Person's camera at cameraPos + (2,5,2). A Law can make
+     // it world-fixed by setting light.cameraRelative=false and writing
+     // light.position, or can animate either vector as any other property.
+-    bool      lightCameraRelative = true;
++    bool      lightCameraRelative = false;
+     glm::vec3 lightPosition{2.0f, 5.0f, 2.0f};
+     glm::vec3 lightCameraOffset{2.0f, 5.0f, 2.0f};
++    double    spaceDistortion = 0.0;
+ 
+     bool getHasScreenCapturePermission() const;
+     bool getHasAccessibilityPermission() const;
+diff --git a/src/Singularity/Screen/WebGPU/SdfWgsl.cpp b/src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+index 45ed4466..ee1e4b44 100644
+--- a/src/Singularity/Screen/WebGPU/SdfWgsl.cpp
++++ b/src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+@@ -941,14 +941,15 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
+ // and leave at the analytic AABB; the rasterised face is not the ray origin.
+ const char* kMarcher = R"WGSL(
+ struct RU {
+-    viewProj:  mat4x4<f32>,
+-    lightPos:  vec4<f32>,
+-    eyePos:    vec4<f32>,
+-    // x = distance to the camera's far plane, in WORLD units. Everything past it
+-    // is clipped before it is ever seen, so marching there is work with no
+-    // possible output. Unlike a hardcoded horizon constant this is not a quality
+-    // setting -- it cannot remove anything a Person could have seen.
+-    limits:    vec4<f32>,
++    viewProj:    mat4x4<f32>,
++    invViewProj: mat4x4<f32>,
++    lightPos:    vec4<f32>,
++    eyePos:      vec4<f32>,
++    // x = distance to the camera's far plane, in WORLD units.
++    // y = viewport width in pixels.
++    // z = viewport height in pixels.
++    // w = authorable space distortion factor (e.g. Far Lands Zone).
++    limits:      vec4<f32>,
+ };
+ @group(0) @binding(0) var<uniform> u: RU;
+ struct Params { v: array<f32> };
+@@ -966,8 +967,11 @@ fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VSO
+     let inst = instances[instIdx];
+     let world = inst.model * vec4<f32>(pos * inst.extents.xyz, 1.0);
+     o.clip = u.viewProj * world;
+-    // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
+-    o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
++    // Clamp to far plane only when in front of camera (w > 0) so proxy geometry is never
++    // lost to far-plane clipping without inverting clip depth for vertices behind the camera plane.
++    if (o.clip.w > 0.0) {
++        o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
++    }
+     o.worldPos = world.xyz;
+     o.instIdx = instIdx;
+     return o;
+@@ -1063,10 +1067,32 @@ fn fs(in: VSOut) -> FSOut {
+     g_instIdx = in.instIdx;
+     let inst    = instances[in.instIdx];
+     let roWorld = u.eyePos.xyz;
+-    let rdWorld = normalize(in.worldPos - roWorld);
++
++    // Derive primary ray direction: use exact screen NDC unprojection when viewport
++    // dimensions are available to eliminate proxy cube clipping and perspective non-linearities.
++    var rdWorld: vec3<f32>;
++    if (u.limits.y > 0.0 && u.limits.z > 0.0) {
++        let ndc = vec4<f32>(
++            (in.clip.x / u.limits.y) * 2.0 - 1.0,
++            (1.0 - (in.clip.y / u.limits.z)) * 2.0 - 1.0,
++            1.0,
++            1.0
++        );
++        let worldPt = u.invViewProj * ndc;
++        rdWorld = normalize(worldPt.xyz / worldPt.w - roWorld);
++    } else {
++        rdWorld = normalize(in.worldPos - roWorld);
++    }
++
+     let ro      = (inst.invModel * vec4<f32>(roWorld, 1.0)).xyz;
+     let rdField = (inst.invModel * vec4<f32>(rdWorld, 0.0)).xyz;
+-    let rd      = normalize(rdField);
++    var rd      = normalize(rdField);
++
++    // Authorable Far Lands space distortion (Part 2):
++    if (u.limits.w > 1e-4) {
++        let warp = sin(ro.xyz * 0.05 + vec3<f32>(0.0, rdField.y * 2.0, 0.0)) * u.limits.w;
++        rd = normalize(rd + warp);
++    }
+     // t is measured in FIELD units; the far plane is a WORLD distance. The
+     // unnormalised field-space direction is exactly the conversion factor along
+     // this ray, so this stays right under any invertible model transform,
+diff --git a/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp b/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+index 7bbe1a28..423f47ef 100644
+--- a/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
++++ b/src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
+@@ -927,9 +927,10 @@ namespace {
+ // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
+ struct SdfGlobalUniforms {
+     glm::mat4 viewProj;
++    glm::mat4 invViewProj;
+     glm::vec4 lightPos;
+     glm::vec4 eyePos;
+-    glm::vec4 limits;   // x = far-plane distance in world units; see struct RU
++    glm::vec4 limits;   // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
+ };
+ } // namespace
+ 
+@@ -1260,6 +1261,7 @@ void WebGpuRenderer::flushSdfDraws() {
+     // Global uniforms for SDFs
+     SdfGlobalUniforms u;
+     u.viewProj = _viewProj;
++    u.invViewProj = glm::inverse(_viewProj);
+     u.lightPos = glm::vec4(lightPos(), 1.0f);
+     u.eyePos = glm::vec4(_eyePos, 1.0f);
+     // Unprojected rather than read off a named setting: the far plane belongs to
+@@ -1274,7 +1276,7 @@ void WebGpuRenderer::flushSdfDraws() {
+             if (std::isfinite(d) && d > 0.0f) farDist = d;
+         }
+     }
+-    u.limits = glm::vec4(farDist, 0.0f, 0.0f, 0.0f);
++    u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
+ 
+     auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
+ 
+diff --git a/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp b/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp
+index 700773bf..5c777329 100644
+--- a/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp
++++ b/src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp
+@@ -93,6 +93,7 @@ public:
+     // template as setWireframe -- disabled, every heightfield object simply
+     // renders through the unmodified marcher, exactly as before this phase.
+     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
++    void setSpaceDistortion(float d) override { _spaceDistortion = d; }
+ 
+     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
+     // field's surface; this renders a VECTOR field's flow as points. Positions are
+@@ -222,6 +223,7 @@ private:
+     // (Phase C). Defaults true so the optimization is live out of the box;
+     // a Person can author @screen-channel.heightGridDdaEnabled = false.
+     bool _heightGridDdaEnabled = true;
++    float _spaceDistortion = 0.0f;
+ 
+     // Depth buffer, recreated when the target size changes.
+     WGPUTexture     _depthTex  = nullptr;

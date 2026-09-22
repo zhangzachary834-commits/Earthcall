@@ -1,0 +1,83 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-revert-capture",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-revert-capture",
+    "name": "restore-captured-if-reverted",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        {
+          "kind": 0,
+          "path": "capturedThisMove",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "onBoard",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "capturedThisMove",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-revert-capture",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "move-reverted"
+  ]
+}

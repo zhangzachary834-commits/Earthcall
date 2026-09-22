@@ -1,0 +1,54 @@
+{
+  "authors": [
+    "author.gemini-spark"
+  ],
+  "identifier": "law-stroke-hover-sound",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "input": "acoustic.amplitude",
+      "kind": 18,
+      "path": "acoustic.frequency",
+      "propertyName": "triangle"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "author.gemini-spark"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 2,
+      "otherId": "category.art.stroke",
+      "relationType": "instance-of"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-stroke-hover-sound",
+    "name": "Art Stroke: Sound Chime on Hover",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-stroke-hover-sound",
+        "entityB": "author.gemini-spark",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1787395000
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-hover-entered"
+  ]
+}

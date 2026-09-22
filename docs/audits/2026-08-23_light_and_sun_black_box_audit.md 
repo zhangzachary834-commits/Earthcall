@@ -1,0 +1,36 @@
+Earthcall Audit: Light Source and Sun Object (Black Box Refusal)
+Document: docs/audits/2026-08-23_light_and_sun_black_box_audit.md
+Date: August 23, 2026
+Auditor: Gemini Spark Research Assistant
+
+Target Architecture: Earthcall WebGPU/Screen Rendering & Core Ontology Subsystems
+
+1. Executive Summary
+This audit assesses whether Earthcall’s current light source and Sun Object implementations adhere to the foundational "No Black Box" Refusal (NO_BLACK_BOX.md, AGENTS.md, and PropertyPath reflection invariants). The audit concludes that both the light source rendering pipeline and the Sun Object represent severe architectural violations and profound conceptual ironies within the engine.
+
+2. The "No Black Box" Refusal Invariant
+In Earthcall doctrine, the Black Box refusal mandates that:
+Total Legibility & Governance: "You cannot consent to what you cannot read." Every state variable, environmental property, and simulation rule must be transparently exposed as a registered PropertyPath descriptor readable and governable by Person-authored Laws at runtime.
+No Engine Illusions: Graphics tricks, opaque GPU shader routines, and hardcoded C++ behaviors that hide their computational process behind fixed pipelines are refused in favor of OntoMath Abstract Syntax Trees (ASTs).
+Aniconic & Processive Reality: Foundational cosmological teloi and ordering principles must manifest as mathematical fields and processes, never as static, decorative "skinned Objects" (the Minecraft Jesus symbol grounding refusal).
+
+3. Key Findings & Identified Violations
+
+Finding 1: Shader Opacity in the WebGPU Rendering Pipeline
+
+Root Cause: In SdfWgsl.cpp, WebGPU/GL raymarching routines, directional illumination vectors, ambient terms, radiance formulas, and volumetric transmittance equations are hardcoded into static WGSL shader string constants.
+Violation: The lighting engine acts as a closed, un-inspectable black box. A Person authoring a Law in the Ourverse cannot target, inspect, or rewrite the mathematical parameters of light (e.g. light.direction, light.intensity, light.color, or atmospheric scattering) because no PropertyPath bridge exists for them.
+Tracked Obligation: Item 10 in Earthcall's Roadmap explicitly acknowledges this failure: "Figure out and code the ontology of light so shaders aren’t a black box to Persons."
+
+Finding 2: The Sun Object Category Error
+Root Cause: The Sun is currently conceptualized or placed in scenes as a discrete 3D spatial Object (a glowing textured sphere mesh).
+Violation: In Earthcall's metaphysical framework, light is a continuous scalar/vector field governed by vector calculus (OntoMath::ScalarField / FieldNode), not a static constructed entity. Treating the primary celestial illuminator as a skinned Object commits the exact iconographic reduction refused in the Manifesto.
+
+Finding 3: The Central Irony
+The Illuminator as the Black Box: The Sun exists to illuminate and reveal reality. Yet in Earthcall, it is the single most opaque, un-illuminated component in the software substrate—its internal workings are locked away in GPU registers where the Law engine cannot reach them.
+Smuggling the Game Engine Back: While Earthcall refuses conventional game engine shortcuts (like bounded fog boxes), hardcoding lighting equations inside WGSL reintroduces teleologically indifferent game-engine illusions through the backdoor.
+
+4. Actionable Remediation Plan
+Elevate Light to a First-Class Singular / FieldNode: Register light.direction, light.radiance, light.color, and light.falloff as inspectable PropertyPaths.
+Implement AST-to-WGSL Compilation for Illumination: Connect lighting mathematics to OntoMath::MathNode ASTs so that Laws can dynamically alter lighting equations and compile them into WGSL at runtime (Dual-Path compilation).
+Abolish the Skinned Sun Object: Re-order the Sun as a radiant mathematical FieldNode projecting continuous radiance across Zones.

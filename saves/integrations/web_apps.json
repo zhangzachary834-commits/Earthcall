@@ -1,0 +1,19 @@
+{
+  "timestamp": 1754098663,
+  "version": "1.0",
+  "web_apps": [
+    {
+      "active": true,
+      "config": {
+        "allow_earthcall_features": true,
+        "allow_overlay": true,
+        "icon_path": "",
+        "name": "Google",
+        "permissions": {},
+        "url": "https://google.com"
+      },
+      "name": "Google",
+      "overlay_mode": false
+    }
+  ]
+}

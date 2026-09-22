@@ -1,0 +1,608 @@
+// Regression witness for SDF WGSL structure/value separation.
+//
+// A value-only edit must not require shader-source regeneration. collectParams()
+// follows compile()'s exact parameter traversal order and must therefore produce
+// the same parameter block a full compile would have produced for the changed
+// values, while the WGSL source itself remains byte-identical.
+//
+// This test covers both ordinary CSG parameters and the special analytic-gradient
+// Perlin path, because the latter has its own traversal order.
+
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+
+#include <cstdio>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace {
+
+int failures = 0;
+
+void check(bool ok, const char* what) {
+    std::printf("  %s: %s\n", ok ? "ok" : "FAILED", what);
+    if (!ok) ++failures;
+}
+
+bool sameFloats(const std::vector<float>& a, const std::vector<float>& b) {
+    return a == b;
+}
+
+std::unique_ptr<OntoMath::MathNode> number(double value) {
+    auto n = std::make_unique<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::ScalarLeaf;
+    n->scalarForm.terms.push_back(OntoMath::Term(value));
+    return n;
+}
+
+std::unique_ptr<OntoMath::MathNode> variable(const std::string& name) {
+    auto n = std::make_unique<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::ValueLeaf;
+    n->variableName = name;
+    return n;
+}
+
+std::unique_ptr<OntoMath::MathNode> vector3(double x, double y, double z) {
+    auto n = std::make_unique<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::VectorConstruct;
+    n->children.push_back(number(x));
+    n->children.push_back(number(y));
+    n->children.push_back(number(z));
+    return n;
+}
+
+std::shared_ptr<OntoMath::MathNode> terrainMath(double amplitude) {
+    auto y = variable("y");
+    auto p = variable("p");
+
+    auto plus = std::make_unique<OntoMath::MathNode>();
+    plus->op = OntoMath::MathNode::Op::Add;
+    plus->children.push_back(std::move(p));
+    plus->children.push_back(vector3(100.0, 0.0, 100.0));
+
+    auto scaledPoint = std::make_unique<OntoMath::MathNode>();
+    scaledPoint->op = OntoMath::MathNode::Op::Scale;
+    scaledPoint->children.push_back(number(0.008));
+    scaledPoint->children.push_back(std::move(plus));
+
+    auto noise = std::make_unique<OntoMath::MathNode>();
+    noise->op = OntoMath::MathNode::Op::Noise;
+    noise->children.push_back(std::move(scaledPoint));
+
+    auto scaledNoise = std::make_unique<OntoMath::MathNode>();
+    scaledNoise->op = OntoMath::MathNode::Op::Scale;
+    scaledNoise->children.push_back(number(amplitude));
+    scaledNoise->children.push_back(std::move(noise));
+
+    auto root = std::make_unique<OntoMath::MathNode>();
+    root->op = OntoMath::MathNode::Op::Sub;
+    root->children.push_back(std::move(y));
+    root->children.push_back(std::move(scaledNoise));
+    return std::shared_ptr<OntoMath::MathNode>(root.release());
+}
+
+} // namespace
+
+int main() {
+    std::printf("Running SDF WGSL parameter refresh test...\n");
+
+    // ---------------------------------------------------------------------
+    // 1. Ordinary CSG: blend and child offset are parameter values, not WGSL
+    //    structure. Recollection must exactly match a full compile.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.8f));
+        auto torus = geom::SdfNode::leaf(geom::SdfPrim::Torus,
+                                         glm::vec3(1.1f, 0.22f, 0.0f));
+        auto field = geom::SdfNode::binary(geom::SdfOp::SmoothUnion,
+                                           sphere, torus, 0.17f);
+
+        const sdfwgsl::Program before = sdfwgsl::compile(field);
+        check(before.ok, "initial CSG program compiles");
+
+        field.t = 0.63f;
+        field.children[1]->offset = glm::vec3(0.3f, -0.1f, 0.2f);
+
+        const sdfwgsl::ParameterBlock refreshed = sdfwgsl::collectParams(field);
+        const sdfwgsl::Program after = sdfwgsl::compile(field);
+
+        check(refreshed.ok, "CSG parameter-only recollection succeeds");
+        check(after.ok, "mutated CSG full compile succeeds");
+        check(before.wgsl == after.wgsl,
+              "CSG value edits leave WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "CSG value edits change the parameter block");
+        check(sameFloats(refreshed.values, after.params),
+              "CSG recollection exactly matches full-compile parameters");
+
+        field.op = geom::SdfOp::Union;
+        const sdfwgsl::Program structural = sdfwgsl::compile(field);
+        check(structural.ok, "structurally-mutated CSG compiles");
+        check(after.wgsl != structural.wgsl,
+              "CSG operator edit changes WGSL structure");
+    }
+
+    // ---------------------------------------------------------------------
+    // 2. Analytic gradients are a property of supported mathematics, not of
+    //    Noise specifically. length(p)-r is differentiable by the same jet
+    //    machinery and must not fall back to finite differences.
+    // ---------------------------------------------------------------------
+    {
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(variable("p"));
+
+        auto radiusField = std::make_unique<OntoMath::MathNode>();
+        radiusField->op = OntoMath::MathNode::Op::Sub;
+        radiusField->children.push_back(std::move(length));
+        radiusField->children.push_back(number(0.75));
+
+        geom::SdfNode implicit = geom::makeImplicit(
+            std::shared_ptr<OntoMath::MathNode>(radiusField.release()));
+        const sdfwgsl::Program compiled = sdfwgsl::compile(implicit);
+
+        check(compiled.ok, "non-noise differentiable Expr compiles");
+        check(compiled.wgsl.find("fn sdfEvalGrad") != std::string::npos,
+              "non-noise differentiable Expr emits analytic value+gradient");
+    }
+
+    // ---------------------------------------------------------------------
+    // 3. Analytic Perlin-gradient path: compile() traverses the root through
+    //    emitMathNodeGrad instead of ordinary emitNode. collectParams() must
+    //    preserve that special ordering exactly.
+    // ---------------------------------------------------------------------
+    {
+        geom::SdfNode terrain = geom::makeImplicit(terrainMath(40.0));
+        terrain.offset = glm::vec3(2.0f, 3.0f, 4.0f);
+
+        const sdfwgsl::Program before = sdfwgsl::compile(terrain);
+        check(before.ok, "analytic Perlin program compiles");
+        check(before.needsGradientStep, "Perlin expression uses gradient-corrected marcher");
+
+        // Root is Sub(y, Scale(amplitude, Noise(...))).
+        auto& amplitudeNode = terrain.mathNode->children[1]->children[0];
+        amplitudeNode->scalarForm.terms[0].coefficient = 55.0;
+        terrain.offset = glm::vec3(-5.0f, 1.5f, 8.0f);
+
+        const sdfwgsl::ParameterBlock refreshed = sdfwgsl::collectParams(terrain);
+        const sdfwgsl::Program after = sdfwgsl::compile(terrain);
+
+        check(refreshed.ok, "analytic Perlin parameter recollection succeeds");
+        check(after.ok, "mutated analytic Perlin full compile succeeds");
+        check(before.wgsl == after.wgsl,
+              "analytic Perlin value edits leave WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "analytic Perlin value edits change parameter values");
+        check(sameFloats(refreshed.values, after.params),
+              "analytic Perlin recollection exactly matches full-compile parameters");
+    }
+
+    // ---------------------------------------------------------------------
+    // 4. Authored radiance uses the SAME OntoMath emitter and parameter
+    //    traversal as geometry/material math. A value-only radiance edit must
+    //    recollect to the exact full-compile buffer without changing WGSL.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto radianceNode = std::shared_ptr<OntoMath::MathNode>(number(0.75).release());
+        OntoMath::Piecewise radiance;
+        radiance.pieces.push_back({
+            false, false, 0.0, 0.0, true, true,
+            radianceNode, nullptr, nullptr, nullptr, nullptr, nullptr
+        });
+
+        const sdfwgsl::Program before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::ScalarExpressionLayout layoutBefore =
+            sdfwgsl::inspectScalarExpression(&radiance);
+        check(before.ok, "authored radiance program compiles");
+        check(layoutBefore.ok, "authored radiance structure inspection succeeds");
+        check(before.wgsl.find("fn lightRadiance(p: vec3<f32>) -> f32") != std::string::npos,
+              "authored radiance emits the shared OntoMath WGSL function");
+
+        radianceNode->scalarForm.terms[0].coefficient = 0.25;
+        const sdfwgsl::ParameterBlock refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::Program after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &radiance);
+        const sdfwgsl::ScalarExpressionLayout layoutAfter =
+            sdfwgsl::inspectScalarExpression(&radiance);
+
+        check(refreshed.ok, "radiance parameter recollection succeeds");
+        check(layoutAfter.ok, "mutated radiance structure inspection succeeds");
+        check(layoutBefore.structure == layoutAfter.structure,
+              "numeric radiance edit preserves emitted structure identity");
+        check(layoutBefore.parameterCount == layoutAfter.parameterCount,
+              "numeric radiance edit preserves parameter layout");
+        check(after.ok, "mutated radiance full compile succeeds");
+        check(before.wgsl == after.wgsl,
+              "radiance value edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "radiance value edit changes the parameter block");
+        check(sameFloats(refreshed.values, after.params),
+              "radiance recollection exactly matches full-compile parameters");
+
+        auto add = std::make_shared<OntoMath::MathNode>();
+        add->op = OntoMath::MathNode::Op::Add;
+        add->children.push_back(number(0.10));
+        add->children.push_back(number(0.15));
+        radiance.pieces[0].mathNode = add;
+        const sdfwgsl::ScalarExpressionLayout structural =
+            sdfwgsl::inspectScalarExpression(&radiance);
+        check(structural.ok, "structurally changed radiance remains compilable");
+        check(structural.structure != layoutAfter.structure,
+              "radiance operator-tree edit changes emitted structure identity");
+
+        auto unsupported = std::make_shared<OntoMath::MathNode>();
+        unsupported->op = OntoMath::MathNode::Op::Raycast;
+        radiance.pieces[0].mathNode = unsupported;
+        const sdfwgsl::ScalarExpressionLayout refused =
+            sdfwgsl::inspectScalarExpression(&radiance);
+        check(!refused.ok && !refused.error.empty(),
+              "unsupported authored radiance refuses during structure inspection");
+
+        const sdfwgsl::Program legacy = sdfwgsl::compile(sphere);
+        check(legacy.ok, "legacy no-radiance program still compiles");
+        check(legacy.wgsl.find("fn lightRadiance(p: vec3<f32>) -> f32") != std::string::npos,
+              "no-radiance source still exposes the common lightRadiance seam");
+    }
+
+    // ---------------------------------------------------------------------
+    // 5. Rung 4's admitted temporal coordinate is an ambient input, not an
+    //    authored parameter. rho(p,t) must compile to the shared temporal
+    //    uniform without knowing which Timeline supplied t, and therefore
+    //    requires no parameter slot or per-frame WGSL regeneration.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto timeNode = std::shared_ptr<OntoMath::MathNode>(
+            variable(OntoMath::kTimeVar).release());
+        OntoMath::Piecewise timedRadiance =
+            OntoMath::Piecewise::continuous(timeNode);
+
+        const sdfwgsl::ScalarExpressionLayout unboundLayout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance);
+        const sdfwgsl::ScalarExpressionLayout layout =
+            sdfwgsl::inspectScalarExpression(&timedRadiance, true);
+        const sdfwgsl::Program timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+
+        check(!unboundLayout.ok &&
+                  unboundLayout.error.find("does not bind the temporal coordinate") != std::string::npos,
+              "t refuses in a shader expression context that did not opt into time");
+        check(layout.ok, "rho(p,t) structure inspection succeeds");
+        check(timed.ok, "rho(p,t) WGSL compilation succeeds");
+        check(layout.parameterCount == 0,
+              "temporal coordinate consumes no authored parameter slot");
+        check(timed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "canonical t binds to the shared SDF temporal uniform");
+
+        auto scalarTime = std::make_shared<OntoMath::MathNode>();
+        scalarTime->op = OntoMath::MathNode::Op::ScalarLeaf;
+        scalarTime->scalarForm.terms.push_back(
+            OntoMath::Term(2.0, {{OntoMath::kTimeVar, 1.0}}));
+        timedRadiance.pieces[0].mathNode = scalarTime;
+        const sdfwgsl::Program scalarTimed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &timedRadiance);
+        check(scalarTimed.ok && scalarTimed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "ScalarForm factors may use the same canonical t binding");
+
+        // Piecewise applicability must use the same admitted coordinate. Before
+        // Rung 4 this emitter recognized only x/y/z and silently used 0.0 for
+        // every other inputVariable, which would make a bounded rho(t) choose
+        // the wrong branch while still producing valid WGSL.
+        OntoMath::Piecewise boundedTime =
+            OntoMath::Piecewise::continuous(
+                std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        boundedTime.inputVariable = OntoMath::kTimeVar;
+        boundedTime.pieces[0].hasLo = true;
+        boundedTime.pieces[0].lo = 0.25;
+        boundedTime.pieces[0].hasHi = true;
+        boundedTime.pieces[0].hi = 0.75;
+
+        const auto boundedUnbound =
+            sdfwgsl::inspectScalarExpression(&boundedTime);
+        const auto boundedLayout =
+            sdfwgsl::inspectScalarExpression(&boundedTime, true);
+        const auto boundedProgram =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &boundedTime);
+
+        check(!boundedUnbound.ok,
+              "bounded rho(t) refuses when temporal coordinate is not admitted");
+        check(boundedLayout.ok && boundedProgram.ok,
+              "bounded rho(t) compiles when temporal coordinate is admitted");
+        check(boundedProgram.wgsl.find("u.radianceTime.x >=") != std::string::npos &&
+                  boundedProgram.wgsl.find("u.radianceTime.x <=") != std::string::npos,
+              "Piecewise t bounds read the admitted Timeline coordinate");
+    }
+
+    // ---------------------------------------------------------------------
+    // 6. Rung 5: chi(p,t)->vec3 is independent authored source chroma.
+    //    Numeric edits refresh parameters; structure edits compile; t is an
+    //    ambient source coordinate; absence remains legacy light.color.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto rhoNode = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+
+        auto chiNode = std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.25, 0.0).release());
+        OntoMath::Piecewise chi = OntoMath::Piecewise::continuous(chiNode);
+
+        const auto legacyLayout = sdfwgsl::inspectVectorExpression(nullptr, true);
+        const auto layoutBefore = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto before = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(legacyLayout.ok &&
+                  legacyLayout.structure.find("legacy-chroma:light.color") != std::string::npos,
+              "absent chi has explicit legacy light.color structural identity");
+        check(layoutBefore.ok, "authored chi vector structure inspection succeeds");
+        check(before.ok && before.wgsl.find("fn lightChroma(p: vec3<f32>) -> vec3<f32>") != std::string::npos,
+              "authored chi lowers through the production OntoMath WGSL emitter");
+        check(before.wgsl.find("const HAS_AUTHORED_CHROMA: bool = true") != std::string::npos,
+              "authored chi selects the separated source-chroma lighting path");
+
+        // VALUE ONLY: mutate the red component's ScalarLeaf coefficient.
+        chiNode->children[0]->scalarForm.terms[0].coefficient = 0.2;
+        const auto layoutAfter = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto refreshed = sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, &chi);
+        const auto after = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(layoutAfter.ok && layoutAfter.structure == layoutBefore.structure,
+              "numeric chi edit preserves vector structure identity");
+        check(layoutAfter.parameterCount == layoutBefore.parameterCount,
+              "numeric chi edit preserves vector parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric chi edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric chi edit changes authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "chi parameter recollection exactly matches full compile");
+
+        // STRUCTURE/TIME: chi=(t,0,0). t is admitted but takes no authored slot.
+        auto timeVector = std::make_shared<OntoMath::MathNode>();
+        timeVector->op = OntoMath::MathNode::Op::VectorConstruct;
+        timeVector->children.push_back(variable(OntoMath::kTimeVar));
+        timeVector->children.push_back(number(0.0));
+        timeVector->children.push_back(number(0.0));
+        chi.pieces[0].mathNode = timeVector;
+        const auto timedUnbound = sdfwgsl::inspectVectorExpression(&chi, false);
+        const auto timedLayout = sdfwgsl::inspectVectorExpression(&chi, true);
+        const auto timed = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi);
+        check(!timedUnbound.ok,
+              "timed chi refuses in an expression context that did not admit source time");
+        check(timedLayout.ok && timedLayout.structure != layoutAfter.structure,
+              "structural chi edit changes emitted structure identity");
+        check(timed.ok && timed.wgsl.find("u.radianceTime.x") != std::string::npos,
+              "chi(p,t) binds the same admitted radiance-source Timeline coordinate");
+
+        // An authored scalar is NOT silently accepted as RGB merely because the
+        // caller expected chroma.
+        OntoMath::Piecewise scalarChi = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.5).release()));
+        const auto wrongType = sdfwgsl::inspectVectorExpression(&scalarChi, true);
+        check(!wrongType.ok && wrongType.error.find("Vector") != std::string::npos,
+              "non-vector authored chi refuses instead of falling back to a color");
+
+        auto badVector = std::make_shared<OntoMath::MathNode>();
+        badVector->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto raycast = std::make_unique<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        badVector->children.push_back(std::move(raycast));
+        badVector->children.push_back(number(0.0));
+        badVector->children.push_back(number(0.0));
+        OntoMath::Piecewise unsupportedChi = OntoMath::Piecewise::continuous(badVector);
+        const auto refused = sdfwgsl::inspectVectorExpression(&unsupportedChi, true);
+        check(!refused.ok && refused.error.find("Raycast") != std::string::npos,
+              "unsupported authored chroma math refuses explicitly");
+
+        const auto legacy = sdfwgsl::compile(sphere, nullptr, nullptr, &rho, nullptr);
+        check(legacy.ok &&
+                  legacy.wgsl.find("const HAS_AUTHORED_CHROMA: bool = false") != std::string::npos,
+              "source without chi retains the exact legacy-color compatibility branch");
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 7. Rung 6: alpha(p,omega,t)->scalar is independent authored angular
+    //    emission. omega is admitted ONLY here and means normalized world-space
+    //    source -> receiver direction at the production shader seam.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        OntoMath::Piecewise chi = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 1.0, 1.0).release()));
+
+        auto coefficient = number(-1.0);
+        auto omegaZ = variable(OntoMath::kOmegaZVar);
+        auto lobe = std::make_shared<OntoMath::MathNode>();
+        lobe->op = OntoMath::MathNode::Op::Scale;
+        lobe->children.push_back(std::move(coefficient));
+        lobe->children.push_back(std::move(omegaZ));
+        OntoMath::Piecewise alpha = OntoMath::Piecewise::continuous(lobe);
+
+        const auto legacyLayout = sdfwgsl::inspectAngularExpression(nullptr);
+        const auto layoutBefore = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+
+        check(legacyLayout.ok && !legacyLayout.readsOmega &&
+                  legacyLayout.structure.find("legacy-angular:1.0") != std::string::npos,
+              "absent alpha has explicit multiplicative-identity structure");
+        check(layoutBefore.ok && layoutBefore.readsOmega,
+              "authored directional alpha records that its structure reads omega");
+        check(before.ok &&
+                  before.wgsl.find("fn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32") != std::string::npos &&
+                  before.wgsl.find("omega.z") != std::string::npos &&
+                  before.wgsl.find("sourceDelta / directionLength") != std::string::npos,
+              "alpha lowers through production WGSL with normalized source-to-receiver omega");
+        check(before.wgsl.find("const HAS_AUTHORED_ANGULAR: bool = true") != std::string::npos &&
+                  before.wgsl.find("const ANGULAR_READS_OMEGA: bool = true") != std::string::npos,
+              "production shader exposes authored/directional angular structure explicitly");
+
+        // VALUE ONLY: keep Scale(number, omega.z), change only its coefficient.
+        lobe->children[0]->scalarForm.terms[0].coefficient = -0.25;
+        const auto layoutAfter = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        const auto after =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        check(layoutAfter.ok && layoutAfter.structure == layoutBefore.structure &&
+                  layoutAfter.readsOmega == layoutBefore.readsOmega,
+              "numeric alpha edit preserves angular structure identity");
+        check(layoutAfter.parameterCount == layoutBefore.parameterCount,
+              "numeric alpha edit preserves angular parameter layout");
+        check(after.ok && before.wgsl == after.wgsl,
+              "numeric alpha edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "numeric alpha edit changes authored parameter data");
+        check(refreshed.ok && sameFloats(refreshed.values, after.params),
+              "alpha parameter recollection exactly matches full compile");
+
+        // STRUCTURE + TIME: alpha = -omega.z * cos(t). The temporal coordinate
+        // is ambient; its value is not baked into WGSL or the parameter buffer.
+        auto cosine = std::make_unique<OntoMath::MathNode>();
+        cosine->op = OntoMath::MathNode::Op::ScalarLeaf;
+        cosine->scalarForm =
+            OntoMath::ScalarForm::transcendental(OntoMath::TransFactor::Kind::Cos,
+                                                 OntoMath::kTimeVar);
+        auto omegaZTimed = variable(OntoMath::kOmegaZVar);
+        auto directionalCos = std::make_unique<OntoMath::MathNode>();
+        directionalCos->op = OntoMath::MathNode::Op::Scale;
+        directionalCos->children.push_back(std::move(omegaZTimed));
+        directionalCos->children.push_back(std::move(cosine));
+        auto rotating = std::make_shared<OntoMath::MathNode>();
+        rotating->op = OntoMath::MathNode::Op::Scale;
+        rotating->children.push_back(number(-1.0));
+        rotating->children.push_back(std::move(directionalCos));
+        alpha.pieces[0].mathNode = rotating;
+
+        const auto timedLayout = sdfwgsl::inspectAngularExpression(&alpha);
+        const auto timed =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, &alpha);
+        check(timedLayout.ok && timedLayout.readsOmega &&
+                  timedLayout.structure != layoutAfter.structure,
+              "structural timed-alpha edit advances angular structure identity");
+        check(timed.ok &&
+                  timed.wgsl.find("u.radianceTime.x") != std::string::npos &&
+                  timed.wgsl.find("omega.z") != std::string::npos,
+              "alpha(omega,t) binds both the source Timeline and canonical omega");
+
+        // omega must not leak into rho: the same authored variable outside the
+        // angular context is a refusal, not a fabricated zero or direction.
+        OntoMath::Piecewise illegalRho = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(
+                variable(OntoMath::kOmegaXVar).release()));
+        const auto omegaOutsideAngular =
+            sdfwgsl::inspectScalarExpression(&illegalRho, true);
+        check(!omegaOutsideAngular.ok &&
+                  omegaOutsideAngular.error.find("does not bind omega") != std::string::npos,
+              "omega refuses outside the admitted angular-radiance context");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        alpha.pieces[0].mathNode = raycast;
+        const auto refused = sdfwgsl::inspectAngularExpression(&alpha);
+        check(!refused.ok && refused.error.find("Raycast") != std::string::npos,
+              "unsupported authored angular math refuses explicitly");
+
+        const auto legacy =
+            sdfwgsl::compile(sphere, nullptr, nullptr, &rho, &chi, nullptr);
+        check(legacy.ok &&
+                  legacy.wgsl.find("const HAS_AUTHORED_ANGULAR: bool = false") != std::string::npos &&
+                  legacy.wgsl.find("return 1.0;") != std::string::npos,
+              "source without alpha retains exact multiplicative-identity compatibility");
+    }
+
+    // ---------------------------------------------------------------------
+    // 8. Rung 7: multiple source ASTs remain independent and are composed
+    //    above the source invariants. Numeric edits refresh the packed values;
+    //    changing emitted structure changes WGSL. Source time is per-source.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+
+        auto rho0Node = std::shared_ptr<OntoMath::MathNode>(number(1.0).release());
+        auto rho1Node = std::shared_ptr<OntoMath::MathNode>(number(0.5).release());
+        OntoMath::Piecewise rho0 = OntoMath::Piecewise::continuous(rho0Node);
+        OntoMath::Piecewise rho1 = OntoMath::Piecewise::continuous(rho1Node);
+
+        auto chi0Node = std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.0, 0.0).release());
+        auto chi1Node = std::shared_ptr<OntoMath::MathNode>(vector3(0.0, 0.0, 1.0).release());
+        OntoMath::Piecewise chi0 = OntoMath::Piecewise::continuous(chi0Node);
+        OntoMath::Piecewise chi1 = OntoMath::Piecewise::continuous(chi1Node);
+
+        Rendering::RadianceSourceBinding s0;
+        s0.radianceExpr = &rho0;
+        s0.chromaExpr = &chi0;
+        s0.temporalCoordinate = 0.25;
+
+        Rendering::RadianceSourceBinding s1;
+        s1.radianceExpr = &rho1;
+        s1.chromaExpr = &chi1;
+        s1.temporalCoordinate = 0.75;
+
+        std::vector<Rendering::RadianceSourceBinding> sources{s0, s1};
+
+        const auto before =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(before.ok, "two-source WGSL compilation succeeds");
+        check(before.wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos,
+              "multi-source WGSL admits a dedicated authored-source storage binding");
+        check(before.wgsl.find("fn lightRadiance_0") != std::string::npos &&
+                  before.wgsl.find("fn lightRadiance_1") != std::string::npos,
+              "each source keeps its own rho function instead of enumerating the world inside one AST");
+        check(before.wgsl.find("ambientTerm +=") != std::string::npos &&
+                  before.wgsl.find("diffuseTerm +=") != std::string::npos,
+              "source emission is aggregated additively above the individual invariants");
+
+        // VALUE ONLY: same ScalarLeaf structure on source 1.
+        rho1Node->scalarForm.terms[0].coefficient = 0.2;
+        const auto refreshed =
+            sdfwgsl::collectParams(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        const auto valueEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(refreshed.ok && valueEdited.ok,
+              "multi-source numeric parameter refresh succeeds");
+        check(before.wgsl == valueEdited.wgsl,
+              "numeric edit in one source leaves multi-source WGSL byte-identical");
+        check(!sameFloats(before.params, valueEdited.params),
+              "numeric edit in one source changes packed authored parameters");
+        check(sameFloats(refreshed.values, valueEdited.params),
+              "multi-source parameter recollection exactly matches full compile");
+
+        // STRUCTURE ONLY: source 1 becomes Add(number, number).
+        auto add = std::make_shared<OntoMath::MathNode>();
+        add->op = OntoMath::MathNode::Op::Add;
+        add->children.push_back(number(0.1));
+        add->children.push_back(number(0.1));
+        rho1.pieces[0].mathNode = add;
+        const auto structureEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural edit in one source changes the composed WGSL structure");
+
+        // Per-source relative time: only source 1 reads t, and it must bind that
+        // source's own record rather than the historical global radianceTime.
+        auto timed = std::make_shared<OntoMath::MathNode>();
+        timed->op = OntoMath::MathNode::Op::ValueLeaf;
+        timed->variableName = OntoMath::kTimeVar;
+        rho1.pieces[0].mathNode = timed;
+        const auto timedProgram =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
+        check(timedProgram.ok &&
+                  timedProgram.wgsl.find("RS[1u].time.x") != std::string::npos,
+              "source 1 temporal mathematics reads source 1's relative Timeline coordinate");
+    }
+
+    if (failures) {
+        std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
+        return 1;
+    }
+    std::printf("sdf_wgsl_parameter_refresh_test: PASS\n");
+    return 0;
+}

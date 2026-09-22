@@ -1,0 +1,494 @@
+{
+  "deletable": {
+    "Zach": true
+  },
+  "formationRelations": [],
+  "identifier": "Sun",
+  "lexemes": [],
+  "materials": [
+    {
+      "name": "sun.witness.white",
+      "baseColor": [
+        1,
+        1,
+        1
+      ],
+      "opacity": 1,
+      "shininess": 32,
+      "specular": 1,
+      "ambient": 0.2,
+      "diffuse": 0.8
+    }
+  ],
+  "name": "Sun",
+  "owner": "Zach",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "authoredProperties": {
+      "light.ambient": {
+        "t": "float",
+        "v": 0.2
+      },
+      "light.attenuation.constant": {
+        "t": "float",
+        "v": 1
+      },
+      "light.attenuation.linear": {
+        "t": "float",
+        "v": 0
+      },
+      "light.attenuation.quadratic": {
+        "t": "float",
+        "v": 0
+      },
+      "light.color": {
+        "t": "vec3",
+        "x": 1,
+        "y": 0.95,
+        "z": 0.8
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.8
+      },
+      "light.enabled": {
+        "t": "bool",
+        "v": true
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 1
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 1
+      }
+    },
+    "field": {
+      "mode": "AST",
+      "baseDensity": 1,
+      "frequency": 1,
+      "amplitude": 1,
+      "astDefinition": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 23,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      },
+                      {
+                        "c": 0.005,
+                        "factors": {
+                          "x": 2
+                        }
+                      },
+                      {
+                        "c": 0.005,
+                        "factors": {
+                          "y": 2
+                        }
+                      },
+                      {
+                        "c": 0.005,
+                        "factors": {
+                          "z": 2
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "id": "sun.light-field",
+    "origin": [
+      0,
+      12,
+      0
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "vectorField": {
+      "amplitude": 1,
+      "baseFlowX": 0,
+      "baseFlowY": 0,
+      "baseFlowZ": 0,
+      "frequency": 1,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "laws": [],
+    "objects": [
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 0,
+        "materialId": "sun.witness.white",
+        "objectID": "sun-radiance-witness-cube",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 0,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          -1.2,
+          3.2,
+          -5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "sun.witness.white",
+        "objectID": "sun-radiance-witness-near-sdf",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -1.2,
+          3.2,
+          -5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1,
+          1,
+          1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Radiance Witness — Near"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "near"
+          }
+        }
+      },
+      {
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "center": [
+          1.2,
+          0.2,
+          -5
+        ],
+        "faceColors": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "geometryType": 10,
+        "materialId": "sun.witness.white",
+        "objectID": "sun-radiance-witness-far-sdf",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeKind": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1.2,
+          0.2,
+          -5,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "field": {
+          "op": 0,
+          "prim": 0,
+          "dims": [
+            0.75,
+            0.75,
+            0.75
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1,
+          1,
+          1
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Radiance Witness — Far"
+          },
+          "radianceWitness.role": {
+            "t": "string",
+            "v": "far"
+          }
+        }
+      }
+    ],
+    "relations": []
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": "GPT-5.6 Sol — OntoMath Radiance Rung 3, directed by Zach; Phase-2 witness preserved"
+}

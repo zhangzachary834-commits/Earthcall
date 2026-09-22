@@ -1,0 +1,771 @@
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/Operations.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp"
+
+#include <cassert>
+#include <cmath>
+#include <cstdio>
+
+namespace {
+
+bool neard(double a, double b, double eps = 1e-9) { return std::fabs(a - b) < eps; }
+bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps; }
+
+} // namespace
+
+
+bool neard(const std::optional<PropertyValue>& opt, double b, double eps = 1e-9) {
+    if (!opt) return false;
+    double val = 0.0;
+    if (!propertyValueToNumber(*opt, val)) return false;
+    return std::fabs(val - b) < eps;
+}
+bool neard(const std::optional<PropertyValue>& a, const std::optional<PropertyValue>& b, double eps = 1e-9) {
+    if (!a || !b) return false;
+    double va = 0.0, vb = 0.0;
+    if (propertyValueToNumber(*a, va) && propertyValueToNumber(*b, vb)) return std::fabs(va - vb) < eps;
+    return false;
+}
+bool neard(const PropertyValue& a, double b, double eps = 1e-9) {
+    double va = 0.0;
+    if (propertyValueToNumber(a, va)) return std::fabs(va - b) < eps;
+    return false;
+}
+bool neard(const PropertyValue& a, const PropertyValue& b, double eps = 1e-9) {
+    double va = 0.0, vb = 0.0;
+    if (propertyValueToNumber(a, va) && propertyValueToNumber(b, vb)) return std::fabs(va - vb) < eps;
+    return false;
+}
+
+int main() {
+    Object author;
+    author.setObjectID("math-author");
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&author);
+    });
+
+    {
+        using OntoMath::ScalarForm;
+        using OntoMath::Piecewise;
+        using OntoMath::Term;
+        using OntoMath::TransFactor;
+
+        // ------------------------------------------------------------------
+        // 1. Exact evaluation: f(x,y) = 3x²y + 2x − 5.
+        // ------------------------------------------------------------------
+        ScalarForm f;
+        f.terms.push_back(Term(3.0, {{"x", 2.0}, {"y", 1.0}}));
+        f.terms.push_back(Term(2.0, {{"x", 1.0}}));
+        f.terms.push_back(Term(-5.0));
+
+        assert(neard(f.evaluate({{"x", 2.0}, {"y", 3.0}}), 35.0));
+        assert(!f.evaluate({{"x", 2.0}}));                 // unbound y: no value
+
+        // ------------------------------------------------------------------
+        // 2. Exact algebra: like terms combine; products distribute.
+        // ------------------------------------------------------------------
+        ScalarForm sum = ScalarForm::variable("x").scaled(2.0)
+                             .plus(ScalarForm::variable("x").scaled(3.0));
+        assert(sum.terms.size() == 1 && neard(sum.terms[0].coefficient, 5.0));
+
+        ScalarForm xPlus1 = ScalarForm::variable("x").plus(ScalarForm::constant(1.0));
+        ScalarForm xMinus1 = ScalarForm::variable("x").plus(ScalarForm::constant(-1.0));
+        ScalarForm difference = xPlus1.times(xMinus1);     // x² − 1
+        assert(difference.terms.size() == 2);
+        assert(neard(difference.evaluate({{"x", 7.0}}), 48.0));
+
+        // ------------------------------------------------------------------
+        // 3. Exact calculus by the power rule.
+        // ------------------------------------------------------------------
+        ScalarForm dfdx = f.derivative("x");               // 6xy + 2
+        assert(neard(dfdx.evaluate({{"x", 2.0}, {"y", 3.0}}), 38.0));
+        ScalarForm dfdy = f.derivative("y");               // 3x²
+        assert(neard(dfdy.evaluate({{"x", 2.0}, {"y", 0.0}}), 12.0));
+
+        ScalarForm threeXsq = ScalarForm::variable("x", 2.0, 3.0);
+        auto integral = threeXsq.antiderivative("x");      // x³
+        assert(integral.has_value());
+        assert(neard(integral->evaluate({{"x", 2.0}}), 8.0));
+        // Fundamental round-trip: d/dx ∫ f = f.
+        ScalarForm back = integral->derivative("x");
+        assert(neard(back.evaluate({{"x", 5.0}}), threeXsq.evaluate({{"x", 5.0}})));
+        // ∫ x⁻¹ = ln(x) — the algebra holds it now (section 9 proves it);
+        // once refused honestly, today answered exactly.
+        assert(ScalarForm::variable("x", -1.0).antiderivative("x").has_value());
+
+        // ------------------------------------------------------------------
+        // 4. The hyperoperation ladder (first movers of arithmetic).
+        // ------------------------------------------------------------------
+        assert(neard(Operations::hyperop(2, 3, 4), 12.0));      // multiplication
+        assert(neard(Operations::hyperop(3, 2, 10), 1024.0));   // exponentiation
+        assert(neard(Operations::hyperop(4, 2, 3), 16.0));      // tetration 2↑↑3
+
+        // ------------------------------------------------------------------
+        // 5. Piecewise with open/closed bounds; undefined outside, not zero.
+        // ------------------------------------------------------------------
+        Piecewise pw;
+        Piecewise::Piece rising;                            // x on [0, 1)
+        rising.hasLo = true; rising.lo = 0.0; rising.includeLo = true;
+        rising.hasHi = true; rising.hi = 1.0; rising.includeHi = false;
+        rising.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x"));
+        Piecewise::Piece falling;                           // 2 − x on [1, 2]
+        falling.hasLo = true; falling.lo = 1.0; falling.includeLo = true;
+        falling.hasHi = true; falling.hi = 2.0; falling.includeHi = true;
+        falling.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::constant(2.0)
+                                 .plus(ScalarForm::variable("x").scaled(-1.0)));
+        pw.pieces = {rising, falling};
+
+        assert(neard(pw.evaluate({{"x", 0.5}}), 0.5));
+        assert(neard(pw.evaluate({{"x", 1.0}}), 1.0));     // open [0,1) hands 1 to [1,2]
+        assert(neard(pw.evaluate({{"x", 2.0}}), 0.0));     // closed hi included
+        assert(!pw.evaluate({{"x", 2.5}}));                 // outside every piece
+        assert(!pw.evaluate({{"x", -0.1}}));
+
+        // ------------------------------------------------------------------
+        // 6. Zone condition: the disk x² + z² ≤ 4 — a mathematically-defined
+        //    satisfaction zone, desmos-precise, as a law's condition.
+        // ------------------------------------------------------------------
+        ScalarForm paraboloid;
+        paraboloid.terms.push_back(Term(1.0, {{"x", 2.0}}));
+        paraboloid.terms.push_back(Term(1.0, {{"z", 2.0}}));
+
+        Law diskLaw("gild-the-disk");
+        diskLaw.addAuthor(author);
+        diskLaw.setConditionModel(ConditionNode::zone(
+            Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(paraboloid)),
+            MathBindings{{"x", PropertyPath::parse("position.x")},
+                         {"z", PropertyPath::parse("position.z")}},
+            PropertyValue{},                 // no lower bound
+            PropertyValue(4.0)));            // f ≤ 4: radius-2 disk
+        diskLaw.setActionModel(ActionNode::set("shape.fillet", PropertyValue(0.5f)));
+
+        Object inside;
+        inside.setPosition(glm::vec3(1.0f, 0.0f, 1.0f));    // f = 2
+        assert(diskLaw.applyTo(inside) == Law::ApplicationResult::Applied);
+        Object outside;
+        outside.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));   // f = 9
+        assert(diskLaw.applyTo(outside) == Law::ApplicationResult::ConditionsFailed);
+
+        // The authored mathematics survives serialization like all law text.
+        auto reborn = Law::fromJson(diskLaw.toJson());
+        reborn->addAuthor(author);
+        Object inside2;
+        inside2.setPosition(glm::vec3(0.0f, 0.0f, -1.5f));  // f = 2.25
+        assert(reborn->applyTo(inside2) == Law::ApplicationResult::Applied);
+        Object outside2;
+        outside2.setPosition(glm::vec3(2.5f, 0.0f, 0.0f));
+        assert(reborn->applyTo(outside2) == Law::ApplicationResult::ConditionsFailed);
+
+        // ------------------------------------------------------------------
+        // 7. Map action: position.y := x² − 1, x bound to position.x.
+        // ------------------------------------------------------------------
+        Law liftLaw("parabolic-lift");
+        liftLaw.addAuthor(author);
+        liftLaw.setActionModel(ActionNode::map(
+            "position.y",
+            Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x", 2.0)
+                                      .plus(ScalarForm::constant(-1.0)))),
+            MathBindings{{"x", PropertyPath::parse("position.x")}}));
+
+        Object lifted;
+        lifted.setPosition(glm::vec3(3.0f, 0.0f, 0.0f));
+        assert(liftLaw.applyTo(lifted) == Law::ApplicationResult::Applied);
+        assert(nearf(lifted.getPosition().y, 8.0f));
+
+        // Piecewise map: outside the authored domain, NOTHING is written.
+        Law tentLaw("tent");
+        tentLaw.addAuthor(author);
+        tentLaw.setActionModel(ActionNode::map(
+            "position.y", pw,                                // the [0,2] tent
+            MathBindings{{"x", PropertyPath::parse("position.x")}}));
+        Object beyond;
+        beyond.setPosition(glm::vec3(5.0f, 7.0f, 0.0f));     // x = 5: undefined
+        assert(tentLaw.applyTo(beyond) == Law::ApplicationResult::Applied);
+        assert(nearf(beyond.getPosition().y, 7.0f));         // untouched
+
+        // ------------------------------------------------------------------
+        // 8. Calculus in the pipeline: govern by the DERIVATIVE of an
+        //    authored function (slope law: rotation.y := d/dx x³ = 3x²).
+        // ------------------------------------------------------------------
+        ScalarForm cubic = ScalarForm::variable("x", 3.0);
+        Law slopeLaw("turn-with-slope");
+        slopeLaw.addAuthor(author);
+        slopeLaw.setActionModel(ActionNode::map(
+            "rotation.y",
+            Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(cubic.derivative("x"))),
+            MathBindings{{"x", PropertyPath::parse("position.x")}}));
+
+        Object turner;
+        turner.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
+        assert(slopeLaw.applyTo(turner) == Law::ApplicationResult::Applied);
+        assert(nearf(turner.getRotationEulerDegrees().y, 12.0f, 1e-2f));
+
+        // ------------------------------------------------------------------
+        // 9. Transcendentals: sin/cos/exp/ln as EXACT factors — periodic and
+        //    exponential change as law-text, closed under the calculus.
+        // ------------------------------------------------------------------
+        const double kPi = 3.14159265358979323846;
+
+        // Exact evaluation.
+        ScalarForm wave = ScalarForm::transcendental(
+            TransFactor::Kind::Sin, "t", 2.0, 0.0, 3.0);   // 3·sin(2t)
+        assert(neard(wave.evaluate({{"t", kPi / 4.0}}), 3.0));   // sin(π/2) = 1
+        ScalarForm growth = ScalarForm::transcendental(
+            TransFactor::Kind::Exp, "t");
+        assert(neard(growth.evaluate({{"t", 0.0}}), 1.0));
+        ScalarForm logOf = ScalarForm::transcendental(
+            TransFactor::Kind::Ln, "x", 3.0);              // ln(3x)
+        assert(neard(logOf.evaluate({{"x", 1.0 / 3.0}}), 0.0));
+        assert(!logOf.evaluate({{"x", -1.0}}));            // outside domain: undefined
+        assert(!logOf.evaluate({{"x", 0.0}}));
+
+        // Chain rule: d/dt 3·sin(2t) = 6·cos(2t).
+        ScalarForm dwave = wave.derivative("t");
+        assert(neard(dwave.evaluate({{"t", 0.0}}), 6.0));
+        // Product rule: d/dx x·sin(x) = sin(x) + x·cos(x).
+        ScalarForm xsin = ScalarForm::variable("x").times(
+            ScalarForm::transcendental(TransFactor::Kind::Sin, "x"));
+        ScalarForm dxsin = xsin.derivative("x");
+        assert(dxsin.terms.size() == 2);
+        assert(neard(dxsin.evaluate({{"x", kPi}}),
+                     std::sin(kPi) + kPi * std::cos(kPi)));
+        // d/dx ln(3x) = 1/x (the scale cancels — Ln carries no shift).
+        ScalarForm dlog = logOf.derivative("x");
+        assert(neard(dlog.evaluate({{"x", 4.0}}), 0.25));
+        // exp is its own derivative (times the inner scale).
+        ScalarForm dgrowth = growth.derivative("t");
+        assert(neard(dgrowth.evaluate({{"t", 1.5}}), std::exp(1.5)));
+
+        // ∫x⁻¹ dx = ln(x): the old honest gap CLOSES.
+        ScalarForm inverse = ScalarForm::variable("x", -1.0, 5.0);   // 5/x
+        auto lnIntegral = inverse.antiderivative("x");
+        assert(lnIntegral.has_value());
+        assert(neard(lnIntegral->evaluate({{"x", 2.0}}), 5.0 * std::log(2.0)));
+        // ∫3·sin(2t) dt = -(3/2)·cos(2t); its derivative returns the wave.
+        auto waveIntegral = wave.antiderivative("t");
+        assert(waveIntegral.has_value());
+        assert(neard(waveIntegral->evaluate({{"t", 0.0}}), -1.5));
+        ScalarForm roundTrip = waveIntegral->derivative("t");
+        assert(neard(roundTrip.evaluate({{"t", 0.7}}), wave.evaluate({{"t", 0.7}})));
+        // ∫ln(3x) dx = x·ln(3x) − x, checked against the analytic value.
+        auto logIntegral = logOf.antiderivative("x");
+        assert(logIntegral.has_value());
+        assert(neard(logIntegral->evaluate({{"x", 2.0}}),
+                     2.0 * std::log(6.0) - 2.0));
+        // x·sin(x) needs integration by parts: honestly not yet held.
+        assert(!xsin.antiderivative("x").has_value());
+
+        // Like terms combine across identical transcendental shapes.
+        ScalarForm doubled = wave.plus(wave);
+        assert(doubled.terms.size() == 1);
+        assert(neard(doubled.terms[0].coefficient, 6.0));
+
+        // The exact sinusoid matches evalTrack's form: bias + A·sin(2π(f·t + φ)).
+        ScalarForm track = ScalarForm::sinusoid(2.0, 0.5, 0.25, 1.0, "t");
+        assert(neard(track.evaluate({{"t", 0.0}}), 1.0 + 2.0 * std::sin(kPi / 2.0)));
+
+        // Law-text like everything else: survives serialization.
+        ScalarForm rebornWave = ScalarForm::fromJson(wave.toJson());
+        assert(rebornWave.terms.size() == 1 && rebornWave.terms[0].trans.size() == 1);
+        assert(neard(rebornWave.evaluate({{"t", 0.3}}), wave.evaluate({{"t", 0.3}})));
+
+        // And runs in the pipeline: position.y := sin(π/2 · x) on a subject.
+        Law waveLaw("crest");
+        waveLaw.addAuthor(author);
+        waveLaw.setActionModel(ActionNode::map(
+            "position.y",
+            Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(ScalarForm::transcendental(
+                TransFactor::Kind::Sin, "x", kPi / 2.0))),
+            MathBindings{{"x", PropertyPath::parse("position.x")}}));
+        Object surfer;
+        surfer.setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        assert(waveLaw.applyTo(surfer) == Law::ApplicationResult::Applied);
+        assert(nearf(surfer.getPosition().y, 1.0f));         // sin(π/2) = 1
+
+        // ------------------------------------------------------------------
+        // 10. EXPRESSION-GUARDED PIECES — the discrete-math fusion. A piece
+        //     may be gated by a CONDITION instead of interval bounds, so
+        //     min/max/abs become DEFINABLE and the SDF boolean algebra
+        //     follows. Guards testify about a subject; without one they are
+        //     unproven and skipped — never guessed.
+        // ------------------------------------------------------------------
+        Object witness;
+        const MathBindings xBind{{"x", PropertyPath::parse("position.x")}};
+        const auto guardLEZero = [&](ScalarForm g) {
+            // "applies where g(vars) <= 0" — the min/max workhorse, built
+            // from the EXISTING Zone condition: zero new condition kinds.
+            return std::make_shared<ConditionNode>(ConditionNode::zone(
+                Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(std::move(g))), xBind,
+                PropertyValue{}, PropertyValue(0.0)));
+        };
+
+        // abs(x): where -x <= 0 (i.e. x >= 0) use x; otherwise use -x.
+        Piecewise absF;
+        {
+            Piecewise::Piece positive;
+            positive.guard = guardLEZero(ScalarForm::variable("x", 1.0, -1.0));
+            positive.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x"));
+            Piecewise::Piece negative;                       // bare catch-all
+            negative.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x", 1.0, -1.0));
+            absF.pieces.push_back(std::move(positive));
+            absF.pieces.push_back(std::move(negative));
+        }
+        witness.setPosition(glm::vec3(-3.0f, 0.0f, 0.0f));
+        assert(neard(absF.evaluate({{"x", -3.0}}, &witness), 3.0));
+        witness.setPosition(glm::vec3(4.0f, 0.0f, 0.0f));
+        assert(neard(absF.evaluate({{"x", 4.0}}, &witness), 4.0));
+
+        // min(f, g) with f = x², g = 2x + 3: where f - g <= 0 use f, else g.
+        Piecewise minF;
+        {
+            ScalarForm f = ScalarForm::variable("x", 2.0);
+            ScalarForm g = ScalarForm::variable("x", 1.0, 2.0).plus(
+                ScalarForm::constant(3.0));
+            ScalarForm fMinusG = f.plus(g.scaled(-1.0));
+            Piecewise::Piece useF;
+            useF.guard = guardLEZero(fMinusG);
+            useF.mathNode = OntoMath::MathNode::fromLegacyExpression(f);
+            Piecewise::Piece useG;                           // bare catch-all
+            useG.mathNode = OntoMath::MathNode::fromLegacyExpression(g);
+            minF.pieces.push_back(std::move(useF));
+            minF.pieces.push_back(std::move(useG));
+        }
+        witness.setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+        assert(neard(minF.evaluate({{"x", 0.0}}, &witness), 0.0));   // f wins
+        witness.setPosition(glm::vec3(5.0f, 0.0f, 0.0f));
+        assert(neard(minF.evaluate({{"x", 5.0}}, &witness), 13.0)); // g wins
+
+        // Without a subject, a guard is UNPROVEN: only unguarded pieces can
+        // testify; a fully guarded function is undefined, never guessed.
+        Piecewise onlyGuarded;
+        {
+            Piecewise::Piece lone;
+            lone.guard = guardLEZero(ScalarForm::variable("x"));
+            lone.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::constant(1.0));
+            onlyGuarded.pieces.push_back(std::move(lone));
+        }
+        assert(!onlyGuarded.evaluate({{"x", -5.0}}).has_value());
+        witness.setPosition(glm::vec3(-5.0f, 0.0f, 0.0f));
+        assert(onlyGuarded.evaluate({{"x", -5.0}}, &witness).has_value());
+
+        // Guards are law-text: they survive serialization with the function.
+        Piecewise rebornAbs = Piecewise::fromJson(absF.toJson());
+        witness.setPosition(glm::vec3(-7.0f, 0.0f, 0.0f));
+        assert(neard(rebornAbs.evaluate({{"x", -7.0}}, &witness), 7.0));
+
+        // And they run inside a real law: y := |x| via a Map action.
+        Law absLaw("y-becomes-abs-x");
+        absLaw.addAuthor(author);
+        absLaw.setActionModel(ActionNode::map("position.y", absF, xBind));
+        Object dipper;
+        dipper.setPosition(glm::vec3(-6.0f, 0.0f, 0.0f));
+        assert(absLaw.applyTo(dipper) == Law::ApplicationResult::Applied);
+        assert(nearf(dipper.getPosition().y, 6.0f));         // |−6|, legislated
+
+        // ------------------------------------------------------------------
+        // 11. NAMED FUNCTIONS — createTerm's recursion made durable. Define
+        //     once, call from any piece; iteration is carried through the
+        //     ARGUMENTS, so primitive recursion is expressible; divergence
+        //     meets the call-depth ceiling with an honest nullopt.
+        // ------------------------------------------------------------------
+        using OntoMath::FunctionCall;
+        using OntoMath::FunctionDef;
+        using OntoMath::FunctionRegistry;
+        auto& registry = FunctionRegistry::instance();
+
+        // double(x) = 2x — and a caller composing double(x² + 1).
+        FunctionDef doubler;
+        doubler.name = "double";
+        doubler.params = {"x"};
+        doubler.body = Piecewise::continuous(OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x", 1.0, 2.0)));
+        registry.define(doubler);
+
+        Piecewise composed;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "double";
+            piece.call->args = {ScalarForm::variable("x", 2.0).plus(
+                ScalarForm::constant(1.0))};                 // x² + 1
+            composed.pieces.push_back(std::move(piece));
+        }
+        assert(neard(composed.evaluate({{"x", 3.0}}), 20.0));   // 2·(9+1)
+
+        // iter(x, n): n <= 0 -> x; else iter(2x, n - 1) — recursion with
+        // the state carried through the arguments: iter(3, 4) = 3·2⁴ = 48.
+        FunctionDef iter;
+        iter.name = "iter";
+        iter.params = {"x", "n"};
+        iter.body.inputVariable = "n";
+        {
+            Piecewise::Piece base;                            // n <= 0 -> x
+            base.hasHi = true;
+            base.hi = 0.0;
+            base.includeHi = true;
+            base.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x"));
+            Piecewise::Piece step;                            // else recurse
+            step.call = std::make_shared<FunctionCall>();
+            step.call->function = "iter";
+            step.call->args = {ScalarForm::variable("x", 1.0, 2.0),      // 2x
+                               ScalarForm::variable("n").plus(
+                                   ScalarForm::constant(-1.0))};         // n-1
+            iter.body.pieces.push_back(std::move(base));
+            iter.body.pieces.push_back(std::move(step));
+        }
+        registry.define(iter);
+
+        Piecewise callIter;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "iter";
+            piece.call->args = {ScalarForm::variable("x"), ScalarForm::constant(4.0)};
+            callIter.pieces.push_back(std::move(piece));
+        }
+        assert(neard(callIter.evaluate({{"x", 3.0}}), 48.0));
+
+        // Divergence is honest: a function with no base case hits the
+        // anti-Babel depth ceiling and answers NOTHING.
+        FunctionDef forever;
+        forever.name = "forever";
+        forever.params = {"x"};
+        {
+            Piecewise::Piece loop;
+            loop.call = std::make_shared<FunctionCall>();
+            loop.call->function = "forever";
+            loop.call->args = {ScalarForm::variable("x")};
+            forever.body.pieces.push_back(std::move(loop));
+        }
+        registry.define(forever);
+        Piecewise callForever;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "forever";
+            piece.call->args = {ScalarForm::variable("x")};
+            callForever.pieces.push_back(std::move(piece));
+        }
+        assert(!callForever.evaluate({{"x", 1.0}}).has_value());
+
+        // Unknown words and wrong arity are refusals, not guesses.
+        Piecewise callGhost;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "no-such-function";
+            piece.call->args = {ScalarForm::variable("x")};
+            callGhost.pieces.push_back(std::move(piece));
+        }
+        assert(!callGhost.evaluate({{"x", 1.0}}).has_value());
+        Piecewise wrongArity;
+        {
+            Piecewise::Piece piece;
+            piece.call = std::make_shared<FunctionCall>();
+            piece.call->function = "iter";
+            piece.call->args = {ScalarForm::variable("x")};   // iter wants 2
+            wrongArity.pieces.push_back(std::move(piece));
+        }
+        assert(!wrongArity.evaluate({{"x", 1.0}}).has_value());
+
+        // The whole vocabulary survives serialization: registry AND call.
+        const auto registryJson = registry.toJson();
+        registry.loadFromJson(nlohmann::json::object());
+        assert(registry.getAll().empty());
+        registry.loadFromJson(registryJson);
+        assert(registry.find("iter") != nullptr);
+        Piecewise rebornCall = Piecewise::fromJson(callIter.toJson());
+        assert(neard(rebornCall.evaluate({{"x", 3.0}}), 48.0));
+
+        // And in a real law: y := iter(x, 4).
+        Law iterLaw("y-becomes-iterated-x");
+        iterLaw.addAuthor(author);
+        iterLaw.setActionModel(ActionNode::map("position.y", callIter, xBind));
+        Object grower;
+        grower.setPosition(glm::vec3(2.0f, 0.0f, 0.0f));
+        assert(iterLaw.applyTo(grower) == Law::ApplicationResult::Applied);
+        assert(nearf(grower.getPosition().y, 32.0f));         // 2·2⁴, legislated
+
+        // ------------------------------------------------------------------
+        // 12. PURE GUARDS — local mathematics gating local mathematics:
+        //     "applies where g(variables) <= 0", no subject needed. This
+        //     closes the known gap: recursion base cases over PARAMETERS,
+        //     and with it the manifesto's Mandelbrot ambition (real slice).
+        // ------------------------------------------------------------------
+        // abs(x), subjectless this time: where -x <= 0 use x; where x <= 0
+        // use -x. No world, no witness — just the variables.
+        Piecewise pureAbs;
+        {
+            Piecewise::Piece positive;
+            positive.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
+                ScalarForm::variable("x", 1.0, -1.0));            // -x <= 0
+            positive.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x"));
+            Piecewise::Piece negative;                       // bare catch-all
+            negative.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
+                ScalarForm::variable("x"));                       // x <= 0
+            negative.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("x", 1.0, -1.0));
+            pureAbs.pieces.push_back(std::move(positive));
+            pureAbs.pieces.push_back(std::move(negative));
+        }
+        assert(neard(pureAbs.evaluate({{"x", -9.0}}), 9.0));     // NO subject
+        assert(neard(pureAbs.evaluate({{"x", 2.5}}), 2.5));
+
+        // Escape-time on the real axis of the Mandelbrot recurrence
+        // x <- x² + c:  mand(x, c, n) =
+        //   where 2 - x <= 0        -> n   (escaped; remaining budget)
+        //   where n <= 0            -> 0   (never escaped: in the set)
+        //   otherwise               -> mand(x² + c, c, n - 1)
+        FunctionDef mand;
+        mand.name = "mand";
+        mand.params = {"x", "c", "n"};
+        {
+            Piecewise::Piece escaped;
+            escaped.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
+                ScalarForm::constant(2.0).plus(
+                    ScalarForm::variable("x", 1.0, -1.0)));       // 2 - x <= 0
+            escaped.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::variable("n"));
+            Piecewise::Piece inTheSet;
+            inTheSet.whereLEZero = OntoMath::MathNode::fromLegacyExpression(
+                ScalarForm::variable("n"));                       // n <= 0
+            inTheSet.mathNode = OntoMath::MathNode::fromLegacyExpression(ScalarForm::constant(0.0));
+            Piecewise::Piece iterate;
+            iterate.call = std::make_shared<FunctionCall>();
+            iterate.call->function = "mand";
+            iterate.call->args = {
+                ScalarForm::variable("x", 2.0).plus(ScalarForm::variable("c")),
+                ScalarForm::variable("c"),
+                ScalarForm::variable("n").plus(ScalarForm::constant(-1.0))};
+            mand.body.pieces.push_back(std::move(escaped));
+            mand.body.pieces.push_back(std::move(inTheSet));
+            mand.body.pieces.push_back(std::move(iterate));
+        }
+        registry.define(mand);
+
+        Piecewise orbit;
+        {
+            Piecewise::Piece seed;
+            seed.call = std::make_shared<FunctionCall>();
+            seed.call->function = "mand";
+            seed.call->args = {ScalarForm::constant(0.0), ScalarForm::variable("c"),
+                               ScalarForm::constant(8.0)};
+            orbit.pieces.push_back(std::move(seed));
+        }
+        // c = 1: 0 -> 1 -> 2, escapes with 6 of 8 iterations unspent.
+        assert(neard(orbit.evaluate({{"c", 1.0}}), 6.0));
+        // c = -0.5: the orbit stays bounded — in the set, honestly 0.
+        assert(neard(orbit.evaluate({{"c", -0.5}}), 0.0));
+
+        // The pure guard survives serialization with the function.
+        Piecewise rebornPureAbs = Piecewise::fromJson(pureAbs.toJson());
+        assert(neard(rebornPureAbs.evaluate({{"x", -4.0}}), 4.0));
+
+        // ------------------------------------------------------------------
+        // 13. FOLDS — the discrete Σ over the world: aggregate a property
+        //     across every being of a kind (with exceptions). Empty sum and
+        //     count are their honest identities; empty mean/min/max are
+        //     undefined, never guessed.
+        // ------------------------------------------------------------------
+        using OntoMath::Fold;
+        Object low, mid, high;
+        low.setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
+        mid.setPosition(glm::vec3(0.0f, 4.0f, 0.0f));
+        high.setPosition(glm::vec3(0.0f, 10.0f, 0.0f));
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&low);
+            beings.push_back(&mid);
+            beings.push_back(&high);
+        });
+
+        const auto foldOf = [](Fold::Op op, const std::string& path,
+                               std::vector<std::string> except = {}) {
+            Piecewise f;
+            Piecewise::Piece piece;
+            piece.fold = std::make_shared<Fold>();
+            piece.fold->op = op;
+            piece.fold->path = path;
+            piece.fold->exceptIds = std::move(except);
+            f.pieces.push_back(std::move(piece));
+            return f;
+        };
+        assert(neard(*foldOf(Fold::Op::Sum, "position.y").evaluate({}), 15.0));
+        assert(neard(*foldOf(Fold::Op::Mean, "position.y").evaluate({}), 5.0));
+        assert(neard(*foldOf(Fold::Op::Min, "position.y").evaluate({}), 1.0));
+        assert(neard(*foldOf(Fold::Op::Max, "position.y").evaluate({}), 10.0));
+        assert(neard(*foldOf(Fold::Op::Count, "").evaluate({}), 3.0));
+        // "...with possible exceptions": exclude the tallest.
+        assert(neard(*foldOf(Fold::Op::Max, "position.y",
+                             {high.getIdentifier()}).evaluate({}), 4.0));
+
+        // Empty world honesty.
+        Universe::instance().setProvider({});
+        assert(neard(*foldOf(Fold::Op::Sum, "position.y").evaluate({}), 0.0));
+        assert(neard(*foldOf(Fold::Op::Count, "").evaluate({}), 0.0));
+        assert(!foldOf(Fold::Op::Mean, "position.y").evaluate({}).has_value());
+        assert(!foldOf(Fold::Op::Min, "position.y").evaluate({}).has_value());
+
+        // Folds are law-text: survive serialization, and run in a law —
+        // "y := the mean height of every Object".
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&low);
+            beings.push_back(&mid);
+            beings.push_back(&high);
+        });
+        Piecewise rebornFold =
+            Piecewise::fromJson(foldOf(Fold::Op::Mean, "position.y").toJson());
+        assert(neard(rebornFold.evaluate({}), 5.0));
+
+        Law levelLaw("y-becomes-the-mean");
+        levelLaw.addAuthor(author);
+        levelLaw.setActionModel(ActionNode::map(
+            "position.y", foldOf(Fold::Op::Mean, "position.y"), MathBindings{}));
+        Object leveler;
+        leveler.setPosition(glm::vec3(7.0f, 0.0f, 0.0f));
+        assert(levelLaw.applyTo(leveler) == Law::ApplicationResult::Applied);
+        assert(nearf(leveler.getPosition().y, 5.0f));         // the world's mean
+
+        Universe::instance().setProvider({});
+        registry.loadFromJson(nlohmann::json::object());      // leave it clean
+
+        // ------------------------------------------------------------------
+        // 14. POLYNOMIAL BASIS & GEOMETRIC PRIMITIVE EXTENSIONS (Rung 0)
+        // ------------------------------------------------------------------
+        // Combinatorics
+        assert(neard(Operations::binom(4, 0), 1.0));
+        assert(neard(Operations::binom(4, 1), 4.0));
+        assert(neard(Operations::binom(4, 2), 6.0));
+        assert(neard(Operations::binom(4, 3), 4.0));
+        assert(neard(Operations::binom(4, 4), 1.0));
+
+        // Bernstein basis polynomial B_{1,3}(t) = 3t(1-t)^2 = 3t - 6t^2 + 3t^3
+        ScalarForm b13 = ScalarForm::bernsteinBasis(3, 1, "t");
+        assert(neard(b13.evaluate({{"t", 0.0}}), 0.0));
+        assert(neard(b13.evaluate({{"t", 1.0}}), 0.0));
+        assert(neard(b13.evaluate({{"t", 0.5}}), 3.0 * 0.5 * 0.25));
+
+        // 1D Bernstein curve with control points [1, 2, 3, 4] -> linear 1 + 3t
+        ScalarForm b1d = ScalarForm::fromBernstein(3, {1.0, 2.0, 3.0, 4.0}, "t");
+        assert(neard(b1d.evaluate({{"t", 0.0}}), 1.0));
+        assert(neard(b1d.evaluate({{"t", 0.5}}), 2.5));
+        assert(neard(b1d.evaluate({{"t", 1.0}}), 4.0));
+
+        // 2D Bivariate Bernstein surface round-trip
+        int du = 2, dv = 2;
+        std::vector<double> grid = {
+            1.0, 2.0, 3.0,
+            2.0, 4.0, 6.0,
+            3.0, 6.0, 9.0
+        };
+        ScalarForm patchForm = ScalarForm::fromBivariateBernstein(du, dv, grid, "u", "v");
+        assert(neard(patchForm.evaluate({{"u", 0.0}, {"v", 0.0}}), 1.0));
+        assert(neard(patchForm.evaluate({{"u", 1.0}, {"v", 1.0}}), 9.0));
+        assert(neard(patchForm.evaluate({{"u", 0.5}, {"v", 0.5}}), 4.0));
+
+        std::vector<double> recoveredGrid = ScalarForm::toBivariateBernstein(patchForm, du, dv, "u", "v");
+        assert(recoveredGrid.size() == grid.size());
+        for (size_t i = 0; i < grid.size(); ++i) {
+            assert(neard(recoveredGrid[i], grid[i], 1e-6));
+        }
+
+        // Geometric primitive MathNodes
+        auto sphereNode = OntoMath::MathNode::sphere(2.0, "p");
+        std::map<std::string, PropertyValue> sphereVars;
+        sphereVars["p"] = PropertyValue(glm::vec3(2.0f, 0.0f, 0.0f));
+        auto sphereVal = sphereNode->evaluate(sphereVars);
+        assert(sphereVal.has_value());
+        assert(neard(*sphereVal, 0.0));
+
+        sphereVars["p"] = PropertyValue(glm::vec3(5.0f, 0.0f, 0.0f));
+        sphereVal = sphereNode->evaluate(sphereVars);
+        assert(sphereVal.has_value());
+        assert(neard(*sphereVal, 3.0));
+
+        // CSG MathNodes
+        auto sphere2 = OntoMath::MathNode::sphere(1.0, "p");
+        auto unionAst = OntoMath::MathNode::unionOp(std::move(sphereNode), std::move(sphere2));
+        auto unionVal = unionAst->evaluate(sphereVars);
+        assert(unionVal.has_value());
+        assert(neard(*unionVal, 3.0));
+    }
+
+    
+        // Quadric algebra <-> ScalarForm conversions (Rung 3)
+        glm::mat4 Qsphere = geom::Quadric::sphere(2.0f);
+        OntoMath::ScalarForm spherePoly = geom::Quadric::toScalarForm(Qsphere);
+        // x^2 + y^2 + z^2 - 4 = 0
+        assert(neard(spherePoly.evaluate({{"x", 2.0}, {"y", 0.0}, {"z", 0.0}}), 0.0));
+        assert(neard(spherePoly.evaluate({{"x", 0.0}, {"y", 2.0}, {"z", 0.0}}), 0.0));
+        assert(neard(spherePoly.evaluate({{"x", 0.0}, {"y", 0.0}, {"z", 0.0}}), -4.0));
+
+        glm::mat4 Qrecovered = geom::Quadric::fromScalarForm(spherePoly);
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                assert(nearf(Qsphere[j][i], Qrecovered[j][i]));
+            }
+        }
+
+    // ------------------------------------------------------------------
+    // 15. MathNode operations and JSON roundtrip tests
+    // ------------------------------------------------------------------
+    {
+        std::map<std::string, PropertyValue> env;
+        env["x"] = PropertyValue(5.0);
+        env["y"] = PropertyValue(3.0);
+
+        OntoMath::MathNode addNode;
+        addNode.op = OntoMath::MathNode::Op::Add;
+        auto left = std::make_unique<OntoMath::MathNode>();
+        left->op = OntoMath::MathNode::Op::ScalarLeaf;
+        left->scalarForm = OntoMath::ScalarForm::constant(5.0);
+
+        auto right = std::make_unique<OntoMath::MathNode>();
+        right->op = OntoMath::MathNode::Op::ScalarLeaf;
+        right->scalarForm = OntoMath::ScalarForm::constant(3.0);
+
+        addNode.children.push_back(std::move(left));
+        addNode.children.push_back(std::move(right));
+
+        auto resScalar = addNode.evaluate(env);
+        assert(resScalar.has_value() && neard(*resScalar, 8.0));
+
+        // Test VectorConstruct and Component
+        OntoMath::MathNode vecNode;
+        vecNode.op = OntoMath::MathNode::Op::VectorConstruct;
+        auto xNode = std::make_unique<OntoMath::MathNode>();
+        xNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        xNode->scalarForm = OntoMath::ScalarForm::constant(1.0);
+        auto yNode = std::make_unique<OntoMath::MathNode>();
+        yNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        yNode->scalarForm = OntoMath::ScalarForm::constant(2.0);
+        auto zNode = std::make_unique<OntoMath::MathNode>();
+        zNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        zNode->scalarForm = OntoMath::ScalarForm::constant(3.0);
+        vecNode.children.push_back(std::move(xNode));
+        vecNode.children.push_back(std::move(yNode));
+        vecNode.children.push_back(std::move(zNode));
+
+        auto resVec = vecNode.evaluate(env);
+        assert(resVec.has_value() && std::holds_alternative<glm::vec3>(*resVec));
+        glm::vec3 v = std::get<glm::vec3>(*resVec);
+        assert(nearf(v.x, 1.0f) && nearf(v.y, 2.0f) && nearf(v.z, 3.0f));
+
+        OntoMath::MathNode compNode;
+        compNode.op = OntoMath::MathNode::Op::Component;
+        compNode.stringArg = "y";
+        compNode.children.push_back(std::make_unique<OntoMath::MathNode>(vecNode));
+        auto resComp = compNode.evaluate(env);
+        assert(resComp.has_value() && neard(*resComp, 2.0));
+
+        // JSON roundtrip
+        nlohmann::json j = addNode.toJson();
+        auto restored = OntoMath::MathNode::fromJson(j);
+        assert(restored && restored->op == OntoMath::MathNode::Op::Add);
+        auto resRestored = restored->evaluate(env);
+        assert(resRestored.has_value() && neard(*resRestored, 8.0));
+    }
+
+    Universe::instance().setProvider({});
+    std::puts("ontomath_test: ALL OK");
+    return 0;
+}

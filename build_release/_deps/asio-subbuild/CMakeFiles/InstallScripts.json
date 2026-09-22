@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/zacharyzhang/Documents/GitHub/Earthcall/build_release/_deps/asio-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

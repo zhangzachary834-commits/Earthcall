@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/src**",
+                "/opt/homebrew/include",
+                "${workspaceFolder}/src/ZonesOfEarth",
+                "${workspaceFolder}/src/Person",
+                "${workspaceFolder}/src/ZonesOfEarth/HomesOfEarth",
+                "${workspaceFolder}/src/ZonesOfEarth/Ourverse",
+                "${workspaceFolder}/src/Relation",
+                "${workspaceFolder}/src/Person/Body",
+                "${workspaceFolder}/imgui",
+                "${workspaceFolder}/third_party/flatbuffers/include"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}

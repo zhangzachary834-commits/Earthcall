@@ -1,0 +1,66 @@
+{
+  "zoneId": "foreign-zone.calendar-app",
+  "name": "Calendar App Raw Dump",
+  "description": "An isolated Zone holding K0 K3 structures translated from macOS Accessibility",
+  "objects": [
+    {
+      "id": "calendar-window-1",
+      "concept": "foreign.window",
+      "properties": {
+        "x": 100,
+        "y": 100,
+        "width": 800,
+        "height": 600,
+        "title": "Calendar"
+      }
+    },
+    {
+      "id": "button-next-month",
+      "concept": "foreign.button",
+      "properties": {
+        "x": 750,
+        "y": 120,
+        "width": 30,
+        "height": 30,
+        "label": ">"
+      }
+    },
+    {
+      "id": "grid-cell-15",
+      "concept": "foreign.cell",
+      "properties": {
+        "label": "15",
+        "hasEvent": true
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel-btn-contain",
+      "type": "contained-by",
+      "entityA": "button-next-month",
+      "entityB": "calendar-window-1",
+      "weight": 1.0,
+      "directed": true
+    },
+    {
+      "id": "rel-cell-contain",
+      "type": "contained-by",
+      "entityA": "grid-cell-15",
+      "entityB": "calendar-window-1",
+      "weight": 1.0,
+      "directed": true
+    }
+  ],
+  "formations": [
+    {
+      "id": "calendar-ui-formation",
+      "name": "Calendar Window View Hierarchy",
+      "members": [
+        "calendar-window-1",
+        "button-next-month",
+        "grid-cell-15"
+      ]
+    }
+  ]
+}

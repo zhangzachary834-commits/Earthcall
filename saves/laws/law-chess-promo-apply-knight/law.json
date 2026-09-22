@@ -1,0 +1,154 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-promo-apply-knight",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-promo-apply-knight",
+    "name": "apply-promotion-knight",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        {
+          "kind": 0,
+          "path": "onBoard",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 4,
+          "children": [
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 7
+              }
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operand": {
+                "t": "int",
+                "v": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "chessRole",
+          "operand": {
+            "t": "int",
+            "v": 2
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.kind",
+          "operand": {
+            "t": "int",
+            "v": 5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.r",
+          "operand": {
+            "t": "double",
+            "v": 0.28
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.ry",
+          "operand": {
+            "t": "double",
+            "v": 0.2
+          }
+        },
+        {
+          "kind": 0,
+          "path": "shape.rz",
+          "operand": {
+            "t": "double",
+            "v": 0.32
+          }
+        },
+        {
+          "kind": 0,
+          "path": "restY",
+          "operand": {
+            "t": "double",
+            "v": 0.32
+          }
+        },
+        {
+          "kind": 0,
+          "path": "position.y",
+          "operand": {
+            "t": "double",
+            "v": 0.32
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.promoActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-promo-apply-knight",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "promo-select-knight"
+  ]
+}

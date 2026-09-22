@@ -1,0 +1,66 @@
+{
+  "authors": [
+    "studio.author.codex"
+  ],
+  "identifier": "law-studio-resonance-struck",
+  "injected_by": "GPT-5.6 Sol preservation migration authorized by Zach, 2026-09-14",
+  "law": {
+    "actionModel": {
+      "bindings": {
+        "t": "time"
+      },
+      "function": {
+        "pieces": [
+          {
+            "expr": {
+              "terms": [
+                {
+                  "c": 1.0,
+                  "factors": {
+                    "t": 1.0
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "kind": 8,
+      "path": "struckAt"
+    },
+    "activation": 0,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "studio.author.codex"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 0,
+      "op": 0,
+      "operandPath": "@event.subject.noteName",
+      "path": "resonanceNote"
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "law-studio-resonance-struck",
+    "name": "Studio: A played note strikes its light",
+    "provenance": [
+      {
+        "directed": true,
+        "entityA": "law-studio-resonance-struck",
+        "entityB": "studio.author.codex",
+        "events": [],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [
+    "note-played"
+  ]
+}

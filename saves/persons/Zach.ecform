@@ -1,0 +1,21 @@
+{
+  "body": {
+    "artStyle": "default",
+    "bodyParts": [],
+    "height": 1.7999999523162842,
+    "shape": "humanoid"
+  },
+  "displayLexemeId": "lexeme_99ECEA28-E735-4FD6-9847-11846EDC6EB6",
+  "displayName": "Zach",
+  "position": [
+    0.0,
+    -0.8999999761581421,
+    3.0
+  ],
+  "soulName": "Zach",
+  "velocity": [
+    0.0,
+    0.0,
+    0.0
+  ]
+}

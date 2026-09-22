@@ -1,0 +1,370 @@
+#include "Singularity/Core/Engine.hpp"
+#include "../Screen/Camera.hpp"
+#include "../Screen/Renderer.hpp"
+#include "../Screen/ShadingSystem.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
+#include "../../ZonesOfEarth/ZoneManager.hpp"
+#include "../../ZonesOfEarth/Zone/Zone.hpp"
+#include "../../Person/Person.hpp"
+#include "../../Person/Body/BodyPart/BodyPart.hpp"
+#include "../../ConstructedBeing/Singular/Object/Object.hpp"
+#include "../../ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Audio/AudioRecorder.hpp"
+#include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
+
+#include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <GLFW/glfw3.h>
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+extern ZoneManager mgr;
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+namespace Core {
+    void Engine::render() {
+        if (!_window) return;
+
+        int fbW, fbH;
+        glfwGetFramebufferSize(_window, &fbW, &fbH);
+        if (fbH == 0) fbH = 1;
+        float aspect = static_cast<float>(fbW) / fbH;
+
+        // Current active Zone's objects
+        auto& zone = mgr.active();
+
+        /**
+         * --------------------
+         * Projection
+         *
+         */
+        float fov = 45.0f;
+        float nearZ = 0.1f;
+        float farZ  = 100.0f;
+        float top   = tanf(fov * M_PI / 360.0f) * nearZ;
+        float bottom = -top;
+        float right  = top * aspect;
+        float left   = -right;
+
+        glm::mat4 proj = currentRenderer().zeroToOneDepth()
+            ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
+            : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
+
+        /* -------------------- */
+
+        // Model-view (camera)
+        glm::vec3 eyePos   = _camera->pos;
+        glm::vec3 lookDir  = _camera->front;
+        const float CAMERA_DISTANCE = 4.0f;
+
+        if (_currentPerspective == PerspectiveMode::ThirdPerson) {
+            eyePos  = _camera->pos - _camera->front * CAMERA_DISTANCE;
+        } else if (_currentPerspective == PerspectiveMode::SecondPerson) {
+            eyePos  = _camera->pos + _camera->front * CAMERA_DISTANCE;
+        }
+
+        glm::vec3 lookTarget = _camera->pos + lookDir;
+        glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera->up);
+
+        currentRenderer().setCamera(view, proj, eyePos);
+
+        for (int i = 0; i < 16; ++i) {
+            _camera->modelview[i]  = static_cast<GLdouble>(glm::value_ptr(view)[i]);
+            _camera->projection[i] = static_cast<GLdouble>(glm::value_ptr(proj)[i]);
+        }
+        _camera->viewport[0] = 0;    _camera->viewport[1] = 0;
+        _camera->viewport[2] = fbW;  _camera->viewport[3] = fbH;
+
+        // Refusal #6: renderer state is downstream of authored reality.
+        //
+        // A Zone's existing FieldNode can become the persistent illumination
+        // source by carrying the ordinary authored bool property
+        // `light.source=true`. Its registered `origin` is then the source's
+        // world-space placement. Nothing new is carved into the C++ ontology:
+        // FieldNode remains the continuous mathematical substrate, and the
+        // marker is Person/Law-authored vocabulary on a Singular.
+        //
+        // If no persistent radiant field has been authored yet, ScreenChannel
+        // preserves the previous camera-relative compatibility path. That
+        // first-mover fallback is intentionally second priority: once a Zone
+        // says where illumination lives, the renderer obeys the world.
+        Singularity::Screen::ScreenChannel* screenChannel = nullptr;
+        if (_lawManager) {
+            screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
+        }
+
+        const Universe& universe = Universe::instance();
+        const double sourceTime = universe.hasClock() ? universe.now() : 0.0;
+        const double sourceDelta = universe.hasClock() ? universe.dt() : 0.0;
+
+        // Rung 7 source discovery is over the Zone's direct FieldNode ownership
+        // index, not over every Object. The canonical spatialRoot is first so a
+        // one-source Zone remains byte-for-byte ordered like the historical path.
+        std::vector<geom::FieldNode*> candidateFields;
+        if (auto* root = zone.spatialRoot()) candidateFields.push_back(root);
+        for (const auto& field : zone.additionalSpatialFields()) {
+            if (field) candidateFields.push_back(field.get());
+        }
+
+        std::vector<Rendering::RadianceSourceBinding> radiantSources;
+        radiantSources.reserve(candidateFields.size());
+        std::string sourceSetIdentity;
+
+        for (geom::FieldNode* field : candidateFields) {
+            Rendering::AuthorableLightState light;
+            if (!field || !Rendering::readAuthorableLight(*field, light)) continue;
+
+            Rendering::RadianceSourceBinding source;
+            source.position = light.position;
+            source.ambientRadiance = Rendering::lightAmbientRadiance(light);
+            source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
+            source.specularRadiance = Rendering::lightSpecularRadiance(light);
+            source.coefficients =
+                glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
+            source.temporalCoordinate = sourceTime;
+            source.temporalDelta = sourceDelta;
+            source.enabled = light.enabled;
+
+            if (field->field &&
+                field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                !field->field->astDefinition.pieces.empty()) {
+                const std::string json = field->field->astDefinition.toJson().dump();
+                source.radianceExpr = &field->field->astDefinition;
+                source.radianceRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+            }
+            if (field->lightChroma && !field->lightChroma->pieces.empty()) {
+                const std::string json = field->lightChroma->toJson().dump();
+                source.chromaExpr = field->lightChroma.get();
+                source.chromaRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+            }
+            if (field->lightAngular && !field->lightAngular->pieces.empty()) {
+                const std::string json = field->lightAngular->toJson().dump();
+                source.angularExpr = field->lightAngular.get();
+                source.angularRevision =
+                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+            }
+
+            // Rung 7 structural/value invalidation is intentionally bounded.
+            // Source membership/order plus authored rho/chi/alpha content is the
+            // parameter/compiler identity. Position, light coefficients,
+            // enablement and temporal coordinates live in the persistent source
+            // storage buffer and must NOT serialize an entire FieldNode merely
+            // to move/recolor/enable a source.
+            sourceSetIdentity += field->getIdentifier();
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.radianceRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.chromaRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.angularRevision);
+            sourceSetIdentity += "\n";
+            radiantSources.push_back(source);
+        }
+
+        const bool persistentLightPlaced = !radiantSources.empty();
+        if (radiantSources.size() == 1) {
+            // Exact Rungs 3-6 compatibility: one source uses the pre-Rung-7
+            // renderer state and generated shader path without multi-source code.
+            const auto& source = radiantSources.front();
+            currentRenderer().setRadianceSources({}, 0);
+            currentRenderer().setLight(source.position, source.ambientRadiance,
+                                       source.diffuseRadiance, source.specularRadiance);
+            currentRenderer().setLightingEnabled(source.enabled);
+            currentRenderer().setRadianceSourceCoefficients(
+                source.coefficients.x, source.coefficients.y,
+                source.coefficients.z, source.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                source.temporalCoordinate, source.temporalDelta);
+            currentRenderer().setRadianceField(source.radianceExpr, source.radianceRevision);
+            currentRenderer().setRadianceChroma(source.chromaExpr, source.chromaRevision);
+            currentRenderer().setRadianceAngular(source.angularExpr, source.angularRevision);
+        } else if (radiantSources.size() > 1) {
+            const uint64_t sourceSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
+            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
+
+            // Legacy fixed/mesh lighting has only one source-shaped slot. Keep
+            // it deterministic by projecting the first ENABLED source there;
+            // WebGPU SDF transport below receives and sums the complete set.
+            const auto it = std::find_if(
+                radiantSources.begin(), radiantSources.end(),
+                [](const Rendering::RadianceSourceBinding& source) {
+                    return source.enabled;
+                });
+            const auto& compatibility =
+                it != radiantSources.end() ? *it : radiantSources.front();
+            currentRenderer().setLight(
+                compatibility.position, compatibility.ambientRadiance,
+                compatibility.diffuseRadiance, compatibility.specularRadiance);
+            currentRenderer().setLightingEnabled(it != radiantSources.end());
+            currentRenderer().setRadianceSourceCoefficients(
+                compatibility.coefficients.x, compatibility.coefficients.y,
+                compatibility.coefficients.z, compatibility.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                compatibility.temporalCoordinate, compatibility.temporalDelta);
+            currentRenderer().setRadianceField(
+                compatibility.radianceExpr, compatibility.radianceRevision);
+            currentRenderer().setRadianceChroma(
+                compatibility.chromaExpr, compatibility.chromaRevision);
+            currentRenderer().setRadianceAngular(
+                compatibility.angularExpr, compatibility.angularRevision);
+        }
+
+        if (!persistentLightPlaced) {
+            currentRenderer().setRadianceSources({}, 0);
+            currentRenderer().setRadianceField(nullptr, 0);
+            currentRenderer().setRadianceChroma(nullptr, 0);
+            currentRenderer().setRadianceAngular(nullptr, 0);
+            currentRenderer().setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+            currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
+            // A previously active authored Zone may have disabled illumination.
+            // No-source means the historical compatibility contract, so restore
+            // enabled state even when no ScreenChannel happens to be present.
+            currentRenderer().setLightingEnabled(true);
+            if (screenChannel) {
+                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                    ? _camera->pos + screenChannel->lightCameraOffset
+                    : screenChannel->lightPosition;
+                currentRenderer().setLight(lightWorldPos,
+                                           currentRenderer().lightAmbient(),
+                                           currentRenderer().lightDiffuse(),
+                                           currentRenderer().lightSpecular());
+            }
+        }
+
+        {
+            glm::vec4 clearColor(0.1f, 0.1f, 0.15f, 1.0f);
+            if (screenChannel) {
+                clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
+                currentRenderer().setWireframe(screenChannel->wireframe);
+                currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
+                currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
+                currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
+            }
+            auto tB0 = std::chrono::steady_clock::now();
+            currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
+            auto tB1 = std::chrono::steady_clock::now();
+            g_frameTimings.wait_surface_ms = std::chrono::duration<float, std::milli>(tB1 - tB0).count();
+        }
+
+        // Draw all owned objects cleanly (no hardcoded baseline mutation or skipping ground)
+        const auto& objects = zone.getOwnedObjects();
+        for (const auto& obj : objects) {
+            if (obj) {
+                currentRenderer().setModel(obj->getTransform());
+                obj->drawObject();
+                obj->drawHighlightOutline();
+            }
+        }
+        currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
+
+        if (_creatorConsoleOpen) {
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
+        }
+
+        // Draw player avatar and nametag when not in first-person
+        if (_currentPerspective != PerspectiveMode::FirstPerson) {
+            _person->draw();
+            _person->drawNametag();
+        }
+
+        _mainMenu.draw(fbW, fbH);
+
+        // Draw 2D objects (Shape2D / Text2D) in screen space, after the 3D scene.
+        // begin2D / end2D bracket installs the orthographic projection; objects are
+        // sorted by zOrder2D so authored z-ordering is honoured.
+        //
+        // WINDOW POINTS, not framebuffer pixels — and the distinction is the whole
+        // bug this line fixes. `x2D`/`y2D` are picked against `glfwGetCursorPos`,
+        // which reports window points; opening the bracket with the FRAMEBUFFER
+        // size made every Shape2D draw at 1/scale of its authored position while
+        // staying clickable at the authored one, so on any Retina display the
+        // visible rectangle and its hit region were in different places and no 2D
+        // control could be clicked at all. Worse, the orphaned hit regions still
+        // occluded the 3D pick, swallowing clicks aimed at the world behind them.
+        // Invisible at scale 1, which is why it survived.
+        //
+        // Window points is the space to standardise on: it is what the cursor is
+        // in, what ImGui is in, what Menu::draw already passes, and it is
+        // resolution-independent, so an authored HUD lands in the same place on
+        // every display. See Renderer::begin2D's contract.
+        {
+            int winW = fbW, winH = fbH;
+            glfwGetWindowSize(_window, &winW, &winH);
+            if (winW <= 0) winW = fbW;
+            if (winH <= 0) winH = fbH;
+            const uint32_t fbWu = static_cast<uint32_t>(winW);
+            const uint32_t fbHu = static_cast<uint32_t>(winH);
+            std::vector<Object*> objects2D;
+            for (const auto& obj : objects) {
+                if (obj && obj->is2D()) objects2D.push_back(obj.get());
+            }
+            std::stable_sort(objects2D.begin(), objects2D.end(),
+                [](const Object* a, const Object* b) {
+                    return a->getZOrder2D() < b->getZOrder2D();
+                });
+            if (!objects2D.empty()) {
+                currentRenderer().begin2D(fbWu, fbHu);
+                for (Object* obj : objects2D) {
+                    obj->draw2DObject(fbWu, fbHu);
+                }
+                currentRenderer().end2D();
+            }
+        }
+
+        auto tE0 = std::chrono::steady_clock::now();
+        currentRenderer().endFrame();
+        auto tE1 = std::chrono::steady_clock::now();
+        g_frameTimings.wait_submit_ms = std::chrono::duration<float, std::milli>(tE1 - tE0).count();
+
+        if (_lawManager) {
+            if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                const auto& stats = currentRenderer().frameStats();
+                sc->updateMetrics(static_cast<int>(stats.drawCalls),
+                                  static_cast<int>(stats.trianglesDrawn),
+                                  static_cast<double>(stats.vramAllocatedBytes),
+                                  static_cast<double>(stats.uniformBytesWritten),
+                                  static_cast<int>(stats.bufferSuballocations),
+                                  static_cast<int>(stats.pipelineSwitches),
+                                  static_cast<int>(stats.cachedMeshesCount),
+                                  static_cast<int>(stats.sdfProgramCompiles),
+                                  static_cast<int>(stats.sdfProgramCacheHits),
+                                  static_cast<int>(stats.sdfProgramCacheMisses),
+                                  static_cast<int>(stats.sdfProgramRefusals),
+                                  stats.sdfLastProgramRefusal,
+                                  static_cast<double>(stats.sdfWgslBytesGenerated),
+                                  static_cast<double>(stats.sdfParameterBytesUploaded),
+                                  static_cast<int>(stats.sdfRangeHierarchyBuilds),
+                                  static_cast<int>(stats.sdfRangeProxyDraws),
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws),
+                                  static_cast<int>(stats.sdfRangeTraversalDraws),
+                                  static_cast<double>(stats.sdfRangeNodeBytesUploaded));
+            }
+            if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                if (recorder->isRecording()) {
+                    recorder->stepFrame(fbW, fbH);
+                }
+            }
+            if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
+                watcher->tick();
+            }
+            if (auto* mic = Singularity::Audio::AudioRecorder::find(*_lawManager)) {
+                double dt = Universe::instance().dt();
+                mic->tick(dt > 0.0 ? dt : 0.016);
+            }
+        }
+    }
+}

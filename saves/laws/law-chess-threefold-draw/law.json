@@ -1,0 +1,107 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-threefold-draw",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-threefold-draw",
+    "name": "draw-on-threefold-repetition",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "path": "repCount",
+          "op": 5,
+          "operand": {
+            "t": "int",
+            "v": 6
+          }
+        },
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "result",
+          "operand": {
+            "t": "int",
+            "v": 2
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isDraw",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "drawReason",
+          "operand": {
+            "t": "string",
+            "v": "Threefold repetition"
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-threefold-draw",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "turn-changed"
+  ]
+}

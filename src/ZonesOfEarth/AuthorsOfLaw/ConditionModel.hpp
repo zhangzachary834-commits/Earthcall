@@ -1,0 +1,234 @@
+#pragma once
+
+#include "ECA.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "MathBinding.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "json.hpp"
+
+#include <memory>
+#include <unordered_set>
+#include <string>
+#include <utility>
+#include <vector>
+
+// The law's condition as data (LAW_AND_CREATION_SYSTEM.md §2a): an expression
+// tree over PropertyPaths, serializable and Person-authorable, compiled once
+// into the ECA::ConditionPredicate slot. The SdfNode move applied to
+// predicates — the tree is the law's text; the closure is derived.
+struct ConditionNode {
+    // Serialized as ints — all enums here are APPEND-ONLY.
+    //
+    // The condition calculus, mapped to what C++ itself gives:
+    //   All / Any / Not  =  && / || / !   — and tree NESTING is
+    //   parenthesization: All(Any(a,b), Not(c)) is (a || b) && !c.
+    //   IsKind           =  runtime instanceof (dynamic_cast)
+    //   Identity         =  this one specific being
+    //   ForAny / ForAll  =  first-order quantifiers over the Universe of
+    //                       beings (with exceptions) — the inner condition is
+    //                       evaluated with each INSTANCE as its subject.
+    enum class Kind { Compare = 0, InRegion = 1, Related = 2, All = 3, Any = 4, Not = 5,
+                      Zone = 6, IsKind = 7, Identity = 8, ForAny = 9, ForAll = 10,
+                      // Overlaps — geometric contact between the subject and a
+                      // named other, answered by the engine's collision test
+                      // (a first mover shrunk to a pure PREDICATE): perception
+                      // as an ordinary condition.
+                      Overlaps = 11,
+                      // 12 and 13 were the pair quantifiers (ForAnyPair /
+                      // ForAllPair), retired in favour of modelling pairs as
+                      // Relations in the graph. APPEND-ONLY means those two
+                      // stay BURNED: a future kind must not reuse them, or a
+                      // saved world would load as something else entirely.
+                      //
+                      // Not a kind an author can pick — the landing place for
+                      // a kind THIS BUILD does not know: a save from another
+                      // version, or one of the retired pair quantifiers. It
+                      // never holds (compile() answers false and says why in
+                      // the audit log), and the original JSON rides along in
+                      // `unsupported` so a load/save round trip does not
+                      // destroy law text we merely cannot evaluate.
+                      Unsupported = 255 };
+    enum class Op { Eq = 0, Ne = 1, Lt = 2, Le = 3, Gt = 4, Ge = 5, Near = 6, InRange = 7 };
+
+    // The ontology's kinds, checked by dynamic_cast — honest C++ instanceof.
+    // (Note: a Law IS an Object in this ontology — extra-spatial — so
+    // BeingKind::Object matches laws too; use BeingKind::Law for precision.)
+    // (Zone is likewise an Object — extra-spatial, per the manifesto — so
+    // BeingKind::Object matches zones too; use BeingKind::Zone for precision.)
+    enum class BeingKind { AnyBeing = 0, Object = 1, Person = 2, Relation = 3,
+                           Formation = 4, Law = 5,
+                           // 6 was World, folded into Zone 2026-08-20.
+                           // BURNED: never reuse. matchesKind answers false.
+                           World = 6,
+                           Zone = 7, Lexeme = 8 };
+
+    Kind kind = Kind::Compare;
+
+    // Compare payload.
+    PropertyPath path;               // lhs
+    Op op = Op::Eq;
+    PropertyValue operand;           // rhs literal…
+    PropertyPath operandPath;        // …or rhs read live from another property
+    double tolerance = 0.0;          // Near
+    PropertyValue lo, hi;            // InRange
+
+    // InRegion payload — a shape IS the condition. Authored with the ordinary
+    // shape tools in projection mode; evalSdf(region, probe) < 0 is the test.
+    geom::SdfNode region;
+    PropertyPath probe;              // point tested; defaults to "position"
+
+    // Related payload — graph-shaped conditions ("x touching y"). Recorded in
+    // the model now; resolution against the relation graph lands with the
+    // event/Rete wiring (commit 4).
+    std::string relationType;
+    std::string otherId;
+
+    // Zone payload — the authored satisfaction zone of a mathematical
+    // function: satisfied when f(bindings) lies within [lo, hi] (either side
+    // may be absent = unbounded, reusing the InRange lo/hi slots; a monostate
+    // bound is an open side). The function itself is Person-authored OntoMath
+    // — piecewise, multivariate, exact — and the bindings name where each
+    // variable lives on the subject. Undefined f (outside every piece, or an
+    // unbound variable) is NOT satisfied: laws never fire on undefined math.
+    OntoMath::Piecewise zoneFunction;
+    MathBindings bindings;
+
+    // IsKind payload + the quantifiers' domain filter.
+    BeingKind beingKind = BeingKind::AnyBeing;
+    // Quantifier exceptions: "every instance ... with possible exceptions".
+    std::vector<std::string> exceptIds;
+
+    std::vector<ConditionNode> children;   // All/Any/Not members; quantifier inner test
+
+    // Unsupported payload: the node's original JSON, kept verbatim so this
+    // build can hand back law text it cannot read. shared_ptr because the
+    // common case is null and ConditionNode is copied freely.
+    std::shared_ptr<nlohmann::json> unsupported;
+
+    nlohmann::json toJson() const;
+    static ConditionNode fromJson(const nlohmann::json& j);
+
+    // Tree → closure, once. The tree remains the law's text.
+    ECA::ConditionPredicate compile() const;
+
+    // Compile the live remainder after one exact POSITIVE conjunctive
+    // Related(kind, other) route has already been proved by current derived
+    // relevance state. The proof is consumed only at a matching Related leaf
+    // reached through All-conjunctions. Any / Not / quantifier subtrees compile
+    // normally, so a proof can never leak across logical polarity.
+    ECA::ConditionPredicate compileAssumingCategoryRoute(
+        const std::string& relationType,
+        const std::string& otherId) const;
+
+    // Compiles this condition tree into the given ReteNetwork.
+    // Returns a list of terminal node IDs (Alpha or Beta) that represent the satisfied conditions.
+    std::vector<std::size_t> compileToRete(class ReteNetwork& rete,
+                                           const std::string& lawId,
+                                           std::size_t leftId = 0,
+                                           bool leftIsBeta = false) const;
+
+    // One-line human summary for ApplicationRecord logs.
+    // Does this tree read a QUALIFIED ROOT — "@some-being.property",
+    // "@interaction-channel.leftDown", "@world.pointerOver"?
+    //
+    // Such a condition is about a being OTHER than the subject, and the
+    // incremental Rete cannot index it: a change to that other being marks
+    // ITS facts dirty, and the subjects whose match set just changed are
+    // every other being in the world. Propagation never reaches them, the
+    // terminal memory stays as it was, and — because a law that HAS terminals
+    // never falls through to the sweep — the law silently stops noticing.
+    //
+    // PROPHETIC_RETE.md §2: the analysis may only ever conclude IMPOSSIBLE.
+    // "I cannot index this" is a legitimate conclusion; "nothing matches" is
+    // not, and that is what the terminals were saying. LawManager consults
+    // this and declines to compile terminals for such a law, which costs it
+    // the O(1) path and leaves it correct on the sweep.
+    bool readsQualifiedRoot() const;
+
+    // ------------------------------------------------------------------
+    // A GATE: a conjunct whose truth does not depend on the subject.
+    //
+    // `@studio.themeNight > 0` names ONE being (§1.1: the condition language
+    // has no free variable), so it is one truth about the world, identical for
+    // every subject you ask it about. Rung 1 established what follows: such a
+    // conjunct cannot NARROW a candidate set, because it says nothing about
+    // which subject. What it can do is decide the law all at once — when it is
+    // false, the correct candidate set is empty, and the engine should be able
+    // to say so once instead of discovering it one refusal per subject.
+    //
+    // Measured before building: a law behind a SHUT gate cost 278 ms/tick at
+    // 480 beings and fitted k = 1.67 against population, while firing nothing.
+    //
+    // Two roots are deliberately NOT hoistable, and both would be wrong:
+    //   @event.*  resolves through Universe's application event, which is set
+    //             per application inside applyTo — outside one it reads unset.
+    //   @world.*  passes the SUBJECT to the channel reading
+    //             (`found->second(subject, out)` in lawGetValue), so it is not
+    //             subject-independent at all.
+    // ------------------------------------------------------------------
+    bool isHoistableGate() const;
+    // Every hoistable gate in this tree, in conjunction position. Only `All`
+    // is descended: a gate under `Any` is a DISJUNCT, and a false disjunct
+    // decides nothing — the other branch may still hold. Under `Not` its sense
+    // is inverted, which this does not attempt to reason about.
+    void collectHoistableGates(std::vector<const ConditionNode*>& out) const;
+
+    // Every relation type this tree's Related conditions name.
+    void collectRelationTypes(std::unordered_set<std::string>& out) const;
+
+    // The (relation kind, named far end) pairs this condition routes through:
+    // every `Related(type, otherId)` leaf where BOTH are literal. A far end
+    // written "@event.subject" names whoever the event is about, which is not a
+    // place in the graph the adapter can pre-load, so those are skipped.
+    //
+    // This is what lets a Law be connected to the Relations it travels through
+    // ahead of time, on the slow adapter's clock, instead of asking the graph
+    // every frame — FORMATION_RETE.md §3.2/§3.3, and Zach 2026-09-16: "The
+    // mechanism that creates Relations between Relations and pre-loads Law
+    // Relations to these Relation Formations is also supposed to be in the slow
+    // adapter rather than constantly rebuilt every frame."
+    void collectCategoryRoutes(
+        std::vector<std::pair<std::string, std::string>>& out) const;
+
+    std::string describe() const;
+
+    // Every property this condition addresses ON ITS OWN SUBJECT — the
+    // vocabulary a being must have for the condition to be about it at all.
+    // Quantifiers are deliberately NOT descended into: their inner condition
+    // is evaluated against each INSTANCE it ranges over, not against the
+    // law's subject, so folding those paths in would filter out exactly the
+    // beings a quantified law is meant to sweep.
+    void collectPaths(std::vector<PropertyPath>& out) const;
+
+    // Factories (mirror SdfNode::leaf/binary).
+    static ConditionNode compare(const std::string& dottedPath, Op op, PropertyValue rhs);
+    static ConditionNode comparePaths(const std::string& dottedPath, Op op, const std::string& rhsPath);
+    static ConditionNode inRegion(geom::SdfNode region, const std::string& probePath = "position");
+    static ConditionNode zone(OntoMath::Piecewise function, MathBindings bindings,
+                              PropertyValue zoneLo = PropertyValue{},
+                              PropertyValue zoneHi = PropertyValue{});
+    static ConditionNode isKind(BeingKind kind);
+    static ConditionNode identity(const std::string& beingId);
+    // Empty type = any relation kind; empty otherId = related to anyone.
+    static ConditionNode related(const std::string& type = "",
+                                 const std::string& otherId = "");
+    // otherToken: a being id, or "@event.subject" / "@event.object".
+    static ConditionNode overlaps(const std::string& otherToken);
+
+    // Honest C++ instanceof, shared with everything that ranges over the
+    // Universe by kind (quantifiers, folds).
+    static bool matchesKind(const Singular& being, BeingKind kind);
+
+    // (Pair quantifiers removed: model pairs as Relations in the graph.)
+    static ConditionNode forAny(BeingKind kind, ConditionNode inner,
+                                std::vector<std::string> exceptions = {});
+    static ConditionNode forAll(BeingKind kind, ConditionNode inner,
+                                std::vector<std::string> exceptions = {});
+    static ConditionNode all(std::vector<ConditionNode> children);
+    static ConditionNode any(std::vector<ConditionNode> children);
+    static ConditionNode negate(ConditionNode child);
+};
+
+// A law's condition model is the root of one such tree.
+using ConditionModel = ConditionNode;

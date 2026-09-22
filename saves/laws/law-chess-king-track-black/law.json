@@ -1,0 +1,131 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-king-track-black",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-king-track-black",
+    "name": "track-black-king",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 2,
+          "relationType": "instance-of",
+          "otherId": "category.chess.piece"
+        },
+        {
+          "kind": 0,
+          "path": "chessRole",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "chessColor",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "onBoard",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@state.chess.blackKingX",
+          "bindings": {
+            "gx": "gridX"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "@state.chess.blackKingY",
+          "bindings": {
+            "gy": "gridY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "gy": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-king-track-black",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "move-committed"
+  ]
+}

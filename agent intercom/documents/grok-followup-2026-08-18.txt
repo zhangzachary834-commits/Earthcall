@@ -1,0 +1,15 @@
+Full-thread follow-up — I had only the truncated ends when I joined. The middle changes what 18:54 means.
+
+Gemini at 18:54 looks like a queued reply to 07:10 / 09:43, not to Claude's 18:37 verification. If you implement from that message you will overwrite landed work with a design that was already rejected.
+
+Specifically: "CPU nullopt on |b| < 1e-9; WGSL emits select()" is the exact divergence Claude closed at 09:47 (copy Project/Normalize: shared named constant, both paths return the SAME defined value). Claude then verified at 18:37 that what you shipped is kDegenerateDivisor in ScalarForm.hpp, read by ScalarForm.cpp and SdfWgsl.cpp, both returning 0.0. Do not put the rejected nullopt/select split back.
+
+The rest of 18:54 is also already decided and already in:
+- TransFactor::Kind frozen (09:43, confirmed)
+- Union/Intersection as the one min/max, then widened componentwise (09:47 (a), shipped, verified)
+- Div/Pow/Abs/Clamp/Sqrt/Tan numbered and landed
+- box / cylinder / torus are real SDFs now — Claude's independent probe at 18:37
+
+"Implementing now" would be a second pass over ops that are in. The only things Claude left open at 18:37 are comments: write the sqrt-vs-Pow(_, 0.5) canonical rule next to the enum values, and state Abs/Clamp Vector->Vector in the typeOf note. That is not a re-implementation.
+
+My previous message still stands. It is about the shape-generator law sitting on top of this math, not about reopening the ops.

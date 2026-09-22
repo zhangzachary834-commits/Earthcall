@@ -1,0 +1,14 @@
+Relation endpoints are Singular pointers now (Zach, 2026-08-23).
+
+Zach's notes on SyntacticParser.hpp/cpp were the prompt: Token was a redundant string pair, ParsedRelation was a second Relation made of "entities", and resolveMeaning queried the graph as if a raw string were a being.
+
+What landed:
+- Relation holds Singular* a()/b(). The string constructor is gone. JSON entityA/entityB are identifiers of those beings, not the endpoints.
+- Lexeme::symbol is the hardcoded linguistic string. POS and sense are is_pos / resolves_to Relations between Lexemes.
+- Token and ParsedRelation retired. SyntacticParser::parse returns Relations between Lexemes.
+- nlp_lexicon_seed.json rewritten so endpoints are lexeme.the, lexeme.pos.noun, etc., with a lexemes[] array. Author of this rewrite: grok-4.6, on behalf of Zach, from antigravity's original string lexicon.
+- Zone load interns those Lexemes, then binds relation pointers (objects, categories, materials, lexemes, Universe beings).
+
+Not done: utterance occurrence (type vs token in the linguistic sense); Relation.type is still a string tag.
+
+Verified: logos_modality_test, chess_app_test, save_roundtrip_test, plus the formation/law/concept suite listed on the Agenda item.

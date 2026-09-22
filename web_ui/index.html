@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthcall - Logos Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #viewport-container {
+            flex-grow: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+
+        /* Earthcall canvas for WebGPU / WASM */
+        #earthcall-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #logos-interface {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #logos-interface:focus-within {
+            border-color: rgba(37, 99, 235, 0.5);
+            box-shadow: 0 8px 32px rgba(37, 99, 235, 0.25);
+        }
+
+        #utterance-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 1.1em;
+            padding: 10px;
+            outline: none;
+        }
+
+        #utterance-input:focus-visible {
+            outline: none;
+        }
+
+        #utterance-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        #utterance-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #emit-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #emit-btn:hover:not([aria-disabled="true"]) {
+            background: #1d4ed8;
+        }
+
+        #emit-btn:active:not([aria-disabled="true"]) {
+            transform: scale(0.96);
+        }
+
+        #emit-btn:focus-visible {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+        }
+
+        #emit-btn[aria-disabled="true"] {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #connection-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.85em;
+            color: rgba(255, 255, 255, 0.95);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 6px 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f5a623; /* Default/Connecting */
+            transition: background-color 0.3s ease;
+        }
+
+        .connecting .status-dot {
+            background: #f5a623;
+            animation: pulse 1.5s infinite;
+        }
+
+        .connected .status-dot {
+            background: #7ed321;
+        }
+
+        .disconnected .status-dot {
+            background: #d0021b;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .connecting .status-dot {
+                animation: none;
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .kbd-hint {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 0.85em;
+            line-height: 1;
+            color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
+
+    <main id="viewport-container">
+        <!-- The canvas is used if running in Emscripten WASM mode -->
+        <canvas id="earthcall-canvas" tabindex="-1" oncontextmenu="event.preventDefault()" role="img" aria-label="Earthcall World View"></canvas>
+        
+        <div id="connection-status" role="status" aria-live="polite">
+            <div class="status-dot" id="status-indicator"></div>
+            <span id="status-text">Initializing...</span>
+        </div>
+
+        <form id="logos-interface" aria-label="Utterance Command Form">
+            <input type="text" id="utterance-input" placeholder="Speak a word into the World... (e.g. 'Joy')" autocomplete="off" aria-label="Speak a word into the World" autofocus>
+            <button type="submit" id="emit-btn" title="Enter a word to emit" aria-disabled="true">Emit <kbd aria-hidden="true" class="kbd-hint">↵</kbd></button>
+        </form>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

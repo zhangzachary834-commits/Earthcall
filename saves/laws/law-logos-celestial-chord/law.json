@@ -1,0 +1,85 @@
+{
+  "authors": [
+    "Zach"
+  ],
+  "identifier": "law-logos-celestial-chord",
+  "injected_by": "Gemini Spark (authored under Zach's Hierarchy of Joys ontology)",
+  "law": {
+    "id": "law-logos-celestial-chord",
+    "name": "Logos: Sound Polyphonic Celestial Canon",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "any",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 4,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "hud.btn.chord"
+        },
+        {
+          "kind": 8,
+          "otherId": "glyph.lexeme.harmonia"
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@state.logos.resonanceFreq",
+          "operand": {
+            "t": "float",
+            "v": 432.0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@logos.resonator.core.light.intensity",
+          "operand": {
+            "t": "float",
+            "v": 7.5
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@hud.logos.telemetry.freq.label2D",
+          "operand": {
+            "t": "string",
+            "v": "CHORD: 432 Hz PYTHAGOREAN CELESTIAL CANON (ACTIVE)"
+          }
+        },
+        {
+          "kind": 18,
+          "path": "acoustic.frequency",
+          "input": "acoustic.amplitude",
+          "propertyName": "sine"
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-logos-celestial-chord",
+        "entityB": "Zach",
+        "directed": true,
+        "weight": 1.0,
+        "events": [],
+        "type": "authored-by"
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

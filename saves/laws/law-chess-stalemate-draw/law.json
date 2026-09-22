@@ -1,0 +1,137 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-stalemate-draw",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-stalemate-draw",
+    "name": "draw-on-stalemate-or-insufficient",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 5,
+          "children": [
+            {
+              "kind": 9,
+              "beingKind": 1,
+              "children": [
+                {
+                  "kind": 3,
+                  "children": [
+                    {
+                      "kind": 2,
+                      "relationType": "instance-of",
+                      "otherId": "category.chess.piece"
+                    },
+                    {
+                      "kind": 0,
+                      "path": "onBoard",
+                      "op": 0,
+                      "operand": {
+                        "t": "bool",
+                        "v": true
+                      }
+                    },
+                    {
+                      "kind": 0,
+                      "path": "chessRole",
+                      "op": 1,
+                      "operand": {
+                        "t": "int",
+                        "v": 5
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "gameOver",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "result",
+          "operand": {
+            "t": "int",
+            "v": 2
+          }
+        },
+        {
+          "kind": 0,
+          "path": "isDraw",
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "drawReason",
+          "operand": {
+            "t": "string",
+            "v": "Stalemate / Insufficient material"
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-stalemate-draw",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "turn-changed"
+  ]
+}

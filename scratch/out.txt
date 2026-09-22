@@ -1,0 +1,222 @@
+=== Synthesis Studio: the authored save, executed ===
+  ok: every authored law in the save is in the register (36)
+  ok: every law reattached to its recorded author — the structural gate
+  ok: every law carries a readable condition tree
+  ok: the save does not re-author the engine's control archetypes
+  ok: with no audio channel bound, nothing is sounded
+  ok: 3D major scale pad exists: studio.pad.c5
+  ok: 2D HUD major scale pad exists: hud.pad.c5
+  ok: 3D pad C5 dips under press
+  ok: clicking 3D pad C5 sounds exactly one note
+  ok: 3D pad C5 plays 523.250000 Hz
+  ok: note sounded by studio.pad.c5
+  ok: the timbre is triangle
+  ok: 3D pad C5 springs back on release
+  ok: 2D pad C5 shifts y2D under press
+  ok: clicking 2D pad C5 sounds exactly one note
+  ok: 2D pad C5 plays 523.250000 Hz
+  ok: note sounded by hud.pad.c5
+  ok: 2D pad C5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.d5
+  ok: 2D HUD major scale pad exists: hud.pad.d5
+  ok: 3D pad D5 dips under press
+  ok: clicking 3D pad D5 sounds exactly one note
+  ok: 3D pad D5 plays 587.330000 Hz
+  ok: note sounded by studio.pad.d5
+  ok: the timbre is triangle
+  ok: 3D pad D5 springs back on release
+  ok: 2D pad D5 shifts y2D under press
+  ok: clicking 2D pad D5 sounds exactly one note
+  ok: 2D pad D5 plays 587.330000 Hz
+  ok: note sounded by hud.pad.d5
+  ok: 2D pad D5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.e5
+  ok: 2D HUD major scale pad exists: hud.pad.e5
+  ok: 3D pad E5 dips under press
+  ok: clicking 3D pad E5 sounds exactly one note
+  ok: 3D pad E5 plays 659.250000 Hz
+  ok: note sounded by studio.pad.e5
+  ok: the timbre is triangle
+  ok: 3D pad E5 springs back on release
+  ok: 2D pad E5 shifts y2D under press
+  ok: clicking 2D pad E5 sounds exactly one note
+  ok: 2D pad E5 plays 659.250000 Hz
+  ok: note sounded by hud.pad.e5
+  ok: 2D pad E5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.f5
+  ok: 2D HUD major scale pad exists: hud.pad.f5
+  ok: 3D pad F5 dips under press
+  ok: clicking 3D pad F5 sounds exactly one note
+  ok: 3D pad F5 plays 698.460000 Hz
+  ok: note sounded by studio.pad.f5
+  ok: the timbre is triangle
+  ok: 3D pad F5 springs back on release
+  ok: 2D pad F5 shifts y2D under press
+  ok: clicking 2D pad F5 sounds exactly one note
+  ok: 2D pad F5 plays 698.460000 Hz
+  ok: note sounded by hud.pad.f5
+  ok: 2D pad F5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.g5
+  ok: 2D HUD major scale pad exists: hud.pad.g5
+  ok: 3D pad G5 dips under press
+  ok: clicking 3D pad G5 sounds exactly one note
+  ok: 3D pad G5 plays 783.990000 Hz
+  ok: note sounded by studio.pad.g5
+  ok: the timbre is triangle
+  ok: 3D pad G5 springs back on release
+  ok: 2D pad G5 shifts y2D under press
+  ok: clicking 2D pad G5 sounds exactly one note
+  ok: 2D pad G5 plays 783.990000 Hz
+  ok: note sounded by hud.pad.g5
+  ok: 2D pad G5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.a5
+  ok: 2D HUD major scale pad exists: hud.pad.a5
+  ok: 3D pad A5 dips under press
+  ok: clicking 3D pad A5 sounds exactly one note
+  ok: 3D pad A5 plays 880.000000 Hz
+  ok: note sounded by studio.pad.a5
+  ok: the timbre is triangle
+  ok: 3D pad A5 springs back on release
+  ok: 2D pad A5 shifts y2D under press
+  ok: clicking 2D pad A5 sounds exactly one note
+  ok: 2D pad A5 plays 880.000000 Hz
+  ok: note sounded by hud.pad.a5
+  ok: 2D pad A5 springs back on release
+  ok: 3D major scale pad exists: studio.pad.b5
+  ok: 2D HUD major scale pad exists: hud.pad.b5
+  ok: 3D pad B5 dips under press
+  ok: clicking 3D pad B5 sounds exactly one note
+  ok: 3D pad B5 plays 987.770000 Hz
+  ok: note sounded by studio.pad.b5
+  ok: the timbre is triangle
+  ok: 3D pad B5 springs back on release
+  ok: 2D pad B5 shifts y2D under press
+  ok: clicking 2D pad B5 sounds exactly one note
+  ok: 2D pad B5 plays 987.770000 Hz
+  ok: note sounded by hud.pad.b5
+  ok: 2D pad B5 springs back on release
+  ok: law-studio-spawn-orb mints exactly one being per activation
+  ok: @state.studio.spawnCount reached the state being through a rooted path
+  ok: the spawn button sounds its own voice, not a shared 440 Hz constant
+  ok: the newborn carries the authored create type
+  ok: and its instance-of edge to category.interactive.orb was made
+  ok: shape.r took the authored radius (`scale` is not a property and never was)
+  ok: the second orb lands somewhere else — spawnCount is read, not just written
+  ok: the studio starts in the day theme
+  ok: one click turns night on
+  ok: and the studio's surfaces take the night ambient
+  ok: a second click turns it back off — the flip is in the mathematics
+  ok: and the surfaces return to day
+  ok: draw mode starts off
+  ok: the draw button turns it on
+  ok: and the button says so — a mode a Person cannot see is a mode they fight
+  ok: and it turns back off
+  ok: the handle is authored where its own law puts it — no jump on load
+  ok: a value past controlMax is clamped back to it
+  ok: and the handle stops at the end of the track
+  ok: pulseRate follows the clamped value, not the runaway one
+  ok: a value below controlMin is clamped up to it
+  ok: the crystal's pulse depth follows pulseRate — the slider means something
+  ok: the Tidal ink selector exists
+  ok: a held pointer that is not moving lays no segments at all
+  ok: slow real travel starts a stroke with exactly one segment
+  FAILED: the Law records the emitted dab's world position
+  FAILED: sub-spacing movement does not create a frame-rate-dependent flood
+  FAILED: accumulated slow travel reaches the authored spacing and lays the next segment
+  ok: the selected Tidal ink reaches the newly drawn stroke
+  ok: the segment carries the acoustics law-stroke-hover-sound reads
+  ok: so hovering a stroke actually chimes
+  ok: with the pointer off the canvas, no segments are laid at the origin
+  ok: hud.btn.spawn-orb loaded authored width2D (150)
+  ok: hud.dock.bg loaded authored width2D (1232)
+  ok: 2D HUD pads do not overlap (pad C5 ends before pad D5 begins)
+  ok: captions carry negative pickPriority and are transparent to picking
+  ok: picking left side of spawn button hits hud.btn.spawn-orb
+  ok: picking right side of spawn button hits hud.btn.spawn-orb
+  ok: picking center of pad D5 hits hud.pad.d5 (not stolen by C5)
+  ok: picking center of pad E5 hits hud.pad.e5 (not stolen by D5)
+  ok: picking right side of draw button hits hud.btn.draw-stroke
+  ok: caption text2d does not swallow clicks at (80, 50)
+  ok: real mouse click through InteractionChannel fires control-button-law and spawns an orb
+  ok: 20 successive clicks through InteractionChannel reliably spawn 20 orbs
+  ok: click on pad C5 works after ImGui UI-captured events
+  ok: pointer moved 4px does not set dragging flag
+  ok: click with natural hand tremor reliably fires object-clicked and spawns orb
+  ok: button is held down before focus loss
+  ok: focus loss clears held button and in-flight pressedId
+  ok: fresh click immediately succeeds after window focus loss and recovery
+  ok: 3D raycast from camera hits studio.btn.spawn-orb on desk
+  ok: 3D raycast from camera hits studio.pad.c5 on desk
+  ok: shape-generator-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)
+  ok: tool-create-3d-law starts disabled in synthesis studio (armed by tool selection, not by load)
+  ok: first mover can be explicitly disabled by a world
+  ok: omitted first mover is left untouched on world load, not reset to any default
+  ok: first mover can be explicitly re-enabled by a world
+  ok: omitted first mover stays enabled too -- omission never overrides either way
+  After 35 pad clicks (5 passes): sounded 35 notes (expected 35)
+  ok: clicking all 7 pads in sequence for 5 passes sounds all 35 notes without lockout
+  ok: button elevation depresses by 3 points and springs back to its authored rest every click
+  ok: resonance sculpture and creative selectors exist in the actual save
+  ok: sine selector changes the next note with no duplicate triangle sound
+  ok: note-played reaches the matching 3D resonator
+  ok: a struck note swells the sculpture and its spectrum meter
+  ok: both visual responses decay to rest after the note
+  ok: square voice is a real audio request
+  ok: repeated musical play allocates no new world objects
+  ok: ink selection changes the authored drawing state
+  ok: voice selection and note playback survive real Law save/load
+  ok: real Object round-trip retains hud.resonance.dock-caption
+  ok: hud.resonance.dock-caption retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.notes-caption
+  ok: hud.resonance.notes-caption retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.draw-caption
+  ok: hud.resonance.draw-caption retains label2D through save/load
+  ok: real Object round-trip retains studio.resonance.c5
+  ok: studio.resonance.c5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.c5
+  ok: hud.resonance.meter.c5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.d5
+  ok: studio.resonance.d5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.d5
+  ok: hud.resonance.meter.d5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.e5
+  ok: studio.resonance.e5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.e5
+  ok: hud.resonance.meter.e5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.f5
+  ok: studio.resonance.f5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.f5
+  ok: hud.resonance.meter.f5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.g5
+  ok: studio.resonance.g5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.g5
+  ok: hud.resonance.meter.g5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.a5
+  ok: studio.resonance.a5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.a5
+  ok: hud.resonance.meter.a5 retains resonanceNote through save/load
+  ok: real Object round-trip retains studio.resonance.b5
+  ok: studio.resonance.b5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.meter.b5
+  ok: hud.resonance.meter.b5 retains resonanceNote through save/load
+  ok: real Object round-trip retains hud.resonance.note
+  ok: hud.resonance.note retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.note-hint
+  ok: hud.resonance.note-hint retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.voice-caption
+  ok: hud.resonance.voice-caption retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.ink-caption
+  ok: hud.resonance.ink-caption retains label2D through save/load
+  ok: real Object round-trip retains hud.resonance.voice.triangle
+  ok: hud.resonance.voice.triangle retains studioVoice through save/load
+  ok: real Object round-trip retains hud.resonance.voice.sine
+  ok: hud.resonance.voice.sine retains studioVoice through save/load
+  ok: real Object round-trip retains hud.resonance.voice.square
+  ok: hud.resonance.voice.square retains studioVoice through save/load
+  ok: real Object round-trip retains hud.resonance.ink.solar
+  ok: hud.resonance.ink.solar retains studioInk through save/load
+  ok: real Object round-trip retains hud.resonance.ink.tidal
+  ok: hud.resonance.ink.tidal retains studioInk through save/load
+  ok: real Object round-trip retains hud.resonance.ink.orchid
+  ok: hud.resonance.ink.orchid retains studioInk through save/load
+=== Synthesis Studio: 3 check(s) FAILED ===

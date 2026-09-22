@@ -1,0 +1,225 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-commit",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-commit",
+    "name": "commit-turn-if-safe",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "state.chess"
+        },
+        {
+          "kind": 0,
+          "path": "inCheck",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.gameOver",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "turn",
+          "bindings": {
+            "t": "turn"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "t": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "selectedX",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "selectedY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "castleMove",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantFile",
+          "bindings": {
+            "f": "nextEnPassantFile"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "f": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantTargetY",
+          "bindings": {
+            "y": "nextEnPassantTargetY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "enPassantVictimY",
+          "bindings": {
+            "y": "nextEnPassantVictimY"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "y": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantFile",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantTargetY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "nextEnPassantVictimY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "turn-changed",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-commit",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "check-evaluated"
+  ]
+}

@@ -1,0 +1,293 @@
+#include "Relation.hpp"
+#include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include <iostream>
+#include <mutex>
+#include <unordered_map>
+
+// Specific Implementation Vision: Recursive, custom tool creation
+// With a combination of the basic tools here, with a Formation system comprised of relations between things, people can create their own tools on top of that.
+// This allows for a recursive, self-creating tool system that can evolve over time.
+// For example, person wants to create a tool that spins objects. The user can set it so that relations are created between an Object's 2D form with others, and they use the existing tool system to draw the pattern by which they want the new tools behavior to resmble. So they can draw a spiral for the spin tool. Then they choose how the system actually uses it—here, let's say it uses an existing hypotehtical base tool "warp". A new relation is created that relates this "tool-behavior" drawing by looking at the drawing and "warping" the current drawing according to the pattern of the meta-spiral drawing. 
+// User can have the choice to have the tools themselves be integrated under relations. Every act of drawing can call a relation between the tool and the other Singulars involved. (tool isn't Singular yet, so we'll make them Singular in the future.)
+
+using json = nlohmann::json;
+
+// The endpoint register behind Relation::mayBeEndpoint (see Relation.hpp,
+// struct Endpoint). Leaked on purpose: Relations and Singulars are destroyed
+// during static teardown, after any ordinary static would already be gone.
+// Mutex-guarded because Singular destructors run on whatever thread frees them.
+namespace {
+struct EndpointRegister {
+    std::mutex mutex;
+    std::unordered_map<const Singular*, std::size_t> counts;
+};
+EndpointRegister& endpointRegister() {
+    static auto* reg = new EndpointRegister();
+    return *reg;
+}
+} // namespace
+
+void Relation::retainEndpoint(const Singular* being) {
+    if (!being) return;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    ++reg.counts[being];
+}
+
+void Relation::releaseEndpoint(const Singular* being) {
+    if (!being) return;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    auto it = reg.counts.find(being);
+    if (it == reg.counts.end()) return;
+    if (--it->second == 0) reg.counts.erase(it);
+}
+
+bool Relation::mayBeEndpoint(const Singular* being) {
+    if (!being) return false;
+    auto& reg = endpointRegister();
+    std::lock_guard<std::mutex> lock(reg.mutex);
+    return reg.counts.count(being) != 0;
+}
+
+namespace {
+bool readIntProperty(Singular* being, const char* name, int& out) {
+    if (!being || !name) return false;
+    Property* property = being->findProperty(name);
+    if (property) {
+        const PropertyValue value = property->value();
+        if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
+        if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
+    }
+    PropertyValue value;
+    if (!being->getDynamicProperty(name, value)) return false;
+    if (const auto* v = std::get_if<int>(&value)) { out = *v; return true; }
+    if (const auto* v = std::get_if<long>(&value)) { out = static_cast<int>(*v); return true; }
+    return false;
+}
+} // namespace
+
+Relation::Relation(const std::string& type,
+                   Singular& aBeing,
+                   Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(type), directed(directed) {
+    bind(&aBeing, &bBeing);
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(const std::string& type,
+                   const Singular& aBeing,
+                   const Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(type), directed(directed) {
+    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
+                   Singular& aBeing,
+                   Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
+    bind(&aBeing, &bBeing);
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
+                   const Singular& aBeing,
+                   const Singular& bBeing,
+                   bool directed,
+                   float initialWeight)
+    : type(typeLexeme.getIdentifier()), _typeLexeme(&typeLexeme), directed(directed) {
+    bind(const_cast<Singular*>(&aBeing), const_cast<Singular*>(&bBeing));
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
+void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
+    _typeLexeme = lexeme;
+    if (_typeLexeme) {
+        const std::string previous = type;
+        type = _typeLexeme->getIdentifier();
+        // Announced like any write to the `type` property: a Relation's kind
+        // changing in place moves its endpoints' edge facts in the Rete
+        // (LawManager::_relationStateToRevalidate). Silent before 2026-09-14.
+        if (type != previous) Singular::notifyPropertyChanged(this, "type");
+    }
+}
+
+void Relation::forgetTypeLexeme(const Singularity::Language::Lexeme* lexeme) {
+    if (!lexeme || _typeLexeme != lexeme) return;
+
+    // `type` already carries the Lexeme's stable Singular identifier. The
+    // kind-being leaving memory therefore changes only pointer grounding, not
+    // Relation identity; do not announce a semantic type change.
+    _typeLexeme = nullptr;
+}
+
+std::string Relation::typeLabel() const {
+    return _typeLexeme ? _typeLexeme->getSymbol() : type;
+}
+
+Relation::ConstitutiveStatus Relation::evaluateConstitutive() const {
+    if (!_typeLexeme) return ConstitutiveStatus::NotApplicable;
+
+    int rawOpcode = static_cast<int>(ConstitutiveOpcode::None);
+    if (!readIntProperty(_typeLexeme, kConstitutiveOpcodeProperty, rawOpcode) ||
+        rawOpcode == static_cast<int>(ConstitutiveOpcode::None)) {
+        return ConstitutiveStatus::NotApplicable;
+    }
+
+    switch (static_cast<ConstitutiveOpcode>(rawOpcode)) {
+        case ConstitutiveOpcode::None:
+            return ConstitutiveStatus::NotApplicable;
+        case ConstitutiveOpcode::CppInheritance: {
+            if (!a() || !b()) return ConstitutiveStatus::Invalid;
+            int rawKind = -1;
+            if (!readIntProperty(b(), kCppBeingKindProperty, rawKind)) {
+                return ConstitutiveStatus::Invalid;
+            }
+            const auto kind = static_cast<ConditionNode::BeingKind>(rawKind);
+            return ConditionNode::matchesKind(*a(), kind)
+                       ? ConstitutiveStatus::Holds
+                       : ConstitutiveStatus::Violated;
+        }
+    }
+    return ConstitutiveStatus::Invalid;
+}
+
+void Relation::describe() const {
+    std::cout << "Relation [" << typeLabel() << "] "
+              << (directed ? "from " : "between ")
+              << aId() << (directed ? " -> " : " and ") << bId()
+              << " (strength=" << getWeight() << ")"
+              << std::endl;
+}
+
+bool Relation::involves(const Singular* being) const {
+    return being && (a() == being || b() == being);
+}
+
+bool Relation::involves(const Singular& being) const {
+    return a() == &being || b() == &being;
+}
+
+bool Relation::involves(const std::string& identifier) const {
+    if (identifier.empty()) return false;
+    return aId() == identifier || bId() == identifier;
+}
+
+bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
+    if (directed) {
+        return a() == &aBeing && b() == &bBeing;
+    }
+    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
+}
+
+bool Relation::isBetween(const std::string& a, const std::string& b) const {
+    if (a.empty() || b.empty()) return false;
+    if (directed) {
+        return aId() == a && bId() == b;
+    }
+    return (aId() == a && bId() == b) || (aId() == b && bId() == a);
+}
+
+json Relation::toJson() const {
+    return relationToJson(*this);
+}
+
+Relation Relation::fromJson(const json& j, const RelationEndpointResolver& resolve) {
+    return relationFromJson(j, resolve);
+}
+
+// A Relation is a legible Singular: type/weight/directed are governable
+// state; the endpoints are read-only (they ARE the relation's identity).
+void Relation::buildProperties() {
+    registerProperty(std::make_unique<PropertyRef<Relation, std::string>>(
+        "type", this, &Relation::type));
+    registerProperty(std::make_unique<PropertyRef<Relation, bool>>(
+        "directed", this, &Relation::directed));
+    registerProperty(std::make_unique<ComputedProperty<Relation, float>>(
+        "weight", this, &Relation::getWeight, &Relation::setWeight));
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::string>>(
+        "entityA", this, &Relation::propEntityA));
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::string>>(
+        "entityB", this, &Relation::propEntityB));
+
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.enabled", this, &Relation::getAttachmentEnabled, &Relation::setAttachmentEnabled));
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::mat4>>(
+        "attachment.localOffset", this, &Relation::getAttachmentLocalOffset, &Relation::setAttachmentLocalOffset));
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+        "attachment.parentAnchor", this, &Relation::getAttachmentParentAnchor, &Relation::setAttachmentParentAnchor));
+    registerProperty(std::make_unique<ComputedProperty<Relation, glm::vec3>>(
+        "attachment.childAnchor", this, &Relation::getAttachmentChildAnchor, &Relation::setAttachmentChildAnchor));
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritTranslation", this, &Relation::getAttachmentInheritTranslation, &Relation::setAttachmentInheritTranslation));
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritRotation", this, &Relation::getAttachmentInheritRotation, &Relation::setAttachmentInheritRotation));
+    registerProperty(std::make_unique<ComputedProperty<Relation, bool>>(
+        "attachment.inheritScale", this, &Relation::getAttachmentInheritScale, &Relation::setAttachmentInheritScale));
+    registerProperty(std::make_unique<ComputedProperty<Relation, std::shared_ptr<PropertyList>>>(
+        "events", this, &Relation::getEventsList, &Relation::setEventsList));
+}
+
+
+bool Relation::s_developerMode = true; // Default true for developer testing
+
+float Relation::getWeight() const {
+    PropertyValue out;
+    if (getDynamicProperty("weight", out)) {
+        return std::get<float>(out);
+    }
+    if (s_developerMode) {
+        std::cerr << "[Relation] AUDIT WARNING: weight not explicitly settled for Relation " << getIdentifier() << ". Falling back to 1.0f in developer mode." << std::endl;
+        return 1.0f;
+    }
+    throw std::runtime_error("Relation weight not explicitly settled by a Person.");
+}
+
+void Relation::setWeight(const float& w) {
+    setDynamicProperty("weight", PropertyValue(w));
+}
+
+std::shared_ptr<PropertyList> Relation::getEventsList() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto& ev : events) {
+        auto dict = std::make_shared<PropertyDict>();
+        dict->elements["timestamp"] = PropertyValue(static_cast<long>(ev.timestamp));
+        dict->elements["description"] = PropertyValue(ev.description);
+        dict->elements["deltaWeight"] = PropertyValue(ev.deltaWeight);
+        list->elements.push_back(PropertyValue(dict));
+    }
+    return list;
+}
+
+void Relation::setEventsList(const std::shared_ptr<PropertyList>& list) {
+    if (!list) return;
+    events.clear();
+    for (const auto& item : list->elements) {
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&item)) {
+            RelationEvent ev;
+            if ((*dict)->elements.count("timestamp")) {
+                if (auto* v = std::get_if<long>(&(*dict)->elements["timestamp"])) ev.timestamp = *v;
+            }
+            if ((*dict)->elements.count("description")) {
+                if (auto* v = std::get_if<std::string>(&(*dict)->elements["description"])) ev.description = *v;
+            }
+            if ((*dict)->elements.count("deltaWeight")) {
+                if (auto* v = std::get_if<float>(&(*dict)->elements["deltaWeight"])) ev.deltaWeight = *v;
+                else if (auto* dv = std::get_if<double>(&(*dict)->elements["deltaWeight"])) ev.deltaWeight = static_cast<float>(*dv);
+            }
+            events.push_back(ev);
+        }
+    }
+}

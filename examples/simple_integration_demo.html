@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Earthcall Integration Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: rgba(0, 184, 148, 0.3);
+            border: 1px solid #00b894;
+        }
+
+        .status.disconnected {
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid #ff6b6b;
+        }
+
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Earthcall Integration Demo</h1>
+        
+        <div class="demo-section">
+            <h3>🔗 Connection Status</h3>
+            <div id="connectionStatus" class="status disconnected">
+                Simulating connection to Earthcall...
+            </div>
+            <button class="button" onclick="simulateConnection()">Connect to Earthcall</button>
+        </div>
+
+        <div class="demo-section">
+            <h3>🖌️ Brush System Demo</h3>
+            <p>This simulates what it would be like to use Earthcall's brush system from a web app:</p>
+            
+            <div class="color-picker">
+                <div class="color-option selected" style="background: #ff0000;" data-color="#ff0000"></div>
+                <div class="color-option" style="background: #00ff00;" data-color="#00ff00"></div>
+                <div class="color-option" style="background: #0000ff;" data-color="#0000ff"></div>
+                <div class="color-option" style="background: #ffff00;" data-color="#ffff00"></div>
+            </div>
+
+            <button class="button" onclick="simulateBrushStroke()">Create Brush Stroke</button>
+            <button class="button" onclick="simulateDesignElement()">Create Design Element</button>
+        </div>
+
+        <div class="demo-section">
+            <h3>👤 Avatar System Demo</h3>
+            <p>This simulates modifying an avatar from a web interface:</p>
+            
+            <select id="avatarPart">
+                <option value="head">Head</option>
+                <option value="body">Body</option>
+                <option value="arms">Arms</option>
+                <option value="legs">Legs</option>
+            </select>
+
+            <button class="button" onclick="simulateAvatarModification()">Modify Avatar</button>
+        </div>
+
+        <div class="demo-section">
+            <h3>📡 Communication Log</h3>
+            <div id="logContainer" class="log">
+                <div>Waiting for connection...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let connected = false;
+        let currentColor = '#ff0000';
+
+        // Setup color picker
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                e.target.classList.add('selected');
+                currentColor = e.target.dataset.color;
+            });
+        });
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#00b894' : '#ffffff';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateConnectionStatus() {
+            const status = document.getElementById('connectionStatus');
+            if (connected) {
+                status.textContent = 'Connected to Earthcall (Simulated)';
+                status.className = 'status connected';
+            } else {
+                status.textContent = 'Disconnected from Earthcall';
+                status.className = 'status disconnected';
+            }
+        }
+
+        function simulateConnection() {
+            connected = true;
+            log('🔗 Connected to Earthcall successfully!', 'success');
+            log('🔒 Requesting permissions...', 'info');
+            log('✅ Permissions granted: brush_system, design_system, avatar_system', 'success');
+            updateConnectionStatus();
+        }
+
+        function simulateBrushStroke() {
+            if (!connected) {
+                log('❌ Not connected to Earthcall!', 'error');
+                return;
+            }
+
+            log('🎨 Creating brush stroke...', 'info');
+            log(`   - Color: ${currentColor}`, 'info');
+            log(`   - Size: 10px`, 'info');
+            log(`   - Opacity: 0.8`, 'info');
+            log('✅ Brush stroke created in Earthcall!', 'success');
+        }
+
+        function simulateDesignElement() {
+            if (!connected) {
+                log('❌ Not connected to Earthcall!', 'error');
+                return;
+            }
+
+            log('🎨 Creating design element...', 'info');
+            log(`   - Type: Geometric Shape`, 'info');
+            log(`   - Color: ${currentColor}`, 'info');
+            log(`   - Position: (0, 0, 0)`, 'info');
+            log('✅ Design element created in Earthcall!', 'success');
+        }
+
+        function simulateAvatarModification() {
+            if (!connected) {
+                log('❌ Not connected to Earthcall!', 'error');
+                return;
+            }
+
+            const part = document.getElementById('avatarPart').value;
+            log('👤 Modifying avatar...', 'info');
+            log(`   - Part: ${part}`, 'info');
+            log(`   - Modification: Color change`, 'info');
+            log(`   - Color: ${currentColor}`, 'info');
+            log('✅ Avatar modified in Earthcall!', 'success');
+        }
+
+        // Auto-connect after 2 seconds for demo
+        setTimeout(() => {
+            simulateConnection();
+        }, 2000);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,146 @@
+{
+  "authors": [
+    "grok-4.6"
+  ],
+  "identifier": "law-chess-check-reset",
+  "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+  "law": {
+    "id": "law-chess-check-reset",
+    "name": "reset-check-flags",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "grok-4.6"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "conditionModel": {
+      "kind": 8,
+      "otherId": "state.chess"
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@state.chess.inCheck",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.checkers",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderRankActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderFileActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderDiagActive",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderRankX",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderRankY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderFileX",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderFileY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderDiagX",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.chess.sliderDiagY",
+          "operand": {
+            "t": "int",
+            "v": -1
+          }
+        },
+        {
+          "kind": 10,
+          "eventType": "king-probed",
+          "publishSubject": "state.chess",
+          "publishObject": ""
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "type": "authored-by",
+        "entityA": "law-chess-check-reset",
+        "entityB": "grok-4.6",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1787390000
+          }
+        ]
+      }
+    ],
+    "applicationLog": []
+  },
+  "triggers": [
+    "move-committed"
+  ]
+}

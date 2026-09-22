@@ -1,0 +1,363 @@
+# WebGPU Migration — Handoff for the Next Session
+
+**Read this first, then `OPENGL_MIGRATION_PLAN.md` for depth.** This is the "start
+here" for continuing the OpenGL→WebGPU migration in a fresh conversation.
+
+---
+
+## TL;DR — where we are
+
+> **UPDATE (session 2):** Milestones **A–C below are DONE.** There is now **zero raw
+> GL outside `src/Singularity/Screen/GL/`** — the whole app draws through the `Renderer`
+> boundary, still running on OpenGL. What remains is Phase D (implement the new
+> verbs in `WebGpuRenderer`), E (imgui backend swap), F (the flip). See
+> "Boundary as it stands now" and "Remaining work" below, which supersede the
+> original plan in this file.
+
+- Milestones **M1** (stop re-tessellating / geometry caching), **M2** (renderer
+  boundary — all object draw paths behind a `Renderer` interface), **M3** (retire
+  GLU) are **DONE**. **M5's renderer is DONE and proven on-screen.**
+- **The `WebGpuRenderer` is feature-complete and verified on real hardware** — the
+  user watched `./webgpu_window` render a spinning, lit, shaded cube. Every WebGPU
+  unknown (link, device, mesh pipeline, depth, perspective, texture, specular,
+  overlays, the on-screen surface/swapchain/present path) is eliminated.
+- The default `make` still builds and runs the **OpenGL** app, unchanged. WebGPU is
+  opt-in via `make webgpu-*`. **Keep the OpenGL app working through all further prep.**
+- **What remains = making WebGPU the app's LIVE backend.** That's a large, multi-turn
+  phase: ~275 raw-GL calls across 10 files (mostly 2D UI) + the imgui backend swap +
+  camera unification. A window is all-or-nothing (OpenGL *xor* WebGPU), so the app
+  can't flip until the remaining raw GL is migrated.
+
+## What's proven — do NOT re-derive
+
+- **wgpu-native v29.0.1.1** vendored at `third_party/wgpu/` (`.a` committed, `.dylib`
+  gitignored). Static-link recipe + v29 API gotchas are in `OPENGL_MIGRATION_PLAN.md`
+  Milestone 5.
+- **`src/Singularity/Screen/WebGPU/WebGpuRenderer.{hpp,cpp}`** — implements the `Renderer`
+  interface: `drawMesh` (real), `drawImplicit` (stub → M6 raymarcher), `drawLines`,
+  `drawOverlay`. Plus frame lifecycle: `beginFrame(w,h,clear)` [interface, live —
+  currently a no-op stub], `beginFrameOffscreen(targetView,w,h,clear)` [real, tests
+  use it], `endFrame()`, `setCamera(viewProj, eyePos)`, `setModel(model)`. Does
+  Blinn-Phong (ambient+diffuse+specular), depth (Depth24Plus), perspective, texture
+  albedo (uploads `RenderMaterial.albedoPixels`), two-sided lighting, and a flat-colour
+  pipeline (additive/alpha/line-list) for overlays. `init(gpu, colorFormat)` — format
+  must match the target (RGBA8Unorm offscreen, BGRA8Unorm surface).
+- **`src/Singularity/Screen/WebGPU/WgpuDevice.hpp`** — header-only instance/adapter/device/queue
+  bring-up (synchronous via processEvents).
+- **`src/Singularity/Screen/WebGPU/smoke_window.mm`** — the working on-screen demo (GLFW
+  `GLFW_NO_API` + `CAMetalLayer` + surface + swapchain + spinning cube). This is the
+  reference for moving the surface into `Engine`.
+- **Verify anytime:** `make webgpu-renderer` (5 offscreen scenes: depth, albedo,
+  specular, overlay, lines) and `make webgpu-window` (on-screen; user runs it).
+
+## Architecture facts you need
+
+- **`src/Singularity/Screen/Renderer.hpp`** is the boundary. `currentRenderer()` returns the
+  active backend (defaults to a static `OpenGLRenderer`). `setCurrentRenderer(Renderer*)`
+  swaps it. `beginFrame`/`endFrame` are virtual with **empty defaults** (OpenGL inherits
+  no-ops; only WebGPU overrides). `GameRender::render()` already brackets its drawing
+  with `currentRenderer().beginFrame(fbW,fbH,{zone rgb})` / `endFrame()`.
+- **Objects draw via `obj.drawObject()` → `currentRenderer().drawMesh(...)`.** The MODEL
+  transform is applied by the **caller**: OpenGL does `glMultMatrixf(obj.transform)` in
+  GameRender; **for WebGPU you must call `renderer.setModel(obj.getTransform())` before
+  `obj.drawObject()`.** This is the key wiring for rendering the real scene.
+- **Material is a being** (`Material : Singular`, global `MaterialManager materials`).
+  Objects reference by identifier string; resolved to a flat `RenderMaterial` at draw
+  time via `resolveRenderMaterial()`. `faceTextures` = per-face albedo (paint); the
+  portable pixels are `RenderMaterial.albedoPixels`. See `[[material-as-being]]` memory.
+- **WebGPU gotchas:** clip depth is [0,1] → build any projection fed to `WebGpuRenderer`
+  with `GLM_FORCE_DEPTH_ZERO_TO_ONE`. Pipeline colour format must match the attachment.
+  Native lines are always 1px (OpenGL glow width doesn't translate).
+
+## Boundary as it stands now (session 2)
+
+`Renderer.hpp` grew from 4 draw verbs to a full backend contract. Additions, and
+why each was forced rather than chosen:
+
+| Addition | Why it had to exist |
+|---|---|
+| `enum class Blend` + `drawSolid(tris, color, blend, depthWrite)` | The gravity-field arrows blend **additively**; a single alpha path would have dulled them. Covers every gizmo cube / handle / ghost. |
+| `setWireframe(bool)` | The BrushCreate hologram wraps an *arbitrary object draw* in `glPolygonMode(GL_LINE)`. It is render STATE, not a verb. |
+| model stack: `setModel` / `pushModel` / `popModel` / `currentModel()` | `BodyPart` and `Formation` compose child transforms onto parents. Implemented once in the base over a single `applyModel` hook. |
+| recorded camera: `setCamera(view, proj, eye)` + `view()/proj()/eyePos()/viewport()` | `drawNametag`, `BrushSystem`, `Zone` read the camera back with `glGetDoublev`. Also fixes a latent bug: the old readback ran at *end* of frame. |
+| `setLight(pos, amb, diff, spec)` / `setLightingEnabled` | `ShadingSystem` was pure `GL_LIGHT0`. Lighting is now scene policy; installing it is backend policy. |
+| `begin2D/end2D`, `drawTris2D`, `drawLines2D`, `drawImage2D` | The 2D UI (chosen strategy (a), not imgui draw lists). |
+| `uploadTexture/releaseTexture` + `TextureHandle` | `FaceTexture` owned a raw `GLuint`. |
+| `draw::` adapters | WebGPU has no `GL_QUADS`/`GL_POLYGON`/`GL_LINE_LOOP`/`GL_POINTS`/`GL_LINE_STIPPLE`. Adapters: `quadsToTris`, `fanToTris`, `stripToSegments`, `dashSegments`, `pointsToTris`, `rectTris`, `rectOutline`, `easyFontToTris`. |
+
+Backends implement `applyModel` / `applyCamera` / `applyBeginFrame` / `applyLight` /
+`applyLightingEnabled`; all shared state lives in the base class.
+
+**Decisions taken this session, with reasons:**
+- **Skipped the "render the real scene" demo** (old step 1). It duplicates what the
+  flip itself proves; porting call sites keeps the app live on OpenGL throughout.
+- **Did NOT consolidate onto `PersonPerspective`** (old step 2). The migration needs
+  glm matrices at the boundary, which it now has. Rewiring perspective/input is
+  app-level cleanup with regression risk and no migration payoff.
+- **Deleted AdvancedFacePaint's GL apparatus.** Its shaders/VAO/VBO fed only
+  `renderGradientPreview`/`renderSmudgePreview`, which nothing ever called — and
+  `initialize()` ran at startup, so it would have demanded a GL context under
+  `GLFW_NO_API`. The real painting is CPU-side and untouched.
+
+## Live on WebGPU (session 3)
+
+`make webgpu-app` -> `./earthcall_webgpu`. `make` -> `./earthcall` (OpenGL, unchanged).
+Backend choice is COMPILE-TIME: a window is created either with a GL context or
+`GLFW_NO_API`, and that cannot change afterwards. User confirmed on screen: imgui
+renders over the scene correctly.
+
+**Bug found on first real run, now fixed — the lesson matters more than the fix.**
+Every surface rendered WHITE. `RenderMaterial::albedoPixels` was read correctly by
+`WebGpuRenderer` *and* set correctly by the offscreen test fixture, while NOTHING
+in the app ever populated it — `resolveRenderMaterial` only took a GL texture id.
+Under OpenGL that id *was* the paint, so the gap was invisible. **A verb tested
+only through a hand-fed fixture passes while the production path feeding it does
+not exist.** Fixed by `Object::faceTextureId` -> `faceAlbedo`, returning a
+`FaceAlbedo{handle, pixels, size}` so each backend takes the form it can use.
+`tests/webgpu_object_test.cpp` now drives the REAL Object path and would have
+caught it (`make test-webgpu-object`).
+
+**Also done this session**
+- `WebGpuRenderer` now owns persistent textures (`uploadTexture`/`releaseTexture`)
+  instead of re-uploading every face every frame. `FaceTexture` only re-uploads
+  when paint changes, so a static surface costs nothing per frame.
+- Mesh pipeline gained alpha blending, so `RenderMaterial::opacity` means
+  something. Default opacity 1.0 makes it mathematically identical to no blending.
+- `OpenGLRenderer::uploadTexture` returns 0 when there is no GL context, so
+  Objects can be constructed headlessly. This turned `action_spawn_test`'s
+  segfault into a legible assertion failure (that test's own logic still fails —
+  it belongs to the law/spawn work, not rendering).
+- `using Renderer::setCamera;` in WebGpuRenderer — its 2-arg overload was HIDING
+  the boundary's 3-arg one for anyone holding the concrete type.
+
+**OPEN — process-teardown abort (not yet root-caused).** Bringing up a wgpu-native
+device in a process that also links this app's global objects aborts (SIGABRT)
+during STATIC DESTRUCTION, after main. Reproduces with no Objects created and with
+the texture cache disabled; `smoke_renderer` (same bring-up, no app globals) exits
+0; `earthcall_webgpu` itself shuts down cleanly. `webgpu_object_test` works around
+it with `std::_Exit(0)` after its assertions — that is a WORKAROUND, not a fix.
+Suspect an ordering conflict between wgpu/Metal teardown and a global destructor.
+
+## Confirmed working on screen (2026-07-29)
+
+User-verified in `./earthcall_webgpu`:
+- imgui composites correctly over the 3D scene.
+- **Object colours correct** after the `faceAlbedo` fix (see the white-surface bug above).
+- **2D stroke thickness matches OpenGL.** Expected, and worth writing down so nobody
+  "fixes" it: once a stroke is painted, the canvas reaches the screen through
+  `drawImage2D` as a PIXEL BLIT, not through `drawLines2D`. The native-1px line
+  limit therefore only affects the vector-stroke fallback (before a canvas exists)
+  and thin UI outlines.
+
+**FIXED — `./earthcall_webgpu` segfaulted in `WebGpuRenderer::uploadTexture`.**
+Root cause was in the Makefile, not the renderer: `-include $(OBJECTS:.o=.d)`
+covered only the OpenGL build, so `build-webgpu/` had NO header dependency
+tracking. `-MMD` wrote `.d` files nothing read, editing a header recompiled
+nothing, and the binary got linked from units compiled against different versions
+of `WebGpuRenderer` — some predating the `_textures` member. Mismatched member
+offsets meant the map was read past the end of the object, hence a `std::map`
+whose tree read as all zeroes. Fixed by adding
+`-include $(WEBGPU_APP_OBJECTS:.o=.d)`.
+**Diagnostic trap worth remembering:** a debug build and an ASan build both
+"fixed" it — not because of the flags, but because both began with
+`rm -rf build-webgpu`. ANY clean build hides this class of bug. "Crashes at -O2,
+works at -O0" means UB *or* a stale build; check the build rules early.
+
+## STILL UNVERIFIED BY EYE
+The 3D drag gizmos, which only render while a specific 3D mode is active with an
+object selected (`GameRender.cpp` lines ~175-330):
+- `Mode3D::Morph` — per-vertex cube handles on a polyhedron; control-net + control
+  points on a Bezier patch.
+- `Mode3D::Morph/Combine/Sculpt` on a binary field — translucent ghost of operand
+  B, its gold drag handle, and the floating blend bead on its rail.
+- `Mode3D::Sculpt` with a clay target — gold bounding-box outline.
+- `Mode3D::BrushCreate` — the translucent WIREFRAME hologram preview
+  (`setWireframe`, the most WebGPU-specific of these: OpenGL used
+  `glPolygonMode(GL_LINE)`, WebGPU expands triangles to explicit edges).
+- Gravity-field arrows (`Physics::getGravityVisualization()`) — the only ADDITIVE
+  `drawLines` in the app.
+These exercise `drawSolid`, `drawLines` w/ Blend, `drawOverlay` and `setWireframe`
+against real content. Reach them via the toolbar (`T`) plus an object selection.
+
+## M6 DONE — SDF fields are raymarched, not tessellated (2026-07-29)
+
+The first thing this migration UNLOCKS rather than preserves. `drawImplicit` was
+an unused stub; it now compiles a `geom::SdfNode` tree to WGSL and sphere-traces
+it, so a field is exact at any zoom instead of being a mesh at some resolution.
+
+**`src/Singularity/Screen/WebGPU/SdfWgsl.{hpp,cpp}` — the codegen.** The key split, and the
+reason this is not string concatenation:
+- **Tree STRUCTURE becomes generated code** (which primitives, which operators).
+- **Numeric PARAMETERS become entries in a storage buffer.**
+So the generated WGSL is a complete pipeline cache key, and two spheres of
+different radii SHARE one pipeline. Baking numbers into the source would recompile
+a shader on every frame of a slider drag. This is also the groundwork for M7.
+
+Every primitive in `kPrimitives` is a line-by-line transcription of its
+counterpart in `Sdf.cpp` — same formulas, same epsilons, same degenerate
+branches. **If you edit a formula in Sdf.cpp, edit it there too**, or the
+raymarched and tessellated surfaces stop being the same surface.
+
+Implementation notes worth keeping:
+- WGSL has **no forward declarations**: emit order is primitives, then the
+  generated `sdfEval`, then the marcher that calls both.
+- WGSL `select(falseVal, trueVal, cond)` is the REVERSE of a C ternary — an easy
+  way to silently invert a sign (see `sdCone`).
+- WGSL has no recursion, so the RPN of an implicit `f(x,y,z)` expression is
+  unwound at CODEGEN time into straight-line code.
+- The marcher rasterises the field's bounding cube but traces the **true eye ray**
+  from the eye, not from the rasterised face: culling is off, so which face
+  produced a fragment is unknowable, and starting at the far face marches
+  backwards. It writes `frag_depth` from the real hit, so fields interleave with
+  meshes correctly rather than by their bounding box.
+- Implicit `Expr` fields are iso-surface values, NOT distances, so steps are
+  damped (`kExprDamping`) or a full step tunnels through the surface.
+
+**`Renderer::rendersImplicitExactly()`** decides the route. `Object::drawFieldModel`
+asks, and only WebGPU says yes. It is a query rather than "always call
+drawImplicit" because the OpenGL implementation tessellates on EVERY call while
+`Object` caches `_fieldMesh` — routing the cached-mesh caller through it would be
+a large regression.
+
+**Fidelity trap caught during this work:** the raymarcher initially ignored face
+paint, so fields rendered WHITE under WebGPU while the mesh path tinted them (a
+default field's face 0 is red) — a shape changing colour with the backend.
+`tessellateSdf` assigns every vertex `uv = (0.5, 0.5)`, so a meshed field samples
+exactly ONE texel; the fix reads that same texel on the CPU and folds it into
+baseColor, needing no texture binding at all. `webgpu_object_test` now asserts the
+field is red, which is what would catch a regression here.
+
+Verification: `make webgpu-renderer` scene 11 (centre is lit surface, CORNER MISSES
+— proving a traced sphere rather than a painted bounding box) and
+`make test-webgpu-object` (a real field `Object` through `drawObject()`).
+
+## SDF parity test — the transcription is now guarded (2026-08-01)
+
+`make test-sdf-parity` (`tests/webgpu_sdf_parity_test.cpp`) renders EVERY primitive
+and EVERY operator through the GPU raymarcher and compares the silhouette against
+`geom::raycastSdf`. 17 shapes, all agreeing with **zero** differing pixels.
+
+This exists because SdfWgsl.cpp's formulas are a hand transcription of Sdf.cpp's
+and nothing else enforces that they stay in step. **Run it after touching either
+file.** It compares silhouettes rather than colours so it tests the distance
+function itself, not shading.
+
+**It immediately found a real pre-existing bug.** Implicit `f(x,y,z)=0` fields
+(`SdfPrim::Expr`, the math-mode shapes) rendered NOTHING — on the GPU *and* in
+`geom::raycastSdf`. Cause: such a field is an iso-surface VALUE, not a distance,
+and can be arbitrarily larger than the true distance, so a sphere-tracing step of
+`f` tunnels past the surface. For `x^2+y^2+z^2-0.3` seen from z=3, `f` is 8.7 while
+the surface is 2.45 away — the first step alone clears the whole shape. Halving the
+step (the original mitigation) is not enough either.
+
+Fixed on BOTH sides by stepping `f/|grad f|`, a first-order distance estimate that
+is conservative and therefore legal for sphere tracing. `sdfwgsl::Program::
+needsGradientStep` reports when a tree contains an Expr leaf so ordinary distance
+fields skip the extra 6 evaluations per step. `raycastSdf` does the same, so a
+picked point and a rendered point agree.
+
+Coverage now includes fields under a non-identity model (translate + rotate +
+NON-UNIFORM scale). Those exercise the marcher's `invModel` path, which the
+identity-model cases never touched and which is exactly where a field would
+silently render rotated, offset or the wrong size. They also confirm that marching
+in field space is correct for any invertible affine transform — a field-space ray
+is still a ray, and the SDF is only meaningful there — so no special handling of
+non-uniform scale is needed.
+
+**Two consequences of the raymarch path worth knowing:**
+- A field's selection highlight still comes from `drawOverlay(_fieldMesh, ...)`,
+  i.e. the TESSELLATED approximation, while the surface itself is exact. The glow
+  can therefore sit slightly off the true silhouette.
+- `_fieldMesh` is still built by `rebuildGeometryCaches()` even though WebGPU no
+  longer draws it. Wasted tessellation, not a bug; worth skipping once the OpenGL
+  backend is retired.
+
+Note `raycastSdf` currently has NO callers outside Sdf.cpp — the bug was latent,
+and implicit shapes would have failed to pick the moment something used it.
+
+## Known gaps to close in Phase D
+- `WebGpuRenderer` stubs `drawSolid`/`begin2D`/`end2D`/`drawTris2D`/`drawLines2D`/
+  `drawImage2D` — they `warnOnce` to stderr instead of drawing.
+- `WebGpuRenderer::drawLines` **ignores `Blend`** (`_linesPipe` is alpha-only), so
+  the additive gravity arrows will render alpha until a second pipeline exists.
+- `WebGpuRenderer` ignores the recorded light: `lightDir` is still hardcoded to
+  `normalize(2,5,2)` and is *directional*, while OpenGL's `GL_LIGHT0` is
+  **positional** and follows the camera. Wire `lightPos()` through and decide the
+  shading model. Changing this will move the `webgpu-renderer` scene expectations.
+- `uploadTexture` returns 0 (this backend uploads `albedoPixels` per draw).
+- `setWireframe` is unimplemented (needs a line-list pipeline variant).
+
+## Latent oddity (pre-existing, not caused by the migration)
+`World::load()` calls `drawGround()` — a draw issued outside any frame. Harmless
+(`WebGpuRenderer::drawMesh` guards on a null pass, and the visible ground is the
+scaled placeholder cube drawn in `GameRender`), but it is dead work.
+
+## Remaining work — recommended order
+
+### 1. (Recommended next) Render the REAL scene on WebGPU
+Prove the renderer eats real Earthcall content, not a hand-made cube. Extend
+`smoke_window.mm` (or a sibling demo):
+- **Light version:** build real geometry meshes directly —
+  `geom::tessellateSmooth(geom::makeSphere(r))`, `geom::tessellateSdf(field)`,
+  `geom::tessellatePatch(...)`, `geom::tessellateComplex(...)` — and `drawMesh` them.
+  Links only the geometry `.cpp` files. Proves smooth surfaces / marched SDFs / patches
+  render.
+- **Fuller version:** link the Object machinery, `setCurrentRenderer(&webgpu)`, and in
+  the loop: for each world Object, `webgpu.setModel(obj.getTransform()); obj.drawObject();`
+  This routes the real M2 object dispatch (smooth/complex/field/patch/cube/polyhedron)
+  through WebGPU. High payoff.
+
+### 2. Camera unification (backend-independent — do it on OpenGL, stays verifiable)
+Per `OPENGL_MIGRATION_PLAN.md` → "Perspective And The Camera". Today `GameRender` builds
+a fixed-function `_camera` (`glFrustum` + `ecgl::lookAtMul` + reads it back with
+`glGetDoublev`). `PersonPerspective` already produces glm view/proj but is unused. Make
+`PersonPerspective` the source of truth; feed `setModel`/`setCamera`; delete the
+`glGetDoublev` readback. Reduces coupling and preps the WebGPU camera path.
+
+### 3. Decide the 2D-UI strategy (the biggest chunk — ~140 GL calls)
+Half the remaining raw GL is 2D UI: `DesignSystem.cpp` (60), `Form.cpp` (30),
+`Menu.cpp` (29), `Zone.cpp` (21) — 2D panels/cards/strokes via `glBegin/glColor/glVertex`.
+**Pick a strategy before migrating:** (a) add 2D draw verbs (`drawQuad2D`/`drawLine2D`)
+to the `Renderer` + a 2D pipeline in `WebGpuRenderer`; or (b) re-express the 2D UI as
+Dear ImGui draw lists (imgui is already the editor UI). This is a design decision worth
+an explicit choice.
+
+### 4. imgui backend swap
+Makefile links `imgui_impl_opengl2`. Swap to `imgui_impl_wgpu` (already vendored at
+`../imgui/backends/imgui_impl_wgpu.{h,cpp}`). Update `Engine.cpp` init/new-frame/render/
+shutdown calls; it needs the wgpu device + queue + surface format.
+
+### 5. Backend flip in Engine
+Move the surface setup from `smoke_window.mm` into `Engine` behind a flag (e.g.
+`USE_WEBGPU`): window hint `GLFW_NO_API`; create surface/adapter/device/queue +
+`WebGpuRenderer`; `setCurrentRenderer(&webgpu)`. Then refactor `WebGpuRenderer::beginFrame`
+(live) to acquire the surface texture and call the shared pass setup that
+`beginFrameOffscreen` already has. Also: the app must build projections with
+`GLM_FORCE_DEPTH_ZERO_TO_ONE` when WebGPU is active.
+
+### Also open / deferred
+- **Resource caching** in `WebGpuRenderer` (per-draw buffers/textures today) — deferred
+  on purpose; do it once WebGPU is live and the per-frame pattern is measurable.
+- **M6** — SDF raymarcher in `drawImplicit` (exact implicit rendering); M7 — WGSL codegen
+  from `SdfToken`/`OntoMath` (the manifesto payoff). Both after the live switch.
+
+## Verify / gotchas
+
+- `cmake --build build` or `./scripts/build.sh webgpu run` (**must stay green through all prep**).
+- `make webgpu-renderer` → 5 offscreen scenes pass. `make webgpu-window` → user runs.
+- `make test` currently **fails to compile `property_bridge_test.cpp:222`** — this is
+  the USER's parallel Person/Body WIP (`BodyPart._subObjects` = `vector<unique_ptr<Object>>`
+  made `Body` non-copyable; the test copies a `Body`). **NOT a rendering issue — leave it.**
+
+## File map
+```
+src/Singularity/Screen/Renderer.hpp            the boundary (4 verbs + frame lifecycle)
+src/Singularity/Screen/RenderMaterial.{hpp,cpp} flat GPU material (+ albedoPixels) & resolver
+src/Singularity/Screen/GL/OpenGLRenderer.*     OpenGL backend (live today)
+src/Singularity/Screen/WebGPU/WebGpuRenderer.* WebGPU backend (done, offscreen+onscreen proven)
+src/Singularity/Screen/WebGPU/WgpuDevice.hpp   device bring-up
+src/Singularity/Screen/WebGPU/smoke_*.{cpp,mm} verification: offscreen, mesh, renderer, window
+third_party/wgpu/                     vendored wgpu-native v29.0.1.1 (.a committed)
+OPENGL_MIGRATION_PLAN.md              full plan + all v29 API notes + decisions
+```
+Memory: `[[material-as-being]]` has the running WebGPU status; keep it updated.

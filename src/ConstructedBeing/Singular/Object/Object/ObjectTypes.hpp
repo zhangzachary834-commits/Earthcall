@@ -1,0 +1,108 @@
+#pragma once
+
+// ============================================================================
+// ObjectTypes.hpp - Type definitions for the Object class
+// 
+// This header contains all the enum types and data structures used by Object,
+// allowing code that only needs these types to include this instead of the
+// full Object.hpp.
+// ============================================================================
+
+#include <string>
+#include <vector>
+#include <glm/glm.hpp>
+
+// Forward declarations for types used in the type definitions
+namespace geom {
+    struct SmoothSurfaceData;
+    struct ComplexShapeData;
+    struct SdfNode;
+    class FieldNode;
+    struct TessMesh;
+    struct BezierPatch;
+}
+
+struct PolyhedronData;
+
+namespace ObjectTypes {
+
+// ============================================================================
+// Geometry Types — ShapeKind
+//
+// QUALIFICATION (Architectural Doctrine — Zach):
+// ShapeKind is a parameterization substrate RESERVED FOR FIRST MOVERS
+// (seed bootstrapping, engine tooling, foreign interop, and migration).
+//
+// 1. NOT THE LOAD-BEARING SUBSTRATE: ShapeKind must NEVER become the main
+//    load-bearing substrate for Persons' world authoring. What things ARE in
+//    Earthcall is authored in-world by Persons out of first-principles OntoMath
+//    (symbolic math, continuous scalar/vector fields, implicit distance functions
+//    over R^2 and R^3), Formations, and Laws — never carved into C++ enums
+//    (Refusals 1, 3, 7; INTERACTION_AS_LAW.md; ONTOMATH_FRAMEWORK.md).
+//
+// 2. TOTAL LEGIBILITY FROM METAL TO PERSONS: No shape kind or 2D/3D parameter
+//    admitted here may be any less legible from the metal (GPU/shaders/buffers)
+//    to the program (C++/PropertyBridge) and Persons (Law text and inspection)
+//    than any other Singular or its fellow visual shapes and visual property-
+//    bearing Singulars. Every property carried by these shapes must be registered,
+//    observable, and governable under the Law system (Refusal 6: No Black Box).
+//
+// Serialized as an int, so this enum is strictly APPEND-ONLY.
+// ============================================================================
+enum class ShapeKind {
+    Cube = 0, Polyhedron = 1, Sphere = 2, Cylinder = 3, Cone = 4,  // legacy-aligned
+    Ellipsoid = 5, Ovoid = 6, Paraboloid = 7, Torus = 8, RoundedBox = 9,
+    Field = 10, // SDF expression (morph / boolean / implicit)
+    Patch = 11, // Bezier control-net surface
+    Shape2D = 12,
+    Text2D = 13
+};
+
+// How a shape whose truth is analytic (a quadric, an SDF) reaches the screen.
+// This is Sense-Act substrate — a rendering-strategy hint, the same shape as
+// `wireframe` — never a domain kind, so it stays outside AUTHORED_CATEGORIES.
+// Serialized as an int, so APPEND-ONLY like ShapeKind above.
+//   Auto     — the backend's own default (WebGPU raymarches exactly; a
+//              backend that cannot falls back to the cached tessellation).
+//   Analytic — force the exact analytic path even where a mesh fallback
+//              exists, refusing to let a tessellation stand in for the math.
+//   Mesh     — force the polygon fallback (e.g. to inspect the tessellation
+//              itself, or on a channel that cannot batch/instance analytic
+//              draws the way it can a merged mesh).
+enum class RenderMode { Auto = 0, Analytic = 1, Mesh = 2 };
+
+// Per-shape parameters (defaults match the geom factory defaults so an
+// unparameterized setShape reproduces current behavior). Persisted so
+// parameterized shapes round-trip through save/load.
+struct ShapeParams {
+    float r = 0.5f;        // sphere/ellipsoid-x, cylinder/cone radius
+    float ry = 0.32f;      // ellipsoid y semi-axis
+    float rz = 0.5f;       // ellipsoid z semi-axis
+    float halfH = 0.5f;    // cylinder/cone half-height
+    float majorR = 0.35f;  // torus major radius
+    float minorR = 0.15f;  // torus minor radius
+    float paraboloidA = 2.0f;   // paraboloid steepness
+    float ovoidAsym = 0.25f;  // ovoid taper
+    float fillet = 0.12f;      // rounded-box fillet radius
+    float width2D = 100.0f;    // 2D shape width
+    float height2D = 100.0f;   // 2D shape height
+    // Note: For std::string or complex types, PropertyBridge doesn't directly
+    // support pointers to members easily, so we typically use attributes/tags.
+};
+
+// The fundamental category of the object. Named primitives are merely
+// parameterizations inside a category, never the identity itself.
+enum class SpatialKind { Polyhedron, SmoothSurface, ComplexShape, Field, Patch };
+
+// ============================================================================
+// State Snapshot for Object (used for interaction recording)
+// ============================================================================
+
+struct StateSnapshot {
+    float time;
+    float x, y, z;
+    std::string interactionSummary;
+    std::vector<std::string> symbolicTags;
+};
+
+} // namespace ObjectTypes

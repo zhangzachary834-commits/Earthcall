@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthcall Integration Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .integration-panel {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .section {
+            margin: 30px 0;
+        }
+        
+        .section h2 {
+            color: #ffd700;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn.brush { background: linear-gradient(45deg, #a8e6cf, #88d8c0); }
+        .btn.design { background: linear-gradient(45deg, #ffd3b6, #ffaaa5); }
+        .btn.avatar { background: linear-gradient(45deg, #dcedc1, #ffd3a5); }
+        .btn.world { background: linear-gradient(45deg, #ff8b94, #ffc3a0); }
+        .btn.ui { background: linear-gradient(45deg, #a8e6cf, #dcedc1); }
+        .btn.data { background: linear-gradient(45deg, #ffd3b6, #ff8b94); }
+        
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .canvas-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        #paintCanvas {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .color-picker input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+        
+        .avatar-preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .avatar-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            min-width: 150px;
+        }
+        
+        .zone-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .zone-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,255,0,0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: rgba(255,0,0,0.9);
+        }
+        
+        .notification.info {
+            background: rgba(0,100,255,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Earthcall Integration Demo</h1>
+            <p>Experience seamless integration between web content and Earthcall's creative engine</p>
+        </div>
+
+        <div class="integration-panel">
+            <h2>🚀 Quick Start</h2>
+            <p>This demo shows how web applications can directly control Earthcall's creative systems. Try the buttons below to see the integration in action!</p>
+            
+            <div class="button-group">
+                <button class="btn" onclick="testConnection()">🔗 Test Connection</button>
+                <button class="btn" onclick="showNotification('Hello from the web!', 'info')">🔔 Test Notification</button>
+                <button class="btn" onclick="loadAllData()">📊 Load All Data</button>
+            </div>
+        </div>
+
+        <!-- Brush System Integration -->
+        <div class="section">
+            <h2>🎨 Brush System Integration</h2>
+            <p>Create and control brushes directly from the web interface</p>
+            
+            <div class="button-group">
+                <button class="btn brush" onclick="createBrush('web_brush', '#ff6b6b', 10, 'smooth')">Create Red Brush</button>
+                <button class="btn brush" onclick="createBrush('web_brush_blue', '#4ecdc4', 15, 'rough')">Create Blue Brush</button>
+                <button class="btn brush" onclick="setActiveBrush('web_brush')">Set Active Brush</button>
+                <button class="btn brush" onclick="getAllBrushes()">Get All Brushes</button>
+            </div>
+            
+            <div class="canvas-container">
+                <h3>🎨 Interactive Painting Canvas</h3>
+                <p>Click and drag to paint directly in Earthcall!</p>
+                <canvas id="paintCanvas" width="600" height="400"></canvas>
+                <div class="color-picker">
+                    <label>Brush Color:</label>
+                    <input type="color" id="brushColor" value="#ff6b6b">
+                    <label>Brush Size:</label>
+                    <input type="range" id="brushSize" min="1" max="50" value="10">
+                    <span id="brushSizeValue">10</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Design System Integration -->
+        <div class="section">
+            <h2>🎨 Design System Integration</h2>
+            <p>Create shapes, text, and apply effects in Earthcall's design space</p>
+            
+            <div class="button-group">
+                <button class="btn design" onclick="createShape('circle', 100, 100, 50, 50, '#ff6b6b')">Create Circle</button>
+                <button class="btn design" onclick="createShape('rectangle', 200, 200, 100, 80, '#4ecdc4')">Create Rectangle</button>
+                <button class="btn design" onclick="createText('Hello Earthcall!', 300, 300, 'Arial', 24, '#ffd700')">Create Text</button>
+                <button class="btn design" onclick="applyEffect('glow', 'all')">Apply Glow Effect</button>
+                <button class="btn design" onclick="getAllDesigns()">Get All Designs</button>
+            </div>
+        </div>
+
+        <!-- Avatar System Integration -->
+        <div class="section">
+            <h2>👤 Avatar System Integration</h2>
+            <p>Create and animate avatars in Earthcall's world</p>
+            
+            <div class="button-group">
+                <button class="btn avatar" onclick="createAvatar('WebUser', {hair: 'brown', eyes: 'blue', height: 180})">Create Avatar</button>
+                <button class="btn avatar" onclick="animateAvatar('WebUser', 'wave')">Wave Animation</button>
+                <button class="btn avatar" onclick="setAvatarPosition('WebUser', 100, 200, 0)">Set Position</button>
+                <button class="btn avatar" onclick="getAllAvatars()">Get All Avatars</button>
+            </div>
+            
+            <div class="avatar-preview">
+                <div class="avatar-card">
+                    <h4>WebUser</h4>
+                    <p>Brown hair, Blue eyes</p>
+                    <button class="btn avatar" onclick="animateAvatar('WebUser', 'dance')">Dance</button>
+                </div>
+                <div class="avatar-card">
+                    <h4>Demo Alice</h4>
+                    <p>Default avatar</p>
+                    <button class="btn avatar" onclick="animateAvatar('Demo Alice', 'jump')">Jump</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- World System Integration -->
+        <div class="section">
+            <h2>🌍 World System Integration</h2>
+            <p>Create zones and populate Earthcall's world</p>
+            
+            <div class="button-group">
+                <button class="btn world" onclick="createZone('WebZone', 0, 0, 500, 500)">Create Zone</button>
+                <button class="btn world" onclick="addObjectToZone('WebZone', 'tree', 100, 100)">Add Tree</button>
+                <button class="btn world" onclick="addObjectToZone('WebZone', 'fountain', 200, 200)">Add Fountain</button>
+                <button class="btn world" onclick="setZoneTheme('WebZone', 'forest')">Set Forest Theme</button>
+                <button class="btn world" onclick="getAllWorld()">Get All Zones</button>
+            </div>
+            
+            <div class="zone-grid">
+                <div class="zone-card">
+                    <h4>WebZone</h4>
+                    <p>500x500 zone</p>
+                    <button class="btn world" onclick="setZoneTheme('WebZone', 'ocean')">Ocean Theme</button>
+                </div>
+                <div class="zone-card">
+                    <h4>Player's Sanctuary</h4>
+                    <p>Default zone</p>
+                    <button class="btn world" onclick="setZoneTheme('Player\'s Sanctuary', 'magical')">Magical Theme</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- UI Integration -->
+        <div class="section">
+            <h2>🔧 UI Integration</h2>
+            <p>Control Earthcall's user interface from the web</p>
+            
+            <div class="button-group">
+                <button class="btn ui" onclick="showNotification('This is a success message!', 'success')">Success Notification</button>
+                <button class="btn ui" onclick="showNotification('This is an error message!', 'error')">Error Notification</button>
+                <button class="btn ui" onclick="openPanel('brush_panel')">Open Brush Panel</button>
+                <button class="btn ui" onclick="setCursor('paint')">Paint Cursor</button>
+                <button class="btn ui" onclick="setCursor('select')">Select Cursor</button>
+            </div>
+        </div>
+
+        <!-- Data Integration -->
+        <div class="section">
+            <h2>💾 Data Integration</h2>
+            <p>Save and load data between web and Earthcall</p>
+            
+            <div class="button-group">
+                <button class="btn data" onclick="saveData('web_settings', {theme: 'dark', language: 'en'})">Save Settings</button>
+                <button class="btn data" onclick="loadData('web_settings')">Load Settings</button>
+                <button class="btn data" onclick="saveData('web_progress', {level: 5, score: 1250})">Save Progress</button>
+                <button class="btn data" onclick="getAllDataKeys()">Get All Keys</button>
+            </div>
+            
+            <div class="status" id="dataStatus">
+                Data status will appear here...
+            </div>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="section">
+            <h2>📊 Integration Status</h2>
+            <div class="status" id="statusPanel">
+                Waiting for Earthcall integration...
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <script>
+        // Global variables
+        let isConnected = false;
+        let paintMode = false;
+        let lastX = 0, lastY = 0;
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCanvas();
+            testConnection();
+            updateStatus('Page loaded, testing Earthcall connection...');
+        });
+        
+        // Canvas painting functionality
+        function initializeCanvas() {
+            const canvas = document.getElementById('paintCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.addEventListener('mousedown', startPaint);
+            canvas.addEventListener('mousemove', paint);
+            canvas.addEventListener('mouseup', stopPaint);
+            canvas.addEventListener('mouseleave', stopPaint);
+            
+            // Update brush size display
+            document.getElementById('brushSize').addEventListener('input', function() {
+                document.getElementById('brushSizeValue').textContent = this.value;
+            });
+        }
+        
+        function startPaint(e) {
+            paintMode = true;
+            const rect = e.target.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        }
+        
+        function paint(e) {
+            if (!paintMode) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Paint on canvas
+            const ctx = e.target.getContext('2d');
+            const color = document.getElementById('brushColor').value;
+            const size = document.getElementById('brushSize').value;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = size;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            // Send paint command to Earthcall
+            if (isConnected) {
+                earthcall.brush.paint(x, y, 1.0);
+            }
+            
+            lastX = x;
+            lastY = y;
+        }
+        
+        function stopPaint() {
+            paintMode = false;
+        }
+        
+        // Connection testing
+        function testConnection() {
+            updateStatus('Testing Earthcall connection...');
+            
+            if (typeof earthcall !== 'undefined') {
+                isConnected = true;
+                updateStatus('✅ Connected to Earthcall! All integration features are available.');
+                showNotification('Successfully connected to Earthcall!', 'success');
+            } else {
+                isConnected = false;
+                updateStatus('❌ Earthcall integration not available. Running in demo mode.');
+                showNotification('Earthcall integration not available', 'error');
+            }
+        }
+        
+        // Brush System Functions
+        function createBrush(name, color, size, texture) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.brush.createBrush(name, color, size, texture);
+            showNotification(`Created brush: ${name}`, 'success');
+        }
+        
+        function setActiveBrush(name) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.brush.setActiveBrush(name);
+            showNotification(`Set active brush: ${name}`, 'success');
+        }
+        
+        function getAllBrushes() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.brush.getBrushes();
+            showNotification('Requested brush list', 'info');
+        }
+        
+        // Design System Functions
+        function createShape(type, x, y, width, height, color) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.design.createShape(type, x, y, width, height, color);
+            showNotification(`Created ${type} shape`, 'success');
+        }
+        
+        function createText(text, x, y, font, size, color) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.design.createText(text, x, y, font, size, color);
+            showNotification(`Created text: ${text}`, 'success');
+        }
+        
+        function applyEffect(effect, target) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.design.applyEffect(effect, target);
+            showNotification(`Applied ${effect} effect`, 'success');
+        }
+        
+        function getAllDesigns() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.design.getDesigns();
+            showNotification('Requested design list', 'info');
+        }
+        
+        // Avatar System Functions
+        function createAvatar(name, appearance) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.avatar.createAvatar(name, appearance);
+            showNotification(`Created avatar: ${name}`, 'success');
+        }
+        
+        function animateAvatar(name, animation) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.avatar.animateAvatar(name, animation);
+            showNotification(`Animated ${name} with ${animation}`, 'success');
+        }
+        
+        function setAvatarPosition(name, x, y, z) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.avatar.setAvatarPosition(name, x, y, z);
+            showNotification(`Set ${name} position`, 'success');
+        }
+        
+        function getAllAvatars() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.avatar.getAvatars();
+            showNotification('Requested avatar list', 'info');
+        }
+        
+        // World System Functions
+        function createZone(name, x, y, width, height) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.world.createZone(name, x, y, width, height);
+            showNotification(`Created zone: ${name}`, 'success');
+        }
+        
+        function addObjectToZone(zoneName, objectType, x, y) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.world.addObjectToZone(zoneName, objectType, x, y);
+            showNotification(`Added ${objectType} to ${zoneName}`, 'success');
+        }
+        
+        function setZoneTheme(zoneName, theme) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.world.setZoneTheme(zoneName, theme);
+            showNotification(`Set ${zoneName} theme to ${theme}`, 'success');
+        }
+        
+        function getAllWorld() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.world.getWorld();
+            showNotification('Requested world data', 'info');
+        }
+        
+        // UI Functions
+        function showNotification(message, type) {
+            if (isConnected) {
+                earthcall.ui.showNotification(message, type);
+            }
+            
+            // Also show local notification
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            container.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => container.removeChild(notification), 300);
+            }, 3000);
+        }
+        
+        function openPanel(panelName) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.ui.openPanel(panelName);
+            showNotification(`Opening panel: ${panelName}`, 'info');
+        }
+        
+        function setCursor(cursorType) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.ui.setCursor(cursorType);
+            showNotification(`Set cursor: ${cursorType}`, 'info');
+        }
+        
+        // Data Functions
+        function saveData(key, value) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.data.saveData(key, value);
+            showNotification(`Saved data: ${key}`, 'success');
+            updateDataStatus(`Saved: ${key} = ${JSON.stringify(value)}`);
+        }
+        
+        function loadData(key) {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.data.loadData(key);
+            showNotification(`Loading data: ${key}`, 'info');
+        }
+        
+        function getAllDataKeys() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            earthcall.data.getDataKeys();
+            showNotification('Requested data keys', 'info');
+        }
+        
+        function loadAllData() {
+            if (!isConnected) {
+                showNotification('Earthcall not connected', 'error');
+                return;
+            }
+            
+            getAllDataKeys();
+            showNotification('Loading all available data...', 'info');
+        }
+        
+        // Utility Functions
+        function updateStatus(message) {
+            document.getElementById('statusPanel').textContent = message;
+        }
+        
+        function updateDataStatus(message) {
+            document.getElementById('dataStatus').textContent = message;
+        }
+        
+        // Listen for responses from Earthcall
+        if (typeof earthcallEvents !== 'undefined') {
+            earthcallEvents.on('brush_created', function(data) {
+                showNotification(`Brush created: ${data.name}`, 'success');
+            });
+            
+            earthcallEvents.on('shape_created', function(data) {
+                showNotification(`Shape created: ${data.type}`, 'success');
+            });
+            
+            earthcallEvents.on('avatar_created', function(data) {
+                showNotification(`Avatar created: ${data.name}`, 'success');
+            });
+            
+            earthcallEvents.on('zone_created', function(data) {
+                showNotification(`Zone created: ${data.name}`, 'success');
+            });
+            
+            earthcallEvents.on('data_loaded', function(data) {
+                updateDataStatus(`Loaded: ${data.key} = ${data.value}`);
+                showNotification(`Data loaded: ${data.key}`, 'success');
+            });
+        }
+        
+        // Demo mode fallback
+        if (typeof earthcall === 'undefined') {
+            console.log('🌐 Running in demo mode - Earthcall integration not available');
+            updateStatus('Demo mode: Earthcall integration not available. All buttons will show demo notifications.');
+        }
+    </script>
+</body>
+</html> 

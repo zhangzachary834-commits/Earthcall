@@ -1,0 +1,57 @@
+{
+  "being": "home",
+  "cannotForceStay": true,
+  "deletable": {
+    "Zach": true
+  },
+  "entryRequiresWill": true,
+  "formationRelations": [],
+  "identifier": "Home_of_Zach",
+  "inhabitants": [
+    "Zach"
+  ],
+  "lexemes": [],
+  "name": "Home_of_Zach",
+  "owner": "Zach",
+  "parentZone": "",
+  "primary": true,
+  "qualities": {
+    "kind": "home",
+    "ownerKind": "person",
+    "primary": "true"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "Home_of_Zach_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "stakes": [
+    "Zach"
+  ],
+  "world": {
+    "objects": []
+  }
+}

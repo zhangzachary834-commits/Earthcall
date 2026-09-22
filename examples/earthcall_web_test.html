@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthcall Web Integration Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button.secondary {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+        }
+
+        .button.success {
+            background: linear-gradient(45deg, #00b894, #00cec9);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .status.connected {
+            background: rgba(0, 184, 148, 0.3);
+            border: 1px solid #00b894;
+        }
+
+        .status.disconnected {
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid #ff6b6b;
+        }
+
+        .log {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Earthcall Web Integration Test</h1>
+        
+        <div class="section">
+            <h3>🔗 Connection Status</h3>
+            <div id="connectionStatus" class="status connected">
+                Connected to Earthcall via WebKit!
+            </div>
+            <p>This web page is running inside Earthcall using native WebKit integration.</p>
+        </div>
+
+        <div class="section">
+            <h3>📡 Communication Test</h3>
+            <p>Test sending messages to Earthcall:</p>
+            
+            <div class="input-group">
+                <label for="messageInput">Message to send:</label>
+                <input type="text" id="messageInput" placeholder="Enter a message to send to Earthcall...">
+            </div>
+            
+            <button class="button" onclick="sendMessage()">Send Message to Earthcall</button>
+            <button class="button secondary" onclick="testBrushStroke()">Test Brush Stroke</button>
+            <button class="button success" onclick="testDesignElement()">Test Design Element</button>
+        </div>
+
+        <div class="section">
+            <h3>🎨 Creative Tools Test</h3>
+            <p>Test Earthcall's creative features:</p>
+            
+            <div class="input-group">
+                <label for="brushType">Brush Type:</label>
+                <select id="brushType">
+                    <option value="default">Default</option>
+                    <option value="soft">Soft</option>
+                    <option value="hard">Hard</option>
+                    <option value="airbrush">Airbrush</option>
+                    <option value="chalk">Chalk</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="brushSize">Brush Size:</label>
+                <input type="range" id="brushSize" min="1" max="50" value="10">
+                <span id="brushSizeValue">10</span>
+            </div>
+            
+            <button class="button" onclick="createBrushStroke()">Create Brush Stroke</button>
+            <button class="button secondary" onclick="modifyAvatar()">Modify Avatar</button>
+        </div>
+
+        <div class="section">
+            <h3>📡 Communication Log</h3>
+            <div id="logContainer" class="log">
+                <div>Web page loaded successfully!</div>
+                <div>Earthcall bridge initialized.</div>
+                <div>Ready to communicate with Earthcall...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Earthcall bridge
+        if (typeof window.earthcall !== 'undefined') {
+            log('✅ Earthcall bridge detected!', 'success');
+        } else {
+            log('⚠️ Earthcall bridge not found - running in standalone mode', 'warning');
+            // Create a mock bridge for testing
+            window.earthcall = {
+                sendMessage: function(message) {
+                    log('📤 Mock: Sending message to Earthcall: ' + message, 'info');
+                },
+                receiveMessage: function(message) {
+                    log('📥 Mock: Received message from Earthcall: ' + message, 'info');
+                }
+            };
+        }
+
+        // Setup brush size display
+        document.getElementById('brushSize').addEventListener('input', function(e) {
+            document.getElementById('brushSizeValue').textContent = e.target.value;
+        });
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            
+            let color = '#ffffff';
+            if (type === 'error') color = '#ff6b6b';
+            else if (type === 'success') color = '#00b894';
+            else if (type === 'warning') color = '#fdcb6e';
+            
+            logEntry.style.color = color;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (message.trim()) {
+                window.earthcall.sendMessage(message);
+                log('📤 Sent message: ' + message, 'success');
+                document.getElementById('messageInput').value = '';
+            }
+        }
+
+        function testBrushStroke() {
+            const brushType = document.getElementById('brushType').value;
+            const brushSize = document.getElementById('brushSize').value;
+            
+            const message = JSON.stringify({
+                type: 'brush_stroke',
+                brush_type: brushType,
+                size: parseInt(brushSize),
+                color: '#ff0000',
+                opacity: 0.8
+            });
+            
+            window.earthcall.sendMessage(message);
+            log('🎨 Test brush stroke sent: ' + brushType + ' (size: ' + brushSize + ')', 'success');
+        }
+
+        function testDesignElement() {
+            const message = JSON.stringify({
+                type: 'design_element',
+                name: 'Web Test Design',
+                design_type: 'shape',
+                position: { x: 0, y: 0, z: 0 },
+                properties: {
+                    color: '#00ff00',
+                    size: 5
+                }
+            });
+            
+            window.earthcall.sendMessage(message);
+            log('🎨 Test design element sent', 'success');
+        }
+
+        function createBrushStroke() {
+            const brushType = document.getElementById('brushType').value;
+            const brushSize = document.getElementById('brushSize').value;
+            
+            const message = JSON.stringify({
+                type: 'brush_stroke',
+                settings: {
+                    brush_type: brushType,
+                    size: parseInt(brushSize),
+                    color: '#ff0000',
+                    opacity: 0.8
+                },
+                points: [
+                    { x: 0, y: 0, z: 0 },
+                    { x: 1, y: 1, z: 0 },
+                    { x: 2, y: 0, z: 0 }
+                ]
+            });
+            
+            window.earthcall.sendMessage(message);
+            log('🎨 Created brush stroke: ' + brushType + ' (size: ' + brushSize + ')', 'success');
+        }
+
+        function modifyAvatar() {
+            const message = JSON.stringify({
+                type: 'avatar_modification',
+                part: 'head',
+                modification_type: 'color',
+                parameters: {
+                    color: '#ff00ff',
+                    intensity: 0.8
+                }
+            });
+            
+            window.earthcall.sendMessage(message);
+            log('👤 Avatar modification sent', 'success');
+        }
+
+        // Handle messages from Earthcall
+        window.earthcall.receiveMessage = function(message) {
+            log('📥 Received from Earthcall: ' + message, 'info');
+        };
+
+        // Auto-send a test message after 3 seconds
+        setTimeout(() => {
+            log('🚀 Auto-sending test message...', 'info');
+            window.earthcall.sendMessage('Hello from web integration test!');
+        }, 3000);
+
+        // Log page load
+        log('🌐 Web page loaded and ready for Earthcall integration!', 'success');
+    </script>
+</body>
+</html> 

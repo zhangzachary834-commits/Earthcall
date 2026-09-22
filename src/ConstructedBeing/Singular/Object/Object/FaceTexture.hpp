@@ -1,0 +1,64 @@
+#pragma once
+
+#include "Singularity/Screen/Renderer.hpp" // TextureHandle
+
+#include <cstdint>
+#include <vector>
+#include <glm/glm.hpp>
+
+// Per-face paintable texture with multi-layer compositing and stroke history.
+// Pulled out of Object to keep paint/blend code separate from object semantics.
+struct FaceTexture {
+    // Backend-owned handle, assigned by uploadToGPU. Mutable because uploading is
+    // const from the caller's view — the paint is the same, only its GPU copy
+    // changes. 0 while unuploaded, or under a backend that keeps no handles.
+    mutable TextureHandle id = 0;
+    mutable uint64_t revision = 0;
+    mutable std::vector<uint8_t> pixels;     // RGBA8 buffer, width×height×4
+    int width = 64;
+    int height = 64;
+
+    std::vector<std::vector<uint8_t>> layers;
+    std::vector<float> layerOpacities;
+    std::vector<int>   blendModes;
+    int  activeLayer = 0;
+    bool useLayers   = false;
+
+    struct StrokePoint {
+        glm::vec2 uv;
+        float radius;
+        float opacity;
+        glm::vec3 color;
+        float timestamp;
+    };
+    std::vector<std::vector<StrokePoint>> strokeHistory;
+    std::vector<std::vector<StrokePoint>> undoStack;
+
+    void create(int w = 64, int h = 64, uint32_t initColorRGBA = 0xFFFFFFFFu);
+    void resize(int newWidth, int newHeight);
+    void addLayer();
+    void deleteLayer(int layerIndex);
+    void setLayerOpacity(int layerIndex, float opacity);
+    void setBlendMode(int layerIndex, int mode);
+
+    void uploadToGPU() const;
+    void updateWholeGPU() const;
+    void compositeLayers() const;
+    void blendLayer(int layerIndex) const;
+    glm::vec4 blendPixels(const glm::vec4& src, const glm::vec4& dst, int blendMode, float opacity) const;
+
+    // Replace exactly one RGBA sample addressed in normalized face space.
+    // This is the indivisible storage operation beneath the Screen channel;
+    // brush radius, interpolation and gesture meaning remain authored above.
+    bool writePixel(const glm::vec2& uv, const glm::vec3& color);
+    bool writePixelWithRadius(const glm::vec2& uv, const glm::vec3& color, int radius = 1);
+    bool writeLine(const glm::vec2& uv0, const glm::vec2& uv1,
+                   const glm::vec3& color, int radius = 1);
+    bool writeRegion(int x0, int y0, int x1, int y1,
+                     const std::vector<glm::vec3>& colors);
+    bool writeSamples(const std::vector<glm::ivec2>& coordinates,
+                      const std::vector<glm::vec3>& colors);
+
+    void saveStrokeState();
+    void undo();
+};
