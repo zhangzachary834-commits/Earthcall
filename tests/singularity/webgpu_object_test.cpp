@@ -16,6 +16,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Time/timeline.hpp"
 #include "Relation/Relation.hpp"
@@ -839,6 +840,20 @@ int main() {
         unsigned char blockerMoved[4];
         readCentre(blockerMoved);
         const Renderer::FrameStats blockerMoveStats = renderer.frameStats();
+        const auto movedPacked = sdfwgsl::collectParams(radiant.getFieldData());
+        std::printf("Rung-8 blocker moved pixel=(%d,%d,%d) uploadBytes=%zu offset=(%.3f,%.3f,%.3f) packedB=(%.3f,%.3f,%.3f)\\n",
+                    blockerMoved[0], blockerMoved[1], blockerMoved[2],
+                    blockerMoveStats.sdfParameterBytesUploaded,
+                    radiant.getFieldOperandBOffset().x,
+                    radiant.getFieldOperandBOffset().y,
+                    radiant.getFieldOperandBOffset().z,
+                    movedPacked.values.size() > 6 ? movedPacked.values[4] : 999.0f,
+                    movedPacked.values.size() > 6 ? movedPacked.values[5] : 999.0f,
+                    movedPacked.values.size() > 6 ? movedPacked.values[6] : 999.0f);
+        assert(movedPacked.ok && movedPacked.values.size() >= 8 &&
+               std::abs(movedPacked.values[4] + 0.4f) < 1e-5f &&
+               std::abs(movedPacked.values[6] + 0.8f) < 1e-5f &&
+               "value-only blocker edit did not reach SDF parameter repacking");
         assert(blockerMoved[0] > redBlocked[0] + 25 &&
                "moving the blocker away left a stale shadow");
         assert(blockerMoved[2] > 35 &&
