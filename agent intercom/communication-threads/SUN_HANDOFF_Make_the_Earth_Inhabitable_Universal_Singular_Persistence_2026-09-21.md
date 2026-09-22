@@ -3,8 +3,9 @@
 Date: 2026-09-21  
 Repository: zhangzachary834-commits/Earthcall  
 Source branch: `sol/singular-semantic-persistence-20260919`  
-Source branch head before this handoff: `c0057440d154fd1e98d7e040d5552e57883efda5`  
-Current default head at handoff time: `4ab5ebe25aaac99915d25d63770960a2e085a34b`
+Implementation head before the handoff document: `c0057440d154fd1e98d7e040d5552e57883efda5`  
+Handoff-document branch head before this revision: `f11a8d68bfbcf7ad4751d7ae8a750e659303ff77`  
+Current default head verified at handoff time: `4ab5ebe25aaac99915d25d63770960a2e085a34b`
 
 ## READ THIS FIRST
 
@@ -274,19 +275,21 @@ This test is not merely a JSON unit test.
 
 ## CI evidence
 
-Latest branch head at the time this handoff was prepared:
+Implementation head exercised by CI:
 
 `c0057440d154fd1e98d7e040d5552e57883efda5`
 
-Latest Earthcall focused CI:
+Earthcall focused CI run:
 
 Run: `35493303849`
+
+Overall workflow conclusion: **FAILURE**, caused by the independent Slow Adapter performance job described below.
 
 Focused CPU result: **SUCCESS**
 
 Focused set: **34 / 34 tests passed**
 
-Decisive witnesses on the latest green run:
+Decisive Singular-persistence witnesses in the successful Focused CPU job:
 
 - `object_roundtrip_test` — PASS
 - `shape_hydration_integrity_test` — PASS
@@ -328,13 +331,15 @@ At the end of this work, current default had advanced to:
 
 `4ab5ebe25aaac99915d25d63770960a2e085a34b`
 
-The source branch was:
+At verification immediately before this handoff revision, the source branch was:
 
-- 57 commits ahead of its old ancestry;
 - **454 commits behind current default**;
+- 58 commits ahead of current default's merge base, including one docs-only handoff commit;
 - about 31 files different when handoff docs are counted.
 
-The implementation itself was green on its own branch, but that does NOT prove it is green after 454 commits of current-default evolution.
+This handoff revision itself is another docs-only commit, so do not use the ahead count as an implementation count.
+
+The **Singular-persistence implementation was green in the Focused CPU job (34/34 tests)** on its old branch. The overall workflow was red only because the independent Slow Adapter performance guard failed its Chess threshold. Neither fact proves the implementation is green after 454 commits of current-default evolution.
 
 ### Correct next move
 
