@@ -3,6 +3,7 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -121,9 +122,29 @@ namespace Core {
         radiantSources.reserve(candidateFields.size());
         std::string sourceSetIdentity;
 
+        std::vector<Rendering::VolumeDensityBinding> volumeDensities;
+        volumeDensities.reserve(candidateFields.size());
+        std::string volumeSetIdentity;
+
         for (geom::FieldNode* field : candidateFields) {
+            if (!field) continue;
+
+            // Volumetric truth is independent from source truth. A FieldNode may
+            // be fog without being a light, a light without being fog, or both.
+            // Therefore density discovery MUST happen before the light.source
+            // compatibility reader below.
+            Rendering::VolumeDensityBinding medium;
+            if (Rendering::readVolumeDensity(
+                    *field, sourceTime, sourceDelta, medium)) {
+                volumeSetIdentity += field->getIdentifier();
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.densityRevision);
+                volumeSetIdentity += "\n";
+                volumeDensities.push_back(medium);
+            }
+
             Rendering::AuthorableLightState light;
-            if (!field || !Rendering::readAuthorableLight(*field, light)) continue;
+            if (!Rendering::readAuthorableLight(*field, light)) continue;
 
             Rendering::RadianceSourceBinding source;
             source.position = light.position;
@@ -172,6 +193,15 @@ namespace Core {
             sourceSetIdentity += std::to_string(source.angularRevision);
             sourceSetIdentity += "\n";
             radiantSources.push_back(source);
+        }
+
+        if (volumeDensities.empty()) {
+            currentRenderer().setVolumeDensitySources({}, 0);
+        } else {
+            const uint64_t volumeSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(volumeSetIdentity));
+            currentRenderer().setVolumeDensitySources(
+                std::move(volumeDensities), volumeSetRevision);
         }
 
         const bool persistentLightPlaced = !radiantSources.empty();
@@ -275,9 +305,16 @@ namespace Core {
             Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
-        // Draw player avatar and nametag when not in first-person
+        // Draw the embodied Person as world geometry before volumetric
+        // composition. Nametags/UI remain sensory overlays and are drawn only
+        // after the medium pass so fog never becomes a screen-space filter.
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->draw();
+        }
+
+        currentRenderer().composeVolumes();
+
+        if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
         }
 
