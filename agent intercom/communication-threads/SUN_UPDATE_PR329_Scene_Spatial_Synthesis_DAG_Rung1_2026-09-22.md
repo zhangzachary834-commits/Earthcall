@@ -221,3 +221,138 @@ This is an important distinction: incremental repair is not merely “append a n
 This remains test-only architecture work. No renderer, WGSL, production SDF runtime, or production proof runtime was changed.
 
 The next gate remains: exact-head CI for the new witness, followed by base reconciliation and then the first conservative proof/support annotation that can bypass exact DAG branch work while explicitly charging consultation and fallback costs.
+
+
+## Rung 1D — first conservative support bypass on the execution DAG
+
+Successor-Sun pass on 2026-09-22 advanced the synthetic execution witness in commit `4393ee85` after reconciling current default into the branch with merge commit `f4cee035`.
+
+### Base reconciliation
+
+Before the proof experiment, current `sync-from-earthcall-main` was `71d5d972`, eight commits beyond the old merge base. Those incoming commits touched none of PR #329's four changed files. The branch was reconciled with a real two-parent merge commit preserving both histories.
+
+After reconciliation, GitHub reported:
+
+- branch behind base: 0;
+- branch mergeable: true;
+- PR remains draft.
+
+### First proof that changes execution
+
+`scene_spatial_synthesis_dag_test.cpp` no longer merely counts a diagnostic proof annotation.
+
+It now recognizes one deliberately narrow, exact algebraic shape:
+
+```
+scene = min(shared - biasA, shared - biasB)
+```
+
+The support proof is valid only when both subtraction branches point to the exact same canonical `shared` child and the bias leaves are exactly the declared authored inputs. Under that shape, the branch with the larger bias is <= the other branch for every runtime value of `shared`.
+
+If the shape is not recognized, the proof builder refuses to prove anything.
+
+When the proof is valid, the Min evaluator consults the proof on the execution node and evaluates only the proved winner child. The losing branch is not interpreted.
+
+The test compares this support road against the full exact DAG authority and requires exact parity.
+
+### Economics now charged explicitly
+
+The witness separately counts:
+
+- support-proof consultations;
+- successful branch bypasses;
+- support fallbacks;
+- exact DAG nodes visited;
+- support-road nodes visited;
+- nodes avoided by proof;
+- ordinary cache hits / leaf evaluations.
+
+This is the first rung in this family where a proof artifact has direct measured execution profit rather than merely living beside the execution road.
+
+### Runtime movement does not rebuild proof
+
+The existing ambient/runtime sample movement remains value-state only.
+
+After `p: 7 -> 8`:
+
+- the semantic DAG is unchanged;
+- the support proof remains valid;
+- proof artifacts rebuilt for ambient movement = 0;
+- the support road still bypasses the losing Min branch;
+- exact parity remains required.
+
+### Authored mutation invalidates, then falls open
+
+The authored mutation remains:
+
+`sdfA.bias: 5 -> 17`
+
+The dirty semantic frontier is still exactly:
+
+`biasA -> sdfA -> scene`
+
+Because the support proof lives on `scene`, that authored semantic change invalidates the proof through the same dependency frontier.
+
+Crucially, an invalid proof does not guess and does not retain optimization authority. The support evaluator records one consultation and one fallback, then evaluates both exact Min children using the still-valid unaffected cache entries.
+
+This keeps exact semantics as authority.
+
+### Targeted re-proof flips the winner
+
+After the authored mutation is repaired, the same narrow proof builder is run again.
+
+Before mutation:
+
+- `biasA=5`
+- `biasB=11`
+- proved winner: `sdfB`
+
+After mutation:
+
+- `biasA=17`
+- `biasB=11`
+- proved winner: `sdfA`
+
+The rebuilt support artifact therefore reverses the chosen branch and restores the branch bypass while preserving exact parity.
+
+Only the semantic edit can require this re-proof; ambient/runtime movement still does not.
+
+### Scope boundary retained
+
+This experiment is still test-only.
+
+No production renderer, WGSL, SDF runtime, or production Prophetic/proof runtime was modified.
+
+The proof is intentionally a tiny exact shape witness rather than a general theorem system. Its purpose is to prove the architecture:
+
+```
+conservative theorem
+    -> annotation on compiled execution node
+    -> hot path consults one local artifact
+    -> proved branch bypass
+    -> stale/missing proof falls open to exact work
+    -> authored premise change invalidates/rebuilds locally
+```
+
+### CI state
+
+The pre-1D head `7de0de55` had the relevant SDF focused job green in run #2559.
+
+The Rung 1D code head `4393ee85` triggered focused CI run **#2570**. At the time of this update its jobs were queued by GitHub Actions capacity; do not claim Rung 1D CI-green until an executor actually runs it.
+
+The standalone witness could not be independently compiled from the local sandbox because that environment had no network route to GitHub. Treat Actions as the executable gate.
+
+### Next decision after CI
+
+If the synthetic support-bypass witness is green, the next research question is whether the same conservative proof shape can be expressed over the real `OntoMath::MathNode` compiled DAG without weakening identity/provenance rules.
+
+Do not jump directly to renderer/WGSL productionization.
+
+The next real-OntoMath rung should preserve all of these properties:
+
+1. proof derives from canonical semantic child identity, not pretty-printed text;
+2. proof has declared authored dependencies;
+3. runtime samples do not rebuild it;
+4. authored dependency changes invalidate only its dependent frontier;
+5. invalid/missing proof falls open to exact compiled evaluation;
+6. consultation and bypass/fallback economics are measured separately.
