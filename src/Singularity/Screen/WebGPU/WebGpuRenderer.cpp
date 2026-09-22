@@ -2,6 +2,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -11,6 +12,7 @@
 #include <cstdio>
 #include <cstring>
 #include <limits>
+#include <functional>
 #include <set>
 #include <string>
 #include <utility>
@@ -1304,6 +1306,30 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             ? fieldNode->volumeDensity.get()
             : nullptr;
 
+    sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
+    if (densityExpr) {
+        densityKind = sdfwgsl::DensityInputKind::Authored;
+    } else if (fieldNode) {
+        Rendering::AuthorableLightState authoredLight;
+        if (Rendering::readAuthorableLight(*fieldNode, authoredLight)) {
+            // rho is source truth, never an implicit participating-medium fallback.
+            densityKind = sdfwgsl::DensityInputKind::None;
+        }
+    }
+
+    uint64_t densityRevision = 0;
+    sdfwgsl::ScalarExpressionLayout densityLayout;
+    std::string densityStructure =
+        densityKind == sdfwgsl::DensityInputKind::None
+            ? "<density:none>"
+            : "<density:legacy-field>";
+    if (densityKind == sdfwgsl::DensityInputKind::Authored) {
+        const std::string densityJson = densityExpr->toJson().dump();
+        densityRevision = static_cast<uint64_t>(std::hash<std::string>{}(densityJson));
+        densityLayout = sdfwgsl::inspectDensityExpression(densityExpr);
+        densityStructure = "<density:authored>\n" + densityLayout.structure;
+    }
+
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
             std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
@@ -1403,6 +1429,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     };
 
+    if (densityKind == sdfwgsl::DensityInputKind::Authored && !densityLayout.ok) {
+        recordProgramRefusal("volume density: " + densityLayout.error);
+        return;
+    }
+
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
             recordProgramRefusal(_radianceSourcesLayoutError);
@@ -1433,10 +1464,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceStructureRevision == _radianceStructureRevision &&
                    memo->chromaStructureRevision == _chromaStructureRevision &&
                    memo->angularStructureRevision == _angularStructureRevision));
+        const bool densityStructureMatches =
+            memo->densityKind == densityKind &&
+            memo->densityStructure == densityStructure;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
+            densityStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1445,15 +1480,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 : (memo->radianceRevision != radianceRevision() ||
                    memo->chromaRevision != radianceChromaRevision() ||
                    memo->angularRevision != radianceAngularRevision());
+            const bool densityValuesChanged =
+                densityKind == sdfwgsl::DensityInputKind::Authored &&
+                memo->densityRevision != densityRevision;
             const bool valuesChanged =
-                memo->parameterRevision != memoParameterRevision || sourceValuesChanged;
+                memo->parameterRevision != memoParameterRevision ||
+                sourceValuesChanged || densityValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
                                            radianceAngularExpr(), sourceSet,
-                                           densityExpr);
+                                           densityExpr, densityKind);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1465,6 +1504,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->chromaRevision = radianceChromaRevision();
                     memo->angularRevision = radianceAngularRevision();
                     memo->sourceSetRevision = radianceSourcesRevision();
+                    memo->densityRevision = densityRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1484,7 +1524,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
                                      radianceAngularExpr(), sourceSet,
-                                     densityExpr);
+                                     densityExpr, densityKind);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1509,6 +1549,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->angularStructureRevision = _angularStructureRevision;
             memo->sourceSetRevision = radianceSourcesRevision();
             memo->sourceSetStructureRevision = _radianceSourcesStructureRevision;
+            memo->densityRevision = densityRevision;
+            memo->densityKind = densityKind;
+            memo->densityStructure = densityStructure;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
