@@ -2316,8 +2316,20 @@ int main() {
             }
         }
         if (routeAuthority) {
+            // Preserve the original coarse matrix as the stable baseline.
             for (uint32_t entrySide : {2u, 4u, 8u}) {
                 for (uint32_t dirSide : {2u, 4u, 8u}) {
+                    printStableRouteAtlasCensus(
+                        c.name, stableRouteRays, proofExtent, *routeAuthority,
+                        entrySide, dirSide);
+                }
+            }
+
+            // #2441 showed that horizon ambiguity responds to direction
+            // discrimination while entry refinement alone is nearly inert.
+            // Push only that axis harder before paying for a GPU atlas.
+            for (uint32_t entrySide : {2u, 4u, 8u}) {
+                for (uint32_t dirSide : {16u, 32u}) {
                     printStableRouteAtlasCensus(
                         c.name, stableRouteRays, proofExtent, *routeAuthority,
                         entrySide, dirSide);
