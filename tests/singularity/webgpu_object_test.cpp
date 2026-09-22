@@ -296,6 +296,27 @@ int main() {
                "numeric D edit regenerated WGSL instead of refreshing parameters");
         assert(highStats.sdfProgramCacheHits >= 1 &&
                "numeric D edit did not reuse the memoized volume shader");
+
+        // STRUCTURE ONLY: replace ScalarLeaf with Add(ScalarLeaf, ScalarLeaf)
+        // while geometry revisions remain untouched. Density structure itself
+        // must invalidate WGSL exactly once.
+        auto densityAdd = std::make_shared<OntoMath::MathNode>();
+        densityAdd->op = OntoMath::MathNode::Op::Add;
+        densityAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.4)));
+        densityAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.4)));
+        medium.volumeDensity->pieces[0].mathNode = densityAdd;
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.drawImplicit(noSurface, glm::vec3(1.0f), volumeMat, &medium,
+                              kVolumeMemoId, kVolumeStructureRevision, nullptr,
+                              /*memoParameterRevision=*/1u);
+        renderer.endFrame();
+        const Renderer::FrameStats densityStructureStats = renderer.frameStats();
+        assert(densityStructureStats.sdfProgramCompiles == 1 &&
+               "density operator-tree edit failed to regenerate WGSL structure");
     }
 
     // --- Volumetric V0c production-composition witness -----------------------
