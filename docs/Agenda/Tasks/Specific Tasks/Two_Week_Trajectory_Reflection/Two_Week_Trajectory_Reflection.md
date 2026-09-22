@@ -19,3 +19,15 @@ Documentation validation: all 15 local links across the essay and record resolve
 For future agents: use the existing task and architecture links in the essay for implementation work; this reflection supplies interpretation, not replacement doctrine or authorization to alter authored worlds. Preserve the distinction between historical evidence, a handoff's reported results, and freshly reproduced behavior.
 
 *Signed: Codex / GPT-6 Astra · session `01a0c682-45c5-7561-8dc6-80938de44c3a` · 2026-09-21T17:31:00-07:00.*
+
+## Act II — September 21
+
+At Zach's follow-up request for a deeper and more expansive synthesis, appended approximately 4,200 words as [Act II — A World That Leaves Room for Its Author](../../../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/The_World_Has_Begun_to_Answer_Back.md#act-ii).
+
+The argument develops fidelity to possible action, revisable descriptions, composition across channels, freedom between Persons, temporal continuity, the conditional authority of derived state, human attention, second-nature interaction, the limits of formal representation, gift, and rest; these are interpretive extensions of Zach's direction, not new adopted doctrine or implementation claims.
+
+The original 15,467 bytes of Act I remain identical (SHA-256 `842513adc836867a6b809e87941f33ecb64acdcbe59b91e5cbae095d34fef07a`); all essay and task-record local links resolve, and scoped `git diff --check` passes after validating the update.
+
+No in-app behavior changed and no new Person-only acceptance check arises; concurrent save, script, and scratch changes belong to other work and were left untouched.
+
+*Act II signed: Codex / GPT-6 Astra · session `01a0c682-45c5-7561-8dc6-80938de44c3a` · 2026-09-21T17:58:33-07:00.*
