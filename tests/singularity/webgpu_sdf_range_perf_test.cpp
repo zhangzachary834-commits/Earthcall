@@ -180,6 +180,143 @@ struct RuntimeTaxTotals {
     bool valid = false;
 };
 
+bool proofCellPositive(const geom::SdfPositiveProofGrid& grid,
+                       uint32_t x, uint32_t y, uint32_t z);
+
+struct alignas(16) DirectProofRun {
+    // xyz are the field-local proved-positive run bounds.
+    glm::vec4 bmin{0.0f};
+    glm::vec4 bmax{0.0f};
+    // x/y/z = axis / first source proof-cell linear index / run cell count.
+    // That is sufficient to recover the exact dependency slice for a future
+    // incremental repair without storing the rich theorem twice.
+    glm::uvec4 provenance{0u};
+};
+
+static_assert(sizeof(DirectProofRun) == 48,
+              "direct proof-run ABI must match two vec4 + one uvec4");
+
+struct DirectRunArtifact {
+    uint32_t axis = 0;
+    uint32_t minRunCells = 1;
+    uint32_t coveredPositiveCells = 0;
+    float minAxisWorld = 0.0f;
+    std::vector<DirectProofRun> runs;
+};
+
+struct DirectRuntimeTax {
+    uint32_t axis = 0;
+    uint32_t minRunCells = 1;
+    uint32_t coveredPositiveCells = 0;
+    float minAxisWorld = 0.0f;
+    size_t artifactRecords = 0;
+    size_t artifactBytes = 0;
+    uint64_t rays = 0;
+    uint64_t artifactQueries = 0;
+    uint64_t recordTests = 0;
+    uint64_t skipCalls = 0;
+    uint64_t directSampleSteps = 0;
+    uint64_t directFallbackEvals = 0;
+    uint64_t directHits = 0;
+    uint64_t artifactExhaustions = 0;
+    uint64_t directIterations = 0;
+    uint64_t offSampleSteps = 0;
+    uint64_t offFallbackEvals = 0;
+    uint64_t offHits = 0;
+    uint64_t offIterations = 0;
+    uint64_t perRayHitMismatches = 0;
+    double skippedDistance = 0.0;
+    bool valid = false;
+};
+
+const char* directAxisName(uint32_t axis) {
+    return axis == 0u ? "x" : (axis == 1u ? "y" : "z");
+}
+
+DirectRunArtifact buildDirectRunArtifact(
+    const geom::SdfPositiveProofGrid& grid,
+    const glm::vec3& extent,
+    uint32_t axis,
+    uint32_t minRunCells) {
+    DirectRunArtifact out;
+    out.axis = std::min(axis, 2u);
+    out.minRunCells = std::max(minRunCells, 1u);
+    if (grid.dim == 0u || grid.words.empty()) return out;
+
+    const glm::vec3 absExtent = glm::abs(extent);
+    const glm::vec3 cellSize =
+        (2.0f * absExtent) / static_cast<float>(grid.dim);
+    out.minAxisWorld =
+        static_cast<float>(out.minRunCells) * cellSize[out.axis];
+
+    auto positive = [&](uint32_t k, uint32_t u, uint32_t v) {
+        if (out.axis == 0u) return proofCellPositive(grid, k, u, v);
+        if (out.axis == 1u) return proofCellPositive(grid, u, k, v);
+        return proofCellPositive(grid, u, v, k);
+    };
+
+    auto emitRun = [&](uint32_t start, uint32_t end,
+                       uint32_t u, uint32_t v) {
+        const uint32_t runCells = end - start;
+        if (runCells < out.minRunCells) return;
+
+        glm::uvec3 lo(0u);
+        glm::uvec3 hi(0u);
+        if (out.axis == 0u) {
+            lo = glm::uvec3(start, u, v);
+            hi = glm::uvec3(end, u + 1u, v + 1u);
+        } else if (out.axis == 1u) {
+            lo = glm::uvec3(u, start, v);
+            hi = glm::uvec3(u + 1u, end, v + 1u);
+        } else {
+            lo = glm::uvec3(u, v, start);
+            hi = glm::uvec3(u + 1u, v + 1u, end);
+        }
+
+        const glm::vec3 loF(
+            static_cast<float>(lo.x),
+            static_cast<float>(lo.y),
+            static_cast<float>(lo.z));
+        const glm::vec3 hiF(
+            static_cast<float>(hi.x),
+            static_cast<float>(hi.y),
+            static_cast<float>(hi.z));
+        const glm::vec3 bmin = -absExtent + loF * cellSize;
+        const glm::vec3 bmax = -absExtent + hiF * cellSize;
+        const uint32_t sourceLinear =
+            lo.x + grid.dim * (lo.y + grid.dim * lo.z);
+        DirectProofRun run;
+        run.bmin = glm::vec4(bmin, 0.0f);
+        run.bmax = glm::vec4(bmax, 0.0f);
+        run.provenance =
+            glm::uvec4(out.axis, sourceLinear, runCells, 0u);
+        out.runs.push_back(run);
+        out.coveredPositiveCells += runCells;
+    };
+
+    // One chosen axis partitions the positive cells into disjoint maximal runs.
+    // No cell is duplicated inside one artifact, and thresholding only removes
+    // optimization opportunities; it never creates skip authority.
+    for (uint32_t v = 0; v < grid.dim; ++v) {
+        for (uint32_t u = 0; u < grid.dim; ++u) {
+            bool inRun = false;
+            uint32_t runStart = 0u;
+            for (uint32_t k = 0; k <= grid.dim; ++k) {
+                const bool isPositive =
+                    k < grid.dim ? positive(k, u, v) : false;
+                if (isPositive && !inRun) {
+                    inRun = true;
+                    runStart = k;
+                } else if (!isPositive && inRun) {
+                    emitRun(runStart, k, u, v);
+                    inRun = false;
+                }
+            }
+        }
+    }
+    return out;
+}
+
 // CPU-side opportunity census for the exact regular proof bitmap consumed by
 // rangeCandidate(). This deliberately does NOT instrument the hot shader: the
 // native AB/BA GPU timing below remains unpolluted. The census walks the same
@@ -979,6 +1116,988 @@ void printRuntimeTax(const char* viewName, const RuntimeTaxTotals& t) {
         samplesSavedPerCall);
 }
 
+
+std::vector<DirectRuntimeTax> runDirectArtifactDiagnostic(
+    wgpu::Device& gpu,
+    const sdfwgsl::Program& program,
+    const std::vector<DirectRunArtifact>& artifacts,
+    const RuntimeTaxTotals& genericBaseline,
+    const glm::vec3& extent,
+    const glm::vec3& eye,
+    const glm::mat4& view,
+    const glm::mat4& proj) {
+    constexpr uint32_t sampleW = 160;
+    constexpr uint32_t sampleH = 100;
+
+    std::vector<DirectRuntimeTax> results;
+    results.reserve(artifacts.size());
+    if (!program.ok) return results;
+
+    float farField = 1e6f;
+    {
+        const glm::vec4 farPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(farPt.w) > 1e-9f) {
+            const float d = -(farPt.z / farPt.w);
+            if (std::isfinite(d) && d > 0.0f) farField = d;
+        }
+    }
+
+    std::vector<RuntimeTaxRay> rays;
+    rays.reserve(static_cast<size_t>(sampleW) * sampleH);
+    const glm::mat4 invViewProj = glm::inverse(proj * view);
+    for (uint32_t y = 0; y < sampleH; ++y) {
+        for (uint32_t x = 0; x < sampleW; ++x) {
+            const float sx =
+                (static_cast<float>(x) + 0.5f) / static_cast<float>(sampleW);
+            const float sy =
+                (static_cast<float>(y) + 0.5f) / static_cast<float>(sampleH);
+            const glm::vec4 ndc(
+                sx * 2.0f - 1.0f,
+                (1.0f - sy) * 2.0f - 1.0f,
+                1.0f,
+                1.0f);
+            const glm::vec4 worldH = invViewProj * ndc;
+            glm::vec3 rd(0.0f, 0.0f, 1.0f);
+            if (std::abs(worldH.w) >= 1e-8f) {
+                const glm::vec3 world = glm::vec3(worldH) / worldH.w;
+                rd = glm::normalize(world - eye);
+            }
+            rays.push_back({glm::vec4(eye, 1.0f), glm::vec4(rd, farField)});
+        }
+    }
+
+    const char* diagnosticWgsl = R"WGSL(
+struct DirectTaxRay {
+    ro: vec4<f32>,
+    rdFar: vec4<f32>,
+};
+struct DirectProofRun {
+    bmin: vec4<f32>,
+    bmax: vec4<f32>,
+    provenance: vec4<u32>,
+};
+struct DirectTaxOut {
+    counts0: vec4<u32>,
+    counts1: vec4<u32>,
+    distances: vec4<f32>,
+};
+@group(2) @binding(0) var<storage, read> directTaxRays: array<DirectTaxRay>;
+@group(2) @binding(1) var<storage, read_write> directTaxOut: array<DirectTaxOut>;
+@group(2) @binding(2) var<storage, read> directRuns: array<DirectProofRun>;
+
+fn findDirectRun(ro: vec3<f32>, rd: vec3<f32>,
+                 t: f32, maxDist: f32) -> vec4<f32> {
+    var found = false;
+    var bestEnter = maxDist + 1.0;
+    var bestExit = 0.0;
+    var tests = 0u;
+    let count = arrayLength(&directRuns);
+
+    for (var i = 0u; i < count; i = i + 1u) {
+        tests = tests + 1u;
+        let run = directRuns[i];
+        let center = 0.5 * (run.bmin.xyz + run.bmax.xyz);
+        let halfExtent =
+            max(0.5 * (run.bmax.xyz - run.bmin.xyz), vec3<f32>(1e-8));
+        let interval = rayAabb(ro - center, rd, halfExtent);
+        let enter = max(interval.x, t);
+        let exit = min(interval.y, maxDist);
+        if (exit <= enter) { continue; }
+
+        if (!found || enter < bestEnter - 1e-6 ||
+            (abs(enter - bestEnter) <= 1e-6 && exit > bestExit)) {
+            found = true;
+            bestEnter = enter;
+            bestExit = exit;
+        }
+    }
+
+    return vec4<f32>(
+        bestEnter, bestExit, select(0.0, 1.0, found), f32(tests));
+}
+
+fn directTaxMarch(ray: DirectTaxRay, useDirect: bool) -> DirectTaxOut {
+    var out: DirectTaxOut;
+    g_instIdx = 0u;
+    let inst = instances[0u];
+    let ro = ray.ro.xyz;
+    let rd = normalize(ray.rdFar.xyz);
+    let box = rayAabb(ro, rd, inst.extents.xyz);
+    if (box.y < box.x || box.y < 0.0) {
+        return out;
+    }
+
+    var t = max(box.x, 0.0);
+    let maxDist = min(min(box.y, t + inst.misc.z), ray.rdFar.w);
+
+    var artifactQueries = 0u;
+    var recordTests = 0u;
+    var skipCalls = 0u;
+    var sampleSteps = 0u;
+    var fallbackEvals = 0u;
+    var hit = false;
+    var artifactExhaustions = 0u;
+    var iterations = 0u;
+    var skippedDistance = 0.0;
+
+    var directValid = false;
+    var directExhausted = !useDirect;
+    var directEnter = 0.0;
+    var directExit = 0.0;
+
+    var prev_d = 1e10;
+    var candidate_step = 0.0;
+
+    for (var i = 0; i < 192; i = i + 1) {
+        if (t > maxDist) { break; }
+        iterations = iterations + 1u;
+
+        if (useDirect && directValid && t >= directExit) {
+            directValid = false;
+        }
+
+        // The direct artifact is discovered at most once per retained candidate
+        // interval, not once per exact marcher step. A no-future-run result is
+        // final for this monotonic ray and suppresses all later artifact work.
+        if (useDirect && !directExhausted && !directValid) {
+            artifactQueries = artifactQueries + 1u;
+            let candidate = findDirectRun(ro, rd, t, maxDist);
+            recordTests = recordTests + u32(candidate.w);
+            if (candidate.z > 0.5) {
+                directEnter = candidate.x;
+                directExit = candidate.y;
+                directValid = true;
+            } else {
+                artifactExhaustions = artifactExhaustions + 1u;
+                directExhausted = true;
+            }
+        }
+
+        if (useDirect && directValid &&
+            t >= directEnter && t < directExit) {
+            let oldT = t;
+            t = directExit;
+            directValid = false;
+            if (t > oldT) {
+                skipCalls = skipCalls + 1u;
+                skippedDistance = skippedDistance + (t - oldT);
+                prev_d = 1e10;
+                candidate_step = 0.0;
+            }
+            if (t > maxDist) { break; }
+        }
+
+        let p = ro + rd * t;
+        let current_eps = max(inst.misc.y, t * 0.001);
+        let sample = sdfSampleStep(p);
+        sampleSteps = sampleSteps + 1u;
+        let raw = sample.raw;
+        var gl = sample.gradLen;
+        if (gl <= 1e-6) {
+            let ge = 1e-3;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            fallbackEvals = fallbackEvals + 3u;
+            gl = length(g);
+        }
+        let d = select(raw, raw / gl, gl > 1e-6);
+
+        if (d <= 0.0 || abs(d) < current_eps) {
+            hit = true;
+            if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
+                let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
+                t = (t - candidate_step) + candidate_step * frac;
+            }
+            break;
+        }
+
+        candidate_step = max(d, current_eps);
+        prev_d = d;
+        t = t + candidate_step;
+    }
+
+    out.counts0 =
+        vec4<u32>(artifactQueries, recordTests, skipCalls, sampleSteps);
+    out.counts1 =
+        vec4<u32>(fallbackEvals, select(0u, 1u, hit),
+                  artifactExhaustions, iterations);
+    out.distances = vec4<f32>(skippedDistance, 0.0, 0.0, 0.0);
+    return out;
+}
+
+@compute @workgroup_size(64)
+fn cs_direct_tax(@builtin(global_invocation_id) gid: vec3<u32>) {
+    let idx = gid.x;
+    if (idx >= arrayLength(&directTaxRays)) { return; }
+    let ray = directTaxRays[idx];
+    directTaxOut[idx * 2u] = directTaxMarch(ray, true);
+    directTaxOut[idx * 2u + 1u] = directTaxMarch(ray, false);
+}
+)WGSL";
+
+    const std::string shaderCode = program.wgsl + diagnosticWgsl;
+    WGPUShaderSourceWGSL wgslSrc = {};
+    wgslSrc.chain.sType = WGPUSType_ShaderSourceWGSL;
+    wgslSrc.code = wgpu::Device::str(shaderCode.c_str());
+    WGPUShaderModuleDescriptor smd = {};
+    smd.nextInChain = &wgslSrc.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(gpu.device, &smd);
+    if (!shader) return results;
+
+    WGPUComputePipelineDescriptor cpd = {};
+    cpd.compute.module = shader;
+    cpd.compute.entryPoint = wgpu::Device::str("cs_direct_tax");
+    WGPUComputePipeline pipeline = wgpuDeviceCreateComputePipeline(gpu.device, &cpd);
+    if (!pipeline) {
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    RuntimeTaxInstance inst;
+    inst.extents = glm::vec4(extent, 0.0f);
+    inst.misc = glm::vec4(0.0f, 1e-4f, 8000.0f, 0.25f);
+
+    const size_t rayBytes = rays.size() * sizeof(RuntimeTaxRay);
+    const size_t outCount = rays.size() * 2u;
+    const size_t outBytes = outCount * sizeof(RuntimeTaxOut);
+    const size_t paramBytes =
+        std::max(program.params.size() * sizeof(float), sizeof(float));
+
+    size_t maxDirectBytes = sizeof(DirectProofRun);
+    for (const auto& artifact : artifacts) {
+        maxDirectBytes = std::max(
+            maxDirectBytes,
+            artifact.runs.size() * sizeof(DirectProofRun));
+    }
+
+    auto makeBuffer = [&](uint64_t size, WGPUBufferUsage usage) {
+        WGPUBufferDescriptor desc = {};
+        desc.size = size;
+        desc.usage = usage;
+        return wgpuDeviceCreateBuffer(gpu.device, &desc);
+    };
+
+    WGPUBuffer rayBuffer = makeBuffer(
+        rayBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer outBuffer = makeBuffer(
+        outBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc);
+    WGPUBuffer readback = makeBuffer(
+        outBytes, WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead);
+    WGPUBuffer paramBuffer = makeBuffer(
+        paramBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer instBuffer = makeBuffer(
+        sizeof(RuntimeTaxInstance),
+        WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+    WGPUBuffer directBuffer = makeBuffer(
+        maxDirectBytes, WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst);
+
+    if (!rayBuffer || !outBuffer || !readback ||
+        !paramBuffer || !instBuffer || !directBuffer) {
+        if (directBuffer) wgpuBufferRelease(directBuffer);
+        if (instBuffer) wgpuBufferRelease(instBuffer);
+        if (paramBuffer) wgpuBufferRelease(paramBuffer);
+        if (readback) wgpuBufferRelease(readback);
+        if (outBuffer) wgpuBufferRelease(outBuffer);
+        if (rayBuffer) wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    wgpuQueueWriteBuffer(gpu.queue, rayBuffer, 0, rays.data(), rayBytes);
+    if (!program.params.empty()) {
+        wgpuQueueWriteBuffer(
+            gpu.queue, paramBuffer, 0, program.params.data(),
+            program.params.size() * sizeof(float));
+    } else {
+        const float zero = 0.0f;
+        wgpuQueueWriteBuffer(gpu.queue, paramBuffer, 0, &zero, sizeof(zero));
+    }
+    wgpuQueueWriteBuffer(
+        gpu.queue, instBuffer, 0, &inst, sizeof(RuntimeTaxInstance));
+
+    WGPUBindGroupLayout bgl0 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 0);
+    WGPUBindGroupLayout bgl1 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 1);
+    WGPUBindGroupLayout bgl2 =
+        wgpuComputePipelineGetBindGroupLayout(pipeline, 2);
+
+    WGPUBindGroupEntry g0e = {};
+    g0e.binding = 1;
+    g0e.buffer = paramBuffer;
+    g0e.offset = 0;
+    g0e.size = paramBytes;
+    WGPUBindGroupDescriptor g0d = {};
+    g0d.layout = bgl0;
+    g0d.entryCount = 1;
+    g0d.entries = &g0e;
+    WGPUBindGroup g0 = wgpuDeviceCreateBindGroup(gpu.device, &g0d);
+
+    WGPUBindGroupEntry g1e = {};
+    g1e.binding = 0;
+    g1e.buffer = instBuffer;
+    g1e.offset = 0;
+    g1e.size = sizeof(RuntimeTaxInstance);
+    WGPUBindGroupDescriptor g1d = {};
+    g1d.layout = bgl1;
+    g1d.entryCount = 1;
+    g1d.entries = &g1e;
+    WGPUBindGroup g1 = wgpuDeviceCreateBindGroup(gpu.device, &g1d);
+
+    if (!g0 || !g1) {
+        if (g1) wgpuBindGroupRelease(g1);
+        if (g0) wgpuBindGroupRelease(g0);
+        wgpuBindGroupLayoutRelease(bgl2);
+        wgpuBindGroupLayoutRelease(bgl1);
+        wgpuBindGroupLayoutRelease(bgl0);
+        wgpuBufferRelease(directBuffer);
+        wgpuBufferRelease(instBuffer);
+        wgpuBufferRelease(paramBuffer);
+        wgpuBufferRelease(readback);
+        wgpuBufferRelease(outBuffer);
+        wgpuBufferRelease(rayBuffer);
+        wgpuComputePipelineRelease(pipeline);
+        wgpuShaderModuleRelease(shader);
+        return results;
+    }
+
+    for (const auto& artifact : artifacts) {
+        DirectRuntimeTax totals;
+        totals.axis = artifact.axis;
+        totals.minRunCells = artifact.minRunCells;
+        totals.coveredPositiveCells = artifact.coveredPositiveCells;
+        totals.minAxisWorld = artifact.minAxisWorld;
+        totals.artifactRecords = artifact.runs.size();
+        totals.artifactBytes = artifact.runs.size() * sizeof(DirectProofRun);
+        totals.rays = rays.size();
+
+        if (artifact.runs.empty()) {
+            totals.directSampleSteps = genericBaseline.offSampleSteps;
+            totals.offSampleSteps = genericBaseline.offSampleSteps;
+            totals.directFallbackEvals = genericBaseline.offFallbackEvals;
+            totals.offFallbackEvals = genericBaseline.offFallbackEvals;
+            totals.directHits = genericBaseline.offHits;
+            totals.offHits = genericBaseline.offHits;
+            totals.directIterations = genericBaseline.offIterations;
+            totals.offIterations = genericBaseline.offIterations;
+            totals.valid = genericBaseline.valid;
+            results.push_back(totals);
+            continue;
+        }
+
+        const size_t directBytes =
+            artifact.runs.size() * sizeof(DirectProofRun);
+        wgpuQueueWriteBuffer(
+            gpu.queue, directBuffer, 0, artifact.runs.data(), directBytes);
+
+        WGPUBindGroupEntry g2e[3] = {};
+        g2e[0].binding = 0;
+        g2e[0].buffer = rayBuffer;
+        g2e[0].offset = 0;
+        g2e[0].size = rayBytes;
+        g2e[1].binding = 1;
+        g2e[1].buffer = outBuffer;
+        g2e[1].offset = 0;
+        g2e[1].size = outBytes;
+        g2e[2].binding = 2;
+        g2e[2].buffer = directBuffer;
+        g2e[2].offset = 0;
+        g2e[2].size = directBytes;
+        WGPUBindGroupDescriptor g2d = {};
+        g2d.layout = bgl2;
+        g2d.entryCount = 3;
+        g2d.entries = g2e;
+        WGPUBindGroup g2 =
+            wgpuDeviceCreateBindGroup(gpu.device, &g2d);
+        if (!g2) {
+            results.push_back(totals);
+            continue;
+        }
+
+        WGPUCommandEncoder encoder =
+            wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+        WGPUComputePassEncoder pass =
+            wgpuCommandEncoderBeginComputePass(encoder, nullptr);
+        wgpuComputePassEncoderSetPipeline(pass, pipeline);
+        wgpuComputePassEncoderSetBindGroup(pass, 0, g0, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 1, g1, 0, nullptr);
+        wgpuComputePassEncoderSetBindGroup(pass, 2, g2, 0, nullptr);
+        const uint32_t workgroups =
+            static_cast<uint32_t>((rays.size() + 63u) / 64u);
+        wgpuComputePassEncoderDispatchWorkgroups(pass, workgroups, 1, 1);
+        wgpuComputePassEncoderEnd(pass);
+        wgpuComputePassEncoderRelease(pass);
+        wgpuCommandEncoderCopyBufferToBuffer(
+            encoder, outBuffer, 0, readback, 0, outBytes);
+        WGPUCommandBuffer command =
+            wgpuCommandEncoderFinish(encoder, nullptr);
+        wgpuQueueSubmit(gpu.queue, 1, &command);
+        wgpuCommandBufferRelease(command);
+        wgpuCommandEncoderRelease(encoder);
+
+        RuntimeTaxMapResult mapResult;
+        WGPUBufferMapCallbackInfo mapInfo = {};
+        mapInfo.mode = WGPUCallbackMode_AllowProcessEvents;
+        mapInfo.callback = onRuntimeTaxMap;
+        mapInfo.userdata1 = &mapResult;
+        wgpuBufferMapAsync(
+            readback, WGPUMapMode_Read, 0, outBytes, mapInfo);
+        while (!mapResult.done) {
+            wgpuDevicePoll(gpu.device, true, nullptr);
+        }
+
+        if (mapResult.ok) {
+            const auto* out = static_cast<const RuntimeTaxOut*>(
+                wgpuBufferGetConstMappedRange(readback, 0, outBytes));
+            if (out) {
+                for (size_t i = 0; i < rays.size(); ++i) {
+                    const RuntimeTaxOut& direct = out[i * 2u];
+                    const RuntimeTaxOut& off = out[i * 2u + 1u];
+                    totals.artifactQueries += direct.counts0.x;
+                    totals.recordTests += direct.counts0.y;
+                    totals.skipCalls += direct.counts0.z;
+                    totals.directSampleSteps += direct.counts0.w;
+                    totals.directFallbackEvals += direct.counts1.x;
+                    totals.directHits += direct.counts1.y;
+                    totals.artifactExhaustions += direct.counts1.z;
+                    totals.directIterations += direct.counts1.w;
+                    totals.offSampleSteps += off.counts0.w;
+                    totals.offFallbackEvals += off.counts1.x;
+                    totals.offHits += off.counts1.y;
+                    totals.offIterations += off.counts1.w;
+                    if (direct.counts1.y != off.counts1.y) {
+                        ++totals.perRayHitMismatches;
+                    }
+                    totals.skippedDistance +=
+                        static_cast<double>(direct.distances.x);
+                }
+                totals.valid = true;
+            }
+            wgpuBufferUnmap(readback);
+        }
+
+        wgpuBindGroupRelease(g2);
+        results.push_back(totals);
+    }
+
+    wgpuBindGroupRelease(g1);
+    wgpuBindGroupRelease(g0);
+    wgpuBindGroupLayoutRelease(bgl2);
+    wgpuBindGroupLayoutRelease(bgl1);
+    wgpuBindGroupLayoutRelease(bgl0);
+    wgpuBufferRelease(directBuffer);
+    wgpuBufferRelease(instBuffer);
+    wgpuBufferRelease(paramBuffer);
+    wgpuBufferRelease(readback);
+    wgpuBufferRelease(outBuffer);
+    wgpuBufferRelease(rayBuffer);
+    wgpuComputePipelineRelease(pipeline);
+    wgpuShaderModuleRelease(shader);
+    return results;
+}
+
+void printDirectRuntimeTax(const char* viewName, const DirectRuntimeTax& t) {
+    const int64_t savedSampleSteps =
+        static_cast<int64_t>(t.offSampleSteps) -
+        static_cast<int64_t>(t.directSampleSteps);
+    const double queriesPerRay =
+        t.rays > 0
+            ? static_cast<double>(t.artifactQueries) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+    const double recordTestsPerRay =
+        t.rays > 0
+            ? static_cast<double>(t.recordTests) /
+                  static_cast<double>(t.rays)
+            : 0.0;
+    const double samplesSavedPerQuery =
+        t.artifactQueries > 0
+            ? static_cast<double>(savedSampleSteps) /
+                  static_cast<double>(t.artifactQueries)
+            : 0.0;
+    const double samplesSavedPerRecordTest =
+        t.recordTests > 0
+            ? static_cast<double>(savedSampleSteps) /
+                  static_cast<double>(t.recordTests)
+            : 0.0;
+
+    std::printf(
+        "SDF_DIRECT_RUNTIME_TAX view=%s valid=%d axis=%s "
+        "min_run_cells=%u min_axis_world=%.6f artifact_records=%zu "
+        "artifact_bytes=%zu covered_positive_cells=%u rays=%llu "
+        "artifact_queries=%llu record_tests=%llu useful_skip_calls=%llu "
+        "artifact_exhaustions=%llu direct_sample_steps=%llu "
+        "off_sample_steps=%llu saved_sample_steps=%lld "
+        "direct_fallback_evals=%llu off_fallback_evals=%llu "
+        "direct_iterations=%llu off_iterations=%llu "
+        "direct_hits=%llu off_hits=%llu per_ray_hit_mismatches=%llu "
+        "skipped_distance=%.6f queries_per_ray=%.6f "
+        "record_tests_per_ray=%.6f samples_saved_per_query=%.6f "
+        "samples_saved_per_record_test=%.6f\n",
+        viewName,
+        t.valid ? 1 : 0,
+        directAxisName(t.axis),
+        t.minRunCells,
+        t.minAxisWorld,
+        t.artifactRecords,
+        t.artifactBytes,
+        t.coveredPositiveCells,
+        static_cast<unsigned long long>(t.rays),
+        static_cast<unsigned long long>(t.artifactQueries),
+        static_cast<unsigned long long>(t.recordTests),
+        static_cast<unsigned long long>(t.skipCalls),
+        static_cast<unsigned long long>(t.artifactExhaustions),
+        static_cast<unsigned long long>(t.directSampleSteps),
+        static_cast<unsigned long long>(t.offSampleSteps),
+        static_cast<long long>(savedSampleSteps),
+        static_cast<unsigned long long>(t.directFallbackEvals),
+        static_cast<unsigned long long>(t.offFallbackEvals),
+        static_cast<unsigned long long>(t.directIterations),
+        static_cast<unsigned long long>(t.offIterations),
+        static_cast<unsigned long long>(t.directHits),
+        static_cast<unsigned long long>(t.offHits),
+        static_cast<unsigned long long>(t.perRayHitMismatches),
+        t.skippedDistance,
+        queriesPerRay,
+        recordTestsPerRay,
+        samplesSavedPerQuery,
+        samplesSavedPerRecordTest);
+}
+
+
+void printDirectDispatchOracleCeiling(
+    const char* viewName,
+    const RuntimeTaxTotals& genericBaseline,
+    const std::vector<DirectRuntimeTax>& candidates) {
+    const int64_t genericSaved =
+        static_cast<int64_t>(genericBaseline.offSampleSteps) -
+        static_cast<int64_t>(genericBaseline.onSampleSteps);
+    const double baselineEconomics =
+        genericBaseline.candidateCalls > 0u && genericSaved > 0
+            ? static_cast<double>(genericSaved) /
+                  static_cast<double>(genericBaseline.candidateCalls)
+            : 0.0;
+
+    for (const auto& candidate : candidates) {
+        const int64_t saved =
+            static_cast<int64_t>(candidate.offSampleSteps) -
+            static_cast<int64_t>(candidate.directSampleSteps);
+        if (!candidate.valid || candidate.perRayHitMismatches != 0u ||
+            candidate.artifactRecords == 0u || candidate.skipCalls == 0u ||
+            saved <= 0) {
+            continue;
+        }
+
+        // This is deliberately an oracle CEILING, not a production claim.
+        // It charges exactly one hypothetical direct dispatch for each query
+        // that actually produced a proof-authorized skip and charges no
+        // irrelevant queries. A real stable-key atlas must approach this
+        // ceiling without using camera/frame-derived state.
+        const double savedPerUsefulDispatch =
+            static_cast<double>(saved) /
+            static_cast<double>(candidate.skipCalls);
+        const double usefulDispatchesPerRay =
+            candidate.rays > 0u
+                ? static_cast<double>(candidate.skipCalls) /
+                      static_cast<double>(candidate.rays)
+                : 0.0;
+        const double irrelevantQueryFraction =
+            candidate.artifactQueries > 0u
+                ? 1.0 -
+                      static_cast<double>(candidate.skipCalls) /
+                          static_cast<double>(candidate.artifactQueries)
+                : 0.0;
+        const double oracleGain =
+            baselineEconomics > 0.0
+                ? savedPerUsefulDispatch / baselineEconomics
+                : 0.0;
+
+        std::printf(
+            "SDF_DIRECT_DISPATCH_ORACLE view=%s axis=%s min_run_cells=%u "
+            "useful_dispatches=%llu rays=%llu saved_sample_steps=%lld "
+            "saved_per_useful_dispatch=%.6f useful_dispatches_per_ray=%.8f "
+            "irrelevant_query_fraction=%.8f baseline_samples_per_call=%.6f "
+            "oracle_gain=%.2f camera_independent=0 production_eligible=0\n",
+            viewName,
+            directAxisName(candidate.axis),
+            candidate.minRunCells,
+            static_cast<unsigned long long>(candidate.skipCalls),
+            static_cast<unsigned long long>(candidate.rays),
+            static_cast<long long>(saved),
+            savedPerUsefulDispatch,
+            usefulDispatchesPerRay,
+            irrelevantQueryFraction,
+            baselineEconomics,
+            oracleGain);
+    }
+}
+
+
+struct StableRouteAtlasStats {
+    uint32_t faceBins = 0;
+    uint32_t directionBins = 0;
+    uint64_t routes = 0;
+    uint64_t occupiedRoutes = 0;
+    uint64_t ambiguousRoutes = 0;
+    uint64_t usefulRays = 0;
+    uint64_t capturedUsefulRays = 0;
+    uint64_t falsePositiveRays = 0;
+    uint64_t consequenceTests = 0;
+};
+
+uint32_t stableRouteFace(const glm::vec3& p, const glm::vec3& extent) {
+    glm::vec3 q = glm::abs(p) / glm::max(glm::abs(extent), glm::vec3(1e-6f));
+    uint32_t axis = q.x >= q.y && q.x >= q.z ? 0u : (q.y >= q.z ? 1u : 2u);
+    const bool positive = p[axis] >= 0.0f;
+    return axis * 2u + (positive ? 1u : 0u);
+}
+
+uint32_t stableRouteDirectionClass(const glm::vec3& rd, uint32_t bins) {
+    // Stable object-local octahedral direction quantization. This is bounded
+    // arithmetic only: no theorem lookup, spatial walk, or camera-derived table.
+    const glm::vec3 n = glm::normalize(rd);
+    const float l1 = std::abs(n.x) + std::abs(n.y) + std::abs(n.z);
+    glm::vec2 o(n.x, n.y);
+    if (l1 > 1e-8f) o /= l1;
+    if (n.z < 0.0f) {
+        const glm::vec2 a = glm::abs(glm::vec2(o.y, o.x));
+        o = glm::vec2(1.0f - a.x, 1.0f - a.y) *
+            glm::vec2(o.x >= 0.0f ? 1.0f : -1.0f,
+                      o.y >= 0.0f ? 1.0f : -1.0f);
+    }
+    const uint32_t side = std::max(1u, bins);
+    const glm::vec2 uv = glm::clamp(o * 0.5f + 0.5f, 0.0f, 0.999999f);
+    const uint32_t x = std::min(static_cast<uint32_t>(uv.x * side), side - 1u);
+    const uint32_t y = std::min(static_cast<uint32_t>(uv.y * side), side - 1u);
+    return y * side + x;
+}
+
+void printStableRouteAtlasCensus(
+    const char* viewName,
+    const std::vector<RuntimeTaxRay>& rays,
+    const glm::vec3& extent,
+    const DirectRunArtifact& authority,
+    uint32_t faceBins,
+    uint32_t directionBins) {
+    // CPU-side census of a production-shaped key. The atlas itself is compiled
+    // from theorem-authorized runs plus a fixed object-local compiler probe
+    // basis. Camera rays score the finished atlas but never populate it.
+    const uint32_t entrySide = std::max(1u, faceBins);
+    const uint32_t dirSide = std::max(1u, directionBins);
+    const uint64_t entryCells = static_cast<uint64_t>(entrySide) * entrySide;
+    const uint64_t dirCells = static_cast<uint64_t>(dirSide) * dirSide;
+    const uint64_t routeCount = 6ull * entryCells * dirCells;
+    std::vector<std::vector<uint32_t>> routeConsequences(routeCount);
+
+    auto tangentAxes = [](uint32_t axis, uint32_t& a, uint32_t& b) {
+        if (axis == 0u) {
+            a = 1u; b = 2u;
+        } else if (axis == 1u) {
+            a = 0u; b = 2u;
+        } else {
+            a = 0u; b = 1u;
+        }
+    };
+
+    auto decodeDirection = [&](uint32_t dirIndex,
+                               float ox, float oy) -> glm::vec3 {
+        const uint32_t dx = dirIndex % dirSide;
+        const uint32_t dy = dirIndex / dirSide;
+        const float fx = glm::clamp(
+            (static_cast<float>(dx) + 0.5f + ox) /
+                static_cast<float>(dirSide),
+            0.0f, 0.999999f);
+        const float fy = glm::clamp(
+            (static_cast<float>(dy) + 0.5f + oy) /
+                static_cast<float>(dirSide),
+            0.0f, 0.999999f);
+        glm::vec3 n(fx * 2.0f - 1.0f,
+                    fy * 2.0f - 1.0f,
+                    1.0f);
+        n.z = 1.0f - std::abs(n.x) - std::abs(n.y);
+        const float t = glm::clamp(-n.z, 0.0f, 1.0f);
+        n.x += n.x >= 0.0f ? -t : t;
+        n.y += n.y >= 0.0f ? -t : t;
+        const float len = glm::length(n);
+        return len > 1e-8f ? n / len : glm::vec3(0.0f, 0.0f, 1.0f);
+    };
+
+    auto entryPoint = [&](uint32_t face, uint32_t entryIndex,
+                          float ou, float ov) -> glm::vec3 {
+        const uint32_t axis = face / 2u;
+        const bool positive = (face & 1u) != 0u;
+        uint32_t a = 0u, b = 0u;
+        tangentAxes(axis, a, b);
+        const uint32_t eu = entryIndex % entrySide;
+        const uint32_t ev = entryIndex / entrySide;
+        const float fu = glm::clamp(
+            (static_cast<float>(eu) + 0.5f + ou) /
+                static_cast<float>(entrySide),
+            0.0f, 0.999999f);
+        const float fv = glm::clamp(
+            (static_cast<float>(ev) + 0.5f + ov) /
+                static_cast<float>(entrySide),
+            0.0f, 0.999999f);
+        const glm::vec3 e = glm::abs(extent);
+        glm::vec3 p(0.0f);
+        p[axis] = positive ? e[axis] : -e[axis];
+        p[a] = (fu * 2.0f - 1.0f) * e[a];
+        p[b] = (fv * 2.0f - 1.0f) * e[b];
+        return p;
+    };
+
+    auto intersectsRun = [&](const glm::vec3& ro, const glm::vec3& rd,
+                             const DirectProofRun& run) {
+        float re = 0.0f, rx = 0.0f;
+        const glm::vec3 center =
+            0.5f * (glm::vec3(run.bmin) + glm::vec3(run.bmax));
+        const glm::vec3 half = glm::max(
+            0.5f * (glm::vec3(run.bmax) - glm::vec3(run.bmin)),
+            glm::vec3(1e-8f));
+        if (!rayBoxInterval(ro - center, rd, half, re, rx)) return false;
+        return rx > std::max(re, 0.0f);
+    };
+
+    // Five fixed probes per route: center + four paired subcell diagonals.
+    // This basis is deliberately object-local and camera-independent. Missing
+    // a consequence only loses an optimization opportunity; every retained
+    // consequence still carries positive-proof authority and is re-tested
+    // against the actual runtime ray before it can authorize a skip.
+    constexpr std::array<glm::vec2, 5> kCompilerOffsets = {{
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(-0.35f, -0.35f),
+        glm::vec2(0.35f, -0.35f),
+        glm::vec2(-0.35f, 0.35f),
+        glm::vec2(0.35f, 0.35f),
+    }};
+
+    uint64_t compilerProbeRays = 0u;
+    for (uint32_t face = 0u; face < 6u; ++face) {
+        const uint32_t axis = face / 2u;
+        const float normalSign = (face & 1u) ? 1.0f : -1.0f;
+        glm::vec3 normal(0.0f);
+        normal[axis] = normalSign;
+        for (uint32_t entry = 0u; entry < entryCells; ++entry) {
+            for (uint32_t dir = 0u; dir < dirCells; ++dir) {
+                const uint64_t key =
+                    (static_cast<uint64_t>(face) * entryCells + entry) *
+                        dirCells +
+                    dir;
+                auto& bucket = routeConsequences[key];
+                for (const glm::vec2& offset : kCompilerOffsets) {
+                    const glm::vec3 rd =
+                        decodeDirection(dir, offset.x, offset.y);
+                    if (glm::dot(rd, normal) >= -1e-6f) continue;
+                    const glm::vec3 ro =
+                        entryPoint(face, entry, offset.x, offset.y);
+                    ++compilerProbeRays;
+                    for (uint32_t r = 0u; r < authority.runs.size(); ++r) {
+                        if (!intersectsRun(ro, rd, authority.runs[r])) continue;
+                        if (std::find(bucket.begin(), bucket.end(), r) ==
+                            bucket.end()) {
+                            bucket.push_back(r);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    auto routeKey = [&](const RuntimeTaxRay& ray, glm::vec3& ro,
+                        glm::vec3& rd, float& enter,
+                        float& exit) -> uint64_t {
+        ro = glm::vec3(ray.ro);
+        rd = glm::normalize(glm::vec3(ray.rdFar));
+        if (!rayBoxInterval(ro, rd, extent, enter, exit) || exit < 0.0f)
+            return routeCount;
+        enter = std::max(enter, 0.0f);
+        const glm::vec3 p = ro + rd * enter;
+        const uint32_t face = stableRouteFace(p, extent);
+        const uint32_t axis = face / 2u;
+        uint32_t a = 0u, b = 0u;
+        tangentAxes(axis, a, b);
+        const glm::vec3 e =
+            glm::max(glm::abs(extent), glm::vec3(1e-6f));
+        const float ua =
+            glm::clamp(p[a] / e[a] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const float ub =
+            glm::clamp(p[b] / e[b] * 0.5f + 0.5f, 0.0f, 0.999999f);
+        const uint32_t u = std::min(
+            static_cast<uint32_t>(ua * entrySide), entrySide - 1u);
+        const uint32_t v = std::min(
+            static_cast<uint32_t>(ub * entrySide), entrySide - 1u);
+        const uint64_t entry =
+            static_cast<uint64_t>(v) * entrySide + u;
+        const uint64_t dir =
+            stableRouteDirectionClass(rd, dirSide);
+        return (static_cast<uint64_t>(face) * entryCells + entry) *
+                   dirCells +
+               dir;
+    };
+
+    StableRouteAtlasStats s;
+    s.faceBins = entrySide;
+    s.directionBins = dirSide;
+    s.routes = routeCount;
+    uint64_t atlasConsequenceRecords = 0u;
+    for (const auto& bucket : routeConsequences) {
+        if (!bucket.empty()) {
+            ++s.occupiedRoutes;
+            atlasConsequenceRecords += bucket.size();
+            if (bucket.size() > 1u) ++s.ambiguousRoutes;
+        }
+    }
+
+    for (const auto& ray : rays) {
+        glm::vec3 ro, rd;
+        float enter = 0.0f, exit = 0.0f;
+        const uint64_t key = routeKey(ray, ro, rd, enter, exit);
+        if (key >= routeCount) continue;
+
+        bool globallyUseful = false;
+        for (const auto& run : authority.runs) {
+            if (intersectsRun(ro, rd, run)) {
+                globallyUseful = true;
+                break;
+            }
+        }
+        if (globallyUseful) ++s.usefulRays;
+
+        const auto& bucket = routeConsequences[key];
+        s.consequenceTests += bucket.size();
+        bool captured = false;
+        for (uint32_t r : bucket) {
+            if (r < authority.runs.size() &&
+                intersectsRun(ro, rd, authority.runs[r])) {
+                captured = true;
+                break;
+            }
+        }
+        if (globallyUseful && captured) ++s.capturedUsefulRays;
+        if (!captured && !bucket.empty()) ++s.falsePositiveRays;
+    }
+
+    const double capture =
+        s.usefulRays > 0u
+            ? static_cast<double>(s.capturedUsefulRays) / s.usefulRays
+            : 1.0;
+    const double falsePositivePerRay =
+        !rays.empty()
+            ? static_cast<double>(s.falsePositiveRays) / rays.size()
+            : 0.0;
+    const double testsPerRay =
+        !rays.empty()
+            ? static_cast<double>(s.consequenceTests) / rays.size()
+            : 0.0;
+    const uint64_t atlasBytes =
+        s.routes * sizeof(uint32_t) * 2ull +
+        atlasConsequenceRecords * sizeof(uint32_t);
+
+    std::printf(
+        "SDF_STABLE_ROUTE_ATLAS_CENSUS view=%s entry_side=%u dir_side=%u "
+        "routes=%llu occupied_routes=%llu ambiguous_routes=%llu "
+        "atlas_consequence_records=%llu compiler_probe_rays=%llu "
+        "useful_rays=%llu captured_useful_rays=%llu capture=%.6f "
+        "false_positive_rays=%llu false_positive_per_ray=%.6f "
+        "consequence_tests=%llu tests_per_ray=%.6f estimated_bytes=%llu "
+        "camera_independent_key=1 camera_independent_atlas=1 "
+        "runtime_grid_walk=0 global_run_scan=0\\n",
+        viewName, entrySide, dirSide,
+        static_cast<unsigned long long>(s.routes),
+        static_cast<unsigned long long>(s.occupiedRoutes),
+        static_cast<unsigned long long>(s.ambiguousRoutes),
+        static_cast<unsigned long long>(atlasConsequenceRecords),
+        static_cast<unsigned long long>(compilerProbeRays),
+        static_cast<unsigned long long>(s.usefulRays),
+        static_cast<unsigned long long>(s.capturedUsefulRays), capture,
+        static_cast<unsigned long long>(s.falsePositiveRays),
+        falsePositivePerRay,
+        static_cast<unsigned long long>(s.consequenceTests), testsPerRay,
+        static_cast<unsigned long long>(atlasBytes));
+}
+
+
+void printDirectProfitabilityVerdict(
+    const char* viewName,
+    const RuntimeTaxTotals& genericBaseline,
+    const std::vector<DirectRuntimeTax>& candidates) {
+    const int64_t genericSaved =
+        static_cast<int64_t>(genericBaseline.offSampleSteps) -
+        static_cast<int64_t>(genericBaseline.onSampleSteps);
+    const double baselineEconomics =
+        genericBaseline.candidateCalls > 0u && genericSaved > 0
+            ? static_cast<double>(genericSaved) /
+                  static_cast<double>(genericBaseline.candidateCalls)
+            : 0.0;
+
+    bool found = false;
+    uint32_t bestAxis = 0u;
+    uint32_t bestMinRunCells = 0u;
+    double bestQueryGain = 0.0;
+    double bestRecordGain = 0.0;
+    double bestCombinedGain = 0.0;
+
+    if (genericBaseline.valid && baselineEconomics > 0.0) {
+        for (const auto& candidate : candidates) {
+            const int64_t saved =
+                static_cast<int64_t>(candidate.offSampleSteps) -
+                static_cast<int64_t>(candidate.directSampleSteps);
+            if (!candidate.valid ||
+                candidate.perRayHitMismatches != 0u ||
+                candidate.artifactRecords == 0u ||
+                candidate.artifactQueries == 0u ||
+                candidate.recordTests == 0u ||
+                saved <= 0) {
+                continue;
+            }
+
+            const double savedPerQuery =
+                static_cast<double>(saved) /
+                static_cast<double>(candidate.artifactQueries);
+            const double savedPerRecord =
+                static_cast<double>(saved) /
+                static_cast<double>(candidate.recordTests);
+            const double queryGain = savedPerQuery / baselineEconomics;
+            const double recordGain = savedPerRecord / baselineEconomics;
+            const double combinedGain = std::min(queryGain, recordGain);
+            if (!found || combinedGain > bestCombinedGain) {
+                found = true;
+                bestAxis = candidate.axis;
+                bestMinRunCells = candidate.minRunCells;
+                bestQueryGain = queryGain;
+                bestRecordGain = recordGain;
+                bestCombinedGain = combinedGain;
+            }
+        }
+    }
+
+    constexpr double kRequiredEconomicsGain = 10.0;
+    const bool graduates =
+        found &&
+        bestQueryGain >= kRequiredEconomicsGain &&
+        bestRecordGain >= kRequiredEconomicsGain;
+
+    std::printf(
+        "SDF_DIRECT_PROFITABILITY_VERDICT view=%s baseline=%.6f "
+        "candidate_found=%d best_axis=%s best_min_run_cells=%u "
+        "best_query_gain=%.4f best_record_gain=%.4f "
+        "best_combined_gain=%.4f required_gain=%.1f graduation=%s\n",
+        viewName,
+        baselineEconomics,
+        found ? 1 : 0,
+        directAxisName(bestAxis),
+        bestMinRunCells,
+        bestQueryGain,
+        bestRecordGain,
+        bestCombinedGain,
+        kRequiredEconomicsGain,
+        graduates ? "PASS" : "REJECT");
+}
+
 } // namespace
 
 int main() {
@@ -1110,6 +2229,18 @@ int main() {
             proofBytes);
     }
 
+    // Test-only Spatial-Prophetic Direct candidates. Each artifact chooses one
+    // partition axis and a minimum maximal-run length. This deliberately sweeps
+    // representation economics before any production shader mutation.
+    std::vector<DirectRunArtifact> directArtifacts;
+    for (uint32_t axis = 0u; axis < 3u; ++axis) {
+        for (uint32_t minRunCells : {1u, 2u, 4u}) {
+            directArtifacts.push_back(
+                buildDirectRunArtifact(
+                    proofGrids[1], proofExtent, axis, minRunCells));
+        }
+    }
+
     if (!probeProgram.needsGradientStep || positiveSkipNodes == 0) {
         std::printf("SDF_RANGE_PERF FAIL Release traversal prerequisites are absent\n");
         return 1;
@@ -1223,6 +2354,117 @@ int main() {
                 static_cast<unsigned long long>(runtimeTax.offHits));
             measurementWarnings = true;
         }
+
+        const auto directTaxes =
+            runDirectArtifactDiagnostic(
+                gpu, probeProgram, directArtifacts, runtimeTax,
+                proofExtent, c.eye, view, proj);
+        if (directTaxes.size() != directArtifacts.size()) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL direct artifact diagnostic result count "
+                "for %s: got=%zu expected=%zu\n",
+                c.name, directTaxes.size(), directArtifacts.size());
+            measurementWarnings = true;
+        }
+        for (const auto& directTax : directTaxes) {
+            printDirectRuntimeTax(c.name, directTax);
+            if (!directTax.valid) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct artifact diagnostic invalid "
+                    "for %s axis=%s min_run_cells=%u\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells);
+                measurementWarnings = true;
+                continue;
+            }
+            if (directTax.perRayHitMismatches != 0u) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct artifact per-ray hit mismatch "
+                    "for %s axis=%s min_run_cells=%u mismatches=%llu\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells,
+                    static_cast<unsigned long long>(
+                        directTax.perRayHitMismatches));
+                measurementWarnings = true;
+            }
+            if (runtimeTax.valid &&
+                directTax.offSampleSteps != runtimeTax.offSampleSteps) {
+                std::printf(
+                    "SDF_RANGE_PERF FAIL direct diagnostic OFF baseline drift "
+                    "for %s axis=%s min_run_cells=%u direct_off=%llu "
+                    "generic_off=%llu\n",
+                    c.name, directAxisName(directTax.axis),
+                    directTax.minRunCells,
+                    static_cast<unsigned long long>(
+                        directTax.offSampleSteps),
+                    static_cast<unsigned long long>(
+                        runtimeTax.offSampleSteps));
+                measurementWarnings = true;
+            }
+        }
+
+        printDirectDispatchOracleCeiling(c.name, runtimeTax, directTaxes);
+
+        // Stable-key census: same deterministic 160x100 ray population as the
+        // direct GPU diagnostic, but CPU-only and test-only. This does not
+        // mutate production WGSL or renderer state.
+        std::vector<RuntimeTaxRay> stableRouteRays;
+        stableRouteRays.reserve(160u * 100u);
+        const glm::mat4 stableInvViewProj = glm::inverse(proj * view);
+        float stableFar = 1e6f;
+        const glm::vec4 stableFarPt =
+            glm::inverse(proj) * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+        if (std::abs(stableFarPt.w) > 1e-9f) {
+            const float d = -(stableFarPt.z / stableFarPt.w);
+            if (std::isfinite(d) && d > 0.0f) stableFar = d;
+        }
+        for (uint32_t sy = 0; sy < 100u; ++sy) {
+            for (uint32_t sx = 0; sx < 160u; ++sx) {
+                const float fx = (static_cast<float>(sx) + 0.5f) / 160.0f;
+                const float fy = (static_cast<float>(sy) + 0.5f) / 100.0f;
+                const glm::vec4 ndc(fx * 2.0f - 1.0f,
+                                    (1.0f - fy) * 2.0f - 1.0f, 1.0f, 1.0f);
+                const glm::vec4 wh = stableInvViewProj * ndc;
+                glm::vec3 rd(0.0f, 0.0f, 1.0f);
+                if (std::abs(wh.w) >= 1e-8f)
+                    rd = glm::normalize(glm::vec3(wh) / wh.w - c.eye);
+                stableRouteRays.push_back(
+                    {glm::vec4(c.eye, 1.0f), glm::vec4(rd, stableFar)});
+            }
+        }
+        // Use the most permissive Z artifact as authority so this census asks
+        // whether stable routing can eliminate discovery tax without reducing
+        // the theorem's existing positive opportunities.
+        const DirectRunArtifact* routeAuthority = nullptr;
+        for (const auto& artifact : directArtifacts) {
+            if (artifact.axis == 2u && artifact.minRunCells == 1u) {
+                routeAuthority = &artifact;
+                break;
+            }
+        }
+        if (routeAuthority) {
+            // Preserve the original coarse matrix as the stable baseline.
+            for (uint32_t entrySide : {2u, 4u, 8u}) {
+                for (uint32_t dirSide : {2u, 4u, 8u}) {
+                    printStableRouteAtlasCensus(
+                        c.name, stableRouteRays, proofExtent, *routeAuthority,
+                        entrySide, dirSide);
+                }
+            }
+
+            // #2441 showed that horizon ambiguity responds to direction
+            // discrimination while entry refinement alone is nearly inert.
+            // Push only that axis harder before paying for a GPU atlas.
+            for (uint32_t entrySide : {2u, 4u, 8u}) {
+                for (uint32_t dirSide : {16u, 32u}) {
+                    printStableRouteAtlasCensus(
+                        c.name, stableRouteRays, proofExtent, *routeAuthority,
+                        entrySide, dirSide);
+                }
+            }
+        }
+
+        printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
 
         Arm off;
         Arm on;
