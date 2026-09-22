@@ -9,6 +9,7 @@
 // Perlin path, because the latter has its own traversal order.
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
