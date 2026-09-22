@@ -1341,7 +1341,7 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
     return sdfEval(p);
 }
 
-fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     if (u.lightControl.y < 0.5) { return 1.0; }
 
     let inst = instances[g_instIdx];
@@ -1361,7 +1361,6 @@ fn sourceVisibility(surfacePoint: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     // self-shadow. Escape only when the source ray points outward through the
     // receiver's local SDF normal. Back-facing/inward rays remain inside real
     // geometry and are therefore still blocked by the receiver itself.
-    let surfaceNormal = sdfNormal(surfacePoint);
     let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
     var origin = surfacePoint + initialDir * bias;
     if (dot(surfaceNormal, initialDir) > 0.0) {
@@ -1679,7 +1678,7 @@ fn fs(in: VSOut) -> FSOut {
         }
     }
     let shapedRadiance = radialRadiance * angularRadiance;
-    let pathVisibility = sourceVisibility(pf, u.lightPos.xyz);
+    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
     let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
@@ -2239,7 +2238,7 @@ Program compile(const geom::SdfNode& root,
                 }
 
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, source.position.xyz);\n";
+                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
