@@ -772,6 +772,111 @@ int main() {
               "dedicated volume shader compiles noise expressions and defines cnoise3 in scope");
     }
 
+    // ---------------------------------------------------------------------
+    // V1. Extinction sovereignty: sigma_t(p,t) is independently authored.
+    //     Absence preserves exact pre-V1 sigma_t = 0.5 * D compatibility.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        auto extinctionNode = std::shared_ptr<OntoMath::MathNode>(number(0.05).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        OntoMath::Piecewise extinction = OntoMath::Piecewise::continuous(extinctionNode);
+
+        const std::string densityBeforeExtinctionEdit = density.toJson().dump();
+        const auto compatibility = sdfwgsl::compileVolume(&density);
+        check(compatibility.ok &&
+                  compatibility.wgsl.find("return compatibilityDensity * 0.5") != std::string::npos,
+              "V1 absence preserves the exact pre-V1 0.5*D extinction contract");
+
+        const auto extinctionLayoutBefore =
+            sdfwgsl::inspectExtinctionExpression(&extinction);
+        const auto authored =
+            sdfwgsl::compileVolume(&density, &extinction);
+        const auto genericAuthored =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                             &density, sdfwgsl::DensityInputKind::Authored, &extinction);
+        check(extinctionLayoutBefore.ok && authored.ok && genericAuthored.ok,
+              "authored sigma_t lowers through both volume renderer seams");
+        check(authored.wgsl.find("fn volumeExtinctionEval") != std::string::npos &&
+                  authored.wgsl.find("compatibilityDensity * 0.5") == std::string::npos &&
+                  genericAuthored.wgsl.find("V1: explicit authored sigma_t(p,t)") != std::string::npos,
+              "authored extinction replaces the fossil rather than multiplying or aliasing D");
+
+        // VALUE ONLY: sigma_t changes while D remains byte-identical.
+        extinctionNode->scalarForm.terms[0].coefficient = 3.0;
+        const auto extinctionLayoutAfter =
+            sdfwgsl::inspectExtinctionExpression(&extinction);
+        const auto refreshed =
+            sdfwgsl::collectVolumeParams(&density, &extinction);
+        const auto valueEdited =
+            sdfwgsl::compileVolume(&density, &extinction);
+        check(extinctionLayoutAfter.ok &&
+                  extinctionLayoutAfter.structure == extinctionLayoutBefore.structure &&
+                  extinctionLayoutAfter.parameterCount == extinctionLayoutBefore.parameterCount,
+              "numeric sigma_t edit preserves extinction structure and parameter layout");
+        check(valueEdited.ok && authored.wgsl == valueEdited.wgsl,
+              "numeric sigma_t edit leaves dedicated volume WGSL byte-identical");
+        check(refreshed.ok && sameFloats(refreshed.values, valueEdited.params) &&
+                  !sameFloats(authored.params, valueEdited.params),
+              "numeric sigma_t edit refreshes only packed medium parameters");
+        check(density.toJson().dump() == densityBeforeExtinctionEdit,
+              "editing sigma_t leaves D byte-identical");
+
+        // STRUCTURE: change sigma_t from ScalarLeaf to Add without touching D.
+        auto extinctionAdd = std::make_shared<OntoMath::MathNode>();
+        extinctionAdd->op = OntoMath::MathNode::Op::Add;
+        extinctionAdd->children.push_back(number(1.5));
+        extinctionAdd->children.push_back(number(1.5));
+        extinction.pieces[0].mathNode = extinctionAdd;
+        const auto extinctionStructuralLayout =
+            sdfwgsl::inspectExtinctionExpression(&extinction);
+        const auto structureEdited =
+            sdfwgsl::compileVolume(&density, &extinction);
+        check(extinctionStructuralLayout.ok &&
+                  extinctionStructuralLayout.structure != extinctionLayoutAfter.structure &&
+                  structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural sigma_t edit advances only extinction shader structure");
+        check(density.toJson().dump() == densityBeforeExtinctionEdit,
+              "structural sigma_t edit still leaves D byte-identical");
+
+        // TIME: sigma_t(p,t) shares the admitted medium coordinate, without
+        // inventing an ExtinctionTimeline kind or mutating authored structure.
+        auto extinctionTimeNode = std::make_shared<OntoMath::MathNode>();
+        extinctionTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        extinctionTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedExtinction =
+            OntoMath::Piecewise::continuous(extinctionTimeNode);
+        const auto cpuTimedExtinction =
+            timedExtinction.evaluate({{OntoMath::kTimeVar, PropertyValue(2.25)}});
+        double cpuSigmaT = -1.0;
+        check(cpuTimedExtinction &&
+                  propertyValueToNumber(*cpuTimedExtinction, cpuSigmaT) &&
+                  cpuSigmaT == 2.25,
+              "sigma_t(p,t) remains ordinary CPU-evaluable OntoMath truth");
+
+        const auto timedExtinctionLayout =
+            sdfwgsl::inspectExtinctionExpression(&timedExtinction);
+        const auto timedExtinctionProgram =
+            sdfwgsl::compileVolume(&density, &timedExtinction);
+        check(timedExtinctionLayout.ok && timedExtinctionProgram.ok &&
+                  timedExtinctionProgram.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "the same sigma_t(p,t) lowers to WGSL with the admitted medium Timeline coordinate");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedExtinction =
+            OntoMath::Piecewise::continuous(raycast);
+        const auto refusedExtinction =
+            sdfwgsl::inspectExtinctionExpression(&unsupportedExtinction);
+        const auto refusedVolume =
+            sdfwgsl::compileVolume(&density, &unsupportedExtinction);
+        check(!refusedExtinction.ok && !refusedVolume.ok &&
+                  refusedExtinction.error.find("Raycast") != std::string::npos &&
+                  refusedVolume.error.find("Raycast") != std::string::npos,
+              "unsupported authored extinction refuses instead of using stale or compatibility sigma_t");
+    }
+
     // 9. Rung 8: visibility is derived transport below source authorship.
     //    The shader must expose an exact V=1 compatibility gate and multiply
     //    each source's direct radiance AFTER rho*chi*alpha composition.

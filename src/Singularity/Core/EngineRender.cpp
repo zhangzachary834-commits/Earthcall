@@ -139,6 +139,8 @@ namespace Core {
                 volumeSetIdentity += field->getIdentifier();
                 volumeSetIdentity += ":";
                 volumeSetIdentity += std::to_string(medium.densityRevision);
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.extinctionRevision);
                 volumeSetIdentity += "\n";
                 volumeDensities.push_back(medium);
             }

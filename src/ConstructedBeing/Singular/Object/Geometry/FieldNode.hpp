@@ -96,6 +96,7 @@ public:
           field(std::make_shared<OntoMath::ScalarField>()),
           vectorField(std::make_shared<OntoMath::VectorField>()),
           volumeDensity(std::make_shared<OntoMath::Piecewise>()),
+          volumeExtinction(std::make_shared<OntoMath::Piecewise>()),
           lightChroma(std::make_shared<OntoMath::Piecewise>()),
           lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
 
@@ -115,6 +116,12 @@ public:
     // Empty means no explicitly authored volume-density channel; compatibility
     // migration, where required, is resolved outside this storage boundary.
     const std::shared_ptr<OntoMath::Piecewise> volumeDensity;
+
+    // V1 participating-medium extinction sigma_t(p,t) -> scalar. Empty means
+    // compatibility extinction (0.5 * D) rather than absence of the medium.
+    // This channel is authored independently from D: equal density fields may
+    // intentionally transmit light very differently.
+    const std::shared_ptr<OntoMath::Piecewise> volumeExtinction;
 
     // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
     // case the historical authored light.color remains the constant chroma.
@@ -170,6 +177,10 @@ protected:
         if (volumeDensity) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.density.ast", volumeDensity.get()));
+        }
+        if (volumeExtinction) {
+            registerProperty(std::make_unique<PiecewiseAstBridge>(
+                "volume.extinction.ast", volumeExtinction.get()));
         }
 
         if (lightChroma) {

@@ -384,6 +384,172 @@ int main() {
                depthClampedMedium[1] > depthClampedMedium[2] + 20 &&
                "volume composition erased or replaced the opaque green receiver");
 
+        // V1 EXTINCTION: hold D fixed and change only sigma_t. Low
+        // extinction remains bright under the temporary V0 white-scatter model;
+        // high extinction visibly reduces the premultiplied scattered RGB.
+        auto extinctionNode = scalarNode(0.05);
+        OntoMath::Piecewise authoredExtinction =
+            OntoMath::Piecewise::continuous(extinctionNode);
+        Rendering::VolumeDensityBinding extinctionMedium = medium;
+        extinctionMedium.extinctionExpr = &authoredExtinction;
+        extinctionMedium.extinctionRevision = 5501;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5501);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char lowExtinction[4];
+        readCentre(lowExtinction);
+        const Renderer::FrameStats lowExtinctionStats = renderer.frameStats();
+        assert(lowExtinctionStats.volumeProgramCompiles == 1 &&
+               "first authored sigma_t structure did not compile exactly once");
+
+        extinctionNode->scalarForm.terms[0].coefficient = 3.0;
+        extinctionMedium.extinctionRevision = 5502;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5502);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char highExtinction[4];
+        readCentre(highExtinction);
+        const Renderer::FrameStats highExtinctionStats = renderer.frameStats();
+        std::printf("volume extinction low=%d high=%d compiles=%u\n",
+                    lowExtinction[0], highExtinction[0],
+                    highExtinctionStats.volumeProgramCompiles);
+        assert(lowExtinction[0] > highExtinction[0] + 60 &&
+               "changing sigma_t with fixed D did not visibly change native volume transport");
+        assert(highExtinctionStats.volumeProgramCompiles == 0 &&
+               "numeric sigma_t edit regenerated WGSL instead of refreshing parameters");
+
+        // SHARED-D CACHE IDENTITY: two media may share exactly one D AST while
+        // carrying different sigma_t ASTs. V0's density-only memo key would make
+        // these variants evict one another every frame. V1 keys the compiled
+        // medium program by (D AST, sigma_t AST), so the second identical frame
+        // must hit both memos without recompiling either structure.
+        auto siblingExtinctionNode = scalarNode(0.2);
+        OntoMath::Piecewise siblingExtinction =
+            OntoMath::Piecewise::continuous(siblingExtinctionNode);
+        auto siblingExtinctionAdd = std::make_shared<OntoMath::MathNode>();
+        siblingExtinctionAdd->op = OntoMath::MathNode::Op::Add;
+        siblingExtinctionAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.1)));
+        siblingExtinctionAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.1)));
+        siblingExtinction.pieces[0].mathNode = siblingExtinctionAdd;
+
+        Rendering::VolumeDensityBinding sharedDensityA = medium;
+        Rendering::VolumeDensityBinding sharedDensityB = medium;
+        sharedDensityA.origin.x = -0.35f;
+        sharedDensityB.origin.x = 0.35f;
+        sharedDensityA.extinctionExpr = &authoredExtinction;
+        sharedDensityA.extinctionRevision = 5601;
+        sharedDensityB.extinctionExpr = &siblingExtinction;
+        sharedDensityB.extinctionRevision = 5602;
+        renderer.setVolumeDensitySources({sharedDensityA, sharedDensityB}, 5603);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        const Renderer::FrameStats sharedDensityFirstStats = renderer.frameStats();
+        assert(sharedDensityFirstStats.volumeProgramCompiles >= 1 &&
+               "shared-D extinction variants did not establish their program structures");
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        const Renderer::FrameStats sharedDensitySecondStats = renderer.frameStats();
+        assert(sharedDensitySecondStats.volumeProgramCompiles == 0 &&
+               sharedDensitySecondStats.volumeProgramCacheHits >= 2 &&
+               "media sharing D but differing in sigma_t thrashed the volume program cache");
+
+        // Structural sigma_t edit must compile even though the resulting value
+        // stays 3.0 and D is unchanged.
+        auto extinctionAdd = std::make_shared<OntoMath::MathNode>();
+        extinctionAdd->op = OntoMath::MathNode::Op::Add;
+        extinctionAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(1.5)));
+        extinctionAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(1.5)));
+        authoredExtinction.pieces[0].mathNode = extinctionAdd;
+        extinctionMedium.extinctionRevision = 5503;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5503);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        const Renderer::FrameStats extinctionStructureStats = renderer.frameStats();
+        assert(extinctionStructureStats.volumeProgramCompiles == 1 &&
+               "sigma_t operator-tree edit failed to regenerate volume WGSL structure");
+
+        // Timeline: sigma_t=t, while D remains exactly the same authored tree.
+        auto extinctionTimeNode = std::make_shared<OntoMath::MathNode>();
+        extinctionTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        extinctionTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedExtinction =
+            OntoMath::Piecewise::continuous(extinctionTimeNode);
+        extinctionMedium.extinctionExpr = &timedExtinction;
+        extinctionMedium.extinctionRevision = 5504;
+        extinctionMedium.temporalCoordinate = 0.05;
+        extinctionMedium.temporalDelta = 0.05;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5504);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char timedExtinctionLow[4];
+        readCentre(timedExtinctionLow);
+        const Renderer::FrameStats timedExtinctionCompileStats = renderer.frameStats();
+        assert(timedExtinctionCompileStats.volumeProgramCompiles == 1 &&
+               "introducing sigma_t(p,t) did not compile exactly once");
+
+        extinctionMedium.temporalCoordinate = 3.0;
+        extinctionMedium.temporalDelta = 2.95;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5504);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char timedExtinctionHigh[4];
+        readCentre(timedExtinctionHigh);
+        const Renderer::FrameStats timedExtinctionAdvanceStats = renderer.frameStats();
+        assert(timedExtinctionLow[0] > timedExtinctionHigh[0] + 60 &&
+               "advancing medium time did not visibly drive sigma_t(p,t)");
+        assert(timedExtinctionAdvanceStats.volumeProgramCompiles == 0 &&
+               timedExtinctionAdvanceStats.volumeProgramCacheHits >= 1 &&
+               "advancing extinction time failed to reuse compiled volume structure");
+
+        // Refusal: unsupported extinction must suppress the medium rather than
+        // reusing the previous valid sigma_t program.
+        auto unsupportedExtinctionNode = std::make_shared<OntoMath::MathNode>();
+        unsupportedExtinctionNode->op = OntoMath::MathNode::Op::Raycast;
+        timedExtinction.pieces[0].mathNode = unsupportedExtinctionNode;
+        extinctionMedium.extinctionRevision = 5505;
+        renderer.setVolumeDensitySources({extinctionMedium}, 5505);
+
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char refusedExtinctionPixel[4];
+        readCentre(refusedExtinctionPixel);
+        const Renderer::FrameStats refusedExtinctionStats = renderer.frameStats();
+        assert(refusedExtinctionStats.volumeProgramRefusals >= 1 &&
+               refusedExtinctionStats.volumeLastProgramRefusal.find("extinction") != std::string::npos &&
+               refusedExtinctionStats.volumeLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "unsupported sigma_t did not produce a named extinction refusal");
+        assert(refusedExtinctionPixel[0] < 12 &&
+               refusedExtinctionPixel[1] < 12 &&
+               refusedExtinctionPixel[2] < 12 &&
+               "refused sigma_t left stale volumetric output on screen");
+
         // TIMELINE: D(p,t)=t is the same authored structure across both frames.
         // Only this medium's admitted Timeline coordinate changes. The second
         // frame must visibly brighten while reusing the already-compiled volume

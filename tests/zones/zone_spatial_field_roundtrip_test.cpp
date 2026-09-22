@@ -113,6 +113,13 @@ int main() {
             OntoMath::ScalarForm::variable("z", 0.25, 0.6)));
     const std::string densityAstJson = densityAst.toJson().dump();
 
+    // V1 extinction is intentionally a third scalar truth: it neither aliases
+    // source rho nor density D, even when all three share OntoMath Piecewise.
+    auto extinctionAst = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(
+            OntoMath::ScalarForm::variable("y", 0.4, 0.2)));
+    const std::string extinctionAstJson = extinctionAst.toJson().dump();
+
     // V0c projection witness: sourcehood and mediumhood are independent. This
     // FieldNode has authored density but deliberately has NO light.source.
     {
@@ -120,12 +127,16 @@ int main() {
         fogOnly.origin = glm::vec3(2.0f, 4.0f, 6.0f);
         fogOnly.scale = glm::vec3(8.0f, 10.0f, 12.0f);
         *fogOnly.volumeDensity = densityAst;
+        *fogOnly.volumeExtinction = extinctionAst;
 
         Rendering::VolumeDensityBinding projected;
         check(Rendering::readVolumeDensity(fogOnly, 3.25, 0.125, projected),
               "density-only FieldNode projects as participating medium without light.source");
         check(projected.densityExpr == fogOnly.volumeDensity.get(),
               "volume projection borrows the authored D AST rather than copying or aliasing rho");
+        check(projected.extinctionExpr == fogOnly.volumeExtinction.get() &&
+                  projected.extinctionRevision != 0,
+              "volume projection carries independent authored extinction sigma_t");
         check(nearf(projected.origin.x, 2.0f) &&
                   nearf(projected.origin.y, 4.0f) &&
                   nearf(projected.origin.z, 6.0f) &&
@@ -164,12 +175,19 @@ int main() {
             check(PropertyPath::parse("volume.density.ast").setValue(
                       *root, PropertyValue(densityAstJson)) == PropertyPath::PathResult::Ok,
                   "V0 density AST is independently authored through PropertyPath");
+            check(PropertyPath::parse("volume.extinction.ast").setValue(
+                      *root, PropertyValue(extinctionAstJson)) == PropertyPath::PathResult::Ok,
+                  "V1 extinction AST is independently authored through PropertyPath");
 
             Property* rhoProperty = root->findProperty("field.ast");
             Property* densityProperty = root->findProperty("volume.density.ast");
+            Property* extinctionProperty = root->findProperty("volume.extinction.ast");
             check(rhoProperty != nullptr && densityProperty != nullptr &&
-                      rhoProperty != densityProperty,
-                  "rho-compatible field AST and V0 density are distinct Property beings");
+                      extinctionProperty != nullptr &&
+                      rhoProperty != densityProperty &&
+                      rhoProperty != extinctionProperty &&
+                      densityProperty != extinctionProperty,
+                  "rho, D, and sigma_t are three distinct Property beings");
 
             const PropertyValue rhoBeforeBadDensity =
                 rhoProperty ? rhoProperty->value() : PropertyValue(std::string());
@@ -182,6 +200,21 @@ int main() {
                       rhoProperty->value() == rhoBeforeBadDensity &&
                       densityProperty->value() == densityBeforeBadWrite,
                   "refused density authorship mutates neither density nor source-radiance mathematics");
+
+            const PropertyValue rhoBeforeBadExtinction =
+                rhoProperty ? rhoProperty->value() : PropertyValue(std::string());
+            const PropertyValue densityBeforeBadExtinction =
+                densityProperty ? densityProperty->value() : PropertyValue(std::string());
+            const PropertyValue extinctionBeforeBadWrite =
+                extinctionProperty ? extinctionProperty->value() : PropertyValue(std::string());
+            check(extinctionProperty &&
+                      !extinctionProperty->setValue(PropertyValue(std::string("{ malformed"))),
+                  "malformed V1 extinction AST is refused atomically");
+            check(rhoProperty && densityProperty && extinctionProperty &&
+                      rhoProperty->value() == rhoBeforeBadExtinction &&
+                      densityProperty->value() == densityBeforeBadExtinction &&
+                      extinctionProperty->value() == extinctionBeforeBadWrite,
+                  "refused extinction authorship mutates neither rho, D, nor sigma_t");
         }
 
         auto second = std::make_shared<geom::FieldNode>(zoneId + "_secondRadiantField");
@@ -305,20 +338,51 @@ int main() {
             check(sameDensityAst,
                   "independent volume.density.ast survives save -> fresh hydration");
 
-            Property* rho = root->findProperty("field.ast");
-            check(rho != nullptr && density != nullptr && rho != density,
-                  "fresh hydration preserves rho/D property independence");
+            Property* extinction = root->findProperty("volume.extinction.ast");
+            bool sameExtinctionAst = false;
+            if (extinction) {
+                const PropertyValue extinctionValue = extinction->value();
+                if (const auto* extinctionText = std::get_if<std::string>(&extinctionValue)) {
+                    const auto expected =
+                        nlohmann::json::parse(extinctionAstJson, nullptr, false);
+                    const auto actual =
+                        nlohmann::json::parse(*extinctionText, nullptr, false);
+                    sameExtinctionAst = !expected.is_discarded() && !actual.is_discarded()
+                                     && expected == actual;
+                }
+            }
+            check(sameExtinctionAst,
+                  "independent volume.extinction.ast survives save -> fresh hydration");
 
-            if (rho && density) {
+            Property* rho = root->findProperty("field.ast");
+            check(rho != nullptr && density != nullptr && extinction != nullptr &&
+                      rho != density && rho != extinction && density != extinction,
+                  "fresh hydration preserves rho/D/sigma_t property independence");
+
+            if (rho && density && extinction) {
                 const PropertyValue rhoBeforeDensityRewrite = rho->value();
+                const PropertyValue extinctionBeforeDensityRewrite = extinction->value();
                 auto replacementDensity = OntoMath::Piecewise::continuous(
                     OntoMath::MathNode::fromLegacyExpression(
                         OntoMath::ScalarForm::variable("y", 0.5, 1.25)));
                 check(density->setValue(
                           PropertyValue(replacementDensity.toJson().dump())),
                       "hydrated V0 density accepts a complete Law-style AST replacement");
-                check(rho->value() == rhoBeforeDensityRewrite,
-                      "rewriting D leaves rho-compatible field mathematics byte-identical");
+                check(rho->value() == rhoBeforeDensityRewrite &&
+                          extinction->value() == extinctionBeforeDensityRewrite,
+                      "rewriting D leaves rho and sigma_t byte-identical");
+
+                const PropertyValue rhoBeforeExtinctionRewrite = rho->value();
+                const PropertyValue densityBeforeExtinctionRewrite = density->value();
+                auto replacementExtinction = OntoMath::Piecewise::continuous(
+                    OntoMath::MathNode::fromLegacyExpression(
+                        OntoMath::ScalarForm::variable("x", 1.5, 0.1)));
+                check(extinction->setValue(
+                          PropertyValue(replacementExtinction.toJson().dump())),
+                      "hydrated V1 extinction accepts a complete Law-style AST replacement");
+                check(rho->value() == rhoBeforeExtinctionRewrite &&
+                          density->value() == densityBeforeExtinctionRewrite,
+                      "rewriting sigma_t leaves rho and D byte-identical");
             }
         }
     }
