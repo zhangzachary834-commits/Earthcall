@@ -722,8 +722,17 @@ int main() {
               "dedicated volume shader samples the finished opaque depth texture");
         check(volumeBefore.wgsl.find("@builtin(frag_depth)") == std::string::npos,
               "participating-medium composite owns no opaque fragment depth");
-        check(volumeBefore.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
-              "dedicated volume shader reads the current medium's relative Timeline coordinate");
+
+        auto dedicatedTimeNode = std::make_shared<OntoMath::MathNode>();
+        dedicatedTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        dedicatedTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise dedicatedTimedDensity =
+            OntoMath::Piecewise::continuous(dedicatedTimeNode);
+        const auto timedVolume = sdfwgsl::compileVolume(&dedicatedTimedDensity);
+        check(timedVolume.ok &&
+                  timedVolume.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "dedicated D(p,t) volume shader reads the current medium's relative Timeline coordinate");
+
         check(volumeBefore.wgsl.find("worldP - inst.origin.xyz") != std::string::npos,
               "D(p,t) receives FieldNode-local offset coordinates");
         check(volumeBefore.wgsl.find("opaqueT") != std::string::npos &&
