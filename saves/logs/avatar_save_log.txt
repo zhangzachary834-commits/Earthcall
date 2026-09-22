@@ -1,3 +1,0 @@
-saves/avatars/test_avatar.json
-saves/avatars/test_avatar.ecsave
-saves/avatars/test_avatar.ecsave
