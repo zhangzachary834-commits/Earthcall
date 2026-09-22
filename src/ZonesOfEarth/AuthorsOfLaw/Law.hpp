@@ -1083,6 +1083,7 @@ private:
     void releaseFromLaws(Singular* being);
 
     std::vector<std::shared_ptr<Law>> _laws;
+    mutable std::unordered_map<std::string, Law*> _lawById;
     Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
