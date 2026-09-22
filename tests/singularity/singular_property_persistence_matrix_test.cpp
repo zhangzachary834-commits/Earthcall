@@ -289,6 +289,13 @@ int main() {
     seedSimple(fieldNode, 7);
     fieldNode.field->baseDensity = 8.0f;
     auto fieldJson = fieldNode.toJson();
+    check(!fieldJson.contains("registeredProperties") ||
+              !fieldJson["registeredProperties"].contains("field.baseDensity"),
+          "FieldNode canonical field.baseDensity is not duplicated into fallback envelope");
+    // The mathematical Field object is the canonical home. A stale fallback
+    // must never replay after the nested field payload and overwrite it.
+    fieldJson["registeredProperties"]["field.baseDensity"] =
+        propertyValueToJson(PropertyValue(99.0f));
     auto restoredField = geom::FieldNode::fromJson(fieldJson);
     check(restoredField != nullptr, "FieldNode codec restored root");
     if (restoredField) {
