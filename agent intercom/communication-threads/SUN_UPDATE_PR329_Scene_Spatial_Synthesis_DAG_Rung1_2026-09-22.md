@@ -92,3 +92,71 @@ Next work should, in order:
 ## Verdict so far
 
 The first scene-spatial synthesis representation is coherent enough to test. It encodes common-subexpression sharing and local dependency-frontier repair directly, without an external spatial relevance lookup. It has not yet earned production work.
+
+
+## Rung 1B — executable repair + real OntoMath bridge
+
+The branch has advanced substantially beyond the first structural witness.
+
+### Executable incremental repair
+
+`scene_spatial_synthesis_dag_test.cpp` now performs the mutation rather than merely counting the dependency frontier.
+
+After an initial exact-parity evaluation, it performs two distinct change classes:
+
+1. **Ambient/runtime sample change** (`p: 7 -> 8`)
+   - invalidates evaluation-cache values downstream of the ambient input;
+   - preserves the semantic DAG and canonical node identities;
+   - preserves the attached Prophetic annotation;
+   - performs zero semantic-node rebuilds and zero proof-artifact rebuilds;
+   - re-evaluates against a fresh exact authority result.
+
+2. **Authored semantic change** (`sdfA.bias: 5 -> 17`)
+   - invalidates exactly `biasA -> sdfA -> scene`;
+   - erases only those cached values;
+   - preserves the shared subtree and independent `sdfB` cached values;
+   - invalidates the Prophetic annotation attached to the dirty `sdfA` branch;
+   - recomputes exactly the dirty execution frontier;
+   - compares the repaired value both to a fresh naive authority evaluation and to a fresh full DAG evaluation.
+
+The test now reports actual payload/cache bytes rewritten rather than equating the dirty-set size with physical work.
+
+### Real Earthcall OntoMath adapter
+
+Added `tests/singularity/scene_spatial_ontomath_synthesis_test.cpp`.
+
+This is the first bridge from real `OntoMath::MathNode` authored ASTs into the scene-spatial synthesis idea.
+
+It constructs two separately-authored SDF-like MathNode branches whose shared expression trees are distinct C++ objects but semantically identical. The test compiler canonicalizes from:
+
+- the real MathNode opcode;
+- local semantic payload (`variableName`, `stringArg`, exact normalized ScalarForm JSON for scalar leaves);
+- already-canonical child IDs.
+
+It deliberately does **not** use `MathNode::print()` as semantic identity and does not perform recursive whole-subtree serialization as a hidden lookup key.
+
+The initial 15-node authored tree synthesizes into fewer compiled execution nodes by sharing the duplicate subtree. Exact compiled evaluation is checked against `MathNode::evaluate()`.
+
+Then `sdfA`'s real ScalarLeaf bias is mutated in place. Source-parent provenance repairs only:
+
+```
+biasA -> sdfA -> scene
+```
+
+The compiler does not scan the whole authored scene or canonical table to rediscover relevance. The shared subtree and independent sdfB branch retain their exact compiled IDs. The repair creates exactly three replacement compiled nodes.
+
+### CI integrity correction
+
+A live audit found that CMake auto-configured these tests, but the focused GitHub workflow did not build or execute them. Therefore earlier green CI was **not** sufficient evidence for this rung.
+
+Commit `0395c3bb` explicitly adds both witnesses to the CPU portion of the SDF range-proxy focused CI job.
+
+CI run **#2542** is therefore the first honest exact-head CI gate for the executable-repair + real-OntoMath rung.
+
+Do not graduate PR #329 based on earlier green runs.
+
+### Live base drift
+
+At this update, canonical default is `22756eb5` and the PR is three commits behind. The latest default commit is the docs-only “Property as metal” agenda update, which is conceptually aligned with the next dependency-addressing question but does not alter the implementation files in this rung.
+
+Reconcile current base after the test witness is green, then rerun exact-head CI before promoting the PR out of draft.
