@@ -15,6 +15,28 @@
 #import <WebKit/WebKit.h>
 #import <Cocoa/Cocoa.h>
 
+namespace {
+std::string escapeJavaScriptString(const std::string& input) {
+    std::string escaped;
+    escaped.reserve(input.length() * 2);
+
+    for (char c : input) {
+        switch (c) {
+            case '\\': escaped += "\\\\"; break;
+            case '\"': escaped += "\\\""; break;
+            case '\'': escaped += "\\'"; break;
+            case '\n': escaped += "\\n"; break;
+            case '\r': escaped += "\\r"; break;
+            case '\t': escaped += "\\t"; break;
+            case '`':  escaped += "\\`"; break;
+            case '$':  escaped += "\\$"; break; // Prevent template literal injection
+            default: escaped += c; break;
+        }
+    }
+    return escaped;
+}
+} // namespace
+
 // Objective-C bridge for WebKit integration
 @interface WebViewBridge : NSObject <WKScriptMessageHandler, WKNavigationDelegate>
 @property (nonatomic, strong) WKWebView* webView;
@@ -316,7 +338,7 @@ void RealWebView::injectCSS(const std::string& css) {
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "var style = document.createElement('style'); style.textContent = `" + css + "`; document.head.appendChild(style);";
+        std::string script = "var style = document.createElement('style'); style.textContent = `" + escapeJavaScriptString(css) + "`; document.head.appendChild(style);";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "🎨 CSS injected: " << css.substr(0, 50) << "..." << std::endl;
@@ -329,7 +351,7 @@ void RealWebView::modifyElement(const std::string& selector, const std::string& 
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "document.querySelector('" + selector + "').style." + property + " = '" + value + "';";
+        std::string script = "document.querySelector('" + escapeJavaScriptString(selector) + "').style." + escapeJavaScriptString(property) + " = '" + escapeJavaScriptString(value) + "';";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "🔧 Modified element: " << selector << "." << property << " = " << value << std::endl;
@@ -342,7 +364,7 @@ void RealWebView::addElement(const std::string& parentSelector, const std::strin
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "document.querySelector('" + parentSelector + "').insertAdjacentHTML('beforeend', `" + html + "`);";
+        std::string script = "document.querySelector('" + escapeJavaScriptString(parentSelector) + "').insertAdjacentHTML('beforeend', `" + escapeJavaScriptString(html) + "`);";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "➕ Added element to: " << parentSelector << std::endl;
@@ -355,7 +377,7 @@ void RealWebView::removeElement(const std::string& selector) {
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "document.querySelector('" + selector + "').remove();";
+        std::string script = "document.querySelector('" + escapeJavaScriptString(selector) + "').remove();";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "🗑️ Removed element: " << selector << std::endl;
@@ -368,7 +390,7 @@ void RealWebView::setElementText(const std::string& selector, const std::string&
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "document.querySelector('" + selector + "').textContent = '" + text + "';";
+        std::string script = "document.querySelector('" + escapeJavaScriptString(selector) + "').textContent = '" + escapeJavaScriptString(text) + "';";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "📝 Set text for: " << selector << " = " << text << std::endl;
@@ -381,7 +403,7 @@ void RealWebView::setElementHTML(const std::string& selector, const std::string&
 #ifdef __APPLE__
 #if TARGET_OS_MAC
     if (_webView) {
-        std::string script = "document.querySelector('" + selector + "').innerHTML = `" + html + "`;";
+        std::string script = "document.querySelector('" + escapeJavaScriptString(selector) + "').innerHTML = `" + escapeJavaScriptString(html) + "`;";
         NSString* nsScript = [NSString stringWithUTF8String:script.c_str()];
         [_webView evaluateJavaScript:nsScript completionHandler:nil];
         std::cout << "🔧 Set HTML for: " << selector << std::endl;
