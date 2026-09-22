@@ -234,6 +234,9 @@ private:
         uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
         uint64_t angularRevision = 0xffffffffffffffffULL;
         uint64_t angularStructureRevision = 0xffffffffffffffffULL;
+        uint64_t densityRevision = 0xffffffffffffffffULL;
+        sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
+        std::string densityStructure;
         bool multiSource = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
