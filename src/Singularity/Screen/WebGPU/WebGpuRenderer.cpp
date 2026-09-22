@@ -2172,11 +2172,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                 memo.ok = false;
                 memo.error = layout.error;
                 memo.pipeline = nullptr;
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal = memo.error;
                 continue;
             }
 
             if (!memo.ok || memo.structure != layout.structure || !memo.pipeline) {
                 memo.prog = sdfwgsl::compileVolume(medium.densityExpr);
+                ++mutableFrameStats().volumeProgramCompiles;
+                mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = layout.structure;
                 memo.ok = memo.prog.ok;
                 memo.error = memo.prog.error;
@@ -2188,10 +2192,18 @@ void WebGpuRenderer::flushVolumeComposite() {
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
             }
+        } else {
+            ++mutableFrameStats().volumeProgramCacheHits;
         }
 
         // Refusal never falls back to stale compiled density.
-        if (!memo.ok || !memo.pipeline) continue;
+        if (!memo.ok || !memo.pipeline) {
+            if (!memo.error.empty()) {
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal = memo.error;
+            }
+            continue;
+        }
 
         auto& instances = _volumeBatches[memo.pipeline];
         auto& params = _volumeParamBatches[memo.pipeline];
