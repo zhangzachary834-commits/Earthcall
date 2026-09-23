@@ -1312,6 +1312,16 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
          !fieldNode->volumeExtinction->pieces.empty())
             ? fieldNode->volumeExtinction.get()
             : nullptr;
+    const OntoMath::Piecewise* scatteringExpr =
+        (fieldNode && fieldNode->volumeScattering &&
+         !fieldNode->volumeScattering->pieces.empty())
+            ? fieldNode->volumeScattering.get()
+            : nullptr;
+    const OntoMath::Piecewise* volumeChromaExpr =
+        (fieldNode && fieldNode->volumeChroma &&
+         !fieldNode->volumeChroma->pieces.empty())
+            ? fieldNode->volumeChroma.get()
+            : nullptr;
 
     sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
     if (densityExpr) {
@@ -1344,6 +1354,25 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         const std::string extinctionJson = extinctionExpr->toJson().dump();
         extinctionRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
+    }
+
+    uint64_t scatteringRevision = 0;
+    const auto scatteringLayout = sdfwgsl::inspectScatteringExpression(scatteringExpr);
+    const std::string scatteringStructure = scatteringLayout.structure;
+    if (scatteringExpr) {
+        const std::string scatteringJson = scatteringExpr->toJson().dump();
+        scatteringRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(scatteringJson));
+    }
+
+    uint64_t volumeChromaRevision = 0;
+    const auto volumeChromaLayout =
+        sdfwgsl::inspectVolumeChromaExpression(volumeChromaExpr);
+    const std::string volumeChromaStructure = volumeChromaLayout.structure;
+    if (volumeChromaExpr) {
+        const std::string chromaJson = volumeChromaExpr->toJson().dump();
+        volumeChromaRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
     }
 
     if (multiSource) {
@@ -1453,6 +1482,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("volume extinction: " + extinctionLayout.error);
         return;
     }
+    if (!scatteringLayout.ok) {
+        recordProgramRefusal("volume scattering: " + scatteringLayout.error);
+        return;
+    }
+    if (!volumeChromaLayout.ok) {
+        recordProgramRefusal("volume chroma: " + volumeChromaLayout.error);
+        return;
+    }
 
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
@@ -1489,12 +1526,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->densityStructure == densityStructure;
         const bool extinctionStructureMatches =
             memo->extinctionStructure == extinctionStructure;
+        const bool scatteringStructureMatches =
+            memo->scatteringStructure == scatteringStructure;
+        const bool volumeChromaStructureMatches =
+            memo->volumeChromaStructure == volumeChromaStructure;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
             sourceStructureMatches &&
             densityStructureMatches &&
             extinctionStructureMatches &&
+            scatteringStructureMatches &&
+            volumeChromaStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1508,16 +1551,22 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 memo->densityRevision != densityRevision;
             const bool extinctionValuesChanged =
                 extinctionExpr && memo->extinctionRevision != extinctionRevision;
+            const bool scatteringValuesChanged =
+                scatteringExpr && memo->scatteringRevision != scatteringRevision;
+            const bool volumeChromaValuesChanged =
+                volumeChromaExpr && memo->volumeChromaRevision != volumeChromaRevision;
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
-                sourceValuesChanged || densityValuesChanged || extinctionValuesChanged;
+                sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
+                scatteringValuesChanged || volumeChromaValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
                     sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
                                            radianceExpr(), radianceChromaExpr(),
                                            radianceAngularExpr(), sourceSet,
-                                           densityExpr, densityKind, extinctionExpr);
+                                           densityExpr, densityKind, extinctionExpr,
+                                           scatteringExpr, volumeChromaExpr);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1531,6 +1580,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->sourceSetRevision = radianceSourcesRevision();
                     memo->densityRevision = densityRevision;
                     memo->extinctionRevision = extinctionRevision;
+                    memo->scatteringRevision = scatteringRevision;
+                    memo->volumeChromaRevision = volumeChromaRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1550,7 +1601,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
                                      radianceExpr(), radianceChromaExpr(),
                                      radianceAngularExpr(), sourceSet,
-                                     densityExpr, densityKind, extinctionExpr);
+                                     densityExpr, densityKind, extinctionExpr,
+                                     scatteringExpr, volumeChromaExpr);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1580,6 +1632,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->densityStructure = densityStructure;
             memo->extinctionRevision = extinctionRevision;
             memo->extinctionStructure = extinctionStructure;
+            memo->scatteringRevision = scatteringRevision;
+            memo->scatteringStructure = scatteringStructure;
+            memo->volumeChromaRevision = volumeChromaRevision;
+            memo->volumeChromaStructure = volumeChromaStructure;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -2192,24 +2248,39 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
 
         const VolumeProgramKey programKey{
-            medium.densityExpr, medium.extinctionExpr};
+            medium.densityExpr, medium.extinctionExpr,
+            medium.scatteringExpr, medium.volumeChromaExpr};
         auto& memo = _volumeProgramCache[programKey];
-        const uint64_t mediumContentRevision =
-            medium.densityRevision ^
-            (medium.extinctionRevision + 0x9e3779b97f4a7c15ULL +
-             (medium.densityRevision << 6) + (medium.densityRevision >> 2));
+        uint64_t mediumContentRevision = medium.densityRevision;
+        auto combineRevision = [&](uint64_t next) {
+            mediumContentRevision ^=
+                next + 0x9e3779b97f4a7c15ULL +
+                (mediumContentRevision << 6) + (mediumContentRevision >> 2);
+        };
+        combineRevision(medium.extinctionRevision);
+        combineRevision(medium.scatteringRevision);
+        combineRevision(medium.volumeChromaRevision);
         if (memo.contentRevision != mediumContentRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
             const auto extinctionLayout =
                 sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
+            const auto scatteringLayout =
+                sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
+            const auto volumeChromaLayout =
+                sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
             memo.contentRevision = mediumContentRevision;
 
-            if (!densityLayout.ok || !extinctionLayout.ok) {
+            if (!densityLayout.ok || !extinctionLayout.ok ||
+                !scatteringLayout.ok || !volumeChromaLayout.ok) {
                 memo.ok = false;
                 memo.error = !densityLayout.ok
                     ? "density: " + densityLayout.error
-                    : "extinction: " + extinctionLayout.error;
+                    : !extinctionLayout.ok
+                        ? "extinction: " + extinctionLayout.error
+                        : !scatteringLayout.ok
+                            ? "scattering: " + scatteringLayout.error
+                            : "volume chroma: " + volumeChromaLayout.error;
                 memo.pipeline = nullptr;
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = memo.error;
@@ -2218,10 +2289,14 @@ void WebGpuRenderer::flushVolumeComposite() {
 
             const std::string structure =
                 "density:\n" + densityLayout.structure +
-                "\nextinction:\n" + extinctionLayout.structure;
+                "\nextinction:\n" + extinctionLayout.structure +
+                "\nscattering:\n" + scatteringLayout.structure +
+                "\nvolume-chroma:\n" + volumeChromaLayout.structure;
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
-                    sdfwgsl::compileVolume(medium.densityExpr, medium.extinctionExpr);
+                    sdfwgsl::compileVolume(
+                        medium.densityExpr, medium.extinctionExpr,
+                        medium.scatteringExpr, medium.volumeChromaExpr);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -2231,7 +2306,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                 if (!memo.pipeline) memo.ok = false;
             } else {
                 const auto params =
-                    sdfwgsl::collectVolumeParams(medium.densityExpr, medium.extinctionExpr);
+                    sdfwgsl::collectVolumeParams(
+                        medium.densityExpr, medium.extinctionExpr,
+                        medium.scatteringExpr, medium.volumeChromaExpr);
                 memo.ok = params.ok;
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
@@ -2240,7 +2317,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             ++mutableFrameStats().volumeProgramCacheHits;
         }
 
-        // Refusal never falls back to stale compiled density/extinction.
+        // Refusal never falls back to stale compiled density/extinction/scattering/chroma.
         if (!memo.ok || !memo.pipeline) {
             if (!memo.error.empty()) {
                 ++mutableFrameStats().volumeProgramRefusals;

@@ -239,6 +239,10 @@ private:
         std::string densityStructure;
         uint64_t extinctionRevision = 0xffffffffffffffffULL;
         std::string extinctionStructure;
+        uint64_t scatteringRevision = 0xffffffffffffffffULL;
+        std::string scatteringStructure;
+        uint64_t volumeChromaRevision = 0xffffffffffffffffULL;
+        std::string volumeChromaStructure;
         bool multiSource = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
@@ -353,12 +357,12 @@ private:
         sdfwgsl::Program prog;
         const VolumePipeline* pipeline = nullptr;
     };
-    // V1 program identity is the authored medium pair, not density alone.
-    // Two media may intentionally share the same D AST while carrying different
-    // sigma_t ASTs; keeping separate memos prevents them from evicting each
-    // other's structure/value cache every frame.
-    using VolumeProgramKey =
-        std::pair<const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
+    // V2 program identity spans all independently authored medium channels.
+    // Shared D/sigma_t with different sigma_s/C_v must never collide or evict
+    // one another's structure/value cache every frame.
+    using VolumeProgramKey = std::tuple<
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     struct VolumeInstanceData {

@@ -141,6 +141,10 @@ namespace Core {
                 volumeSetIdentity += std::to_string(medium.densityRevision);
                 volumeSetIdentity += ":";
                 volumeSetIdentity += std::to_string(medium.extinctionRevision);
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.scatteringRevision);
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.volumeChromaRevision);
                 volumeSetIdentity += "\n";
                 volumeDensities.push_back(medium);
             }

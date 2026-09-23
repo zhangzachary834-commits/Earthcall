@@ -877,6 +877,148 @@ int main() {
               "unsupported authored extinction refuses instead of using stale or compatibility sigma_t");
     }
 
+    // ---------------------------------------------------------------------
+    // V2. Scattering/chroma sovereignty: sigma_s(p,t) and C_v(p,t) are
+    //     independently authored while D and sigma_t remain unchanged.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        auto extinctionNode = std::shared_ptr<OntoMath::MathNode>(number(0.4).release());
+        auto scatteringNode = std::shared_ptr<OntoMath::MathNode>(number(0.2).release());
+        auto chromaNode = std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.2, 0.1).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        OntoMath::Piecewise extinction = OntoMath::Piecewise::continuous(extinctionNode);
+        OntoMath::Piecewise scattering = OntoMath::Piecewise::continuous(scatteringNode);
+        OntoMath::Piecewise volumeChroma = OntoMath::Piecewise::continuous(chromaNode);
+
+        const std::string densityTruth = density.toJson().dump();
+        const std::string extinctionTruth = extinction.toJson().dump();
+
+        const auto compatibility = sdfwgsl::compileVolume(&density, &extinction);
+        check(compatibility.ok &&
+                  compatibility.wgsl.find("return compatibilityDensity;") != std::string::npos &&
+                  compatibility.wgsl.find("return vec3<f32>(1.0);") != std::string::npos,
+              "V2 absence preserves exact sigma_s=D and neutral-white compatibility");
+
+        const auto scatteringLayoutBefore =
+            sdfwgsl::inspectScatteringExpression(&scattering);
+        const auto chromaLayoutBefore =
+            sdfwgsl::inspectVolumeChromaExpression(&volumeChroma);
+        const auto authored =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+        const auto genericAuthored =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                             &density, sdfwgsl::DensityInputKind::Authored, &extinction,
+                             &scattering, &volumeChroma);
+        check(scatteringLayoutBefore.ok && chromaLayoutBefore.ok &&
+                  authored.ok && genericAuthored.ok,
+              "authored sigma_s and C_v lower through both volume renderer seams");
+        check(authored.wgsl.find("fn volumeScatteringEval") != std::string::npos &&
+                  authored.wgsl.find("fn volumeChromaEval") != std::string::npos &&
+                  authored.wgsl.find("var volumetricScatter = vec3<f32>(0.0)") != std::string::npos &&
+                  genericAuthored.wgsl.find("var volumetric_scatter = vec3<f32>(0.0)") != std::string::npos,
+              "V2 transport accumulates authored medium chroma as vector radiance");
+
+        // VALUE ONLY: sigma_s changes while D and sigma_t remain byte-identical.
+        scatteringNode->scalarForm.terms[0].coefficient = 0.65;
+        const auto scatteringLayoutAfter =
+            sdfwgsl::inspectScatteringExpression(&scattering);
+        const auto scatteringRefreshed =
+            sdfwgsl::collectVolumeParams(&density, &extinction, &scattering, &volumeChroma);
+        const auto scatteringEdited =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+        check(scatteringLayoutAfter.ok &&
+                  scatteringLayoutAfter.structure == scatteringLayoutBefore.structure &&
+                  scatteringEdited.ok && scatteringEdited.wgsl == authored.wgsl &&
+                  scatteringRefreshed.ok &&
+                  sameFloats(scatteringRefreshed.values, scatteringEdited.params) &&
+                  !sameFloats(authored.params, scatteringEdited.params),
+              "numeric sigma_s edit refreshes parameters without shader regeneration");
+        check(density.toJson().dump() == densityTruth &&
+                  extinction.toJson().dump() == extinctionTruth,
+              "editing sigma_s leaves D and sigma_t byte-identical");
+
+        // VALUE ONLY: C_v changes independently from sigma_s.
+        const std::string scatteringTruth = scattering.toJson().dump();
+        chromaNode->children[1]->scalarForm.terms[0].coefficient = 0.9;
+        const auto chromaLayoutAfter =
+            sdfwgsl::inspectVolumeChromaExpression(&volumeChroma);
+        const auto chromaRefreshed =
+            sdfwgsl::collectVolumeParams(&density, &extinction, &scattering, &volumeChroma);
+        const auto chromaEdited =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+        check(chromaLayoutAfter.ok &&
+                  chromaLayoutAfter.structure == chromaLayoutBefore.structure &&
+                  chromaEdited.ok && chromaEdited.wgsl == scatteringEdited.wgsl &&
+                  chromaRefreshed.ok &&
+                  sameFloats(chromaRefreshed.values, chromaEdited.params) &&
+                  !sameFloats(scatteringEdited.params, chromaEdited.params),
+              "numeric C_v edit refreshes parameters without shader regeneration");
+        check(scattering.toJson().dump() == scatteringTruth,
+              "editing C_v leaves sigma_s byte-identical");
+
+        // STRUCTURE: sigma_s changes shape without changing D.
+        auto scatteringAdd = std::make_shared<OntoMath::MathNode>();
+        scatteringAdd->op = OntoMath::MathNode::Op::Add;
+        scatteringAdd->children.push_back(number(0.2));
+        scatteringAdd->children.push_back(number(0.45));
+        scattering.pieces[0].mathNode = scatteringAdd;
+        const auto scatteringStructuralLayout =
+            sdfwgsl::inspectScatteringExpression(&scattering);
+        const auto scatteringStructural =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+        check(scatteringStructuralLayout.ok &&
+                  scatteringStructuralLayout.structure != scatteringLayoutAfter.structure &&
+                  scatteringStructural.ok && scatteringStructural.wgsl != chromaEdited.wgsl,
+              "structural sigma_s edit recompiles scattering structure independently");
+        check(density.toJson().dump() == densityTruth,
+              "structural sigma_s edit still leaves D byte-identical");
+
+        // TIME: both V2 channels use the admitted medium Timeline coordinate.
+        auto scatteringTimeNode = std::make_shared<OntoMath::MathNode>();
+        scatteringTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        scatteringTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedScattering =
+            OntoMath::Piecewise::continuous(scatteringTimeNode);
+        auto timedChromaNode = std::make_shared<OntoMath::MathNode>();
+        timedChromaNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        timedChromaNode->children.push_back(variable(OntoMath::kTimeVar));
+        timedChromaNode->children.push_back(number(0.0));
+        timedChromaNode->children.push_back(number(1.0));
+        OntoMath::Piecewise timedChroma =
+            OntoMath::Piecewise::continuous(timedChromaNode);
+        const auto timedScatteringLayout =
+            sdfwgsl::inspectScatteringExpression(&timedScattering);
+        const auto timedChromaLayout =
+            sdfwgsl::inspectVolumeChromaExpression(&timedChroma);
+        const auto timedProgram =
+            sdfwgsl::compileVolume(&density, &extinction, &timedScattering, &timedChroma);
+        check(timedScatteringLayout.ok && timedChromaLayout.ok && timedProgram.ok &&
+                  timedProgram.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "sigma_s(p,t) and C_v(p,t) share the admitted medium Timeline coordinate");
+
+        // REFUSAL: authored unsupported/wrongly typed V2 channels may not fall
+        // back to D or white.
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedScattering =
+            OntoMath::Piecewise::continuous(raycast);
+        OntoMath::Piecewise scalarAsChroma =
+            OntoMath::Piecewise::continuous(
+                std::shared_ptr<OntoMath::MathNode>(number(1.0).release()));
+        const auto refusedScattering =
+            sdfwgsl::compileVolume(&density, &extinction, &unsupportedScattering, &volumeChroma);
+        const auto refusedChroma =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &scalarAsChroma);
+        check(!refusedScattering.ok &&
+                  refusedScattering.error.find("Raycast") != std::string::npos,
+              "unsupported sigma_s refuses instead of reverting to compatibility D");
+        check(!refusedChroma.ok &&
+                  refusedChroma.error.find("volume chroma") != std::string::npos,
+              "invalid C_v refuses instead of reverting to compatibility white");
+    }
+
     // 9. Rung 8: visibility is derived transport below source authorship.
     //    The shader must expose an exact V=1 compatibility gate and multiply
     //    each source's direct radiance AFTER rho*chi*alpha composition.

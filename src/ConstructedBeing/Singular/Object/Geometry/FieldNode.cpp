@@ -16,6 +16,12 @@ nlohmann::json FieldNode::toJson() const {
     if (volumeExtinction && !volumeExtinction->pieces.empty()) {
         j["volumeExtinction"] = volumeExtinction->toJson();
     }
+    if (volumeScattering && !volumeScattering->pieces.empty()) {
+        j["volumeScattering"] = volumeScattering->toJson();
+    }
+    if (volumeChroma && !volumeChroma->pieces.empty()) {
+        j["volumeChroma"] = volumeChroma->toJson();
+    }
     if (lightChroma && !lightChroma->pieces.empty()) {
         j["lightChroma"] = lightChroma->toJson();
     }
@@ -88,6 +94,21 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             *volumeExtinction = OntoMath::Piecewise::fromJson(j["volumeExtinction"]);
         } else {
             *volumeExtinction = OntoMath::Piecewise{};
+        }
+    }
+
+    if (volumeScattering) {
+        if (j.contains("volumeScattering")) {
+            *volumeScattering = OntoMath::Piecewise::fromJson(j["volumeScattering"]);
+        } else {
+            *volumeScattering = OntoMath::Piecewise{};
+        }
+    }
+    if (volumeChroma) {
+        if (j.contains("volumeChroma")) {
+            *volumeChroma = OntoMath::Piecewise::fromJson(j["volumeChroma"]);
+        } else {
+            *volumeChroma = OntoMath::Piecewise{};
         }
     }
 
