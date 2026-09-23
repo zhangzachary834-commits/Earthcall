@@ -663,16 +663,16 @@ int main() {
         OntoMath::Piecewise phaseChroma =
             OntoMath::Piecewise::continuous(phaseChromaNode);
 
-        auto forwardNode = std::shared_ptr<OntoMath::MathNode>(
+        auto forwardNode =
             OntoMath::MathNode::fromLegacyExpression(
                 OntoMath::ScalarForm::constant(1.0).plus(
                     OntoMath::ScalarForm::variable(
-                        OntoMath::kWiZVar, 1.0, 0.8))).release());
-        auto reverseNode = std::shared_ptr<OntoMath::MathNode>(
+                        OntoMath::kWiZVar, 1.0, 0.8)));
+        auto reverseNode =
             OntoMath::MathNode::fromLegacyExpression(
                 OntoMath::ScalarForm::constant(1.0).plus(
                     OntoMath::ScalarForm::variable(
-                        OntoMath::kWiZVar, 1.0, -0.8))).release());
+                        OntoMath::kWiZVar, 1.0, -0.8)));
         OntoMath::Piecewise forwardPhase =
             OntoMath::Piecewise::continuous(forwardNode);
         OntoMath::Piecewise reversePhase =
