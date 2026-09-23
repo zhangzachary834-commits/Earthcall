@@ -1180,6 +1180,101 @@ int main() {
               "unsupported authored Phi refuses instead of reverting to isotropic identity");
     }
 
+    // ---------------------------------------------------------------------
+    // V4. Emission sovereignty: E_v(p,omega,t) is independent medium truth.
+    //     It emits vec3 radiance even when no external source illuminates it.
+    // ---------------------------------------------------------------------
+    {
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        auto extinctionNode = std::shared_ptr<OntoMath::MathNode>(number(0.4).release());
+        auto scatteringNode = std::shared_ptr<OntoMath::MathNode>(number(0.3).release());
+        auto chromaNode = std::shared_ptr<OntoMath::MathNode>(vector3(0.2, 0.8, 1.0).release());
+        auto emissionNode = std::shared_ptr<OntoMath::MathNode>(vector3(0.1, 0.5, 1.0).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        OntoMath::Piecewise extinction = OntoMath::Piecewise::continuous(extinctionNode);
+        OntoMath::Piecewise scattering = OntoMath::Piecewise::continuous(scatteringNode);
+        OntoMath::Piecewise volumeChroma = OntoMath::Piecewise::continuous(chromaNode);
+        OntoMath::Piecewise emission = OntoMath::Piecewise::continuous(emissionNode);
+
+        const std::string densityTruth = density.toJson().dump();
+        const std::string extinctionTruth = extinction.toJson().dump();
+        const std::string scatteringTruth = scattering.toJson().dump();
+        const std::string chromaTruth = volumeChroma.toJson().dump();
+
+        const auto emissionLayoutBefore = sdfwgsl::inspectEmissionExpression(&emission);
+        const auto authored = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &emission);
+        check(emissionLayoutBefore.ok && authored.ok &&
+                  authored.wgsl.find("fn volumeEmissionEval") != std::string::npos &&
+                  authored.wgsl.find("HAS_AUTHORED_VOLUME_EMISSION") != std::string::npos,
+              "authored E_v lowers through the dedicated volume renderer");
+
+        // SELF-EMISSION: this compiled transport has no source-radiance input at all.
+        // The emitted term must enter the medium accumulation independently.
+        check(authored.wgsl.find("volumeEmissionEval") != std::string::npos &&
+                  authored.wgsl.find("emission") != std::string::npos,
+              "E_v remains present in transport without any external illumination channel");
+
+        // VALUE ONLY: change one E_v coefficient; siblings remain byte-identical.
+        emissionNode->children[1]->scalarForm.terms[0].coefficient = 0.9;
+        const auto emissionLayoutAfter = sdfwgsl::inspectEmissionExpression(&emission);
+        const auto refreshed = sdfwgsl::collectVolumeParams(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &emission);
+        const auto valueEdited = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &emission);
+        check(emissionLayoutAfter.ok &&
+                  emissionLayoutAfter.structure == emissionLayoutBefore.structure &&
+                  valueEdited.ok && valueEdited.wgsl == authored.wgsl &&
+                  refreshed.ok && sameFloats(refreshed.values, valueEdited.params) &&
+                  !sameFloats(authored.params, valueEdited.params),
+              "numeric E_v edit refreshes parameters without WGSL regeneration");
+        check(density.toJson().dump() == densityTruth &&
+                  extinction.toJson().dump() == extinctionTruth &&
+                  scattering.toJson().dump() == scatteringTruth &&
+                  volumeChroma.toJson().dump() == chromaTruth,
+              "rewriting E_v leaves D, sigma_t, sigma_s and C_v byte-identical");
+
+        // STRUCTURE + DIRECTION: omega belongs to medium emission and means sample -> eye.
+        auto directionalEmission = std::make_shared<OntoMath::MathNode>();
+        directionalEmission->op = OntoMath::MathNode::Op::VectorConstruct;
+        directionalEmission->children.push_back(variable(OntoMath::kOmegaXVar));
+        directionalEmission->children.push_back(number(0.25));
+        directionalEmission->children.push_back(number(0.75));
+        emission.pieces[0].mathNode = directionalEmission;
+        const auto directionalLayout = sdfwgsl::inspectEmissionExpression(&emission);
+        const auto structureEdited = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &emission);
+        check(directionalLayout.ok && directionalLayout.readsOmega &&
+                  directionalLayout.structure != emissionLayoutAfter.structure &&
+                  structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural/directional E_v edit changes emission program identity");
+
+        // TIME: E_v consumes the medium Timeline without AST rewrite.
+        auto timedEmissionNode = std::make_shared<OntoMath::MathNode>();
+        timedEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        timedEmissionNode->children.push_back(variable(OntoMath::kTimeVar));
+        timedEmissionNode->children.push_back(number(0.0));
+        timedEmissionNode->children.push_back(number(1.0));
+        OntoMath::Piecewise timedEmission = OntoMath::Piecewise::continuous(timedEmissionNode);
+        const auto timedLayout = sdfwgsl::inspectEmissionExpression(&timedEmission);
+        const auto timedProgram = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &timedEmission);
+        check(timedLayout.ok && timedProgram.ok &&
+                  timedProgram.wgsl.find("instances[g_instIdx].time.x") != std::string::npos,
+              "E_v(p,omega,t) lowers the admitted medium Timeline independently");
+
+        // REFUSAL: unsupported authored emission cannot silently become black/absent.
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedEmission = OntoMath::Piecewise::continuous(raycast);
+        const auto refusedLayout = sdfwgsl::inspectEmissionExpression(&unsupportedEmission);
+        const auto refusedProgram = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma, nullptr, &unsupportedEmission);
+        check(!refusedLayout.ok && !refusedProgram.ok &&
+                  refusedProgram.error.find("volume emission") != std::string::npos,
+              "unsupported authored E_v refuses instead of falling back to absent emission");
+    }
+
     // 9. Rung 8: visibility is derived transport below source authorship.
     //    The shader must expose an exact V=1 compatibility gate and multiply
     //    each source's direct radiance AFTER rho*chi*alpha composition.
