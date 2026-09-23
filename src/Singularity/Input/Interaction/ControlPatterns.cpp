@@ -179,18 +179,55 @@ std::shared_ptr<Law> createSliderLaw(Singular& author) {
          ConditionNode::compare("@world.pointerPressedOn", ConditionNode::Op::Eq,
                                 PropertyValue(true))}));
 
-    // dcontrolValue/dt = d · s — the RATE form. Flow integrates it each tick,
-    // so the value the Person sees is the exact antiderivative of what was
-    // authored rather than a per-frame delta accumulated by hand.
-    OntoMath::ScalarForm rate =
-        OntoMath::ScalarForm::variable("d").times(OntoMath::ScalarForm::variable("s"));
-    MathBindings bindings{
+    // controlValue := v + d·s, then controlValue := clamp(v, lo, hi).
+    //
+    // This was a Flow of the RATE d·s, and that was wrong in two ways
+    // (docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md, Tier 0 #5):
+    //   * dragX is pixels moved THIS FRAME, already a delta. Integrating it
+    //     over dt multiplied by frame time a second time, so the same hand
+    //     movement moved the value half as far at 120 fps as at 60, and
+    //     ~60x less than controlStep claims (step is per PIXEL).
+    //   * controlMin / controlMax were never read, so a slider ran past its
+    //     own range. Synthesis Studio authored a second law
+    //     (law-studio-slider-sync) to clamp one slider back — two laws on one
+    //     value, the loop shape the toggle comment warns about.
+    // A Map of the per-frame delta sums to exactly (pixels travelled)·step at
+    // any frame rate. The clamp is a second Map in the SAME law: a sequence
+    // keeps going when one child cannot read its bindings, so a slider that
+    // authored no range still moves (its clamp step records "a bound variable
+    // does not read" in the trace) and one that did is held inside it.
+    OntoMath::ScalarForm next =
+        OntoMath::ScalarForm::variable("v").plus(
+            OntoMath::ScalarForm::variable("d").times(OntoMath::ScalarForm::variable("s")));
+    MathBindings moveBindings{
+        {"v", PropertyPath::parse(Control::kValue)},
         {"d", PropertyPath::parse(channelPath("dragX"))},
         {"s", PropertyPath::parse(Control::kStep)},
     };
-    law->setActionModel(
-        ActionNode::flow(Control::kValue, everywhere(std::move(rate), "d"),
-                         std::move(bindings)));
+
+    auto leaf = [](const std::string& var) {
+        auto n = std::make_shared<OntoMath::MathNode>();
+        n->op = OntoMath::MathNode::Op::ScalarLeaf;
+        n->scalarForm = OntoMath::ScalarForm::variable(var);
+        return n;
+    };
+    auto clampNode = std::make_shared<OntoMath::MathNode>();
+    clampNode->op = OntoMath::MathNode::Op::Clamp;
+    for (const char* var : {"v", "lo", "hi"}) {
+        clampNode->children.push_back(std::make_unique<OntoMath::MathNode>(*leaf(var)));
+    }
+    OntoMath::Piecewise clamp = OntoMath::Piecewise::continuous(clampNode);
+    clamp.inputVariable = "v";
+    MathBindings clampBindings{
+        {"v", PropertyPath::parse(Control::kValue)},
+        {"lo", PropertyPath::parse(Control::kMin)},
+        {"hi", PropertyPath::parse(Control::kMax)},
+    };
+
+    law->setActionModel(ActionNode::sequence(
+        {ActionNode::map(Control::kValue, everywhere(std::move(next), "d"),
+                         std::move(moveBindings)),
+         ActionNode::map(Control::kValue, std::move(clamp), std::move(clampBindings))}));
     return law;
 }
 

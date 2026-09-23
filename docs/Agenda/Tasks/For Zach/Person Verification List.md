@@ -622,4 +622,12 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] If you still have Claude Desktop's Sept 9 conversation with Clawd, check whether its `earthcall_spawn_object` calls (with positions) are still visible. They are the only surviving record of the Monastery's intended layout.
 
 
+## 2D interface robustness — sliders, focus loss, overlapping controls (added 2026-09-22)
+
+*Claude Opus 5.5 · session `b0dcb70f-a02a-4081-8589-0aae3ab30551` · 2026-09-22. [Plan](../../../plans/2D_Interface_Robustness_Pass_2026-09-22.md). Headless tests are green; these three need a hand.*
+
+- [ ] **Synthesis Studio → Pulse Rate slider:** drag it. It should now move about 0.02 per pixel (whole range in ~140 px) and **stop at 0.2 and 3.0**. Before, it barely moved. Say whether the new speed feels right; the rate is the slider's own `controlStep`.
+- [ ] **Mid-drag, Cmd-Tab away** from Earthcall and back: the dragged control must not stay stuck "held" (no runaway value, no stuck highlight).
+- [ ] **Two overlapping 2D plates with the same `zOrder2D`:** click where they overlap. The one you *see* on top should respond.
+
 BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW 
