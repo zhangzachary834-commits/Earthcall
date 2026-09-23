@@ -38,14 +38,8 @@ struct ObjectCompositionState {
     std::vector<std::string> pendingElementIds;
 
     // --- Legacy properties (kept for save/load compatibility) ---
-    // The legacy descriptive count (vestigial: set by hand, read by nobody).
     // The TRUTH of what this object is made of is the element Formation above.
-    int corners = 0;
     int faces = 0;
-    int massQuantity = 0;
-    int elements = 0;
-    int relationships = 0;
-    int complexityLevel = 0;
     bool physicalObject = true;
 
     // --- Attributes and Tags (for selection/filtering by physics laws, etc.) ---
