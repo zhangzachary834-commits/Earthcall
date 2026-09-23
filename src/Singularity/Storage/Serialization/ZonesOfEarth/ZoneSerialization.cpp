@@ -262,6 +262,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         homeToJson(zj, *home);
     }
+    Singularity::Storage::writeSingularProperties(zj, zone);
     return zj;
 }
 
@@ -342,6 +343,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         homeFromJson(zj, *home);
     }
+    Singularity::Storage::readSingularProperties(zj, zone);
 }
 
 std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
