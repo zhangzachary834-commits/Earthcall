@@ -268,16 +268,11 @@ Material Material::fromJson(const json& j) {
 }
 
 void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeight) {
-    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
-    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
     if (faceTextures.size() == static_cast<size_t>(numFaces)) {
-        for (auto& ft : faceTextures) {
-            if (ft.width != w || ft.height != h) {
-                ft.resize(w, h);
-            }
-        }
         return; // Already initialised correctly
     }
+    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
+    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
     faceTextures.clear();
     for (int i = 0; i < numFaces; ++i) {
         FaceTexture tex;
