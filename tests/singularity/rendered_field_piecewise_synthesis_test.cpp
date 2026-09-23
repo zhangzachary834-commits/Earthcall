@@ -18,7 +18,7 @@ using OntoMath::ScalarForm;
 
 enum class Channel { SourceRho, MediumDensity, MediumExtinction, MediumScattering, MediumChroma };
 enum class ValueKind { Scalar, Vec3 };
-enum class ProofKind { None, DensityZeroSupport };
+enum class ProofKind { None, DensityZeroSupport, RadianceZeroContribution };
 
 std::unique_ptr<MathNode> scalarU(double v) {
     auto n = std::make_unique<MathNode>();
@@ -140,6 +140,8 @@ struct PiecewiseAdapter {
     uint64_t proofBypasses = 0;
     uint64_t proofFallbacks = 0;
     uint64_t proofRefusals = 0;
+    uint64_t proofPremiseInspections = 0;
+    uint64_t exactEvaluationsAvoided = 0;
 
     bool compile(Channel channel, const Piecewise& model, CompiledPiecewise& out) {
         const ValueKind kind = channel == Channel::MediumChroma ? ValueKind::Vec3 : ValueKind::Scalar;
@@ -213,6 +215,48 @@ struct PiecewiseAdapter {
 
         const std::map<std::string, double> noVars;
         for (size_t i = 0; i < model.pieces.size(); ++i) {
+            ++proofPremiseInspections;
+            const auto& authored = model.pieces[i];
+            assert(authored.mathNode);
+            proof.premiseMath.push_back(vessel.pieces[i].math);
+            proof.premiseSources.push_back(authored.mathNode.get());
+
+            if (authored.mathNode->op != MathNode::Op::ScalarLeaf)
+                continue;
+            const auto value = authored.mathNode->scalarForm.evaluate(noVars);
+            if (value.has_value() && std::abs(*value) < 1e-12)
+                proof.zeroPieces.push_back(i);
+        }
+
+        if (proof.zeroPieces.empty()) {
+            ++proofRefusals;
+            return false;
+        }
+
+        proof.generation = ++proofBuilds;
+        vessel.proof = std::move(proof);
+        return true;
+    }
+
+    bool buildRadianceZeroContributionProof(
+        const Piecewise& model, CompiledPiecewise& vessel) {
+        if (vessel.channel != Channel::SourceRho ||
+            vessel.kind != ValueKind::Scalar ||
+            vessel.pieces.size() != model.pieces.size()) {
+            ++proofRefusals;
+            return false;
+        }
+
+        SupportProof proof;
+        proof.valid = true;
+        proof.channel = Channel::SourceRho;
+        proof.kind = ValueKind::Scalar;
+        proof.theorem = ProofKind::RadianceZeroContribution;
+        proof.topologyKey = vessel.topologyKey;
+
+        const std::map<std::string, double> noVars;
+        for (size_t i = 0; i < model.pieces.size(); ++i) {
+            ++proofPremiseInspections;
             const auto& authored = model.pieces[i];
             assert(authored.mathNode);
             proof.premiseMath.push_back(vessel.pieces[i].math);
@@ -269,6 +313,48 @@ struct PiecewiseAdapter {
                 for (size_t zeroPiece : proof.zeroPieces) {
                     if (zeroPiece == pieceIndex) {
                         ++proofBypasses;
+                        ++exactEvaluationsAvoided;
+                        return true;
+                    }
+                }
+            }
+            ++proofFallbacks;
+        }
+
+        const auto value = model.evaluate({{"x", x}, {"t", t}});
+        assert(value.has_value());
+        const auto* scalar = std::get_if<double>(&*value);
+        assert(scalar);
+        return std::abs(*scalar) < 1e-12;
+    }
+
+    bool queryZeroRadianceContribution(
+        const CompiledPiecewise& vessel, const Piecewise& model,
+        double x, double t, bool allowProof) {
+        size_t pieceIndex = vessel.pieces.size();
+        for (size_t i = 0; i < vessel.pieces.size(); ++i) {
+            if (pieceContains(vessel.pieces[i], x)) {
+                pieceIndex = i;
+                break;
+            }
+        }
+
+        if (allowProof) {
+            ++proofConsultations;
+            const SupportProof& proof = vessel.proof;
+            const bool authoritative =
+                proof.valid &&
+                proof.theorem == ProofKind::RadianceZeroContribution &&
+                proof.channel == Channel::SourceRho &&
+                vessel.channel == Channel::SourceRho &&
+                proof.kind == vessel.kind &&
+                proof.topologyKey == vessel.topologyKey;
+
+            if (authoritative && pieceIndex < vessel.pieces.size()) {
+                for (size_t zeroPiece : proof.zeroPieces) {
+                    if (zeroPiece == pieceIndex) {
+                        ++proofBypasses;
+                        ++exactEvaluationsAvoided;
                         return true;
                     }
                 }
@@ -490,6 +576,127 @@ int main() {
     assert(adapter.proofBypasses == bypassesBeforePartial + 1);
     assert(adapter.proofFallbacks == fallbacksBeforePartial + 1);
 
+    // Rung 1J: source radiance gets its own theorem algebra rather than
+    // reusing density semantics. The underlying zero math remains shareable.
+    auto theoremRho = twoPiece(scalarS(0.0), scalarS(0.0));
+    CompiledPiecewise cTheoremRho;
+    assert(adapter.compile(Channel::SourceRho, theoremRho, cTheoremRho));
+    assert(cTheoremRho.pieces[0].math == rhoZeroLeftMath);
+    assert(cTheoremRho.pieces[1].math == rhoZeroRightMath);
+
+    assert(adapter.buildRadianceZeroContributionProof(
+        theoremRho, cTheoremRho));
+    assert(cTheoremRho.proof.valid);
+    assert(cTheoremRho.proof.channel == Channel::SourceRho);
+    assert(cTheoremRho.proof.theorem ==
+           ProofKind::RadianceZeroContribution);
+    assert(cTheoremRho.proof.zeroPieces.size() == 2);
+
+    // The radiance theorem cannot be consumed by density, symmetric with the
+    // Rung 1I hostile density->radiance copy test.
+    CompiledPiecewise forgedDensity = cZeroDensity;
+    forgedDensity.proof = cTheoremRho.proof;
+    const uint64_t bypassesBeforeForgedDensity = adapter.proofBypasses;
+    const uint64_t fallbacksBeforeForgedDensity = adapter.proofFallbacks;
+    assert(adapter.queryZeroSupport(
+        forgedDensity, zeroDensity, 5.0, 0.0, true));
+    assert(adapter.proofBypasses == bypassesBeforeForgedDensity);
+    assert(adapter.proofFallbacks == fallbacksBeforeForgedDensity + 1);
+
+    const uint64_t rhoBypassesBefore = adapter.proofBypasses;
+    assert(adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, -5.0, 0.0, true));
+    assert(adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, 5.0, 0.0, true));
+    assert(adapter.proofBypasses == rhoBypassesBefore + 2);
+
+    // Runtime x/t motion consumes the same radiance theorem without semantic
+    // or proof rebuilds.
+    const uint64_t rhoBuildsBeforeRuntime = adapter.proofBuilds;
+    const uint64_t rhoTopologyBeforeRuntime = adapter.topologyBuilds;
+    for (double x : {-8.0, -1.0, 0.0, 9.0}) {
+        for (double t : {0.0, 3.0, 55.0}) {
+            assert(adapter.queryZeroRadianceContribution(
+                cTheoremRho, theoremRho, x, t, true));
+        }
+    }
+    assert(adapter.proofBuilds == rhoBuildsBeforeRuntime);
+    assert(adapter.topologyBuilds == rhoTopologyBeforeRuntime);
+
+    // A radiance-only topology mutation invalidates radiance proof authority
+    // while leaving the already-compiled density vessel and its theorem alone.
+    const std::string densityTopologyBeforeRhoMutation =
+        cZeroDensity.topologyKey;
+    const uint64_t densityGenerationBeforeRhoMutation =
+        cZeroDensity.proof.generation;
+    const uint64_t invalidationsBeforeRhoTopology =
+        adapter.proofInvalidations;
+    theoremRho.pieces[0].hi = -4.0;
+    theoremRho.pieces[1].lo = -4.0;
+    assert(adapter.compile(
+        Channel::SourceRho, theoremRho, cTheoremRho));
+    assert(adapter.proofInvalidations ==
+           invalidationsBeforeRhoTopology + 1);
+    assert(!cTheoremRho.proof.valid);
+    assert(cZeroDensity.topologyKey == densityTopologyBeforeRhoMutation);
+    assert(cZeroDensity.proof.generation ==
+           densityGenerationBeforeRhoMutation);
+
+    const uint64_t rhoFallbacksBeforeTopology =
+        adapter.proofFallbacks;
+    assert(adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, -8.0, 0.0, true));
+    assert(adapter.proofFallbacks ==
+           rhoFallbacksBeforeTopology + 1);
+
+    assert(adapter.buildRadianceZeroContributionProof(
+        theoremRho, cTheoremRho));
+
+    // A radiance child edit narrows the radiance theorem only. Density proof
+    // state remains untouched even though zero calculations were canonicalized
+    // across both semantic channels.
+    const uint64_t densityGenerationBeforeRhoChild =
+        cZeroDensity.proof.generation;
+    theoremRho.pieces[0].mathNode->scalarForm =
+        ScalarForm::constant(4.0);
+    const uint64_t invalidationsBeforeRhoChild =
+        adapter.proofInvalidations;
+    assert(adapter.compile(
+        Channel::SourceRho, theoremRho, cTheoremRho));
+    assert(adapter.proofInvalidations ==
+           invalidationsBeforeRhoChild + 1);
+    assert(!cTheoremRho.proof.valid);
+    assert(cZeroDensity.proof.generation ==
+           densityGenerationBeforeRhoChild);
+
+    const uint64_t rhoFallbacksBeforeChild =
+        adapter.proofFallbacks;
+    assert(!adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, -8.0, 0.0, true));
+    assert(adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, 5.0, 0.0, true));
+    assert(adapter.proofFallbacks ==
+           rhoFallbacksBeforeChild + 2);
+
+    assert(adapter.buildRadianceZeroContributionProof(
+        theoremRho, cTheoremRho));
+    assert(cTheoremRho.proof.zeroPieces.size() == 1);
+    const uint64_t rhoBypassesBeforePartial = adapter.proofBypasses;
+    const uint64_t rhoFallbacksBeforePartial = adapter.proofFallbacks;
+    assert(!adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, -8.0, 0.0, true));
+    assert(adapter.queryZeroRadianceContribution(
+        cTheoremRho, theoremRho, 5.0, 0.0, true));
+    assert(adapter.proofBypasses ==
+           rhoBypassesBeforePartial + 1);
+    assert(adapter.proofFallbacks ==
+           rhoFallbacksBeforePartial + 1);
+
+    // Economics are expressed as semantic work units rather than wall-clock
+    // timing in this tiny deterministic witness.
+    assert(adapter.exactEvaluationsAvoided > adapter.proofBuilds);
+    assert(adapter.proofPremiseInspections >= adapter.proofBuilds);
+
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
@@ -502,15 +709,22 @@ int main() {
                 "invalid_proof_exact_fallback=1 local_reproof=1 "
                 "runtime_proof_rebuilds=0 density_child_edit_local=1 "
                 "partial_zero_support_reproof=1 "
+                "radiance_zero_contribution_proof=1 "
+                "radiance_cannot_authorize_density=1 "
+                "radiance_runtime_rebuilds=0 radiance_child_edit_local=1 "
+                "partial_radiance_zero_reproof=1 "
                 "proof_builds=%llu proof_invalidations=%llu "
                 "proof_consultations=%llu proof_bypasses=%llu "
                 "proof_fallbacks=%llu proof_refusals=%llu "
+                "proof_premise_inspections=%llu exact_evaluations_avoided=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
                 static_cast<unsigned long long>(adapter.proofInvalidations),
                 static_cast<unsigned long long>(adapter.proofConsultations),
                 static_cast<unsigned long long>(adapter.proofBypasses),
                 static_cast<unsigned long long>(adapter.proofFallbacks),
-                static_cast<unsigned long long>(adapter.proofRefusals));
+                static_cast<unsigned long long>(adapter.proofRefusals),
+                static_cast<unsigned long long>(adapter.proofPremiseInspections),
+                static_cast<unsigned long long>(adapter.exactEvaluationsAvoided));
     return 0;
 }
