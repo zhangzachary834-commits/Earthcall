@@ -496,6 +496,95 @@ int main() {
         assert(sharedDensityReverseStats.volumeProgramCompiles >= 1 &&
                "V5 reversed set order did not establish its fused structural program");
 
+        // V5 LOCAL-QUALITY WITNESS: adding a distant, disjoint medium that
+        // contributes exactly zero transport must not change the already-existing
+        // local answer of medium A. A carries spatially varying self-emission so
+        // undersampling is visible; B exists only to enlarge the fused union span.
+        auto localDensityNode = scalarNode(1.0);
+        OntoMath::Piecewise localDensity =
+            OntoMath::Piecewise::continuous(localDensityNode);
+        auto localExtinctionNode = scalarNode(0.05);
+        OntoMath::Piecewise localExtinction =
+            OntoMath::Piecewise::continuous(localExtinctionNode);
+        auto localZeroScatteringNode = scalarNode(0.0);
+        OntoMath::Piecewise localZeroScattering =
+            OntoMath::Piecewise::continuous(localZeroScatteringNode);
+
+        auto localEmissionX = std::make_unique<OntoMath::MathNode>();
+        localEmissionX->op = OntoMath::MathNode::Op::ScalarLeaf;
+        localEmissionX->scalarForm =
+            OntoMath::ScalarForm::transcendental(
+                OntoMath::TransFactor::Kind::Exp, "z",
+                /*scale=*/3.0, /*shift=*/0.0, /*coefficient=*/0.05);
+        auto localEmissionNode = std::make_shared<OntoMath::MathNode>();
+        localEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        localEmissionNode->children.push_back(std::move(localEmissionX));
+        localEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        localEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        OntoMath::Piecewise localEmission =
+            OntoMath::Piecewise::continuous(localEmissionNode);
+
+        Rendering::VolumeDensityBinding localA = medium;
+        localA.origin = glm::vec3(0.0f);
+        localA.scale = glm::vec3(1.0f);
+        localA.densityExpr = &localDensity;
+        localA.densityRevision = 5651;
+        localA.extinctionExpr = &localExtinction;
+        localA.extinctionRevision = 5652;
+        localA.scatteringExpr = &localZeroScattering;
+        localA.scatteringRevision = 5653;
+        localA.volumeChromaExpr = nullptr;
+        localA.volumeChromaRevision = 0;
+        localA.phaseExpr = nullptr;
+        localA.phaseRevision = 0;
+        localA.emissionExpr = &localEmission;
+        localA.emissionRevision = 5654;
+
+        renderer.setVolumeDensitySources({localA}, 5655);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localAAlone[4];
+        readCentre(localAAlone);
+
+        auto zeroDensityNode = scalarNode(0.0);
+        OntoMath::Piecewise zeroDensity =
+            OntoMath::Piecewise::continuous(zeroDensityNode);
+        Rendering::VolumeDensityBinding farZeroB = localA;
+        farZeroB.origin = glm::vec3(0.0f, 0.0f, -90.0f);
+        farZeroB.densityExpr = &zeroDensity;
+        farZeroB.densityRevision = 5656;
+        farZeroB.extinctionExpr = nullptr;
+        farZeroB.extinctionRevision = 0;
+        farZeroB.scatteringExpr = nullptr;
+        farZeroB.scatteringRevision = 0;
+        farZeroB.emissionExpr = nullptr;
+        farZeroB.emissionRevision = 0;
+
+        renderer.setVolumeDensitySources({localA, farZeroB}, 5657);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localAWithFarZeroB[4];
+        readCentre(localAWithFarZeroB);
+
+        const int localQualityDelta =
+            std::abs(static_cast<int>(localAAlone[0]) -
+                     static_cast<int>(localAWithFarZeroB[0]));
+        std::printf(
+            "V5 local quality A-alone=(%d,%d,%d) A+far-zero-B=(%d,%d,%d) delta=%d\n",
+            localAAlone[0], localAAlone[1], localAAlone[2],
+            localAWithFarZeroB[0], localAWithFarZeroB[1], localAWithFarZeroB[2],
+            localQualityDelta);
+        assert(localAAlone[0] > 20 &&
+               "V5 local-quality witness did not produce a measurable A baseline");
+        assert(localQualityDelta <= 2 &&
+               "V5 distant zero-contribution medium degraded A's local sampling quality");
+
         // Restore the original order for the remaining single-medium V1/V2/V3/V4
         // witnesses below; they replace the collection before rendering anyway.
         renderer.setVolumeDensitySources({sharedDensityA, sharedDensityB}, 5603);
