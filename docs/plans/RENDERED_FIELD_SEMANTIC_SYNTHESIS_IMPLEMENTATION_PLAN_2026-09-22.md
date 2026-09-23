@@ -498,10 +498,12 @@ Use explicit structural/content revisions or canonical compiled identities.
 **A4 — cross-domain identity/proof separation:** Rung 1F on PR #329:
 one geometry expression, one `rho`, and one `D` intentionally share identical mathematics; mathematical execution may canonicalize together while theorem authority remains channel-scoped.
 
-**A5 — Piecewise bridge:** compile representative real field channels rather than only isolated MathNode roots.
+**A5 — Piecewise bridge:** implemented in Rungs 1G/1H. Representative real field channels now compile through a shared Piecewise adapter with channel/type sovereignty, including scalar `rho/D/sigma_t/sigma_s`, typed vec3 `C_v`, and a real authored Timeline premise.
+
+**A6 — vessel-scoped theorem authority:** implemented in Rung 1I pending exact-head CI. Byte-identical zero mathematics intentionally canonicalizes across `SourceRho` and `MediumDensity`, while a density-zero support theorem lives only on the compiled density Piecewise vessel. The witness rejects cross-channel proof borrowing, invalidates theorem authority on Piecewise topology or authored-child premise change, falls open to exact Piecewise evaluation while invalid, re-proves locally, and preserves proof state across runtime `x/t` movement without rebuild.
 
 Landing criterion for Phase A:
-focused CI green with no production renderer/WGSL modification.
+focused CI green with no production renderer/WGSL modification, including the Rung 1I vessel-proof witness and its proof-economics counters.
 
 ### Phase B — establish production observation without changing pixels
 
