@@ -141,6 +141,22 @@ int main() {
     auto mediumChromaAst = OntoMath::Piecewise::continuous(mediumChromaNode);
     const std::string mediumChromaAstJson = mediumChromaAst.toJson().dump();
 
+    // V3 phase is a sixth independent medium truth. It may read the medium
+    // scattering directions, but it never borrows source angular alpha.
+    auto phaseAst = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(
+            OntoMath::ScalarForm::constant(1.0).plus(
+                OntoMath::ScalarForm::variable(
+                    OntoMath::kWiZVar, 1.0, 0.35))));
+    const std::string phaseAstJson = phaseAst.toJson().dump();
+
+    auto sourceAngularAst = OntoMath::Piecewise::continuous(
+        OntoMath::MathNode::fromLegacyExpression(
+            OntoMath::ScalarForm::constant(1.0).plus(
+                OntoMath::ScalarForm::variable(
+                    OntoMath::kOmegaZVar, 1.0, -0.2))));
+    const std::string sourceAngularAstJson = sourceAngularAst.toJson().dump();
+
     // V0c projection witness: sourcehood and mediumhood are independent. This
     // FieldNode has authored density but deliberately has NO light.source.
     {
@@ -151,6 +167,7 @@ int main() {
         *fogOnly.volumeExtinction = extinctionAst;
         *fogOnly.volumeScattering = scatteringAst;
         *fogOnly.volumeChroma = mediumChromaAst;
+        *fogOnly.volumePhase = phaseAst;
 
         Rendering::VolumeDensityBinding projected;
         check(Rendering::readVolumeDensity(fogOnly, 3.25, 0.125, projected),
@@ -166,6 +183,9 @@ int main() {
         check(projected.volumeChromaExpr == fogOnly.volumeChroma.get() &&
                   projected.volumeChromaRevision != 0,
               "volume projection carries independent authored medium chroma C_v");
+        check(projected.phaseExpr == fogOnly.volumePhase.get() &&
+                  projected.phaseRevision != 0,
+              "volume projection carries independent authored phase Phi");
         check(nearf(projected.origin.x, 2.0f) &&
                   nearf(projected.origin.y, 4.0f) &&
                   nearf(projected.origin.z, 6.0f) &&
@@ -213,23 +233,47 @@ int main() {
             check(PropertyPath::parse("volume.chroma.ast").setValue(
                       *root, PropertyValue(mediumChromaAstJson)) == PropertyPath::PathResult::Ok,
                   "V2 medium chroma AST is independently authored through PropertyPath");
+            check(PropertyPath::parse("volume.phase.ast").setValue(
+                      *root, PropertyValue(phaseAstJson)) == PropertyPath::PathResult::Ok,
+                  "V3 phase AST is independently authored through PropertyPath");
+            check(PropertyPath::parse("light.angular.ast").setValue(
+                      *root, PropertyValue(sourceAngularAstJson)) == PropertyPath::PathResult::Ok,
+                  "source alpha remains independently authored through its own PropertyPath");
 
             Property* rhoProperty = root->findProperty("field.ast");
             Property* densityProperty = root->findProperty("volume.density.ast");
             Property* extinctionProperty = root->findProperty("volume.extinction.ast");
             Property* scatteringProperty = root->findProperty("volume.scattering.ast");
             Property* volumeChromaProperty = root->findProperty("volume.chroma.ast");
+            Property* phaseProperty = root->findProperty("volume.phase.ast");
+            Property* sourceAlphaProperty = root->findProperty("light.angular.ast");
             check(rhoProperty != nullptr && densityProperty != nullptr &&
                       extinctionProperty != nullptr && scatteringProperty != nullptr &&
-                      volumeChromaProperty != nullptr &&
+                      volumeChromaProperty != nullptr && phaseProperty != nullptr &&
+                      sourceAlphaProperty != nullptr &&
                       rhoProperty != densityProperty &&
                       rhoProperty != extinctionProperty &&
                       densityProperty != extinctionProperty &&
                       scatteringProperty != densityProperty &&
                       scatteringProperty != extinctionProperty &&
                       volumeChromaProperty != scatteringProperty &&
-                      volumeChromaProperty != rhoProperty,
-                  "rho, D, sigma_t, sigma_s, and C_v are distinct Property beings");
+                      volumeChromaProperty != rhoProperty &&
+                      phaseProperty != volumeChromaProperty &&
+                      phaseProperty != sourceAlphaProperty &&
+                      sourceAlphaProperty != rhoProperty,
+                  "rho, D, sigma_t, sigma_s, C_v, Phi, and source alpha are distinct Property beings");
+
+            const PropertyValue phaseBeforeBadWrite =
+                phaseProperty ? phaseProperty->value() : PropertyValue(std::string());
+            const PropertyValue sourceAlphaBeforeBadPhase =
+                sourceAlphaProperty ? sourceAlphaProperty->value() : PropertyValue(std::string());
+            check(phaseProperty &&
+                      !phaseProperty->setValue(PropertyValue(std::string("{ malformed"))),
+                  "malformed V3 phase AST is refused atomically");
+            check(phaseProperty && sourceAlphaProperty &&
+                      phaseProperty->value() == phaseBeforeBadWrite &&
+                      sourceAlphaProperty->value() == sourceAlphaBeforeBadPhase,
+                  "refused phase authorship mutates neither Phi nor source alpha");
 
             const PropertyValue rhoBeforeBadDensity =
                 rhoProperty ? rhoProperty->value() : PropertyValue(std::string());
@@ -428,15 +472,50 @@ int main() {
             check(sameVolumeChromaAst,
                   "independent volume.chroma.ast survives save -> fresh hydration");
 
+            Property* phase = root->findProperty("volume.phase.ast");
+            bool samePhaseAst = false;
+            if (phase) {
+                const PropertyValue value = phase->value();
+                if (const auto* text = std::get_if<std::string>(&value)) {
+                    const auto expected =
+                        nlohmann::json::parse(phaseAstJson, nullptr, false);
+                    const auto actual =
+                        nlohmann::json::parse(*text, nullptr, false);
+                    samePhaseAst = !expected.is_discarded() && !actual.is_discarded()
+                                && expected == actual;
+                }
+            }
+            check(samePhaseAst,
+                  "independent volume.phase.ast survives save -> fresh hydration");
+
+            Property* sourceAlpha = root->findProperty("light.angular.ast");
+            bool sameSourceAlphaAst = false;
+            if (sourceAlpha) {
+                const PropertyValue value = sourceAlpha->value();
+                if (const auto* text = std::get_if<std::string>(&value)) {
+                    const auto expected =
+                        nlohmann::json::parse(sourceAngularAstJson, nullptr, false);
+                    const auto actual =
+                        nlohmann::json::parse(*text, nullptr, false);
+                    sameSourceAlphaAst = !expected.is_discarded() && !actual.is_discarded()
+                                     && expected == actual;
+                }
+            }
+            check(sameSourceAlphaAst,
+                  "source light.angular.ast survives independently beside medium phase");
+
             Property* rho = root->findProperty("field.ast");
             check(rho != nullptr && density != nullptr && extinction != nullptr &&
                       scattering != nullptr && volumeChroma != nullptr &&
+                      phase != nullptr && sourceAlpha != nullptr &&
                       rho != density && rho != extinction && density != extinction &&
                       scattering != density && scattering != extinction &&
-                      volumeChroma != scattering && volumeChroma != rho,
-                  "fresh hydration preserves rho/D/sigma_t/sigma_s/C_v property independence");
+                      volumeChroma != scattering && volumeChroma != rho &&
+                      phase != volumeChroma && phase != sourceAlpha,
+                  "fresh hydration preserves rho/D/sigma_t/sigma_s/C_v/Phi/source-alpha independence");
 
-            if (rho && density && extinction && scattering && volumeChroma) {
+            if (rho && density && extinction && scattering && volumeChroma &&
+                phase && sourceAlpha) {
                 const PropertyValue rhoBeforeDensityRewrite = rho->value();
                 const PropertyValue extinctionBeforeDensityRewrite = extinction->value();
                 auto replacementDensity = OntoMath::Piecewise::continuous(
@@ -476,6 +555,27 @@ int main() {
                           extinction->value() == extinctionBeforeScatteringRewrite &&
                           volumeChroma->value() == chromaBeforeScatteringRewrite,
                       "rewriting sigma_s leaves rho, D, sigma_t, and C_v byte-identical");
+
+                const PropertyValue rhoBeforePhaseRewrite = rho->value();
+                const PropertyValue densityBeforePhaseRewrite = density->value();
+                const PropertyValue extinctionBeforePhaseRewrite = extinction->value();
+                const PropertyValue scatteringBeforePhaseRewrite = scattering->value();
+                const PropertyValue chromaBeforePhaseRewrite = volumeChroma->value();
+                const PropertyValue sourceAlphaBeforePhaseRewrite = sourceAlpha->value();
+                auto replacementPhase = OntoMath::Piecewise::continuous(
+                    OntoMath::MathNode::fromLegacyExpression(
+                        OntoMath::ScalarForm::constant(0.8).plus(
+                            OntoMath::ScalarForm::variable(
+                                OntoMath::kWoZVar, 1.0, 0.15))));
+                check(phase->setValue(PropertyValue(replacementPhase.toJson().dump())),
+                      "hydrated V3 phase accepts a complete Law-style AST replacement");
+                check(rho->value() == rhoBeforePhaseRewrite &&
+                          density->value() == densityBeforePhaseRewrite &&
+                          extinction->value() == extinctionBeforePhaseRewrite &&
+                          scattering->value() == scatteringBeforePhaseRewrite &&
+                          volumeChroma->value() == chromaBeforePhaseRewrite &&
+                          sourceAlpha->value() == sourceAlphaBeforePhaseRewrite,
+                      "rewriting Phi leaves rho, D, sigma_t, sigma_s, C_v, and source alpha byte-identical");
             }
         }
     }

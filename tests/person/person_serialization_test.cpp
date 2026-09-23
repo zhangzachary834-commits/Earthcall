@@ -134,6 +134,36 @@ int main() {
 
     std::filesystem::remove_all(testIdentDir);
 
+    // Test that updatePriorPersonSerializations with empty oldName does NOT overwrite unkeyed legacy save records of other Persons
+    std::filesystem::path testLegacyDir = tempSaveRoot.path / "test_legacy_empty_oldname";
+    std::filesystem::create_directories(testLegacyDir);
+
+    std::string pathBobLegacy = (testLegacyDir / "bob_world.json").string();
+    {
+        nlohmann::json jBob = {
+            {"person", {
+                {"displayName", "Bob"},
+                {"soulName", "Bob"}
+            }}
+        };
+        std::ofstream fBob(pathBobLegacy); fBob << jBob.dump(2);
+    }
+
+    Person dave = makePerson("Dave");
+    // Call updatePriorPersonSerializations for dave with oldName = ""
+    updatePriorPersonSerializations(dave, "");
+
+    {
+        std::ifstream checkBob(pathBobLegacy);
+        nlohmann::json jBobCheck;
+        checkBob >> jBobCheck;
+        // Unkeyed legacy record for "Bob" MUST NOT be overwritten when oldName is empty!
+        assert(jBobCheck["person"]["displayName"] == "Bob");
+        assert(jBobCheck["person"]["soulName"] == "Bob");
+    }
+
+    std::filesystem::remove_all(testLegacyDir);
+
     std::puts("person_serialization_test: ALL OK");
     return 0;
 }

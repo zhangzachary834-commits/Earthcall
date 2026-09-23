@@ -1028,6 +1028,8 @@ struct VolumeGlobalUniforms {
     glm::mat4 invViewProj;
     glm::vec4 eyePos;
     glm::vec4 viewport;
+    // xyz = exactly one enabled admitted direct source; w=1 iff valid.
+    glm::vec4 incidentSource;
 };
 } // namespace
 
@@ -1322,6 +1324,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
          !fieldNode->volumeChroma->pieces.empty())
             ? fieldNode->volumeChroma.get()
             : nullptr;
+    const OntoMath::Piecewise* phaseExpr =
+        (fieldNode && fieldNode->volumePhase &&
+         !fieldNode->volumePhase->pieces.empty())
+            ? fieldNode->volumePhase.get()
+            : nullptr;
 
     sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
     if (densityExpr) {
@@ -1373,6 +1380,15 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         const std::string chromaJson = volumeChromaExpr->toJson().dump();
         volumeChromaRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
+    }
+
+    uint64_t phaseRevision = 0;
+    const auto phaseLayout = sdfwgsl::inspectPhaseExpression(phaseExpr);
+    const std::string phaseStructure = phaseLayout.structure;
+    if (phaseExpr) {
+        const std::string phaseJson = phaseExpr->toJson().dump();
+        phaseRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(phaseJson));
     }
 
     if (multiSource) {
@@ -1490,6 +1506,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("volume chroma: " + volumeChromaLayout.error);
         return;
     }
+    if (!phaseLayout.ok) {
+        recordProgramRefusal("volume phase: " + phaseLayout.error);
+        return;
+    }
 
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
@@ -1530,6 +1550,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->scatteringStructure == scatteringStructure;
         const bool volumeChromaStructureMatches =
             memo->volumeChromaStructure == volumeChromaStructure;
+        const bool phaseStructureMatches =
+            memo->phaseStructure == phaseStructure &&
+            memo->phaseReadsWi == phaseLayout.readsWi &&
+            memo->phaseReadsWo == phaseLayout.readsWo;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
@@ -1538,6 +1562,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             extinctionStructureMatches &&
             scatteringStructureMatches &&
             volumeChromaStructureMatches &&
+            phaseStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1555,10 +1580,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 scatteringExpr && memo->scatteringRevision != scatteringRevision;
             const bool volumeChromaValuesChanged =
                 volumeChromaExpr && memo->volumeChromaRevision != volumeChromaRevision;
+            const bool phaseValuesChanged =
+                phaseExpr && memo->phaseRevision != phaseRevision;
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
-                scatteringValuesChanged || volumeChromaValuesChanged;
+                scatteringValuesChanged || volumeChromaValuesChanged ||
+                phaseValuesChanged;
 
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
@@ -1566,7 +1594,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                            radianceExpr(), radianceChromaExpr(),
                                            radianceAngularExpr(), sourceSet,
                                            densityExpr, densityKind, extinctionExpr,
-                                           scatteringExpr, volumeChromaExpr);
+                                           scatteringExpr, volumeChromaExpr, phaseExpr);
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1582,6 +1610,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->extinctionRevision = extinctionRevision;
                     memo->scatteringRevision = scatteringRevision;
                     memo->volumeChromaRevision = volumeChromaRevision;
+                    memo->phaseRevision = phaseRevision;
                 } else {
                     needsCompile = true;
                 }
@@ -1602,7 +1631,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      radianceExpr(), radianceChromaExpr(),
                                      radianceAngularExpr(), sourceSet,
                                      densityExpr, densityKind, extinctionExpr,
-                                     scatteringExpr, volumeChromaExpr);
+                                     scatteringExpr, volumeChromaExpr, phaseExpr);
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1636,6 +1665,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->scatteringStructure = scatteringStructure;
             memo->volumeChromaRevision = volumeChromaRevision;
             memo->volumeChromaStructure = volumeChromaStructure;
+            memo->phaseRevision = phaseRevision;
+            memo->phaseStructure = phaseStructure;
+            memo->phaseReadsWi = phaseLayout.readsWi;
+            memo->phaseReadsWo = phaseLayout.readsWo;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -2234,6 +2267,18 @@ void WebGpuRenderer::flushSdfDraws() {
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView) return;
 
+    // V3 does not invent incident direction. A wi-reading Phi can consume one
+    // and only one enabled admitted direct source. Position/enablement are
+    // runtime values, so changing them must not regenerate WGSL.
+    const Rendering::RadianceSourceBinding* incidentSource = nullptr;
+    std::size_t enabledIncidentSources = 0;
+    for (const auto& source : radianceSources()) {
+        if (!source.enabled) continue;
+        ++enabledIncidentSources;
+        if (enabledIncidentSources == 1) incidentSource = &source;
+    }
+    if (enabledIncidentSources != 1) incidentSource = nullptr;
+
     // Build batches only from the bounded projection EngineRender handed to the
     // renderer. No Zone/Object scan occurs here.
     for (const auto& medium : volumeDensitySources()) {
@@ -2249,7 +2294,7 @@ void WebGpuRenderer::flushVolumeComposite() {
 
         const VolumeProgramKey programKey{
             medium.densityExpr, medium.extinctionExpr,
-            medium.scatteringExpr, medium.volumeChromaExpr};
+            medium.scatteringExpr, medium.volumeChromaExpr, medium.phaseExpr};
         auto& memo = _volumeProgramCache[programKey];
         uint64_t mediumContentRevision = medium.densityRevision;
         auto combineRevision = [&](uint64_t next) {
@@ -2260,6 +2305,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         combineRevision(medium.extinctionRevision);
         combineRevision(medium.scatteringRevision);
         combineRevision(medium.volumeChromaRevision);
+        combineRevision(medium.phaseRevision);
         if (memo.contentRevision != mediumContentRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
@@ -2269,10 +2315,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                 sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
             const auto volumeChromaLayout =
                 sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
+            const auto phaseLayout =
+                sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
             memo.contentRevision = mediumContentRevision;
+            memo.phaseReadsWi = phaseLayout.readsWi;
+            memo.phaseReadsWo = phaseLayout.readsWo;
 
             if (!densityLayout.ok || !extinctionLayout.ok ||
-                !scatteringLayout.ok || !volumeChromaLayout.ok) {
+                !scatteringLayout.ok || !volumeChromaLayout.ok ||
+                !phaseLayout.ok) {
                 memo.ok = false;
                 memo.error = !densityLayout.ok
                     ? "density: " + densityLayout.error
@@ -2280,7 +2331,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                         ? "extinction: " + extinctionLayout.error
                         : !scatteringLayout.ok
                             ? "scattering: " + scatteringLayout.error
-                            : "volume chroma: " + volumeChromaLayout.error;
+                            : !volumeChromaLayout.ok
+                                ? "volume chroma: " + volumeChromaLayout.error
+                                : "volume phase: " + phaseLayout.error;
                 memo.pipeline = nullptr;
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = memo.error;
@@ -2291,12 +2344,16 @@ void WebGpuRenderer::flushVolumeComposite() {
                 "density:\n" + densityLayout.structure +
                 "\nextinction:\n" + extinctionLayout.structure +
                 "\nscattering:\n" + scatteringLayout.structure +
-                "\nvolume-chroma:\n" + volumeChromaLayout.structure;
+                "\nvolume-chroma:\n" + volumeChromaLayout.structure +
+                "\nvolume-phase:\n" + phaseLayout.structure +
+                (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
+                (phaseLayout.readsWo ? ":reads-wo" : ":no-wo");
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
                     sdfwgsl::compileVolume(
                         medium.densityExpr, medium.extinctionExpr,
-                        medium.scatteringExpr, medium.volumeChromaExpr);
+                        medium.scatteringExpr, medium.volumeChromaExpr,
+                        medium.phaseExpr);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -2308,7 +2365,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 const auto params =
                     sdfwgsl::collectVolumeParams(
                         medium.densityExpr, medium.extinctionExpr,
-                        medium.scatteringExpr, medium.volumeChromaExpr);
+                        medium.scatteringExpr, medium.volumeChromaExpr,
+                        medium.phaseExpr);
                 memo.ok = params.ok;
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
@@ -2317,12 +2375,22 @@ void WebGpuRenderer::flushVolumeComposite() {
             ++mutableFrameStats().volumeProgramCacheHits;
         }
 
-        // Refusal never falls back to stale compiled density/extinction/scattering/chroma.
+        // Refusal never falls back to stale compiled medium state.
         if (!memo.ok || !memo.pipeline) {
             if (!memo.error.empty()) {
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = memo.error;
             }
+            continue;
+        }
+
+        if (memo.phaseReadsWi && !incidentSource) {
+            const std::string why =
+                "volume phase: Phi reads wi but transport has " +
+                std::to_string(enabledIncidentSources) +
+                " enabled admitted direct sources; exactly one is required";
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal = why;
             continue;
         }
 
@@ -2382,6 +2450,9 @@ void WebGpuRenderer::flushVolumeComposite() {
     globals.eyePos = glm::vec4(_eyePos, 1.0f);
     globals.viewport = glm::vec4(static_cast<float>(_depthW),
                                  static_cast<float>(_depthH), 0.0f, 0.0f);
+    globals.incidentSource =
+        incidentSource ? glm::vec4(incidentSource->position, 1.0f)
+                       : glm::vec4(0.0f);
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
