@@ -107,3 +107,27 @@ The consumer sweep confirms there is still no theorem/cache edge into WGSL, ray 
 **This specific Sun role is complete.**
 
 Do not extend PR #329 with another theorem family or rendering-authority consumer merely to keep the branch active. The next optimization Sun should start from the Sixth Sun performance verdict and separately price relevance-discovery/consumer economics before any proof is allowed to alter rendered work.
+
+
+## Architectural provenance — Zach's original Prophetic Rendering direction
+
+The conceptual origin of this Scene-Spatial / Prophetic Rendering line should be recorded explicitly.
+
+This direction did **not** originate with the later Sun implementation passes. Zach had already architected the project's **Prophetic Rete** and **Formation Rete** around the core principle that stable semantic/proof structure should be established ahead of time, preserved across ordinary runtime change, and repaired only along the dependency frontier when its actual premises change.
+
+Zach then explicitly transferred that precedent into rendering. The originating architectural observation was essentially:
+
+> Why is it recalculating all this stuff? Look at Prophetic Rete for precedent. We can fix a proof ahead of time and incrementally adjust it.
+
+That proposal is the conceptual bridge from Prophetic/Formation Rete to the work embodied in PR #329:
+
+- do not rediscover invariant semantic facts per sample/frame/ray when their premises have not changed;
+- compile/share canonical semantic structure ahead of hot execution;
+- crystallize conservative proofs or support facts where mathematically justified;
+- let runtime movement reuse those facts without rebuilding them;
+- when authored premises change, invalidate and repair only the affected dependency frontier;
+- if a proof is absent or stale, fail open to exact ordinary evaluation rather than granting stale authority.
+
+The Suns' contribution in PR #329 was to investigate, formalize, implement, test, and bound this rendering application. The **architectural seed and cross-subsystem transfer came from Zach**, building directly on Prophetic Rete and Formation Rete that he had already designed.
+
+This provenance matters because the project-level idea is broader than the particular Rung 1 theorem family: **Prophetic Rendering is the rendering-domain application of an existing Earthcall architectural law—move invariant reasoning out of repeated execution, preserve it as long-lived semantic structure, and incrementally repair only what reality actually invalidates.**
