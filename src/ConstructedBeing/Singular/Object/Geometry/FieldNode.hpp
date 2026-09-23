@@ -32,6 +32,7 @@ public:
         if (!_field) return PropertyValue(std::string("{}"));
         return PropertyValue(_field->astDefinition.toJson().dump());
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         if (!_field) return false;
         const std::string* src = std::get_if<std::string>(&v);
@@ -67,6 +68,7 @@ public:
         if (!_expr) return PropertyValue(std::string("{}"));
         return PropertyValue(_expr->toJson().dump());
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         if (!_expr) return false;
         const std::string* src = std::get_if<std::string>(&v);
