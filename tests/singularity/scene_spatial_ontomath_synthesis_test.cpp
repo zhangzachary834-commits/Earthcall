@@ -83,6 +83,11 @@ struct CompiledNode {
     std::string stringArg;
     std::vector<uint32_t> children;
     std::string semanticKey;
+
+    // Test-only conservative support theorem attached directly to the compiled
+    // execution node. It has no authority when invalid.
+    bool supportProofValid = false;
+    uint32_t supportWinnerChild = 0;
 };
 
 struct CompileCounters {
@@ -91,12 +96,27 @@ struct CompileCounters {
     uint64_t nodesCreated = 0;
 };
 
+struct EvalCounters {
+    uint64_t nodesVisited = 0;
+    uint64_t cacheHits = 0;
+    uint64_t supportConsultations = 0;
+    uint64_t supportBypasses = 0;
+    uint64_t supportFallbacks = 0;
+};
+
 struct OntoSceneCompiler {
     std::vector<CompiledNode> nodes;
     std::unordered_map<std::string, uint32_t> canonical;
     std::unordered_map<const MathNode*, uint32_t> sourceToCompiled;
     std::unordered_map<const MathNode*, std::vector<const MathNode*>>
         sourceParents;
+
+    // Authored source premise -> compiled execution nodes whose support proof
+    // depends on that premise. This lets change-driven invalidation avoid a
+    // global proof-table scan.
+    std::unordered_map<const MathNode*, std::unordered_set<uint32_t>>
+        proofDependents;
+    uint64_t supportProofBuilds = 0;
 
     std::string localPayload(const MathNode& n) const {
         // Do not use MathNode::print() as semantic identity. The key is built
@@ -136,7 +156,7 @@ struct OntoSceneCompiler {
         const uint32_t id = static_cast<uint32_t>(nodes.size());
         nodes.push_back(
             CompiledNode{id, n.op, n.scalarForm, n.variableName,
-                         n.stringArg, childIds, key});
+                         n.stringArg, childIds, key, false, 0});
         canonical.emplace(key, id);
         ++counters.nodesCreated;
         return id;
@@ -195,19 +215,108 @@ struct OntoSceneCompiler {
         }
         return repaired;
     }
+
+    bool rebuildUnionSupportProof(
+        const MathNode& rootSource,
+        const MathNode& leftSource,
+        const MathNode& rightSource,
+        const MathNode& sharedLeftSource,
+        const MathNode& sharedRightSource,
+        const MathNode& leftBiasSource,
+        const MathNode& rightBiasSource) {
+        const uint32_t rootId = sourceToCompiled.at(&rootSource);
+        const uint32_t leftId = sourceToCompiled.at(&leftSource);
+        const uint32_t rightId = sourceToCompiled.at(&rightSource);
+        const uint32_t sharedLeftId = sourceToCompiled.at(&sharedLeftSource);
+        const uint32_t sharedRightId = sourceToCompiled.at(&sharedRightSource);
+        const uint32_t leftBiasId = sourceToCompiled.at(&leftBiasSource);
+        const uint32_t rightBiasId = sourceToCompiled.at(&rightBiasSource);
+
+        CompiledNode& root = nodes[rootId];
+        root.supportProofValid = false;
+
+        if (root.op != MathNode::Op::Union ||
+            root.children.size() != 2 ||
+            root.children[0] != leftId ||
+            root.children[1] != rightId)
+            return false;
+
+        const CompiledNode& left = nodes[leftId];
+        const CompiledNode& right = nodes[rightId];
+        if (left.op != MathNode::Op::Sub ||
+            right.op != MathNode::Op::Sub ||
+            left.children.size() != 2 ||
+            right.children.size() != 2)
+            return false;
+
+        // The theorem is derived from canonical compiled semantic identity:
+        // both subtraction branches must consume the same compiled shared
+        // subtree. Source-object pointer equality is neither required nor used.
+        if (sharedLeftId != sharedRightId ||
+            left.children[0] != sharedLeftId ||
+            right.children[0] != sharedRightId ||
+            left.children[1] != leftBiasId ||
+            right.children[1] != rightBiasId)
+            return false;
+
+        const CompiledNode& leftBias = nodes[leftBiasId];
+        const CompiledNode& rightBias = nodes[rightBiasId];
+        if (leftBias.op != MathNode::Op::ScalarLeaf ||
+            rightBias.op != MathNode::Op::ScalarLeaf)
+            return false;
+
+        const std::map<std::string, double> noVars;
+        const auto leftValue = leftBias.scalarForm.evaluate(noVars);
+        const auto rightValue = rightBias.scalarForm.evaluate(noVars);
+        if (!leftValue.has_value() || !rightValue.has_value())
+            return false;
+
+        // min(shared-a, shared-b): the larger bias always yields the smaller
+        // result for every runtime value of shared.
+        root.supportWinnerChild =
+            (*leftValue >= *rightValue) ? leftId : rightId;
+        root.supportProofValid = true;
+
+        const MathNode* premises[] = {
+            &rootSource, &leftSource, &rightSource,
+            &sharedLeftSource, &sharedRightSource,
+            &leftBiasSource, &rightBiasSource
+        };
+        for (const MathNode* premise : premises)
+            proofDependents[premise].insert(rootId);
+
+        ++supportProofBuilds;
+        return true;
+    }
+
+    size_t invalidateSupportProofs(
+        const std::unordered_set<const MathNode*>& changedFrontier) {
+        std::unordered_set<uint32_t> invalidatedIds;
+        for (const MathNode* changed : changedFrontier) {
+            auto it = proofDependents.find(changed);
+            if (it == proofDependents.end()) continue;
+            for (uint32_t id : it->second) {
+                if (nodes[id].supportProofValid) {
+                    nodes[id].supportProofValid = false;
+                    invalidatedIds.insert(id);
+                }
+            }
+        }
+        return invalidatedIds.size();
+    }
 };
 
 double evalCompiled(
     const OntoSceneCompiler& compiler, uint32_t id,
     const std::map<std::string, double>& vars,
     std::unordered_map<uint32_t, double>& memo,
-    uint64_t& nodesVisited, uint64_t& cacheHits) {
+    EvalCounters& counters, bool allowSupportProof = false) {
     auto m = memo.find(id);
     if (m != memo.end()) {
-        ++cacheHits;
+        ++counters.cacheHits;
         return m->second;
     }
-    ++nodesVisited;
+    ++counters.nodesVisited;
     const CompiledNode& n = compiler.nodes[id];
     double v = 0.0;
     if (n.op == MathNode::Op::ScalarLeaf) {
@@ -220,10 +329,31 @@ double evalCompiled(
         v = it->second;
     } else {
         assert(n.children.size() == 2);
+
+        // Support is only optimization authority when a valid theorem is
+        // attached to this exact compiled Union node. Invalid/missing proof
+        // falls open to exact evaluation of both children.
+        if (allowSupportProof && n.op == MathNode::Op::Union) {
+            ++counters.supportConsultations;
+            if (n.supportProofValid) {
+                assert(n.supportWinnerChild == n.children[0] ||
+                       n.supportWinnerChild == n.children[1]);
+                ++counters.supportBypasses;
+                v = evalCompiled(
+                    compiler, n.supportWinnerChild, vars, memo,
+                    counters, true);
+                memo[id] = v;
+                return v;
+            }
+            ++counters.supportFallbacks;
+        }
+
         const double a = evalCompiled(
-            compiler, n.children[0], vars, memo, nodesVisited, cacheHits);
+            compiler, n.children[0], vars, memo,
+            counters, allowSupportProof);
         const double b = evalCompiled(
-            compiler, n.children[1], vars, memo, nodesVisited, cacheHits);
+            compiler, n.children[1], vars, memo,
+            counters, allowSupportProof);
         if (n.op == MathNode::Op::Add) v = a + b;
         else if (n.op == MathNode::Op::Sub) v = a - b;
         else if (n.op == MathNode::Op::Scale) v = a * b;
@@ -258,6 +388,7 @@ int main() {
     MathNode* sharedA = sdfA->children[0].get();
     MathNode* sharedB = sdfB->children[0].get();
     MathNode* biasA = sdfA->children[1].get();
+    MathNode* biasB = sdfB->children[1].get();
 
     OntoSceneCompiler compiler;
     CompileCounters initialCompile;
@@ -278,6 +409,36 @@ int main() {
     const size_t semanticNodesBeforeAmbient = compiler.nodes.size();
     const size_t canonicalNodesBeforeAmbient = compiler.canonical.size();
 
+    // Real-OntoMath Rung 1E: derive a conservative Union support theorem from
+    // canonical compiled identity, not source pointer identity or print text.
+    assert(compiler.rebuildUnionSupportProof(
+        *scene, *sdfA, *sdfB, *sharedA, *sharedB, *biasA, *biasB));
+    assert(compiler.supportProofBuilds == 1);
+    assert(compiler.nodes[root].supportProofValid);
+    assert(compiler.nodes[root].supportWinnerChild ==
+           compiler.sourceToCompiled.at(sdfB));
+    assert(compiler.proofDependents.at(biasA).count(root) == 1);
+    assert(compiler.proofDependents.at(biasB).count(root) == 1);
+
+    std::unordered_map<uint32_t, double> initialExactMemo;
+    EvalCounters initialExactEval;
+    const double initialExactCompiled =
+        evalCompiled(compiler, root, {{"x", 7.0}},
+                     initialExactMemo, initialExactEval, false);
+
+    std::unordered_map<uint32_t, double> initialSupportMemo;
+    EvalCounters initialSupportEval;
+    const double initialSupportCompiled =
+        evalCompiled(compiler, root, {{"x", 7.0}},
+                     initialSupportMemo, initialSupportEval, true);
+    assert(std::abs(initialExactCompiled - initialSupportCompiled) < 1e-12);
+    assert(initialSupportEval.supportConsultations == 1);
+    assert(initialSupportEval.supportBypasses == 1);
+    assert(initialSupportEval.supportFallbacks == 0);
+    assert(initialSupportEval.nodesVisited < initialExactEval.nodesVisited);
+    const uint64_t initialSupportNodesAvoided =
+        initialExactEval.nodesVisited - initialSupportEval.nodesVisited;
+
     // Runtime/camera sample changes are evaluation state, not authored semantic
     // changes. Exercise several samples while explicitly invalidating the value
     // memo between samples. The semantic DAG and canonical identities must stay
@@ -289,20 +450,37 @@ int main() {
     size_t ambientCacheEntriesInvalidated = 0;
     uint64_t ambientNodesVisited = 0;
     uint64_t ambientCacheHits = 0;
+    uint64_t ambientSupportBypasses = 0;
+    uint64_t ambientSupportNodesAvoided = 0;
     for (double x : ambientSamples) {
         if (!ambientMemo.empty()) {
             ambientCacheEntriesInvalidated += ambientMemo.size();
             ambientMemo.clear();
         }
-        uint64_t visited = 0, cacheHits = 0;
         const double exact = exactMathNode(*scene, x);
+
+        EvalCounters exactEval;
         const double compiled =
             evalCompiled(compiler, root, {{"x", x}},
-                         ambientMemo, visited, cacheHits);
+                         ambientMemo, exactEval, false);
         assert(std::abs(exact - compiled) < 1e-12);
-        assert(cacheHits > 0);
-        ambientNodesVisited += visited;
-        ambientCacheHits += cacheHits;
+        assert(exactEval.cacheHits > 0);
+        ambientNodesVisited += exactEval.nodesVisited;
+        ambientCacheHits += exactEval.cacheHits;
+
+        std::unordered_map<uint32_t, double> supportMemo;
+        EvalCounters supportEval;
+        const double supported =
+            evalCompiled(compiler, root, {{"x", x}},
+                         supportMemo, supportEval, true);
+        assert(std::abs(exact - supported) < 1e-12);
+        assert(supportEval.supportConsultations == 1);
+        assert(supportEval.supportBypasses == 1);
+        assert(supportEval.supportFallbacks == 0);
+        assert(supportEval.nodesVisited < exactEval.nodesVisited);
+        ++ambientSupportBypasses;
+        ambientSupportNodesAvoided +=
+            exactEval.nodesVisited - supportEval.nodesVisited;
 
         assert(compiler.nodes.size() == semanticNodesBeforeAmbient);
         assert(compiler.canonical.size() == canonicalNodesBeforeAmbient);
@@ -313,8 +491,11 @@ int main() {
                sharedCompiledBefore);
         assert(compiler.sourceToCompiled.at(sdfB) ==
                sdfBCompiledBefore);
+        assert(compiler.nodes[root].supportProofValid);
+        assert(compiler.supportProofBuilds == 1);
     }
     assert(ambientCacheEntriesInvalidated > 0);
+    assert(ambientSupportBypasses == ambientSamples.size());
 
     const size_t compiledNodesBeforeRepair = compiler.nodes.size();
 
@@ -342,19 +523,58 @@ int main() {
     assert(repairCounters.sourceNodesVisited == 3);
     assert(repairCounters.nodesCreated == 3);
 
+    const size_t supportProofsInvalidated =
+        compiler.invalidateSupportProofs(repairedSources);
+    assert(supportProofsInvalidated == 1);
+    assert(!compiler.nodes[root].supportProofValid);
+
     const uint32_t repairedRoot =
         compiler.sourceToCompiled.at(scene.get());
     const double exactAfter = exactMathNode(*scene, 7.0);
+
+    // The newly repaired root has no support theorem yet. Enabling the support
+    // road must therefore fall open to full exact compiled evaluation.
+    std::unordered_map<uint32_t, double> fallbackMemo;
+    EvalCounters fallbackEval;
+    const double fallbackCompiled =
+        evalCompiled(compiler, repairedRoot, {{"x", 7.0}},
+                     fallbackMemo, fallbackEval, true);
+    assert(std::abs(exactAfter - fallbackCompiled) < 1e-12);
+    assert(fallbackEval.supportConsultations == 1);
+    assert(fallbackEval.supportBypasses == 0);
+    assert(fallbackEval.supportFallbacks == 1);
+
     std::unordered_map<uint32_t, double> repairedMemo;
-    uint64_t repairedVisited = 0, repairedCacheHits = 0;
+    EvalCounters repairedEval;
     const double compiledAfter =
         evalCompiled(compiler, repairedRoot, {{"x", 7.0}},
-                     repairedMemo, repairedVisited, repairedCacheHits);
+                     repairedMemo, repairedEval, false);
     assert(std::abs(exactAfter - compiledAfter) < 1e-12);
 
     const size_t newCompiledNodes =
         compiler.nodes.size() - compiledNodesBeforeRepair;
     assert(newCompiledNodes == 3);
+
+    // Re-prove only after the authored premise mutation. The exact same theorem
+    // now selects sdfA because biasA=17 exceeds biasB=11.
+    assert(compiler.rebuildUnionSupportProof(
+        *scene, *sdfA, *sdfB, *sharedA, *sharedB, *biasA, *biasB));
+    assert(compiler.supportProofBuilds == 2);
+    assert(compiler.nodes[repairedRoot].supportWinnerChild ==
+           compiler.sourceToCompiled.at(sdfA));
+
+    std::unordered_map<uint32_t, double> postRepairSupportMemo;
+    EvalCounters postRepairSupportEval;
+    const double postRepairSupported =
+        evalCompiled(compiler, repairedRoot, {{"x", 7.0}},
+                     postRepairSupportMemo, postRepairSupportEval, true);
+    assert(std::abs(exactAfter - postRepairSupported) < 1e-12);
+    assert(postRepairSupportEval.supportConsultations == 1);
+    assert(postRepairSupportEval.supportBypasses == 1);
+    assert(postRepairSupportEval.supportFallbacks == 0);
+    assert(postRepairSupportEval.nodesVisited < repairedEval.nodesVisited);
+    const uint64_t postRepairSupportNodesAvoided =
+        repairedEval.nodesVisited - postRepairSupportEval.nodesVisited;
 
     // A second authored mutation returns the same source leaf to its original
     // semantics. This must repair the same three-source frontier but reuse the
@@ -382,45 +602,89 @@ int main() {
     assert(compiler.sourceToCompiled.at(sdfB) ==
            sdfBCompiledBefore);
 
+    const size_t revertSupportProofsInvalidated =
+        compiler.invalidateSupportProofs(revertedSources);
+    assert(revertSupportProofsInvalidated == 1);
+
+    // Returning to previously-seen semantics reuses the original canonical root,
+    // but its stale theorem was invalidated. Rebuild that proof rather than
+    // silently reviving old derived state.
+    assert(compiler.rebuildUnionSupportProof(
+        *scene, *sdfA, *sdfB, *sharedA, *sharedB, *biasA, *biasB));
+    assert(compiler.supportProofBuilds == 3);
+    assert(compiler.nodes[root].supportWinnerChild ==
+           compiler.sourceToCompiled.at(sdfB));
+
     uint64_t revertParitySamples = 0;
+    uint64_t revertSupportBypasses = 0;
     for (double x : ambientSamples) {
         std::unordered_map<uint32_t, double> memo;
-        uint64_t nodesVisited = 0, cacheHits = 0;
+        EvalCounters exactEval;
         const double exact = exactMathNode(*scene, x);
         const double compiled =
             evalCompiled(compiler, root, {{"x", x}},
-                         memo, nodesVisited, cacheHits);
+                         memo, exactEval, false);
         assert(std::abs(exact - compiled) < 1e-12);
+
+        std::unordered_map<uint32_t, double> supportMemo;
+        EvalCounters supportEval;
+        const double supported =
+            evalCompiled(compiler, root, {{"x", x}},
+                         supportMemo, supportEval, true);
+        assert(std::abs(exact - supported) < 1e-12);
+        assert(supportEval.supportConsultations == 1);
+        assert(supportEval.supportBypasses == 1);
+        assert(supportEval.supportFallbacks == 0);
+        ++revertSupportBypasses;
         ++revertParitySamples;
     }
     assert(revertParitySamples == ambientSamples.size());
+    assert(revertSupportBypasses == ambientSamples.size());
 
     std::printf(
         "SCENE_SPATIAL_ONTOMATH_SYNTHESIS parity=1 "
         "source_nodes=%zu compiled_nodes_initial=%zu canonical_hits=%llu "
         "source_nodes_visited_initial=%llu shared_subtree_identity=1 "
+        "support_proof_from_canonical_identity=1 support_builds=%llu "
+        "initial_support_bypasses=%llu initial_support_nodes_avoided=%llu "
         "ambient_samples=%zu ambient_cache_entries_invalidated=%zu "
         "ambient_nodes_visited=%llu ambient_cache_hits=%llu "
-        "semantic_nodes_rebuilt_for_ambient=0 "
+        "ambient_support_bypasses=%llu ambient_support_nodes_avoided=%llu "
+        "semantic_nodes_rebuilt_for_ambient=0 support_proofs_rebuilt_for_ambient=0 "
         "mutation_biasA_to17=1 repaired_source_nodes=%zu repair_source_visits=%llu "
         "new_compiled_nodes=%zu shared_compiled_id_preserved=1 "
         "sdfB_compiled_id_preserved=1 whole_scene_rescan_for_repair=0 "
+        "support_proofs_invalidated=%zu invalid_support_fallbacks=%llu "
+        "post_repair_support_bypasses=%llu post_repair_support_nodes_avoided=%llu "
         "mutation_biasA_revert=1 revert_source_visits=%llu "
         "revert_nodes_created=%llu revert_canonical_hits=%llu "
+        "revert_support_proofs_invalidated=%zu revert_support_bypasses=%llu "
         "prior_artifact_reused_on_revert=1 revert_parity_samples=%llu "
-        "pretty_print_identity=0 production_wgsl_changed=0\n",
+        "proof_invalidation_global_scan=0 pretty_print_identity=0 "
+        "production_wgsl_changed=0\n",
         sourceNodes, compiledNodesBeforeRepair,
         static_cast<unsigned long long>(initialCompile.canonicalHits),
         static_cast<unsigned long long>(initialCompile.sourceNodesVisited),
+        static_cast<unsigned long long>(compiler.supportProofBuilds),
+        static_cast<unsigned long long>(initialSupportEval.supportBypasses),
+        static_cast<unsigned long long>(initialSupportNodesAvoided),
         ambientSamples.size(), ambientCacheEntriesInvalidated,
         static_cast<unsigned long long>(ambientNodesVisited),
         static_cast<unsigned long long>(ambientCacheHits),
+        static_cast<unsigned long long>(ambientSupportBypasses),
+        static_cast<unsigned long long>(ambientSupportNodesAvoided),
         repairedSources.size(),
         static_cast<unsigned long long>(repairCounters.sourceNodesVisited),
         newCompiledNodes,
+        supportProofsInvalidated,
+        static_cast<unsigned long long>(fallbackEval.supportFallbacks),
+        static_cast<unsigned long long>(postRepairSupportEval.supportBypasses),
+        static_cast<unsigned long long>(postRepairSupportNodesAvoided),
         static_cast<unsigned long long>(revertCounters.sourceNodesVisited),
         static_cast<unsigned long long>(revertCounters.nodesCreated),
         static_cast<unsigned long long>(revertCounters.canonicalHits),
+        revertSupportProofsInvalidated,
+        static_cast<unsigned long long>(revertSupportBypasses),
         static_cast<unsigned long long>(revertParitySamples));
     return 0;
 }
