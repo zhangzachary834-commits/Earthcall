@@ -90,6 +90,14 @@ struct PhaseExpressionLayout {
     std::string error;
 };
 
+struct EmissionExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
+    bool readsOmega = false;
+    bool ok = true;
+    std::string error;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -149,7 +157,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* extinctionExpr = nullptr,
                 const OntoMath::Piecewise* scatteringExpr = nullptr,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                const OntoMath::Piecewise* phaseExpr = nullptr);
+                const OntoMath::Piecewise* phaseExpr = nullptr,
+                const OntoMath::Piecewise* emissionExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -166,7 +175,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* extinctionExpr = nullptr,
                              const OntoMath::Piecewise* scatteringExpr = nullptr,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                             const OntoMath::Piecewise* phaseExpr = nullptr);
+                             const OntoMath::Piecewise* phaseExpr = nullptr,
+                             const OntoMath::Piecewise* emissionExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -209,6 +219,10 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 
+// V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
+// radiance. omega is world-space sample -> eye in an emission-owned context.
+EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr);
+
 // Volumetric V0c: compile one authored density structure into a dedicated
 // depth-aware volume-composite shader. This is intentionally separate from
 // drawImplicit: a participating medium is not a hard surface and must not own
@@ -217,15 +231,17 @@ Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr = nullptr,
                       const OntoMath::Piecewise* scatteringExpr = nullptr,
                       const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                      const OntoMath::Piecewise* phaseExpr = nullptr);
+                      const OntoMath::Piecewise* phaseExpr = nullptr,
+                      const OntoMath::Piecewise* emissionExpr = nullptr);
 
 // Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s,
-// C_v and Phi numeric parameter slots without regenerating shader source when
-// structure is unchanged.
+// C_v, Phi and E_v numeric parameter slots without regenerating shader source
+// when structure is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
                                    const OntoMath::Piecewise* extinctionExpr = nullptr,
                                    const OntoMath::Piecewise* scatteringExpr = nullptr,
                                    const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                                   const OntoMath::Piecewise* phaseExpr = nullptr);
+                                   const OntoMath::Piecewise* phaseExpr = nullptr,
+                                   const OntoMath::Piecewise* emissionExpr = nullptr);
 
 } // namespace sdfwgsl
