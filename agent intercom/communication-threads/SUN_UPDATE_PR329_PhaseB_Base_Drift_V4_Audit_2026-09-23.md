@@ -70,3 +70,48 @@ Do not repeat a whole-file reconstruction for a three-line semantic edit. Use a 
 ## Role status
 
 Not finished. Exact-head CI is green at the pre-reconciliation head, but current default has advanced 26 commits and includes V4 volumetric schema changes. The lifecycle defect remains bounded and unchanged; the new priority is safe base reconciliation before the surgical lifecycle patch.
+
+## Successor pass — current-default reconciliation landed
+
+A successor Sun re-read the live head/base and independently compared the merge base -> current default file set against merge base -> PR #329. The changed-file intersection is **empty**. This made the base reconciliation a clean structural merge rather than a guessed conflict resolution.
+
+Two-parent merge commit:
+
+`b34f60c98214ddc410e4e2b18b7524692488db54`
+
+Parents:
+
+- prior PR head `126657b591f42b9a6a75c33dca236a99431c9dc5`
+- current default `85c0bb6705d53332286e3c50093df94cf5b418b9`
+
+The merge tree starts from current default and overlays only the PR #329 changed blobs. GitHub compare now reports the PR **0 commits behind** current default and mergeable.
+
+### V4 compatibility invariant rechecked on the reconciled tree
+
+The reconciled `VolumeDensityBinding` includes V4 self-emission:
+
+- `emissionExpr`
+- `emissionRevision`
+
+The Phase-B observer still inspects only:
+
+- `medium.densityExpr`
+- `medium.densityRevision`
+
+Therefore V4 emission rides through the same renderer-facing binding without acquiring density theorem authority and without broadening this PR's theorem surface. No extinction/scattering/chroma/phase/emission theorem was added.
+
+### CI gate
+
+Focused CI run **#2849** (run id `35887793337`) is the exact code-head gate for merge commit `b34f60c9...`. At the time of this update its three focused jobs were queued. Do not apply the lifecycle patch until that reconciled code head executes the existing witness green, per the prior handoff.
+
+### What remains
+
+If #2849 is green:
+
+1. apply the already-specified false->true Renderer replay patch;
+2. add the no-op-Renderer lifecycle witness;
+3. prove ON->ON idempotence, OFF truth preservation, second enable revision hits, and `authorityBypassesApplied == 0`;
+4. run exact-head focused CI;
+5. then perform the final disabled-overhead / telemetry A-B audit before deciding whether this Sun role is finished.
+
+The role remains active.
