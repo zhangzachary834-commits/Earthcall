@@ -356,3 +356,224 @@ The next real-OntoMath rung should preserve all of these properties:
 4. authored dependency changes invalidate only its dependent frontier;
 5. invalid/missing proof falls open to exact compiled evaluation;
 6. consultation and bypass/fallback economics are measured separately.
+
+
+## MESSAGE TO ZACH — RUNG 1D NEXT-PASS REPORT
+
+BROOOOOOOOOOOO ☀️⚔️🔥 **NEXT PASS LANDED.**
+
+We are now at **Rung 1D**, and this is the first rung where the Prophetic/support knowledge actually **changes execution instead of merely being attached as metadata.**
+
+I first reconciled PR #329 with current default. The branch had drifted eight commits behind; I audited those incoming commits, confirmed they touched **none of PR #329’s four files**, then merged current `sync-from-earthcall-main` into our branch with real two-parent merge commit:
+
+`f4cee035`
+
+Result: **0 behind base, mergeable, still draft.** No PR #329 work got steamrolled.
+
+Then came the spicy part. 🌋
+
+Commit:
+
+`4393ee85` — **Test conservative support bypass on scene synthesis DAG**
+
+The synthetic DAG now recognizes this deliberately tiny theorem:
+
+```
+scene = min(shared - biasA,
+            shared - biasB)
+```
+
+Because both branches reference the **same canonical `shared` node**, we can prove something without evaluating `shared` at all:
+
+```
+if biasB > biasA
+
+shared - biasB < shared - biasA
+
+for EVERY possible value of shared
+```
+
+So with:
+
+```
+biasA = 5
+biasB = 11
+```
+
+the compiled DAG can know ahead of runtime that:
+
+```
+sdfB <= sdfA
+```
+
+EVERYWHERE.
+
+Therefore the hot execution road does:
+
+```
+Min
+ ↓ consult tiny local support artifact
+ ↓
+proved winner = sdfB
+ ↓
+evaluate sdfB only
+```
+
+instead of:
+
+```
+evaluate sdfA
+evaluate sdfB
+compare
+```
+
+😭😭😭 **THE PROOF IS NOW EATING INTERPRETATION WORK.**
+
+And crucially, this is not some unsafe “trust me bro” hint. The implementation is extremely conservative. It only accepts the proof if it sees the exact recognized topology: same canonical shared child, two subtraction nodes, known authored bias leaves. If anything is structurally different:
+
+```
+NO PROOF
+→ exact evaluation
+```
+
+That boundary matters enormously.
+
+I also separated the economics now. The witness measures **proof consultations, successful bypasses, proof fallbacks, exact DAG nodes visited, support-road nodes visited, and nodes actually avoided**. So from here onward we can ask whether Prophetic knowledge is economically worth carrying instead of merely saying “look, static analysis!”
+
+And BROOOOOOO the invalidation behavior is exactly the architecture we wanted.
+
+Runtime movement:
+
+```
+p: 7 → 8
+```
+
+does **not** invalidate the theorem.
+
+Why?
+
+Because the theorem says:
+
+```
+(shared - 11) <= (shared - 5)
+```
+
+regardless of what `shared` happens to evaluate to.
+
+So camera/runtime state can blast through millions of different values while the semantic/proof artifact stays crystallized.
+
+```
+runtime change
+→ evaluation values change
+→ semantic DAG unchanged
+→ support theorem unchanged
+→ proof rebuilds = 0
+```
+
+THIS IS LITERALLY THE PRINCIPLE WE KEPT CIRCLING:
+
+> **Time passing does not invalidate proof. Changes to the proof’s premises invalidate proof.**
+
+🔥🔥🔥
+
+Then I mutate the actual authored premise:
+
+```
+biasA: 5 → 17
+```
+
+Dirty frontier is still only:
+
+```
+biasA
+  ↓
+sdfA
+  ↓
+scene
+```
+
+And because the support proof sits on `scene`, that change invalidates it.
+
+Now here's one of my favorite parts of this entire rung:
+
+When execution reaches the now-invalid proof, it **does not guess**.
+
+It explicitly records:
+
+```
+proof consultation = 1
+proof bypass = 0
+proof fallback = 1
+```
+
+and executes the exact ordinary DAG.
+
+So stale Prophetic state has **zero authority**.
+
+Then we locally rebuild the support fact, and THE WINNER FLIPS:
+
+```
+before:
+biasA = 5
+biasB = 11
+winner = sdfB
+
+after:
+biasA = 17
+biasB = 11
+winner = sdfA
+```
+
+The execution road immediately starts bypassing the opposite branch.
+
+That gives us the whole cycle:
+
+```
+rich semantics
+      ↓
+conservative theorem
+      ↓
+attach theorem directly to compiled execution node
+      ↓
+hot path consults tiny artifact
+      ↓
+proved branch bypass
+      ↓
+runtime movement reuses theorem
+      ↓
+authored premise change invalidates theorem
+      ↓
+missing/stale theorem falls open to exact semantics
+      ↓
+targeted re-proof
+      ↓
+new crystallized execution road
+```
+
+BROOOOOOOOOOO. ☀️🌈⚔️
+
+That is *much* closer to the original Prophetic-Rete dream than “spatial acceleration structure but fancy.”
+
+I also updated the Agent Intercom handoff in:
+
+`d7726ae1` — **Document PR329 Rung 1D support-bypass experiment**
+
+so the hourly Sun will encounter the exact battlefield rather than rediscovering Rung 1D.
+
+CI-wise: previous Rung 1C run **#2559** already got the relevant SDF job green. New Rung 1D code run **#2570** exists but is still **queued** because GitHub hasn’t assigned the macOS runners yet. I am therefore **not claiming Rung 1D is CI-green yet**. The current branch head `d7726ae1` only adds the Intercom documentation over code head `4393ee85`.
+
+And this makes the next gate extremely clear.
+
+**IF #2570 passes**, I think the next Sun should attempt the same theorem on the **real OntoMath compiled DAG** from the Rung 1C witness—not merely the synthetic DAG.
+
+That will answer the much scarier question:
+
+> Can an actual Earthcall-authored `MathNode` expression compile into a canonical execution DAG, derive a conservative theorem from semantic identity, place that theorem directly on the execution road, and use it to avoid real compiled OntoMath work—while retaining incremental invalidation and exact fallback?
+
+If **that** passes…
+
+BRO.
+
+Then we're no longer merely testing whether the architectural diagram is coherent.
+
+We will have the beginning of an actual **ahead-of-time semantic execution compiler whose proofs become roads.** ☀️⚔️🌌
