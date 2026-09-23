@@ -86,30 +86,31 @@ This preserves:
 
 and establishes the next adapter requirement: add a typed vec3 lane rather than borrowing scalar compatibility behavior.
 
-## Important limitation / CI state
+## CI gate now wired
 
-CMake automatically discovers every `tests/*.cpp` target, so the new witness has a build target named `rendered_field_piecewise_synthesis_test` without a CMakeLists edit.
+The prior limitation is closed by commit `cac4bc03aea28d0e9ed032c6df6a614b3947088c`.
 
-However, the focused CI workflow has not yet been amended to explicitly build/run this new target. Therefore this pass is **implemented and targeted-audited, but Rung 1G is NOT yet CI-green**.
+`.github/workflows/earthcall-ci.yml` now explicitly builds and executes:
 
-Do not claim Rung 1G green until an exact-head workflow explicitly builds and executes `rendered_field_piecewise_synthesis_test` successfully.
+`rendered_field_piecewise_synthesis_test`
 
-The live exact-head CI that existed before this pass cannot prove Rung 1G because the test did not exist on that head.
+inside the existing `SDF range-proxy verification (macOS)` proof-witness job, adjacent to the two earlier Scene-Spatial synthesis witnesses.
 
-## Canonical movement during this pass
+This matters because workflow run #2632 was fully green on the previous head, but it did not contain the new Piecewise target and therefore could not establish Rung 1G. Do not use #2632 as Rung 1G execution evidence.
 
-Canonical advanced four commits beyond `c18802e7` to `3e46af88ed9986a727b8696598deac3b9917ed29`.
+The next exact-head workflow after this documentation-only successor is the authoritative Rung 1G gate.
 
-Those incoming changes are disjoint from PR #329 and consist of:
+## Canonical reconciliation completed
 
-- three architecture/interrelations documents;
-- Borealis Sanctuary authored save/zone assets;
-- Borealis scratch verification/build helpers;
-- Borealis validation test.
+The four previously-audited canonical commits from `c18802e7` through `3e46af88ed9986a727b8696598deac3b9917ed29` were disjoint from PR #329. Their changed files are limited to three architecture/interrelation docs plus Borealis Sanctuary authored assets/helpers/validation.
 
-No incoming file overlaps this PR's compiler witnesses, plans, workflow, or Intercom threads.
+They were reconciled with a real two-parent merge commit:
 
-PR #329 is therefore currently behind canonical by four disjoint commits and GitHub reports it non-mergeable until reconciliation. Reconcile before judging final CI/landing state.
+`921fc8b1f42a4faa953500c8d717bc291444b749`
+
+The merge tree was built from canonical `3e46af88` and overlaid only PR #329's twelve changed files, preserving both sides rather than snapshotting away incoming default files.
+
+After reconciliation, judge CI only from the current head or a documentation-only successor.
 
 ## Full rendered-field plan status
 
@@ -123,13 +124,12 @@ The radiance and volumetric plans were also linked/corrected in Rung 1F. Do not 
 
 ## Next bounded actions
 
-1. Re-read live head before every write; multiple Suns are overlapping this branch.
-2. Reconcile the four disjoint canonical commits.
-3. Wire `rendered_field_piecewise_synthesis_test` into the focused SDF/rendered-field CPU witness job.
-4. Run exact-head CI and fix only concrete compiler/test failures.
-5. After scalar Piecewise CI is green, add typed vec3 `C_v` support without scalar coercion.
-6. Add an actual `t`-consuming Piecewise expression and prove runtime Timeline movement changes values without semantic rebuild.
-7. Add channel-scoped proof records at the Piecewise vessel level, not merely the child MathNode level.
-8. Then measure compile/proof cost versus repeated evaluation before selecting the first production A/B lane.
+1. Inspect the exact-head workflow triggered after `921fc8b1` / this documentation successor.
+2. If red, fix only the concrete Piecewise build/runtime failure.
+3. If green, record Rung 1G scalar Piecewise as CI-green.
+4. Then add typed vec3 `C_v` support without scalar coercion.
+5. Add an actual `t`-consuming Piecewise expression and prove runtime Timeline movement changes values without semantic rebuild.
+6. Add channel-scoped proof records at the Piecewise vessel level, not merely the child MathNode level.
+7. Then measure compile/proof cost versus repeated evaluation before selecting the first production A/B lane.
 
 No production renderer/WGSL code was changed in this pass.
