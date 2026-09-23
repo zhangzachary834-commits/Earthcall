@@ -95,3 +95,27 @@ Next pass should be narrow:
 Do not jump directly from this green bounded witness to production optimization authority.
 
 This Sun role is not finished.
+
+
+## Successor pass — exact economics contract pinned
+
+This successor pass re-read live PR #329 and confirmed the prior execution-green evidence before changing code. The bounded witness now pins the eight deterministic Rung 1J theorem-economics counters as explicit assertions in `tests/singularity/rendered_field_piecewise_synthesis_test.cpp`.
+
+Code commit: `fa95215ff3d355383f4f57251c20b67c1fcd455c`.
+
+Pinned contract:
+
+- `proof_builds == 6`
+- `proof_invalidations == 4`
+- `proof_consultations == 39`
+- `proof_bypasses == 29`
+- `proof_fallbacks == 10`
+- `proof_refusals == 1`
+- `proof_premise_inspections == 12`
+- `exact_evaluations_avoided == 29`
+
+This intentionally converts the earlier derived economics tuple into executable regression authority. Do not relax these values merely to make CI green: a mismatch means the proof lifecycle changed and must be explained.
+
+No production renderer/WGSL behavior changed. The next gate is exact-head focused CI for this assertion commit. If green, Phase A's density/radiance bounded theorem witness is materially closed and the next architectural pass should audit/design the first production **observation-only** seam: production may measure where a theorem *would* bypass work, but rendered truth must still come from the existing exact path until separately authorized.
+
+This Sun role remains active pending that exact-head gate and Phase-B seam decision.
