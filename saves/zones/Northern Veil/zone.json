@@ -337,9 +337,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "variable": "x",
                                                                 "scale": 0.12,
-                                                                "shift": 0
+                                                                "shift": 0,
+                                                                "var": "x"
                                                               }
                                                             ]
                                                           }
@@ -358,9 +358,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "variable": "x",
                                                             "scale": 0.24,
-                                                            "shift": 0
+                                                            "shift": 0,
+                                                            "var": "x"
                                                           }
                                                         ]
                                                       }
@@ -441,9 +441,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "variable": "x",
                                         "scale": 1.4,
-                                        "shift": 0
+                                        "shift": 0,
+                                        "var": "x"
                                       }
                                     ]
                                   }
@@ -769,9 +769,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -820,9 +820,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -871,9 +871,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -1146,9 +1146,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "variable": "x",
                                                                 "scale": 0.14,
-                                                                "shift": 0
+                                                                "shift": 0,
+                                                                "var": "x"
                                                               }
                                                             ]
                                                           }
@@ -1167,9 +1167,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "variable": "x",
                                                             "scale": 0.28,
-                                                            "shift": 0
+                                                            "shift": 0,
+                                                            "var": "x"
                                                           }
                                                         ]
                                                       }
@@ -1250,9 +1250,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "variable": "x",
                                         "scale": 1.6,
-                                        "shift": 0
+                                        "shift": 0,
+                                        "var": "x"
                                       }
                                     ]
                                   }
@@ -1578,9 +1578,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -1629,9 +1629,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -1680,9 +1680,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -1955,9 +1955,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "variable": "x",
                                                                 "scale": 0.1,
-                                                                "shift": 0
+                                                                "shift": 0,
+                                                                "var": "x"
                                                               }
                                                             ]
                                                           }
@@ -1976,9 +1976,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "variable": "x",
                                                             "scale": 0.2,
-                                                            "shift": 0
+                                                            "shift": 0,
+                                                            "var": "x"
                                                           }
                                                         ]
                                                       }
@@ -2059,9 +2059,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "variable": "x",
                                         "scale": 0.8,
-                                        "shift": 0
+                                        "shift": 0,
+                                        "var": "x"
                                       }
                                     ]
                                   }
@@ -2317,9 +2317,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -2368,9 +2368,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -2419,9 +2419,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -2694,9 +2694,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "variable": "x",
                                                                 "scale": 0.15,
-                                                                "shift": 0
+                                                                "shift": 0,
+                                                                "var": "x"
                                                               }
                                                             ]
                                                           }
@@ -2715,9 +2715,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "variable": "x",
                                                             "scale": 0.3,
-                                                            "shift": 0
+                                                            "shift": 0,
+                                                            "var": "x"
                                                           }
                                                         ]
                                                       }
@@ -2798,9 +2798,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "variable": "x",
                                         "scale": 1.8,
-                                        "shift": 0
+                                        "shift": 0,
+                                        "var": "x"
                                       }
                                     ]
                                   }
@@ -3126,9 +3126,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -3177,9 +3177,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
@@ -3228,9 +3228,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0
+                                    "shift": 0,
+                                    "var": "t"
                                   }
                                 ]
                               }
