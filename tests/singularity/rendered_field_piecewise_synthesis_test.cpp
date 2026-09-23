@@ -13,7 +13,6 @@
 namespace {
 using OntoMath::MathNode;
 using OntoMath::Piecewise;
-using OntoMath::PropertyValue;
 using OntoMath::ScalarForm;
 
 enum class Channel { SourceRho, MediumDensity, MediumExtinction, MediumScattering, MediumChroma };
