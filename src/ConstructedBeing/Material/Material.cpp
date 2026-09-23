@@ -10,6 +10,22 @@
 using json = nlohmann::json;
 
 namespace {
+
+bool materialRegisteredPropertyNeedsEnvelope(const std::string& name) {
+    // Every current registered Material path is a projection of this codec's
+    // canonical fields or the canonical faceTextures payload. Keep one truth.
+    return name != "baseColor" &&
+           name != "opacity" &&
+           name != "shininess" &&
+           name != "specular" &&
+           name != "ambient" &&
+           name != "diffuse" &&
+           name != "colorExpr" &&
+           name != "textureResolution" &&
+           name != "textureWidth" &&
+           name != "textureHeight";
+}
+
 // Paint lives on the Material being. Object serialization used to carry
 // faceTextures, then paint moved here and the pixels stopped round-tripping
 // — a checkerboard authored into a save loaded as a blank face. The encode
@@ -240,7 +256,8 @@ json Material::toJson() const {
     if (!faceTextures.empty()) {
         j["faceTextures"] = faceTexturesToJson(faceTextures);
     }
-    Singularity::Storage::writeSingularProperties(j, *this);
+    Singularity::Storage::writeSingularProperties(
+        j, *this, materialRegisteredPropertyNeedsEnvelope);
     return j;
 }
 
@@ -267,7 +284,8 @@ Material Material::fromJson(const json& j) {
     if (j.contains("faceTextures")) {
         faceTexturesFromJson(m, j["faceTextures"]);
     }
-    Singularity::Storage::readSingularProperties(j, m);
+    Singularity::Storage::readSingularProperties(
+        j, m, {}, materialRegisteredPropertyNeedsEnvelope);
     return m;
 }
 
