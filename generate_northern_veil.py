@@ -1,0 +1,538 @@
+#!/usr/bin/env python3
+"""
+generate_northern_veil.py
+Generates the 'Northern Veil' zone for Earthcall.
+Showcases landed Volumetric V0-V4 (D, sigma_t, sigma_s, C_v, Phi, E_v).
+"""
+
+import json
+import math
+import os
+
+def scalar_node(val):
+    return {
+        "op": 0,
+        "scalarForm": {
+            "terms": [{
+                "c": float(val),
+                "factors": {}
+            }]
+        }
+    }
+
+def var_node(name):
+    return {
+        "op": 1,
+        "var": str(name)
+    }
+
+def vec3_node(x, y, z):
+    return {
+        "op": 2,
+        "children": [scalar_node(x), scalar_node(y), scalar_node(z)]
+    }
+
+def mul_node(a, b):
+    return {
+        "op": 4,
+        "children": [a, b]
+    }
+
+def add_node(a, b):
+    return {
+        "op": 5,
+        "children": [a, b]
+    }
+
+def scale_node(s, node):
+    return {
+        "op": 6,
+        "children": [scalar_node(s), node]
+    }
+
+def length_node(node):
+    return {
+        "op": 11,
+        "children": [node]
+    }
+
+def div_node(a, b):
+    return {
+        "op": 23,
+        "children": [a, b]
+    }
+
+def cos_node(node):
+    return {
+        "op": 25,
+        "children": [node]
+    }
+
+def clamp_node(val_node, min_val, max_val):
+    return {
+        "op": 26,
+        "children": [val_node, scalar_node(min_val), scalar_node(max_val)]
+    }
+
+def perlin_node(p_node):
+    return {
+        "op": 29,
+        "children": [p_node]
+    }
+
+def piecewise(math_node, var_input="x"):
+    return {
+        "input": var_input,
+        "pieces": [
+            {
+                "hasLo": False,
+                "hasHi": False,
+                "mathNode": math_node
+            }
+        ]
+    }
+
+def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
+    """
+    D(p, t) = peak_d * clamp(1.0 - |z - z_fold| / z_thick, 0, 1) * (0.65 + 0.35 * cos(ray_freq * x)) * (0.7 + 0.3 * cnoise3(noise_scale * p))
+    """
+    # z_term: z - z_fold. In OntoMath, trans on scalarForm gives cos/sin modulation.
+    # We compose: z + c * trans(x)
+    z_offset = {
+        "op": 0,
+        "scalarForm": {
+            "terms": [{
+                "c": float(z_scale),
+                "factors": {},
+                "trans": [{
+                    "kind": 0,
+                    "var": "x",
+                    "scale": 0.12,
+                    "shift": 0.0
+                }]
+            }]
+        }
+    }
+    z_fold_diff = add_node(var_node("z"), z_offset)
+    z_abs = cos_node(z_fold_diff) # smooth cosine ridge envelope
+    envelope = clamp_node(
+        add_node(scalar_node(1.0), div_node(z_abs, scalar_node(z_thick))),
+        0.0, 1.0
+    )
+    
+    # ray fluting: 0.65 + 0.35 * cos(ray_freq * x)
+    ray_flute = add_node(
+        scalar_node(0.65),
+        {
+            "op": 0,
+            "scalarForm": {
+                "terms": [{
+                    "c": 0.35,
+                    "factors": {},
+                    "trans": [{
+                        "kind": 0,
+                        "var": "x",
+                        "scale": float(ray_freq),
+                        "shift": 0.0
+                    }]
+                }]
+            }
+        }
+    )
+    
+    # noise: 0.7 + 0.3 * cnoise3(noise_scale * p)
+    noise_term = add_node(
+        scalar_node(0.7),
+        scale_node(0.3, perlin_node(scale_node(noise_scale, var_node("p"))))
+    )
+    
+    combined = mul_node(envelope, mul_node(ray_flute, noise_term))
+    return scale_node(peak_d, combined)
+
+def make_altitude_extinction(base_ext, top_ext):
+    """
+    sigma_t(p) = base_ext * (1.0 - 0.7 * (y / 10.0))
+    """
+    y_norm = div_node(var_node("y"), scalar_node(12.0))
+    decay = clamp_node(add_node(scalar_node(1.0), scale_node(-0.7, y_norm)), 0.15, 1.0)
+    return scale_node(base_ext, decay)
+
+def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
+    """
+    E_v(p, omega, t) = vec3(r, g, b) * intensity * (0.8 + 0.2 * cos(time_rate * t))
+    """
+    # Base color vector
+    base_color = vec3_node(r, g, b)
+    
+    # Breathing modulation over time
+    time_mod = add_node(
+        scalar_node(0.8),
+        {
+            "op": 0,
+            "scalarForm": {
+                "terms": [{
+                    "c": 0.2,
+                    "factors": {},
+                    "trans": [{
+                        "kind": 0,
+                        "var": "t",
+                        "scale": float(time_rate),
+                        "shift": 0.0
+                    }]
+                }]
+            }
+        }
+    )
+    
+    # scale vector by intensity * time_mod
+    scalar_factor = scale_node(intensity, time_mod)
+    
+    # Multiply vector by scalar: vec3(r * f, g * f, b * f)
+    r_val = mul_node(scalar_node(r), scalar_factor)
+    g_val = mul_node(scalar_node(g), scalar_factor)
+    b_val = mul_node(scalar_node(b), scalar_factor)
+    return {
+        "op": 2,
+        "children": [r_val, g_val, b_val]
+    }
+
+def make_phase_forward(g_val=0.35):
+    """
+    Phi(p, wi, wo) = 1.0 + g * (wi_x * wo_x + wi_y * wo_y + wi_z * wo_z)
+    """
+    # Henyey-Greenstein 1st order: 1.0 + 3.0 * g * dot(wi, wo)
+    dot_x = mul_node(var_node("wi_x"), var_node("wo_x"))
+    dot_y = mul_node(var_node("wi_y"), var_node("wo_y"))
+    dot_z = mul_node(var_node("wi_z"), var_node("wo_z"))
+    dot_term = add_node(dot_x, add_node(dot_y, dot_z))
+    return add_node(scalar_node(1.0), scale_node(3.0 * g_val, dot_term))
+
+def build_zone():
+    spatial_fields = []
+    
+    # 1. Primary Emerald Aurora Curtain (557.7 nm atomic oxygen)
+    curtain_1_density = make_curtain_density(peak_d=1.85, z_scale=2.8, z_thick=1.8, ray_freq=1.2, noise_scale=0.15)
+    curtain_1_extinction = make_altitude_extinction(base_ext=0.42, top_ext=0.08)
+    curtain_1_scattering = scale_node(0.85, scalar_node(1.0))
+    curtain_1_chroma = vec3_node(0.12, 0.98, 0.42)
+    curtain_1_phase = make_phase_forward(0.40)
+    curtain_1_emission = make_emissive_vec3(0.08, 0.96, 0.36, intensity=1.85, time_rate=0.35)
+    
+    spatial_fields.append({
+        "id": "northern_veil.aurora.primary-emerald-curtain",
+        "origin": [0.0, 22.0, 65.0],
+        "scale": [38.0, 16.0, 18.0],
+        "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
+        "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
+        "volumeDensity": piecewise(curtain_1_density),
+        "volumeExtinction": piecewise(curtain_1_extinction),
+        "volumeScattering": piecewise(curtain_1_scattering),
+        "volumeChroma": piecewise(curtain_1_chroma),
+        "volumePhase": piecewise(curtain_1_phase),
+        "volumeEmission": piecewise(curtain_1_emission),
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Primary Emerald Aurora Curtain (557.7nm O-I)"},
+            "aurora.role": {"t": "string", "v": "Dominant Oxygen Green Drapery"},
+            "aurora.spectrum": {"t": "string", "v": "557.7 nm Forbidden Atomic Oxygen Green"},
+            "volumetric.channels": {"t": "string", "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"}
+        }
+    })
+    
+    # 2. Secondary Cyan Ribbon (High altitude N2+ / O2+ ionization)
+    curtain_2_density = make_curtain_density(peak_d=1.45, z_scale=3.4, z_thick=1.2, ray_freq=1.8, noise_scale=0.18)
+    curtain_2_extinction = make_altitude_extinction(base_ext=0.22, top_ext=0.03)
+    curtain_2_scattering = scale_node(0.55, scalar_node(1.0))
+    curtain_2_chroma = vec3_node(0.06, 0.84, 0.98)
+    curtain_2_phase = make_phase_forward(0.25)
+    curtain_2_emission = make_emissive_vec3(0.10, 0.88, 0.98, intensity=1.50, time_rate=0.28)
+    
+    spatial_fields.append({
+        "id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "origin": [14.0, 28.0, 95.0],
+        "scale": [32.0, 14.0, 14.0],
+        "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
+        "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
+        "volumeDensity": piecewise(curtain_2_density),
+        "volumeExtinction": piecewise(curtain_2_extinction),
+        "volumeScattering": piecewise(curtain_2_scattering),
+        "volumeChroma": piecewise(curtain_2_chroma),
+        "volumePhase": piecewise(curtain_2_phase),
+        "volumeEmission": piecewise(curtain_2_emission),
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Secondary Cyan Ionization Ribbon"},
+            "aurora.role": {"t": "string", "v": "Upper Tropospheric Fast Ribbon"},
+            "aurora.spectrum": {"t": "string", "v": "470.9 nm First Negative Nitrogen Band"},
+            "volumetric.channels": {"t": "string", "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"}
+        }
+    })
+    
+    # 3. Accent Violet-Magenta Crest (High altitude N2 molecular corona)
+    curtain_3_density = make_curtain_density(peak_d=1.15, z_scale=2.2, z_thick=2.4, ray_freq=0.8, noise_scale=0.10)
+    curtain_3_extinction = scale_node(0.12, scalar_node(1.0))
+    curtain_3_scattering = scale_node(0.35, scalar_node(1.0))
+    curtain_3_chroma = vec3_node(0.86, 0.18, 0.94)
+    curtain_3_phase = scalar_node(1.0) # Isotropic
+    curtain_3_emission = make_emissive_vec3(0.90, 0.22, 0.96, intensity=1.35, time_rate=0.22)
+    
+    spatial_fields.append({
+        "id": "northern_veil.aurora.accent-violet-crest",
+        "origin": [-12.0, 38.0, 80.0],
+        "scale": [34.0, 12.0, 20.0],
+        "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
+        "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
+        "volumeDensity": piecewise(curtain_3_density),
+        "volumeExtinction": piecewise(curtain_3_extinction),
+        "volumeScattering": piecewise(curtain_3_scattering),
+        "volumeChroma": piecewise(curtain_3_chroma),
+        "volumePhase": piecewise(curtain_3_phase),
+        "volumeEmission": piecewise(curtain_3_emission),
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Accent Violet-Magenta Celestial Crest"},
+            "aurora.role": {"t": "string", "v": "Exospheric High-Altitude Corona"},
+            "aurora.spectrum": {"t": "string", "v": "427.8 nm N2+ Molecular Violet/Magenta"},
+            "volumetric.channels": {"t": "string", "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"}
+        }
+    })
+    
+    # 4. Delicate Crimson Lower Fringe (630.0 nm atomic oxygen)
+    curtain_4_density = make_curtain_density(peak_d=0.95, z_scale=2.0, z_thick=1.0, ray_freq=1.5, noise_scale=0.20)
+    curtain_4_extinction = scale_node(0.18, scalar_node(1.0))
+    curtain_4_scattering = scale_node(0.40, scalar_node(1.0))
+    curtain_4_chroma = vec3_node(0.95, 0.15, 0.28)
+    curtain_4_phase = make_phase_forward(0.30)
+    curtain_4_emission = make_emissive_vec3(0.98, 0.18, 0.32, intensity=1.25, time_rate=0.40)
+    
+    spatial_fields.append({
+        "id": "northern_veil.aurora.deep-crimson-fringe",
+        "origin": [5.0, 14.0, 50.0],
+        "scale": [28.0, 8.0, 12.0],
+        "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
+        "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
+        "volumeDensity": piecewise(curtain_4_density),
+        "volumeExtinction": piecewise(curtain_4_extinction),
+        "volumeScattering": piecewise(curtain_4_scattering),
+        "volumeChroma": piecewise(curtain_4_chroma),
+        "volumePhase": piecewise(curtain_4_phase),
+        "volumeEmission": piecewise(curtain_4_emission),
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Deep Crimson Aurora Fringe (630.0nm O-I)"},
+            "aurora.role": {"t": "string", "v": "Lower Ray Fringe"},
+            "aurora.spectrum": {"t": "string", "v": "630.0 nm Excited Atomic Oxygen Red"},
+            "volumetric.channels": {"t": "string", "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"}
+        }
+    })
+    
+    # --- Planetary Environment & Staging ---
+    # Dark reflective lake, observation dais, perimeter mountain ridges, stele
+    objects = []
+    
+    # 1. Mirror Lake ice segments (Z from -20 to 220, X from -60 to 60)
+    for z in range(-20, 220, 40):
+        for x in [-30.0, 30.0]:
+            objects.append({
+                "objectID": f"northern_veil.ice.plate_x{int(x)}_z{z}",
+                "shapeKind": 10, # Box / Plane
+                "geometryType": "Polyhedron",
+                "center": [x, -0.6, float(z)],
+                "authoritativeAxis": [0.0, 1.0, 0.0],
+                "materialId": "material.northern_veil.mirror_ice",
+                "renderMode": "Solid",
+                "rotationResponsiveness": 1.0,
+                "shapeParams": [30.0, 0.5, 20.0],
+                "targetRotation": [0.0, 0.0, 0.0, 1.0],
+                "transform": [
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    x, -0.6, float(z), 1.0
+                ],
+                "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
+                "faceColors": [[0.02, 0.03, 0.05, 1.0]] * 6,
+                "field": "", "fieldExtent": [0.0, 0.0, 0.0],
+                "authoredProperties": {
+                    "displayName": {"t": "string", "v": f"Obsidian Mirror Lake Plate (Z={z})"},
+                    "material.specular": {"t": "float", "v": 0.88},
+                    "material.diffuse": {"t": "float", "v": 0.12}
+                }
+            })
+    
+    # 2. Central Observation Dais at [0, 0, 0]
+    objects.append({
+        "objectID": "northern_veil.dais.platform",
+        "shapeKind": 10,
+        "geometryType": "Polyhedron",
+        "center": [0.0, -0.4, 0.0],
+        "authoritativeAxis": [0.0, 1.0, 0.0],
+        "materialId": "material.northern_veil.stone",
+        "renderMode": "Solid",
+        "rotationResponsiveness": 1.0,
+        "shapeParams": [8.0, 0.4, 8.0],
+        "targetRotation": [0.0, 0.0, 0.0, 1.0],
+        "transform": [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, -0.4, 0.0, 1.0
+        ],
+        "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
+        "faceColors": [[0.06, 0.07, 0.09, 1.0]] * 6,
+        "field": "", "fieldExtent": [0.0, 0.0, 0.0],
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Observation Dais (Spawn)"},
+            "material.specular": {"t": "float", "v": 0.45},
+            "material.diffuse": {"t": "float", "v": 0.55}
+        }
+    })
+    
+    # 3. Perimeter Mountain Silhouettes (West at X=-55, East at X=+55)
+    for i, z in enumerate([30.0, 70.0, 110.0, 150.0, 190.0]):
+        # West mountain
+        objects.append({
+            "objectID": f"northern_veil.mountain.west_{i}",
+            "shapeKind": 10,
+            "geometryType": "Polyhedron",
+            "center": [-55.0, 12.0 + (i % 3) * 4.0, z],
+            "authoritativeAxis": [0.0, 1.0, 0.0],
+            "materialId": "material.northern_veil.mountain",
+            "renderMode": "Solid",
+            "rotationResponsiveness": 1.0,
+            "shapeParams": [14.0, 18.0 + (i % 2) * 6.0, 18.0],
+            "targetRotation": [0.0, 0.0, 0.0, 1.0],
+            "transform": [
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                -55.0, 12.0 + (i % 3) * 4.0, z, 1.0
+            ],
+            "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
+            "faceColors": [[0.015, 0.02, 0.03, 1.0]] * 6,
+            "field": "", "fieldExtent": [0.0, 0.0, 0.0],
+            "authoredProperties": {
+                "displayName": {"t": "string", "v": f"Western Ridge Silhouette {i+1}"}
+            }
+        })
+        # East mountain
+        objects.append({
+            "objectID": f"northern_veil.mountain.east_{i}",
+            "shapeKind": 10,
+            "geometryType": "Polyhedron",
+            "center": [55.0, 14.0 + ((i + 1) % 3) * 4.0, z],
+            "authoritativeAxis": [0.0, 1.0, 0.0],
+            "materialId": "material.northern_veil.mountain",
+            "renderMode": "Solid",
+            "rotationResponsiveness": 1.0,
+            "shapeParams": [14.0, 20.0 + (i % 2) * 4.0, 18.0],
+            "targetRotation": [0.0, 0.0, 0.0, 1.0],
+            "transform": [
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                55.0, 14.0 + ((i + 1) % 3) * 4.0, z, 1.0
+            ],
+            "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
+            "faceColors": [[0.015, 0.02, 0.03, 1.0]] * 6,
+            "field": "", "fieldExtent": [0.0, 0.0, 0.0],
+            "authoredProperties": {
+                "displayName": {"t": "string", "v": f"Eastern Ridge Silhouette {i+1}"}
+            }
+        })
+        
+    # 4. Inscribed Stele of Volumetric Sovereignty
+    objects.append({
+        "objectID": "northern_veil.stele.monolith",
+        "shapeKind": 10,
+        "geometryType": "Polyhedron",
+        "center": [0.0, 1.6, 10.0],
+        "authoritativeAxis": [0.0, 1.0, 0.0],
+        "materialId": "material.northern_veil.stele",
+        "renderMode": "Solid",
+        "rotationResponsiveness": 1.0,
+        "shapeParams": [1.4, 2.8, 0.6],
+        "targetRotation": [0.0, 0.0, 0.0, 1.0],
+        "transform": [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 1.6, 10.0, 1.0
+        ],
+        "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
+        "faceColors": [[0.12, 0.14, 0.18, 1.0]] * 6,
+        "field": "", "fieldExtent": [0.0, 0.0, 0.0],
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": "Stele of the Northern Veil (V0-V4 Sovereignty)"},
+            "inscription.constitution": {"t": "string", "v": "rho_source != V_transport != D_medium; D != sigma_t != sigma_s != C_v != Phi != E_v"},
+            "inscription.authors": {"t": "string", "v": "Zachary Zhang & Gemini Spark"}
+        }
+    })
+
+    zone = {
+        "identifier": "Northern Veil",
+        "name": "Northern Veil",
+        "authors": [
+            "Zachary Zhang",
+            "Gemini Spark"
+        ],
+        "injected_by": "Gemini Spark",
+        "scope": "global",
+        "deletable": False,
+        "qualities": [
+            "aurora",
+            "volumetric",
+            "night",
+            "participating_media",
+            "ontomath",
+            "luminous",
+            "showcase",
+            "v0-v4",
+            "northern_veil"
+        ],
+        "parentZone": "",
+        "owner": "default",
+        "spatialRoot": {
+            "id": "northern_veil.celestial-vault-root",
+            "origin": [0.0, 30.0, 80.0],
+            "scale": [1.0, 1.0, 1.0],
+            "field": {
+                "mode": "Procedural",
+                "baseDensity": 1.0,
+                "frequency": 1.0,
+                "amplitude": 1.0
+            },
+            "vectorField": {
+                "mode": "Procedural",
+                "baseFlowX": 0.0,
+                "baseFlowY": 0.0,
+                "baseFlowZ": 0.0,
+                "frequency": 1.0,
+                "amplitude": 0.0
+            },
+            "authoredProperties": {
+                "displayName": {"t": "string", "v": "Starlit Arctic Night Sky"},
+                "light.source": {"t": "bool", "v": True},
+                "light.ambient": {"t": "float", "v": 0.025},
+                "light.diffuse": {"t": "float", "v": 0.18},
+                "light.specular": {"t": "float", "v": 0.12},
+                "light.intensity": {"t": "float", "v": 0.35},
+                "light.color": {"t": "vec3", "v": [0.06, 0.08, 0.16]}
+            }
+        },
+        "spatialFields": spatial_fields,
+        "materials": {},
+        "world": {
+            "objects": objects
+        },
+        "formationRelations": [],
+        "lexemes": []
+    }
+    
+    out_dir = "saves/zones/Northern Veil"
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "zone.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(zone, f, indent=2)
+    print(f"Generated {out_path} successfully!")
+    print(f"  - Spatial fields: {len(spatial_fields)}")
+    print(f"  - Objects: {len(objects)}")
+
+if __name__ == "__main__":
+    build_zone()
