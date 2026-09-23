@@ -179,3 +179,50 @@ Do not begin with production branch bypasses. Do not wire `DensityZeroSupport` d
 The next targeted pass should locate the smallest existing production ownership boundary where authored `OntoMath::Piecewise` rendered fields are already admitted/cached, and introduce or design the observer beside that boundary rather than inside an individual shader effect. Prefer one narrow CPU-side observation seam with explicit revision keys and counters. Preserve the exact renderer path as sole truth authority.
 
 This Sun role remains active: Phase A is closed, but Phase B observation-only integration has not yet been implemented.
+
+## Successor pass — Phase B production observer seam implemented
+
+This pass continued from the Phase-A closure / Phase-B seam audit without restarting Rungs 1A–1J.
+
+### Production boundary selected
+
+The smallest existing CPU ownership boundary is the base renderer admission pair:
+
+- `Renderer::setRadianceSources(...)`
+- `Renderer::setVolumeDensitySources(...)`
+
+Those calls already receive renderer-facing `Piecewise*` vessels plus authored revision keys before WebGPU structure inspection or shader generation. The observer therefore belongs beside these setters, not inside WGSL and not inside an individual lighting/volume effect.
+
+### What landed
+
+A new production header, `RenderedFieldSemanticObserver.hpp`, adds the first observation-only semantic seam.
+
+The observer is:
+
+- disabled by default;
+- called from the two renderer admission setters;
+- O(1) on stable source-set revisions;
+- revision-keyed at the vessel level so an authored change can rebuild one semantic record while unrelated cached vessels remain reusable;
+- channel-scoped: `SourceRho` and `MediumDensity` have distinct theorem kinds;
+- capable of recognizing only the deliberately tiny first production theorem surface: one everywhere-defined scalar literal equal to zero;
+- conservative: every richer/unsupported Piecewise shape remains UNKNOWN/refused;
+- able to share the canonical scalar-literal calculation identity across rho and D without sharing theorem authority.
+
+Most importantly, it exposes only diagnostics/counters. There is **no proof-consumption API** that renderer control flow can query. `authorityBypassesApplied` is therefore pinned at zero. The exact renderer remains sole pixel authority.
+
+### Witness extension
+
+`rendered_field_piecewise_synthesis_test.cpp` now additionally checks the production observer seam:
+
+1. disabled observer is inert;
+2. byte-identical zero rho and D share one canonical math identity but build two channel-specific theorem records;
+3. stable set revisions hit the O(1) observation cache with zero theorem rebuilds;
+4. a rho-only authored revision to nonzero withdraws only the radiance opportunity;
+5. density zero-support observation survives unchanged;
+6. renderer-authoritative bypass count remains exactly zero.
+
+### Next gate
+
+The immediate gate is exact-head focused CI for this production-seam commit. If green, the next Phase-B pass should expose these diagnostics through existing renderer telemetry / a focused A/B witness and measure observer OFF vs ON while requiring identical rendered pixels. Do **not** convert the observer into a bypass authority yet.
+
+This Sun role remains active pending exact-head CI and the first observer OFF/ON pixel-parity A/B.

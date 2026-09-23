@@ -1,4 +1,5 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/Screen/RenderedFieldSemanticObserver.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -710,6 +711,64 @@ int main() {
     assert(adapter.proofPremiseInspections == 12);
     assert(adapter.exactEvaluationsAvoided == 29);
 
+    // Phase B production-observer seam. This is deliberately observation-only:
+    // the class exposes counters, not a theorem-consumption result that renderer
+    // control flow could use.
+    Rendering::RenderedFieldSemanticObserver observer;
+    auto productionZeroRho = Piecewise::continuous(scalarS(0.0));
+    auto productionZeroDensity = Piecewise::continuous(scalarS(0.0));
+
+    Rendering::RadianceSourceBinding observedSource;
+    observedSource.radianceExpr = &productionZeroRho;
+    observedSource.radianceRevision = 9001;
+
+    Rendering::VolumeDensityBinding observedMedium;
+    observedMedium.densityExpr = &productionZeroDensity;
+    observedMedium.densityRevision = 9101;
+
+    // Disabled means completely inert even when production admission calls it.
+    observer.observeRadianceSources({observedSource}, 10001);
+    observer.observeVolumeDensitySources({observedMedium}, 11001);
+    assert(observer.stats().vesselObservations == 0);
+    assert(observer.stats().theoremBuilds == 0);
+
+    observer.setEnabled(true);
+    observer.observeRadianceSources({observedSource}, 10001);
+    observer.observeVolumeDensitySources({observedMedium}, 11001);
+
+    const auto firstObserverStats = observer.stats();
+    assert(firstObserverStats.vesselObservations == 2);
+    assert(firstObserverStats.semanticBuilds == 2);
+    assert(firstObserverStats.semanticCacheHits == 0);
+    assert(firstObserverStats.canonicalMathBuilds == 1);
+    assert(firstObserverStats.canonicalMathHits == 1);
+    assert(firstObserverStats.theoremBuilds == 2);
+    assert(firstObserverStats.hypotheticalRadianceBypasses == 1);
+    assert(firstObserverStats.hypotheticalDensityBypasses == 1);
+    assert(firstObserverStats.authorityBypassesApplied == 0);
+
+    // Stable set revisions are O(1) observer hits: runtime/frame movement does
+    // not walk the vessels or rebuild the theorem artifacts.
+    observer.observeRadianceSources({observedSource}, 10001);
+    observer.observeVolumeDensitySources({observedMedium}, 11001);
+    assert(observer.stats().radianceSetRevisionHits == 1);
+    assert(observer.stats().densitySetRevisionHits == 1);
+    assert(observer.stats().semanticBuilds == firstObserverStats.semanticBuilds);
+    assert(observer.stats().theoremBuilds == firstObserverStats.theoremBuilds);
+
+    // A rho-only authored revision creates one new radiance semantic record,
+    // withdraws only the radiance zero opportunity, and leaves density theorem
+    // state intact. There is still no renderer authority path.
+    productionZeroRho.pieces[0].mathNode->scalarForm = ScalarForm::constant(3.0);
+    observedSource.radianceRevision = 9002;
+    observer.observeRadianceSources({observedSource}, 10002);
+
+    assert(observer.stats().semanticBuilds == firstObserverStats.semanticBuilds + 1);
+    assert(observer.stats().theoremRefusals == 1);
+    assert(observer.stats().hypotheticalRadianceBypasses == 0);
+    assert(observer.stats().hypotheticalDensityBypasses == 1);
+    assert(observer.stats().authorityBypassesApplied == 0);
+
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
@@ -730,6 +789,8 @@ int main() {
                 "proof_consultations=%llu proof_bypasses=%llu "
                 "proof_fallbacks=%llu proof_refusals=%llu "
                 "proof_premise_inspections=%llu exact_evaluations_avoided=%llu "
+                "phase_b_observer=1 observer_authority_bypasses=0 "
+                "observer_radiance_zero=%llu observer_density_zero=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
                 static_cast<unsigned long long>(adapter.proofInvalidations),
@@ -738,6 +799,10 @@ int main() {
                 static_cast<unsigned long long>(adapter.proofFallbacks),
                 static_cast<unsigned long long>(adapter.proofRefusals),
                 static_cast<unsigned long long>(adapter.proofPremiseInspections),
-                static_cast<unsigned long long>(adapter.exactEvaluationsAvoided));
+                static_cast<unsigned long long>(adapter.exactEvaluationsAvoided),
+                static_cast<unsigned long long>(
+                    observer.stats().hypotheticalRadianceBypasses),
+                static_cast<unsigned long long>(
+                    observer.stats().hypotheticalDensityBypasses));
     return 0;
 }
