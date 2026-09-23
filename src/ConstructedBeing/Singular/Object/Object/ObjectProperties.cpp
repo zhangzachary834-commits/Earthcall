@@ -60,6 +60,7 @@ public:
     PropertyValue value() const override {
         return PropertyValue(_owner->getShapeParams().*_member);
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         double n = 0.0;
         if (!propertyValueToNumber(v, n)) return false;
@@ -88,6 +89,11 @@ public:
     std::string typeName() const override { return "int"; }
     PropertyValue value() const override {
         return PropertyValue(static_cast<int>(_owner->getShapeKind()));
+    }
+    bool isSemanticallyWritable() const override {
+        const auto kind = _owner->getShapeKind();
+        return kind != Object::ShapeKind::Field &&
+               kind != Object::ShapeKind::Patch;
     }
     bool setValue(const PropertyValue& v) override {
         double n = 0.0;
@@ -171,6 +177,10 @@ public:
             case Field::CellSize: return PropertyValue(_owner->getFieldCellSize().value_or(0.0f));
         }
         return PropertyValue(0.0f);
+    }
+
+    bool isSemanticallyWritable() const override {
+        return _field == Field::Expr || _owner->hasField();
     }
 
     bool setValue(const PropertyValue& v) override {
@@ -265,6 +275,9 @@ public:
     PropertyValue value() const override {
         return PropertyValue(_owner->getPatchControlLocal(_index));
     }
+    bool isSemanticallyWritable() const override {
+        return _owner->hasPatch() && _index < _owner->getPatchControlCount();
+    }
     bool setValue(const PropertyValue& v) override {
         if (!_owner->hasPatch() || _index >= _owner->getPatchControlCount()) return false;
         const glm::vec3* vec = std::get_if<glm::vec3>(&v);
@@ -346,6 +359,7 @@ public:
         }
         return PropertyValue(0.0f);
     }
+    bool isSemanticallyWritable() const override { return true; }
     bool setValue(const PropertyValue& v) override {
         Physics::RigidForm& form = Physics::getFormFor(_owner);
         if (_field == Field::Velocity) {
@@ -448,6 +462,12 @@ public:
                 return PropertyValue(tex ? tex->width : 64);
         }
         return PropertyValue{};
+    }
+
+    bool isSemanticallyWritable() const override {
+        if (_field == Field::LayerCount || _field == Field::TextureSize) return false;
+        if (_field == Field::Color || _field == Field::Resolution) return true;
+        return texture() != nullptr;
     }
 
     bool setValue(const PropertyValue& v) override {
