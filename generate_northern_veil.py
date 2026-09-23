@@ -322,7 +322,7 @@ def build_zone():
     # 1. Primary Emerald Aurora Curtain (557.7 nm atomic oxygen green)
     # Majestic undulating S-curve across the northern sky with luminous limb brightening (Ref 2, 3, 5)
     curtain_1_shape = make_curtain_shape(
-        half_w=85.0, half_h=28.0, w_z=3.4,
+        half_w=85.0, half_h=28.0, w_z=2.2,
         z_amp1=20.0, z_freq1=0.024,
         z_amp2=7.5, z_freq2=0.062,
         ray_freq=0.32, noise_scale=0.08,
@@ -333,13 +333,13 @@ def build_zone():
     curtain_1_scattering = scale_node(0.04, curtain_1_shape)
     curtain_1_chroma = vec3_node(0.10, 0.98, 0.45)
     curtain_1_phase = make_phase_forward(0.40)
-    # Radiant electric emerald with brilliant white-green core on limb folds
-    curtain_1_emission = mul_node(curtain_1_shape, make_emissive_vec3(0.45, 3.40, 1.15, time_rate=0.32))
+    # Calibrated emerald emission: preserve chroma under overlap without white clipping
+    curtain_1_emission = mul_node(curtain_1_shape, make_emissive_vec3(0.018, 0.140, 0.045, time_rate=0.32))
     
     spatial_fields.append({
         "id": "northern_veil.aurora.primary-emerald-curtain",
         "origin": [0.0, 68.0, 80.0],
-        "scale": [180.0, 60.0, 64.0],
+        "scale": [90.0, 30.0, 36.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_1_density),
@@ -359,7 +359,7 @@ def build_zone():
     # 2. Secondary Cyan Ribbon (High altitude N2+ / O2+ ionization)
     # Graceful intertwining ribbon creating multi-layer celestial depth (Ref 2)
     curtain_2_shape = make_curtain_shape(
-        half_w=75.0, half_h=26.0, w_z=3.0,
+        half_w=75.0, half_h=26.0, w_z=2.0,
         z_amp1=-17.0, z_freq1=0.028,
         z_amp2=6.0, z_freq2=0.072,
         ray_freq=0.36, noise_scale=0.09,
@@ -370,13 +370,13 @@ def build_zone():
     curtain_2_scattering = scale_node(0.03, curtain_2_shape)
     curtain_2_chroma = vec3_node(0.08, 0.88, 0.98)
     curtain_2_phase = make_phase_forward(0.25)
-    # Luminous electric turquoise / cyan ribbon
-    curtain_2_emission = mul_node(curtain_2_shape, make_emissive_vec3(0.25, 2.30, 2.90, time_rate=0.40))
+    # Calibrated cyan emission: luminous but below white saturation
+    curtain_2_emission = mul_node(curtain_2_shape, make_emissive_vec3(0.012, 0.085, 0.110, time_rate=0.40))
     
     spatial_fields.append({
         "id": "northern_veil.aurora.secondary-cyan-ribbon",
         "origin": [15.0, 80.0, 110.0],
-        "scale": [160.0, 56.0, 56.0],
+        "scale": [80.0, 28.0, 30.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_2_density),
@@ -396,7 +396,7 @@ def build_zone():
     # 3. Accent Violet-Magenta Crest (High altitude N2 molecular corona)
     # Exospheric purple/magenta crown soaring high above the green drapery (Ref 1 & 4)
     curtain_3_shape = make_curtain_shape(
-        half_w=80.0, half_h=24.0, w_z=4.0,
+        half_w=80.0, half_h=24.0, w_z=2.4,
         z_amp1=15.0, z_freq1=0.022,
         z_amp2=6.5, z_freq2=0.055,
         ray_freq=0.25, noise_scale=0.07,
@@ -407,13 +407,13 @@ def build_zone():
     curtain_3_scattering = scale_node(0.02, curtain_3_shape)
     curtain_3_chroma = vec3_node(0.88, 0.20, 0.95)
     curtain_3_phase = scalar_node(1.0)
-    # Radiant celestial violet / hot magenta
-    curtain_3_emission = mul_node(curtain_3_shape, make_emissive_vec3(2.50, 0.45, 2.80, time_rate=0.24))
+    # Calibrated violet emission: preserve hue through overlap
+    curtain_3_emission = mul_node(curtain_3_shape, make_emissive_vec3(0.110, 0.025, 0.130, time_rate=0.24))
     
     spatial_fields.append({
         "id": "northern_veil.aurora.accent-violet-crest",
         "origin": [-12.0, 102.0, 92.0],
-        "scale": [170.0, 50.0, 60.0],
+        "scale": [85.0, 26.0, 28.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_3_density),
@@ -433,7 +433,7 @@ def build_zone():
     # 4. Towering Crimson Ray Pillar (630.0 nm atomic oxygen)
     # Majestic vertical salmon-rose / crimson ray column rising into the stars (Ref 1)
     curtain_4_shape = make_curtain_shape(
-        half_w=65.0, half_h=30.0, w_z=3.2,
+        half_w=65.0, half_h=30.0, w_z=1.8,
         z_amp1=13.0, z_freq1=0.030,
         z_amp2=5.0, z_freq2=0.085,
         ray_freq=0.28, noise_scale=0.10,
@@ -444,13 +444,13 @@ def build_zone():
     curtain_4_scattering = scale_node(0.02, curtain_4_shape)
     curtain_4_chroma = vec3_node(0.98, 0.18, 0.32)
     curtain_4_phase = make_phase_forward(0.30)
-    # Deep, glowing atomic oxygen crimson / salmon-rose
-    curtain_4_emission = mul_node(curtain_4_shape, make_emissive_vec3(2.80, 0.40, 0.75, time_rate=0.36))
+    # Calibrated crimson emission: visible accent without saturating the frame
+    curtain_4_emission = mul_node(curtain_4_shape, make_emissive_vec3(0.120, 0.020, 0.035, time_rate=0.36))
     
     spatial_fields.append({
         "id": "northern_veil.aurora.deep-crimson-fringe",
         "origin": [6.0, 76.0, 65.0],
-        "scale": [140.0, 64.0, 48.0],
+        "scale": [70.0, 32.0, 24.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_4_density),
