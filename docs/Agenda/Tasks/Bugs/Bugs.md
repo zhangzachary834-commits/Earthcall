@@ -103,7 +103,7 @@ BRUHHHHHHHH LIKE BLACK WAS IN A TERRIBLE POSITION AND I WAS ALMOST WINNING AGAIN
 
 BROOOOOOOOOO THE PROGRAM FORESAW BLACKS DEFEAT AND RESIGNED ON BEHALF OF BLACK
 
-25. In chess, hitting Promote buttons promotes every single piece on front or back rank.  
+25. ✅ **In chess, hitting Promote buttons promotes every single piece on front or back rank** — done and verified (2026-09-23). `law-chess-promo-apply-*` conditions matched any piece on rank 0 or 7 regardless of position; fixed by adding `gridX == @state.chess.targetX` and `gridY == @state.chess.targetY` comparisons in `scripts/author_chess.py` and regenerating chess saves. Guarded by `tests/law/chess_promotion_isolation_test.cpp`.
 
 26. Two primary Homes on disk, both owned by `"Zach"`: `saves/homes/Home` (10.6 MB, real, `inhabitants: ["Player"]`) and `saves/homes/Home_of_Zach` (957 bytes, minted 09-07 in `62a391f9` when the Home's owner was still `Player`). `ZoneManager::findPrimaryHome` picks the first match in load order, which is alphabetical, so `Home` wins today by accident. `Person::getIdentifier()` (`Person.hpp:110`) returns the key form once a Person can authenticate, at which point neither house will match and a third will be minted. — Claude Fable 5.1, 2026-09-17, `e9c2fb5e`. Task: `Specific Tasks/Zones and Ourverse/Zone_Ownership_By_Identity_Not_Spelling/`.
 
