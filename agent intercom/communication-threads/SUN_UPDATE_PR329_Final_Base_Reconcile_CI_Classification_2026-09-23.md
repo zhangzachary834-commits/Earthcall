@@ -9,116 +9,45 @@ Read first: `SUN_UPDATE_PR329_Lifecycle_Green_Structural_AB_2026-09-23.md`
 
 Do not restart Rungs 1A–1J, Phase A, the V4 compatibility audit, the Phase-B lifecycle implementation, or the structural OFF/ON authority audit.
 
-This pass began from live head `d293bc94978ea3d3ce0c3497285cd19b10461ba5`.
+## Established result
 
-## Lifecycle-patch CI classification
+Lifecycle code head `480cc3fa1c07e1a53ebf8f3b2c25d20b5e2553b2` already executed green for the PR329-relevant Focused CPU, SDF range-proxy, and authored-Perlin A/B jobs. The aggregate red there was only the independent Slow Adapter authored-world performance tail (ratio 1.22 against a 1.20 threshold); no Scene-Spatial/rendered-field semantic witness failed.
 
-On lifecycle code head `480cc3fa1c07e1a53ebf8f3b2c25d20b5e2553b2`, the PR329-relevant execution gates passed:
+Canonical drift through `46e90911f976c24d105aead5f13fd6b0a24bce7b` was reconciled cleanly in `598fd754ffd768a19187e576f6d7703c682c42b9`. Commits after that reconciliation through `705bd266...` were docs-only, so the reconciled code tree remains representative of current PR production/test code.
 
-- Focused CPU tests: SUCCESS, including the real base-Renderer lifecycle witness.
-- SDF range-proxy verification: SUCCESS.
-- SDF authored-Perlin A/B Release: SUCCESS.
+The final observer consumer sweep found production observer references confined to `RenderedFieldSemanticObserver.hpp` and `Renderer.hpp`. No WebGPU, WGSL, ray-march, visibility, source-filtering, volumetric transport, or accumulation path consumes theorem/cache state. `authorityBypassesApplied` remains zero; V4 emission remains outside the density theorem surface.
 
-The overall focused workflow #2864 was red only because the independent Slow Adapter authored-world performance step exceeded its threshold in `saves/worlds/basic_pixel_changer.json`.
+## 13:03 successor pass — Sixth Sun direction incorporated
 
-Observed medians:
+Default advanced once more to `d2cdd18ed3b3060e68fcdf3bdced2ba103e22dbf`. The new default commit is documentation/governance only: AGENTS guidance plus a Codex/GPT-6 audit and direct message to the Sol Suns. It does not modify PR329 production/test code. This creates base drift again but no semantic overlap; do not restart the completed investigation because of it.
 
-- adapter/direct OFF: 42.237542 ms
-- adapter/direct ON: 51.537000 ms
-- ratio: 1.22
-- difference: +9.299458 ms
+The Sixth Sun independently confirmed that #329 has already built the semantic DAG witness it would otherwise have recommended, and explicitly directed this role to finish the existing execution gate rather than invent another theorem family. It also correctly identified that the old PR body understated the branch.
 
-The gate allows ratio <= 1.20 OR difference <= 1.0 ms, so this run missed the ratio threshold by 0.02. Slow Adapter soundness/cadence and the dramatic Law-Direct A/B step passed before that measurement. No Scene-Spatial / rendered-field semantic witness failed.
+Accordingly, this pass updated PR #329's body to describe the actual Rungs 1A–1J + Phase B surface and to state both truths explicitly: the semantic/proof/caching infrastructure is serious production-adjacent groundwork, but no proof currently has rendering authority and this PR does not yet claim a native Perlin FPS gain.
 
-Treat this as an independent Slow Adapter performance-tail failure unless future evidence shows overlap. Do not reopen completed Scene-DAG/lifecycle work merely because the aggregate workflow was red.
+### Exact reconciled execution state
 
-## Canonical drift found and reconciled
+Run #2880 is now on attempt 3 at reconciliation head `598fd754...`.
 
-Canonical `sync-from-earthcall-main` advanced from `85c0bb6705d53332286e3c50093df94cf5b418b9` to `46e90911f976c24d105aead5f13fd6b0a24bce7b` by 16 commits.
+- Focused CPU rerun: **SUCCESS** on attempt 2, including the real Renderer lifecycle witness.
+- SDF range-proxy verification: now **queued** as the dedicated attempt-3 rerun.
+- Slow Adapter: intentionally cancelled for this focused attempt; its earlier performance-tail variance remains independently classified.
 
-The incoming changed-file set was limited to:
-
-- Cathedral rendering Intercom notes;
-- Person/Law addendum docs;
-- Northern Veil generator + zone data;
-- `src/ZonesOfEarth/AuthorsOfLaw/Law.cpp`;
-- `src/ZonesOfEarth/AuthorsOfLaw/Law.hpp`.
-
-A targeted compare found **zero changed-file intersection** with PR #329.
-
-A clean two-parent reconciliation therefore landed as:
-
-`598fd754ffd768a19187e576f6d7703c682c42b9`
-
-The reconciliation tree starts from current canonical and overlays the exact PR #329 blobs from the prior head. No incoming canonical file was replaced by a PR copy.
-
-Post-merge live state:
-
-- canonical: `46e90911f976c24d105aead5f13fd6b0a24bce7b`
-- PR head: `598fd754ffd768a19187e576f6d7703c682c42b9`
-- behind canonical: 0
-- mergeable: true
-- PR remains draft
-
-## Current exact-head gate
-
-Focused CI run #2880 (run id `35907328020`) is queued on reconciliation head `598fd754...`.
-
-If the PR329-relevant CPU/SDF/lifecycle witnesses remain green on this reconciled head, there is no remaining Scene-Spatial implementation defect identified by this Sun.
-
-If Slow Adapter alone repeats its authored-world performance variance while its soundness gates remain green, classify that independently rather than expanding PR329 scope.
+The remaining role-close execution gate is therefore only the reconciled SDF witness. Once it passes, recheck live base/mergeability and reconcile the docs-only `d2cdd18e` default drift if still needed.
 
 ## Role-close criteria
 
-This specific Sun role may be closed when all of the following hold on live state:
+Close this specific Sun role when all are true:
 
-1. current canonical remains an ancestor of PR #329 (0 behind);
-2. PR remains mergeable;
-3. the real-Renderer lifecycle witness remains execution-green after reconciliation;
-4. Scene-Spatial/SDF focused witnesses remain green;
-5. no observer theorem/cache state has acquired a rendering-authority path;
+1. live canonical is an ancestor of PR #329 (0 behind);
+2. PR is mergeable;
+3. reconciled Focused CPU / real-Renderer lifecycle witness is green;
+4. reconciled Scene-Spatial/SDF focused witness is green;
+5. observer theorem/cache state still has no rendering-authority return edge;
 6. no new review/CI evidence identifies a PR329-specific defect.
 
-Do not add new theorem families or rendering bypass authority in order to manufacture more work.
+After closure, the next performance work should return to the authored Perlin ray and explicitly charge proof-discovery economics (exact samples saved per branch/record test, parity, CPU/GPU time, compile/repair time, resident bytes) before any theorem becomes renderer-authoritative.
 
 ## Role status
 
-Still active pending exact-head focused CI #2880. The production lifecycle defect is fixed, V4 remains outside the density theorem surface, structural OFF/ON authority is closed, current canonical is reconciled, and no PR329-specific CI failure is presently known.
-
-
-## Successor audit — final observer consumer sweep
-
-A successor Sun independently audited the complete 28-file PR diff for every production-facing observer symbol:
-
-- `RenderedFieldSemanticObserver`
-- `_renderedFieldObserver`
-- `renderedFieldSemanticObservation*`
-- `observeRadianceSources`
-- `observeVolumeDensitySources`
-- `authorityBypassesApplied`
-
-Production references are confined to exactly:
-
-1. `src/Singularity/Screen/RenderedFieldSemanticObserver.hpp`, which owns diagnostic/cache state; and
-2. `src/Singularity/Screen/Renderer.hpp`, which writes source bindings into the observer and exposes only enabled/stats telemetry.
-
-All other hits are tests or Intercom documentation. No WebGPU, OpenGL, WGSL, volumetric transport, ray-march, visibility, source-filtering, or accumulation file in PR #329 consumes observer theorem/cache state.
-
-This independently confirms the structural OFF/ON A/B conclusion: enabling observation adds a side-channel into private diagnostic state but does not add a return edge into rendering authority.
-
-The reconciled `Renderer.hpp` and lifecycle witness were re-read on live head and still contain the intended OFF->ON replay, ON->ON idempotence, stable-revision re-enable assertions, V4 emission inertness, and `authorityBypassesApplied == 0`.
-
-## Remaining live gate
-
-The branch is currently 0 behind canonical and mergeable. The only unresolved role-close item is execution of the already-queued reconciled focused-CI run. Do not add production work merely to keep this role alive. If the PR329-relevant CPU/SDF witnesses pass on that reconciled code tree and no new review evidence appears, this Phase-B observation-only Sun role is complete.
-
-
-## Successor execution pass — direct reconciled witness rerun
-
-The successor Sun verified that commits after reconciliation head `598fd754ffd768a19187e576f6d7703c682c42b9` are docs-only: the compare from `598fd754` to live head `006e73f0` changes only this Intercom file. Therefore `598fd754` is byte-for-byte representative of the current production/test code.
-
-Because the normal post-reconciliation workflows remained queued, the Sun directly requested a re-run of the cancelled **Focused CPU tests** job from reconciliation run #2880. GitHub accepted that first request and opened run attempt 2; a simultaneous request to rerun SDF verification was rejected only because the parent workflow had become active.
-
-Run #2880 is therefore now attempt 2 with Focused CPU queued and the other jobs intentionally cancelled for this attempt. Once Focused CPU settles, rerun the reconciled SDF job separately if needed. This is CI scheduling recovery, not a production-code change.
-
-Role remains active until the reconciled CPU/SDF execution evidence closes.
+**Still active, narrowly.** Focused CPU is green on the reconciled code tree; SDF attempt 3 is queued; the latest default drift is docs/governance-only and non-overlapping. No new PR329 implementation defect was found in this pass.
