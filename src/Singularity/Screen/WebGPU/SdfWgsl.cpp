@@ -3404,31 +3404,111 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     }
     if (t1 <= t0) { discard; }
 
-    let span = t1 - t0;
-    let stepLength = span / 96.0;
-    if (stepLength <= 0.0) { discard; }
-
     var transmittance = 1.0;
     var integratedRadiance = vec3<f32>(0.0);
+)WGSL";
 
-    for (var step = 0; step < 96; step = step + 1) {
-        let sampleT = t0 + (f32(step) + 0.5) * stepLength;
-        let worldP = ro + rd * sampleT;
+    // V5 local-quality policy: the union proxy is only a conservative draw/ray
+    // envelope. Sampling is driven by the actually occupied ray intervals of
+    // the admitted media, so empty distance between disjoint media consumes no
+    // sample budget and cannot coarsen an already-existing medium.
+    const std::size_t eventCount = media.size() * 2u;
+    out.wgsl += "    var mediumEvents: array<f32, " +
+                std::to_string(eventCount) + ">;\n";
 
-        // Transport directions are properties of this world-space sample, not
-        // of medium ordering. Per-medium Phi/E_v evaluators consume them below
-        // only when their authored structure actually reads the variables.
-        let wiDelta = worldP - u.incidentSource.xyz;
-        let woDelta = ro - worldP;
-        let wiLen = length(wiDelta);
-        let woLen = length(woDelta);
-        let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
-                        u.incidentSource.w > 0.5 && wiLen > 1e-8);
-        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
-                        woLen > 1e-8);
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        const std::string entryIndex = std::to_string(i * 2u) + "u";
+        const std::string exitIndex = std::to_string(i * 2u + 1u) + "u";
+        out.wgsl +=
+            "    {\n"
+            "        let eventInst" + n + " = instances[" + inst + "];\n"
+            "        let eventBounds" + n + " = rayAabbWorld(\n"
+            "            ro, rd,\n"
+            "            eventInst" + n + ".origin.xyz - eventInst" + n + ".halfExtent.xyz,\n"
+            "            eventInst" + n + ".origin.xyz + eventInst" + n + ".halfExtent.xyz);\n"
+            "        var eventEnter" + n + " = max(eventBounds" + n + ".x, t0);\n"
+            "        var eventExit" + n + " = min(eventBounds" + n + ".y, t1);\n"
+            "        if (eventExit" + n + " <= eventEnter" + n + ") {\n"
+            "            eventEnter" + n + " = t1;\n"
+            "            eventExit" + n + " = t1;\n"
+            "        }\n"
+            "        mediumEvents[" + entryIndex + "] = eventEnter" + n + ";\n"
+            "        mediumEvents[" + exitIndex + "] = eventExit" + n + ";\n"
+            "    }\n";
+    }
 
-        var totalExtinction = 0.0;
-        var totalSource = vec3<f32>(0.0);
+    out.wgsl +=
+        "    for (var eventIdx = 1u; eventIdx < " + std::to_string(eventCount) +
+        "u; eventIdx = eventIdx + 1u) {\n"
+        "        let key = mediumEvents[eventIdx];\n"
+        "        var insertIdx = eventIdx;\n"
+        "        loop {\n"
+        "            if (insertIdx == 0u) { break; }\n"
+        "            let previousIdx = insertIdx - 1u;\n"
+        "            if (mediumEvents[previousIdx] <= key) { break; }\n"
+        "            mediumEvents[insertIdx] = mediumEvents[previousIdx];\n"
+        "            insertIdx = previousIdx;\n"
+        "        }\n"
+        "        mediumEvents[insertIdx] = key;\n"
+        "    }\n"
+        "    for (var segmentIdx = 0u; segmentIdx + 1u < " +
+        std::to_string(eventCount) +
+        "u; segmentIdx = segmentIdx + 1u) {\n"
+        "        let segmentStart = max(mediumEvents[segmentIdx], t0);\n"
+        "        let segmentEnd = min(mediumEvents[segmentIdx + 1u], t1);\n"
+        "        if (segmentEnd <= segmentStart + 1e-6) { continue; }\n"
+        "        let segmentMidT = 0.5 * (segmentStart + segmentEnd);\n"
+        "        let segmentMidP = ro + rd * segmentMidT;\n"
+        "        var segmentOccupied = false;\n";
+
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "        {\n"
+            "            let segmentInst" + n + " = instances[" + inst + "];\n"
+            "            let segmentMin" + n + " = segmentInst" + n +
+                ".origin.xyz - segmentInst" + n + ".halfExtent.xyz;\n"
+            "            let segmentMax" + n + " = segmentInst" + n +
+                ".origin.xyz + segmentInst" + n + ".halfExtent.xyz;\n"
+            "            if (all(segmentMidP >= segmentMin" + n + ") && "
+                "all(segmentMidP <= segmentMax" + n + ")) {\n"
+            "                segmentOccupied = true;\n"
+            "            }\n"
+            "        }\n";
+    }
+
+    out.wgsl += R"WGSL(
+        if (!segmentOccupied) { continue; }
+
+        // Preserve the established one-medium local resolution inside each
+        // occupied topological interval. Segment boundaries come only from
+        // medium entry/exit events; the physical state remains one continuous
+        // transmittance/radiance integral across all occupied segments.
+        let segmentSpan = segmentEnd - segmentStart;
+        let stepLength = segmentSpan / 96.0;
+        if (stepLength <= 0.0) { continue; }
+
+        for (var step = 0; step < 96; step = step + 1) {
+            let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
+            let worldP = ro + rd * sampleT;
+
+            // Transport directions are properties of this world-space sample,
+            // not of medium ordering. Per-medium Phi/E_v evaluators consume
+            // them below only when authored structure actually reads them.
+            let wiDelta = worldP - u.incidentSource.xyz;
+            let woDelta = ro - worldP;
+            let wiLen = length(wiDelta);
+            let woLen = length(woDelta);
+            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
+                            u.incidentSource.w > 0.5 && wiLen > 1e-8);
+            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
+                            woLen > 1e-8);
+
+            var totalExtinction = 0.0;
+            var totalSource = vec3<f32>(0.0);
 )WGSL";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
@@ -3496,6 +3576,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             integratedRadiance += oldT * totalSource * stepLength;
         }
 
+            if (transmittance < 0.01) { break; }
+        }
         if (transmittance < 0.01) { break; }
     }
 
