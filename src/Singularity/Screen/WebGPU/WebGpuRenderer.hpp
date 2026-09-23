@@ -247,6 +247,9 @@ private:
         std::string phaseStructure;
         bool phaseReadsWi = false;
         bool phaseReadsWo = false;
+        uint64_t emissionRevision = 0xffffffffffffffffULL;
+        std::string emissionStructure;
+        bool emissionReadsOmega = false;
         bool multiSource = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
@@ -360,16 +363,17 @@ private:
         std::string error;
         bool phaseReadsWi = false;
         bool phaseReadsWo = false;
+        bool emissionReadsOmega = false;
         sdfwgsl::Program prog;
         const VolumePipeline* pipeline = nullptr;
     };
-    // V3 program identity spans all independently authored medium channels.
-    // Shared D/sigma_t/sigma_s/C_v with different Phi must never collide or
+    // V4 program identity spans all independently authored medium channels.
+    // Shared D/sigma_t/sigma_s/C_v/Phi with different E_v must never collide or
     // evict one another's structure/value cache every frame.
     using VolumeProgramKey = std::tuple<
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        const OntoMath::Piecewise*>;
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     struct VolumeInstanceData {
