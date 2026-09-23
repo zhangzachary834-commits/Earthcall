@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -102,6 +103,72 @@ struct EvalCounters {
     uint64_t supportConsultations = 0;
     uint64_t supportBypasses = 0;
     uint64_t supportFallbacks = 0;
+};
+
+// Cross-domain Rung 1F separates reusable mathematical execution identity from
+// channel-specific theorem authority. The same compiled calculation may serve
+// geometry, source radiance, and participating-medium density without allowing
+// a theorem from one authored meaning to become authority for another.
+enum class SemanticChannel {
+    GeometrySdf,
+    SourceRadiance,
+    MediumDensity
+};
+
+enum class ChannelProofKind {
+    GeometryDistanceSupport,
+    RadianceContributionSupport,
+    MediumDensitySupport
+};
+
+struct ChannelProof {
+    ChannelProofKind kind = ChannelProofKind::GeometryDistanceSupport;
+    bool valid = false;
+};
+
+struct ChannelProofLedger {
+    using Key = std::pair<SemanticChannel, uint32_t>;
+
+    std::map<Key, ChannelProof> proofs;
+    std::unordered_map<const MathNode*, std::vector<Key>> reversePremises;
+
+    void attach(
+        SemanticChannel channel, uint32_t compiledId, ChannelProofKind kind,
+        const std::vector<const MathNode*>& premises) {
+        const Key key{channel, compiledId};
+        proofs[key] = ChannelProof{kind, true};
+        for (const MathNode* premise : premises)
+            reversePremises[premise].push_back(key);
+    }
+
+    bool valid(SemanticChannel channel, uint32_t compiledId) const {
+        auto it = proofs.find(Key{channel, compiledId});
+        return it != proofs.end() && it->second.valid;
+    }
+
+    ChannelProofKind kind(
+        SemanticChannel channel, uint32_t compiledId) const {
+        auto it = proofs.find(Key{channel, compiledId});
+        assert(it != proofs.end());
+        return it->second.kind;
+    }
+
+    size_t invalidate(
+        const std::unordered_set<const MathNode*>& changedFrontier) {
+        std::set<Key> invalidated;
+        for (const MathNode* changed : changedFrontier) {
+            auto it = reversePremises.find(changed);
+            if (it == reversePremises.end()) continue;
+            for (const Key& key : it->second) {
+                auto proof = proofs.find(key);
+                if (proof != proofs.end() && proof->second.valid) {
+                    proof->second.valid = false;
+                    invalidated.insert(key);
+                }
+            }
+        }
+        return invalidated.size();
+    }
 };
 
 struct OntoSceneCompiler {
@@ -641,6 +708,155 @@ int main() {
     assert(revertParitySamples == ambientSamples.size());
     assert(revertSupportBypasses == ambientSamples.size());
 
+    // ---------------------------------------------------------------------
+    // Rung 1F: cross-domain semantic-synthesis boundary.
+    //
+    // Three independently authored channels intentionally contain identical
+    // mathematics. The execution compiler is allowed to share the canonical
+    // calculation node. Proof authority is NOT allowed to collapse with it.
+    // ---------------------------------------------------------------------
+    auto geometryExpr = sharedExpr();
+    auto radianceExpr = sharedExpr();
+    auto densityExpr = sharedExpr();
+
+    MathNode* geometryScale = geometryExpr->children[1].get();
+    MathNode* radianceScale = radianceExpr->children[1].get();
+    MathNode* densityScale = densityExpr->children[1].get();
+
+    CompileCounters geometryCompile, radianceCompile, densityCompile;
+    const uint32_t geometryCompiled =
+        compiler.compile(*geometryExpr, geometryCompile);
+    const uint32_t radianceCompiled =
+        compiler.compile(*radianceExpr, radianceCompile);
+    const uint32_t densityCompiled =
+        compiler.compile(*densityExpr, densityCompile);
+
+    // Identical mathematics may share one execution artifact even though the
+    // authored truths remain different.
+    assert(geometryExpr.get() != radianceExpr.get());
+    assert(radianceExpr.get() != densityExpr.get());
+    assert(geometryCompiled == radianceCompiled);
+    assert(radianceCompiled == densityCompiled);
+
+    ChannelProofLedger channelProofs;
+    channelProofs.attach(
+        SemanticChannel::GeometrySdf, geometryCompiled,
+        ChannelProofKind::GeometryDistanceSupport,
+        {geometryExpr.get(), geometryScale});
+    channelProofs.attach(
+        SemanticChannel::SourceRadiance, radianceCompiled,
+        ChannelProofKind::RadianceContributionSupport,
+        {radianceExpr.get(), radianceScale});
+    channelProofs.attach(
+        SemanticChannel::MediumDensity, densityCompiled,
+        ChannelProofKind::MediumDensitySupport,
+        {densityExpr.get(), densityScale});
+
+    // Same compiled ID, three independent theorem meanings.
+    assert(channelProofs.valid(
+        SemanticChannel::GeometrySdf, geometryCompiled));
+    assert(channelProofs.valid(
+        SemanticChannel::SourceRadiance, radianceCompiled));
+    assert(channelProofs.valid(
+        SemanticChannel::MediumDensity, densityCompiled));
+    assert(channelProofs.kind(
+        SemanticChannel::GeometrySdf, geometryCompiled) ==
+           ChannelProofKind::GeometryDistanceSupport);
+    assert(channelProofs.kind(
+        SemanticChannel::SourceRadiance, radianceCompiled) ==
+           ChannelProofKind::RadianceContributionSupport);
+    assert(channelProofs.kind(
+        SemanticChannel::MediumDensity, densityCompiled) ==
+           ChannelProofKind::MediumDensitySupport);
+
+    // Mutate ONLY the authored medium-density expression. Its source-parent
+    // frontier is disjoint from the separately authored geometry/radiance
+    // source trees even though all three initially mapped to one compiled node.
+    densityScale->scalarForm = ScalarForm::constant(4.0);
+    CompileCounters densityRepairCounters;
+    const auto densityRepairedSources =
+        compiler.repairFrom(*densityScale, densityRepairCounters);
+    assert(densityRepairedSources.size() == 2);
+    assert(densityRepairedSources.count(densityScale) == 1);
+    assert(densityRepairedSources.count(densityExpr.get()) == 1);
+    assert(densityRepairedSources.count(geometryScale) == 0);
+    assert(densityRepairedSources.count(radianceScale) == 0);
+
+    const size_t crossDomainProofsInvalidated =
+        channelProofs.invalidate(densityRepairedSources);
+    assert(crossDomainProofsInvalidated == 1);
+
+    // Density's theorem is invalid; geometry and radiance theorem authority on
+    // the old shared compiled node remains intact because their authored
+    // premises did not change.
+    assert(channelProofs.valid(
+        SemanticChannel::GeometrySdf, geometryCompiled));
+    assert(channelProofs.valid(
+        SemanticChannel::SourceRadiance, radianceCompiled));
+    assert(!channelProofs.valid(
+        SemanticChannel::MediumDensity, densityCompiled));
+
+    const uint32_t densityCompiledAfter =
+        compiler.sourceToCompiled.at(densityExpr.get());
+    assert(densityCompiledAfter != densityCompiled);
+    assert(compiler.sourceToCompiled.at(geometryExpr.get()) ==
+           geometryCompiled);
+    assert(compiler.sourceToCompiled.at(radianceExpr.get()) ==
+           radianceCompiled);
+
+    // Execution truth also separates after the authored density mutation.
+    const double crossX = 7.0;
+    const double geometryExact = exactMathNode(*geometryExpr, crossX);
+    const double radianceExact = exactMathNode(*radianceExpr, crossX);
+    const double densityExact = exactMathNode(*densityExpr, crossX);
+    assert(std::abs(geometryExact - radianceExact) < 1e-12);
+    assert(std::abs(densityExact - geometryExact) > 1e-12);
+
+    std::unordered_map<uint32_t, double> crossMemo;
+    EvalCounters crossEval;
+    const double densityCompiledValue =
+        evalCompiled(compiler, densityCompiledAfter, {{"x", crossX}},
+                     crossMemo, crossEval, false);
+    assert(std::abs(densityCompiledValue - densityExact) < 1e-12);
+
+    // Attach the new density-channel theorem to the new compiled calculation.
+    // Geometry/radiance proof records remain scoped to their own channels.
+    channelProofs.attach(
+        SemanticChannel::MediumDensity, densityCompiledAfter,
+        ChannelProofKind::MediumDensitySupport,
+        {densityExpr.get(), densityScale});
+    assert(channelProofs.valid(
+        SemanticChannel::MediumDensity, densityCompiledAfter));
+    assert(!channelProofs.valid(
+        SemanticChannel::MediumDensity, densityCompiled));
+
+    // Revert the density math to the byte/semantic-identical original. The
+    // compiler reuses the common execution node, but the old density theorem
+    // does not regain validity merely because the shared node ID returns.
+    densityScale->scalarForm = ScalarForm::constant(3.0);
+    CompileCounters densityRevertCounters;
+    const auto densityRevertedSources =
+        compiler.repairFrom(*densityScale, densityRevertCounters);
+    assert(compiler.sourceToCompiled.at(densityExpr.get()) ==
+           geometryCompiled);
+    const size_t densityRevertProofsInvalidated =
+        channelProofs.invalidate(densityRevertedSources);
+    assert(densityRevertProofsInvalidated == 1);
+    assert(!channelProofs.valid(
+        SemanticChannel::MediumDensity, geometryCompiled));
+    assert(channelProofs.valid(
+        SemanticChannel::GeometrySdf, geometryCompiled));
+    assert(channelProofs.valid(
+        SemanticChannel::SourceRadiance, radianceCompiled));
+
+    // Explicit re-proof restores only density-channel authority.
+    channelProofs.attach(
+        SemanticChannel::MediumDensity, geometryCompiled,
+        ChannelProofKind::MediumDensitySupport,
+        {densityExpr.get(), densityScale});
+    assert(channelProofs.valid(
+        SemanticChannel::MediumDensity, geometryCompiled));
+
     std::printf(
         "SCENE_SPATIAL_ONTOMATH_SYNTHESIS parity=1 "
         "source_nodes=%zu compiled_nodes_initial=%zu canonical_hits=%llu "
@@ -661,6 +877,10 @@ int main() {
         "revert_support_proofs_invalidated=%zu revert_support_bypasses=%llu "
         "prior_artifact_reused_on_revert=1 revert_parity_samples=%llu "
         "proof_invalidation_global_scan=0 pretty_print_identity=0 "
+        "cross_domain_math_shared=1 channel_scoped_proofs=1 "
+        "density_only_proof_invalidations=%zu "
+        "density_revert_proof_invalidations=%zu "
+        "geometry_proof_preserved=1 radiance_proof_preserved=1 "
         "production_wgsl_changed=0\n",
         sourceNodes, compiledNodesBeforeRepair,
         static_cast<unsigned long long>(initialCompile.canonicalHits),
@@ -685,6 +905,8 @@ int main() {
         static_cast<unsigned long long>(revertCounters.canonicalHits),
         revertSupportProofsInvalidated,
         static_cast<unsigned long long>(revertSupportBypasses),
-        static_cast<unsigned long long>(revertParitySamples));
+        static_cast<unsigned long long>(revertParitySamples),
+        crossDomainProofsInvalidated,
+        densityRevertProofsInvalidated);
     return 0;
 }
