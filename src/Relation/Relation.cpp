@@ -1,4 +1,5 @@
 #include "Relation.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
@@ -183,12 +184,28 @@ void Relation::describe() const {
               << std::endl;
 }
 
+namespace {
+bool matchesSingular(const Singular* a, const Singular* b) {
+    if (!a || !b) return false;
+    if (a == b) return true;
+    const auto* pA = dynamic_cast<const Person*>(a);
+    const auto* pB = dynamic_cast<const Person*>(b);
+    if (pA && pB) {
+        return pA->hasIdentity() && pB->hasIdentity() && pA->personId() == pB->personId();
+    }
+    if (!pA && !pB) {
+        return a->getIdentifier() == b->getIdentifier();
+    }
+    return false;
+}
+} // namespace
+
 bool Relation::involves(const Singular* being) const {
-    return being && (a() == being || b() == being);
+    return being && (matchesSingular(a(), being) || matchesSingular(b(), being));
 }
 
 bool Relation::involves(const Singular& being) const {
-    return a() == &being || b() == &being;
+    return matchesSingular(a(), &being) || matchesSingular(b(), &being);
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -198,9 +215,10 @@ bool Relation::involves(const std::string& identifier) const {
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
     if (directed) {
-        return a() == &aBeing && b() == &bBeing;
+        return matchesSingular(a(), &aBeing) && matchesSingular(b(), &bBeing);
     }
-    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
+    return (matchesSingular(a(), &aBeing) && matchesSingular(b(), &bBeing)) ||
+           (matchesSingular(a(), &bBeing) && matchesSingular(b(), &aBeing));
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
