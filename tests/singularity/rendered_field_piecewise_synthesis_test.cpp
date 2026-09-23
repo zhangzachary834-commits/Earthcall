@@ -697,6 +697,19 @@ int main() {
     assert(adapter.exactEvaluationsAvoided > adapter.proofBuilds);
     assert(adapter.proofPremiseInspections >= adapter.proofBuilds);
 
+    // Rung 1J regression contract: pin the deterministic theorem economics.
+    // These counters make accidental proof leakage, unexpected fallback work,
+    // or proof-rebuild churn visible instead of letting a weaker inequality
+    // silently absorb the regression.
+    assert(adapter.proofBuilds == 6);
+    assert(adapter.proofInvalidations == 4);
+    assert(adapter.proofConsultations == 39);
+    assert(adapter.proofBypasses == 29);
+    assert(adapter.proofFallbacks == 10);
+    assert(adapter.proofRefusals == 1);
+    assert(adapter.proofPremiseInspections == 12);
+    assert(adapter.exactEvaluationsAvoided == 29);
+
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
