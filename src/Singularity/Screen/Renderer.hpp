@@ -9,6 +9,7 @@
 #include <vector>
 #include "Singularity/Screen/RadianceSource.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/RenderedFieldSemanticObserver.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -219,6 +220,7 @@ public:
                             uint64_t revision) {
         _radianceSources = std::move(sources);
         _radianceSourcesRevision = revision;
+        _renderedFieldObserver.observeRadianceSources(_radianceSources, revision);
     }
     const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
         return _radianceSources;
@@ -232,11 +234,39 @@ public:
                                  uint64_t revision) {
         _volumeDensitySources = std::move(sources);
         _volumeDensitySourcesRevision = revision;
+        _renderedFieldObserver.observeVolumeDensitySources(
+            _volumeDensitySources, revision);
     }
     const std::vector<Rendering::VolumeDensityBinding>& volumeDensitySources() const {
         return _volumeDensitySources;
     }
     uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
+
+    // Scene-spatial synthesis Phase B: diagnostic only. The observer has no
+    // theorem-consumption API and therefore cannot alter rendered truth.
+    void setRenderedFieldSemanticObservationEnabled(bool on) {
+        const bool wasEnabled = _renderedFieldObserver.enabled();
+        if (wasEnabled == on) return;
+
+        _renderedFieldObserver.setEnabled(on);
+        if (!on) return;
+
+        // Phase-B observation must describe the scene already admitted to the
+        // Renderer, not only source-set traffic that happens after enablement.
+        // This replay is diagnostic-only: theorem state has no authority path
+        // back into pixels, marching, accumulation, visibility, or WGSL.
+        _renderedFieldObserver.observeRadianceSources(
+            _radianceSources, _radianceSourcesRevision);
+        _renderedFieldObserver.observeVolumeDensitySources(
+            _volumeDensitySources, _volumeDensitySourcesRevision);
+    }
+    bool renderedFieldSemanticObservationEnabled() const {
+        return _renderedFieldObserver.enabled();
+    }
+    const Rendering::RenderedFieldSemanticObserver::Stats&
+    renderedFieldSemanticObservationStats() const {
+        return _renderedFieldObserver.stats();
+    }
 
     // Rung 8 execution seam: visibility is DERIVED transport truth, never an
     // authored property of rho/chi/alpha. Keeping this as renderer state makes
@@ -448,6 +478,7 @@ private:
     bool _radianceVisibilityEnabled = false;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
     uint64_t _volumeDensitySourcesRevision = 0;
+    Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;
     FrameStats _frameStats;
 };
 

@@ -643,3 +643,82 @@ This is a mandatory companion to the radiance roadmap, not an optional visual
 polish rung.
 
 — addendum directed by Zach, recorded by GPT-5.6 Sol, 2026-09-21
+
+
+---
+
+# 2026-09-22 integration addendum — full rendered semantic synthesis
+
+The radiance roadmap now has an explicit whole-renderer companion:
+
+[`RENDERED_FIELD_SEMANTIC_SYNTHESIS_IMPLEMENTATION_PLAN_2026-09-22.md`](RENDERED_FIELD_SEMANTIC_SYNTHESIS_IMPLEMENTATION_PLAN_2026-09-22.md)
+
+That plan is authoritative for how radiance joins the rest of rendered world truth without losing the semantic boundaries established above.
+
+The full field/transport composition tracked by that plan includes:
+
+```text
+geometry / SDF
+surface/material fields
+
+rho_s(p,t)                 source radiance magnitude
+chi_s(p,t)                 source chroma
+alpha_s(p,omega,t)         source angular emission
+V_s(source,p,...)           derived visibility/shadow transport
+
+D_m(p,t)                   medium density
+sigma_t,m(p,t)             medium extinction
+sigma_s,m(p,t)             medium scattering
+C_v,m(p,t)                 medium chroma
+Phi_m(p,wi,wo,t)           medium phase
+E_v,m(p,omega,t)           volumetric emission
+
+material response
+indirect transport / GI
+camera / Screen presentation
+```
+
+The common semantic-synthesis compiler is allowed to share mathematical execution across these channels only when the calculations are exactly canonical-equivalent.
+
+**Proof authority remains channel-scoped.**
+
+Thus identical mathematics such as:
+
+```text
+rho(p) = (x + 2) * 3
+D(p)   = (x + 2) * 3
+```
+
+may share a compiled calculation node, while a theorem derived for density has no authority over source radiance.
+
+This is now an executable PR #329 research invariant rather than only a documentation preference.
+
+The implementation sequence is:
+
+1. finish the real-OntoMath and cross-domain compiler witnesses;
+2. bridge actual `Piecewise` field channels into the semantic compiler;
+3. run production observation/A-B telemetry without changing pixels;
+4. grant conservative proof authority to the smallest exact geometry/SDF case;
+5. extend to exact-zero/support radiance proofs;
+6. accelerate exact visibility/shadow queries with conservative geometry proofs;
+7. extend to `D / sigma_t` interval/support proofs and semantic empty-space skipping;
+8. extend independently to `sigma_s / C_v / Phi / E_v`;
+9. integrate authored material response;
+10. only then grow indirect transport / GI and later spectral extensions.
+
+All old compatibility laws in this radiance roadmap remain in force.
+
+In particular:
+
+```text
+rho != D
+emission != visibility
+source chi != medium C_v
+source alpha != medium Phi
+source truth != material response
+world truth != Screen presentation
+```
+
+The common compiler is shared machinery beneath those meanings, not permission to collapse them.
+
+— integration addendum directed by Zach, recorded by GPT-5.6 Sol, 2026-09-22
