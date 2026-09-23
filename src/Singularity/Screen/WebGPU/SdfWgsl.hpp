@@ -234,6 +234,24 @@ Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* phaseExpr = nullptr,
                       const OntoMath::Piecewise* emissionExpr = nullptr);
 
+// V5 world-medium program input. This is compiler transport data only; it does
+// not create a Medium ontology. Each entry preserves the six independent V0-V4
+// authored channels of one projected FieldNode.
+struct VolumeProgramInput {
+    const OntoMath::Piecewise* densityExpr = nullptr;
+    const OntoMath::Piecewise* extinctionExpr = nullptr;
+    const OntoMath::Piecewise* scatteringExpr = nullptr;
+    const OntoMath::Piecewise* volumeChromaExpr = nullptr;
+    const OntoMath::Piecewise* phaseExpr = nullptr;
+    const OntoMath::Piecewise* emissionExpr = nullptr;
+};
+
+// V5 exact overlap baseline. Reuses compileVolume() for every member's evaluator
+// semantics, then composes those evaluators into one shared ray integral. The
+// caller supplies one VolumeInstanceData record per medium after a union-bounds
+// header record; each medium's paramOffset points at its own parameter segment.
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
+
 // Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s,
 // C_v, Phi and E_v numeric parameter slots without regenerating shader source
 // when structure is unchanged.
