@@ -33,8 +33,12 @@ def vec3_node(x, y, z):
     }
 
 def mul_node(a, b):
+    # MathNode::Op::Scale = 6. In Earthcall's typed OntoMath this admits
+    # Scalar×Scalar as well as scalar/vector scaling. Op 4 is Add; using it
+    # here turns every intended density/emission product into a sum and fills
+    # the whole volume proxy ("big white box").
     return {
-        "op": 4,
+        "op": 6,
         "children": [a, b]
     }
 
@@ -227,9 +231,9 @@ def make_phase_forward(g_val=0.35):
     """
     Phi(p, wi, wo) = 1.0 + 3.0 * g * dot(wi, wo)
     """
-    dot_x = mul_node(var_node("wi_x"), var_node("wo_x"))
-    dot_y = mul_node(var_node("wi_y"), var_node("wo_y"))
-    dot_z = mul_node(var_node("wi_z"), var_node("wo_z"))
+    dot_x = mul_node(var_node("wi.x"), var_node("wo.x"))
+    dot_y = mul_node(var_node("wi.y"), var_node("wo.y"))
+    dot_z = mul_node(var_node("wi.z"), var_node("wo.z"))
     dot_term = add_node(dot_x, add_node(dot_y, dot_z))
     return add_node(scalar_node(1.0), scale_node(3.0 * g_val, dot_term))
 
