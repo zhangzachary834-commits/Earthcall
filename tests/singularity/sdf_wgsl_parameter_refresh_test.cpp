@@ -13,6 +13,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 
+#include <cmath>
 #include <cstdio>
 #include <memory>
 #include <string>
@@ -1154,7 +1155,11 @@ int main() {
               "Phi timeline input lowers to WGSL and evaluates on CPU without structural mutation");
 
         // CONTEXT REFUSAL: wi is admitted only by phase, never ordinary scalar fields.
-        const auto wiOutsidePhase = sdfwgsl::inspectScalarExpression(&phase, true);
+        OntoMath::Piecewise wiOnly =
+            OntoMath::Piecewise::continuous(
+                std::shared_ptr<OntoMath::MathNode>(
+                    variable(OntoMath::kWiXVar).release()));
+        const auto wiOutsidePhase = sdfwgsl::inspectScalarExpression(&wiOnly, true);
         check(!wiOutsidePhase.ok &&
                   wiOutsidePhase.error.find("wi") != std::string::npos,
               "wi cannot leak from V3 phase into ordinary field expression contexts");
