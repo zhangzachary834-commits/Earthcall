@@ -198,6 +198,7 @@ read by a `WhileTrue` law.
 | `object-scrolled` | the being under the pointer | any wheel notch (may have a null subject) |
 | `object-focused` | the being | a press lands on it and it did not hold focus |
 | `object-unfocused` | the being | focus moves elsewhere, **including to nothing** |
+| `object-press-cancelled` | the being pressed | the press ends without the Person finishing it — window lost focus, or the being left the reachable set (Zone switch). Follows `object-released` (+ `object-drag-ended` if it travelled); never followed by a click. Added 2026-09-22 |
 | `key-pressed` | the focused being, or null | a key goes down (repeats suppressed) |
 | `key-released` | the focused being, or null | that key comes up |
 
@@ -215,6 +216,16 @@ reaching a being the Person walked away from.
 
 **`kClickSlopPixels` is a first-mover constant, not a setting.** It is a fact about
 hands. An authored law that could widen it could make every drag in the world a click.
+*(Drift, noted 2026-09-22: the code now registers `clickSlopPixels` as an ordinary
+writable property, which contradicts this paragraph. ⚑ Zach's call: gate it at the Kernel
+tier in `TransferPolicy`, or revise this paragraph. See
+`docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md`.)*
+
+Right and middle buttons publish the same grammar with a `right-` / `middle-` infix
+(`object-right-pressed`, `object-middle-drag-ended`, …). **A press always ends:** window
+focus loss and a pressed or focused being leaving the reachable set publish the closing
+edges instead of clearing state silently. `interaction_robustness_test` holds this against
+10,000 seeded random frames.
 
 ### 4c. The readings — `@world.*`
 
@@ -386,17 +397,25 @@ and `control_patterns_test` case 3 is the regression.
 Trigger:     (none — Activation: WhileTrue, Scope: Everyone)
 Condition:   All( Related(instance-of, category.control.slider),
                   @world.pointerPressedOn == true )
-Action:      Flow controlValue := f(dragX) · dt
-             (bindings: d → @interaction-channel.dragX,
-                        s → controlStep)
+Action:      Sequence(
+               Map controlValue := v + d·s
+                 (bindings: v → controlValue, d → @interaction-channel.dragX,
+                            s → controlStep),
+               Map controlValue := clamp(v, lo, hi)
+                 (bindings: lo → controlMin, hi → controlMax) )
 ```
 
-A slider is a `Flow`: the authored model is the *rate*, integrated each tick, which is
-what dragging is. `Map` would author the position directly; `Flow` authors its
-derivative, and OntoMath's exact derivative/antiderivative make them exact counterparts
-(`ActionModel.hpp`). Bounds come from the authored `Piecewise`'s own domain — a slider
-that stops at its ends stops because its mathematics is undefined past them, not because
-a `clamp()` was called.
+**Revised 2026-09-22** (Claude Opus 5.5, at Zach's request to make the 2D interfaces
+more robust — `docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md`). This was
+first written as a `Flow` of the rate `d·s`, on the reasoning that dragging *is* a rate
+and that bounds would come from the `Piecewise`'s domain. Neither held: `dragX` is
+already a per-frame delta, so integrating it over `dt` made the slider frame-rate
+dependent and ~60× slower than `controlStep` says; and the seeded `Piecewise` was
+defined everywhere, so no slider ever stopped at its ends — Synthesis Studio had to
+author a second law to clamp one back. A `Map` of the delta sums to exactly *pixels
+travelled × step* at any frame rate. The clamp is the second step of the same law, so
+there is no second law to cascade with; a slider that authored no range still moves
+(its clamp step is recorded in the trace as unable to read `controlMin`).
 
 ### 6d. Tuner — the scroll act
 
@@ -716,9 +735,10 @@ Named here so nobody reads absence as completion.
   (`FIRST_MOVER_AUTHORING.md` §4d) rather than from C++ on boot — the same move
   `shape-generator-3d-law` has waiting for it. Until then, §11b step 17 will show the
   seeded version returning, and that is not a bug in the loader.
-- **Right and middle button edges.** Levels are registered; only the left button
-  publishes press/release/click edges. Adding the others is mechanical and deliberately
-  not done on speculation.
+- ~~**Right and middle button edges.**~~ Built since this was written; see §4b.
+- **Null-subject edges are dropped.** `publishEdge` returns on a null subject, so
+  `key-pressed` with nothing focused and `object-scrolled` over nothing never publish —
+  contrary to §4b's table. A global key command cannot be authored today.
 - **Occlusion by non-objects.** The pick sweeps the active Zone's objects. A Person's
   body does not occlude the ray.
 - **A layout law library.** §10 says layout is a Formation plus laws. No such laws are

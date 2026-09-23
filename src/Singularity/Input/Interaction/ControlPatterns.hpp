@@ -111,7 +111,8 @@ std::shared_ptr<Law> createButtonLaw(Singular& author);
 // are a loop, not a branch. §6b.
 std::shared_ptr<Law> createToggleLaw(Singular& author);
 
-// WhileTrue, driven by drag: controlValue integrates the authored rate. §6c.
+// WhileTrue, driven by drag: controlValue := v + dragX·step, clamped to
+// [controlMin, controlMax] when the being authored a range. §6c.
 std::shared_ptr<Law> createSliderLaw(Singular& author);
 
 // object-scrolled -> controlValue := v + s·n. §6d.

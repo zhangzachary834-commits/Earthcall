@@ -56,6 +56,37 @@ Object* InteractionChannel::findReachable(const std::vector<Object*>& reachable,
     return nullptr;
 }
 
+Object* InteractionChannel::resolveBeing(const std::string& id) const {
+    if (id.empty()) return nullptr;
+    for (Singular* being : Universe::instance().beings()) {
+        if (being && being->getIdentifier() == id) return dynamic_cast<Object*>(being);
+    }
+    return nullptr;
+}
+
+// A press always ENDS. The window losing focus mid-drag, or the pressed being
+// leaving the reachable world (a Zone switch, a destroy), used to clear the
+// held state silently — so a law that lit a slider on drag-started never heard
+// the drag end, and the slider stayed lit forever. Every gesture that begins
+// now closes with released (+ drag-ended if it travelled) and a distinct
+// press-cancelled, and never with a click: the Person did not complete one.
+void InteractionChannel::cancelPress(std::string& heldId, bool& travelling,
+                                     float& totalX, float& totalY,
+                                     const std::string& button, Object* subject) {
+    if (heldId.empty()) return;
+    const std::string prefix = "object-" + button;
+    if (subject) {
+        publishEdge(prefix + "released", subject);
+        if (travelling) publishEdge(prefix + "drag-ended", subject);
+        publishEdge(prefix + "press-cancelled", subject);
+        subject->endSurfaceStroke();
+    }
+    heldId.clear();
+    travelling = false;
+    totalX = 0.0f;
+    totalY = 0.0f;
+}
+
 void InteractionChannel::publishEdge(const std::string& type, Object* object) const {
     if (!object) {
         return;
@@ -186,7 +217,12 @@ void InteractionChannel::observe(const Sense& sense,
                     sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
                     const double priority = obj->pickPriority();
                     if (priority < 0.0) continue;
-                    if (!hit2D || priority > best2D) {
+                    // `>=`, not `>`: the 2D pass stable-sorts this same list
+                    // (Zone::objects) by zOrder2D and draws in order, so among
+                    // equals the LAST being is drawn on top. With `>` the
+                    // first won the pick, and a click on the visible control
+                    // landed on the one hidden beneath it.
+                    if (!hit2D || priority >= best2D) {
                         best2D = priority;
                         hit2D = obj;
                     }
@@ -259,6 +295,28 @@ void InteractionChannel::observe(const Sense& sense,
         const bool over = (obj == hit);
         obj->updateHoverState(over, over ? hitPoint : obj->getHoverPoint(),
                               glm::vec2(sense.pointerX, sense.pointerY));
+    }
+
+    // --- Orphans ------------------------------------------------------------
+    // A held press or a focus whose being is no longer reachable (Zone switch,
+    // destroyed) ends HERE, as edges, instead of lingering: an orphaned press
+    // loses its release, and an orphaned focus kept routing keys to a being in
+    // a Zone the Person had left (noteKey resolves across the whole Universe).
+    if (!pressedId.empty() && !findReachable(reachable, pressedId)) {
+        cancelPress(pressedId, dragging, dragTotalX, dragTotalY, "",
+                    resolveBeing(pressedId));
+    }
+    if (!rightPressedId.empty() && !findReachable(reachable, rightPressedId)) {
+        cancelPress(rightPressedId, rightDragging, rightDragTotalX, rightDragTotalY,
+                    "right-", resolveBeing(rightPressedId));
+    }
+    if (!middlePressedId.empty() && !findReachable(reachable, middlePressedId)) {
+        cancelPress(middlePressedId, middleDragging, middleDragTotalX, middleDragTotalY,
+                    "middle-", resolveBeing(middlePressedId));
+    }
+    if (!focusedId.empty() && !findReachable(reachable, focusedId)) {
+        publishEdge("object-unfocused", resolveBeing(focusedId));
+        focusedId.clear();
     }
 
     // --- Button edges -----------------------------------------------------
@@ -416,20 +474,6 @@ void InteractionChannel::observe(const Sense& sense,
         middleDragTotalY = 0.0f;
     }
 
-    if (middleReleasedNow) {
-        Object* pressed = findReachable(reachable, middlePressedId);
-        if (pressed) publishEdge("object-middle-released", pressed);
-        if (middleDragging) {
-            publishEdge("object-middle-drag-ended", pressed);
-        } else if (pressed && pressed == hit) {
-            publishEdge("object-middle-clicked", pressed);
-        }
-        middlePressedId.clear();
-        middleDragging = false;
-        middleDragTotalX = 0.0f;
-        middleDragTotalY = 0.0f;
-    }
-
     if (!leftDown) {
         dragX = 0.0f;
         dragY = 0.0f;
@@ -504,7 +548,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     }
 
     // Left comes from noteMouseButton()'s callback-latched level, reconciled above.
-    // Right/middle stay polled: nothing in the tree publishes edges for them yet.
+    // Right/middle are polled levels; observe() derives their edges from them.
     sense.left = _liveLeftDown;
     sense.right = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     sense.middle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
@@ -518,10 +562,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     // The wheel is a callback, not a level: whatever accumulated since the
     // last step is this frame's delta, and the accumulator resets here so a
     // frame with no wheel reports none.
-    sense.scrollX = _pendingScrollX;
-    sense.scrollY = _pendingScrollY;
-    _pendingScrollX = 0.0f;
-    _pendingScrollY = 0.0f;
+    // (Drained by observePending below, not here.)
 
     // The pointer ray, from the same view/projection/viewport the renderer
     // used. Shared arithmetic with CursorTools::pickObjectAtCursor3D — kept
@@ -585,6 +626,20 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         if (obj) reachable.push_back(obj.get());
     }
 
+    observePending(sense, reachable);
+}
+
+// Everything the GLFW callbacks latched since the last frame, folded into one
+// frame of observation. Split out of step() so tests drive the REAL replay:
+// interaction_channel_test once re-implemented this loop by hand, and the copy
+// hid the scroll double-count below for as long as it existed.
+void InteractionChannel::observePending(Sense sense,
+                                        const std::vector<Object*>& reachable) {
+    sense.scrollX += _pendingScrollX;
+    sense.scrollY += _pendingScrollY;
+    _pendingScrollX = 0.0f;
+    _pendingScrollY = 0.0f;
+
     // A rapid sequence of press/release callbacks that land inside one
     // glfwPollEvents() batch would otherwise vanish. We replay every edge
     // in order before observing the final frame state. Consumed here
@@ -594,6 +649,11 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         for (size_t i = 0; i < _pendingLeftEdges.size() - 1; ++i) {
             Sense edgeSense = sense;
             edgeSense.left = _pendingLeftEdges[i];
+            // The wheel belongs to the frame, not to each replayed button
+            // edge: copying it here counted one notch once per replay
+            // (scrollTotal inflated, object-scrolled published N+1 times).
+            edgeSense.scrollX = 0.0f;
+            edgeSense.scrollY = 0.0f;
             observe(edgeSense, reachable);
         }
         _pendingLeftEdges.clear();
@@ -622,14 +682,13 @@ void InteractionChannel::onWindowFocus(bool focused) {
         leftDown = false;
         rightDown = false;
         middleDown = false;
-        pressedId.clear();
-        rightPressedId.clear();
-        middlePressedId.clear();
-        dragging = false;
-        rightDragging = false;
-        middleDragging = false;
-        dragTotalX = 0.0f;
-        dragTotalY = 0.0f;
+        // Held presses end as edges, not silence (cancelPress).
+        cancelPress(pressedId, dragging, dragTotalX, dragTotalY, "",
+                    resolveBeing(pressedId));
+        cancelPress(rightPressedId, rightDragging, rightDragTotalX, rightDragTotalY,
+                    "right-", resolveBeing(rightPressedId));
+        cancelPress(middlePressedId, middleDragging, middleDragTotalX, middleDragTotalY,
+                    "middle-", resolveBeing(middlePressedId));
         hoveredId.clear();
         for (Singular* being : Universe::instance().beings()) {
             if (auto* obj = dynamic_cast<Object*>(being)) {

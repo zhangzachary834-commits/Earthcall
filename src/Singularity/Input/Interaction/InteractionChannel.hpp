@@ -94,6 +94,11 @@ public:
     void step(GLFWwindow* window, ::Core::Camera& camera, ZoneManager& mgr,
               bool uiCaptured);
 
+    // Fold the callback-latched scroll and queued left-button edges into
+    // `sense` and observe: replays each queued edge (without the wheel), then
+    // the frame itself. step() ends here; tests call it directly.
+    void observePending(Sense sense, const std::vector<Object*>& reachable);
+
     // Keys arrive as callbacks, not levels, so they enter here rather than
     // through Sense — an edge by construction. Publishes key-pressed /
     // key-released with the focused being as subject (null when nothing holds
@@ -102,7 +107,7 @@ public:
 
     // The wheel is a callback too, and unlike a button it has no level to
     // poll: what the GLFW scroll callback reports is all there is. It
-    // accumulates here and step() drains it, so a frame with no wheel reports
+    // accumulates here and observePending() drains it, so a frame with no wheel reports
     // none instead of repeating the last notch forever.
     void noteScroll(float dx, float dy);
 
@@ -213,6 +218,17 @@ private:
 
     Object* findReachable(const std::vector<Object*>& reachable,
                           const std::string& id) const;
+
+    // Resolve an identifier anywhere in the Universe — for ending a gesture
+    // whose being has left the reachable set (another Zone) but still exists.
+    Object* resolveBeing(const std::string& id) const;
+
+    // End a press the Person never released: publishes <prefix>released,
+    // <prefix>drag-ended when it had travelled, and <prefix>press-cancelled —
+    // never a click — then clears the held state. `button` is "" / "right-" /
+    // "middle-". See INTERACTION_AS_LAW.md §4b.
+    void cancelPress(std::string& heldId, bool& travelling, float& totalX,
+                     float& totalY, const std::string& button, Object* subject);
 
     std::string _name{"interaction-channel"};
 

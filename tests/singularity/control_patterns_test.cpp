@@ -278,6 +278,51 @@ int main() {
     }
 
     // ------------------------------------------------------------------
+    // 4a. The slider. Pixels travelled × step, at ANY frame rate, and held
+    //     inside controlMin/controlMax when the being authored them. The
+    //     earlier Flow form integrated dragX (already a per-frame delta) over
+    //     dt, so it moved half as far at 120 fps and never stopped at its ends
+    //     (docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md, Tier 0 #5).
+    // ------------------------------------------------------------------
+    Object slider, rangedSlider;
+    slider.setObjectID("the-slider");
+    rangedSlider.setObjectID("the-ranged-slider");
+    world.push_back(&slider);
+    world.push_back(&rangedSlider);
+    {
+        makeControl(slider, Control::kCategorySlider, cats, 1.0, 0.02);
+        makeControl(rangedSlider, Control::kCategorySlider, cats, 1.0, 0.02);
+        rangedSlider.setDynamicProperty(Control::kMin, PropertyValue(0.2));
+        rangedSlider.setDynamicProperty(Control::kMax, PropertyValue(3.0));
+
+        const auto drag = [&](const std::string& id, float pixels, double dt) {
+            Universe::instance().setClock(0.0, dt);
+            channel.pressedId = id;
+            channel.dragX = pixels;
+            laws.tick();
+            channel.dragX = 0.0f;
+            channel.pressedId.clear();
+            laws.tick();
+        };
+
+        drag("the-slider", 10.0f, 1.0 / 60.0);
+        check(nearf(valueOf(slider), 1.2), "10 px at step 0.02 moves the slider by 0.2");
+        drag("the-slider", 10.0f, 1.0 / 120.0);
+        check(nearf(valueOf(slider), 1.4),
+              "the same 10 px at 120 fps moves it the same 0.2 — frame-rate independent");
+        drag("the-slider", 1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(slider), 21.4),
+              "a slider that authored no range still moves (its clamp step cannot read)");
+        check(nearf(valueOf(rangedSlider), 1.0), "dragging one slider leaves the other alone");
+
+        drag("the-ranged-slider", 1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(rangedSlider), 3.0), "a ranged slider stops at controlMax");
+        drag("the-ranged-slider", -1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(rangedSlider), 0.2), "and at controlMin");
+        Universe::instance().setClock(0.0, 1.0 / 60.0);
+    }
+
+    // ------------------------------------------------------------------
     // 4b. The key command. Its subject is whoever holds focus, and the
     //     archetype is a FACTORY rather than a boot registration: which
     //     key, on which control, is an authored choice with no default
