@@ -2459,7 +2459,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                 }
             }
         } else {
-            ++mutableFrameStats().volumeProgramCacheHits;
+            // Preserve telemetry's historical meaning as useful per-medium
+            // reuse even though V5 reuses one fused program for the set.
+            mutableFrameStats().volumeProgramCacheHits +=
+                static_cast<uint32_t>(activeMedia.size());
         }
 
         // Missing runtime incident-source truth must not poison the compiled
