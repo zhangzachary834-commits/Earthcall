@@ -557,8 +557,10 @@ void WebGpuRenderer::reloadShaders() {
     }
     _volumePipes.clear();
     _volumeProgramCache.clear();
+    _volumeSetProgramCache.clear();
     _volumeBatches.clear();
     _volumeParamBatches.clear();
+    _volumeDrawInstanceCounts.clear();
     _activeVolumePipelines.clear();
 }
 
@@ -609,8 +611,10 @@ void WebGpuRenderer::shutdown() {
     }
     _volumePipes.clear();
     _volumeProgramCache.clear();
+    _volumeSetProgramCache.clear();
     _volumeBatches.clear();
     _volumeParamBatches.clear();
+    _volumeDrawInstanceCounts.clear();
     _activeVolumePipelines.clear();
     if (_sdfCubeVerts) { wgpuBufferRelease(_sdfCubeVerts); _sdfCubeVerts = nullptr; }
     for (auto& kv : _textures) {
@@ -2309,8 +2313,218 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
     if (enabledIncidentSources != 1) incidentSource = nullptr;
 
-    // Build batches only from the bounded projection EngineRender handed to the
-    // renderer. No Zone/Object scan occurs here.
+    // V5 chooses the production path by the number of valid bounded media, not
+    // merely by vector size. One valid medium remains on the exact V4 path.
+    std::vector<const Rendering::VolumeDensityBinding*> activeMedia;
+    activeMedia.reserve(volumeDensitySources().size());
+    for (const auto& medium : volumeDensitySources()) {
+        if (!medium.densityExpr || medium.densityExpr->pieces.empty()) continue;
+        const glm::vec3 halfExtent = glm::abs(medium.scale);
+        if (halfExtent.x <= 1e-6f || halfExtent.y <= 1e-6f || halfExtent.z <= 1e-6f) {
+            continue;
+        }
+        activeMedia.push_back(&medium);
+    }
+
+    if (activeMedia.size() > 1) {
+        VolumeSetProgramKey setKey;
+        setKey.reserve(activeMedia.size());
+        std::vector<sdfwgsl::VolumeProgramInput> compilerInputs;
+        compilerInputs.reserve(activeMedia.size());
+        for (const auto* medium : activeMedia) {
+            setKey.emplace_back(
+                medium->densityExpr, medium->extinctionExpr,
+                medium->scatteringExpr, medium->volumeChromaExpr,
+                medium->phaseExpr, medium->emissionExpr);
+            compilerInputs.push_back({
+                medium->densityExpr, medium->extinctionExpr,
+                medium->scatteringExpr, medium->volumeChromaExpr,
+                medium->phaseExpr, medium->emissionExpr});
+        }
+
+        auto& setMemo = _volumeSetProgramCache[setKey];
+        const uint64_t setContentRevision = volumeDensitySourcesRevision();
+        if (setMemo.contentRevision != setContentRevision) {
+            setMemo.contentRevision = setContentRevision;
+            setMemo.phaseReadsWi = false;
+
+            bool layoutsOk = true;
+            std::string layoutError;
+            std::string structure =
+                "medium-count:" + std::to_string(activeMedia.size()) + "\n";
+
+            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                const auto& medium = *activeMedia[i];
+                const auto densityLayout =
+                    sdfwgsl::inspectDensityExpression(medium.densityExpr);
+                const auto extinctionLayout =
+                    sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
+                const auto scatteringLayout =
+                    sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
+                const auto chromaLayout =
+                    sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
+                const auto phaseLayout =
+                    sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
+                const auto emissionLayout =
+                    sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
+
+                setMemo.phaseReadsWi = setMemo.phaseReadsWi || phaseLayout.readsWi;
+                if (!densityLayout.ok || !extinctionLayout.ok ||
+                    !scatteringLayout.ok || !chromaLayout.ok ||
+                    !phaseLayout.ok || !emissionLayout.ok) {
+                    layoutsOk = false;
+                    layoutError =
+                        "volume set member " + std::to_string(i) + ": " +
+                        (!densityLayout.ok
+                             ? "density: " + densityLayout.error
+                             : !extinctionLayout.ok
+                                   ? "extinction: " + extinctionLayout.error
+                                   : !scatteringLayout.ok
+                                         ? "scattering: " + scatteringLayout.error
+                                         : !chromaLayout.ok
+                                               ? "volume chroma: " + chromaLayout.error
+                                               : !phaseLayout.ok
+                                                     ? "volume phase: " + phaseLayout.error
+                                                     : "volume emission: " +
+                                                           emissionLayout.error);
+                    break;
+                }
+
+                structure +=
+                    "member:" + std::to_string(i) +
+                    "\ndensity:\n" + densityLayout.structure +
+                    "\nextinction:\n" + extinctionLayout.structure +
+                    "\nscattering:\n" + scatteringLayout.structure +
+                    "\nvolume-chroma:\n" + chromaLayout.structure +
+                    "\nvolume-phase:\n" + phaseLayout.structure +
+                    (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
+                    (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
+                    "\nvolume-emission:\n" + emissionLayout.structure +
+                    (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
+                    "\n";
+            }
+
+            if (!layoutsOk) {
+                setMemo.ok = false;
+                setMemo.error = layoutError;
+                setMemo.pipeline = nullptr;
+            } else {
+                const bool needsCompile =
+                    !setMemo.ok || setMemo.structure != structure ||
+                    !setMemo.pipeline;
+                if (needsCompile) {
+                    setMemo.prog = sdfwgsl::compileVolumeSet(compilerInputs);
+                    ++mutableFrameStats().volumeProgramCompiles;
+                    mutableFrameStats().volumeWgslBytesGenerated +=
+                        setMemo.prog.wgsl.size();
+                    setMemo.structure = structure;
+                    setMemo.ok = setMemo.prog.ok;
+                    setMemo.error = setMemo.prog.error;
+                    setMemo.pipeline =
+                        setMemo.ok ? volumePipeline(setMemo.prog.wgsl) : nullptr;
+                    if (!setMemo.pipeline) setMemo.ok = false;
+                }
+
+                // Whether structure compiled or only values changed, rebuild the
+                // concatenated parameter block through the existing V4 collector.
+                // Each projected medium points at its own segment; no second
+                // OntoMath value walker is introduced for V5.
+                if (setMemo.ok && setMemo.pipeline) {
+                    std::vector<float> setParams;
+                    std::vector<uint32_t> paramOffsets;
+                    paramOffsets.reserve(activeMedia.size());
+                    for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                        const auto& medium = *activeMedia[i];
+                        paramOffsets.push_back(
+                            static_cast<uint32_t>(setParams.size()));
+                        const auto params = sdfwgsl::collectVolumeParams(
+                            medium.densityExpr, medium.extinctionExpr,
+                            medium.scatteringExpr, medium.volumeChromaExpr,
+                            medium.phaseExpr, medium.emissionExpr);
+                        if (!params.ok) {
+                            setMemo.ok = false;
+                            setMemo.error =
+                                "volume set member " + std::to_string(i) +
+                                " params: " + params.error;
+                            break;
+                        }
+                        setParams.insert(
+                            setParams.end(), params.values.begin(), params.values.end());
+                    }
+                    if (setMemo.ok) {
+                        if (setParams.empty()) setParams.push_back(0.0f);
+                        setMemo.prog.params = std::move(setParams);
+                        setMemo.paramOffsets = std::move(paramOffsets);
+                    }
+                }
+            }
+        } else {
+            ++mutableFrameStats().volumeProgramCacheHits;
+        }
+
+        if (setMemo.phaseReadsWi && !incidentSource) {
+            setMemo.ok = false;
+            setMemo.error =
+                "volume set phase: Phi reads wi but transport has " +
+                std::to_string(enabledIncidentSources) +
+                " enabled admitted direct sources; exactly one is required";
+        }
+
+        if (!setMemo.ok || !setMemo.pipeline) {
+            if (!setMemo.error.empty()) {
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal = setMemo.error;
+            }
+        } else {
+            auto& instances = _volumeBatches[setMemo.pipeline];
+            auto& params = _volumeParamBatches[setMemo.pipeline];
+            if (instances.empty()) {
+                _activeVolumePipelines.push_back(setMemo.pipeline);
+            }
+
+            glm::vec3 setMin(std::numeric_limits<float>::max());
+            glm::vec3 setMax(std::numeric_limits<float>::lowest());
+            std::vector<VolumeInstanceData> mediumInstances;
+            mediumInstances.reserve(activeMedia.size());
+
+            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                const auto& medium = *activeMedia[i];
+                const glm::vec3 halfExtent = glm::abs(medium.scale);
+                setMin = glm::min(setMin, medium.origin - halfExtent);
+                setMax = glm::max(setMax, medium.origin + halfExtent);
+
+                VolumeInstanceData instance;
+                instance.origin = glm::vec4(medium.origin, 1.0f);
+                instance.halfExtent = glm::vec4(halfExtent, 0.0f);
+                instance.time =
+                    glm::vec4(static_cast<float>(medium.temporalCoordinate),
+                              static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
+                instance.paramOffset =
+                    i < setMemo.paramOffsets.size() ? setMemo.paramOffsets[i] : 0u;
+                mediumInstances.push_back(instance);
+            }
+
+            VolumeInstanceData header;
+            const glm::vec3 setOrigin = 0.5f * (setMin + setMax);
+            const glm::vec3 setHalfExtent = 0.5f * (setMax - setMin);
+            header.origin = glm::vec4(setOrigin, 1.0f);
+            header.halfExtent = glm::vec4(setHalfExtent, 0.0f);
+            header.time = glm::vec4(0.0f);
+            header.paramOffset = 0u;
+
+            instances.push_back(header);
+            instances.insert(
+                instances.end(), mediumInstances.begin(), mediumInstances.end());
+            params.insert(
+                params.end(), setMemo.prog.params.begin(), setMemo.prog.params.end());
+            _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
+        }
+    }
+
+    // Build ordinary V0-V4 batches only from the bounded projection EngineRender
+    // handed to the renderer. A multi-medium set instead uses the fused path
+    // above; no Zone/Object scan occurs here.
+    if (activeMedia.size() <= 1) {
     for (const auto& medium : volumeDensitySources()) {
         if (!medium.densityExpr || medium.densityExpr->pieces.empty()) continue;
 
@@ -2438,6 +2652,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         instances.push_back(instance);
         params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
     }
+    }
 
     if (_activeVolumePipelines.empty()) return;
 
@@ -2446,6 +2661,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         for (const VolumePipeline* pipeline : _activeVolumePipelines) {
             _volumeBatches[pipeline].clear();
             _volumeParamBatches[pipeline].clear();
+            _volumeDrawInstanceCounts.erase(pipeline);
         }
         _activeVolumePipelines.clear();
         return;
@@ -2532,12 +2748,17 @@ void WebGpuRenderer::flushVolumeComposite() {
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
         wgpuRenderPassEncoderSetVertexBuffer(
             _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+        uint32_t drawInstanceCount = static_cast<uint32_t>(instances.size());
+        if (const auto countIt = _volumeDrawInstanceCounts.find(pipeline);
+            countIt != _volumeDrawInstanceCounts.end()) {
+            drawInstanceCount = countIt->second;
+        }
         wgpuRenderPassEncoderDraw(
-            _pass, 36, static_cast<uint32_t>(instances.size()), 0, 0);
+            _pass, 36, drawInstanceCount, 0, 0);
 
         mutableFrameStats().drawCalls++;
         mutableFrameStats().trianglesDrawn +=
-            static_cast<uint32_t>(12 * instances.size());
+            static_cast<uint32_t>(12 * drawInstanceCount);
     }
 
     wgpuRenderPassEncoderEnd(_pass);
@@ -2548,6 +2769,7 @@ void WebGpuRenderer::flushVolumeComposite() {
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
         _volumeBatches[pipeline].clear();
         _volumeParamBatches[pipeline].clear();
+        _volumeDrawInstanceCounts.erase(pipeline);
     }
     _activeVolumePipelines.clear();
 
