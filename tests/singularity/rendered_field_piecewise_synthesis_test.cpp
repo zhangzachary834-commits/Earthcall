@@ -18,12 +18,16 @@ using OntoMath::ScalarForm;
 
 enum class Channel { SourceRho, MediumDensity, MediumExtinction, MediumScattering, MediumChroma };
 enum class ValueKind { Scalar, Vec3 };
+enum class ProofKind { None, DensityZeroSupport };
 
 std::unique_ptr<MathNode> scalarU(double v) {
     auto n = std::make_unique<MathNode>();
     n->op = MathNode::Op::ScalarLeaf;
     n->scalarForm = ScalarForm::constant(v);
     return n;
+}
+std::shared_ptr<MathNode> scalarS(double v) {
+    return std::shared_ptr<MathNode>(scalarU(v).release());
 }
 std::unique_ptr<MathNode> variableU(const std::string& name) {
     auto n = std::make_unique<MathNode>();
@@ -105,21 +109,42 @@ struct CompiledPiece {
     bool includeLo = true, includeHi = true;
     uint32_t math = 0;
 };
+struct SupportProof {
+    bool valid = false;
+    Channel channel = Channel::SourceRho;
+    ValueKind kind = ValueKind::Scalar;
+    ProofKind theorem = ProofKind::None;
+    std::string topologyKey;
+    std::vector<uint32_t> premiseMath;
+    std::vector<const MathNode*> premiseSources;
+    std::vector<size_t> zeroPieces;
+    uint64_t generation = 0;
+};
+
 struct CompiledPiecewise {
     Channel channel = Channel::SourceRho;
     ValueKind kind = ValueKind::Scalar;
     std::string inputVariable;
     std::vector<CompiledPiece> pieces;
     std::string topologyKey;
+    SupportProof proof;
 };
 
 struct PiecewiseAdapter {
     MathCompiler math;
     uint64_t topologyBuilds = 0;
     uint64_t refusals = 0;
+    uint64_t proofBuilds = 0;
+    uint64_t proofInvalidations = 0;
+    uint64_t proofConsultations = 0;
+    uint64_t proofBypasses = 0;
+    uint64_t proofFallbacks = 0;
+    uint64_t proofRefusals = 0;
 
     bool compile(Channel channel, const Piecewise& model, CompiledPiecewise& out) {
         const ValueKind kind = channel == Channel::MediumChroma ? ValueKind::Vec3 : ValueKind::Scalar;
+        const SupportProof priorProof = out.proof;
+
         CompiledPiecewise next;
         next.channel = channel;
         next.kind = kind;
@@ -127,6 +152,9 @@ struct PiecewiseAdapter {
         std::ostringstream topology;
         topology << "kind=" << static_cast<int>(kind) << "|input=" << model.inputVariable
                  << "|pieces=" << model.pieces.size();
+
+        std::vector<uint32_t> premiseMath;
+        std::vector<const MathNode*> premiseSources;
         for (const auto& p : model.pieces) {
             const bool acceptedRoot = p.mathNode &&
                 ((kind == ValueKind::Scalar && scalarOp(p.mathNode->op)) ||
@@ -139,14 +167,120 @@ struct PiecewiseAdapter {
             const uint32_t mathId = math.compile(*p.mathNode, kind);
             next.pieces.push_back({p.hasLo, p.hasHi, p.lo, p.hi,
                                    p.includeLo, p.includeHi, mathId});
+            premiseMath.push_back(mathId);
+            premiseSources.push_back(p.mathNode.get());
             topology << "|" << p.hasLo << ":" << p.lo << ":" << p.includeLo
                      << ":" << p.hasHi << ":" << p.hi << ":" << p.includeHi
                      << ":math=" << mathId;
         }
         next.topologyKey = topology.str();
+
+        // Recompiling a stable vessel may preserve a proof only when every
+        // declared premise remains identical. Canonical math equality alone is
+        // insufficient: replacing an authored source node with a new but
+        // equivalent node is still an authored-premise change.
+        if (priorProof.valid) {
+            const bool stillValid =
+                priorProof.channel == next.channel &&
+                priorProof.kind == next.kind &&
+                priorProof.topologyKey == next.topologyKey &&
+                priorProof.premiseMath == premiseMath &&
+                priorProof.premiseSources == premiseSources;
+            if (stillValid) next.proof = priorProof;
+            else ++proofInvalidations;
+        }
+
         out = std::move(next);
         ++topologyBuilds;
         return true;
+    }
+
+    bool buildDensityZeroSupportProof(
+        const Piecewise& model, CompiledPiecewise& vessel) {
+        if (vessel.channel != Channel::MediumDensity ||
+            vessel.kind != ValueKind::Scalar ||
+            vessel.pieces.size() != model.pieces.size()) {
+            ++proofRefusals;
+            return false;
+        }
+
+        SupportProof proof;
+        proof.valid = true;
+        proof.channel = Channel::MediumDensity;
+        proof.kind = ValueKind::Scalar;
+        proof.theorem = ProofKind::DensityZeroSupport;
+        proof.topologyKey = vessel.topologyKey;
+
+        const std::map<std::string, double> noVars;
+        for (size_t i = 0; i < model.pieces.size(); ++i) {
+            const auto& authored = model.pieces[i];
+            assert(authored.mathNode);
+            proof.premiseMath.push_back(vessel.pieces[i].math);
+            proof.premiseSources.push_back(authored.mathNode.get());
+
+            if (authored.mathNode->op != MathNode::Op::ScalarLeaf)
+                continue;
+            const auto value = authored.mathNode->scalarForm.evaluate(noVars);
+            if (value.has_value() && std::abs(*value) < 1e-12)
+                proof.zeroPieces.push_back(i);
+        }
+
+        if (proof.zeroPieces.empty()) {
+            ++proofRefusals;
+            return false;
+        }
+
+        proof.generation = ++proofBuilds;
+        vessel.proof = std::move(proof);
+        return true;
+    }
+
+    static bool pieceContains(const CompiledPiece& piece, double x) {
+        if (piece.hasLo && (x < piece.lo || (x == piece.lo && !piece.includeLo)))
+            return false;
+        if (piece.hasHi && (x > piece.hi || (x == piece.hi && !piece.includeHi)))
+            return false;
+        return true;
+    }
+
+    bool queryZeroSupport(
+        const CompiledPiecewise& vessel, const Piecewise& model,
+        double x, double t, bool allowProof) {
+        size_t pieceIndex = vessel.pieces.size();
+        for (size_t i = 0; i < vessel.pieces.size(); ++i) {
+            if (pieceContains(vessel.pieces[i], x)) {
+                pieceIndex = i;
+                break;
+            }
+        }
+
+        if (allowProof) {
+            ++proofConsultations;
+            const SupportProof& proof = vessel.proof;
+            const bool authoritative =
+                proof.valid &&
+                proof.theorem == ProofKind::DensityZeroSupport &&
+                proof.channel == Channel::MediumDensity &&
+                vessel.channel == Channel::MediumDensity &&
+                proof.kind == vessel.kind &&
+                proof.topologyKey == vessel.topologyKey;
+
+            if (authoritative && pieceIndex < vessel.pieces.size()) {
+                for (size_t zeroPiece : proof.zeroPieces) {
+                    if (zeroPiece == pieceIndex) {
+                        ++proofBypasses;
+                        return true;
+                    }
+                }
+            }
+            ++proofFallbacks;
+        }
+
+        const auto value = model.evaluate({{"x", x}, {"t", t}});
+        assert(value.has_value());
+        const auto* scalar = std::get_if<double>(&*value);
+        assert(scalar);
+        return std::abs(*scalar) < 1e-12;
     }
 };
 
@@ -256,12 +390,127 @@ int main() {
     assert(adapter.topologyBuilds == buildsBeforeTimeline);
     assert(cTimedDensity.pieces[0].math == timedMathBefore);
 
+    // Rung 1I: theorem authority belongs to the rendered-field vessel,
+    // not to the canonical math node. Two channels intentionally compile
+    // byte-identical zero mathematics to the same calculation IDs.
+    auto zeroDensity = twoPiece(scalarS(0.0), scalarS(0.0));
+    auto zeroRho = twoPiece(scalarS(0.0), scalarS(0.0));
+    CompiledPiecewise cZeroDensity, cZeroRho;
+    assert(adapter.compile(Channel::MediumDensity, zeroDensity, cZeroDensity));
+    assert(adapter.compile(Channel::SourceRho, zeroRho, cZeroRho));
+    assert(cZeroDensity.pieces[0].math == cZeroRho.pieces[0].math);
+    assert(cZeroDensity.pieces[1].math == cZeroRho.pieces[1].math);
+    assert(cZeroDensity.channel != cZeroRho.channel);
+    const uint32_t rhoZeroLeftMath = cZeroRho.pieces[0].math;
+    const uint32_t rhoZeroRightMath = cZeroRho.pieces[1].math;
+    const std::string rhoZeroTopology = cZeroRho.topologyKey;
+    assert(!cZeroRho.proof.valid);
+
+    // Build a density-only exact-zero support theorem. The same theorem builder
+    // explicitly refuses SourceRho even though the canonical zero math is shared.
+    assert(adapter.buildDensityZeroSupportProof(zeroDensity, cZeroDensity));
+    assert(cZeroDensity.proof.valid);
+    assert(cZeroDensity.proof.channel == Channel::MediumDensity);
+    assert(cZeroDensity.proof.zeroPieces.size() == 2);
+    assert(!adapter.buildDensityZeroSupportProof(zeroRho, cZeroRho));
+    assert(!cZeroRho.proof.valid);
+
+    const uint64_t bypassesBeforeDensity = adapter.proofBypasses;
+    assert(adapter.queryZeroSupport(cZeroDensity, zeroDensity, -5.0, 0.0, true));
+    assert(adapter.proofBypasses == bypassesBeforeDensity + 1);
+
+    // Even a deliberately copied density proof cannot acquire radiance
+    // authority: the vessel channel check forces exact SourceRho fallback.
+    CompiledPiecewise forgedRho = cZeroRho;
+    forgedRho.proof = cZeroDensity.proof;
+    const uint64_t bypassesBeforeForgedRho = adapter.proofBypasses;
+    const uint64_t fallbacksBeforeForgedRho = adapter.proofFallbacks;
+    assert(adapter.queryZeroSupport(forgedRho, zeroRho, -5.0, 0.0, true));
+    assert(adapter.proofBypasses == bypassesBeforeForgedRho);
+    assert(adapter.proofFallbacks == fallbacksBeforeForgedRho + 1);
+
+    // Topology mutation invalidates the density theorem on the stable vessel.
+    // While invalid, support-enabled queries fall open to exact Piecewise truth.
+    const uint64_t invalidationsBeforeTopology = adapter.proofInvalidations;
+    zeroDensity.pieces[0].hi = -2.0;
+    zeroDensity.pieces[1].lo = -2.0;
+    assert(adapter.compile(Channel::MediumDensity, zeroDensity, cZeroDensity));
+    assert(adapter.proofInvalidations == invalidationsBeforeTopology + 1);
+    assert(!cZeroDensity.proof.valid);
+    const uint64_t fallbacksBeforeTopology = adapter.proofFallbacks;
+    assert(adapter.queryZeroSupport(cZeroDensity, zeroDensity, -5.0, 7.0, true));
+    assert(adapter.proofFallbacks == fallbacksBeforeTopology + 1);
+
+    // Local re-proof restores the density bypass. Runtime x/t movement then
+    // consumes the same theorem with zero topology or theorem rebuilds.
+    assert(adapter.buildDensityZeroSupportProof(zeroDensity, cZeroDensity));
+    const uint64_t proofBuildsBeforeRuntime = adapter.proofBuilds;
+    const uint64_t topologyBuildsBeforeProofRuntime = adapter.topologyBuilds;
+    for (double x : {-9.0, -3.0, 0.0, 12.0}) {
+        for (double t : {0.0, 2.0, 99.0}) {
+            assert(adapter.queryZeroSupport(
+                cZeroDensity, zeroDensity, x, t, true));
+        }
+    }
+    assert(adapter.proofBuilds == proofBuildsBeforeRuntime);
+    assert(adapter.topologyBuilds == topologyBuildsBeforeProofRuntime);
+
+    // Authored child mutation on density only invalidates density proof state,
+    // while the separately authored SourceRho vessel retains its exact topology
+    // and canonical zero calculation IDs.
+    const uint64_t invalidationsBeforeChild = adapter.proofInvalidations;
+    zeroDensity.pieces[0].mathNode->scalarForm = ScalarForm::constant(2.0);
+    assert(adapter.compile(Channel::MediumDensity, zeroDensity, cZeroDensity));
+    assert(adapter.proofInvalidations == invalidationsBeforeChild + 1);
+    assert(!cZeroDensity.proof.valid);
+    assert(cZeroRho.topologyKey == rhoZeroTopology);
+    assert(cZeroRho.pieces[0].math == rhoZeroLeftMath);
+    assert(cZeroRho.pieces[1].math == rhoZeroRightMath);
+    assert(!cZeroRho.proof.valid);
+
+    // Invalid density proof falls open: left interval is now non-zero while the
+    // untouched right interval remains exactly zero.
+    const uint64_t fallbacksBeforeChild = adapter.proofFallbacks;
+    assert(!adapter.queryZeroSupport(
+        cZeroDensity, zeroDensity, -5.0, 0.0, true));
+    assert(adapter.queryZeroSupport(
+        cZeroDensity, zeroDensity, 5.0, 0.0, true));
+    assert(adapter.proofFallbacks == fallbacksBeforeChild + 2);
+
+    // Re-proof becomes partial: only the still-zero right interval is allowed
+    // to bypass. The nonzero left interval continues to use exact fallback.
+    assert(adapter.buildDensityZeroSupportProof(zeroDensity, cZeroDensity));
+    assert(cZeroDensity.proof.zeroPieces.size() == 1);
+    const uint64_t bypassesBeforePartial = adapter.proofBypasses;
+    const uint64_t fallbacksBeforePartial = adapter.proofFallbacks;
+    assert(!adapter.queryZeroSupport(
+        cZeroDensity, zeroDensity, -5.0, 0.0, true));
+    assert(adapter.queryZeroSupport(
+        cZeroDensity, zeroDensity, 5.0, 0.0, true));
+    assert(adapter.proofBypasses == bypassesBeforePartial + 1);
+    assert(adapter.proofFallbacks == fallbacksBeforePartial + 1);
+
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
                 "density_topology_edit_local=1 typed_vec3_chroma=1 "
                 "scalar_to_chroma_refused=1 timeline_consumed=1 "
                 "timeline_value_changes_without_rebuild=1 "
-                "pretty_print_identity=0 full_scene_serialization_identity=0\n");
+                "vessel_scoped_density_zero_proof=1 cross_channel_math_shared=1 "
+                "radiance_cannot_borrow_density_proof=1 "
+                "topology_change_invalidates_density_proof=1 "
+                "invalid_proof_exact_fallback=1 local_reproof=1 "
+                "runtime_proof_rebuilds=0 density_child_edit_local=1 "
+                "partial_zero_support_reproof=1 "
+                "proof_builds=%llu proof_invalidations=%llu "
+                "proof_consultations=%llu proof_bypasses=%llu "
+                "proof_fallbacks=%llu proof_refusals=%llu "
+                "pretty_print_identity=0 full_scene_serialization_identity=0\n",
+                static_cast<unsigned long long>(adapter.proofBuilds),
+                static_cast<unsigned long long>(adapter.proofInvalidations),
+                static_cast<unsigned long long>(adapter.proofConsultations),
+                static_cast<unsigned long long>(adapter.proofBypasses),
+                static_cast<unsigned long long>(adapter.proofFallbacks),
+                static_cast<unsigned long long>(adapter.proofRefusals));
     return 0;
 }
