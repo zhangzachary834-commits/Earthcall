@@ -2822,7 +2822,13 @@ void LawManager::releaseFromLaws(Singular* being) {
     _seededBeingPointers.erase(being);
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
-                       [&id](const DriveSession& s) { return s.subjectId == id; }),
+                       [&id, this](const DriveSession& s) {
+                           if (s.subjectId == id) {
+                               _driveSessionKeys.erase({s.lawId, s.subjectId});
+                               return true;
+                           }
+                           return false;
+                       }),
         _driveSessions.end());
 }
 
@@ -2886,6 +2892,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
             session.eventObjectId = o->getIdentifier();
         }
     }
+    _driveSessionKeys.insert({law.getIdentifier(), subjectId});
     _driveSessions.push_back(std::move(session));
 }
 
@@ -2919,6 +2926,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
             if (law && subject) law->forgetOnset(subject);
+            _driveSessionKeys.erase({it->lawId, it->subjectId});
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2944,6 +2952,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
+            _driveSessionKeys.erase({it->lawId, it->subjectId});
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2984,6 +2993,18 @@ bool LawManager::remove(const std::string& lawId) {
     removed.reset();
     _adapter.forgetLaw(lawId);
     Law::bumpTextRevision();
+
+    _driveSessions.erase(
+        std::remove_if(_driveSessions.begin(), _driveSessions.end(),
+                       [&lawId, this](const DriveSession& s) {
+                           if (s.lawId == lawId) {
+                               _driveSessionKeys.erase({s.lawId, s.subjectId});
+                               return true;
+                           }
+                           return false;
+                       }),
+        _driveSessions.end());
+
     return true;
 }
 
@@ -3374,6 +3395,7 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     }
     oldLaws.clear();
     _driveSessions.clear();
+    _driveSessionKeys.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();
     _compiledConditionRevision.clear();
