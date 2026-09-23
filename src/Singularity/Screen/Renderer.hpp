@@ -245,7 +245,20 @@ public:
     // Scene-spatial synthesis Phase B: diagnostic only. The observer has no
     // theorem-consumption API and therefore cannot alter rendered truth.
     void setRenderedFieldSemanticObservationEnabled(bool on) {
+        const bool wasEnabled = _renderedFieldObserver.enabled();
+        if (wasEnabled == on) return;
+
         _renderedFieldObserver.setEnabled(on);
+        if (!on) return;
+
+        // Phase-B observation must describe the scene already admitted to the
+        // Renderer, not only source-set traffic that happens after enablement.
+        // This replay is diagnostic-only: theorem state has no authority path
+        // back into pixels, marching, accumulation, visibility, or WGSL.
+        _renderedFieldObserver.observeRadianceSources(
+            _radianceSources, _radianceSourcesRevision);
+        _renderedFieldObserver.observeVolumeDensitySources(
+            _volumeDensitySources, _volumeDensitySourcesRevision);
     }
     bool renderedFieldSemanticObservationEnabled() const {
         return _renderedFieldObserver.enabled();

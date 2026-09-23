@@ -1,5 +1,6 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/RenderedFieldSemanticObserver.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -394,6 +395,29 @@ glm::vec3 vectorValue(const PropertyValue& v) {
     assert(p);
     return *p;
 }
+
+// Minimal backend used only to cross the real base-Renderer ownership seam.
+// None of these draw methods participate in the observer lifecycle witness.
+class ProbeRenderer final : public Renderer {
+public:
+    void drawMesh(const geom::TessMesh&, const RenderMaterial&) override {}
+    void drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&,
+                      const geom::FieldNode*, uint64_t, uint32_t,
+                      const geom::HeightGrid*, uint32_t) override {}
+    void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&,
+                   const glm::vec4&, float, Blend) override {}
+    void drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) override {}
+    void drawSolid(const std::vector<glm::vec3>&, const glm::vec4&, Blend, bool) override {}
+    void begin2D(uint32_t, uint32_t) override {}
+    void end2D() override {}
+    void drawTris2D(const std::vector<glm::vec2>&, const glm::vec4&) override {}
+    void drawLines2D(const std::vector<glm::vec2>&, const glm::vec4&, float) override {}
+    void drawImage2D(const uint8_t*, uint32_t, uint32_t,
+                     const glm::vec4&, const glm::vec4&) override {}
+    TextureHandle uploadTexture(TextureHandle, const uint8_t*,
+                                uint32_t, uint32_t) override { return 0; }
+    void releaseTexture(TextureHandle) override {}
+};
 }
 
 int main() {
@@ -769,6 +793,87 @@ int main() {
     assert(observer.stats().hypotheticalDensityBypasses == 1);
     assert(observer.stats().authorityBypassesApplied == 0);
 
+    // Phase B renderer lifecycle: admit authoritative world truth while
+    // observation is OFF, then enable diagnostics without waiting for another
+    // authored mutation. V4 emission is present but intentionally outside this
+    // density-only theorem surface.
+    ProbeRenderer rendererBoundary;
+    auto boundaryZeroRho = Piecewise::continuous(scalarS(0.0));
+    auto boundaryZeroDensity = Piecewise::continuous(scalarS(0.0));
+    auto boundaryEmission = Piecewise::continuous(scalarS(7.0));
+
+    Rendering::RadianceSourceBinding boundarySource;
+    boundarySource.radianceExpr = &boundaryZeroRho;
+    boundarySource.radianceRevision = 12001;
+
+    Rendering::VolumeDensityBinding boundaryMedium;
+    boundaryMedium.densityExpr = &boundaryZeroDensity;
+    boundaryMedium.densityRevision = 13001;
+    boundaryMedium.emissionExpr = &boundaryEmission;
+    boundaryMedium.emissionRevision = 13002;
+
+    rendererBoundary.setRadianceSources({boundarySource}, 14001);
+    rendererBoundary.setVolumeDensitySources({boundaryMedium}, 15001);
+    assert(!rendererBoundary.renderedFieldSemanticObservationEnabled());
+    assert(rendererBoundary.renderedFieldSemanticObservationStats().vesselObservations == 0);
+
+    const auto* radianceDataBefore = rendererBoundary.radianceSources().data();
+    const auto* densityDataBefore = rendererBoundary.volumeDensitySources().data();
+    const auto* rhoExprBefore = rendererBoundary.radianceSources()[0].radianceExpr;
+    const auto* densityExprBefore = rendererBoundary.volumeDensitySources()[0].densityExpr;
+    const auto* emissionExprBefore = rendererBoundary.volumeDensitySources()[0].emissionExpr;
+    const uint64_t rhoRevisionBefore = rendererBoundary.radianceSources()[0].radianceRevision;
+    const uint64_t densityRevisionBefore = rendererBoundary.volumeDensitySources()[0].densityRevision;
+    const uint64_t emissionRevisionBefore = rendererBoundary.volumeDensitySources()[0].emissionRevision;
+
+    rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
+    const auto firstBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
+    assert(firstBoundary.vesselObservations == 2);
+    assert(firstBoundary.semanticBuilds == 2);
+    assert(firstBoundary.theoremBuilds == 2);
+    assert(firstBoundary.hypotheticalRadianceBypasses == 1);
+    assert(firstBoundary.hypotheticalDensityBypasses == 1);
+    assert(firstBoundary.authorityBypassesApplied == 0);
+
+    // Replay borrows existing renderer state. It may not move or rewrite the
+    // admitted collections, their authored AST pointers, or any V4 field.
+    assert(rendererBoundary.radianceSources().data() == radianceDataBefore);
+    assert(rendererBoundary.volumeDensitySources().data() == densityDataBefore);
+    assert(rendererBoundary.radianceSources()[0].radianceExpr == rhoExprBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].densityExpr == densityExprBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].emissionExpr == emissionExprBefore);
+    assert(rendererBoundary.radianceSources()[0].radianceRevision == rhoRevisionBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].densityRevision == densityRevisionBefore);
+    assert(rendererBoundary.volumeDensitySources()[0].emissionRevision == emissionRevisionBefore);
+    assert(rendererBoundary.radianceSourcesRevision() == 14001);
+    assert(rendererBoundary.volumeDensitySourcesRevision() == 15001);
+
+    // ON->ON is exactly idempotent.
+    rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
+    const auto secondBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
+    assert(secondBoundary.vesselObservations == firstBoundary.vesselObservations);
+    assert(secondBoundary.semanticBuilds == firstBoundary.semanticBuilds);
+    assert(secondBoundary.theoremBuilds == firstBoundary.theoremBuilds);
+    assert(secondBoundary.radianceSetRevisionHits == firstBoundary.radianceSetRevisionHits);
+    assert(secondBoundary.densitySetRevisionHits == firstBoundary.densitySetRevisionHits);
+
+    // OFF changes diagnostics only; a later OFF->ON replays the still-current
+    // scene and takes the O(1) set-revision hit path rather than rebuilding.
+    rendererBoundary.setRenderedFieldSemanticObservationEnabled(false);
+    const auto disabledBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
+    assert(rendererBoundary.radianceSources().data() == radianceDataBefore);
+    assert(rendererBoundary.volumeDensitySources().data() == densityDataBefore);
+
+    rendererBoundary.setRenderedFieldSemanticObservationEnabled(true);
+    const auto reenabledBoundary = rendererBoundary.renderedFieldSemanticObservationStats();
+    assert(reenabledBoundary.radianceSetRevisionHits ==
+           disabledBoundary.radianceSetRevisionHits + 1);
+    assert(reenabledBoundary.densitySetRevisionHits ==
+           disabledBoundary.densitySetRevisionHits + 1);
+    assert(reenabledBoundary.semanticBuilds == disabledBoundary.semanticBuilds);
+    assert(reenabledBoundary.theoremBuilds == disabledBoundary.theoremBuilds);
+    assert(reenabledBoundary.authorityBypassesApplied == 0);
+
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
                 "runtime_rebuilds=0 density_value_edit_local=1 "
@@ -789,7 +894,9 @@ int main() {
                 "proof_consultations=%llu proof_bypasses=%llu "
                 "proof_fallbacks=%llu proof_refusals=%llu "
                 "proof_premise_inspections=%llu exact_evaluations_avoided=%llu "
-                "phase_b_observer=1 observer_authority_bypasses=0 "
+                "phase_b_observer=1 renderer_enable_replays_current_scene=1 "
+                "renderer_enable_idempotent=1 v4_emission_observer_inert=1 "
+                "observer_authority_bypasses=0 "
                 "observer_radiance_zero=%llu observer_density_zero=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
