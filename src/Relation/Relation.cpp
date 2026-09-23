@@ -92,6 +92,17 @@ Relation::Relation(const std::string& type,
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 
+Relation::Relation(const std::string& type,
+                   const std::string& aId,
+                   const std::string& bId,
+                   bool directed,
+                   float initialWeight)
+    : type(type), directed(directed) {
+    _endpointA.savedId = aId;
+    _endpointB.savedId = bId;
+    if (initialWeight != -1.0f) setWeight(initialWeight);
+}
+
 Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
                    Singular& aBeing,
                    Singular& bBeing,
