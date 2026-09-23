@@ -98,26 +98,28 @@ static nlohmann::json buildWorldSnapshotJson() {
 
     // Active Zone Objects
     nlohmann::json objList = nlohmann::json::array();
-    for (const auto& objPtr : mgr.active().objects()) {
-        if (!objPtr) continue;
-        nlohmann::json oj;
-        oj["id"] = objPtr->getObjectID();
-        oj["name"] = objPtr->getIdentifier();
-        oj["type"] = objPtr->getObjectType();
-        oj["shapeKind"] = static_cast<int>(objPtr->getShapeKind());
-        oj["spatialKind"] = static_cast<int>(objPtr->getSpatialKind());
-        
-        glm::vec3 pos = objPtr->getPosition();
-        oj["position"] = {pos.x, pos.y, pos.z};
-        
-        glm::vec3 rot = objPtr->getRotationEulerDegrees();
-        oj["rotation"] = {rot.x, rot.y, rot.z};
-        
-        oj["dimensions"] = objPtr->getDimensions();
-        oj["materialId"] = objPtr->materialId();
-        oj["color"] = {objPtr->faceColors[0][0], objPtr->faceColors[0][1], objPtr->faceColors[0][2]};
-        oj["renderMode"] = objPtr->getRenderModeProp();
-        objList.push_back(oj);
+    if (!mgr.zones().empty() && mgr.currentIndex() < mgr.zones().size() && mgr.zones()[mgr.currentIndex()]) {
+        for (const auto& objPtr : mgr.active().objects()) {
+            if (!objPtr) continue;
+            nlohmann::json oj;
+            oj["id"] = objPtr->getObjectID();
+            oj["name"] = objPtr->getIdentifier();
+            oj["type"] = objPtr->getObjectType();
+            oj["shapeKind"] = static_cast<int>(objPtr->getShapeKind());
+            oj["spatialKind"] = static_cast<int>(objPtr->getSpatialKind());
+
+            glm::vec3 pos = objPtr->getPosition();
+            oj["position"] = {pos.x, pos.y, pos.z};
+
+            glm::vec3 rot = objPtr->getRotationEulerDegrees();
+            oj["rotation"] = {rot.x, rot.y, rot.z};
+
+            oj["dimensions"] = objPtr->getDimensions();
+            oj["materialId"] = objPtr->materialId();
+            oj["color"] = {objPtr->faceColors[0][0], objPtr->faceColors[0][1], objPtr->faceColors[0][2]};
+            oj["renderMode"] = objPtr->getRenderModeProp();
+            objList.push_back(oj);
+        }
     }
     root["objects"] = objList;
 
@@ -1178,6 +1180,7 @@ void WebSocketServer::start(uint16_t port) {
     if (_impl->running) return;
 
     try {
+        _impl->server.reset();
         _impl->server.set_reuse_addr(true);
         websocketpp::lib::error_code ec;
         _impl->server.listen("127.0.0.1", std::to_string(port), ec);
