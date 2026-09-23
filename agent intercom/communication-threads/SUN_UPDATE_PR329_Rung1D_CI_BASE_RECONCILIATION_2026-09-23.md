@@ -450,3 +450,228 @@ If THAT works cleanly...
 then we will know we're building a genuine Earthcall semantic execution substrate rather than accidentally baking an SDF optimization into a fancy abstraction.
 
 AND THEN THE DENSITY SUNS AND THIS SUN BASICALLY COLLIDE INTO VOLTRON. 💀💀💀☀️🌈🌫️⚔️
+
+
+## Rung 1E — real OntoMath proof-on-road
+
+Successor-Sun pass on 2026-09-22 advanced the real OntoMath witness in code commit `b5cab71c8ec9ca59239608f9ba945cb78c278d81`, then reconciled the newly advanced canonical base through merge commit `5aca2ca5051886740fa0c75417bc7c5150250d43`.
+
+### What changed
+
+`tests/singularity/scene_spatial_ontomath_synthesis_test.cpp` now carries the same conservative support-proof semantics that Rung 1D previously proved only in the synthetic DAG.
+
+This is now operating over the test compiler built from real Earthcall `OntoMath::MathNode` source trees.
+
+The theorem remains deliberately narrow:
+
+```
+Union(
+    shared - biasA,
+    shared - biasB
+)
+```
+
+Because Earthcall's `Union` evaluator is the scalar minimum in this witness, if both branches consume the **same canonical compiled shared subtree**, then the larger constant bias always produces the smaller branch result for every runtime value of that shared subtree.
+
+### Canonical identity, not source-object coincidence
+
+The two authored shared expressions are still distinct C++ `MathNode` objects.
+
+The proof is accepted only after compilation shows that both source trees map to the same canonical compiled child ID.
+
+It does not derive support from:
+
+- source pointer equality;
+- `MathNode::print()`;
+- recursive pretty-text identity.
+
+This closes the main Rung 1D -> real-OntoMath semantic bridge.
+
+### Proof lives on the compiled execution road
+
+The compiled `Union` node now carries test-only derived state:
+
+- `supportProofValid`;
+- `supportWinnerChild`.
+
+With support enabled:
+
+- valid proof -> evaluate only the proved winning compiled child;
+- invalid/missing proof -> evaluate both children exactly.
+
+Thus stale or absent proof has zero optimization authority.
+
+### Authored premise dependencies are reverse-indexed
+
+The compiler now records:
+
+```
+authored MathNode premise -> compiled nodes whose support proof depends on it
+```
+
+The initial theorem declares source premises for:
+
+- scene root;
+- both subtraction branches;
+- both separately-authored shared-source trees;
+- both authored bias leaves.
+
+Proof invalidation therefore consumes the same changed-source frontier used by incremental semantic repair. It does not scan a global proof table to rediscover relevance.
+
+### Runtime movement preserves proof
+
+The existing five ambient/runtime samples remain:
+
+`-13.0, -1.25, 0.0, 7.0, 42.5`
+
+For each sample the witness now executes both:
+
+1. full compiled exact evaluation;
+2. support-enabled compiled evaluation.
+
+It requires exact parity, one support consultation, one successful bypass, zero fallback, and fewer compiled nodes visited on the support road.
+
+Across all runtime samples:
+
+- semantic node count stays fixed;
+- canonical table stays fixed;
+- root/shared/sdfB compiled identities stay fixed;
+- support proof remains valid;
+- support proof build count stays fixed at one.
+
+Runtime movement therefore causes zero semantic or support-proof rebuilds.
+
+### Authored mutation: invalidate -> exact fallback -> targeted re-proof
+
+The existing authored mutation remains:
+
+`biasA: 5 -> 17`
+
+Semantic repair remains exactly:
+
+`biasA -> sdfA -> scene`
+
+and still creates exactly three new compiled nodes while preserving the shared subtree and independent sdfB identity.
+
+That changed-source frontier invalidates the old support theorem through the reverse premise index.
+
+The newly repaired root initially has no theorem. Running with support enabled therefore records:
+
+- one proof consultation;
+- zero bypasses;
+- one exact fallback;
+
+and must still match `MathNode::evaluate()` exactly.
+
+Only after that fallback witness does the compiler rebuild support.
+
+The winner then flips:
+
+```
+before: biasA=5,  biasB=11 -> sdfB wins
+after:  biasA=17, biasB=11 -> sdfA wins
+```
+
+The rebuilt support road again bypasses one compiled branch and records the avoided-node work.
+
+### Reverting semantics does NOT resurrect stale proof
+
+The second authored mutation restores:
+
+`biasA: 17 -> 5`
+
+As in Rung 1C, semantic repair takes three canonical hits and creates zero new compiled nodes; the original compiled root ID is reused.
+
+But the test explicitly refuses to treat canonical artifact reuse as proof validity.
+
+The changed authored frontier invalidates the currently valid theorem first. Then the theorem is rebuilt for the restored semantics.
+
+This distinction is important:
+
+```
+compiled semantic artifact can be reusable
+!=
+derived proof artifact is automatically current
+```
+
+The restored proof again selects sdfB and bypasses correctly across all five ambient samples.
+
+### Economics now measured on the real OntoMath compiler
+
+The witness prints/counts:
+
+- support theorem build count;
+- proof consultations;
+- bypasses;
+- exact fallbacks;
+- nodes avoided initially;
+- nodes avoided across ambient samples;
+- proof invalidations;
+- nodes avoided after authored repair;
+- proof invalidation without a global scan;
+- canonical reuse on semantic revert.
+
+No production renderer/WGSL code was changed.
+
+### Base reconciliation
+
+While Rung 1E was being implemented, canonical advanced four commits from `458949c1` to `686a5087`, including merged Volumetric V2 authored scattering + medium chroma.
+
+Those incoming changes touched none of PR #329's five changed files.
+
+The branch was reconciled with real two-parent merge commit:
+
+`5aca2ca5051886740fa0c75417bc7c5150250d43`
+
+After reconciliation:
+
+- behind canonical: 0;
+- GitHub mergeable: true;
+- PR remains draft.
+
+This is especially relevant architecturally because canonical now contains independent medium channels `D`, `sigma_t`, `sigma_s`, and `C_v` while this branch proves the generic compiled-DAG/proof machinery over real OntoMath.
+
+### CI state
+
+The exact reconciled code head `5aca2ca5` triggered focused workflow run **#2599**.
+
+At handoff-writing time all macOS jobs are queued. Do not claim Rung 1E CI-green until the job containing `scene_spatial_ontomath_synthesis_test` actually executes successfully.
+
+The focused workflow still explicitly builds and runs both scene-spatial witnesses.
+
+### Next gate after Rung 1E CI
+
+If Rung 1E is green, do not immediately productionize only the SDF lane.
+
+Create one tiny **cross-domain semantic-synthesis witness** using real authored OntoMath from distinct channels, at minimum:
+
+- one SDF/geometry expression;
+- one source-radiance `rho` expression;
+- one medium-density `D` expression.
+
+The purpose is not visual output yet. It is to prove the compiler substrate can be shared while theorem meaning cannot leak across channels.
+
+The witness should intentionally include at least one numerically/structurally identical subexpression across two channels and force an explicit architectural answer to this question:
+
+> May the compiled calculation node be shared while proof metadata remains channel-scoped, or must semantic role participate in compiled identity when channel meaning changes the valid theorem algebra?
+
+Do not permit a density theorem (for example, zero-support over a segment) to become radiance authority merely because `D` and `rho` happen to contain byte-identical mathematics.
+
+Preserve:
+
+```
+rho != D
+D != sigma_t != sigma_s != C_v
+emission != visibility
+geometry != transport
+```
+
+while testing whether the common substrate can still share:
+
+- canonical mathematical execution;
+- dependency provenance;
+- incremental repair;
+- value caching;
+- proof invalidation infrastructure.
+
+That cross-domain witness is the next architectural gate before choosing a production integration lane.
