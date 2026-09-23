@@ -869,6 +869,119 @@ int main() {
 
         renderer.setRadianceSources({}, 0);
 
+        // V4 NATIVE SELF-EMISSION: remove every admitted radiance source and
+        // force sigma_s=0 so ordinary scattering cannot fake the result. The
+        // control and emissive media share exact D/sigma_t/sigma_s/C_v truth;
+        // only E_v differs.
+        auto v4ExtinctionNode = scalarNode(0.6);
+        OntoMath::Piecewise v4Extinction =
+            OntoMath::Piecewise::continuous(v4ExtinctionNode);
+        auto v4ZeroScatteringNode = scalarNode(0.0);
+        OntoMath::Piecewise v4ZeroScattering =
+            OntoMath::Piecewise::continuous(v4ZeroScatteringNode);
+        auto v4ChromaNode = vectorNode(1.0, 1.0, 1.0);
+        OntoMath::Piecewise v4Chroma =
+            OntoMath::Piecewise::continuous(v4ChromaNode);
+        auto v4EmissionNode = vectorNode(1.2, 0.15, 0.05);
+        OntoMath::Piecewise v4Emission =
+            OntoMath::Piecewise::continuous(v4EmissionNode);
+
+        Rendering::VolumeDensityBinding v4Dark = medium;
+        v4Dark.extinctionExpr = &v4Extinction;
+        v4Dark.extinctionRevision = 5901;
+        v4Dark.scatteringExpr = &v4ZeroScattering;
+        v4Dark.scatteringRevision = 5902;
+        v4Dark.volumeChromaExpr = &v4Chroma;
+        v4Dark.volumeChromaRevision = 5903;
+        v4Dark.phaseExpr = nullptr;
+        v4Dark.phaseRevision = 0;
+        v4Dark.emissionExpr = nullptr;
+        v4Dark.emissionRevision = 0;
+
+        Rendering::VolumeDensityBinding v4Emissive = v4Dark;
+        v4Emissive.emissionExpr = &v4Emission;
+        v4Emissive.emissionRevision = 5904;
+
+        assert(v4Dark.densityExpr == v4Emissive.densityExpr &&
+               v4Dark.extinctionExpr == v4Emissive.extinctionExpr &&
+               v4Dark.scatteringExpr == v4Emissive.scatteringExpr &&
+               v4Dark.volumeChromaExpr == v4Emissive.volumeChromaExpr &&
+               v4Dark.phaseExpr == v4Emissive.phaseExpr &&
+               "V4 self-emission witness stopped holding D/sigma_t/sigma_s/C_v/Phi fixed");
+
+        renderer.setVolumeDensitySources({v4Dark}, 5910);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v4DarkPixel[4];
+        readCentre(v4DarkPixel);
+
+        renderer.setVolumeDensitySources({v4Emissive}, 5911);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v4EmissivePixel[4];
+        readCentre(v4EmissivePixel);
+        const Renderer::FrameStats v4EmissiveStats = renderer.frameStats();
+
+        std::printf(
+            "V4 no-source self-emission dark=(%d,%d,%d,%d) emissive=(%d,%d,%d,%d) compiles=%u\n",
+            v4DarkPixel[0], v4DarkPixel[1], v4DarkPixel[2], v4DarkPixel[3],
+            v4EmissivePixel[0], v4EmissivePixel[1], v4EmissivePixel[2], v4EmissivePixel[3],
+            v4EmissiveStats.volumeProgramCompiles);
+
+        assert(v4DarkPixel[0] < 12 && v4DarkPixel[1] < 12 && v4DarkPixel[2] < 12 &&
+               "zero-source sigma_s=0 control medium produced unexpected radiance");
+        assert(v4EmissivePixel[0] > v4DarkPixel[0] + 50 &&
+               v4EmissivePixel[0] > v4EmissivePixel[1] + 35 &&
+               v4EmissivePixel[0] > v4EmissivePixel[2] + 35 &&
+               "authored E_v failed to produce visible native radiance without external illumination");
+        assert(v4EmissiveStats.volumeProgramCompiles == 1 &&
+               "introducing independent E_v did not establish its own volume program");
+
+        // VALUE ONLY on the same E_v AST: dim red emission in-place. This must
+        // visibly change pixels while reusing the compiled structure.
+        v4EmissionNode->children[0]->scalarForm.terms[0].coefficient = 0.2;
+        v4Emissive.emissionRevision = 5905;
+        renderer.setVolumeDensitySources({v4Emissive}, 5912);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v4DimmedPixel[4];
+        readCentre(v4DimmedPixel);
+        const Renderer::FrameStats v4DimmedStats = renderer.frameStats();
+        assert(v4EmissivePixel[0] > v4DimmedPixel[0] + 35 &&
+               "numeric E_v edit did not visibly refresh native self-emission");
+        assert(v4DimmedStats.volumeProgramCompiles == 0 &&
+               v4DimmedStats.volumeProgramCacheHits >= 1 &&
+               "numeric E_v edit regenerated WGSL instead of refreshing parameters");
+
+        // REFUSAL: an unsupported E_v must suppress the medium contribution and
+        // may not replay the previously valid emissive program.
+        auto unsupportedEmissionNode = std::make_shared<OntoMath::MathNode>();
+        unsupportedEmissionNode->op = OntoMath::MathNode::Op::Raycast;
+        v4Emission.pieces[0].mathNode = unsupportedEmissionNode;
+        v4Emissive.emissionRevision = 5906;
+        renderer.setVolumeDensitySources({v4Emissive}, 5913);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v4RefusedPixel[4];
+        readCentre(v4RefusedPixel);
+        const Renderer::FrameStats v4RefusedStats = renderer.frameStats();
+        assert(v4RefusedStats.volumeProgramRefusals >= 1 &&
+               v4RefusedStats.volumeLastProgramRefusal.find("emission") != std::string::npos &&
+               v4RefusedStats.volumeLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "unsupported E_v did not produce a named emission refusal");
+        assert(v4RefusedPixel[0] < 12 &&
+               v4RefusedPixel[1] < 12 &&
+               v4RefusedPixel[2] < 12 &&
+               "refused E_v left stale self-emitted radiance on screen");
+
         // TIMELINE: D(p,t)=t is the same authored structure across both frames.
         // Only this medium's admitted Timeline coordinate changes. The second
         // frame must visibly brighten while reusing the already-compiled volume
