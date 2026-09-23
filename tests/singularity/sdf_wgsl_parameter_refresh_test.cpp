@@ -1050,14 +1050,14 @@ int main() {
                       std::string::npos,
               "absent Phi keeps the literal V2 scattering accumulation path");
 
-        // Phi = 1 + g * wi.z. Keep the numeric g node reachable so a value-only
-        // edit does not alter the AST shape.
-        auto gain = number(0.35);
-        OntoMath::MathNode* gainPtr = gain.get();
+        // Phi = 1 + g * wi.z. Scalar-by-scalar multiplication belongs inside
+        // ScalarForm's exact algebra; MathNode::Scale is vector/scalar only and
+        // there is deliberately no separate MathNode::Mul vocabulary.
         auto weightedWi = std::make_unique<OntoMath::MathNode>();
-        weightedWi->op = OntoMath::MathNode::Op::Mul;
-        weightedWi->children.push_back(std::move(gain));
-        weightedWi->children.push_back(variable(OntoMath::kWiZVar));
+        weightedWi->op = OntoMath::MathNode::Op::ScalarLeaf;
+        weightedWi->scalarForm =
+            OntoMath::ScalarForm::variable(OntoMath::kWiZVar, 1.0, 0.35);
+        OntoMath::MathNode* gainPtr = weightedWi.get();
         auto phaseRoot = std::make_shared<OntoMath::MathNode>();
         phaseRoot->op = OntoMath::MathNode::Op::Add;
         phaseRoot->children.push_back(number(1.0));
