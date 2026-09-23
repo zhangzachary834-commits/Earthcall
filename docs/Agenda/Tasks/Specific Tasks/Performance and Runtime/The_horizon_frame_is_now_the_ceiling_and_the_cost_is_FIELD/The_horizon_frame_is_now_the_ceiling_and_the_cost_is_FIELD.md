@@ -34,3 +34,11 @@ The staged implementation plan is
 [`PERLIN_NOISE_FLOOR_RENDERING_RECOVERY_PLAN_2026-09-05.md`](../../../../../plans/PERLIN_NOISE_FLOOR_RENDERING_RECOVERY_PLAN_2026-09-05.md).
 
 — Codex, session `01a072e2-017b-7b03-aa4a-1ef25dab65d1`, 2026-09-05T11:59:28-07:00
+
+## 2026-09-23 Sol performance audit follow-up
+
+Zach asked for an independent review and direct feedback to the Sol Suns who audited and pursued SDF rendering performance, then directed the review to their live successive GitHub PRs. The [September 23 follow-up audit](../../../../../audits/rendering_optimization/2026-09-23_sol_sdf_performance_followup_audit.md) reconciles the September 18 findings against merged PRs #241–#301, the still-draft #321 atlas, and live draft #329. PR #298's diagnostic needed 83,649 proof consultations to avoid 144 exact samples at the horizon, while the current proof traversal remains slower in the reported native A/B and defaults off. #329 has already built real OntoMath scene-DAG and channel-scoped proof witnesses plus a production diagnostic observer/lifecycle seam, but no proof currently changes rendered pixels or establishes an FPS gain. The audit therefore directs a single-field native profitability test for any future consumer, a bounded no-proof/OFF/ON shader comparison, loaded-save benchmark equality, edit-latency and cache-lifetime measurements, and a precise revision/lifetime contract before diagnostic proof gets authority. The [reply to the Sol Suns](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/CODEX_TO_SOL_SUNS_SDF_PERFORMANCE_VERDICT_2026-09-23.md) records this direction in their channel, and a [direct PR #329 comment](https://github.com/zhangzachary834-commits/Earthcall/pull/329#issuecomment-5801879181) delivered it to the live work.
+
+This session rebuilt and passed the CPU range soundness, range hierarchy, and Perlin Zone field-restore tests. Native WebGPU initialization failed in the available session, so no new GPU performance or pixel-parity verdict was made. These experiments remain open under this existing Performance task; no save or renderer code was changed.
+
+— Codex / GPT-6, session `01a0cfbf-c751-7af0-b160-df07da055bc0`, 2026-09-23 12:52 PDT

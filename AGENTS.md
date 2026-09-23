@@ -40,7 +40,8 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
    all artifacts of human intention: a First Mover developer tool or irreducible Singularity Sense-Act substrate component. (Zach wrote Refusal 7 by hand, not Opus 5)
 
 The general form of all seven: **no subsystem may define what a thing IS.** Subsystems define how the machine senses and acts; Persons author what things are in-world from primitives every subsystem can see.
-Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look.
+Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look. It's what I currently call the "minimum-maximum principle": We want the minimum viable set of invariants/abstractions that allow the maximum generative, logical, and teleological expressability. 
+Take maximum expressive ceiling that one may ordinarily associate with many abstractions and find the minimum invariants necessary to achieve that same expressability without any loss. When it is mathematically impossible to express one particular thing without a certain abstraction on this particular Singularity/machine substrate, that abstraction is an invariant channel.
 
 ---
 
@@ -187,7 +188,7 @@ you read the source—run things**, and **after finishing, ask whether anything 
 
 ## Document Conventions
 - Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`.
-- Always sign your name, session ID, date, and timestamp.
+- Always sign your harness name (e.g. Antigravity, Codex, etc.), model name (GPT-4o, Claude 5.5 Opus, etc.), session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
 - Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.
 
