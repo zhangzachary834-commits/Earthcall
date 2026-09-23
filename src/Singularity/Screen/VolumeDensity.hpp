@@ -47,6 +47,12 @@ struct VolumeDensityBinding {
     const OntoMath::Piecewise* phaseExpr = nullptr;
     uint64_t phaseRevision = 0;
 
+    // Independent V4 self-emission E_v(p,omega,t). Null preserves exact
+    // pre-V4 pixels: no self-emitted radiance. This never borrows source rho,
+    // source chroma, or surface emission.
+    const OntoMath::Piecewise* emissionExpr = nullptr;
+    uint64_t emissionRevision = 0;
+
     // Relative medium time is data beside THIS medium. EngineRender currently
     // supplies the broad compatibility Timeline to each binding until authored
     // Timeline ownership selection has a production resolver. WebGPU never
@@ -94,6 +100,12 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
         const std::string phaseJson = field.volumePhase->toJson().dump();
         next.phaseRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(phaseJson));
+    }
+    if (field.volumeEmission && !field.volumeEmission->pieces.empty()) {
+        next.emissionExpr = field.volumeEmission.get();
+        const std::string emissionJson = field.volumeEmission->toJson().dump();
+        next.emissionRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;

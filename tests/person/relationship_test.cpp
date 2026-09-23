@@ -51,8 +51,27 @@ void test_directed_relationship() {
     std::cout << "test_directed_relationship passed" << std::endl;
 }
 
+void test_string_relationship_instantiation() {
+    Relationship r("spouse", "person-id-alice", "person-id-bob", false, 1.0f);
+
+    assert(r.aId() == "person-id-alice");
+    assert(r.bId() == "person-id-bob");
+    assert(r.involves("person-id-alice"));
+    assert(r.involves("person-id-bob"));
+    assert(!r.involves("person-id-charlie"));
+
+    assert(r.isBetween("person-id-alice", "person-id-bob"));
+    assert(r.isBetween("person-id-bob", "person-id-alice"));
+    assert(!r.isBetween("person-id-alice", "person-id-charlie"));
+
+    assert(r.getIdentifier() == "person-id-alice-spouse-person-id-bob");
+
+    std::cout << "test_string_relationship_instantiation passed" << std::endl;
+}
+
 int main() {
     test_relationship_instantiation();
     test_directed_relationship();
+    test_string_relationship_instantiation();
     return 0;
 }

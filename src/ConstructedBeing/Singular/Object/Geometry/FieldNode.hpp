@@ -100,6 +100,7 @@ public:
           volumeScattering(std::make_shared<OntoMath::Piecewise>()),
           volumeChroma(std::make_shared<OntoMath::Piecewise>()),
           volumePhase(std::make_shared<OntoMath::Piecewise>()),
+          volumeEmission(std::make_shared<OntoMath::Piecewise>()),
           lightChroma(std::make_shared<OntoMath::Piecewise>()),
           lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
 
@@ -138,6 +139,12 @@ public:
     // exact V2 compatibility identity Phi=1. This is medium angular-scattering
     // truth and never aliases source angular emission.
     const std::shared_ptr<OntoMath::Piecewise> volumePhase;
+
+    // V4 participating-medium emission E_v(p,omega,t) -> vec3. Empty means
+    // exact pre-V4 compatibility: the medium contributes no self-emitted
+    // radiance. This is independent from D, sigma_t, sigma_s, C_v, Phi and
+    // every source-side rho/chi/alpha channel.
+    const std::shared_ptr<OntoMath::Piecewise> volumeEmission;
 
     // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
     // case the historical authored light.color remains the constant chroma.
@@ -209,6 +216,10 @@ protected:
         if (volumePhase) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.phase.ast", volumePhase.get()));
+        }
+        if (volumeEmission) {
+            registerProperty(std::make_unique<PiecewiseAstBridge>(
+                "volume.emission.ast", volumeEmission.get()));
         }
 
         if (lightChroma) {

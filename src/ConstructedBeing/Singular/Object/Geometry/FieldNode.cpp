@@ -25,6 +25,9 @@ nlohmann::json FieldNode::toJson() const {
     if (volumePhase && !volumePhase->pieces.empty()) {
         j["volumePhase"] = volumePhase->toJson();
     }
+    if (volumeEmission && !volumeEmission->pieces.empty()) {
+        j["volumeEmission"] = volumeEmission->toJson();
+    }
     if (lightChroma && !lightChroma->pieces.empty()) {
         j["lightChroma"] = lightChroma->toJson();
     }
@@ -119,6 +122,13 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             *volumePhase = OntoMath::Piecewise::fromJson(j["volumePhase"]);
         } else {
             *volumePhase = OntoMath::Piecewise{};
+        }
+    }
+    if (volumeEmission) {
+        if (j.contains("volumeEmission")) {
+            *volumeEmission = OntoMath::Piecewise::fromJson(j["volumeEmission"]);
+        } else {
+            *volumeEmission = OntoMath::Piecewise{};
         }
     }
 

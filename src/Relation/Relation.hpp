@@ -104,6 +104,12 @@ public:
              bool directed = false,
              float initialWeight = -1.0f);
 
+    Relation(const std::string& type,
+             const std::string& aId,
+             const std::string& bId,
+             bool directed = false,
+             float initialWeight = -1.0f);
+
     // Lexeme-typed Relation constructors. The Lexeme is the semantic kind
     // being; `type` stores its stable identifier, not its surface spelling.
     Relation(Singularity::Language::Lexeme& typeLexeme,
