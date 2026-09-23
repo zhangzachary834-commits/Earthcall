@@ -5,7 +5,7 @@
 // That style missed three bugs at once (docs/plans/
 // 2D_Interface_Robustness_Pass_2026-09-22.md, Tier 0): a wheel notch counted
 // once per replayed button edge, a press that lost its release when the
-// window lost focus or the Zone changed, and a pick that handed equal-z
+// window lost focus, and a pick that handed equal-z
 // overlaps to the being drawn UNDERNEATH. None of them is a strange gesture;
 // each is an ordinary one nobody scripted.
 //
@@ -13,7 +13,7 @@
 // same entry step() uses — with thousands of seeded random frames (pointer
 // moves, press/release bursts inside one frame, wheel, a foreign UI taking
 // the pointer, the window losing focus, beings leaving and re-entering the
-// reachable set) and checks the event STREAM against a small state machine:
+// reachable set, laws writing pressedId / focusedId) and checks the event STREAM against a small state machine:
 //
 //   * every object-pressed is closed by exactly one object-released on the
 //     same being, before any other press;
@@ -30,6 +30,9 @@
 // at Zach's request to make the Singular/Law-driven 2D interfaces more robust.
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -58,6 +61,7 @@ void check(bool ok, const std::string& what) {
 }
 
 std::vector<std::pair<std::string, std::string>> g_events;
+std::map<std::string, std::string> g_objects;   // last event object, by type
 
 int count(const std::string& type, const std::string& subject = "") {
     int n = 0;
@@ -152,6 +156,7 @@ int main() {
     Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& e) {
         g_events.emplace_back(e.type,
                               e.subject ? e.subject->getIdentifier() : std::string("null"));
+        if (e.object) g_objects[e.type] = e.object->getIdentifier();
     });
 
     // Two equal-z plates overlapping at (150..200, 0..100); a higher-z HUD
@@ -221,8 +226,9 @@ int main() {
     }
 
     // ------------------------------------------------------------------
-    // 4. The pressed and focused being leaving the reachable set (a Zone
-    //    switch) ends the press and the focus, instead of orphaning them.
+    // 4. Leaving reach is SENSED, not enforced (Zach, 2026-09-23: a Zone the
+    //    Person is not in may keep running; cancelling on a Zone switch is
+    //    "good design if authorable, but too absolute as hardcoded").
     // ------------------------------------------------------------------
     {
         channel.observe(at(20.0f, 320.0f, true), all);   // press + focus lone
@@ -230,13 +236,85 @@ int main() {
         g_events.clear();
         const std::vector<Object*> otherZone{&under, &over, &hud};
         channel.observe(at(20.0f, 320.0f, true), otherZone);
-        check(count("object-released", "plate-lone") == 1, "a Zone switch releases the held press");
-        check(count("object-press-cancelled", "plate-lone") == 1, "as a cancellation");
-        check(count("object-unfocused", "plate-lone") == 1, "and unfocuses the being left behind");
-        check(channel.focusedId.empty(), "so keys no longer reach a being in another Zone");
+        channel.observe(at(25.0f, 320.0f, true), otherZone);
+        check(count("object-left-reach", "plate-lone") == 1,
+              "leaving reach publishes object-left-reach, once");
+        check(count("object-released") == 0 && count("object-press-cancelled") == 0,
+              "and does NOT cancel the press");
+        check(channel.pressedId == "plate-lone" && channel.focusedId == "plate-lone",
+              "press and focus persist beyond reach");
         channel.observe(at(20.0f, 320.0f, false), otherZone);
-        check(count("object-clicked") == 0, "the later physical release clicks nothing");
+        check(count("object-released", "plate-lone") == 1,
+              "the physical release still closes the press, out of reach");
+        check(count("object-clicked") == 0, "without a click — the pointer was not on it");
+        g_events.clear();
         channel.observe(at(20.0f, 320.0f, false), all);
+        check(count("object-entered-reach", "plate-lone") == 1,
+              "returning publishes object-entered-reach");
+    }
+
+    // ------------------------------------------------------------------
+    // 4b. Cancellation and focus are AUTHORED: a law's Set on pressedId /
+    //     focusedId is heard and reported as edges.
+    // ------------------------------------------------------------------
+    {
+        channel.observe(at(20.0f, 320.0f, true), all);
+        channel.observe(at(60.0f, 330.0f, true), all);   // a drag
+        g_events.clear();
+        channel.pressedId.clear();                        // what `Set pressedId := ""` does
+        channel.observe(at(60.0f, 330.0f, true), all);
+        check(count("object-released", "plate-lone") == 1 &&
+                  count("object-drag-ended", "plate-lone") == 1 &&
+                  count("object-press-cancelled", "plate-lone") == 1,
+              "clearing pressedId cancels the press: released, drag-ended, press-cancelled");
+        check(count("object-clicked") == 0 && !channel.dragging, "never a click; nothing held");
+        channel.observe(at(60.0f, 330.0f, false), all);
+        check(count("object-released") == 1, "and the later physical release adds nothing");
+
+        g_events.clear();
+        channel.focusedId = "plate-hud";                  // authored focus (Tab order)
+        channel.observe(at(60.0f, 330.0f, false), all);
+        check(count("object-unfocused", "plate-lone") == 1 &&
+                  count("object-focused", "plate-hud") == 1,
+              "writing focusedId moves focus, as edges");
+    }
+
+    // ------------------------------------------------------------------
+    // 4c. Every edge names a Singular (Zach, 2026-09-23). Addressed to no
+    //     being, it is the Person's; addressed to one, the Person is its agent.
+    // ------------------------------------------------------------------
+    {
+        Soul soul;
+        Body body;
+        Person person(soul, body, "pointer");
+        channel.setPointingPerson(&person);
+        const std::string who = person.getIdentifier();
+        PropertyValue pid;
+        check(PropertyPath::parse("personId").getValue(channel, pid) ==
+                      PropertyPath::PathResult::Ok &&
+                  std::get<std::string>(pid) == who,
+              "personId is a registered reading");
+
+        g_events.clear();
+        g_objects.clear();
+        channel.focusedId.clear();
+        channel.observe(at(1000.0f, 1000.0f), all);       // over nothing
+        channel.noteKey("e", 69, true);
+        channel.noteKey("e", 69, false);
+        check(count("key-pressed", who) == 1 && count("key-released", who) == 1,
+              "a key with nothing focused is the Person's");
+        g_events.clear();
+        channel.noteScroll(0.0f, 1.0f);
+        channel.observePending(at(1000.0f, 1000.0f), all);
+        check(count("object-scrolled", who) == 1, "a wheel over nothing is the Person's");
+
+        g_events.clear();
+        g_objects.clear();
+        channel.observe(at(20.0f, 320.0f, true), all);
+        channel.observe(at(20.0f, 320.0f, false), all);
+        check(count("object-clicked", "plate-lone") == 1 && g_objects["object-clicked"] == who,
+              "a click on a being carries the Person as its agent (event object)");
+        channel.setPointingPerson(nullptr);
     }
 
     // ------------------------------------------------------------------
@@ -305,6 +383,10 @@ int main() {
                 } else if (!windowFocused && die(rng) < 30) {
                     windowFocused = true;
                     ch.onWindowFocus(true);
+                }
+                if (die(rng) < 2) ch.pressedId.clear();          // a law cancels the press
+                if (die(rng) < 2) {                               // a law moves focus
+                    ch.focusedId = all[die(rng) % static_cast<int>(all.size())]->getIdentifier();
                 }
                 const bool foreignUI = die(rng) < 5;
 

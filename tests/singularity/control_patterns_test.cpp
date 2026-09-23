@@ -323,6 +323,84 @@ int main() {
     }
 
     // ------------------------------------------------------------------
+    // 4a'. "Cancel the press when its being leaves reach" is LAW TEXT, not
+    //      channel code. Zach, 2026-09-23: good design if authorable, too
+    //      absolute as hardcoded. The channel only senses object-left-reach;
+    //      this law answers it with Set @interaction-channel.pressedId := "",
+    //      and the channel reports the cancellation as edges — which a second
+    //      authored law hears.
+    // ------------------------------------------------------------------
+    Object farPlate;
+    {
+        farPlate.setObjectID("the-far-plate");
+        Object::ShapeParams p;
+        p.width2D = 100.0f;
+        p.height2D = 100.0f;
+        farPlate.setShape(Object::ShapeKind::Shape2D, p);
+        farPlate.setX2D(0.0f);
+        farPlate.setY2D(0.0f);
+        world.push_back(&farPlate);
+
+        auto cancelOnLeave = std::make_shared<Law>("Cancel press on leaving reach");
+        cancelOnLeave->setLawIdentifier("test-cancel-press-on-leave-law");
+        cancelOnLeave->addAuthor(author);
+        cancelOnLeave->setActivation(Law::Activation::OnEvent);
+        cancelOnLeave->setScope(Law::Scope::Subject);
+        cancelOnLeave->ecaLoop().eventType = "object-left-reach";
+        cancelOnLeave->setConditionModel(ConditionNode::isKind(ConditionNode::BeingKind::Object));
+        cancelOnLeave->setActionModel(
+            ActionNode::set("@interaction-channel.pressedId", PropertyValue(std::string())));
+        laws.add(cancelOnLeave);
+        laws.bindTrigger(cancelOnLeave->getIdentifier(), "object-left-reach");
+
+        auto hearCancel = std::make_shared<Law>("Hear the cancellation");
+        hearCancel->setLawIdentifier("test-hear-press-cancelled-law");
+        hearCancel->addAuthor(author);
+        hearCancel->setActivation(Law::Activation::OnEvent);
+        hearCancel->setScope(Law::Scope::Subject);
+        hearCancel->ecaLoop().eventType = "object-press-cancelled";
+        hearCancel->setConditionModel(ConditionNode::isKind(ConditionNode::BeingKind::Object));
+        hearCancel->setActionModel(ActionNode::publish(Control::kActivated));
+        laws.add(hearCancel);
+        laws.bindTrigger(hearCancel->getIdentifier(), "object-press-cancelled");
+
+        InteractionChannel::Sense s;
+        s.pointerX = 50.0f;
+        s.pointerY = 50.0f;
+        s.rayOrigin = glm::vec3(0.0f, 0.0f, 1e6f);
+        s.rayDirection = glm::vec3(0.0f, 0.0f, 1.0f);
+        s.left = true;
+        const std::vector<Object*> here{&farPlate};
+        const std::vector<Object*> elsewhere{};
+
+        g_activated.clear();
+        channel.observe(s, here);
+        laws.tick();
+        check(channel.pressedId == "the-far-plate", "the press lands on the plate");
+        channel.observe(s, elsewhere);   // the plate leaves reach: sensed, not cancelled
+        laws.tick();                     // the authored law answers it
+        channel.observe(s, elsewhere);   // the channel hears the authored write
+        laws.tick();
+        check(channel.pressedId.empty(), "the authored law cleared the press");
+        check(g_activated.size() == 1 && g_activated[0] == "the-far-plate",
+              "the channel reported it as object-press-cancelled, heard by a second law");
+
+        cancelOnLeave->setEnabled(false);
+        channel.observe(s, here);
+        s.left = false;
+        channel.observe(s, here);
+        s.left = true;
+        channel.observe(s, here);        // a fresh press
+        channel.observe(s, elsewhere);
+        laws.tick();
+        channel.observe(s, elsewhere);
+        check(channel.pressedId == "the-far-plate",
+              "with the law disabled, the press survives leaving reach");
+        s.left = false;
+        channel.observe(s, here);
+    }
+
+    // ------------------------------------------------------------------
     // 4b. The key command. Its subject is whoever holds focus, and the
     //     archetype is a FACTORY rather than a boot registration: which
     //     key, on which control, is an authored choice with no default

@@ -197,6 +197,8 @@ namespace Core {
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
             const bool shellCapturedPointer = ImGui::GetIO().WantCaptureMouse || menuOwnedThisFrame;
+            // Every pointer/key edge names the Person whose hand it is.
+            interaction->setPointingPerson(_person.get());
             interaction->step(_window, *_camera, mgr, shellCapturedPointer);
             static int frameCount = 0;
             frameCount++;

@@ -18,16 +18,51 @@ Task: [2D_Interface_Robustness](../Agenda/Tasks/Specific%20Tasks/Interaction%20a
 |---|---|---|---|
 | 1 | Equal-`zOrder2D` overlap: draw puts the *last* being on top (`stable_sort`), pick kept the *first* (`>`). The click went to the plate underneath. | Pick uses `>=` (`InteractionChannel.cpp`). | `interaction_robustness_test` §1 |
 | 2 | Same-frame press/release replay copied the wheel into every replayed edge: `scrollTotal` inflated, `object-scrolled` published N+1 times. | Replay senses zero the wheel. Replay moved into `observePending()` so tests run the real code; test 15 of `interaction_channel_test` had been a hand copy of it. | §2 + model |
-| 3 | Window focus loss mid-press cleared `pressedId`/`dragging` silently: no `released`, no `drag-ended`. | `cancelPress()`: `released` → `drag-ended` (if travelled) → new `object-press-cancelled`; never `clicked`. All three buttons. | §3 + model |
-| 4 | A pressed or focused being leaving the reachable set (Zone switch) orphaned the press, and focus kept routing keys to a being in another Zone. | Orphan check at the top of the edge pass cancels the press and publishes `object-unfocused`. | §4 + model |
+| 3 | Window focus loss mid-press cleared `pressedId`/`dragging` silently: no `released`, no `drag-ended`. | `closePress()` (was `cancelPress`): `released` → `drag-ended` (if travelled) → new `object-press-cancelled`; never `clicked`. All three buttons. | §3 + model |
+| 4 | A pressed or focused being leaving the reachable set (Zone switch) orphaned the press: its release was lost. | ~~Hard cancel on leaving reach~~ — **revised 2026-09-23**, see below. Now the press persists and still closes on release (resolved across the Universe); leaving reach is sensed as `object-left-reach`. | §4, §4b + model |
 | 5 | Slider archetype: `Flow` integrated `dragX` (already a per-frame delta) over `dt`, so it was frame-rate dependent and ~60× slower than `controlStep`. `controlMin`/`controlMax` were never read. Synthesis Studio wrote a second law to clamp one slider back. | `Sequence(Map v+d·s, Map clamp(v,lo,hi))` in one law. An unranged slider still moves: its clamp step fails to bind, and the trace shows it. | `control_patterns_test` §4a |
 | 6 | Duplicate middle-release block (dead). Stale comments/doc (right/middle "not built"). | Removed / updated. | — |
-| 7 | ⚑ `clickSlopPixels` is registered writable; §4b calls it a first-mover constant no law may widen. | **Not changed — Zach's call:** Kernel-tier in `TransferPolicy`, or revise §4b. | — |
-| 8 | Null-subject edges are dropped by `publishEdge`: `key-pressed` with nothing focused and `object-scrolled` over nothing never publish, against §4b's table. A global key command is unauthorable. | **Not changed.** Needs a decision on what a subject-less edge means under `Scope::Subject`. | — |
+| 7 | `clickSlopPixels` is registered writable; §4b called it a first-mover constant no law may widen. | **Zach, 2026-09-23: the doc changes.** It stays law-writable; §4b revised. | — |
+| 8 | Null-subject edges were dropped: `key-pressed` with nothing focused and `object-scrolled` over nothing never published. | **Done 2026-09-23 per Zach:** such edges name the pointing Person as subject; every other edge carries the Person as `@event.object`. | §4c |
 
 **Mutation check.** Each of fixes 1–4 was reverted one at a time. The new test fails every time,
 and for 3 and 4 the random model fails as well as the scripted case. `control_patterns_test`
 §4a fails 5/5 against the old `Flow` slider.
+
+## Revision 2026-09-23 — Zach's three decisions
+
+*Claude Opus 5.5, same session. Zach's words are quoted; the mechanisms are mine.*
+
+1. **Click slop:** *"The doc should change."* `clickSlopPixels` stays authorable;
+   `INTERACTION_AS_LAW.md` §4b now says so.
+2. **No subjectless events:** *"events semantically always involve some Singular ... A key
+   pressed without anything selected is still pressed by a Person inside a Zone."* The engine
+   hands the channel its Person every frame (`setPointingPerson`, exposed as the read-only
+   `personId`). `publishEdge` makes the Person the subject when no being was addressed, and
+   the agent (`event.object`) otherwise. I added the agent part as an extension: it makes
+   "who clicked" answerable, and multi-Person pointing will need it.
+3. **Zone-switch cancel must be authorable, not hardcoded:** *"Person's currently located
+   zone must be decoupled from whether a Zone is active--you may want to have the states of
+   another Zone changing and running even when you aren't present in it."* So:
+   - The channel no longer cancels on leaving reach. It publishes `object-left-reach` /
+     `object-entered-reach` once per transition. The press and focus persist, and the
+     physical release still closes the press.
+   - Writes to `pressedId` / `focusedId` (and right/middle) are treated as authored gestures.
+     The channel remembers what it last wrote itself (`_heldSeen`, `_focusSeen`). A difference
+     is a law's Set, and becomes `released` → `drag-ended` → `press-cancelled`, or
+     `unfocused` / `focused`. The cancel is now one ordinary law, `OnEvent object-left-reach →
+     Set @interaction-channel.pressedId := ""`, run end to end in `control_patterns_test`
+     §4a′. The same mechanism makes Tab-order focus (Tier 1 I) a law.
+   - C++ still cancels in two cases, both facts about the machine: window focus loss (the OS
+     stops reporting the button), and a being gone from the Universe entirely (nothing left
+     to hold). In the second case `press-cancelled` names the Person.
+   - **Follows Zach's direction toward continuous OntoMath reach:** `step()` still gathers
+     `mgr.active().objects()` as the reachable set. That single gathering is what must change
+     when Zone activity and Person location are decoupled; the edge vocabulary does not.
+
+Mutation-checked: disabling the authored-write handling fails 5 checks across both tests.
+The red suite tests (chess ×3 compared, zone_boot, prism, synthesis_studio) still fail on
+identical lines.
 
 ## A — model-based interaction test (done)
 
@@ -67,6 +102,11 @@ whenever you add one to the channel.
 - **Read first:** `INTERACTION_AS_LAW.md` §4 and this file. Run `interaction_robustness_test`,
   `interaction_channel_test`, and `control_patterns_test` before and after touching the channel.
 - **Pitfalls:**
+  - The channel must be told its Person (`setPointingPerson`). Without one, edges that
+    address no being are not published, and the headless tests only see them because they
+    construct a `Person`.
+  - Do not reintroduce a C++ cancel on leaving reach. It is authored (see the revision above).
+  - A 2D plate's default position is (100, 100), not the origin. Set `x2D`/`y2D` in tests.
   - Events published *outside* `observePending` (`onWindowFocus`, `noteKey`) must be inside
     the model's frame window. The test marks `before` at frame start for this reason; an
     early version missed it and reported false violations.

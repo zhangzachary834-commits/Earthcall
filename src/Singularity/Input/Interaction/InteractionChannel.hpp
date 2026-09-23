@@ -101,8 +101,8 @@ public:
 
     // Keys arrive as callbacks, not levels, so they enter here rather than
     // through Sense — an edge by construction. Publishes key-pressed /
-    // key-released with the focused being as subject (null when nothing holds
-    // focus), and updates lastKey / lastKeyCode / keyDown.
+    // key-released with the focused being as subject (the Person who pressed
+    // it, when nothing holds focus), and updates lastKey / lastKeyCode / keyDown.
     void noteKey(const std::string& keyName, int keyCode, bool down);
 
     // The wheel is a callback too, and unlike a button it has no level to
@@ -126,6 +126,11 @@ public:
     // clears dragging, and cancels in-flight gestures so an unfocused window
     // cannot leak a stuck button or phantom drag across tab switches.
     void onWindowFocus(bool focused);
+
+    // The Person whose hand this channel senses (Engine::getPerson). Every
+    // edge names them: as the agent (event object) of a gesture on a being,
+    // or as the subject of one that addressed no being.
+    void setPointingPerson(Singular* person);
 
     // Registered as "@world.pointerOver" / "@world.pointerDistance": readings
     // ABOUT the subject rather than properties ON it, so "if the pointer is
@@ -214,7 +219,8 @@ private:
     // Publish `type` with `subject` (looked up in `reachable` by id) when
     // anyone is listening. One place, so every edge in this channel obeys the
     // same interest check and the same past-tense naming.
-    void publishEdge(const std::string& type, Object* subject) const;
+    // Null subject = the pointing Person (see the .cpp). No Person, no edge.
+    void publishEdge(const std::string& type, Singular* subject) const;
 
     Object* findReachable(const std::vector<Object*>& reachable,
                           const std::string& id) const;
@@ -223,12 +229,33 @@ private:
     // whose being has left the reachable set (another Zone) but still exists.
     Object* resolveBeing(const std::string& id) const;
 
-    // End a press the Person never released: publishes <prefix>released,
+    // Close a held press the Person did not finish: publishes <prefix>released,
     // <prefix>drag-ended when it had travelled, and <prefix>press-cancelled —
-    // never a click — then clears the held state. `button` is "" / "right-" /
-    // "middle-". See INTERACTION_AS_LAW.md §4b.
-    void cancelPress(std::string& heldId, bool& travelling, float& totalX,
-                     float& totalY, const std::string& button, Object* subject);
+    // never a click. Resets travel; the caller owns the id. `button` is
+    // "" / "right-" / "middle-". See INTERACTION_AS_LAW.md §4b.
+    void closePress(const std::string& heldId, bool& travelling, float& totalX,
+                    float& totalY, const std::string& button);
+
+    // The held/focused being wherever it is: reachable first, else anywhere in
+    // the Universe (a press outlives its being leaving reach).
+    Object* heldBeing(const std::vector<Object*>& reachable, const std::string& id) const;
+
+    std::string propPersonId() const;
+
+    // The Person whose hand this is — the agent of every edge. Identity
+    // pointer, owned by the Engine; exposed as the read-only `personId`.
+    Singular* _person = nullptr;
+
+    // What the channel itself last wrote to the held state. A difference at
+    // the next observe() is an AUTHORED write (a law's Set), reported as edges.
+    std::string _heldSeen;
+    std::string _rightHeldSeen;
+    std::string _middleHeldSeen;
+    std::string _focusSeen;
+
+    // Held/focused beings currently outside the reachable set, so
+    // object-left-reach / object-entered-reach publish once per transition.
+    std::vector<std::string> _outOfReach;
 
     std::string _name{"interaction-channel"};
 

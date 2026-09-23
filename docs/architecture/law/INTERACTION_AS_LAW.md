@@ -178,6 +178,7 @@ All registered, because refusal #6 admits no "nobody registered it yet."
 | `dragging` | toggle | has the press travelled past the click slop |
 | `lastKey`, `lastKeyCode` | text / number | the most recent key |
 | `keyDown` | toggle | is it down |
+| `personId` | text (read-only) | the Person whose hand this is — set by the engine from the Person present |
 | `shiftDown`, `ctrlDown`, `altDown` | toggle | modifier levels |
 
 ### 4b. The edges — published events
@@ -185,6 +186,14 @@ All registered, because refusal #6 admits no "nobody registered it yet."
 Past-tense `noun-verbed`, published **on transitions only**. A per-frame "still hovering"
 event would be the bug CLAUDE.md names outright; that is what the levels above are for,
 read by a `WhileTrue` law.
+
+**Every edge names a Singular.** An edge addressed to a being carries that being as its
+subject and **the pointing Person as its object** (`@event.object`, the agent). An edge
+addressed to no being — a key with nothing focused, a wheel over empty space — has **the
+Person** as its subject. Zach, 2026-09-23: *"events semantically always involve some
+Singular so the notion that an event could be 'subjectless' is flawed to begin with. A key
+pressed without anything selected is still pressed by a Person inside a Zone."* With no
+Person known (a headless harness that set none), nothing is published: no one pointed.
 
 | Event | Subject | Fires when |
 |---|---|---|
@@ -195,12 +204,14 @@ read by a `WhileTrue` law.
 | `object-clicked` | the being | press **and** release on the same being, without travel |
 | `object-drag-started` | the being pressed | the held pointer travels past the click slop |
 | `object-drag-ended` | the being pressed | a travelled press is released |
-| `object-scrolled` | the being under the pointer | any wheel notch (may have a null subject) |
+| `object-scrolled` | the being under the pointer, else the Person | any wheel notch |
 | `object-focused` | the being | a press lands on it and it did not hold focus |
 | `object-unfocused` | the being | focus moves elsewhere, **including to nothing** |
-| `object-press-cancelled` | the being pressed | the press ends without the Person finishing it — window lost focus, or the being left the reachable set (Zone switch). Follows `object-released` (+ `object-drag-ended` if it travelled); never followed by a click. Added 2026-09-22 |
-| `key-pressed` | the focused being, or null | a key goes down (repeats suppressed) |
-| `key-released` | the focused being, or null | that key comes up |
+| `object-press-cancelled` | the being pressed (the Person, if that being left the world) | the press ends without the Person finishing it: the window lost focus (the one cancel the machine owns — the OS stops reporting the button), or **a law cleared `pressedId`**. Follows `object-released` (+ `object-drag-ended` if it travelled); never followed by a click |
+| `object-left-reach` | the held or focused being | it leaves the reachable set (today: the active Zone's objects). **Sensed, not enforced** — the press and focus persist |
+| `object-entered-reach` | that being | it returns |
+| `key-pressed` | the focused being, else the Person | a key goes down (repeats suppressed) |
+| `key-released` | the focused being, else the Person | that key comes up |
 
 Three of these carry decisions worth defending:
 
@@ -214,18 +225,34 @@ mid-press.
 is a focus that never leaves, and every keystroke after the first click would go on
 reaching a being the Person walked away from.
 
-**`kClickSlopPixels` is a first-mover constant, not a setting.** It is a fact about
-hands. An authored law that could widen it could make every drag in the world a click.
-*(Drift, noted 2026-09-22: the code now registers `clickSlopPixels` as an ordinary
-writable property, which contradicts this paragraph. ⚑ Zach's call: gate it at the Kernel
-tier in `TransferPolicy`, or revise this paragraph. See
-`docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md`.)*
+**`clickSlopPixels` is authorable.** The first version of this document called it a
+first-mover constant no law may widen. Zach decided otherwise on 2026-09-23: it stays an
+ordinary registered, law-writable property. The default (12 px) is the channel's; how far a
+hand may travel before a press becomes a drag is the Person's to author, like everything
+else a control means.
 
 Right and middle buttons publish the same grammar with a `right-` / `middle-` infix
-(`object-right-pressed`, `object-middle-drag-ended`, …). **A press always ends:** window
-focus loss and a pressed or focused being leaving the reachable set publish the closing
-edges instead of clearing state silently. `interaction_robustness_test` holds this against
-10,000 seeded random frames.
+(`object-right-pressed`, `object-middle-drag-ended`, …).
+
+**A press always ends, and who ends it is authored.** `pressedId` / `focusedId` (and the
+right/middle ids) are registered and writable, and the channel treats a law's write to
+them as an authored gesture: clearing a held press closes it with `released` →
+`drag-ended` → `press-cancelled`; writing `focusedId` publishes `unfocused` / `focused`
+(Tab order is a law, not a widget). The only cancel written in C++ is the one the machine
+owns: window focus loss, when the OS stops reporting the button at all. Leaving reach is
+only *sensed* (`object-left-reach`). Cancelling on it is one law:
+
+```
+OnEvent object-left-reach, Scope: Subject
+Action:  Set @interaction-channel.pressedId := ""
+```
+
+Zach, 2026-09-23: cancelling on a Zone switch is *"good design if authorable, but too
+absolute as hardcoded"*, because the Person's location is being decoupled from whether a
+Zone is running (a Zone you are not in may keep changing), and "reach" is moving from
+discrete Zone membership to authored OntoMath bounds. `interaction_robustness_test` holds
+the grammar against 10,000 seeded random frames, including random authored writes;
+`control_patterns_test` §4a′ runs the cancel law above end to end.
 
 ### 4c. The readings — `@world.*`
 
@@ -444,8 +471,9 @@ Action:      Publish  "control-activated"
 
 The subject is whatever holds focus. A key command bound to a being that nobody has
 focused simply does not fire, which is the correct behaviour and cost nothing to get:
-`key-pressed` carries a null subject when focus is empty, and a law with
-`Scope::Subject` and no subject has nobody to apply to.
+with focus empty, `key-pressed` names the Person as its subject, and the Person is not in
+`category.control.key-command`. A **global** key command is authored by conditioning on
+the Person instead (e.g. `IsKind(Person)` + `lastKey`).
 
 ### 6f. Hover response — the continuous *feedback*
 
@@ -736,9 +764,12 @@ Named here so nobody reads absence as completion.
   `shape-generator-3d-law` has waiting for it. Until then, §11b step 17 will show the
   seeded version returning, and that is not a bug in the loader.
 - ~~**Right and middle button edges.**~~ Built since this was written; see §4b.
-- **Null-subject edges are dropped.** `publishEdge` returns on a null subject, so
-  `key-pressed` with nothing focused and `object-scrolled` over nothing never publish —
-  contrary to §4b's table. A global key command cannot be authored today.
+- ~~**Null-subject edges are dropped.**~~ Fixed 2026-09-23: such edges now name the Person
+  (§4b).
+- **Reach is still the active Zone's object list.** `step()` gathers `mgr.active().objects()`.
+  When Zone activity is decoupled from the Person's location and reach becomes authored
+  OntoMath bounds (Zach's direction, 2026-09-23), that gathering is the one line that must
+  follow; the edges above do not change.
 - **Occlusion by non-objects.** The pick sweeps the active Zone's objects. A Person's
   body does not occlude the ray.
 - **A layout law library.** §10 says layout is a Formation plus laws. No such laws are

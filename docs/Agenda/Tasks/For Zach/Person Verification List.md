@@ -629,5 +629,6 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] **Synthesis Studio → Pulse Rate slider:** drag it. It should now move about 0.02 per pixel (whole range in ~140 px) and **stop at 0.2 and 3.0**. Before, it barely moved. Say whether the new speed feels right; the rate is the slider's own `controlStep`.
 - [ ] **Mid-drag, Cmd-Tab away** from Earthcall and back: the dragged control must not stay stuck "held" (no runaway value, no stuck highlight).
 - [ ] **Two overlapping 2D plates with the same `zOrder2D`:** click where they overlap. The one you *see* on top should respond.
+- [ ] **Switch Zones while holding a press** (added 2026-09-23): it should *not* be cancelled. Releasing the button should end it cleanly, with no click. Cancelling on a switch is now a law you can author (`OnEvent object-left-reach → Set @interaction-channel.pressedId := ""`).
 
 BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW 
