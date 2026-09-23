@@ -133,7 +133,9 @@ Program compile(const geom::SdfNode& root,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
                 const OntoMath::Piecewise* densityExpr = nullptr,
                 DensityInputKind densityKind = DensityInputKind::LegacyField,
-                const OntoMath::Piecewise* extinctionExpr = nullptr);
+                const OntoMath::Piecewise* extinctionExpr = nullptr,
+                const OntoMath::Piecewise* scatteringExpr = nullptr,
+                const OntoMath::Piecewise* volumeChromaExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -147,7 +149,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
                              const OntoMath::Piecewise* densityExpr = nullptr,
                              DensityInputKind densityKind = DensityInputKind::LegacyField,
-                             const OntoMath::Piecewise* extinctionExpr = nullptr);
+                             const OntoMath::Piecewise* extinctionExpr = nullptr,
+                             const OntoMath::Piecewise* scatteringExpr = nullptr,
+                             const OntoMath::Piecewise* volumeChromaExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -168,6 +172,14 @@ ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr)
 // compatibility state, not a refusal: sigma_t falls back to 0.5 * D.
 ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr);
 
+// V2 authored scattering coefficient sigma_s(p,t). Absence preserves the
+// historical coefficient sigma_s = D.
+ScalarExpressionLayout inspectScatteringExpression(const OntoMath::Piecewise* expr);
+
+// V2 authored medium chroma C_v(p,t)->vec3. Absence preserves neutral white.
+// This is deliberately distinct from source/light chroma.
+VectorExpressionLayout inspectVolumeChromaExpression(const OntoMath::Piecewise* expr);
+
 // Inspect authored source chroma chi(p,t)->vec3 with the same production
 // emitter. Absent chi has a distinct legacy identity; an authored expression
 // must type-check as Vector and unsupported GPU semantics refuse.
@@ -183,11 +195,16 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // drawImplicit: a participating medium is not a hard surface and must not own
 // frag_depth merely because both paths use OntoMath.
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
-                      const OntoMath::Piecewise* extinctionExpr = nullptr);
+                      const OntoMath::Piecewise* extinctionExpr = nullptr,
+                      const OntoMath::Piecewise* scatteringExpr = nullptr,
+                      const OntoMath::Piecewise* volumeChromaExpr = nullptr);
 
-// Value-only companion to compileVolume(). Recollects D and sigma_t numeric
-// parameter slots without regenerating shader source when structure is unchanged.
+// Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s and
+// C_v numeric parameter slots without regenerating shader source when structure
+// is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
-                                   const OntoMath::Piecewise* extinctionExpr = nullptr);
+                                   const OntoMath::Piecewise* extinctionExpr = nullptr,
+                                   const OntoMath::Piecewise* scatteringExpr = nullptr,
+                                   const OntoMath::Piecewise* volumeChromaExpr = nullptr);
 
 } // namespace sdfwgsl

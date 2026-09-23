@@ -1496,7 +1496,7 @@ fn fs(in: VSOut) -> FSOut {
 
     var hit = false;
     var transmittance = 1.0;
-    var volumetric_scatter = 0.0;
+    var volumetric_scatter = vec3<f32>(0.0);
     // First ray coordinate at which the authored medium was actually sampled
     // with positive density. This is NOT a hard-surface hit.
     var first_density_t = -1.0;
@@ -1625,8 +1625,13 @@ fn fs(in: VSOut) -> FSOut {
             let old_t = transmittance;
             transmittance *= exp(-extinction * marched_field_distance);
             
-            // Analytical integration prevents double attenuation across large steps
-            volumetric_scatter += (density / extinction) * (old_t - transmittance);
+            // V2: sigma_s controls scattering magnitude while C_v controls medium
+            // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
+            // equivalent to the historical white term.
+            let scattering = max(volumeScatteringEval(p, density), 0.0);
+            let mediumChroma = volumeChromaEval(p);
+            volumetric_scatter +=
+                mediumChroma * (scattering / extinction) * (old_t - transmittance);
         }
         
         // Early exit if the field is fully opaque or ray exits the bounded volume
@@ -1643,7 +1648,7 @@ fn fs(in: VSOut) -> FSOut {
         // V0c MUST NOT activate this path in production until volume composition
         // no longer treats a translucent sample as an opaque depth owner.
         let final_alpha = 1.0 - transmittance;
-        let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
+        let c = volumetric_scatter;
         if (final_alpha > 0.0) {
             out.color = vec4<f32>(c / final_alpha, final_alpha);
         } else {
@@ -1732,7 +1737,7 @@ fn fs(in: VSOut) -> FSOut {
     let surfaceColor = sdfColor(pf);
     let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
-    let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
+    let field_rgb = volumetric_scatter;
     
     let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
     let final_rgb = base_rgb * transmittance + field_rgb;
@@ -1813,6 +1818,49 @@ ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* ex
     return layout;
 }
 
+ScalarExpressionLayout inspectScatteringExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-scattering:compat-density>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+VectorExpressionLayout inspectVolumeChromaExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return VectorExpressionLayout{"<volume-chroma:compat-white>", 0, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateVectorPiecewise(*expr, true, validationError)) {
+        return VectorExpressionLayout{"", 0, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    VectorExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     // Absence is not refusal: it means the historical authored light.color is
@@ -1873,7 +1921,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
                              const OntoMath::Piecewise* densityExpr,
                              DensityInputKind densityKind,
-                             const OntoMath::Piecewise* extinctionExpr) {
+                             const OntoMath::Piecewise* extinctionExpr,
+                             const OntoMath::Piecewise* scatteringExpr,
+                             const OntoMath::Piecewise* volumeChromaExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1924,6 +1974,29 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
         e.bindTime = false;
         e.timeExpression = previousTimeExpression;
+    }
+
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    }
+
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
     }
 
     if (fieldNode && fieldNode->vectorField) {
@@ -2023,7 +2096,9 @@ Program compile(const geom::SdfNode& root,
                 const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
                 const OntoMath::Piecewise* densityExpr,
                 DensityInputKind densityKind,
-                const OntoMath::Piecewise* extinctionExpr) {
+                const OntoMath::Piecewise* extinctionExpr,
+                const OntoMath::Piecewise* scatteringExpr,
+                const OntoMath::Piecewise* volumeChromaExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2126,6 +2201,46 @@ Program compile(const geom::SdfNode& root,
     } else {
         prog.wgsl += "    // V1 compatibility: preserve pre-V1 extinction exactly\n";
         prog.wgsl += "    return compatibilityDensity * 0.5;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V2 Scattering Compiler ---
+    // Absence preserves the historical sigma_s = D compatibility law.
+    prog.wgsl += "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V2: explicit authored sigma_s(p,t)\n";
+        emitPiecewise(*scatteringExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else {
+        prog.wgsl += "    // V2 compatibility: preserve pre-V2 scattering exactly\n";
+        prog.wgsl += "    return compatibilityDensity;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V2 Medium Chroma Compiler ---
+    // C_v is medium-owned chroma; it does not alias source/light chi.
+    prog.wgsl += "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n";
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            prog.wgsl += "    // V2: explicit authored C_v(p,t)\n";
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    } else {
+        prog.wgsl += "    // V2 compatibility: neutral white medium chroma\n";
+        prog.wgsl += "    return vec3<f32>(1.0);\n";
     }
     prog.wgsl += "}\n";
 
@@ -2401,7 +2516,9 @@ Program compile(const geom::SdfNode& root,
 }
 
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
-                                   const OntoMath::Piecewise* extinctionExpr) {
+                                   const OntoMath::Piecewise* extinctionExpr,
+                                   const OntoMath::Piecewise* scatteringExpr,
+                                   const OntoMath::Piecewise* volumeChromaExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2412,6 +2529,17 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
     }
     if (extinctionExpr && !extinctionExpr->pieces.empty()) {
         emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
+    }
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
+    }
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+        } else {
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+        }
     }
 
     ParameterBlock block;
@@ -2507,7 +2635,9 @@ fn cnoise3(P: vec3<f32>) -> f32 {
 } // namespace
 
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
-                      const OntoMath::Piecewise* extinctionExpr) {
+                      const OntoMath::Piecewise* extinctionExpr,
+                      const OntoMath::Piecewise* scatteringExpr,
+                      const OntoMath::Piecewise* volumeChromaExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2603,6 +2733,36 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
         "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
         extinctionBody + "}\n";
 
+    std::string scatteringBody;
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        emitPiecewise(*scatteringExpr, e, "p", "f32", scatteringBody);
+    } else {
+        scatteringBody =
+            "    // V2 compatibility: exact pre-V2 scattering coefficient\n"
+            "    return compatibilityDensity;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
+        scatteringBody + "}\n";
+
+    std::string volumeChromaBody;
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+            volumeChromaBody = "    return vec3<f32>(0.0);\n";
+        } else {
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", volumeChromaBody);
+        }
+    } else {
+        volumeChromaBody =
+            "    // V2 compatibility: neutral white medium chroma\n"
+            "    return vec3<f32>(1.0);\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n" +
+        volumeChromaBody + "}\n";
+
     prog.wgsl += R"WGSL(
 @fragment
 fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
@@ -2647,7 +2807,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (stepLength <= 0.0) { discard; }
 
     var transmittance = 1.0;
-    var volumetricScatter = 0.0;
+    var volumetricScatter = vec3<f32>(0.0);
 
     for (var i = 0; i < 96; i = i + 1) {
         let sampleT = t0 + (f32(i) + 0.5) * stepLength;
@@ -2662,10 +2822,10 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             let oldT = transmittance;
             transmittance *= exp(-extinction * stepLength);
 
-            // V0 compatibility only. V2 replaces white scattering with
-            // independently authored scattering/chroma.
+            let scattering = max(volumeScatteringEval(p, density), 0.0);
+            let mediumChroma = volumeChromaEval(p);
             volumetricScatter +=
-                (density / extinction) * (oldT - transmittance);
+                mediumChroma * (scattering / extinction) * (oldT - transmittance);
         }
 
         if (transmittance < 0.01) { break; }
@@ -2674,7 +2834,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     let alpha = 1.0 - transmittance;
     if (alpha <= 1e-5) { discard; }
 
-    let integratedRgb = vec3<f32>(1.0) * volumetricScatter;
+    let integratedRgb = volumetricScatter;
     // Keep the analytically integrated medium contribution premultiplied.
     // The volume pipeline blends (ONE, ONE_MINUS_SRC_ALPHA), yielding exactly:
     // C_out = C_medium + T * C_scene.
