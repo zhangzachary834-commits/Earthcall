@@ -14,6 +14,9 @@ measurements, reviews, and conclusions.
 - [`RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md`](RENDERING_OPTIMIZATION_CAMPAIGN_REVIEW_2026-08-31.md) — review of the August optimization campaign and reversions of truth-losing changes.
 - [`2026-09-03_earthcall_rendering_pipeline_audit.md`](2026-09-03_earthcall_rendering_pipeline_audit.md) — broad rendering-pipeline audit; some performance conclusions are superseded by the September 5 measurements below.
 - [`2026-09-05_perlin_noise_floor_rendering_regression_audit.md`](2026-09-05_perlin_noise_floor_rendering_regression_audit.md) — native-resolution reproduction of the current approximately 8 FPS Perlin-floor regression, correctness findings, and ranked optimization frontier.
+- [`2026-09-18_sdf_calculation_and_rendering_pipeline_inefficiency_audit.md`](2026-09-18_sdf_calculation_and_rendering_pipeline_inefficiency_audit.md) — GPT-5.6 Sol's field-evaluation density diagnosis and SDF pipeline audit at its September 18 base.
+- [`2026-09-18_sdf_pipeline_mathematical_complexity_companion.md`](2026-09-18_sdf_pipeline_mathematical_complexity_companion.md) — the Sol audit's complexity model and spatial-Prophetic proposal.
+- [`2026-09-23_sol_sdf_performance_followup_audit.md`](2026-09-23_sol_sdf_performance_followup_audit.md) — current-source and live-PR review of the Sol lineage through draft #329, with native profitability evidence and independent next experiments.
 
 ## Scope boundary
 
