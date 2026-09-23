@@ -107,13 +107,13 @@
       "id": "northern_veil.aurora.primary-emerald-curtain",
       "origin": [
         0.0,
-        68.0,
-        80.0
+        48.0,
+        75.0
       ],
       "scale": [
-        180.0,
-        60.0,
-        64.0
+        160.0,
+        36.0,
+        46.0
       ],
       "field": {
         "mode": "Procedural",
@@ -189,7 +189,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 85.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -258,7 +258,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 28.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -324,7 +324,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 28.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -337,7 +337,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 56.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -414,13 +414,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -20.0,
+                                                                "c": -15.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.024,
+                                                                    "scale": 0.026,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -435,13 +435,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -7.5,
+                                                            "c": -5.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.062,
+                                                                "scale": 0.068,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -456,13 +456,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -3.0,
+                                                        "c": -2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.15,
+                                                            "scale": 0.16,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -479,7 +479,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.4,
+                                                "c": 3.2,
                                                 "factors": {}
                                               }
                                             ]
@@ -548,7 +548,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.32,
+                                            "scale": 0.3,
                                             "shift": 0.0
                                           }
                                         ]
@@ -567,7 +567,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.7040000000000001,
+                                            "scale": 0.66,
                                             "shift": 0.8
                                           }
                                         ]
@@ -686,7 +686,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.12,
+                        "c": 0.1,
                         "factors": {}
                       }
                     ]
@@ -732,7 +732,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 85.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -801,7 +801,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 28.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -867,7 +867,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 28.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -880,7 +880,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 56.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -957,13 +957,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -20.0,
+                                                                "c": -15.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.024,
+                                                                    "scale": 0.026,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -978,13 +978,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -7.5,
+                                                            "c": -5.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.062,
+                                                                "scale": 0.068,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -999,13 +999,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -3.0,
+                                                        "c": -2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.15,
+                                                            "scale": 0.16,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -1022,7 +1022,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.4,
+                                                "c": 3.2,
                                                 "factors": {}
                                               }
                                             ]
@@ -1091,7 +1091,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.32,
+                                            "scale": 0.3,
                                             "shift": 0.0
                                           }
                                         ]
@@ -1110,7 +1110,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.7040000000000001,
+                                            "scale": 0.66,
                                             "shift": 0.8
                                           }
                                         ]
@@ -1275,7 +1275,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 85.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -1344,7 +1344,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 28.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -1410,7 +1410,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 28.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -1423,7 +1423,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 56.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -1500,13 +1500,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -20.0,
+                                                                "c": -15.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.024,
+                                                                    "scale": 0.026,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -1521,13 +1521,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -7.5,
+                                                            "c": -5.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.062,
+                                                                "scale": 0.068,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -1542,13 +1542,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -3.0,
+                                                        "c": -2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.15,
+                                                            "scale": 0.16,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -1565,7 +1565,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.4,
+                                                "c": 3.2,
                                                 "factors": {}
                                               }
                                             ]
@@ -1634,7 +1634,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.32,
+                                            "scale": 0.3,
                                             "shift": 0.0
                                           }
                                         ]
@@ -1653,7 +1653,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.7040000000000001,
+                                            "scale": 0.66,
                                             "shift": 0.8
                                           }
                                         ]
@@ -1944,7 +1944,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 85.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -2013,7 +2013,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 28.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -2079,7 +2079,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 28.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -2092,7 +2092,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 56.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -2169,13 +2169,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -20.0,
+                                                                "c": -15.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.024,
+                                                                    "scale": 0.026,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -2190,13 +2190,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -7.5,
+                                                            "c": -5.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.062,
+                                                                "scale": 0.068,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -2211,13 +2211,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -3.0,
+                                                        "c": -2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.15,
+                                                            "scale": 0.16,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -2234,7 +2234,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.4,
+                                                "c": 3.2,
                                                 "factors": {}
                                               }
                                             ]
@@ -2303,7 +2303,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.32,
+                                            "scale": 0.3,
                                             "shift": 0.0
                                           }
                                         ]
@@ -2322,7 +2322,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.7040000000000001,
+                                            "scale": 0.66,
                                             "shift": 0.8
                                           }
                                         ]
@@ -2433,7 +2433,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 0.45,
+                                "c": 0.01,
                                 "factors": {}
                               }
                             ]
@@ -2484,7 +2484,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 3.4,
+                                "c": 0.092,
                                 "factors": {}
                               }
                             ]
@@ -2535,7 +2535,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.15,
+                                "c": 0.032,
                                 "factors": {}
                               }
                             ]
@@ -2608,13 +2608,13 @@
       "id": "northern_veil.aurora.secondary-cyan-ribbon",
       "origin": [
         15.0,
-        80.0,
-        110.0
+        56.0,
+        140.0
       ],
       "scale": [
-        160.0,
-        56.0,
-        56.0
+        150.0,
+        38.0,
+        44.0
       ],
       "field": {
         "mode": "Procedural",
@@ -2690,7 +2690,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 75.0,
+                                            "c": 70.0,
                                             "factors": {}
                                           }
                                         ]
@@ -2759,7 +2759,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 26.0,
+                                                    "c": 17.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -2825,7 +2825,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 26.0,
+                                                        "c": 17.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -2838,7 +2838,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 52.0,
+                                                    "c": 34.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -2915,7 +2915,7 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": 17.0,
+                                                                "c": 14.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
@@ -2936,13 +2936,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.0,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.072,
+                                                                "scale": 0.075,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -2957,7 +2957,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 2.5,
+                                                        "c": 2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
@@ -2980,7 +2980,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.0,
+                                                "c": 2.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -3049,7 +3049,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.36,
+                                            "scale": 0.35,
                                             "shift": 0.0
                                           }
                                         ]
@@ -3068,7 +3068,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.792,
+                                            "scale": 0.77,
                                             "shift": 0.8
                                           }
                                         ]
@@ -3187,7 +3187,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.1,
+                        "c": 0.09,
                         "factors": {}
                       }
                     ]
@@ -3233,7 +3233,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 75.0,
+                                            "c": 70.0,
                                             "factors": {}
                                           }
                                         ]
@@ -3302,7 +3302,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 26.0,
+                                                    "c": 17.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -3368,7 +3368,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 26.0,
+                                                        "c": 17.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -3381,7 +3381,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 52.0,
+                                                    "c": 34.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -3458,7 +3458,7 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": 17.0,
+                                                                "c": 14.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
@@ -3479,13 +3479,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.0,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.072,
+                                                                "scale": 0.075,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -3500,7 +3500,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 2.5,
+                                                        "c": 2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
@@ -3523,7 +3523,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.0,
+                                                "c": 2.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -3592,7 +3592,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.36,
+                                            "scale": 0.35,
                                             "shift": 0.0
                                           }
                                         ]
@@ -3611,7 +3611,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.792,
+                                            "scale": 0.77,
                                             "shift": 0.8
                                           }
                                         ]
@@ -3776,7 +3776,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 75.0,
+                                            "c": 70.0,
                                             "factors": {}
                                           }
                                         ]
@@ -3845,7 +3845,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 26.0,
+                                                    "c": 17.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -3911,7 +3911,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 26.0,
+                                                        "c": 17.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -3924,7 +3924,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 52.0,
+                                                    "c": 34.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -4001,7 +4001,7 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": 17.0,
+                                                                "c": 14.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
@@ -4022,13 +4022,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.0,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.072,
+                                                                "scale": 0.075,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -4043,7 +4043,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 2.5,
+                                                        "c": 2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
@@ -4066,7 +4066,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.0,
+                                                "c": 2.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -4135,7 +4135,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.36,
+                                            "scale": 0.35,
                                             "shift": 0.0
                                           }
                                         ]
@@ -4154,7 +4154,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.792,
+                                            "scale": 0.77,
                                             "shift": 0.8
                                           }
                                         ]
@@ -4445,7 +4445,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 75.0,
+                                            "c": 70.0,
                                             "factors": {}
                                           }
                                         ]
@@ -4514,7 +4514,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 26.0,
+                                                    "c": 17.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -4580,7 +4580,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 26.0,
+                                                        "c": 17.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -4593,7 +4593,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 52.0,
+                                                    "c": 34.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -4670,7 +4670,7 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": 17.0,
+                                                                "c": 14.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
@@ -4691,13 +4691,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.0,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.072,
+                                                                "scale": 0.075,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -4712,7 +4712,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 2.5,
+                                                        "c": 2.0,
                                                         "factors": {},
                                                         "trans": [
                                                           {
@@ -4735,7 +4735,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.0,
+                                                "c": 2.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -4804,7 +4804,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.36,
+                                            "scale": 0.35,
                                             "shift": 0.0
                                           }
                                         ]
@@ -4823,7 +4823,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.792,
+                                            "scale": 0.77,
                                             "shift": 0.8
                                           }
                                         ]
@@ -4934,7 +4934,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 0.25,
+                                "c": 0.005,
                                 "factors": {}
                               }
                             ]
@@ -4985,7 +4985,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 2.3,
+                                "c": 0.07,
                                 "factors": {}
                               }
                             ]
@@ -5036,7 +5036,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 2.9,
+                                "c": 0.082,
                                 "factors": {}
                               }
                             ]
@@ -5108,14 +5108,14 @@
     {
       "id": "northern_veil.aurora.accent-violet-crest",
       "origin": [
-        -12.0,
-        102.0,
-        92.0
+        -5.0,
+        78.0,
+        82.0
       ],
       "scale": [
-        170.0,
-        50.0,
-        60.0
+        160.0,
+        36.0,
+        46.0
       ],
       "field": {
         "mode": "Procedural",
@@ -5191,7 +5191,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 80.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -5260,7 +5260,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 24.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -5326,7 +5326,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 24.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -5339,7 +5339,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 48.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -5416,13 +5416,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -15.0,
+                                                                "c": -13.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.022,
+                                                                    "scale": 0.024,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -5437,13 +5437,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.5,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.055,
+                                                                "scale": 0.06,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -5458,13 +5458,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.12,
+                                                            "scale": 0.14,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -5481,7 +5481,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 4.0,
+                                                "c": 3.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -5550,7 +5550,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.25,
+                                            "scale": 0.24,
                                             "shift": 0.0
                                           }
                                         ]
@@ -5569,7 +5569,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.55,
+                                            "scale": 0.528,
                                             "shift": 0.8
                                           }
                                         ]
@@ -5734,7 +5734,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 80.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -5803,7 +5803,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 24.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -5869,7 +5869,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 24.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -5882,7 +5882,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 48.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -5959,13 +5959,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -15.0,
+                                                                "c": -13.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.022,
+                                                                    "scale": 0.024,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -5980,13 +5980,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.5,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.055,
+                                                                "scale": 0.06,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -6001,13 +6001,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.12,
+                                                            "scale": 0.14,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -6024,7 +6024,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 4.0,
+                                                "c": 3.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -6093,7 +6093,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.25,
+                                            "scale": 0.24,
                                             "shift": 0.0
                                           }
                                         ]
@@ -6112,7 +6112,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.55,
+                                            "scale": 0.528,
                                             "shift": 0.8
                                           }
                                         ]
@@ -6277,7 +6277,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 80.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -6346,7 +6346,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 24.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -6412,7 +6412,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 24.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -6425,7 +6425,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 48.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -6502,13 +6502,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -15.0,
+                                                                "c": -13.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.022,
+                                                                    "scale": 0.024,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -6523,13 +6523,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.5,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.055,
+                                                                "scale": 0.06,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -6544,13 +6544,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.12,
+                                                            "scale": 0.14,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -6567,7 +6567,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 4.0,
+                                                "c": 3.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -6636,7 +6636,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.25,
+                                            "scale": 0.24,
                                             "shift": 0.0
                                           }
                                         ]
@@ -6655,7 +6655,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.55,
+                                            "scale": 0.528,
                                             "shift": 0.8
                                           }
                                         ]
@@ -6876,7 +6876,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 80.0,
+                                            "c": 75.0,
                                             "factors": {}
                                           }
                                         ]
@@ -6945,7 +6945,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 24.0,
+                                                    "c": 16.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -7011,7 +7011,7 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": 24.0,
+                                                        "c": 16.0,
                                                         "factors": {}
                                                       }
                                                     ]
@@ -7024,7 +7024,7 @@
                                               "scalarForm": {
                                                 "terms": [
                                                   {
-                                                    "c": 48.0,
+                                                    "c": 32.0,
                                                     "factors": {}
                                                   }
                                                 ]
@@ -7101,13 +7101,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -15.0,
+                                                                "c": -13.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.022,
+                                                                    "scale": 0.024,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -7122,13 +7122,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -6.5,
+                                                            "c": -5.0,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.055,
+                                                                "scale": 0.06,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -7143,13 +7143,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.12,
+                                                            "scale": 0.14,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -7166,7 +7166,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 4.0,
+                                                "c": 3.8,
                                                 "factors": {}
                                               }
                                             ]
@@ -7235,7 +7235,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.25,
+                                            "scale": 0.24,
                                             "shift": 0.0
                                           }
                                         ]
@@ -7254,7 +7254,7 @@
                                           {
                                             "kind": 1,
                                             "var": "x",
-                                            "scale": 0.55,
+                                            "scale": 0.528,
                                             "shift": 0.8
                                           }
                                         ]
@@ -7365,7 +7365,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 2.5,
+                                "c": 0.066,
                                 "factors": {}
                               }
                             ]
@@ -7416,7 +7416,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 0.45,
+                                "c": 0.01,
                                 "factors": {}
                               }
                             ]
@@ -7467,7 +7467,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 2.8,
+                                "c": 0.068,
                                 "factors": {}
                               }
                             ]
@@ -7539,14 +7539,14 @@
     {
       "id": "northern_veil.aurora.deep-crimson-fringe",
       "origin": [
-        6.0,
-        76.0,
-        65.0
+        22.0,
+        72.0,
+        68.0
       ],
       "scale": [
-        140.0,
+        70.0,
         64.0,
-        48.0
+        36.0
       ],
       "field": {
         "mode": "Procedural",
@@ -7622,7 +7622,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 65.0,
+                                            "c": 32.0,
                                             "factors": {}
                                           }
                                         ]
@@ -7847,13 +7847,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -13.0,
+                                                                "c": -9.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.03,
+                                                                    "scale": 0.038,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -7868,13 +7868,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -5.0,
+                                                            "c": -3.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.085,
+                                                                "scale": 0.095,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -7889,13 +7889,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.16,
+                                                            "scale": 0.18,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -7912,7 +7912,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.2,
+                                                "c": 3.0,
                                                 "factors": {}
                                               }
                                             ]
@@ -8165,7 +8165,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 65.0,
+                                            "c": 32.0,
                                             "factors": {}
                                           }
                                         ]
@@ -8390,13 +8390,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -13.0,
+                                                                "c": -9.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.03,
+                                                                    "scale": 0.038,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -8411,13 +8411,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -5.0,
+                                                            "c": -3.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.085,
+                                                                "scale": 0.095,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -8432,13 +8432,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.16,
+                                                            "scale": 0.18,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -8455,7 +8455,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.2,
+                                                "c": 3.0,
                                                 "factors": {}
                                               }
                                             ]
@@ -8708,7 +8708,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 65.0,
+                                            "c": 32.0,
                                             "factors": {}
                                           }
                                         ]
@@ -8933,13 +8933,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -13.0,
+                                                                "c": -9.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.03,
+                                                                    "scale": 0.038,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -8954,13 +8954,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -5.0,
+                                                            "c": -3.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.085,
+                                                                "scale": 0.095,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -8975,13 +8975,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.16,
+                                                            "scale": 0.18,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -8998,7 +8998,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.2,
+                                                "c": 3.0,
                                                 "factors": {}
                                               }
                                             ]
@@ -9377,7 +9377,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 65.0,
+                                            "c": 32.0,
                                             "factors": {}
                                           }
                                         ]
@@ -9602,13 +9602,13 @@
                                                           "scalarForm": {
                                                             "terms": [
                                                               {
-                                                                "c": -13.0,
+                                                                "c": -9.0,
                                                                 "factors": {},
                                                                 "trans": [
                                                                   {
                                                                     "kind": 0,
                                                                     "var": "x",
-                                                                    "scale": 0.03,
+                                                                    "scale": 0.038,
                                                                     "shift": 0.0
                                                                   }
                                                                 ]
@@ -9623,13 +9623,13 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -5.0,
+                                                            "c": -3.5,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 1,
                                                                 "var": "x",
-                                                                "scale": 0.085,
+                                                                "scale": 0.095,
                                                                 "shift": 0.5
                                                               }
                                                             ]
@@ -9644,13 +9644,13 @@
                                                   "scalarForm": {
                                                     "terms": [
                                                       {
-                                                        "c": -2.0,
+                                                        "c": -1.5,
                                                         "factors": {},
                                                         "trans": [
                                                           {
                                                             "kind": 0,
                                                             "var": "x",
-                                                            "scale": 0.16,
+                                                            "scale": 0.18,
                                                             "shift": 1.2
                                                           }
                                                         ]
@@ -9667,7 +9667,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.2,
+                                                "c": 3.0,
                                                 "factors": {}
                                               }
                                             ]
@@ -9866,7 +9866,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 2.8,
+                                "c": 0.068,
                                 "factors": {}
                               }
                             ]
@@ -9917,7 +9917,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 0.4,
+                                "c": 0.012,
                                 "factors": {}
                               }
                             ]
@@ -9968,7 +9968,7 @@
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 0.75,
+                                "c": 0.022,
                                 "factors": {}
                               }
                             ]
