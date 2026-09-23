@@ -1019,6 +1019,162 @@ int main() {
               "invalid C_v refuses instead of reverting to compatibility white");
     }
 
+    // ---------------------------------------------------------------------
+    // V3. Phase sovereignty: Phi(p,wi,wo,t) is independent medium truth.
+    //     Absent Phi preserves the literal V2 accumulation path.
+    // ---------------------------------------------------------------------
+    {
+        auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        auto extinctionNode = std::shared_ptr<OntoMath::MathNode>(number(0.4).release());
+        auto scatteringNode = std::shared_ptr<OntoMath::MathNode>(number(0.3).release());
+        auto chromaNode = std::shared_ptr<OntoMath::MathNode>(vector3(0.2, 0.8, 1.0).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        OntoMath::Piecewise extinction = OntoMath::Piecewise::continuous(extinctionNode);
+        OntoMath::Piecewise scattering = OntoMath::Piecewise::continuous(scatteringNode);
+        OntoMath::Piecewise volumeChroma = OntoMath::Piecewise::continuous(chromaNode);
+
+        const std::string densityTruth = density.toJson().dump();
+        const std::string extinctionTruth = extinction.toJson().dump();
+        const std::string scatteringTruth = scattering.toJson().dump();
+        const std::string chromaTruth = volumeChroma.toJson().dump();
+
+        const auto noPhase =
+            sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+        check(noPhase.ok &&
+                  noPhase.wgsl.find("const HAS_AUTHORED_VOLUME_PHASE: bool = false") !=
+                      std::string::npos &&
+                  noPhase.wgsl.find(
+                      "mediumChroma * (scattering / extinction) * (oldT - transmittance)") !=
+                      std::string::npos,
+              "absent Phi keeps the literal V2 scattering accumulation path");
+
+        // Phi = 1 + g * wi.z. Keep the numeric g node reachable so a value-only
+        // edit does not alter the AST shape.
+        auto gain = number(0.35);
+        OntoMath::MathNode* gainPtr = gain.get();
+        auto weightedWi = std::make_unique<OntoMath::MathNode>();
+        weightedWi->op = OntoMath::MathNode::Op::Mul;
+        weightedWi->children.push_back(std::move(gain));
+        weightedWi->children.push_back(variable(OntoMath::kWiZVar));
+        auto phaseRoot = std::make_shared<OntoMath::MathNode>();
+        phaseRoot->op = OntoMath::MathNode::Op::Add;
+        phaseRoot->children.push_back(number(1.0));
+        phaseRoot->children.push_back(std::move(weightedWi));
+        OntoMath::Piecewise phase = OntoMath::Piecewise::continuous(phaseRoot);
+
+        const auto phaseLayoutBefore = sdfwgsl::inspectPhaseExpression(&phase);
+        const auto authored =
+            sdfwgsl::compileVolume(
+                &density, &extinction, &scattering, &volumeChroma, &phase);
+        const auto genericAuthored =
+            sdfwgsl::compile(
+                sphere, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                &density, sdfwgsl::DensityInputKind::Authored, &extinction,
+                &scattering, &volumeChroma, &phase);
+        check(phaseLayoutBefore.ok && phaseLayoutBefore.readsWi &&
+                  !phaseLayoutBefore.readsWo && authored.ok && genericAuthored.ok &&
+                  authored.wgsl.find("fn volumePhaseEval") != std::string::npos &&
+                  authored.wgsl.find("const VOLUME_PHASE_READS_WI: bool = true") !=
+                      std::string::npos,
+              "authored Phi lowers independently through both volume renderer seams");
+
+        const auto cpuPhase = phase.evaluate({
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(1.0)},
+            {OntoMath::kWoXVar, PropertyValue(0.0)},
+            {OntoMath::kWoYVar, PropertyValue(0.0)},
+            {OntoMath::kWoZVar, PropertyValue(-1.0)},
+            {OntoMath::kTimeVar, PropertyValue(2.0)}
+        });
+        double cpuPhi = -1.0;
+        check(cpuPhase && propertyValueToNumber(*cpuPhase, cpuPhi) &&
+                  std::abs(cpuPhi - 1.35) < 1e-9,
+              "Phi(p,wi,wo,t) remains ordinary CPU-evaluable OntoMath truth");
+
+        // VALUE ONLY: change g, preserving exact AST shape and sibling channels.
+        gainPtr->scalarForm.terms[0].coefficient = 0.8;
+        const auto phaseLayoutAfter = sdfwgsl::inspectPhaseExpression(&phase);
+        const auto refreshed =
+            sdfwgsl::collectVolumeParams(
+                &density, &extinction, &scattering, &volumeChroma, &phase);
+        const auto valueEdited =
+            sdfwgsl::compileVolume(
+                &density, &extinction, &scattering, &volumeChroma, &phase);
+        check(phaseLayoutAfter.ok &&
+                  phaseLayoutAfter.structure == phaseLayoutBefore.structure &&
+                  valueEdited.ok && valueEdited.wgsl == authored.wgsl &&
+                  refreshed.ok &&
+                  sameFloats(refreshed.values, valueEdited.params) &&
+                  !sameFloats(authored.params, valueEdited.params),
+              "numeric Phi edit refreshes parameters without WGSL regeneration");
+        check(density.toJson().dump() == densityTruth &&
+                  extinction.toJson().dump() == extinctionTruth &&
+                  scattering.toJson().dump() == scatteringTruth &&
+                  volumeChroma.toJson().dump() == chromaTruth,
+              "rewriting Phi leaves D, sigma_t, sigma_s and C_v byte-identical");
+
+        // STRUCTURE: change only the directional dependency wi.z -> wo.z.
+        auto directionalStructure = std::make_shared<OntoMath::MathNode>();
+        directionalStructure->op = OntoMath::MathNode::Op::Add;
+        directionalStructure->children.push_back(number(1.0));
+        directionalStructure->children.push_back(variable(OntoMath::kWoZVar));
+        phase.pieces[0].mathNode = directionalStructure;
+        const auto phaseStructuralLayout = sdfwgsl::inspectPhaseExpression(&phase);
+        const auto structureEdited =
+            sdfwgsl::compileVolume(
+                &density, &extinction, &scattering, &volumeChroma, &phase);
+        check(phaseStructuralLayout.ok && !phaseStructuralLayout.readsWi &&
+                  phaseStructuralLayout.readsWo &&
+                  phaseStructuralLayout.structure != phaseLayoutAfter.structure &&
+                  structureEdited.ok && structureEdited.wgsl != valueEdited.wgsl,
+              "structural Phi edit recompiles only the phase shader structure");
+
+        // TIME: Phi may consume the admitted medium Timeline without AST rewrite.
+        auto timedPhaseRoot = std::make_shared<OntoMath::MathNode>();
+        timedPhaseRoot->op = OntoMath::MathNode::Op::Add;
+        timedPhaseRoot->children.push_back(number(0.25));
+        timedPhaseRoot->children.push_back(variable(OntoMath::kTimeVar));
+        OntoMath::Piecewise timedPhase =
+            OntoMath::Piecewise::continuous(timedPhaseRoot);
+        const auto timedPhaseLayout = sdfwgsl::inspectPhaseExpression(&timedPhase);
+        const auto timedPhaseProgram =
+            sdfwgsl::compileVolume(
+                &density, &extinction, &scattering, &volumeChroma, &timedPhase);
+        const auto cpuTimedPhase =
+            timedPhase.evaluate({{OntoMath::kTimeVar, PropertyValue(0.75)}});
+        double cpuTimedPhi = -1.0;
+        check(timedPhaseLayout.ok && timedPhaseProgram.ok &&
+                  timedPhaseProgram.wgsl.find("instances[g_instIdx].time.x") !=
+                      std::string::npos &&
+                  cpuTimedPhase &&
+                  propertyValueToNumber(*cpuTimedPhase, cpuTimedPhi) &&
+                  std::abs(cpuTimedPhi - 1.0) < 1e-9,
+              "Phi timeline input lowers to WGSL and evaluates on CPU without structural mutation");
+
+        // CONTEXT REFUSAL: wi is admitted only by phase, never ordinary scalar fields.
+        const auto wiOutsidePhase = sdfwgsl::inspectScalarExpression(&phase, true);
+        check(!wiOutsidePhase.ok &&
+                  wiOutsidePhase.error.find("wi") != std::string::npos,
+              "wi cannot leak from V3 phase into ordinary field expression contexts");
+
+        // AUTHORED REFUSAL: unsupported phase is named and cannot fall back to Phi=1.
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupportedPhase =
+            OntoMath::Piecewise::continuous(raycast);
+        const auto refusedPhaseLayout =
+            sdfwgsl::inspectPhaseExpression(&unsupportedPhase);
+        const auto refusedPhaseProgram =
+            sdfwgsl::compileVolume(
+                &density, &extinction, &scattering, &volumeChroma, &unsupportedPhase);
+        check(!refusedPhaseLayout.ok && !refusedPhaseProgram.ok &&
+                  refusedPhaseLayout.error.find("Raycast") != std::string::npos &&
+                  refusedPhaseProgram.error.find("volume phase") != std::string::npos,
+              "unsupported authored Phi refuses instead of reverting to isotropic identity");
+    }
+
     // 9. Rung 8: visibility is derived transport below source authorship.
     //    The shader must expose an exact V=1 compatibility gate and multiply
     //    each source's direct radiance AFTER rho*chi*alpha composition.
