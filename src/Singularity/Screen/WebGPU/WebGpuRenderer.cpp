@@ -1062,6 +1062,8 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     auto it = _sdfPipes.find(wgsl);
     if (it != _sdfPipes.end()) return &it->second;
 
+    const auto pipelineStart = std::chrono::steady_clock::now();
+
     WGPUShaderSourceWGSL src = {};
     src.chain.sType = WGPUSType_ShaderSourceWGSL;
     src.code = wgpu::Device::str(wgsl.c_str());
@@ -1148,6 +1150,10 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
         wgpuBindGroupLayoutRelease(out.bgl);
         return nullptr;
     }
+    const auto pipelineEnd = std::chrono::steady_clock::now();
+    mutableFrameStats().sdfPipelineCreateCpuMs +=
+        std::chrono::duration<double, std::milli>(
+            pipelineEnd - pipelineStart).count();
     return &(_sdfPipes[wgsl] = out);
 }
 
@@ -1578,6 +1584,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
+            memo->rangeTraversalShaderCapability == _sdfRangeShaderCapability &&
             sourceStructureMatches &&
             densityStructureMatches &&
             extinctionStructureMatches &&
@@ -1653,12 +1660,20 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
 
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
-        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
-                                     radianceExpr(), radianceChromaExpr(),
-                                     radianceAngularExpr(), sourceSet,
-                                     densityExpr, densityKind, extinctionExpr,
-                                     scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr);
+        sdfwgsl::CompileOptions compileOptions;
+        compileOptions.emitRangeTraversal = _sdfRangeShaderCapability;
+        const auto compileStart = std::chrono::steady_clock::now();
+        localProg = sdfwgsl::compileWithOptions(
+            field, compileOptions, fieldNode, mat.colorExpr.get(),
+            radianceExpr(), radianceChromaExpr(),
+            radianceAngularExpr(), sourceSet,
+            densityExpr, densityKind, extinctionExpr,
+            scatteringExpr, volumeChromaExpr, phaseExpr,
+            emissionExpr);
+        const auto compileEnd = std::chrono::steady_clock::now();
+        mutableFrameStats().sdfProgramCompileCpuMs +=
+            std::chrono::duration<double, std::milli>(
+                compileEnd - compileStart).count();
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1703,6 +1718,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
+            memo->rangeTraversalShaderCapability = _sdfRangeShaderCapability;
 
             memo->rangeReady = false;
             memo->rangeHierarchy = {};
@@ -2005,6 +2021,8 @@ void WebGpuRenderer::flushSdfDraws() {
         _activeSdfPipelines.clear();
         return;
     }
+
+    const auto sdfSubmissionStart = std::chrono::steady_clock::now();
     
     // Rung 7 source records are shared across every SDF pipeline in the frame.
     // Upload only when their byte representation changes; source time and
@@ -2292,6 +2310,13 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfRangeNodeBatches[sp].clear();
     }
     _activeSdfPipelines.clear();
+
+    mutableFrameStats().sdfRangeResidentBytes =
+        _persistentSdfRangeNodeVramBytes;
+    const auto sdfSubmissionEnd = std::chrono::steady_clock::now();
+    mutableFrameStats().sdfCpuSubmissionMs +=
+        std::chrono::duration<double, std::milli>(
+            sdfSubmissionEnd - sdfSubmissionStart).count();
 }
 
 void WebGpuRenderer::flushVolumeComposite() {

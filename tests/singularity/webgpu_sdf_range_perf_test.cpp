@@ -103,13 +103,17 @@ double median(std::vector<double> values) {
 
 struct Sample {
     double wallMs = 0.0;
+    double drawImplicitCpuMs = 0.0;
     Renderer::FrameStats stats;
 };
 
 struct Arm {
     std::vector<double> wallMs;
     std::vector<double> gpuMs;
+    std::vector<double> cpuGatherMs;
+    std::vector<double> cpuSubmissionMs;
     size_t recurringRangeUploadBytes = 0;
+    size_t residentRangeBytes = 0;
     uint32_t traversalDraws = 0;
 };
 
@@ -2106,7 +2110,7 @@ int main() {
     constexpr uint32_t W = 2880;
     constexpr uint32_t H = 1800;
     constexpr int kWarmupFrames = 6;
-    constexpr int kSamplePairs = 10;
+    constexpr int kSamplePairs = 12;
     constexpr uint64_t kMemoId = 0x5045524c494e5046ULL; // "PERLINPF"
 
     wgpu::Device gpu;
@@ -2115,13 +2119,19 @@ int main() {
         return 1;
     }
 
+    WebGpuRenderer noProofRenderer;
     WebGpuRenderer offRenderer;
     WebGpuRenderer onRenderer;
-    if (!offRenderer.init(gpu) || !onRenderer.init(gpu)) {
+    if (!noProofRenderer.init(gpu) ||
+        !offRenderer.init(gpu) || !onRenderer.init(gpu)) {
         std::printf("SDF_RANGE_PERF FAIL renderer init\n");
         return 1;
     }
+    noProofRenderer.setSdfRangeShaderCapabilityForTesting(false);
+    noProofRenderer.setSdfRangeProxyEnabled(false);
+    offRenderer.setSdfRangeShaderCapabilityForTesting(true);
     offRenderer.setSdfRangeProxyEnabled(false);
+    onRenderer.setSdfRangeShaderCapabilityForTesting(true);
     onRenderer.setSdfRangeProxyEnabled(true);
     // Some shared helpers still expect a current renderer, but this benchmark
     // invokes both renderers directly. Point the global compatibility handle at
@@ -2157,6 +2167,93 @@ int main() {
                     probeProgram.error.c_str());
         return 1;
     }
+
+    sdfwgsl::CompileOptions noProofOptions;
+    noProofOptions.emitRangeTraversal = false;
+    const sdfwgsl::Program noProofProgram =
+        sdfwgsl::compileWithOptions(field, noProofOptions);
+    if (!noProofProgram.ok) {
+        std::printf("SDF_RANGE_PERF FAIL no-proof Perlin program refused: %s\n",
+                    noProofProgram.error.c_str());
+        return 1;
+    }
+    const bool proofHasRangeFunction =
+        probeProgram.wgsl.find("fn rangeCandidate(") != std::string::npos;
+    const bool proofHasRangeBranch =
+        probeProgram.wgsl.find("inst.rangeTraversalEnabled != 0u") != std::string::npos;
+    const bool proofHasRangeStorage =
+        probeProgram.wgsl.find("rangeProofWords") != std::string::npos;
+    const bool noProofHasRangeFunction =
+        noProofProgram.wgsl.find("fn rangeCandidate(") != std::string::npos;
+    const bool noProofHasRangeBranch =
+        noProofProgram.wgsl.find("inst.rangeTraversalEnabled != 0u") != std::string::npos;
+    const bool noProofHasProofSymbols =
+        noProofProgram.wgsl.find("rangeProof") != std::string::npos ||
+        noProofProgram.wgsl.find("rangeTraversal") != std::string::npos;
+    const bool noProofHasRangeBinding =
+        noProofProgram.wgsl.find("@group(1) @binding(2)") != std::string::npos;
+    const bool noProofHasReservedStride =
+        noProofProgram.wgsl.find("reserved0: u32") != std::string::npos &&
+        noProofProgram.wgsl.find("reserved3: u32") != std::string::npos;
+    if (!proofHasRangeFunction || !proofHasRangeBranch || !proofHasRangeStorage ||
+        noProofHasRangeFunction || noProofHasRangeBranch ||
+        noProofHasProofSymbols || noProofHasRangeBinding ||
+        !noProofHasReservedStride) {
+        std::printf(
+            "SDF_RANGE_PERF FAIL structural comparator invalid "
+            "proof_fn=%d proof_branch=%d proof_storage=%d "
+            "no_proof_fn=%d no_proof_branch=%d no_proof_symbols=%d "
+            "no_proof_binding=%d no_proof_reserved_stride=%d\n",
+            proofHasRangeFunction ? 1 : 0, proofHasRangeBranch ? 1 : 0,
+            proofHasRangeStorage ? 1 : 0,
+            noProofHasRangeFunction ? 1 : 0, noProofHasRangeBranch ? 1 : 0,
+            noProofHasProofSymbols ? 1 : 0, noProofHasRangeBinding ? 1 : 0,
+            noProofHasReservedStride ? 1 : 0);
+        return 1;
+    }
+    std::printf(
+        "SDF_RANGE_SHADER_TOPOLOGY proof_capable_wgsl_bytes=%zu "
+        "no_proof_wgsl_bytes=%zu removed_bytes=%zu "
+        "proof_fn=%d proof_branch=%d proof_storage=%d "
+        "no_proof_fn=%d no_proof_branch=%d no_proof_symbols=%d "
+        "no_proof_binding=%d reserved_stride=%d\n",
+        probeProgram.wgsl.size(), noProofProgram.wgsl.size(),
+        probeProgram.wgsl.size() - noProofProgram.wgsl.size(),
+        proofHasRangeFunction ? 1 : 0, proofHasRangeBranch ? 1 : 0,
+        proofHasRangeStorage ? 1 : 0,
+        noProofHasRangeFunction ? 1 : 0, noProofHasRangeBranch ? 1 : 0,
+        noProofHasProofSymbols ? 1 : 0, noProofHasRangeBinding ? 1 : 0,
+        noProofHasReservedStride ? 1 : 0);
+
+    constexpr int kCompilerSamples = 25;
+    auto compilerMedianMs = [&](bool emitRangeTraversal) {
+        std::vector<double> samples;
+        samples.reserve(kCompilerSamples);
+        sdfwgsl::CompileOptions options;
+        options.emitRangeTraversal = emitRangeTraversal;
+        for (int i = 0; i < kCompilerSamples; ++i) {
+            const auto t0 = std::chrono::steady_clock::now();
+            const auto p = sdfwgsl::compileWithOptions(field, options);
+            const auto t1 = std::chrono::steady_clock::now();
+            if (!p.ok) {
+                std::printf("SDF_RANGE_PERF FAIL compiler timing refusal: %s\n",
+                            p.error.c_str());
+                return -1.0;
+            }
+            samples.push_back(
+                std::chrono::duration<double, std::milli>(t1 - t0).count());
+        }
+        return median(samples);
+    };
+    const double noProofCompilerMs = compilerMedianMs(false);
+    const double proofCompilerMs = compilerMedianMs(true);
+    if (noProofCompilerMs < 0.0 || proofCompilerMs < 0.0) return 1;
+    std::printf(
+        "SDF_RANGE_COMPILER_COST samples=%d no_proof_median_ms=%.6f "
+        "proof_capable_median_ms=%.6f ratio=%.4f\n",
+        kCompilerSamples, noProofCompilerMs, proofCompilerMs,
+        noProofCompilerMs > 0.0 ? proofCompilerMs / noProofCompilerMs : 0.0);
+
     const glm::vec3 proofExtent = glm::abs(extent * 1.05f);
     const auto proofHierarchy = geom::buildRangeHierarchy(
         field, proofExtent, /*maxDepth=*/6, /*maxNodes=*/327680);
@@ -2267,17 +2364,20 @@ int main() {
     bool sawTraversal = false;
     bool sawHierarchyBuild = false;
     bool measurementWarnings = false;
+    bool coldCostsPrinted = false;
 
     auto renderOne = [&](WebGpuRenderer& renderer) -> Sample {
         renderer.setModel(glm::mat4(1.0f));
 
         const auto t0 = std::chrono::steady_clock::now();
         renderer.beginFrameOffscreen(target, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
+        const auto gatherStart = std::chrono::steady_clock::now();
         renderer.drawImplicit(field, extent, mat, nullptr,
                               kMemoId,
                               /*memoRevision=*/1,
                               nullptr,
                               /*memoParameterRevision=*/1);
+        const auto gatherEnd = std::chrono::steady_clock::now();
         renderer.endFrame();
         // The benchmark deliberately waits here. That makes wallMs an honest
         // submitted-frame cost instead of merely measuring command recording.
@@ -2286,6 +2386,9 @@ int main() {
 
         Sample s;
         s.wallMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
+        s.drawImplicitCpuMs =
+            std::chrono::duration<double, std::milli>(
+                gatherEnd - gatherStart).count();
         s.stats = renderer.frameStats();
         return s;
     };
@@ -2303,10 +2406,14 @@ int main() {
     auto recordSample = [&](WebGpuRenderer& renderer, Arm& arm) {
         const Sample s = renderOne(renderer);
         arm.wallMs.push_back(s.wallMs);
+        arm.cpuGatherMs.push_back(s.drawImplicitCpuMs);
+        arm.cpuSubmissionMs.push_back(s.stats.sdfCpuSubmissionMs);
         if (s.stats.gpuMainPassTimingValid) {
             arm.gpuMs.push_back(static_cast<double>(s.stats.gpuMainPassMs));
         }
         arm.recurringRangeUploadBytes += s.stats.sdfRangeNodeBytesUploaded;
+        arm.residentRangeBytes =
+            std::max(arm.residentRangeBytes, s.stats.sdfRangeResidentBytes);
         arm.traversalDraws += s.stats.sdfRangeTraversalDraws;
         observeSample(s);
         return s;
@@ -2317,8 +2424,55 @@ int main() {
         const glm::mat4 proj =
             glm::perspectiveZO(glm::radians(c.fovDeg), aspect, 0.1f, 3000.0f);
         const glm::mat4 view = glm::lookAt(c.eye, c.target, c.up);
+        noProofRenderer.setCamera(view, proj, c.eye);
         offRenderer.setCamera(view, proj, c.eye);
         onRenderer.setCamera(view, proj, c.eye);
+
+        if (!coldCostsPrinted) {
+            const Sample noProofCold = renderOne(noProofRenderer);
+            const Sample offCold = renderOne(offRenderer);
+            const Sample onCold = renderOne(onRenderer);
+            observeSample(noProofCold);
+            observeSample(offCold);
+            observeSample(onCold);
+            std::printf(
+                "SDF_RANGE_COLD arm=no-proof order=ABC wall_ms=%.6f "
+                "program_compile_cpu_ms=%.6f pipeline_create_cpu_ms=%.6f "
+                "cpu_gather_ms=%.6f cpu_submission_ms=%.6f "
+                "wgsl_bytes=%zu resident_range_bytes=%zu\n",
+                noProofCold.wallMs,
+                noProofCold.stats.sdfProgramCompileCpuMs,
+                noProofCold.stats.sdfPipelineCreateCpuMs,
+                noProofCold.drawImplicitCpuMs,
+                noProofCold.stats.sdfCpuSubmissionMs,
+                noProofCold.stats.sdfWgslBytesGenerated,
+                noProofCold.stats.sdfRangeResidentBytes);
+            std::printf(
+                "SDF_RANGE_COLD arm=proof-off order=ABC wall_ms=%.6f "
+                "program_compile_cpu_ms=%.6f pipeline_create_cpu_ms=%.6f "
+                "cpu_gather_ms=%.6f cpu_submission_ms=%.6f "
+                "wgsl_bytes=%zu resident_range_bytes=%zu\n",
+                offCold.wallMs,
+                offCold.stats.sdfProgramCompileCpuMs,
+                offCold.stats.sdfPipelineCreateCpuMs,
+                offCold.drawImplicitCpuMs,
+                offCold.stats.sdfCpuSubmissionMs,
+                offCold.stats.sdfWgslBytesGenerated,
+                offCold.stats.sdfRangeResidentBytes);
+            std::printf(
+                "SDF_RANGE_COLD arm=proof-on order=ABC wall_ms=%.6f "
+                "program_compile_cpu_ms=%.6f pipeline_create_cpu_ms=%.6f "
+                "cpu_gather_ms=%.6f cpu_submission_ms=%.6f "
+                "wgsl_bytes=%zu resident_range_bytes=%zu\n",
+                onCold.wallMs,
+                onCold.stats.sdfProgramCompileCpuMs,
+                onCold.stats.sdfPipelineCreateCpuMs,
+                onCold.drawImplicitCpuMs,
+                onCold.stats.sdfCpuSubmissionMs,
+                onCold.stats.sdfWgslBytesGenerated,
+                onCold.stats.sdfRangeResidentBytes);
+            coldCostsPrinted = true;
+        }
 
         // The geometric census is intentionally outside the timed GPU samples.
         // It measures the proof grid's opportunity/tax structure without
@@ -2466,42 +2620,57 @@ int main() {
 
         printDirectProfitabilityVerdict(c.name, runtimeTax, directTaxes);
 
+        Arm noProof;
         Arm off;
         Arm on;
 
-        // Preserve the historical warm-up cost (six frames per arm), but
-        // alternate order so neither mode is always warmed later.
+        // Six permutations form a balanced three-arm Latin-style schedule:
+        // every arm occupies first/middle/last equally, while every pair sees
+        // AB and BA equally. Warmup consumes one complete cycle; 12 measured
+        // rounds consume two complete cycles.
+        constexpr int kOrders[6][3] = {
+            {0, 1, 2}, {0, 2, 1}, {1, 0, 2},
+            {1, 2, 0}, {2, 0, 1}, {2, 1, 0}
+        };
+        auto warmupArm = [&](int armId) {
+            if (armId == 0) warmupOne(noProofRenderer);
+            else if (armId == 1) warmupOne(offRenderer);
+            else warmupOne(onRenderer);
+        };
         for (int i = 0; i < kWarmupFrames; ++i) {
-            const bool abOrder = (i % 2) == 0;
-            if (abOrder) {
-                warmupOne(offRenderer);
-                warmupOne(onRenderer);
-            } else {
-                warmupOne(onRenderer);
-                warmupOne(offRenderer);
-            }
+            const int* order = kOrders[i % 6];
+            for (int pos = 0; pos < 3; ++pos) warmupArm(order[pos]);
         }
 
         std::vector<double> pairedWallRatios;
         std::vector<double> pairedWallDeltas;
         std::vector<double> pairedGpuRatios;
         std::vector<double> pairedGpuDeltas;
+        std::vector<double> dormantWallRatios;
+        std::vector<double> dormantWallDeltas;
+        std::vector<double> dormantGpuRatios;
+        std::vector<double> dormantGpuDeltas;
 
-        // Each pair contains exactly one OFF and one ON sample. Alternate AB
-        // and BA order so a monotonic runner drift cannot systematically favor
-        // either mode. Total sample count remains close to historical cost at ten frames per arm,
-        // with exactly five AB and five BA pairs.
         for (int i = 0; i < kSamplePairs; ++i) {
-            const bool abOrder = (i % 2) == 0;
-            Sample offSample;
-            Sample onSample;
-            if (abOrder) {
-                offSample = recordSample(offRenderer, off);
-                onSample = recordSample(onRenderer, on);
-            } else {
-                onSample = recordSample(onRenderer, on);
-                offSample = recordSample(offRenderer, off);
+            Sample samples[3];
+            int position[3] = {-1, -1, -1};
+            const int* order = kOrders[i % 6];
+            for (int pos = 0; pos < 3; ++pos) {
+                const int armId = order[pos];
+                position[armId] = pos;
+                if (armId == 0) {
+                    samples[0] = recordSample(noProofRenderer, noProof);
+                } else if (armId == 1) {
+                    samples[1] = recordSample(offRenderer, off);
+                } else {
+                    samples[2] = recordSample(onRenderer, on);
+                }
             }
+            const Sample& noProofSample = samples[0];
+            const Sample& offSample = samples[1];
+            const Sample& onSample = samples[2];
+            const bool offOnAbOrder = position[1] < position[2];
+            const bool dormantAbOrder = position[0] < position[1];
 
             const double wallPairRatio =
                 offSample.wallMs > 0.0 ? onSample.wallMs / offSample.wallMs : 0.0;
@@ -2526,23 +2695,63 @@ int main() {
                 pairedGpuDeltas.push_back(gpuPairDelta);
             }
 
+            const double dormantWallRatio =
+                noProofSample.wallMs > 0.0
+                    ? offSample.wallMs / noProofSample.wallMs : 0.0;
+            const double dormantWallDelta =
+                offSample.wallMs - noProofSample.wallMs;
+            dormantWallRatios.push_back(dormantWallRatio);
+            dormantWallDeltas.push_back(dormantWallDelta);
+
+            const bool dormantGpuValid =
+                noProofSample.stats.gpuMainPassTimingValid &&
+                offSample.stats.gpuMainPassTimingValid;
+            const double noProofGpuSample = dormantGpuValid
+                ? static_cast<double>(noProofSample.stats.gpuMainPassMs) : 0.0;
+            const double dormantOffGpuSample = dormantGpuValid
+                ? static_cast<double>(offSample.stats.gpuMainPassMs) : 0.0;
+            const double dormantGpuRatio =
+                dormantGpuValid && noProofGpuSample > 0.0
+                    ? dormantOffGpuSample / noProofGpuSample : 0.0;
+            const double dormantGpuDelta =
+                dormantGpuValid ? dormantOffGpuSample - noProofGpuSample : 0.0;
+            if (dormantGpuValid) {
+                dormantGpuRatios.push_back(dormantGpuRatio);
+                dormantGpuDeltas.push_back(dormantGpuDelta);
+            }
+
             std::printf(
                 "SDF_RANGE_PERF_PAIR view=%s pair=%d order=%s "
                 "off_wall_ms=%.6f on_wall_ms=%.6f wall_ratio=%.4f "
                 "wall_delta_ms=%.6f gpu_valid=%d off_gpu_ms=%.6f "
                 "on_gpu_ms=%.6f gpu_ratio=%.4f gpu_delta_ms=%.6f\n",
                 c.name, i,
-                abOrder ? "AB" : "BA",
+                offOnAbOrder ? "AB" : "BA",
                 offSample.wallMs, onSample.wallMs,
                 wallPairRatio, wallPairDelta,
                 gpuPairValid ? 1 : 0,
                 offGpuSample, onGpuSample,
                 gpuPairRatio, gpuPairDelta);
+
+            std::printf(
+                "SDF_RANGE_DORMANT_PAIR view=%s pair=%d order=%s "
+                "no_proof_wall_ms=%.6f proof_off_wall_ms=%.6f wall_ratio=%.4f "
+                "wall_delta_ms=%.6f gpu_valid=%d no_proof_gpu_ms=%.6f "
+                "proof_off_gpu_ms=%.6f gpu_ratio=%.4f gpu_delta_ms=%.6f\n",
+                c.name, i,
+                dormantAbOrder ? "AB" : "BA",
+                noProofSample.wallMs, offSample.wallMs,
+                dormantWallRatio, dormantWallDelta,
+                dormantGpuValid ? 1 : 0,
+                noProofGpuSample, dormantOffGpuSample,
+                dormantGpuRatio, dormantGpuDelta);
         }
 
+        const double noProofWall = median(noProof.wallMs);
         const double offWall = median(off.wallMs);
         const double onWall = median(on.wallMs);
         const double wallRatio = offWall > 0.0 ? onWall / offWall : 0.0;
+        const double noProofGpu = median(noProof.gpuMs);
         const double offGpu = median(off.gpuMs);
         const double onGpu = median(on.gpuMs);
         const double gpuRatio = offGpu > 0.0 ? onGpu / offGpu : 0.0;
@@ -2550,7 +2759,19 @@ int main() {
         const double pairedWallDelta = median(pairedWallDeltas);
         const double pairedGpuRatio = median(pairedGpuRatios);
         const double pairedGpuDelta = median(pairedGpuDeltas);
+        const double dormantWallRatio = median(dormantWallRatios);
+        const double dormantWallDelta = median(dormantWallDeltas);
+        const double dormantGpuRatio = median(dormantGpuRatios);
+        const double dormantGpuDelta = median(dormantGpuDeltas);
+        const double noProofCpuGather = median(noProof.cpuGatherMs);
+        const double offCpuGather = median(off.cpuGatherMs);
+        const double onCpuGather = median(on.cpuGatherMs);
+        const double noProofCpuSubmit = median(noProof.cpuSubmissionMs);
+        const double offCpuSubmit = median(off.cpuSubmissionMs);
+        const double onCpuSubmit = median(on.cpuSubmissionMs);
 
+        // Preserve the historical proof-OFF/proof-ON output for existing
+        // consumers, then emit the new dormant-proof comparison separately.
         std::printf(
             "SDF_RANGE_PERF view=%s resolution=%ux%u "
             "off_wall_median_ms=%.6f on_wall_median_ms=%.6f wall_ratio=%.4f "
@@ -2570,6 +2791,51 @@ int main() {
             on.traversalDraws,
             on.recurringRangeUploadBytes);
 
+        std::printf(
+            "SDF_RANGE_DORMANT view=%s resolution=%ux%u "
+            "no_proof_wall_median_ms=%.6f proof_off_wall_median_ms=%.6f "
+            "wall_ratio=%.4f paired_wall_ratio_median=%.4f "
+            "paired_wall_delta_median_ms=%.6f "
+            "no_proof_gpu_median_ms=%.6f proof_off_gpu_median_ms=%.6f "
+            "gpu_ratio=%.4f paired_gpu_ratio_median=%.4f "
+            "paired_gpu_delta_median_ms=%.6f paired_gpu_samples=%zu "
+            "no_proof_cpu_gather_median_ms=%.6f "
+            "proof_off_cpu_gather_median_ms=%.6f "
+            "proof_on_cpu_gather_median_ms=%.6f "
+            "no_proof_cpu_submission_median_ms=%.6f "
+            "proof_off_cpu_submission_median_ms=%.6f "
+            "proof_on_cpu_submission_median_ms=%.6f "
+            "no_proof_resident_range_bytes=%zu "
+            "proof_off_resident_range_bytes=%zu "
+            "proof_on_resident_range_bytes=%zu\n",
+            c.name, W, H,
+            noProofWall, offWall,
+            noProofWall > 0.0 ? offWall / noProofWall : 0.0,
+            dormantWallRatio, dormantWallDelta,
+            noProofGpu, offGpu,
+            noProofGpu > 0.0 ? offGpu / noProofGpu : 0.0,
+            dormantGpuRatio, dormantGpuDelta, dormantGpuRatios.size(),
+            noProofCpuGather, offCpuGather, onCpuGather,
+            noProofCpuSubmit, offCpuSubmit, onCpuSubmit,
+            noProof.residentRangeBytes, off.residentRangeBytes,
+            on.residentRangeBytes);
+
+        if (noProof.traversalDraws != 0 || off.traversalDraws != 0) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL traversal leaked into disabled arms for %s "
+                "no_proof=%u proof_off=%u\n",
+                c.name, noProof.traversalDraws, off.traversalDraws);
+            measurementWarnings = true;
+        }
+        if (noProof.recurringRangeUploadBytes != 0 ||
+            off.recurringRangeUploadBytes != 0) {
+            std::printf(
+                "SDF_RANGE_PERF FAIL disabled arm uploaded proof bytes for %s "
+                "no_proof=%zu proof_off=%zu\n",
+                c.name, noProof.recurringRangeUploadBytes,
+                off.recurringRangeUploadBytes);
+            measurementWarnings = true;
+        }
         if (on.traversalDraws == 0) {
             std::printf("SDF_RANGE_PERF FAIL traversal did not activate for %s\n", c.name);
             measurementWarnings = true;
@@ -2594,6 +2860,7 @@ int main() {
     setCurrentRenderer(nullptr);
     onRenderer.shutdown();
     offRenderer.shutdown();
+    noProofRenderer.shutdown();
     wgpuTextureViewRelease(target);
     wgpuTextureRelease(tex);
 
@@ -2602,7 +2869,9 @@ int main() {
         std::fflush(stdout);
         std::_Exit(2);
     }
-    std::printf("SDF_RANGE_PERF PASS active traversal measurement witness\n");
+    std::printf(
+        "SDF_RANGE_PERF PASS three-arm no-proof/proof-off/proof-on "
+        "measurement witness\n");
     std::fflush(stdout);
     std::_Exit(0);
 }

@@ -726,7 +726,9 @@ int main() {
             r.setCamera(viewM, proj, c.eye);
             r.setModel(glm::mat4(1.0f));
 
-            auto capture = [&](bool rangeEnabled, Renderer::FrameStats& statsOut) {
+            auto capture = [&](bool proofShaderCapable, bool rangeEnabled,
+                               Renderer::FrameStats& statsOut) {
+                r.setSdfRangeShaderCapabilityForTesting(proofShaderCapable);
                 r.setSdfRangeProxyEnabled(rangeEnabled);
                 r.beginFrameOffscreen(view, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
                 r.drawImplicit(perlinField, extent, mat, nullptr,
@@ -769,16 +771,55 @@ int main() {
                 return pixels;
             };
 
+            Renderer::FrameStats noProofStats;
             Renderer::FrameStats offStats;
             Renderer::FrameStats onStats;
-            const auto baseline = capture(/*rangeEnabled=*/false, offStats);
-            const auto accelerated = capture(/*rangeEnabled=*/true, onStats);
+            const auto noProof = capture(
+                /*proofShaderCapable=*/false, /*rangeEnabled=*/false,
+                noProofStats);
+            const auto baseline = capture(
+                /*proofShaderCapable=*/true, /*rangeEnabled=*/false,
+                offStats);
+            const auto accelerated = capture(
+                /*proofShaderCapable=*/true, /*rangeEnabled=*/true,
+                onStats);
+
+            assert(noProofStats.sdfRangeTraversalDraws == 0);
+            assert(offStats.sdfRangeTraversalDraws == 0);
+            assert(noProofStats.sdfRangeNodeBytesUploaded == 0);
+            assert(offStats.sdfRangeNodeBytesUploaded == 0);
 
             auto isBackground = [](unsigned char r, unsigned char g, unsigned char b) {
                 return (std::abs(static_cast<int>(r) - 25) <= 2 &&
                         std::abs(static_cast<int>(g) - 25) <= 2 &&
                         std::abs(static_cast<int>(b) - 38) <= 2);
             };
+
+            // Removing dormant proof WGSL must be semantically invisible. This
+            // is a stronger comparator than the active accelerator: with both
+            // arms traversing the exact ordinary marcher, byte identity is
+            // required, not merely equal hit coverage.
+            size_t noProofRgbaDiffBytes = 0;
+            size_t noProofCoverageDiffPixels = 0;
+            for (uint32_t py = 0; py < H; ++py) {
+                for (uint32_t pxIdx = 0; pxIdx < W; ++pxIdx) {
+                    const size_t p =
+                        static_cast<size_t>(py) * rowStride +
+                        static_cast<size_t>(pxIdx) * 4;
+                    for (size_t cidx = 0; cidx < 4; ++cidx) {
+                        if (noProof[p + cidx] != baseline[p + cidx]) {
+                            ++noProofRgbaDiffBytes;
+                        }
+                    }
+                    const bool noProofHit =
+                        !isBackground(noProof[p], noProof[p+1], noProof[p+2]);
+                    const bool offHit =
+                        !isBackground(baseline[p], baseline[p+1], baseline[p+2]);
+                    if (noProofHit != offHit) ++noProofCoverageDiffPixels;
+                }
+            }
+            assert(noProofRgbaDiffBytes == 0);
+            assert(noProofCoverageDiffPixels == 0);
 
             // The hierarchy is an accelerator, never a hit/miss authority.
             // A lawful spatial jump necessarily changes the exact sequence of
@@ -852,11 +893,14 @@ int main() {
                     bool refHit = exactGenericRaycast(c.eye, rayDir, extent, refTHit);
 
                     size_t offset = py * rowStride + pX * 4;
+                    bool gpuNoProofHit =
+                        !isBackground(noProof[offset], noProof[offset+1], noProof[offset+2]);
                     bool gpuOffHit =
                         !isBackground(baseline[offset], baseline[offset+1], baseline[offset+2]);
                     bool gpuOnHit =
                         !isBackground(accelerated[offset], accelerated[offset+1], accelerated[offset+2]);
 
+                    assert(refHit == gpuNoProofHit);
                     assert(refHit == gpuOffHit);
                     assert(refHit == gpuOnHit);
                     if (refHit) matchingHits++;
@@ -864,16 +908,24 @@ int main() {
                 }
             }
 
-            std::printf("[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels; rangeTraversal=%u; coverageDiff=%zu; rgbaDiffBytes=%zu\n",
-                        c.name, terrainHits, W * H, onStats.sdfRangeTraversalDraws,
-                        coverageDiffPixels, rgbaDiffBytes);
+            std::printf(
+                "[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels; "
+                "rangeTraversal=%u; noProofVsOffCoverageDiff=%zu; "
+                "noProofVsOffRgbaDiffBytes=%zu; offVsOnCoverageDiff=%zu; "
+                "offVsOnRgbaDiffBytes=%zu\n",
+                c.name, terrainHits, W * H, onStats.sdfRangeTraversalDraws,
+                noProofCoverageDiffPixels, noProofRgbaDiffBytes,
+                coverageDiffPixels, rgbaDiffBytes);
             assert(terrainHits > 0);
         }
 
         assert(traversalActiveCases > 0);
-        std::printf("[Gate D] Range hierarchy traversal activated in %zu/%zu authored-Perlin camera cases with exact OFF/ON hit coverage and CPU root agreement.\n",
-                    traversalActiveCases,
-                    sizeof(cameraCorpus) / sizeof(cameraCorpus[0]));
+        std::printf(
+            "[Gate D] Range hierarchy traversal activated in %zu/%zu "
+            "authored-Perlin camera cases; NO-PROOF/OFF was byte-identical, "
+            "and OFF/ON retained exact hit coverage plus CPU root agreement.\n",
+            traversalActiveCases,
+            sizeof(cameraCorpus) / sizeof(cameraCorpus[0]));
 
         wgpuBufferRelease(readback);
         wgpuTextureViewRelease(view);

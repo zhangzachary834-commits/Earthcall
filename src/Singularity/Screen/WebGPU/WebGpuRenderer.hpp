@@ -101,6 +101,13 @@ public:
     }
     void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
 
+    // Bounded native benchmark seam. Production leaves this true. Turning it
+    // off changes only generated WGSL topology (the range proof function/state/
+    // branch are absent) while retaining the exact same renderer/buffer ABI.
+    void setSdfRangeShaderCapabilityForTesting(bool on) {
+        _sdfRangeShaderCapability = on;
+    }
+
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
     // procedural — hashed from the particle index into the field's origin/scale
@@ -259,6 +266,10 @@ private:
         // Derived solely from SDF tree structure. Compute it when this memo is
         // compiled rather than re-walking the AST for every draw of a static field.
         bool isProvenHeightfield = false;
+        // Generated-shader topology is part of memo identity. A benchmark may
+        // switch between proof-free and proof-capable WGSL on one renderer;
+        // never let that reuse a program compiled for the other topology.
+        bool rangeTraversalShaderCapability = true;
 
         // Parameter-dependent conservative spatial proof cache. It is derived
         // substrate only; every unknown region remains represented by the proxy.
@@ -408,6 +419,9 @@ private:
     // the same proof tree and skips proved-zero-free ray cells before exact SDF
     // evaluation. OFF remains the fail-open baseline and parity oracle.
     bool _sdfRangeProxyEnabled = false;
+    // Benchmark-only compiler topology latch. It does not grant proof authority;
+    // range traversal still requires the independent _sdfRangeProxyEnabled gate.
+    bool _sdfRangeShaderCapability = true;
     // Tightening the raster cube itself is independently quarantined after the
     // native parity corpus found a one-pixel SmoothUnion@xform edge mismatch.
     // The proof hierarchy may still build, cull a completely zero-free draw,

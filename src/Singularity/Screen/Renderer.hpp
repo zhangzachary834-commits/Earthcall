@@ -63,6 +63,12 @@ public:
         std::string sdfLastProgramRefusal;
         size_t   sdfWgslBytesGenerated = 0;
         size_t   sdfParameterBytesUploaded = 0;
+        // Rendering relevance-economics accounting. These isolate CPU work that
+        // frame wall time conflates with GPU completion: authored WGSL generation,
+        // native shader/pipeline creation, and steady SDF gather/bind submission.
+        double   sdfProgramCompileCpuMs = 0.0;
+        double   sdfPipelineCreateCpuMs = 0.0;
+        double   sdfCpuSubmissionMs = 0.0;
         // Volumetric V0 observability. Density time belongs to per-medium
         // instance data, so advancing only t must hit the memo and never
         // regenerate the authored density shader.
@@ -83,6 +89,11 @@ public:
         // warmup while traversalDraws remains nonzero.
         uint32_t sdfRangeTraversalDraws = 0;
         size_t   sdfRangeNodeBytesUploaded = 0;
+        // Allocated resident VRAM capacity owned by the range-proof storage
+        // family, including the legal dummy binding used by proof-free draws.
+        // Report it beside logical proof/upload counters so residency is not
+        // mistaken for recurring transfer cost.
+        size_t   sdfRangeResidentBytes = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
