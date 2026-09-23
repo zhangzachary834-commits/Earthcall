@@ -1,4 +1,5 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
@@ -234,10 +235,12 @@ nlohmann::json zoneToJson(const Zone& zone) {
     for (Singular* member : zone.formation().getMembers()) {
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        nlohmann::json lexemeJson{
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        Singularity::Storage::writeSingularProperties(lexemeJson, *lexeme);
+        lexemes.push_back(std::move(lexemeJson));
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
