@@ -782,14 +782,8 @@ public:
     
     // Legacy property accessors (composition-related)
     // Methods with out-of-line implementations in Object.cpp
-    int getCorners() const;
-    void setCorners(int c);
     int getFaces() const;
     void setFaces(int f);
-    int getMassQuantity() const;
-    void setMassQuantity(int m);
-    int getElements() const;
-    void setElements(int e);
     
     // Methods with inline implementations (no cpp definitions)
 
@@ -808,10 +802,6 @@ public:
     uint32_t getFieldRevision() const { return _fieldRevision; }
     uint32_t getSdfStructureRevision() const { return _sdfStructureRevision; }
     uint32_t getSdfParameterRevision() const { return _sdfParameterRevision; }
-    int getRelationships() const { return _composition.relationships; }
-    void setRelationships(int r) { _composition.relationships = r; }
-    int getComplexityLevel() const { return _composition.complexityLevel; }
-    void setComplexityLevel(int cl) { _composition.complexityLevel = cl; }
     int getPhysicalObject() const { return _composition.physicalObject ? 1 : 0; }
     void setPhysicalObject(int po) { _composition.physicalObject = (po != 0); }
     int getSymbolicObject() const { return _composition.physicalObject ? 0 : 1; }
