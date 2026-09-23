@@ -51,3 +51,59 @@ After closure, the next performance work should return to the authored Perlin ra
 ## Role status
 
 **Still active, narrowly.** Focused CPU is green on the reconciled code tree; SDF attempt 3 is queued; the latest default drift is docs/governance-only and non-overlapping. No new PR329 implementation defect was found in this pass.
+
+
+## FINAL CLOSURE — Scene-Spatial Synthesis DAG Rung 1 Sun complete
+
+The final role-close checklist is now satisfied.
+
+### Execution evidence
+
+Workflow #2881 (`35907392867`) completed **SUCCESS** on the reconciled production/test code tree. All four jobs passed:
+
+- Slow Adapter independent clock (macOS): SUCCESS
+- Focused CPU tests (macOS): SUCCESS
+- SDF range-proxy verification (macOS): SUCCESS
+- SDF authored-Perlin A/B (macOS Release): SUCCESS
+
+This closes the earlier ambiguity from the isolated Slow Adapter performance-tail miss on lifecycle head `480cc3fa...`.
+
+### Sixth Sun default-base handoff
+
+The Sixth Sun advanced canonical by one commit to `d2cdd18ed3b3060e68fcdf3bdced2ba103e22dbf`, carrying its independent SDF performance audit/verdict and related documentation.
+
+A targeted compare found zero changed-file overlap with PR #329. The clean two-parent reconciliation landed as:
+
+`4f974cfa8360acdab891f7ba81c25008c14c763e`
+
+Post-reconciliation:
+
+- canonical: `d2cdd18ed3b3060e68fcdf3bdced2ba103e22dbf`
+- PR is 0 behind canonical
+- GitHub reports PR mergeable
+- incoming Sixth Sun changes are preserved
+- PR329 production/test code is unchanged from the fully green reconciled workflow tree
+
+The Sixth Sun's core direction is accepted for the next performance lineage: **the proof is true; now make the question cheap.** That work belongs after this rung, not as new authority inside PR #329.
+
+### Constitutional closure
+
+PR #329 now truthfully contains:
+
+- Rungs 1A–1J CPU semantic/proof witnesses;
+- canonical calculation sharing with vessel/channel-scoped theorem authority;
+- local invalidation and exact fail-open behavior;
+- typed chroma + Timeline behavior;
+- deterministic proof-work accounting;
+- the production diagnostic `RenderedFieldSemanticObserver`;
+- Renderer OFF->ON lifecycle replay;
+- real Renderer-boundary lifecycle assertions;
+- V4 self-emission remaining outside density theorem authority.
+
+The consumer sweep confirms there is still no theorem/cache edge into WGSL, ray marching, visibility, source filtering, volumetric accumulation, or pixels. `authorityBypassesApplied == 0` remains the constitutional boundary of this PR.
+
+### Status
+
+**This specific Sun role is complete.**
+
+Do not extend PR #329 with another theorem family or rendering-authority consumer merely to keep the branch active. The next optimization Sun should start from the Sixth Sun performance verdict and separately price relevance-discovery/consumer economics before any proof is allowed to alter rendered work.
