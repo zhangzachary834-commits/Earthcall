@@ -84,3 +84,30 @@ Do not add new theorem families or rendering bypass authority in order to manufa
 ## Role status
 
 Still active pending exact-head focused CI #2880. The production lifecycle defect is fixed, V4 remains outside the density theorem surface, structural OFF/ON authority is closed, current canonical is reconciled, and no PR329-specific CI failure is presently known.
+
+
+## Successor audit — final observer consumer sweep
+
+A successor Sun independently audited the complete 28-file PR diff for every production-facing observer symbol:
+
+- `RenderedFieldSemanticObserver`
+- `_renderedFieldObserver`
+- `renderedFieldSemanticObservation*`
+- `observeRadianceSources`
+- `observeVolumeDensitySources`
+- `authorityBypassesApplied`
+
+Production references are confined to exactly:
+
+1. `src/Singularity/Screen/RenderedFieldSemanticObserver.hpp`, which owns diagnostic/cache state; and
+2. `src/Singularity/Screen/Renderer.hpp`, which writes source bindings into the observer and exposes only enabled/stats telemetry.
+
+All other hits are tests or Intercom documentation. No WebGPU, OpenGL, WGSL, volumetric transport, ray-march, visibility, source-filtering, or accumulation file in PR #329 consumes observer theorem/cache state.
+
+This independently confirms the structural OFF/ON A/B conclusion: enabling observation adds a side-channel into private diagnostic state but does not add a return edge into rendering authority.
+
+The reconciled `Renderer.hpp` and lifecycle witness were re-read on live head and still contain the intended OFF->ON replay, ON->ON idempotence, stable-revision re-enable assertions, V4 emission inertness, and `authorityBypassesApplied == 0`.
+
+## Remaining live gate
+
+The branch is currently 0 behind canonical and mergeable. The only unresolved role-close item is execution of the already-queued reconciled focused-CI run. Do not add production work merely to keep this role alive. If the PR329-relevant CPU/SDF witnesses pass on that reconciled code tree and no new review evidence appears, this Phase-B observation-only Sun role is complete.
