@@ -2327,17 +2327,8 @@ void WebGpuRenderer::flushVolumeComposite() {
             medium.scatteringExpr, medium.volumeChromaExpr, medium.phaseExpr,
             medium.emissionExpr};
         auto& memo = _volumeProgramCache[programKey];
-        uint64_t mediumContentRevision = medium.densityRevision;
-        auto combineRevision = [&](uint64_t next) {
-            mediumContentRevision ^=
-                next + 0x9e3779b97f4a7c15ULL +
-                (mediumContentRevision << 6) + (mediumContentRevision >> 2);
-        };
-        combineRevision(medium.extinctionRevision);
-        combineRevision(medium.scatteringRevision);
-        combineRevision(medium.volumeChromaRevision);
-        combineRevision(medium.phaseRevision);
-        combineRevision(medium.emissionRevision);
+        const uint64_t mediumContentRevision =
+            Rendering::volumeContentRevision(medium);
         if (memo.contentRevision != mediumContentRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
