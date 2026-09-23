@@ -136,18 +136,11 @@ namespace Core {
             Rendering::VolumeDensityBinding medium;
             if (Rendering::readVolumeDensity(
                     *field, sourceTime, sourceDelta, medium)) {
-                volumeSetIdentity += field->getIdentifier();
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.densityRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.extinctionRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.scatteringRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.volumeChromaRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.phaseRevision);
-                volumeSetIdentity += "\n";
+                // V5 medium-set identity is centralized beside the binding so
+                // discovery cannot silently lag a newly-authored channel. In
+                // particular, V4 E_v must participate in world-set revision.
+                Rendering::appendVolumeSetIdentity(
+                    volumeSetIdentity, field->getIdentifier(), medium);
                 volumeDensities.push_back(medium);
             }
 
