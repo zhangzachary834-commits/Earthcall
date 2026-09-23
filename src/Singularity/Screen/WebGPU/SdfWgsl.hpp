@@ -77,6 +77,19 @@ struct AngularExpressionLayout {
     std::string error;
 };
 
+// V3 medium phase is deliberately not source angular alpha. It admits two
+// independently named directions with transport semantics:
+//   wi = world-space normalized source -> sample propagation direction
+//   wo = world-space normalized sample -> receiver/eye propagation direction.
+struct PhaseExpressionLayout {
+    std::string structure;
+    std::size_t parameterCount = 0;
+    bool readsWi = false;
+    bool readsWo = false;
+    bool ok = true;
+    std::string error;
+};
+
 struct Program {
     std::string        wgsl;    // full shader source; identical for same-shaped trees
     std::vector<float> params;  // the numbers this instance needs, in emitted order
@@ -135,7 +148,8 @@ Program compile(const geom::SdfNode& root,
                 DensityInputKind densityKind = DensityInputKind::LegacyField,
                 const OntoMath::Piecewise* extinctionExpr = nullptr,
                 const OntoMath::Piecewise* scatteringExpr = nullptr,
-                const OntoMath::Piecewise* volumeChromaExpr = nullptr);
+                const OntoMath::Piecewise* volumeChromaExpr = nullptr,
+                const OntoMath::Piecewise* phaseExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -151,7 +165,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              DensityInputKind densityKind = DensityInputKind::LegacyField,
                              const OntoMath::Piecewise* extinctionExpr = nullptr,
                              const OntoMath::Piecewise* scatteringExpr = nullptr,
-                             const OntoMath::Piecewise* volumeChromaExpr = nullptr);
+                             const OntoMath::Piecewise* volumeChromaExpr = nullptr,
+                             const OntoMath::Piecewise* phaseExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -187,8 +202,12 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime = false);
 
 // Inspect alpha(p,omega,t)->scalar through the production emitter. This is the
-// only scalar Screen context that admits omega.x/y/z.
+// only source-radiance scalar context that admits omega.x/y/z.
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
+
+// V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
+// wi/wo are transport bindings, never aliases of source alpha's omega.
+PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 
 // Volumetric V0c: compile one authored density structure into a dedicated
 // depth-aware volume-composite shader. This is intentionally separate from
@@ -197,14 +216,16 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr = nullptr,
                       const OntoMath::Piecewise* scatteringExpr = nullptr,
-                      const OntoMath::Piecewise* volumeChromaExpr = nullptr);
+                      const OntoMath::Piecewise* volumeChromaExpr = nullptr,
+                      const OntoMath::Piecewise* phaseExpr = nullptr);
 
-// Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s and
-// C_v numeric parameter slots without regenerating shader source when structure
-// is unchanged.
+// Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s,
+// C_v and Phi numeric parameter slots without regenerating shader source when
+// structure is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
                                    const OntoMath::Piecewise* extinctionExpr = nullptr,
                                    const OntoMath::Piecewise* scatteringExpr = nullptr,
-                                   const OntoMath::Piecewise* volumeChromaExpr = nullptr);
+                                   const OntoMath::Piecewise* volumeChromaExpr = nullptr,
+                                   const OntoMath::Piecewise* phaseExpr = nullptr);
 
 } // namespace sdfwgsl
