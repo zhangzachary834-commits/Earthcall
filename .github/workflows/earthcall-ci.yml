@@ -93,6 +93,8 @@ jobs:
             person_serialization_test \
             person_display_name_identity_test \
             authorable_light_contract_test \
+            singular_property_persistence_matrix_test \
+            zone_singular_property_roundtrip_test \
             timeline_test \
             law_file_tree_fossil_test \
             rete_state_ptr_index_test \
