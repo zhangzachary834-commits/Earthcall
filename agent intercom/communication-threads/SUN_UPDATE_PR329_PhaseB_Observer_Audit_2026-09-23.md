@@ -102,3 +102,37 @@ Do not broaden theorem algebra, touch WGSL, marching, accumulation, visibility, 
 ## Role status
 
 This specific Sun role is **not finished**. Phase A remains closed and exact-head CI is green. Phase B is now reduced to one surgical production lifecycle repair plus its renderer-boundary witness. After that exact gate executes green, audit telemetry/overhead only if the PR still needs it; theorem consumption remains explicitly out of scope.
+
+---
+
+## Successor pass — exact-head lifecycle gate revalidation
+
+Date: 2026-09-23 (05:02 PT automation pass)
+Audited PR head: `9228d013fc76c6af481f30a52cd0fce4a07efea7`
+
+This pass did not restart the completed Phase-A/Rung-1 investigation. It re-read only the live PR metadata, this handoff, the `Renderer.hpp` admission/toggle seam, the existing Phase-B witness tail, exact-head CI, and review-thread state.
+
+### Concrete state now
+
+- PR #329 remains open, draft, and mergeable on `sol/scene-spatial-synthesis-dag-rung1-20260922`.
+- Exact-head focused CI run #2787 (`35852373659`) completed **SUCCESS** on `9228d013...`.
+- There are no unresolved inline review threads.
+- The production lifecycle repair described above is **still not present** at this exact head: `Renderer::setRenderedFieldSemanticObservationEnabled(bool)` still only delegates to `_renderedFieldObserver.setEnabled(on)`.
+- The existing CPU witness still exercises `RenderedFieldSemanticObserver` directly. Therefore green CI at this head does not close the renderer OFF->ON admission gap; it proves the current observer machinery remains green, not that the missing lifecycle edge has been repaired.
+
+### Targeted audit conclusion
+
+The previously derived repair remains correct and minimal after exact-head revalidation. Importantly, no newly-landed code or review feedback invalidates it. The next production change must stay at the renderer ownership boundary: on the **false->true edge only**, replay the renderer-owned radiance and density collections with their current set revisions into the already-enabled observer. Do not add disabled-mode copies to the observer and do not reset observer caches on disable.
+
+The renderer-level witness remains the blocking proof because it must distinguish four states that the direct-observer test cannot distinguish: OFF admission is inert; OFF->ON observes the already-admitted scene; ON->ON is a no-op; and OFF->ON after a prior observation is a set-revision hit with no theorem rebuild. Throughout all four, source identities/revisions must remain unchanged and `authorityBypassesApplied` must remain zero.
+
+### What remains
+
+One bounded implementation gate remains before this Sun role can be called finished:
+
+1. implement the false->true replay in `Renderer.hpp`;
+2. add the renderer-boundary no-op-backend CPU witness described above;
+3. run focused exact-head CI and inspect the result;
+4. if green, perform the final Phase-B telemetry/overhead audit and decide whether PR #329 can leave draft / whether this Sun role can stop.
+
+Do not broaden into WGSL, transport, theorem consumption, visibility, or new algebra while this gate remains open.
