@@ -955,8 +955,12 @@ int main() {
         const Renderer::FrameStats v4DimmedStats = renderer.frameStats();
         assert(v4EmissivePixel[0] > v4DimmedPixel[0] + 35 &&
                "numeric E_v edit did not visibly refresh native self-emission");
+        // A numeric authored edit changes contentRevision, so it deliberately
+        // takes the parameter-refresh branch rather than the unchanged-content
+        // cache-hit branch. The visible pixel delta above proves refreshed
+        // parameters reached native transport; zero compiles proves structure
+        // and WGSL were reused.
         assert(v4DimmedStats.volumeProgramCompiles == 0 &&
-               v4DimmedStats.volumeProgramCacheHits >= 1 &&
                "numeric E_v edit regenerated WGSL instead of refreshing parameters");
 
         // REFUSAL: an unsupported E_v must suppress the medium contribution and
