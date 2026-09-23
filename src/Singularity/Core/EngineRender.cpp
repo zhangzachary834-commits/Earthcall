@@ -145,6 +145,8 @@ namespace Core {
                 volumeSetIdentity += std::to_string(medium.scatteringRevision);
                 volumeSetIdentity += ":";
                 volumeSetIdentity += std::to_string(medium.volumeChromaRevision);
+                volumeSetIdentity += ":";
+                volumeSetIdentity += std::to_string(medium.phaseRevision);
                 volumeSetIdentity += "\n";
                 volumeDensities.push_back(medium);
             }
@@ -212,10 +214,15 @@ namespace Core {
 
         const bool persistentLightPlaced = !radiantSources.empty();
         if (radiantSources.size() == 1) {
-            // Exact Rungs 3-6 compatibility: one source uses the pre-Rung-7
-            // renderer state and generated shader path without multi-source code.
+            // Exact Rungs 3-6 SDF compatibility still uses the historical
+            // one-source generated path (that path only switches when size>1).
+            // Keep the renderer-facing source projection populated as well so
+            // V3 participating-media transport can truthfully consume the same
+            // admitted source without reconstructing source state.
             const auto& source = radiantSources.front();
-            currentRenderer().setRadianceSources({}, 0);
+            const uint64_t sourceSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
+            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
             currentRenderer().setLight(source.position, source.ambientRadiance,
                                        source.diffuseRadiance, source.specularRadiance);
             currentRenderer().setLightingEnabled(source.enabled);

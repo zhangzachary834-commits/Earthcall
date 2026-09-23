@@ -379,11 +379,21 @@ using TypeEnv = std::map<std::string, ValueKind>;
 //   "omega.x/y/z" components of an explicitly admitted normalized direction.
 //                  Rung 6 Screen radiance binds them as world-space source ->
 //                  receiver direction; OntoMath itself does not invent a frame.
+//   "wi.x/y/z"    V3 participating-medium incoming propagation direction,
+//                  world-space normalized source -> sample.
+//   "wo.x/y/z"    V3 participating-medium outgoing propagation direction,
+//                  world-space normalized sample -> receiver/eye.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
 inline constexpr const char* kOmegaZVar = "omega.z";
+inline constexpr const char* kWiXVar = "wi.x";
+inline constexpr const char* kWiYVar = "wi.y";
+inline constexpr const char* kWiZVar = "wi.z";
+inline constexpr const char* kWoXVar = "wo.x";
+inline constexpr const char* kWoYVar = "wo.y";
+inline constexpr const char* kWoZVar = "wo.z";
 inline constexpr float kDirectionEpsilon = 1e-8f;
 
 // Central-difference step for Gradient, shared by both paths deliberately: the

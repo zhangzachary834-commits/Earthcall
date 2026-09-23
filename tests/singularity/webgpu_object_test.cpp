@@ -650,6 +650,225 @@ int main() {
                v2RedStrongRepeatStats.volumeProgramCacheHits >= 1 &&
                "shared-D/sigma_t V2 variants collided in the volume program cache");
 
+        // V3 NATIVE PHASE: keep D / sigma_t / sigma_s / C_v byte-for-byte
+        // identical and vary only Phi. A single admitted source supplies wi;
+        // wo remains sample->eye. This is angular medium truth, not source alpha.
+        auto phaseExtinctionNode = scalarNode(0.8);
+        OntoMath::Piecewise phaseExtinction =
+            OntoMath::Piecewise::continuous(phaseExtinctionNode);
+        auto phaseScatteringNode = scalarNode(0.2);
+        OntoMath::Piecewise phaseScattering =
+            OntoMath::Piecewise::continuous(phaseScatteringNode);
+        auto phaseChromaNode = vectorNode(1.0, 1.0, 1.0);
+        OntoMath::Piecewise phaseChroma =
+            OntoMath::Piecewise::continuous(phaseChromaNode);
+
+        auto forwardNode =
+            OntoMath::MathNode::fromLegacyExpression(
+                OntoMath::ScalarForm::constant(1.0).plus(
+                    OntoMath::ScalarForm::variable(
+                        OntoMath::kWiZVar, 1.0, 0.8)));
+        auto reverseNode =
+            OntoMath::MathNode::fromLegacyExpression(
+                OntoMath::ScalarForm::constant(1.0).plus(
+                    OntoMath::ScalarForm::variable(
+                        OntoMath::kWiZVar, 1.0, -0.8)));
+        OntoMath::Piecewise forwardPhase =
+            OntoMath::Piecewise::continuous(forwardNode);
+        OntoMath::Piecewise reversePhase =
+            OntoMath::Piecewise::continuous(reverseNode);
+
+        Rendering::VolumeDensityBinding phaseForwardMedium = medium;
+        phaseForwardMedium.extinctionExpr = &phaseExtinction;
+        phaseForwardMedium.extinctionRevision = 5801;
+        phaseForwardMedium.scatteringExpr = &phaseScattering;
+        phaseForwardMedium.scatteringRevision = 5802;
+        phaseForwardMedium.volumeChromaExpr = &phaseChroma;
+        phaseForwardMedium.volumeChromaRevision = 5803;
+        phaseForwardMedium.phaseExpr = &forwardPhase;
+        phaseForwardMedium.phaseRevision = 5804;
+
+        Rendering::VolumeDensityBinding phaseReverseMedium = phaseForwardMedium;
+        phaseReverseMedium.phaseExpr = &reversePhase;
+        phaseReverseMedium.phaseRevision = 5814;
+
+        assert(phaseForwardMedium.densityExpr == phaseReverseMedium.densityExpr &&
+               phaseForwardMedium.extinctionExpr == phaseReverseMedium.extinctionExpr &&
+               phaseForwardMedium.scatteringExpr == phaseReverseMedium.scatteringExpr &&
+               phaseForwardMedium.volumeChromaExpr == phaseReverseMedium.volumeChromaExpr &&
+               "V3 witness stopped holding D/sigma_t/sigma_s/C_v fixed");
+
+        Rendering::RadianceSourceBinding phaseSource;
+        phaseSource.position = glm::vec3(0.0f, 0.0f, -3.0f);
+        phaseSource.enabled = true;
+        renderer.setRadianceSources({phaseSource}, 5820);
+
+        renderer.setVolumeDensitySources({phaseForwardMedium}, 5821);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char phaseForwardPixel[4];
+        readCentre(phaseForwardPixel);
+        const Renderer::FrameStats phaseForwardStats = renderer.frameStats();
+
+        renderer.setVolumeDensitySources({phaseReverseMedium}, 5822);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char phaseReversePixel[4];
+        readCentre(phaseReversePixel);
+        const Renderer::FrameStats phaseReverseStats = renderer.frameStats();
+
+        std::printf(
+            "V3 same-medium phase forward=%d reverse=%d compiles=(%u,%u)\n",
+            phaseForwardPixel[0], phaseReversePixel[0],
+            phaseForwardStats.volumeProgramCompiles,
+            phaseReverseStats.volumeProgramCompiles);
+        assert(phaseForwardPixel[0] > phaseReversePixel[0] + 45 &&
+               "changing only Phi with fixed D/sigma_t/sigma_s/C_v did not change native scattering");
+        assert(phaseForwardStats.volumeProgramCompiles == 1 &&
+               phaseReverseStats.volumeProgramCompiles == 1 &&
+               "distinct authored phase structures were not compiled independently");
+
+        // Directionality itself is runtime input: keep the same Phi AST and move
+        // only the admitted source across the medium. wi.z flips sign; no shader
+        // structure is allowed to change.
+        renderer.setVolumeDensitySources({phaseForwardMedium}, 5821);
+        renderer.setRadianceSources({phaseSource}, 5820);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char sourceBehindPixel[4];
+        readCentre(sourceBehindPixel);
+
+        phaseSource.position = glm::vec3(0.0f, 0.0f, 3.0f);
+        renderer.setRadianceSources({phaseSource}, 5820);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char sourceFrontPixel[4];
+        readCentre(sourceFrontPixel);
+        const Renderer::FrameStats sourceFlipStats = renderer.frameStats();
+        assert(sourceBehindPixel[0] > sourceFrontPixel[0] + 45 &&
+               "Phi(wi) did not respond visibly when the admitted incident direction flipped");
+        assert(sourceFlipStats.volumeProgramCompiles == 0 &&
+               sourceFlipStats.volumeProgramCacheHits >= 1 &&
+               "incident-direction value change regenerated phase WGSL");
+
+        // VALUE ONLY: a scalar Phi coefficient changes while the AST pointer and
+        // structure remain fixed.
+        auto numericPhaseNode = scalarNode(0.25);
+        OntoMath::Piecewise numericPhase =
+            OntoMath::Piecewise::continuous(numericPhaseNode);
+        Rendering::VolumeDensityBinding numericPhaseMedium = phaseForwardMedium;
+        numericPhaseMedium.phaseExpr = &numericPhase;
+        numericPhaseMedium.phaseRevision = 5831;
+        renderer.setVolumeDensitySources({numericPhaseMedium}, 5832);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char numericPhaseDim[4];
+        readCentre(numericPhaseDim);
+
+        numericPhaseNode->scalarForm.terms[0].coefficient = 1.1;
+        numericPhaseMedium.phaseRevision = 5833;
+        renderer.setVolumeDensitySources({numericPhaseMedium}, 5834);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char numericPhaseBright[4];
+        readCentre(numericPhaseBright);
+        const Renderer::FrameStats numericPhaseStats = renderer.frameStats();
+        assert(numericPhaseBright[0] > numericPhaseDim[0] + 35 &&
+               "numeric Phi edit did not visibly refresh native transport");
+        assert(numericPhaseStats.volumeProgramCompiles == 0 &&
+               "numeric Phi edit regenerated WGSL instead of refreshing parameters");
+
+        // STRUCTURE: preserve the numeric value 1.1 but replace the leaf by
+        // Add(0.55,0.55). The phase program must recompile exactly once.
+        auto phaseAdd = std::make_shared<OntoMath::MathNode>();
+        phaseAdd->op = OntoMath::MathNode::Op::Add;
+        phaseAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.55)));
+        phaseAdd->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.55)));
+        numericPhase.pieces[0].mathNode = phaseAdd;
+        numericPhaseMedium.phaseRevision = 5835;
+        renderer.setVolumeDensitySources({numericPhaseMedium}, 5836);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        const Renderer::FrameStats phaseStructureStats = renderer.frameStats();
+        assert(phaseStructureStats.volumeProgramCompiles == 1 &&
+               "structural Phi edit did not regenerate the volume program exactly once");
+
+        // TIME: Phi=t changes only the admitted medium Timeline coordinate.
+        auto phaseTimeNode = std::make_shared<OntoMath::MathNode>();
+        phaseTimeNode->op = OntoMath::MathNode::Op::ValueLeaf;
+        phaseTimeNode->variableName = OntoMath::kTimeVar;
+        OntoMath::Piecewise timedPhase =
+            OntoMath::Piecewise::continuous(phaseTimeNode);
+        Rendering::VolumeDensityBinding timedPhaseMedium = phaseForwardMedium;
+        timedPhaseMedium.phaseExpr = &timedPhase;
+        timedPhaseMedium.phaseRevision = 5841;
+        timedPhaseMedium.temporalCoordinate = 0.2;
+        timedPhaseMedium.temporalDelta = 0.2;
+        renderer.setVolumeDensitySources({timedPhaseMedium}, 5842);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char timedPhaseDim[4];
+        readCentre(timedPhaseDim);
+
+        timedPhaseMedium.temporalCoordinate = 1.2;
+        timedPhaseMedium.temporalDelta = 1.0;
+        renderer.setVolumeDensitySources({timedPhaseMedium}, 5842);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char timedPhaseBright[4];
+        readCentre(timedPhaseBright);
+        const Renderer::FrameStats timedPhaseStats = renderer.frameStats();
+        assert(timedPhaseBright[0] > timedPhaseDim[0] + 30 &&
+               "advancing the medium Timeline did not visibly drive Phi(p,wi,wo,t)");
+        assert(timedPhaseStats.volumeProgramCompiles == 0 &&
+               timedPhaseStats.volumeProgramCacheHits >= 1 &&
+               "phase Timeline advance regenerated structural WGSL");
+
+        // REFUSAL: unsupported authored phase must suppress this medium, never
+        // reuse the previously valid timed phase program.
+        auto unsupportedPhaseNode = std::make_shared<OntoMath::MathNode>();
+        unsupportedPhaseNode->op = OntoMath::MathNode::Op::Raycast;
+        timedPhase.pieces[0].mathNode = unsupportedPhaseNode;
+        timedPhaseMedium.phaseRevision = 5843;
+        renderer.setVolumeDensitySources({timedPhaseMedium}, 5844);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char refusedPhasePixel[4];
+        readCentre(refusedPhasePixel);
+        const Renderer::FrameStats refusedPhaseStats = renderer.frameStats();
+        assert(refusedPhaseStats.volumeProgramRefusals >= 1 &&
+               refusedPhaseStats.volumeLastProgramRefusal.find("phase") != std::string::npos &&
+               refusedPhaseStats.volumeLastProgramRefusal.find("Raycast") != std::string::npos &&
+               "unsupported Phi did not produce a named phase refusal");
+        assert(refusedPhasePixel[0] < 12 &&
+               refusedPhasePixel[1] < 12 &&
+               refusedPhasePixel[2] < 12 &&
+               "refused Phi left stale volumetric output on screen");
+
+        renderer.setRadianceSources({}, 0);
+
         // TIMELINE: D(p,t)=t is the same authored structure across both frames.
         // Only this medium's admitted Timeline coordinate changes. The second
         // frame must visibly brighten while reusing the already-compiled volume
