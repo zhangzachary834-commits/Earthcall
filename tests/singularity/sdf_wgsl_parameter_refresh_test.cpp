@@ -1322,10 +1322,15 @@ int main() {
                   fused.wgsl.find("fn volumeDensityEval_1") != std::string::npos &&
                   fused.wgsl.find("var totalExtinction = 0.0") != std::string::npos &&
                   fused.wgsl.find("var totalSource = vec3<f32>(0.0)") != std::string::npos &&
+                  fused.wgsl.find("var mediumEvents: array<f32, 4>") != std::string::npos &&
+                  fused.wgsl.find("var segmentOccupied = false") != std::string::npos &&
+                  fused.wgsl.find(
+                      "let sampleT = segmentStart + (f32(step) + 0.5) * stepLength") !=
+                      std::string::npos &&
                   fused.wgsl.find(
                       "intervalGain = (oldT - transmittance) / totalExtinction") !=
                       std::string::npos,
-              "V5 compiles two media into one shared extinction/source integral");
+              "V5 compiles two media into occupied-segment shared transport");
 
         const auto paramsA = sdfwgsl::collectVolumeParams(
             &densityA, &extinctionA, &scatteringA, &chromaA, nullptr, &emissionA);
