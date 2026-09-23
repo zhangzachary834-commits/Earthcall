@@ -184,28 +184,29 @@ void Relation::describe() const {
               << std::endl;
 }
 
-namespace {
-bool matchesSingular(const Singular* a, const Singular* b) {
-    if (!a || !b) return false;
-    if (a == b) return true;
-    const auto* pA = dynamic_cast<const Person*>(a);
-    const auto* pB = dynamic_cast<const Person*>(b);
-    if (pA && pB) {
-        return pA->hasIdentity() && pB->hasIdentity() && pA->personId() == pB->personId();
-    }
-    if (!pA && !pB) {
-        return a->getIdentifier() == b->getIdentifier();
+bool Relation::involves(const Singular* being) const {
+    if (!being) return false;
+    if (a() == being || b() == being) return true;
+
+    if (mayBeEndpoint(being)) {
+        const auto* person = dynamic_cast<const Person*>(being);
+        if (person && person->hasIdentity()) {
+            const std::string id = person->personId().toString();
+            return !id.empty() && (aId() == id || bId() == id);
+        }
     }
     return false;
 }
-} // namespace
-
-bool Relation::involves(const Singular* being) const {
-    return being && (matchesSingular(a(), being) || matchesSingular(b(), being));
-}
 
 bool Relation::involves(const Singular& being) const {
-    return matchesSingular(a(), &being) || matchesSingular(b(), &being);
+    if (a() == &being || b() == &being) return true;
+
+    const auto* person = dynamic_cast<const Person*>(&being);
+    if (person && person->hasIdentity()) {
+        const std::string id = person->personId().toString();
+        return !id.empty() && (aId() == id || bId() == id);
+    }
+    return false;
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -214,11 +215,21 @@ bool Relation::involves(const std::string& identifier) const {
 }
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
+    const auto matchEndpoint = [](Singular* epPtr, const std::string& epId, const Singular& target) {
+        if (epPtr == &target) return true;
+        const auto* person = dynamic_cast<const Person*>(&target);
+        if (person && person->hasIdentity()) {
+            const std::string id = person->personId().toString();
+            return !id.empty() && epId == id;
+        }
+        return false;
+    };
+
     if (directed) {
-        return matchesSingular(a(), &aBeing) && matchesSingular(b(), &bBeing);
+        return matchEndpoint(a(), aId(), aBeing) && matchEndpoint(b(), bId(), bBeing);
     }
-    return (matchesSingular(a(), &aBeing) && matchesSingular(b(), &bBeing)) ||
-           (matchesSingular(a(), &bBeing) && matchesSingular(b(), &aBeing));
+    return (matchEndpoint(a(), aId(), aBeing) && matchEndpoint(b(), bId(), bBeing)) ||
+           (matchEndpoint(a(), aId(), bBeing) && matchEndpoint(b(), bId(), aBeing));
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
