@@ -462,10 +462,43 @@ int main() {
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.composeVolumes();
         renderer.endFrame();
+        unsigned char sharedOrderAB[4];
+        readCentre(sharedOrderAB);
         const Renderer::FrameStats sharedDensitySecondStats = renderer.frameStats();
         assert(sharedDensitySecondStats.volumeProgramCompiles == 0 &&
                sharedDensitySecondStats.volumeProgramCacheHits >= 2 &&
                "media sharing D but differing in sigma_t thrashed the volume program cache");
+
+        // V5 NATIVE PERMUTATION WITNESS: these two bounded media overlap the
+        // centre ray. Reversing the projected world-set order must not change
+        // the integrated framebuffer answer. The old V0-V4 sequential
+        // whole-medium blending path made ordering an accidental transport law.
+        renderer.setVolumeDensitySources({sharedDensityB, sharedDensityA}, 5604);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char sharedOrderBA[4];
+        readCentre(sharedOrderBA);
+        const Renderer::FrameStats sharedDensityReverseStats = renderer.frameStats();
+        const auto channelNear = [](unsigned char a, unsigned char b) {
+            return std::abs(static_cast<int>(a) - static_cast<int>(b)) <= 1;
+        };
+        std::printf(
+            "V5 overlap order AB=(%d,%d,%d) BA=(%d,%d,%d) compiles=%u\n",
+            sharedOrderAB[0], sharedOrderAB[1], sharedOrderAB[2],
+            sharedOrderBA[0], sharedOrderBA[1], sharedOrderBA[2],
+            sharedDensityReverseStats.volumeProgramCompiles);
+        assert(channelNear(sharedOrderAB[0], sharedOrderBA[0]) &&
+               channelNear(sharedOrderAB[1], sharedOrderBA[1]) &&
+               channelNear(sharedOrderAB[2], sharedOrderBA[2]) &&
+               "V5 overlapping medium transport changed when world-set order reversed");
+        assert(sharedDensityReverseStats.volumeProgramCompiles >= 1 &&
+               "V5 reversed set order did not establish its fused structural program");
+
+        // Restore the original order for the remaining single-medium V1/V2/V3/V4
+        // witnesses below; they replace the collection before rendering anyway.
+        renderer.setVolumeDensitySources({sharedDensityA, sharedDensityB}, 5603);
 
         // Structural sigma_t edit must compile even though the resulting value
         // stays 3.0 and D is unchanged.
