@@ -42,6 +42,11 @@ struct VolumeDensityBinding {
     const OntoMath::Piecewise* volumeChromaExpr = nullptr;
     uint64_t volumeChromaRevision = 0;
 
+    // Independent V3 phase Phi(p,wi,wo,t). Null preserves exact V2 pixels via
+    // the compatibility identity Phi=1; presence is sole phase authority.
+    const OntoMath::Piecewise* phaseExpr = nullptr;
+    uint64_t phaseRevision = 0;
+
     // Relative medium time is data beside THIS medium. EngineRender currently
     // supplies the broad compatibility Timeline to each binding until authored
     // Timeline ownership selection has a production resolver. WebGPU never
@@ -83,6 +88,12 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
         const std::string chromaJson = field.volumeChroma->toJson().dump();
         next.volumeChromaRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
+    }
+    if (field.volumePhase && !field.volumePhase->pieces.empty()) {
+        next.phaseExpr = field.volumePhase.get();
+        const std::string phaseJson = field.volumePhase->toJson().dump();
+        next.phaseRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(phaseJson));
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;
