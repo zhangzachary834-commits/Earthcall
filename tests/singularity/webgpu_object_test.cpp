@@ -585,6 +585,89 @@ int main() {
         assert(localQualityDelta <= 2 &&
                "V5 distant zero-contribution medium degraded A's local sampling quality");
 
+        // V5 NUMERIC-ONLY FUSED-SET WITNESS: mutate only one numeric
+        // coefficient inside member A's already-admitted E_v tree. Membership,
+        // expression identities, operator topology, and B remain unchanged.
+        // The native answer must change through parameter refresh without
+        // regenerating the fused set WGSL/pipeline structure.
+        localEmissionNode->children[0]->scalarForm.terms[0].coefficient = 0.0;
+        localA.emissionRevision = 5658;
+        renderer.setVolumeDensitySources({localA, farZeroB}, 5658);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localNumericDim[4];
+        readCentre(localNumericDim);
+        const Renderer::FrameStats localNumericStats = renderer.frameStats();
+        std::printf(
+            "V5 numeric fused E_v baseline=%d edited=%d compiles=%u\n",
+            localAWithFarZeroB[0], localNumericDim[0],
+            localNumericStats.volumeProgramCompiles);
+        assert(localAWithFarZeroB[0] > localNumericDim[0] + 15 &&
+               "V5 numeric member edit did not visibly refresh fused-set parameters");
+        assert(localNumericStats.volumeProgramCompiles == 0 &&
+               "V5 numeric member edit regenerated fused-set WGSL structure");
+
+        // V5 TIME-ONLY FUSED-SET WITNESS: E_v=(t,0,0) belongs to member A,
+        // while a second admitted member keeps this on the fused V5 path.
+        // Advancing only A's relative Timeline coordinate must change native
+        // pixels while reusing the already-compiled set program. Time remains
+        // per-medium runtime instance data, never authored structural identity.
+        auto timedSetEmissionT = std::make_unique<OntoMath::MathNode>();
+        timedSetEmissionT->op = OntoMath::MathNode::Op::ValueLeaf;
+        timedSetEmissionT->variableName = OntoMath::kTimeVar;
+        auto timedSetEmissionNode = std::make_shared<OntoMath::MathNode>();
+        timedSetEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        timedSetEmissionNode->children.push_back(std::move(timedSetEmissionT));
+        timedSetEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        timedSetEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        OntoMath::Piecewise timedSetEmission =
+            OntoMath::Piecewise::continuous(timedSetEmissionNode);
+
+        Rendering::VolumeDensityBinding timedSetA = localA;
+        timedSetA.emissionExpr = &timedSetEmission;
+        timedSetA.emissionRevision = 5660;
+        timedSetA.temporalCoordinate = 0.05;
+        timedSetA.temporalDelta = 0.05;
+
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5661);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char fusedTimeDim[4];
+        readCentre(fusedTimeDim);
+        const Renderer::FrameStats fusedTimeCompileStats = renderer.frameStats();
+        assert(fusedTimeCompileStats.volumeProgramCompiles == 1 &&
+               "introducing V5 E_v(t) did not compile its fused structure exactly once");
+
+        timedSetA.temporalCoordinate = 1.0;
+        timedSetA.temporalDelta = 0.95;
+        // Keep membership and authored content revisions fixed: only runtime
+        // Timeline data changes between these two frames.
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5661);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char fusedTimeBright[4];
+        readCentre(fusedTimeBright);
+        const Renderer::FrameStats fusedTimeAdvanceStats = renderer.frameStats();
+        std::printf(
+            "V5 fused timeline t=.05:%d t=1:%d compiles=%u cacheHits=%u\n",
+            fusedTimeDim[0], fusedTimeBright[0],
+            fusedTimeAdvanceStats.volumeProgramCompiles,
+            fusedTimeAdvanceStats.volumeProgramCacheHits);
+        assert(fusedTimeBright[0] > fusedTimeDim[0] + 80 &&
+               "advancing one fused member Timeline did not visibly change E_v(p,t)");
+        assert(fusedTimeAdvanceStats.volumeProgramCompiles == 0 &&
+               "advancing one fused member Timeline regenerated set WGSL");
+        assert(fusedTimeAdvanceStats.volumeProgramCacheHits >= 2 &&
+               "advancing fused member time failed to reuse the admitted set program");
+
         // Restore the original order for the remaining single-medium V1/V2/V3/V4
         // witnesses below; they replace the collection before rendering anyway.
         renderer.setVolumeDensitySources({sharedDensityA, sharedDensityB}, 5603);
