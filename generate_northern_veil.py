@@ -40,6 +40,12 @@ def mul_node(a, b):
 
 def add_node(a, b):
     return {
+        "op": 4,
+        "children": [a, b]
+    }
+
+def sub_node(a, b):
+    return {
         "op": 5,
         "children": [a, b]
     }
@@ -62,7 +68,7 @@ def div_node(a, b):
         "children": [a, b]
     }
 
-def cos_node(node):
+def abs_node(node):
     return {
         "op": 25,
         "children": [node]
@@ -92,33 +98,67 @@ def piecewise(math_node, var_input="x"):
         ]
     }
 
-def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
+def make_curtain_density(peak_d, half_w, half_h, w_z, z_amp1, z_freq1, z_amp2, z_freq2, ray_freq, noise_scale):
     """
-    D(p, t) = peak_d * clamp(1.0 - |z - z_fold| / z_thick, 0, 1) * (0.65 + 0.35 * cos(ray_freq * x)) * (0.7 + 0.3 * cnoise3(noise_scale * p))
+    True thin undulating auroral ribbon.
+    Smoothly tapers to EXACTLY 0.0 at all boundaries of the bounding box:
+    - X envelope: clamp(1.0 - abs(x) / half_w, 0, 1)
+    - Y envelope: clamp(1.0 - abs(y) / half_h, 0, 1)
+    - Z envelope: clamp(1.0 - abs(z - z_fold) / w_z, 0, 1)
+    - Vertical ray striations: 0.65 + 0.35 * cos(ray_freq * x)
+    - Perlin wisps: clamp(0.35 + 0.65 * cnoise3(noise_scale * p), 0, 1)
     """
-    z_offset = {
+    # 1. X envelope (fades to 0 at left and right edges)
+    env_x = clamp_node(
+        sub_node(scalar_node(1.0), div_node(abs_node(var_node("x")), scalar_node(half_w))),
+        0.0, 1.0
+    )
+    
+    # 2. Y envelope (fades to 0 at top and bottom edges)
+    env_y = clamp_node(
+        sub_node(scalar_node(1.0), div_node(abs_node(var_node("y")), scalar_node(half_h))),
+        0.0, 1.0
+    )
+    
+    # 3. Z envelope (thin undulating sheet centered along harmonic wave folds)
+    fold_1 = {
         "op": 0,
         "scalarForm": {
             "terms": [{
-                "c": float(z_scale),
+                "c": -float(z_amp1),
                 "factors": {},
                 "trans": [{
-                    "kind": 0,
+                    "kind": 0, # Sin
                     "var": "x",
-                    "scale": 0.12,
+                    "scale": float(z_freq1),
                     "shift": 0.0
                 }]
             }]
         }
     }
-    z_fold_diff = add_node(var_node("z"), z_offset)
-    z_abs = cos_node(z_fold_diff)
-    envelope = clamp_node(
-        add_node(scalar_node(1.0), div_node(z_abs, scalar_node(z_thick))),
+    fold_2 = {
+        "op": 0,
+        "scalarForm": {
+            "terms": [{
+                "c": -float(z_amp2),
+                "factors": {},
+                "trans": [{
+                    "kind": 1, # Cos
+                    "var": "x",
+                    "scale": float(z_freq2),
+                    "shift": 0.0
+                }]
+            }]
+        }
+    }
+    z_diff = add_node(add_node(var_node("z"), fold_1), fold_2)
+    env_z = clamp_node(
+        sub_node(scalar_node(1.0), div_node(abs_node(z_diff), scalar_node(w_z))),
         0.0, 1.0
     )
     
-    ray_flute = add_node(
+    # 4. Vertical ray striations
+    fluting = add_node(
         scalar_node(0.65),
         {
             "op": 0,
@@ -127,7 +167,7 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
                     "c": 0.35,
                     "factors": {},
                     "trans": [{
-                        "kind": 0,
+                        "kind": 1, # Cos
                         "var": "x",
                         "scale": float(ray_freq),
                         "shift": 0.0
@@ -137,37 +177,36 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
         }
     )
     
-    noise_term = add_node(
-        scalar_node(0.7),
-        scale_node(0.3, perlin_node(scale_node(noise_scale, var_node("p"))))
+    # 5. Perlin wisps and turbulent gaps
+    noise = clamp_node(
+        add_node(
+            scalar_node(0.35),
+            scale_node(0.65, perlin_node(scale_node(noise_scale, var_node("p"))))
+        ),
+        0.0, 1.0
     )
     
-    combined = mul_node(envelope, mul_node(ray_flute, noise_term))
-    return scale_node(peak_d, combined)
+    # Multiplied product
+    sheet = mul_node(env_x, mul_node(env_y, env_z))
+    details = mul_node(fluting, noise)
+    return scale_node(peak_d, mul_node(sheet, details))
 
-def make_altitude_extinction(base_ext, top_ext):
+def make_emissive_vec3(r, g, b, time_rate=0.3):
     """
-    sigma_t(p) = base_ext * clamp(1.0 - 0.7 * (y / 12.0), 0.15, 1.0)
+    E_v(p, omega, t) = vec3(r, g, b) * (0.85 + 0.15 * cos(time_rate * t))
+    Calibrated so (E_v / sigma_t) stays within [0.4, 0.85] range.
+    No white blowout!
     """
-    y_norm = div_node(var_node("y"), scalar_node(12.0))
-    decay = clamp_node(add_node(scalar_node(1.0), scale_node(-0.7, y_norm)), 0.15, 1.0)
-    return scale_node(base_ext, decay)
-
-def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
-    """
-    E_v(p, omega, t) = vec3(r, g, b) * intensity * (0.8 + 0.2 * cos(time_rate * t))
-    """
-    base_color = vec3_node(r, g, b)
     time_mod = add_node(
-        scalar_node(0.8),
+        scalar_node(0.85),
         {
             "op": 0,
             "scalarForm": {
                 "terms": [{
-                    "c": 0.2,
+                    "c": 0.15,
                     "factors": {},
                     "trans": [{
-                        "kind": 0,
+                        "kind": 1, # Cos
                         "var": "t",
                         "scale": float(time_rate),
                         "shift": 0.0
@@ -176,10 +215,9 @@ def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
             }
         }
     )
-    scalar_factor = scale_node(intensity, time_mod)
-    r_val = mul_node(scalar_node(r), scalar_factor)
-    g_val = mul_node(scalar_node(g), scalar_factor)
-    b_val = mul_node(scalar_node(b), scalar_factor)
+    r_val = mul_node(scalar_node(r), time_mod)
+    g_val = mul_node(scalar_node(g), time_mod)
+    b_val = mul_node(scalar_node(b), time_mod)
     return {
         "op": 2,
         "children": [r_val, g_val, b_val]
@@ -196,9 +234,6 @@ def make_phase_forward(g_val=0.35):
     return add_node(scalar_node(1.0), scale_node(3.0 * g_val, dot_term))
 
 def make_box_object(obj_id, center, dims, material_id, display_name, face_color):
-    """
-    Creates an Object with exact SdfPrim::Box shape representation matching Borealis Sanctuary.
-    """
     half_x, half_y, half_z = dims[0] / 2.0, dims[1] / 2.0, dims[2] / 2.0
     x, y, z = center[0], center[1], center[2]
     return {
@@ -247,18 +282,27 @@ def make_box_object(obj_id, center, dims, material_id, display_name, face_color)
 def build_zone():
     spatial_fields = []
     
-    # 1. Primary Emerald Aurora Curtain (557.7 nm atomic oxygen)
-    curtain_1_density = make_curtain_density(peak_d=1.85, z_scale=2.8, z_thick=1.8, ray_freq=1.2, noise_scale=0.15)
-    curtain_1_extinction = make_altitude_extinction(base_ext=0.42, top_ext=0.08)
-    curtain_1_scattering = scale_node(0.85, scalar_node(1.0))
+    # 1. Primary Emerald Aurora Curtain (557.7 nm atomic oxygen green)
+    # Bounding scale: [36, 14, 12] -> half-extents: x in [-36, 36], y in [-14, 14], z in [-12, 12]
+    # Envelope half_w=28.0, half_h=10.0, w_z=1.8 (strictly 0 outside!)
+    curtain_1_density = make_curtain_density(
+        peak_d=0.75,
+        half_w=28.0, half_h=10.0, w_z=1.8,
+        z_amp1=2.5, z_freq1=0.12,
+        z_amp2=1.2, z_freq2=0.24,
+        ray_freq=1.4, noise_scale=0.14
+    )
+    curtain_1_extinction = scalar_node(0.12)
+    curtain_1_scattering = scalar_node(0.04)
     curtain_1_chroma = vec3_node(0.12, 0.98, 0.42)
     curtain_1_phase = make_phase_forward(0.40)
-    curtain_1_emission = make_emissive_vec3(0.08, 0.96, 0.36, intensity=1.85, time_rate=0.35)
+    # Calibrated emission: E_v = [0.012, 0.080, 0.025] -> max integrated G = 0.080/0.12 = 0.67
+    curtain_1_emission = make_emissive_vec3(0.012, 0.080, 0.025, time_rate=0.35)
     
     spatial_fields.append({
         "id": "northern_veil.aurora.primary-emerald-curtain",
-        "origin": [0.0, 22.0, 65.0],
-        "scale": [38.0, 16.0, 18.0],
+        "origin": [0.0, 22.0, 70.0],
+        "scale": [36.0, 14.0, 12.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_1_density),
@@ -276,17 +320,25 @@ def build_zone():
     })
     
     # 2. Secondary Cyan Ribbon (High altitude N2+ / O2+ ionization)
-    curtain_2_density = make_curtain_density(peak_d=1.45, z_scale=3.4, z_thick=1.2, ray_freq=1.8, noise_scale=0.18)
-    curtain_2_extinction = make_altitude_extinction(base_ext=0.22, top_ext=0.03)
-    curtain_2_scattering = scale_node(0.55, scalar_node(1.0))
+    # Bounding scale: [30, 12, 10]
+    curtain_2_density = make_curtain_density(
+        peak_d=0.65,
+        half_w=22.0, half_h=8.5, w_z=1.5,
+        z_amp1=3.2, z_freq1=0.14,
+        z_amp2=-1.4, z_freq2=0.28,
+        ray_freq=1.6, noise_scale=0.16
+    )
+    curtain_2_extinction = scalar_node(0.10)
+    curtain_2_scattering = scalar_node(0.03)
     curtain_2_chroma = vec3_node(0.06, 0.84, 0.98)
     curtain_2_phase = make_phase_forward(0.25)
-    curtain_2_emission = make_emissive_vec3(0.10, 0.88, 0.98, intensity=1.50, time_rate=0.28)
+    # Calibrated emission: E_v = [0.010, 0.055, 0.075] -> max integrated B = 0.075/0.10 = 0.75
+    curtain_2_emission = make_emissive_vec3(0.010, 0.055, 0.075, time_rate=0.28)
     
     spatial_fields.append({
         "id": "northern_veil.aurora.secondary-cyan-ribbon",
-        "origin": [14.0, 28.0, 95.0],
-        "scale": [32.0, 14.0, 14.0],
+        "origin": [12.0, 28.0, 100.0],
+        "scale": [30.0, 12.0, 10.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_2_density),
@@ -304,17 +356,25 @@ def build_zone():
     })
     
     # 3. Accent Violet-Magenta Crest (High altitude N2 molecular corona)
-    curtain_3_density = make_curtain_density(peak_d=1.15, z_scale=2.2, z_thick=2.4, ray_freq=0.8, noise_scale=0.10)
-    curtain_3_extinction = scale_node(0.12, scalar_node(1.0))
-    curtain_3_scattering = scale_node(0.35, scalar_node(1.0))
+    # Bounding scale: [32, 10, 14]
+    curtain_3_density = make_curtain_density(
+        peak_d=0.55,
+        half_w=24.0, half_h=7.0, w_z=2.2,
+        z_amp1=2.0, z_freq1=0.10,
+        z_amp2=1.5, z_freq2=0.20,
+        ray_freq=0.8, noise_scale=0.10
+    )
+    curtain_3_extinction = scalar_node(0.08)
+    curtain_3_scattering = scalar_node(0.02)
     curtain_3_chroma = vec3_node(0.86, 0.18, 0.94)
     curtain_3_phase = scalar_node(1.0)
-    curtain_3_emission = make_emissive_vec3(0.90, 0.22, 0.96, intensity=1.35, time_rate=0.22)
+    # Calibrated emission: E_v = [0.055, 0.010, 0.065] -> max integrated R = 0.69, B = 0.81
+    curtain_3_emission = make_emissive_vec3(0.055, 0.010, 0.065, time_rate=0.22)
     
     spatial_fields.append({
         "id": "northern_veil.aurora.accent-violet-crest",
-        "origin": [-12.0, 38.0, 80.0],
-        "scale": [34.0, 12.0, 20.0],
+        "origin": [-10.0, 36.0, 85.0],
+        "scale": [32.0, 10.0, 14.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_3_density),
@@ -332,17 +392,25 @@ def build_zone():
     })
     
     # 4. Delicate Crimson Lower Fringe (630.0 nm atomic oxygen)
-    curtain_4_density = make_curtain_density(peak_d=0.95, z_scale=2.0, z_thick=1.0, ray_freq=1.5, noise_scale=0.20)
-    curtain_4_extinction = scale_node(0.18, scalar_node(1.0))
-    curtain_4_scattering = scale_node(0.40, scalar_node(1.0))
+    # Bounding scale: [26, 6, 8]
+    curtain_4_density = make_curtain_density(
+        peak_d=0.50,
+        half_w=18.0, half_h=4.0, w_z=1.2,
+        z_amp1=1.8, z_freq1=0.15,
+        z_amp2=0.8, z_freq2=0.30,
+        ray_freq=1.8, noise_scale=0.18
+    )
+    curtain_4_extinction = scalar_node(0.08)
+    curtain_4_scattering = scalar_node(0.02)
     curtain_4_chroma = vec3_node(0.95, 0.15, 0.28)
     curtain_4_phase = make_phase_forward(0.30)
-    curtain_4_emission = make_emissive_vec3(0.98, 0.18, 0.32, intensity=1.25, time_rate=0.40)
+    # Calibrated emission: E_v = [0.060, 0.012, 0.020] -> max integrated R = 0.75
+    curtain_4_emission = make_emissive_vec3(0.060, 0.012, 0.020, time_rate=0.40)
     
     spatial_fields.append({
         "id": "northern_veil.aurora.deep-crimson-fringe",
-        "origin": [5.0, 14.0, 50.0],
-        "scale": [28.0, 8.0, 12.0],
+        "origin": [4.0, 15.0, 55.0],
+        "scale": [26.0, 6.0, 8.0],
         "field": {"mode": "Procedural", "baseDensity": 1.0, "frequency": 1.0, "amplitude": 1.0},
         "vectorField": {"mode": "Procedural", "baseFlowX": 0.0, "baseFlowY": 0.0, "baseFlowZ": 0.0, "frequency": 1.0, "amplitude": 0.0},
         "volumeDensity": piecewise(curtain_4_density),

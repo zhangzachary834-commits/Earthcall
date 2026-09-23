@@ -108,12 +108,12 @@
       "origin": [
         0.0,
         22.0,
-        65.0
+        70.0
       ],
       "scale": [
-        38.0,
-        16.0,
-        18.0
+        36.0,
+        14.0,
+        12.0
       ],
       "field": {
         "mode": "Procedural",
@@ -143,7 +143,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.85,
+                        "c": 0.75,
                         "factors": {}
                       }
                     ]
@@ -153,11 +153,63 @@
                   "op": 4,
                   "children": [
                     {
-                      "op": 26,
+                      "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 28.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
                             {
                               "op": 0,
                               "scalarForm": {
@@ -168,35 +220,48 @@
                                   }
                                 ]
                               }
-                            },
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
                             {
-                              "op": 23,
+                              "op": 26,
                               "children": [
                                 {
-                                  "op": 25,
+                                  "op": 5,
                                   "children": [
                                     {
-                                      "op": 5,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
                                       "children": [
                                         {
-                                          "op": 1,
-                                          "var": "z"
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
                                         },
                                         {
                                           "op": 0,
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 2.8,
-                                                "factors": {},
-                                                "trans": [
-                                                  {
-                                                    "kind": 0,
-                                                    "var": "x",
-                                                    "scale": 0.12,
-                                                    "shift": 0.0
-                                                  }
-                                                ]
+                                                "c": 10.0,
+                                                "factors": {}
                                               }
                                             ]
                                           }
@@ -210,7 +275,134 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.8,
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -2.5,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "var": "x",
+                                                                "scale": 0.12,
+                                                                "shift": 0.0
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -1.2,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "var": "x",
+                                                            "scale": 0.24,
+                                                            "shift": 0.0
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.8,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
                                         "factors": {}
                                       }
                                     ]
@@ -219,28 +411,6 @@
                               ]
                             }
                           ]
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
                         }
                       ]
                     },
@@ -248,7 +418,7 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 0,
@@ -270,9 +440,9 @@
                                     "factors": {},
                                     "trans": [
                                       {
-                                        "kind": 0,
+                                        "kind": 1,
                                         "var": "x",
-                                        "scale": 1.2,
+                                        "scale": 1.4,
                                         "shift": 0.0
                                       }
                                     ]
@@ -283,59 +453,86 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
                             {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 6,
+                              "op": 4,
                               "children": [
                                 {
                                   "op": 0,
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.3,
+                                        "c": 0.35,
                                         "factors": {}
                                       }
                                     ]
                                   }
                                 },
                                 {
-                                  "op": 29,
+                                  "op": 6,
                                   "children": [
                                     {
-                                      "op": 6,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
                                       "children": [
                                         {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0.15,
-                                                "factors": {}
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.14,
+                                                    "factors": {}
+                                                  }
+                                                ]
                                               }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 1,
-                                          "var": "p"
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
                                         }
                                       ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
@@ -355,99 +552,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.42,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.12,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 26,
-                  "children": [
-                    {
-                      "op": 5,
-                      "children": [
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": -0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 23,
-                              "children": [
-                                {
-                                  "op": 1,
-                                  "var": "y"
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 12.0,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "op": 0,
-                      "scalarForm": {
-                        "terms": [
-                          {
-                            "c": 0.15,
-                            "factors": {}
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "op": 0,
-                      "scalarForm": {
-                        "terms": [
-                          {
-                            "c": 1.0,
-                            "factors": {}
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -459,31 +572,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.85,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.04,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -542,7 +639,7 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 5,
+              "op": 4,
               "children": [
                 {
                   "op": 0,
@@ -570,7 +667,7 @@
                       }
                     },
                     {
-                      "op": 5,
+                      "op": 4,
                       "children": [
                         {
                           "op": 4,
@@ -586,7 +683,7 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 4,
@@ -642,6 +739,57 @@
                       "scalarForm": {
                         "terms": [
                           {
+                            "c": 0.012,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.35,
+                                    "shift": 0.0
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
                             "c": 0.08,
                             "factors": {}
                           }
@@ -649,53 +797,37 @@
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.85,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.35,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.35,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -709,127 +841,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.96,
+                            "c": 0.025,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.85,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
-                        {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.8,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.35,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "op": 4,
-                  "children": [
-                    {
-                      "op": 0,
-                      "scalarForm": {
-                        "terms": [
-                          {
-                            "c": 0.36,
-                            "factors": {}
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "op": 6,
-                      "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.85,
-                                "factors": {}
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.35,
+                                    "shift": 0.0
+                                  }
+                                ]
                               }
                             ]
                           }
-                        },
-                        {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.8,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.35,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
                         }
                       ]
                     }
@@ -862,14 +911,14 @@
     {
       "id": "northern_veil.aurora.secondary-cyan-ribbon",
       "origin": [
-        14.0,
+        12.0,
         28.0,
-        95.0
+        100.0
       ],
       "scale": [
-        32.0,
-        14.0,
-        14.0
+        30.0,
+        12.0,
+        10.0
       ],
       "field": {
         "mode": "Procedural",
@@ -899,7 +948,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.45,
+                        "c": 0.65,
                         "factors": {}
                       }
                     ]
@@ -909,11 +958,63 @@
                   "op": 4,
                   "children": [
                     {
-                      "op": 26,
+                      "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 22.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
                             {
                               "op": 0,
                               "scalarForm": {
@@ -924,35 +1025,48 @@
                                   }
                                 ]
                               }
-                            },
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
                             {
-                              "op": 23,
+                              "op": 26,
                               "children": [
                                 {
-                                  "op": 25,
+                                  "op": 5,
                                   "children": [
                                     {
-                                      "op": 5,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
                                       "children": [
                                         {
-                                          "op": 1,
-                                          "var": "z"
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
                                         },
                                         {
                                           "op": 0,
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 3.4,
-                                                "factors": {},
-                                                "trans": [
-                                                  {
-                                                    "kind": 0,
-                                                    "var": "x",
-                                                    "scale": 0.12,
-                                                    "shift": 0.0
-                                                  }
-                                                ]
+                                                "c": 8.5,
+                                                "factors": {}
                                               }
                                             ]
                                           }
@@ -966,7 +1080,134 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.2,
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -3.2,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "var": "x",
+                                                                "scale": 0.14,
+                                                                "shift": 0.0
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 1.4,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "var": "x",
+                                                            "scale": 0.28,
+                                                            "shift": 0.0
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
                                         "factors": {}
                                       }
                                     ]
@@ -975,28 +1216,6 @@
                               ]
                             }
                           ]
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
                         }
                       ]
                     },
@@ -1004,7 +1223,7 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 0,
@@ -1026,9 +1245,9 @@
                                     "factors": {},
                                     "trans": [
                                       {
-                                        "kind": 0,
+                                        "kind": 1,
                                         "var": "x",
-                                        "scale": 1.8,
+                                        "scale": 1.6,
                                         "shift": 0.0
                                       }
                                     ]
@@ -1039,59 +1258,86 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
                             {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 6,
+                              "op": 4,
                               "children": [
                                 {
                                   "op": 0,
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.3,
+                                        "c": 0.35,
                                         "factors": {}
                                       }
                                     ]
                                   }
                                 },
                                 {
-                                  "op": 29,
+                                  "op": 6,
                                   "children": [
                                     {
-                                      "op": 6,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
                                       "children": [
                                         {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0.18,
-                                                "factors": {}
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.16,
+                                                    "factors": {}
+                                                  }
+                                                ]
                                               }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 1,
-                                          "var": "p"
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
                                         }
                                       ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
@@ -1111,99 +1357,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.22,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.1,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 26,
-                  "children": [
-                    {
-                      "op": 5,
-                      "children": [
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 6,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": -0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 23,
-                              "children": [
-                                {
-                                  "op": 1,
-                                  "var": "y"
-                                },
-                                {
-                                  "op": 0,
-                                  "scalarForm": {
-                                    "terms": [
-                                      {
-                                        "c": 12.0,
-                                        "factors": {}
-                                      }
-                                    ]
-                                  }
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "op": 0,
-                      "scalarForm": {
-                        "terms": [
-                          {
-                            "c": 0.15,
-                            "factors": {}
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "op": 0,
-                      "scalarForm": {
-                        "terms": [
-                          {
-                            "c": 1.0,
-                            "factors": {}
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -1215,31 +1377,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.55,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.03,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -1298,7 +1444,7 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 5,
+              "op": 4,
               "children": [
                 {
                   "op": 0,
@@ -1326,7 +1472,7 @@
                       }
                     },
                     {
-                      "op": 5,
+                      "op": 4,
                       "children": [
                         {
                           "op": 4,
@@ -1342,7 +1488,7 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 4,
@@ -1398,60 +1544,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.1,
+                            "c": 0.01,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.5,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.28,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.28,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -1465,60 +1595,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.88,
+                            "c": 0.055,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.5,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.28,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.28,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -1532,60 +1646,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.98,
+                            "c": 0.075,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.5,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.28,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.28,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -1618,14 +1716,14 @@
     {
       "id": "northern_veil.aurora.accent-violet-crest",
       "origin": [
-        -12.0,
-        38.0,
-        80.0
+        -10.0,
+        36.0,
+        85.0
       ],
       "scale": [
-        34.0,
-        12.0,
-        20.0
+        32.0,
+        10.0,
+        14.0
       ],
       "field": {
         "mode": "Procedural",
@@ -1655,7 +1753,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.15,
+                        "c": 0.55,
                         "factors": {}
                       }
                     ]
@@ -1665,11 +1763,63 @@
                   "op": 4,
                   "children": [
                     {
-                      "op": 26,
+                      "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 24.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
                             {
                               "op": 0,
                               "scalarForm": {
@@ -1680,35 +1830,48 @@
                                   }
                                 ]
                               }
-                            },
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
                             {
-                              "op": 23,
+                              "op": 26,
                               "children": [
                                 {
-                                  "op": 25,
+                                  "op": 5,
                                   "children": [
                                     {
-                                      "op": 5,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
                                       "children": [
                                         {
-                                          "op": 1,
-                                          "var": "z"
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
                                         },
                                         {
                                           "op": 0,
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 2.2,
-                                                "factors": {},
-                                                "trans": [
-                                                  {
-                                                    "kind": 0,
-                                                    "var": "x",
-                                                    "scale": 0.12,
-                                                    "shift": 0.0
-                                                  }
-                                                ]
+                                                "c": 7.0,
+                                                "factors": {}
                                               }
                                             ]
                                           }
@@ -1722,7 +1885,134 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 2.4,
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -2.0,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "var": "x",
+                                                                "scale": 0.1,
+                                                                "shift": 0.0
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -1.5,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "var": "x",
+                                                            "scale": 0.2,
+                                                            "shift": 0.0
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 2.2,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
                                         "factors": {}
                                       }
                                     ]
@@ -1731,28 +2021,6 @@
                               ]
                             }
                           ]
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
                         }
                       ]
                     },
@@ -1760,7 +2028,7 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 0,
@@ -1782,7 +2050,7 @@
                                     "factors": {},
                                     "trans": [
                                       {
-                                        "kind": 0,
+                                        "kind": 1,
                                         "var": "x",
                                         "scale": 0.8,
                                         "shift": 0.0
@@ -1795,59 +2063,86 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
                             {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 6,
+                              "op": 4,
                               "children": [
                                 {
                                   "op": 0,
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.3,
+                                        "c": 0.35,
                                         "factors": {}
                                       }
                                     ]
                                   }
                                 },
                                 {
-                                  "op": 29,
+                                  "op": 6,
                                   "children": [
                                     {
-                                      "op": 6,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
                                       "children": [
                                         {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0.1,
-                                                "factors": {}
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.1,
+                                                    "factors": {}
+                                                  }
+                                                ]
                                               }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 1,
-                                          "var": "p"
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
                                         }
                                       ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
@@ -1867,31 +2162,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.12,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.08,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -1903,31 +2182,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.35,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.02,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -2016,60 +2279,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.9,
+                            "c": 0.055,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.35,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.22,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.22,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -2083,60 +2330,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.22,
+                            "c": 0.01,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.35,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.22,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.22,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -2150,60 +2381,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.96,
+                            "c": 0.065,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.35,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.22,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.22,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -2236,14 +2451,14 @@
     {
       "id": "northern_veil.aurora.deep-crimson-fringe",
       "origin": [
-        5.0,
-        14.0,
-        50.0
+        4.0,
+        15.0,
+        55.0
       ],
       "scale": [
-        28.0,
-        8.0,
-        12.0
+        26.0,
+        6.0,
+        8.0
       ],
       "field": {
         "mode": "Procedural",
@@ -2273,7 +2488,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 0.95,
+                        "c": 0.5,
                         "factors": {}
                       }
                     ]
@@ -2283,11 +2498,63 @@
                   "op": 4,
                   "children": [
                     {
-                      "op": 26,
+                      "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 18.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
                             {
                               "op": 0,
                               "scalarForm": {
@@ -2298,35 +2565,48 @@
                                   }
                                 ]
                               }
-                            },
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
                             {
-                              "op": 23,
+                              "op": 26,
                               "children": [
                                 {
-                                  "op": 25,
+                                  "op": 5,
                                   "children": [
                                     {
-                                      "op": 5,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
                                       "children": [
                                         {
-                                          "op": 1,
-                                          "var": "z"
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
                                         },
                                         {
                                           "op": 0,
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 2.0,
-                                                "factors": {},
-                                                "trans": [
-                                                  {
-                                                    "kind": 0,
-                                                    "var": "x",
-                                                    "scale": 0.12,
-                                                    "shift": 0.0
-                                                  }
-                                                ]
+                                                "c": 4.0,
+                                                "factors": {}
                                               }
                                             ]
                                           }
@@ -2334,6 +2614,133 @@
                                       ]
                                     }
                                   ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1.0,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -1.8,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "var": "x",
+                                                                "scale": 0.15,
+                                                                "shift": 0.0
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -0.8,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "var": "x",
+                                                            "scale": 0.3,
+                                                            "shift": 0.0
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.2,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
                                 },
                                 {
                                   "op": 0,
@@ -2349,28 +2756,6 @@
                               ]
                             }
                           ]
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 0.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "op": 0,
-                          "scalarForm": {
-                            "terms": [
-                              {
-                                "c": 1.0,
-                                "factors": {}
-                              }
-                            ]
-                          }
                         }
                       ]
                     },
@@ -2378,7 +2763,7 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 0,
@@ -2400,9 +2785,9 @@
                                     "factors": {},
                                     "trans": [
                                       {
-                                        "kind": 0,
+                                        "kind": 1,
                                         "var": "x",
-                                        "scale": 1.5,
+                                        "scale": 1.8,
                                         "shift": 0.0
                                       }
                                     ]
@@ -2413,59 +2798,86 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 26,
                           "children": [
                             {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.7,
-                                    "factors": {}
-                                  }
-                                ]
-                              }
-                            },
-                            {
-                              "op": 6,
+                              "op": 4,
                               "children": [
                                 {
                                   "op": 0,
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.3,
+                                        "c": 0.35,
                                         "factors": {}
                                       }
                                     ]
                                   }
                                 },
                                 {
-                                  "op": 29,
+                                  "op": 6,
                                   "children": [
                                     {
-                                      "op": 6,
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
                                       "children": [
                                         {
-                                          "op": 0,
-                                          "scalarForm": {
-                                            "terms": [
-                                              {
-                                                "c": 0.2,
-                                                "factors": {}
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.18,
+                                                    "factors": {}
+                                                  }
+                                                ]
                                               }
-                                            ]
-                                          }
-                                        },
-                                        {
-                                          "op": 1,
-                                          "var": "p"
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
                                         }
                                       ]
                                     }
                                   ]
                                 }
                               ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
@@ -2485,31 +2897,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.18,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.08,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -2521,31 +2917,15 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 6,
-              "children": [
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 0.4,
-                        "factors": {}
-                      }
-                    ]
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.02,
+                    "factors": {}
                   }
-                },
-                {
-                  "op": 0,
-                  "scalarForm": {
-                    "terms": [
-                      {
-                        "c": 1.0,
-                        "factors": {}
-                      }
-                    ]
-                  }
-                }
-              ]
+                ]
+              }
             }
           }
         ]
@@ -2604,7 +2984,7 @@
             "hasLo": false,
             "hasHi": false,
             "mathNode": {
-              "op": 5,
+              "op": 4,
               "children": [
                 {
                   "op": 0,
@@ -2632,7 +3012,7 @@
                       }
                     },
                     {
-                      "op": 5,
+                      "op": 4,
                       "children": [
                         {
                           "op": 4,
@@ -2648,7 +3028,7 @@
                           ]
                         },
                         {
-                          "op": 5,
+                          "op": 4,
                           "children": [
                             {
                               "op": 4,
@@ -2704,60 +3084,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.98,
+                            "c": 0.06,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.25,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.4,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.4,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -2771,60 +3135,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.18,
+                            "c": 0.012,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.25,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.4,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.4,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
@@ -2838,60 +3186,44 @@
                       "scalarForm": {
                         "terms": [
                           {
-                            "c": 0.32,
+                            "c": 0.02,
                             "factors": {}
                           }
                         ]
                       }
                     },
                     {
-                      "op": 6,
+                      "op": 4,
                       "children": [
                         {
                           "op": 0,
                           "scalarForm": {
                             "terms": [
                               {
-                                "c": 1.25,
+                                "c": 0.85,
                                 "factors": {}
                               }
                             ]
                           }
                         },
                         {
-                          "op": 5,
-                          "children": [
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
                                   {
-                                    "c": 0.8,
-                                    "factors": {}
+                                    "kind": 1,
+                                    "var": "t",
+                                    "scale": 0.4,
+                                    "shift": 0.0
                                   }
                                 ]
                               }
-                            },
-                            {
-                              "op": 0,
-                              "scalarForm": {
-                                "terms": [
-                                  {
-                                    "c": 0.2,
-                                    "factors": {},
-                                    "trans": [
-                                      {
-                                        "kind": 0,
-                                        "var": "t",
-                                        "scale": 0.4,
-                                        "shift": 0.0
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            }
-                          ]
+                            ]
+                          }
                         }
                       ]
                     }
