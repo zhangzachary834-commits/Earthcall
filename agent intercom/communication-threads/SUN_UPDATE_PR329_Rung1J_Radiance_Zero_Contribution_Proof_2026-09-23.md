@@ -155,11 +155,46 @@ The required direct gate remains:
 
 Do not call Rung 1I or 1J execution-green until that exact witness completes successfully.
 
+## Successor audit pass — exact economics + CI gate
+
+A targeted successor audit re-read the current PR metadata, this handoff, the Rung 1I/1J portion of `rendered_field_piecewise_synthesis_test.cpp`, and the live exact-head workflow rather than restarting the earlier investigation.
+
+PR #329 remained open, draft, mergeable, and based on `sync-from-earthcall-main` at canonical `e4eeee50d1c6982d262c676a0d9d8b55212f959f` before this documentation-only audit commit.
+
+The audit manually traces every theorem construction and query in the deterministic witness. If the current code executes as written, the final economics counters should be:
+
+```
+proof_builds=6
+proof_invalidations=4
+proof_consultations=39
+proof_bypasses=29
+proof_fallbacks=10
+proof_refusals=1
+proof_premise_inspections=12
+exact_evaluations_avoided=29
+```
+
+Derivation summary:
+
+- density theorem builds: initial + post-topology re-proof + post-child partial re-proof = 3;
+- radiance theorem builds: initial + post-topology re-proof + post-child partial re-proof = 3;
+- invalidations: density topology + density child + radiance topology + radiance child = 4;
+- theorem-premise inspections: 6 builds x 2 Piecewise children = 12;
+- successful bypasses / exact evaluations avoided = 29;
+- exact fallbacks = 10;
+- the one deliberate builder refusal is density-proof construction attempted on `SourceRho`.
+
+This is now the concrete next regression-hardening target: after CI executes the witness once and confirms these values, pin these exact counters in the test. Do not pin them merely from static reasoning if CI disagrees; investigate the discrepancy first because it may expose hidden work or a mistaken accounting assumption.
+
+The live exact-head workflow observed during this audit was #2692 on `ec76792fd2dc169b004d7e11bfeb35c89ae8d7c4`. Its `SDF range-proxy verification (macOS)` job had successfully checked out and configured the exact head and was actively building `SDF proof and GPU parity witnesses`; the required `Run CPU SDF proof witnesses` step had not yet executed. Therefore the direct Rung 1I/1J witness was still neither green nor failed at audit time.
+
+No semantic code was changed in this audit pass because changing the code while the first exact-head execution gate was actively building would erase the evidence we are waiting for. The pass instead established the exact expected accounting contract and verified that CI is running the correct branch/head and the correct SDF proof job.
+
 ## Next gate
 
 After exact-head green:
 
-1. pin the proof-economics counters to expected deterministic values so accidental hidden work changes become visible;
+1. compare the emitted counters against the exact expected tuple above and pin them as regression assertions if they match;
 2. compare density and radiance theorem construction/consultation economics separately;
 3. decide whether Phase A has enough evidence to open the first production **observation-only** seam (Phase B), without granting optimization authority;
 4. if more semantic coverage is desired first, add `sigma_t` exact-zero / identity-transmittance theorem as its own theorem kind rather than treating it as density;
