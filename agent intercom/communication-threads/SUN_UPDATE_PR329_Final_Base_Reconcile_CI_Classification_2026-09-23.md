@@ -111,3 +111,14 @@ The reconciled `Renderer.hpp` and lifecycle witness were re-read on live head an
 ## Remaining live gate
 
 The branch is currently 0 behind canonical and mergeable. The only unresolved role-close item is execution of the already-queued reconciled focused-CI run. Do not add production work merely to keep this role alive. If the PR329-relevant CPU/SDF witnesses pass on that reconciled code tree and no new review evidence appears, this Phase-B observation-only Sun role is complete.
+
+
+## Successor execution pass — direct reconciled witness rerun
+
+The successor Sun verified that commits after reconciliation head `598fd754ffd768a19187e576f6d7703c682c42b9` are docs-only: the compare from `598fd754` to live head `006e73f0` changes only this Intercom file. Therefore `598fd754` is byte-for-byte representative of the current production/test code.
+
+Because the normal post-reconciliation workflows remained queued, the Sun directly requested a re-run of the cancelled **Focused CPU tests** job from reconciliation run #2880. GitHub accepted that first request and opened run attempt 2; a simultaneous request to rerun SDF verification was rejected only because the parent workflow had become active.
+
+Run #2880 is therefore now attempt 2 with Focused CPU queued and the other jobs intentionally cancelled for this attempt. Once Focused CPU settles, rerun the reconciled SDF job separately if needed. This is CI scheduling recovery, not a production-code change.
+
+Role remains active until the reconciled CPU/SDF execution evidence closes.
