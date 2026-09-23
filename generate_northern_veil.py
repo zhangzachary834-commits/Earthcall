@@ -96,8 +96,6 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
     """
     D(p, t) = peak_d * clamp(1.0 - |z - z_fold| / z_thick, 0, 1) * (0.65 + 0.35 * cos(ray_freq * x)) * (0.7 + 0.3 * cnoise3(noise_scale * p))
     """
-    # z_term: z - z_fold. In OntoMath, trans on scalarForm gives cos/sin modulation.
-    # We compose: z + c * trans(x)
     z_offset = {
         "op": 0,
         "scalarForm": {
@@ -114,13 +112,12 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
         }
     }
     z_fold_diff = add_node(var_node("z"), z_offset)
-    z_abs = cos_node(z_fold_diff) # smooth cosine ridge envelope
+    z_abs = cos_node(z_fold_diff)
     envelope = clamp_node(
         add_node(scalar_node(1.0), div_node(z_abs, scalar_node(z_thick))),
         0.0, 1.0
     )
     
-    # ray fluting: 0.65 + 0.35 * cos(ray_freq * x)
     ray_flute = add_node(
         scalar_node(0.65),
         {
@@ -140,7 +137,6 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
         }
     )
     
-    # noise: 0.7 + 0.3 * cnoise3(noise_scale * p)
     noise_term = add_node(
         scalar_node(0.7),
         scale_node(0.3, perlin_node(scale_node(noise_scale, var_node("p"))))
@@ -151,7 +147,7 @@ def make_curtain_density(peak_d, z_scale, z_thick, ray_freq, noise_scale):
 
 def make_altitude_extinction(base_ext, top_ext):
     """
-    sigma_t(p) = base_ext * (1.0 - 0.7 * (y / 10.0))
+    sigma_t(p) = base_ext * clamp(1.0 - 0.7 * (y / 12.0), 0.15, 1.0)
     """
     y_norm = div_node(var_node("y"), scalar_node(12.0))
     decay = clamp_node(add_node(scalar_node(1.0), scale_node(-0.7, y_norm)), 0.15, 1.0)
@@ -161,10 +157,7 @@ def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
     """
     E_v(p, omega, t) = vec3(r, g, b) * intensity * (0.8 + 0.2 * cos(time_rate * t))
     """
-    # Base color vector
     base_color = vec3_node(r, g, b)
-    
-    # Breathing modulation over time
     time_mod = add_node(
         scalar_node(0.8),
         {
@@ -183,11 +176,7 @@ def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
             }
         }
     )
-    
-    # scale vector by intensity * time_mod
     scalar_factor = scale_node(intensity, time_mod)
-    
-    # Multiply vector by scalar: vec3(r * f, g * f, b * f)
     r_val = mul_node(scalar_node(r), scalar_factor)
     g_val = mul_node(scalar_node(g), scalar_factor)
     b_val = mul_node(scalar_node(b), scalar_factor)
@@ -198,14 +187,62 @@ def make_emissive_vec3(r, g, b, intensity, time_rate=0.3):
 
 def make_phase_forward(g_val=0.35):
     """
-    Phi(p, wi, wo) = 1.0 + g * (wi_x * wo_x + wi_y * wo_y + wi_z * wo_z)
+    Phi(p, wi, wo) = 1.0 + 3.0 * g * dot(wi, wo)
     """
-    # Henyey-Greenstein 1st order: 1.0 + 3.0 * g * dot(wi, wo)
     dot_x = mul_node(var_node("wi_x"), var_node("wo_x"))
     dot_y = mul_node(var_node("wi_y"), var_node("wo_y"))
     dot_z = mul_node(var_node("wi_z"), var_node("wo_z"))
     dot_term = add_node(dot_x, add_node(dot_y, dot_z))
     return add_node(scalar_node(1.0), scale_node(3.0 * g_val, dot_term))
+
+def make_box_object(obj_id, center, dims, material_id, display_name, face_color):
+    """
+    Creates an Object with exact SdfPrim::Box shape representation matching Borealis Sanctuary.
+    """
+    half_x, half_y, half_z = dims[0] / 2.0, dims[1] / 2.0, dims[2] / 2.0
+    x, y, z = center[0], center[1], center[2]
+    return {
+        "objectID": str(obj_id),
+        "center": [float(x), float(y), float(z)],
+        "authoritativeAxis": [0, 1, 0],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": str(material_id),
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [1, 1, 1, float(half_y), 0.35, 0.15, 2, 0.25, 0.12, 100, 100],
+        "targetRotation": [0, 0, 0],
+        "transform": [
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            float(x), float(y), float(z), 1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])],
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])],
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])],
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])],
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])],
+            [float(face_color[0]), float(face_color[1]), float(face_color[2])]
+        ],
+        "field": {
+            "op": 0,
+            "prim": 1, # SdfPrim::Box
+            "dims": [float(half_x), float(half_y), float(half_z)],
+            "offset": [0, 0, 0],
+            "p0": 0,
+            "p1": 0,
+            "t": 0.5
+        },
+        "fieldExtent": [float(half_x + 0.15), float(half_y + 0.15), float(half_z + 0.15)],
+        "authoredProperties": {
+            "displayName": {"t": "string", "v": str(display_name)}
+        }
+    }
 
 def build_zone():
     spatial_fields = []
@@ -271,7 +308,7 @@ def build_zone():
     curtain_3_extinction = scale_node(0.12, scalar_node(1.0))
     curtain_3_scattering = scale_node(0.35, scalar_node(1.0))
     curtain_3_chroma = vec3_node(0.86, 0.18, 0.94)
-    curtain_3_phase = scalar_node(1.0) # Isotropic
+    curtain_3_phase = scalar_node(1.0)
     curtain_3_emission = make_emissive_vec3(0.90, 0.22, 0.96, intensity=1.35, time_rate=0.22)
     
     spatial_fields.append({
@@ -323,147 +360,77 @@ def build_zone():
     })
     
     # --- Planetary Environment & Staging ---
-    # Dark reflective lake, observation dais, perimeter mountain ridges, stele
     objects = []
     
-    # 1. Mirror Lake ice segments (Z from -20 to 220, X from -60 to 60)
+    # 1. Mirror Lake ice segments (Z from -20 to 220, X from -30 to 30)
     for z in range(-20, 220, 40):
         for x in [-30.0, 30.0]:
-            objects.append({
-                "objectID": f"northern_veil.ice.plate_x{int(x)}_z{z}",
-                "shapeKind": 10, # Box / Plane
-                "geometryType": "Polyhedron",
-                "center": [x, -0.6, float(z)],
-                "authoritativeAxis": [0.0, 1.0, 0.0],
-                "materialId": "material.northern_veil.mirror_ice",
-                "renderMode": "Solid",
-                "rotationResponsiveness": 1.0,
-                "shapeParams": [30.0, 0.5, 20.0],
-                "targetRotation": [0.0, 0.0, 0.0, 1.0],
-                "transform": [
-                    1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    x, -0.6, float(z), 1.0
-                ],
-                "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
-                "faceColors": [[0.02, 0.03, 0.05, 1.0]] * 6,
-                "field": "", "fieldExtent": [0.0, 0.0, 0.0],
-                "authoredProperties": {
-                    "displayName": {"t": "string", "v": f"Obsidian Mirror Lake Plate (Z={z})"},
-                    "material.specular": {"t": "float", "v": 0.88},
-                    "material.diffuse": {"t": "float", "v": 0.12}
-                }
-            })
+            obj = make_box_object(
+                obj_id=f"northern_veil.ice.plate_x{int(x)}_z{z}",
+                center=[x, -0.6, float(z)],
+                dims=[60.0, 1.0, 40.0],
+                material_id="material.cathedral_basalt",
+                display_name=f"Obsidian Mirror Lake Plate (Z={z})",
+                face_color=[0.02, 0.03, 0.05]
+            )
+            obj["authoredProperties"]["material.specular"] = {"t": "float", "v": 0.88}
+            obj["authoredProperties"]["material.diffuse"] = {"t": "float", "v": 0.12}
+            objects.append(obj)
     
     # 2. Central Observation Dais at [0, 0, 0]
-    objects.append({
-        "objectID": "northern_veil.dais.platform",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
-        "center": [0.0, -0.4, 0.0],
-        "authoritativeAxis": [0.0, 1.0, 0.0],
-        "materialId": "material.northern_veil.stone",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
-        "shapeParams": [8.0, 0.4, 8.0],
-        "targetRotation": [0.0, 0.0, 0.0, 1.0],
-        "transform": [
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, -0.4, 0.0, 1.0
-        ],
-        "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
-        "faceColors": [[0.06, 0.07, 0.09, 1.0]] * 6,
-        "field": "", "fieldExtent": [0.0, 0.0, 0.0],
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": "Observation Dais (Spawn)"},
-            "material.specular": {"t": "float", "v": 0.45},
-            "material.diffuse": {"t": "float", "v": 0.55}
-        }
-    })
+    dais_obj = make_box_object(
+        obj_id="northern_veil.dais.platform",
+        center=[0.0, -0.4, 0.0],
+        dims=[16.0, 0.8, 16.0],
+        material_id="material.cathedral_basalt",
+        display_name="Observation Dais (Spawn)",
+        face_color=[0.08, 0.10, 0.14]
+    )
+    dais_obj["authoredProperties"]["material.specular"] = {"t": "float", "v": 0.45}
+    dais_obj["authoredProperties"]["material.diffuse"] = {"t": "float", "v": 0.55}
+    objects.append(dais_obj)
     
     # 3. Perimeter Mountain Silhouettes (West at X=-55, East at X=+55)
     for i, z in enumerate([30.0, 70.0, 110.0, 150.0, 190.0]):
         # West mountain
-        objects.append({
-            "objectID": f"northern_veil.mountain.west_{i}",
-            "shapeKind": 10,
-            "geometryType": "Polyhedron",
-            "center": [-55.0, 12.0 + (i % 3) * 4.0, z],
-            "authoritativeAxis": [0.0, 1.0, 0.0],
-            "materialId": "material.northern_veil.mountain",
-            "renderMode": "Solid",
-            "rotationResponsiveness": 1.0,
-            "shapeParams": [14.0, 18.0 + (i % 2) * 6.0, 18.0],
-            "targetRotation": [0.0, 0.0, 0.0, 1.0],
-            "transform": [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                -55.0, 12.0 + (i % 3) * 4.0, z, 1.0
-            ],
-            "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
-            "faceColors": [[0.015, 0.02, 0.03, 1.0]] * 6,
-            "field": "", "fieldExtent": [0.0, 0.0, 0.0],
-            "authoredProperties": {
-                "displayName": {"t": "string", "v": f"Western Ridge Silhouette {i+1}"}
-            }
-        })
+        m_west = make_box_object(
+            obj_id=f"northern_veil.mountain.west_{i}",
+            center=[-55.0, 12.0 + (i % 3) * 4.0, z],
+            dims=[28.0, 36.0 + (i % 2) * 12.0, 36.0],
+            material_id="material.cathedral_basalt",
+            display_name=f"Western Ridge Silhouette {i+1}",
+            face_color=[0.015, 0.02, 0.03]
+        )
+        objects.append(m_west)
         # East mountain
-        objects.append({
-            "objectID": f"northern_veil.mountain.east_{i}",
-            "shapeKind": 10,
-            "geometryType": "Polyhedron",
-            "center": [55.0, 14.0 + ((i + 1) % 3) * 4.0, z],
-            "authoritativeAxis": [0.0, 1.0, 0.0],
-            "materialId": "material.northern_veil.mountain",
-            "renderMode": "Solid",
-            "rotationResponsiveness": 1.0,
-            "shapeParams": [14.0, 20.0 + (i % 2) * 4.0, 18.0],
-            "targetRotation": [0.0, 0.0, 0.0, 1.0],
-            "transform": [
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                55.0, 14.0 + ((i + 1) % 3) * 4.0, z, 1.0
-            ],
-            "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
-            "faceColors": [[0.015, 0.02, 0.03, 1.0]] * 6,
-            "field": "", "fieldExtent": [0.0, 0.0, 0.0],
-            "authoredProperties": {
-                "displayName": {"t": "string", "v": f"Eastern Ridge Silhouette {i+1}"}
-            }
-        })
+        m_east = make_box_object(
+            obj_id=f"northern_veil.mountain.east_{i}",
+            center=[55.0, 14.0 + ((i + 1) % 3) * 4.0, z],
+            dims=[28.0, 40.0 + (i % 2) * 8.0, 36.0],
+            material_id="material.cathedral_basalt",
+            display_name=f"Eastern Ridge Silhouette {i+1}",
+            face_color=[0.015, 0.02, 0.03]
+        )
+        objects.append(m_east)
         
     # 4. Inscribed Stele of Volumetric Sovereignty
-    objects.append({
-        "objectID": "northern_veil.stele.monolith",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
-        "center": [0.0, 1.6, 10.0],
-        "authoritativeAxis": [0.0, 1.0, 0.0],
-        "materialId": "material.northern_veil.stele",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
-        "shapeParams": [1.4, 2.8, 0.6],
-        "targetRotation": [0.0, 0.0, 0.0, 1.0],
-        "transform": [
-            1.0, 0.0, 0.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 1.0, 0.0,
-            0.0, 1.6, 10.0, 1.0
-        ],
-        "x2D": 0.0, "y2D": 0.0, "zOrder2D": 0,
-        "faceColors": [[0.12, 0.14, 0.18, 1.0]] * 6,
-        "field": "", "fieldExtent": [0.0, 0.0, 0.0],
-        "authoredProperties": {
-            "displayName": {"t": "string", "v": "Stele of the Northern Veil (V0-V4 Sovereignty)"},
-            "inscription.constitution": {"t": "string", "v": "rho_source != V_transport != D_medium; D != sigma_t != sigma_s != C_v != Phi != E_v"},
-            "inscription.authors": {"t": "string", "v": "Zachary Zhang & Gemini Spark"}
-        }
-    })
+    stele_obj = make_box_object(
+        obj_id="northern_veil.stele.monolith",
+        center=[0.0, 1.6, 10.0],
+        dims=[2.8, 5.6, 1.2],
+        material_id="material.cathedral_basalt",
+        display_name="Stele of the Northern Veil (V0-V4 Sovereignty)",
+        face_color=[0.14, 0.16, 0.22]
+    )
+    stele_obj["authoredProperties"]["inscription.constitution"] = {
+        "t": "string",
+        "v": "rho_source != V_transport != D_medium; D != sigma_t != sigma_s != C_v != Phi != E_v"
+    }
+    stele_obj["authoredProperties"]["inscription.authors"] = {
+        "t": "string",
+        "v": "Zachary Zhang & Gemini Spark"
+    }
+    objects.append(stele_obj)
 
     zone = {
         "identifier": "Northern Veil",
@@ -493,10 +460,26 @@ def build_zone():
             "origin": [0.0, 30.0, 80.0],
             "scale": [1.0, 1.0, 1.0],
             "field": {
-                "mode": "Procedural",
-                "baseDensity": 1.0,
-                "frequency": 1.0,
-                "amplitude": 1.0
+                "mode": "AST",
+                "baseDensity": 1,
+                "frequency": 1,
+                "amplitude": 1,
+                "ast": {
+                    "input": "x",
+                    "pieces": [{
+                        "hasLo": False,
+                        "hasHi": False,
+                        "mathNode": {
+                            "op": 0,
+                            "scalarForm": {
+                                "terms": [{
+                                    "c": 0.0,
+                                    "factors": {}
+                                }]
+                            }
+                        }
+                    }]
+                }
             },
             "vectorField": {
                 "mode": "Procedural",

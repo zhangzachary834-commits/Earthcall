@@ -34,10 +34,30 @@
       1.0
     ],
     "field": {
-      "mode": "Procedural",
-      "baseDensity": 1.0,
-      "frequency": 1.0,
-      "amplitude": 1.0
+      "mode": "AST",
+      "baseDensity": 1,
+      "frequency": 1,
+      "amplitude": 1,
+      "ast": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.0,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
     },
     "vectorField": {
       "mode": "Procedural",
@@ -2907,31 +2927,38 @@
     "objects": [
       {
         "objectID": "northern_veil.ice.plate_x-30_z-20",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           -20.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -2951,52 +2978,62 @@
           -20.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3015,31 +3052,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z-20",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           -20.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3059,52 +3103,62 @@
           -20.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3123,31 +3177,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x-30_z20",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           20.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3167,52 +3228,62 @@
           20.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3231,31 +3302,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z20",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           20.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3275,52 +3353,62 @@
           20.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3339,31 +3427,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x-30_z60",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           60.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3383,52 +3478,62 @@
           60.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3447,31 +3552,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z60",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           60.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3491,52 +3603,62 @@
           60.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3555,31 +3677,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x-30_z100",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           100.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3599,52 +3728,62 @@
           100.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3663,31 +3802,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z100",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           100.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3707,52 +3853,62 @@
           100.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3771,31 +3927,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x-30_z140",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           140.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3815,52 +3978,62 @@
           140.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3879,31 +4052,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z140",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           140.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -3923,52 +4103,62 @@
           140.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -3987,31 +4177,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x-30_z180",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -30.0,
           -0.6,
           180.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4031,52 +4228,62 @@
           180.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4095,31 +4302,38 @@
       },
       {
         "objectID": "northern_veil.ice.plate_x30_z180",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           30.0,
           -0.6,
           180.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mirror_ice",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          30.0,
+          1,
+          1,
+          1,
           0.5,
-          20.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4139,52 +4353,62 @@
           180.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ],
           [
             0.02,
             0.03,
-            0.05,
-            1.0
+            0.05
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30.0,
+            0.5,
+            20.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          30.15,
+          0.65,
+          20.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4203,31 +4427,38 @@
       },
       {
         "objectID": "northern_veil.dais.platform",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           0.0,
           -0.4,
           0.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.stone",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          8.0,
+          1,
+          1,
+          1,
           0.4,
-          8.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4247,52 +4478,62 @@
           0.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ],
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ],
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ],
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ],
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ],
           [
-            0.06,
-            0.07,
-            0.09,
-            1.0
+            0.08,
+            0.1,
+            0.14
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            8.0,
+            0.4,
+            8.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          8.15,
+          0.55,
+          8.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4311,31 +4552,38 @@
       },
       {
         "objectID": "northern_veil.mountain.west_0",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -55.0,
           12.0,
           30.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           18.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4355,52 +4603,62 @@
           30.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            18.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          18.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4411,31 +4669,38 @@
       },
       {
         "objectID": "northern_veil.mountain.east_0",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           55.0,
           18.0,
           30.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           20.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4455,52 +4720,62 @@
           30.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            20.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          20.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4511,31 +4786,38 @@
       },
       {
         "objectID": "northern_veil.mountain.west_1",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -55.0,
           16.0,
           70.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           24.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4555,52 +4837,62 @@
           70.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            24.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          24.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4611,31 +4903,38 @@
       },
       {
         "objectID": "northern_veil.mountain.east_1",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           55.0,
           22.0,
           70.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           24.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4655,52 +4954,62 @@
           70.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            24.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          24.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4711,31 +5020,38 @@
       },
       {
         "objectID": "northern_veil.mountain.west_2",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -55.0,
           20.0,
           110.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           18.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4755,52 +5071,62 @@
           110.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            18.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          18.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4811,31 +5137,38 @@
       },
       {
         "objectID": "northern_veil.mountain.east_2",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           55.0,
           14.0,
           110.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           20.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4855,52 +5188,62 @@
           110.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            20.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          20.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -4911,31 +5254,38 @@
       },
       {
         "objectID": "northern_veil.mountain.west_3",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -55.0,
           12.0,
           150.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           24.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -4955,52 +5305,62 @@
           150.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            24.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          24.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -5011,31 +5371,38 @@
       },
       {
         "objectID": "northern_veil.mountain.east_3",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           55.0,
           18.0,
           150.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           24.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -5055,52 +5422,62 @@
           150.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            24.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          24.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -5111,31 +5488,38 @@
       },
       {
         "objectID": "northern_veil.mountain.west_4",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           -55.0,
           16.0,
           190.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           18.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -5155,52 +5539,62 @@
           190.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            18.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          18.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -5211,31 +5605,38 @@
       },
       {
         "objectID": "northern_veil.mountain.east_4",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           55.0,
           22.0,
           190.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.mountain",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          14.0,
+          1,
+          1,
+          1,
           20.0,
-          18.0
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -5255,52 +5656,62 @@
           190.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ],
           [
             0.015,
             0.02,
-            0.03,
-            1.0
+            0.03
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            20.0,
+            18.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          14.15,
+          20.15,
+          18.15
         ],
         "authoredProperties": {
           "displayName": {
@@ -5311,31 +5722,38 @@
       },
       {
         "objectID": "northern_veil.stele.monolith",
-        "shapeKind": 10,
-        "geometryType": "Polyhedron",
         "center": [
           0.0,
           1.6,
           10.0
         ],
         "authoritativeAxis": [
-          0.0,
-          1.0,
-          0.0
+          0,
+          1,
+          0
         ],
-        "materialId": "material.northern_veil.stele",
-        "renderMode": "Solid",
-        "rotationResponsiveness": 1.0,
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
         "shapeParams": [
-          1.4,
+          1,
+          1,
+          1,
           2.8,
-          0.6
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
         ],
         "targetRotation": [
-          0.0,
-          0.0,
-          0.0,
-          1.0
+          0,
+          0,
+          0
         ],
         "transform": [
           1.0,
@@ -5355,52 +5773,62 @@
           10.0,
           1.0
         ],
-        "x2D": 0.0,
-        "y2D": 0.0,
+        "x2D": 100,
+        "y2D": 100,
         "zOrder2D": 0,
         "faceColors": [
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ],
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ],
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ],
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ],
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ],
           [
-            0.12,
             0.14,
-            0.18,
-            1.0
+            0.16,
+            0.22
           ]
         ],
-        "field": "",
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.4,
+            2.8,
+            0.6
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
         "fieldExtent": [
-          0.0,
-          0.0,
-          0.0
+          1.5499999999999998,
+          2.9499999999999997,
+          0.75
         ],
         "authoredProperties": {
           "displayName": {
