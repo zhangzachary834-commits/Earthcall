@@ -30,4 +30,4 @@ The 2026-08-17 geometry-vs-OntoMath audit is historical; current math record is
 (executed), the governing representation/execution boundary is
 [`mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md),
 and the remaining work is tracked in
-[`../Agenda/Tasks/Specific Tasks/Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+[`../Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).

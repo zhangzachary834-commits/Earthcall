@@ -6,7 +6,7 @@
 **Session:** `01a072e2-017b-7b03-aa4a-1ef25dab65d1`  
 **Timestamp:** 2026-09-05T12:05:42-07:00  
 **Audit basis:** [`2026-09-05_perlin_noise_floor_rendering_regression_audit.md`](../audits/rendering_optimization/2026-09-05_perlin_noise_floor_rendering_regression_audit.md)  
-**Existing task:** [`The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md`](../Agenda/Tasks/Specific%20Tasks/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md)
+**Existing task:** [`The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md`](../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md)
 
 ## Implementation status — 2026-09-05
 

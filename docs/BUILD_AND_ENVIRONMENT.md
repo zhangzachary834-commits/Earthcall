@@ -92,7 +92,7 @@ carried `formationRelations: []` while `saves/worlds/chess.json` carried 38 — 
 `law-chess-click` and `law-chess-select` reported `conditions-failed`. Three defects fixed in
 series in `Serialization.cpp` / `ZoneManager.cpp`; full trace in
 `docs/audits/ZONE_RELATION_GRAPH_LOSS_AUDIT_2026-08-24.md`, resolution recorded in
-`docs/Agenda/Tasks/Specific Tasks/Zone_Relation_Graph_Loss.md`. Guarded independently by
+`docs/Agenda/Tasks/Specific Tasks/Zones and Ourverse/Zone_Relation_Graph_Loss/Zone_Relation_Graph_Loss.md`. Guarded independently by
 `tests/zones/zone_relation_roundtrip_test.cpp` so `chess_app_test` is not the only witness. If
 this test goes red again, it is a real regression — read the audit before touching either
 file.
@@ -191,7 +191,7 @@ fail either direction independently. See `docs/architecture/ontology/NO_BLACK_BO
 governable but unreachable from the authoring picker. Both are fixed — the channel is now
 *probed* into `knownPathOptions()` rather than hand-listed, so that drift cannot recur.
 
-**Authored Cathedral witness:** `webgpu_cathedral_open_hand_test` copies the native Cathedral identity and its Law roots into a temporary SaveRoot, checks the pearl gesture and real Person authors, renders the SDF/color/radiance path on a desktop GPU, and verifies geometry, Material identity, commission Relations, and light-field persistence. Optional arguments are `<source-save-root> <capture-directory>`; the source is never saved over. See [Court of the Open Hand](Agenda/Tasks/Specific%20Tasks/Cathedral_Open_Hand/Cathedral_Open_Hand.md). — Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-20T20:04:21-07:00.
+**Authored Cathedral witness:** `webgpu_cathedral_open_hand_test` copies the native Cathedral identity and its Law roots into a temporary SaveRoot, checks the pearl gesture and real Person authors, renders the SDF/color/radiance path on a desktop GPU, and verifies geometry, Material identity, commission Relations, and light-field persistence. Optional arguments are `<source-save-root> <capture-directory>`; the source is never saved over. See [Court of the Open Hand](Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Cathedral_Open_Hand/Cathedral_Open_Hand.md). — Codex / GPT-6 Astra, session `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`, 2026-09-20T20:04:21-07:00.
 
 ### Two traps the suite now holds you to
 

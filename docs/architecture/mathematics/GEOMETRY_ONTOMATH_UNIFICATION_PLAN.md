@@ -10,7 +10,7 @@
 *plan that was executed*, not a backlog. Empty checkboxes in §4 are historical
 — do not implement from them. The executed record, including what was *not*
 done the way the plan first said, is
-[`Geometry_OntoMath_Remaining_Rungs.md`](../../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+[`Geometry_OntoMath_Remaining_Rungs.md`](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).
 The 2026-08-17 audit below it describes the world *before* this work.
 
 What landed differently from the text below:
