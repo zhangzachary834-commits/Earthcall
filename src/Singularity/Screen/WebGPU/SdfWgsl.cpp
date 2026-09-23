@@ -3281,4 +3281,246 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 }
 
 
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
+    Program out;
+    if (media.empty()) {
+        out.ok = false;
+        out.error = "volume set: no participating media";
+        out.wgsl = "// REFUSED: " + out.error + "\n";
+        return out;
+    }
+    if (media.size() == 1) {
+        const auto& m = media.front();
+        return compileVolume(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+                             m.volumeChromaExpr, m.phaseExpr, m.emissionExpr);
+    }
+
+    auto replaceAll = [](std::string& text,
+                         const std::string& from,
+                         const std::string& to) {
+        std::size_t pos = 0;
+        while ((pos = text.find(from, pos)) != std::string::npos) {
+            text.replace(pos, from.size(), to);
+            pos += to.size();
+        }
+    };
+
+    std::vector<Program> members;
+    members.reserve(media.size());
+
+    std::size_t firstEvalStart = std::string::npos;
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const auto& m = media[i];
+        Program member =
+            compileVolume(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+                          m.volumeChromaExpr, m.phaseExpr, m.emissionExpr);
+        if (!member.ok) {
+            out.ok = false;
+            out.error = "volume set member " + std::to_string(i) + ": " + member.error;
+            out.wgsl = "// REFUSED: " + out.error + "\n";
+            return out;
+        }
+
+        const std::size_t evalStart = member.wgsl.find("\nfn volumeDensityEval");
+        const std::size_t fragStart = member.wgsl.find("\n@fragment", evalStart);
+        if (evalStart == std::string::npos || fragStart == std::string::npos) {
+            out.ok = false;
+            out.error =
+                "volume set: internal compiler boundary missing for member " +
+                std::to_string(i);
+            out.wgsl = "// REFUSED: " + out.error + "\n";
+            return out;
+        }
+
+        if (i == 0) {
+            firstEvalStart = evalStart;
+            out.wgsl = member.wgsl.substr(0, firstEvalStart);
+        }
+
+        std::string evalBlock =
+            member.wgsl.substr(evalStart, fragStart - evalStart);
+        const std::string suffix = "_" + std::to_string(i);
+
+        // Rename only the per-medium evaluator/feature symbols. Shared structs,
+        // bindings, ray helpers and noise live once in the prefix from member 0.
+        replaceAll(evalBlock, "volumeDensityEval", "volumeDensityEval" + suffix);
+        replaceAll(evalBlock, "volumeExtinctionEval", "volumeExtinctionEval" + suffix);
+        replaceAll(evalBlock, "volumeScatteringEval", "volumeScatteringEval" + suffix);
+        replaceAll(evalBlock, "volumeChromaEval", "volumeChromaEval" + suffix);
+        replaceAll(evalBlock, "volumePhaseEval", "volumePhaseEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_VOLUME_PHASE",
+                   "HAS_AUTHORED_VOLUME_PHASE" + suffix);
+        replaceAll(evalBlock, "VOLUME_PHASE_READS_WI",
+                   "VOLUME_PHASE_READS_WI" + suffix);
+        replaceAll(evalBlock, "volumeEmissionEval", "volumeEmissionEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_VOLUME_EMISSION",
+                   "HAS_AUTHORED_VOLUME_EMISSION" + suffix);
+        replaceAll(evalBlock, "VOLUME_EMISSION_READS_OMEGA",
+                   "VOLUME_EMISSION_READS_OMEGA" + suffix);
+
+        out.wgsl += evalBlock;
+        members.push_back(std::move(member));
+    }
+
+    out.wgsl += R"WGSL(
+@fragment
+fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
+    // V5: instance 0 is a union-bounds header used only by the proxy vertex/ray
+    // interval. Projected media begin at instance 1 and keep their own
+    // origin/halfExtent/time/paramOffset.
+    g_instIdx = 0u;
+    let setInst = instances[0];
+
+    let ro = u.eyePos.xyz;
+    let farNdc = vec4<f32>(
+        (in.position.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
+        1.0,
+        1.0);
+    let farH = u.invViewProj * farNdc;
+    let farWorld = farH.xyz / farH.w;
+    let rd = normalize(farWorld - ro);
+
+    let bounds = rayAabbWorld(
+        ro, rd,
+        setInst.origin.xyz - setInst.halfExtent.xyz,
+        setInst.origin.xyz + setInst.halfExtent.xyz);
+
+    var t0 = max(bounds.x, 0.0);
+    var t1 = bounds.y;
+    if (t1 <= t0) { discard; }
+
+    let maxX = max(i32(u.viewport.x), 1) - 1;
+    let maxY = max(i32(u.viewport.y), 1) - 1;
+    let px = vec2<i32>(
+        clamp(i32(floor(in.position.x)), 0, maxX),
+        clamp(i32(floor(in.position.y)), 0, maxY));
+    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+
+    if (sceneDepth < 0.999999) {
+        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
+        let opaqueT = dot(opaqueWorld - ro, rd);
+        t1 = min(t1, max(opaqueT, 0.0));
+    }
+    if (t1 <= t0) { discard; }
+
+    let span = t1 - t0;
+    let stepLength = span / 96.0;
+    if (stepLength <= 0.0) { discard; }
+
+    var transmittance = 1.0;
+    var integratedRadiance = vec3<f32>(0.0);
+
+    for (var step = 0; step < 96; step = step + 1) {
+        let sampleT = t0 + (f32(step) + 0.5) * stepLength;
+        let worldP = ro + rd * sampleT;
+
+        // Transport directions are properties of this world-space sample, not
+        // of medium ordering. Per-medium Phi/E_v evaluators consume them below
+        // only when their authored structure actually reads the variables.
+        let wiDelta = worldP - u.incidentSource.xyz;
+        let woDelta = ro - worldP;
+        let wiLen = length(wiDelta);
+        let woLen = length(woDelta);
+        let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
+                        u.incidentSource.w > 0.5 && wiLen > 1e-8);
+        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
+                        woLen > 1e-8);
+
+        var totalExtinction = 0.0;
+        var totalSource = vec3<f32>(0.0);
+)WGSL";
+
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "        {\n"
+            "            let mediumInst" + n + " = instances[" + inst + "];\n"
+            "            let mediumMin" + n + " = mediumInst" + n +
+                ".origin.xyz - mediumInst" + n + ".halfExtent.xyz;\n"
+            "            let mediumMax" + n + " = mediumInst" + n +
+                ".origin.xyz + mediumInst" + n + ".halfExtent.xyz;\n"
+            "            if (all(worldP >= mediumMin" + n + ") && "
+                "all(worldP <= mediumMax" + n + ")) {\n"
+            "                g_instIdx = " + inst + ";\n"
+            "                let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
+            "                let density" + n + " = max(volumeDensityEval_" + n +
+                "(p" + n + "), 0.0);\n"
+            "                if (density" + n + " > 0.0) {\n"
+            "                    let extinction" + n +
+                " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
+                "), 1e-6);\n"
+            "                    totalExtinction += extinction" + n + ";\n"
+            "                    let scattering" + n +
+                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
+                "), 0.0);\n"
+            "                    let mediumChroma" + n + " = volumeChromaEval_" + n +
+                "(p" + n + ");\n"
+            "                    var phase" + n + " = 1.0;\n"
+            "                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
+            "                        phase" + n + " = 0.0;\n"
+            "                        if ((!VOLUME_PHASE_READS_WI_" + n +
+                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
+            "                            phase" + n + " = max(volumePhaseEval_" + n +
+                "(p" + n + ", wi, wo), 0.0);\n"
+            "                        }\n"
+            "                    }\n"
+            "                    var emitted" + n + " = vec3<f32>(0.0);\n"
+            "                    if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
+            "                        if (!VOLUME_EMISSION_READS_OMEGA_" + n +
+                " || woLen > 1e-8) {\n"
+            "                            emitted" + n + " = max(volumeEmissionEval_" + n +
+                "(p" + n + ", wo), vec3<f32>(0.0));\n"
+            "                        }\n"
+            "                    }\n"
+            "                    totalSource += mediumChroma" + n + " * scattering" + n +
+                " * phase" + n + " + emitted" + n + ";\n"
+            "                }\n"
+            "            }\n"
+            "        }\n";
+    }
+
+    out.wgsl += R"WGSL(
+        let oldT = transmittance;
+        if (totalExtinction > 0.0) {
+            transmittance *= exp(-totalExtinction * stepLength);
+            // Shared participating-medium integral. For one active medium this
+            // algebra reduces to the V4 scatter + E_v attenuation formulas.
+            let intervalGain = (oldT - transmittance) / totalExtinction;
+            integratedRadiance += totalSource * intervalGain;
+        } else {
+            // Continuous sigma_t -> 0 limit. Usually unreachable under the
+            // current 1e-6 per-active-medium clamp, but it states the transport
+            // law rather than relying on division by an implementation epsilon.
+            integratedRadiance += oldT * totalSource * stepLength;
+        }
+
+        if (transmittance < 0.01) { break; }
+    }
+
+    let alpha = 1.0 - transmittance;
+    let integratedMagnitude =
+        max(max(abs(integratedRadiance.x), abs(integratedRadiance.y)),
+            abs(integratedRadiance.z));
+    if (alpha <= 1e-5 && integratedMagnitude <= 1e-6) { discard; }
+
+    // One premultiplied answer for the whole admitted medium set:
+    // C_out = C_media_set + T_set * C_scene.
+    return vec4<f32>(integratedRadiance, alpha);
+}
+)WGSL";
+
+    out.params.clear();
+    for (const auto& member : members) {
+        out.params.insert(out.params.end(), member.params.begin(), member.params.end());
+    }
+    if (out.params.empty()) out.params.push_back(0.0f);
+    out.needsGradientStep = false;
+    out.ok = true;
+    out.error.clear();
+    return out;
+}
+
+
 } // namespace sdfwgsl
