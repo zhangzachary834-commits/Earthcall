@@ -314,8 +314,11 @@ struct Emit {
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
     bool               bindTime = false; // expression-context capability, not authored state
-    bool               bindOmega = false; // only Rung-6 angular radiance admits omega
-    bool               readOmega = false; // structural witness for singularity handling
+    bool               bindOmega = false; // only Rung-6 source angular radiance admits omega
+    bool               readOmega = false; // structural witness for source singularity handling
+    bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
+    bool               readWi = false;
+    bool               readWo = false;
     // Ambient temporal coordinate for the expression currently being emitted.
     // Rungs 3-6 use the historical global uniform; Rung 7 temporarily points
     // this at one source record while lowering that source's rho/chi/alpha.
@@ -405,6 +408,32 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         }
         e.refuse("a field expression names angular coordinate '" + var +
                  "', but this shader expression context does not bind omega");
+        return "0.0";
+    }
+    if (var == OntoMath::kWiXVar ||
+        var == OntoMath::kWiYVar ||
+        var == OntoMath::kWiZVar) {
+        e.readWi = true;
+        if (e.bindPhaseDirections) {
+            if (var == OntoMath::kWiXVar) return "wi.x";
+            if (var == OntoMath::kWiYVar) return "wi.y";
+            return "wi.z";
+        }
+        e.refuse("a field expression names phase incoming direction '" + var +
+                 "', but this shader expression context does not bind wi");
+        return "0.0";
+    }
+    if (var == OntoMath::kWoXVar ||
+        var == OntoMath::kWoYVar ||
+        var == OntoMath::kWoZVar) {
+        e.readWo = true;
+        if (e.bindPhaseDirections) {
+            if (var == OntoMath::kWoXVar) return "wo.x";
+            if (var == OntoMath::kWoYVar) return "wo.y";
+            return "wo.z";
+        }
+        e.refuse("a field expression names phase outgoing direction '" + var +
+                 "', but this shader expression context does not bind wo");
         return "0.0";
     }
     e.refuse("a field expression names the variable '" + var +
@@ -1059,6 +1088,55 @@ bool validateAngularPiecewise(const OntoMath::Piecewise& pw, std::string& error)
     return true;
 }
 
+
+// V3 phase has its own directional vocabulary. It is scalar medium truth and
+// therefore must never gain source-alpha's omega binding by accident.
+bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored phase expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Scalar) {
+            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
@@ -1630,8 +1708,19 @@ fn fs(in: VSOut) -> FSOut {
             // equivalent to the historical white term.
             let scattering = max(volumeScatteringEval(p, density), 0.0);
             let mediumChroma = volumeChromaEval(p);
+            let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+            let wiDelta = mediumWorldP - u.lightPos.xyz;
+            let woDelta = u.eyePos.xyz - mediumWorldP;
+            let wiLen = length(wiDelta);
+            let woLen = length(woDelta);
+            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
+                            wiLen > SOURCE_DIRECTION_EPS);
+            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
+                            woLen > SOURCE_DIRECTION_EPS);
+            let phase = max(volumePhaseEval(p, wi, wo), 0.0);
             volumetric_scatter +=
-                mediumChroma * (scattering / extinction) * (old_t - transmittance);
+                mediumChroma * (scattering / extinction) * phase *
+                (old_t - transmittance);
         }
         
         // Early exit if the field is fully opaque or ray exits the bounded volume
@@ -1912,6 +2001,33 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
     return layout;
 }
 
+
+PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validatePhasePiecewise(*expr, validationError)) {
+        return PhaseExpressionLayout{"", 0, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.bindPhaseDirections = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    PhaseExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
@@ -1923,7 +2039,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              DensityInputKind densityKind,
                              const OntoMath::Piecewise* extinctionExpr,
                              const OntoMath::Piecewise* scatteringExpr,
-                             const OntoMath::Piecewise* volumeChromaExpr) {
+                             const OntoMath::Piecewise* volumeChromaExpr,
+                             const OntoMath::Piecewise* phaseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -1994,6 +2111,22 @@ ParameterBlock collectParams(const geom::SdfNode& root,
             e.timeExpression = "u.volumeTime.x";
             e.bindTime = true;
             emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    }
+
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
+            e.bindPhaseDirections = false;
             e.bindTime = false;
             e.timeExpression = previousTimeExpression;
         }
@@ -2098,7 +2231,8 @@ Program compile(const geom::SdfNode& root,
                 DensityInputKind densityKind,
                 const OntoMath::Piecewise* extinctionExpr,
                 const OntoMath::Piecewise* scatteringExpr,
-                const OntoMath::Piecewise* volumeChromaExpr) {
+                const OntoMath::Piecewise* volumeChromaExpr,
+                const OntoMath::Piecewise* phaseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2241,6 +2375,31 @@ Program compile(const geom::SdfNode& root,
     } else {
         prog.wgsl += "    // V2 compatibility: neutral white medium chroma\n";
         prog.wgsl += "    return vec3<f32>(1.0);\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V3 Phase Compiler ---
+    // Phi is medium-owned angular scattering. Absent phase is exact identity 1.
+    prog.wgsl += "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n";
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+            prog.wgsl += "    return 0.0;\n";
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindPhaseDirections = true;
+            prog.wgsl += "    // V3: explicit authored Phi(p,wi,wo,t)\n";
+            emitPiecewise(*phaseExpr, e, "p", "f32", prog.wgsl);
+            e.bindPhaseDirections = false;
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    } else {
+        prog.wgsl += "    // V3 compatibility: exact isotropic identity\n";
+        prog.wgsl += "    return 1.0;\n";
     }
     prog.wgsl += "}\n";
 
@@ -2518,7 +2677,8 @@ Program compile(const geom::SdfNode& root,
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
                                    const OntoMath::Piecewise* extinctionExpr,
                                    const OntoMath::Piecewise* scatteringExpr,
-                                   const OntoMath::Piecewise* volumeChromaExpr) {
+                                   const OntoMath::Piecewise* volumeChromaExpr,
+                                   const OntoMath::Piecewise* phaseExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2539,6 +2699,17 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
             e.refuse("volume chroma: " + validationError);
         } else {
             emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+        }
+    }
+
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+        } else {
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
+            e.bindPhaseDirections = false;
         }
     }
 
@@ -2637,7 +2808,8 @@ fn cnoise3(P: vec3<f32>) -> f32 {
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* extinctionExpr,
                       const OntoMath::Piecewise* scatteringExpr,
-                      const OntoMath::Piecewise* volumeChromaExpr) {
+                      const OntoMath::Piecewise* volumeChromaExpr,
+                      const OntoMath::Piecewise* phaseExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2650,6 +2822,8 @@ struct VolumeGlobals {
     invViewProj: mat4x4<f32>,
     eyePos: vec4<f32>,
     viewport: vec4<f32>,
+    // xyz = the one admitted direct source position; w=1 iff such a source exists.
+    incidentSource: vec4<f32>,
 };
 
 struct VolumeInstanceData {
@@ -2763,6 +2937,26 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
         "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n" +
         volumeChromaBody + "}\n";
 
+    std::string phaseBody;
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+            phaseBody = "    return 0.0;\n";
+        } else {
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", phaseBody);
+            e.bindPhaseDirections = false;
+        }
+    } else {
+        phaseBody =
+            "    // V3 compatibility: exact isotropic identity\n"
+            "    return 1.0;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n" +
+        phaseBody + "}\n";
+
     prog.wgsl += R"WGSL(
 @fragment
 fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
@@ -2824,8 +3018,18 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
             let scattering = max(volumeScatteringEval(p, density), 0.0);
             let mediumChroma = volumeChromaEval(p);
+            let wiDelta = worldP - u.incidentSource.xyz;
+            let woDelta = ro - worldP;
+            let wiLen = length(wiDelta);
+            let woLen = length(woDelta);
+            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
+                            u.incidentSource.w > 0.5 && wiLen > 1e-8);
+            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
+                            woLen > 1e-8);
+            let phase = max(volumePhaseEval(p, wi, wo), 0.0);
             volumetricScatter +=
-                mediumChroma * (scattering / extinction) * (oldT - transmittance);
+                mediumChroma * (scattering / extinction) * phase *
+                (oldT - transmittance);
         }
 
         if (transmittance < 0.01) { break; }
