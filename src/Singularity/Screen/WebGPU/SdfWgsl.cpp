@@ -1708,19 +1708,29 @@ fn fs(in: VSOut) -> FSOut {
             // equivalent to the historical white term.
             let scattering = max(volumeScatteringEval(p, density), 0.0);
             let mediumChroma = volumeChromaEval(p);
-            let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
-            let wiDelta = mediumWorldP - u.lightPos.xyz;
-            let woDelta = u.eyePos.xyz - mediumWorldP;
-            let wiLen = length(wiDelta);
-            let woLen = length(woDelta);
-            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
-                            wiLen > SOURCE_DIRECTION_EPS);
-            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
-                            woLen > SOURCE_DIRECTION_EPS);
-            let phase = max(volumePhaseEval(p, wi, wo), 0.0);
-            volumetric_scatter +=
-                mediumChroma * (scattering / extinction) * phase *
-                (old_t - transmittance);
+            if (HAS_AUTHORED_VOLUME_PHASE) {
+                let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+                let wiDelta = mediumWorldP - u.lightPos.xyz;
+                let woDelta = u.eyePos.xyz - mediumWorldP;
+                let wiLen = length(wiDelta);
+                let woLen = length(woDelta);
+                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
+                                wiLen > SOURCE_DIRECTION_EPS);
+                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
+                                woLen > SOURCE_DIRECTION_EPS);
+                var phase = 0.0;
+                if ((!VOLUME_PHASE_READS_WI || wiLen > SOURCE_DIRECTION_EPS) &&
+                    woLen > SOURCE_DIRECTION_EPS) {
+                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                }
+                volumetric_scatter +=
+                    mediumChroma * (scattering / extinction) * phase *
+                    (old_t - transmittance);
+            } else {
+                // Exact V2 compatibility arithmetic: no extra multiply-by-one.
+                volumetric_scatter +=
+                    mediumChroma * (scattering / extinction) * (old_t - transmittance);
+            }
         }
         
         // Early exit if the field is fully opaque or ray exits the bounded volume
@@ -2402,6 +2412,10 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl += "    return 1.0;\n";
     }
     prog.wgsl += "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
+    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
+    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
 
     // --- Dual-Path Vector Field Compiler ---
     prog.wgsl += "\nfn vectorFieldEval(p: vec3<f32>) -> vec3<f32> {\n";
@@ -2956,6 +2970,10 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     prog.wgsl +=
         "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n" +
         phaseBody + "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
+    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
+    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
 
     prog.wgsl += R"WGSL(
 @fragment
@@ -3018,18 +3036,29 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
             let scattering = max(volumeScatteringEval(p, density), 0.0);
             let mediumChroma = volumeChromaEval(p);
-            let wiDelta = worldP - u.incidentSource.xyz;
-            let woDelta = ro - worldP;
-            let wiLen = length(wiDelta);
-            let woLen = length(woDelta);
-            let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
-                            u.incidentSource.w > 0.5 && wiLen > 1e-8);
-            let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
-                            woLen > 1e-8);
-            let phase = max(volumePhaseEval(p, wi, wo), 0.0);
-            volumetricScatter +=
-                mediumChroma * (scattering / extinction) * phase *
-                (oldT - transmittance);
+            if (HAS_AUTHORED_VOLUME_PHASE) {
+                let wiDelta = worldP - u.incidentSource.xyz;
+                let woDelta = ro - worldP;
+                let wiLen = length(wiDelta);
+                let woLen = length(woDelta);
+                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
+                                u.incidentSource.w > 0.5 && wiLen > 1e-8);
+                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
+                                woLen > 1e-8);
+                var phase = 0.0;
+                if ((!VOLUME_PHASE_READS_WI ||
+                     (u.incidentSource.w > 0.5 && wiLen > 1e-8)) &&
+                    woLen > 1e-8) {
+                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                }
+                volumetricScatter +=
+                    mediumChroma * (scattering / extinction) * phase *
+                    (oldT - transmittance);
+            } else {
+                // Exact V2 compatibility arithmetic: preserve the old expression.
+                volumetricScatter +=
+                    mediumChroma * (scattering / extinction) * (oldT - transmittance);
+            }
         }
 
         if (transmittance < 0.01) { break; }
