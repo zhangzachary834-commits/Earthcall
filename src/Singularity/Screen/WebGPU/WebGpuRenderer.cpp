@@ -2462,15 +2462,21 @@ void WebGpuRenderer::flushVolumeComposite() {
             ++mutableFrameStats().volumeProgramCacheHits;
         }
 
+        // Missing runtime incident-source truth must not poison the compiled
+        // set memo. If the source state becomes lawful next frame, the same
+        // structure is immediately reusable just like the V3 one-medium path.
+        std::string runtimeSetRefusal;
         if (setMemo.phaseReadsWi && !incidentSource) {
-            setMemo.ok = false;
-            setMemo.error =
+            runtimeSetRefusal =
                 "volume set phase: Phi reads wi but transport has " +
                 std::to_string(enabledIncidentSources) +
                 " enabled admitted direct sources; exactly one is required";
         }
 
-        if (!setMemo.ok || !setMemo.pipeline) {
+        if (!runtimeSetRefusal.empty()) {
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal = runtimeSetRefusal;
+        } else if (!setMemo.ok || !setMemo.pipeline) {
             if (!setMemo.error.empty()) {
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = setMemo.error;
