@@ -1275,6 +1275,100 @@ int main() {
               "unsupported authored E_v refuses instead of falling back to absent emission");
     }
 
+    // ---------------------------------------------------------------------
+    // V5. Multiple participating media: the compiler reuses each member's
+    //     V0-V4 evaluators but owns one shared sample-level transport integral.
+    // ---------------------------------------------------------------------
+    {
+        auto densityA = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.8).release()));
+        auto extinctionA = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.35).release()));
+        auto scatteringA = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.7).release()));
+        auto chromaA = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(1.0, 0.1, 0.05).release()));
+        auto emissionA = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(0.2, 0.0, 0.0).release()));
+
+        auto densityB = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.55).release()));
+        auto extinctionB = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.9).release()));
+        auto scatteringB = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(number(0.25).release()));
+        auto chromaB = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(0.05, 0.2, 1.0).release()));
+        auto emissionB = OntoMath::Piecewise::continuous(
+            std::shared_ptr<OntoMath::MathNode>(vector3(0.0, 0.0, 0.3).release()));
+
+        sdfwgsl::VolumeProgramInput a;
+        a.densityExpr = &densityA;
+        a.extinctionExpr = &extinctionA;
+        a.scatteringExpr = &scatteringA;
+        a.volumeChromaExpr = &chromaA;
+        a.emissionExpr = &emissionA;
+
+        sdfwgsl::VolumeProgramInput b;
+        b.densityExpr = &densityB;
+        b.extinctionExpr = &extinctionB;
+        b.scatteringExpr = &scatteringB;
+        b.volumeChromaExpr = &chromaB;
+        b.emissionExpr = &emissionB;
+
+        const auto fused = sdfwgsl::compileVolumeSet({a, b});
+        check(fused.ok &&
+                  fused.wgsl.find("fn volumeDensityEval_0") != std::string::npos &&
+                  fused.wgsl.find("fn volumeDensityEval_1") != std::string::npos &&
+                  fused.wgsl.find("var totalExtinction = 0.0") != std::string::npos &&
+                  fused.wgsl.find("var totalSource = vec3<f32>(0.0)") != std::string::npos &&
+                  fused.wgsl.find(
+                      "intervalGain = (oldT - transmittance) / totalExtinction") !=
+                      std::string::npos,
+              "V5 compiles two media into one shared extinction/source integral");
+
+        const auto paramsA = sdfwgsl::collectVolumeParams(
+            &densityA, &extinctionA, &scatteringA, &chromaA, nullptr, &emissionA);
+        const auto paramsB = sdfwgsl::collectVolumeParams(
+            &densityB, &extinctionB, &scatteringB, &chromaB, nullptr, &emissionB);
+        std::vector<float> expectedParams = paramsA.values;
+        expectedParams.insert(
+            expectedParams.end(), paramsB.values.begin(), paramsB.values.end());
+        check(paramsA.ok && paramsB.ok &&
+                  sameFloats(fused.params, expectedParams),
+              "V5 fused compiler preserves per-medium V4 parameter traversal order");
+
+        // Numeric-only mutation must not alter generated set structure.
+        emissionA.pieces[0].mathNode->children[0]->scalarForm.terms[0].coefficient = 0.65;
+        const auto valueEdited = sdfwgsl::compileVolumeSet({a, b});
+        check(valueEdited.ok && valueEdited.wgsl == fused.wgsl &&
+                  !sameFloats(valueEdited.params, fused.params),
+              "V5 numeric member edit changes set parameters without WGSL structure");
+
+        // Reversing membership order still compiles the same shared physical
+        // law. Native framebuffer permutation equality is the renderer witness;
+        // this compiler witness ensures neither order falls back to sequential
+        // whole-medium composition.
+        const auto reversed = sdfwgsl::compileVolumeSet({b, a});
+        check(reversed.ok &&
+                  reversed.wgsl.find("var totalExtinction = 0.0") != std::string::npos &&
+                  reversed.wgsl.find(
+                      "integratedRadiance += totalSource * intervalGain") !=
+                      std::string::npos,
+              "V5 reversed medium order remains on fused sample-level transport");
+
+        auto raycast = std::make_shared<OntoMath::MathNode>();
+        raycast->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise unsupported =
+            OntoMath::Piecewise::continuous(raycast);
+        b.emissionExpr = &unsupported;
+        const auto refused = sdfwgsl::compileVolumeSet({a, b});
+        check(!refused.ok &&
+                  refused.error.find("volume set member 1") != std::string::npos &&
+                  refused.error.find("volume emission") != std::string::npos,
+              "V5 names the refusing member and never fabricates a stale fallback");
+    }
+
     // 9. Rung 8: visibility is derived transport below source authorship.
     //    The shader must expose an exact V=1 compatibility gate and multiply
     //    each source's direct radiance AFTER rho*chi*alpha composition.
