@@ -2405,7 +2405,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     sdfwgsl::collectVolumeParams(
                         medium.densityExpr, medium.extinctionExpr,
                         medium.scatteringExpr, medium.volumeChromaExpr,
-                        medium.phaseExpr);
+                        medium.phaseExpr, medium.emissionExpr);
                 memo.ok = params.ok;
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
