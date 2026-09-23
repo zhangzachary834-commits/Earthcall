@@ -8,57 +8,68 @@ PR: #329
 
 Continue from `SUN_UPDATE_PR329_Rung1IJ_Execution_Green_2026-09-23.md`. Do not restart Rungs 1A–1J or the Phase-A proof work.
 
-Live PR head audited in this pass: `36743282a28de9894bb48b8e2588446fb3ae2aff`.
-
 ## Exact-head CI evidence
 
-Focused CI run #2725 (run id `35838490253`) is the exact-head run for `36743282...`.
+Current PR head audited in this successor pass: `49ee9d90eb743ea5b829e4644ecf65e8ffbb83f7`.
 
-At audit time:
+GitHub check-runs for this exact SHA now show the previously outstanding jobs completed successfully, including:
 
-- `SDF range-proxy verification (macOS)` = SUCCESS, including build and `Run CPU SDF proof witnesses`;
 - `Focused CPU tests (macOS)` = SUCCESS;
 - `SDF authored-Perlin A/B (macOS Release)` = SUCCESS;
-- `Slow Adapter independent clock (macOS)` was still in progress after its soundness and Law-Direct A/B steps had already succeeded.
+- `Slow Adapter independent clock (macOS)` = SUCCESS.
 
-Therefore the new `RenderedFieldSemanticObserver` and the extended `rendered_field_piecewise_synthesis_test` have executed green on the exact PR head. Do not call the whole workflow complete until the final unrelated Slow Adapter job reports completion.
+Therefore the prior uncertainty about the unrelated Slow Adapter tail is closed. The Phase-B observer head is execution-green at the workflow level.
 
 ## Targeted Phase-B seam audit
 
-I audited only the three relevant surfaces rather than dumping the repository:
+I re-read only the relevant surfaces rather than dumping the repository:
 
-- `src/Singularity/Screen/RenderedFieldSemanticObserver.hpp`
-- the observer integration in `src/Singularity/Screen/Renderer.hpp`
-- the Phase-B portion of `tests/singularity/rendered_field_piecewise_synthesis_test.cpp`
+- `src/Singularity/Screen/Renderer.hpp` observer admission/setter seam;
+- `src/Singularity/Screen/RenderedFieldSemanticObserver.hpp` via the existing Phase-B diff/context;
+- the Phase-B observer assertions in `tests/singularity/rendered_field_piecewise_synthesis_test.cpp`;
+- exact-head PR/check state.
 
-### What is sound now
+### What remains sound
 
-The observer is genuinely non-authoritative. Renderer admission calls it from `setRadianceSources(...)` and `setVolumeDensitySources(...)`, but there is no proof-consumption method that can influence rendering. `authorityBypassesApplied` remains diagnostic and pinned to zero.
+The observer remains genuinely non-authoritative. `setRadianceSources(...)` and `setVolumeDensitySources(...)` merely submit admitted bindings to diagnostic observation. No observer theorem result is consumed by rendering control flow. `authorityBypassesApplied == 0` remains the constitutional Phase-B invariant.
 
-The first theorem surface is deliberately tiny and conservative: only an everywhere-defined scalar literal can produce a theorem, and only exact zero produces `RadianceZeroContribution` or `DensityZeroSupport`. Richer Piecewise shapes refuse rather than guess.
+Stable source-set revisions still have a bounded observer fast path; authored vessel revisions are distinct from source-set revisions; canonical math sharing does not merge channel/vessel theorem authority.
 
-Canonical calculation identity is shared across byte-identical scalar literals, while theorem identity remains channel/vessel scoped. This preserves the critical Phase-A result: shared math does not imply shared semantic authority.
+### Lifecycle gap confirmed at renderer boundary
 
-Stable source-set revisions take an O(1) fast path. Vessel semantic records are keyed by channel + Piecewise pointer + authored vessel revision, so a rho revision can build a new rho record without rebuilding an unrelated density record.
+The exact renderer setter currently does only:
 
-### Important next-gate finding
+`_renderedFieldObserver.setEnabled(on);`
 
-The current test proves the observer class directly, but it does **not yet prove the renderer admission seam end-to-end**. It never instantiates `Renderer` and compares the exact renderer-visible state with observation OFF vs ON.
+Thus this concrete sequence is still diagnostic-incomplete:
 
-There is also a lifecycle edge worth pinning before telemetry grows: enabling observation after sources were already admitted does not retroactively observe the renderer's current source sets. Observation begins only on a subsequent `setRadianceSources` / `setVolumeDensitySources` call. That is not a truth bug because the observer has zero authority, but it can make an ON/OFF diagnostic experiment silently report no opportunities until a source setter happens again.
+1. admit radiance/density source sets while observation is OFF;
+2. flip observation OFF -> ON;
+3. do not mutate or re-submit the world;
+4. query observer telemetry.
 
-Do not paper over this by giving the observer rendering authority. The next test should first make the lifecycle contract explicit.
+The renderer already owns the admitted `_radianceSources`, `_radianceSourcesRevision`, `_volumeDensitySources`, and `_volumeDensitySourcesRevision`, but the false->true transition does not submit them. Telemetry therefore remains empty until a later source setter call.
 
-## Immediate successor gate
+This is not a rendered-truth failure because the observer has no authority, but it is a real observability/lifecycle defect: an A/B experiment can enable diagnostics against an already-live world and silently miss the current scene.
 
-1. Re-read live head and run #2725 first.
-2. Add a renderer-level Phase-B A/B witness, not another synthetic observer-only test.
-3. Admit the same rho/D source bindings with observation OFF and ON and assert all existing renderer source pointers/revisions/state are identical; observer ON may only change diagnostics.
-4. Decide and test enable-after-admission semantics. Preferred behavior for diagnostics: a false->true transition should observe the renderer's already-admitted current source sets once, without requiring the world to mutate or re-submit sources. If that is implemented, keep it CPU-side and observation-only.
-5. Assert stable repeated admission/revision hits do not rebuild semantic/theorem state.
-6. Keep `authorityBypassesApplied == 0` as a hard Phase-B invariant.
-7. Only after that gate is green should we expose observer counters through broader renderer telemetry or benchmark overhead. Do not wire theorem results into WGSL, marching, source accumulation, or pixels yet.
+## Concrete next implementation gate
+
+Do not broaden theorem algebra or touch WGSL. The next code change should be exactly at the renderer seam:
+
+- make `setRenderedFieldSemanticObservationEnabled(true)` detect a false->true transition;
+- after enabling, immediately observe the renderer's already-admitted radiance and density source sets using their current revisions;
+- repeated `true -> true` must not resubmit/rebuild;
+- `true -> false` must only disable observation, never mutate renderer source state;
+- preserve source vectors, source revisions, rendering state, and `authorityBypassesApplied == 0` exactly;
+- add a renderer-level A/B/lifecycle witness proving OFF and ON expose identical renderer truth while only diagnostic counters differ;
+- pin stable repeated admission/revision hits as no semantic/theorem rebuilds.
+
+Important subtlety: retro-observation should happen only on the false->true edge. Calling the observation methods on every `set...Enabled(true)` would turn an idempotent control setter into extra observer work and muddy the economics.
+
+## Why this pass did not widen production code
+
+The live branch has accumulated 47 commits and 19 changed files, but the current bounded defect is only the enable lifecycle. Exact-head CI is green. There is no CI failure justifying opportunistic churn, and no evidence that renderer truth itself is wrong. The safest next mutation is therefore the tiny lifecycle edge plus an end-to-end renderer witness, not another proof/compiler rung.
 
 ## Role status
 
-This specific Sun role is **not finished**. Phase A is closed and the first production observation seam is execution-green, but the renderer-level OFF/ON parity and enable-after-admission lifecycle contract remain the next bounded Phase-B gate.
+This specific Sun role is **not finished**. Phase A remains closed and the first production observer seam is execution-green. The remaining bounded Phase-B gate is now sharply isolated: implement and test false->true retro-observation plus renderer OFF/ON truth parity. After that gate is green, broader telemetry/overhead measurement can be considered; theorem consumption must still remain out of scope.
