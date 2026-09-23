@@ -550,6 +550,106 @@ int main() {
                refusedExtinctionPixel[2] < 12 &&
                "refused sigma_t left stale volumetric output on screen");
 
+        // V2 NATIVE PIXELS: the two media below share the EXACT SAME authored
+        // D pointer and the EXACT SAME sigma_t pointer. Only medium-owned sigma_s
+        // and C_v differ. Their native pixels must therefore diverge without
+        // attributing the difference to density, extinction, or source chroma.
+        auto v2ExtinctionNode = scalarNode(0.4);
+        OntoMath::Piecewise v2Extinction =
+            OntoMath::Piecewise::continuous(v2ExtinctionNode);
+
+        auto strongScatteringNode = scalarNode(0.8);
+        OntoMath::Piecewise strongScattering =
+            OntoMath::Piecewise::continuous(strongScatteringNode);
+        auto weakScatteringNode = scalarNode(0.15);
+        OntoMath::Piecewise weakScattering =
+            OntoMath::Piecewise::continuous(weakScatteringNode);
+
+        auto redMediumChromaNode = vectorNode(1.0, 0.0, 0.0);
+        OntoMath::Piecewise redMediumChroma =
+            OntoMath::Piecewise::continuous(redMediumChromaNode);
+        auto blueMediumChromaNode = vectorNode(0.0, 0.0, 1.0);
+        OntoMath::Piecewise blueMediumChroma =
+            OntoMath::Piecewise::continuous(blueMediumChromaNode);
+
+        Rendering::VolumeDensityBinding v2RedStrong = medium;
+        v2RedStrong.extinctionExpr = &v2Extinction;
+        v2RedStrong.extinctionRevision = 5701;
+        v2RedStrong.scatteringExpr = &strongScattering;
+        v2RedStrong.scatteringRevision = 5702;
+        v2RedStrong.volumeChromaExpr = &redMediumChroma;
+        v2RedStrong.volumeChromaRevision = 5703;
+
+        Rendering::VolumeDensityBinding v2BlueWeak = medium;
+        v2BlueWeak.extinctionExpr = &v2Extinction;
+        v2BlueWeak.extinctionRevision = 5701;
+        v2BlueWeak.scatteringExpr = &weakScattering;
+        v2BlueWeak.scatteringRevision = 5712;
+        v2BlueWeak.volumeChromaExpr = &blueMediumChroma;
+        v2BlueWeak.volumeChromaRevision = 5713;
+
+        assert(v2RedStrong.densityExpr == v2BlueWeak.densityExpr &&
+               v2RedStrong.extinctionExpr == v2BlueWeak.extinctionExpr &&
+               "V2 native witness stopped sharing exact D/sigma_t truth");
+
+        renderer.setVolumeDensitySources({v2RedStrong}, 5721);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v2RedStrongPixel[4];
+        readCentre(v2RedStrongPixel);
+        const Renderer::FrameStats v2RedStrongStats = renderer.frameStats();
+
+        renderer.setVolumeDensitySources({v2BlueWeak}, 5722);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v2BlueWeakPixel[4];
+        readCentre(v2BlueWeakPixel);
+        const Renderer::FrameStats v2BlueWeakStats = renderer.frameStats();
+
+        std::printf(
+            "V2 shared-D/sigma_t red-strong=(%d,%d,%d,%d) blue-weak=(%d,%d,%d,%d) "
+            "compiles=(%u,%u)\n",
+            v2RedStrongPixel[0], v2RedStrongPixel[1], v2RedStrongPixel[2],
+            v2RedStrongPixel[3],
+            v2BlueWeakPixel[0], v2BlueWeakPixel[1], v2BlueWeakPixel[2],
+            v2BlueWeakPixel[3],
+            v2RedStrongStats.volumeProgramCompiles,
+            v2BlueWeakStats.volumeProgramCompiles);
+
+        assert(v2RedStrongPixel[0] > v2RedStrongPixel[1] + 80 &&
+               v2RedStrongPixel[0] > v2RedStrongPixel[2] + 80 &&
+               "authored red C_v did not control native medium hue");
+        assert(v2BlueWeakPixel[2] > v2BlueWeakPixel[0] + 20 &&
+               v2BlueWeakPixel[2] > v2BlueWeakPixel[1] + 20 &&
+               "authored blue C_v did not control native medium hue");
+        assert(v2RedStrongPixel[0] > v2BlueWeakPixel[2] + 80 &&
+               "changing sigma_s with fixed D/sigma_t did not visibly change scattering strength");
+        assert(v2RedStrongStats.volumeProgramCompiles == 1 &&
+               v2BlueWeakStats.volumeProgramCompiles == 1 &&
+               "distinct authored V2 medium structures were not established independently");
+
+        // Return to the first medium. Its (D,sigma_t,sigma_s,C_v) program memo
+        // must still exist after compiling the sibling variant.
+        renderer.setVolumeDensitySources({v2RedStrong}, 5721);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char v2RedStrongRepeat[4];
+        readCentre(v2RedStrongRepeat);
+        const Renderer::FrameStats v2RedStrongRepeatStats = renderer.frameStats();
+        assert(abs(int(v2RedStrongRepeat[0]) - int(v2RedStrongPixel[0])) <= 2 &&
+               abs(int(v2RedStrongRepeat[1]) - int(v2RedStrongPixel[1])) <= 2 &&
+               abs(int(v2RedStrongRepeat[2]) - int(v2RedStrongPixel[2])) <= 2 &&
+               "V2 medium cache replay changed native pixels");
+        assert(v2RedStrongRepeatStats.volumeProgramCompiles == 0 &&
+               v2RedStrongRepeatStats.volumeProgramCacheHits >= 1 &&
+               "shared-D/sigma_t V2 variants collided in the volume program cache");
+
         // TIMELINE: D(p,t)=t is the same authored structure across both frames.
         // Only this medium's admitted Timeline coordinate changes. The second
         // frame must visibly brighten while reusing the already-compiled volume

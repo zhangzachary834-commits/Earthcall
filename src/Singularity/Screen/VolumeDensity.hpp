@@ -32,6 +32,16 @@ struct VolumeDensityBinding {
     const OntoMath::Piecewise* extinctionExpr = nullptr;
     uint64_t extinctionRevision = 0;
 
+    // Independent V2 scattering coefficient sigma_s(p,t). Null preserves the
+    // exact pre-V2 compatibility law sigma_s = D.
+    const OntoMath::Piecewise* scatteringExpr = nullptr;
+    uint64_t scatteringRevision = 0;
+
+    // Independent V2 medium chroma C_v(p,t). Null preserves neutral white.
+    // This is medium truth and never borrows source chroma or source alpha.
+    const OntoMath::Piecewise* volumeChromaExpr = nullptr;
+    uint64_t volumeChromaRevision = 0;
+
     // Relative medium time is data beside THIS medium. EngineRender currently
     // supplies the broad compatibility Timeline to each binding until authored
     // Timeline ownership selection has a production resolver. WebGPU never
@@ -61,6 +71,18 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
         const std::string extinctionJson = field.volumeExtinction->toJson().dump();
         next.extinctionRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
+    }
+    if (field.volumeScattering && !field.volumeScattering->pieces.empty()) {
+        next.scatteringExpr = field.volumeScattering.get();
+        const std::string scatteringJson = field.volumeScattering->toJson().dump();
+        next.scatteringRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(scatteringJson));
+    }
+    if (field.volumeChroma && !field.volumeChroma->pieces.empty()) {
+        next.volumeChromaExpr = field.volumeChroma.get();
+        const std::string chromaJson = field.volumeChroma->toJson().dump();
+        next.volumeChromaRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;
