@@ -1,0 +1,6200 @@
+{
+  "identifier": "Northern Veil",
+  "name": "Northern Veil",
+  "authors": [
+    "Zachary Zhang",
+    "Gemini Spark"
+  ],
+  "injected_by": "Gemini Spark",
+  "scope": "global",
+  "deletable": false,
+  "qualities": [
+    "aurora",
+    "volumetric",
+    "night",
+    "participating_media",
+    "ontomath",
+    "luminous",
+    "showcase",
+    "v0-v4",
+    "northern_veil"
+  ],
+  "parentZone": "",
+  "owner": "default",
+  "spatialRoot": {
+    "id": "northern_veil.celestial-vault-root",
+    "origin": [
+      0,
+      30,
+      80
+    ],
+    "scale": [
+      1,
+      1,
+      1
+    ],
+    "field": {
+      "mode": "AST",
+      "baseDensity": 1,
+      "frequency": 1,
+      "amplitude": 1,
+      "ast": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "vectorField": {
+      "mode": "Procedural",
+      "baseFlowX": 0,
+      "baseFlowY": 0,
+      "baseFlowZ": 0,
+      "frequency": 1,
+      "amplitude": 0
+    },
+    "authoredProperties": {
+      "displayName": {
+        "t": "string",
+        "v": "Starlit Arctic Night Sky"
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.ambient": {
+        "t": "float",
+        "v": 0.025
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.18
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 0.12
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 0.35
+      },
+      "light.color": {
+        "t": "vec3",
+        "v": [
+          0.06,
+          0.08,
+          0.16
+        ]
+      }
+    }
+  },
+  "spatialFields": [
+    {
+      "id": "northern_veil.aurora.primary-emerald-curtain",
+      "origin": [
+        0,
+        22,
+        70
+      ],
+      "scale": [
+        36,
+        14,
+        12
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.75,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 28,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 10,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -2.5,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "scale": 0.12,
+                                                                "shift": 0,
+                                                                "var": "x"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -1.2,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "scale": 0.24,
+                                                            "shift": 0,
+                                                            "var": "x"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.8,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.65,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.35,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 1,
+                                        "scale": 1.4,
+                                        "shift": 0,
+                                        "var": "x"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.35,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.14,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.12,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.04,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.12,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.98,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.42,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumePhase": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.2000000000000002,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "wi.x"
+                            },
+                            {
+                              "op": 1,
+                              "var": "wo.x"
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.y"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.y"
+                                }
+                              ]
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.z"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.z"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeEmission": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.012,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.35,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.08,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.35,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.025,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.35,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Primary Emerald Aurora Curtain (557.7nm O-I)"
+        },
+        "aurora.role": {
+          "t": "string",
+          "v": "Dominant Oxygen Green Drapery"
+        },
+        "aurora.spectrum": {
+          "t": "string",
+          "v": "557.7 nm Forbidden Atomic Oxygen Green"
+        },
+        "volumetric.channels": {
+          "t": "string",
+          "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
+        }
+      }
+    },
+    {
+      "id": "northern_veil.aurora.secondary-cyan-ribbon",
+      "origin": [
+        12,
+        28,
+        100
+      ],
+      "scale": [
+        30,
+        12,
+        10
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.65,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 22,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 8.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -3.2,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "scale": 0.14,
+                                                                "shift": 0,
+                                                                "var": "x"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": 1.4,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "scale": 0.28,
+                                                            "shift": 0,
+                                                            "var": "x"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.5,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.65,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.35,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 1,
+                                        "scale": 1.6,
+                                        "shift": 0,
+                                        "var": "x"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.35,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.16,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.1,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.03,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.06,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.84,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.98,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumePhase": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.75,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "wi.x"
+                            },
+                            {
+                              "op": 1,
+                              "var": "wo.x"
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.y"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.y"
+                                }
+                              ]
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.z"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.z"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeEmission": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.01,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.28,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.055,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.28,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.075,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.28,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Secondary Cyan Ionization Ribbon"
+        },
+        "aurora.role": {
+          "t": "string",
+          "v": "Upper Tropospheric Fast Ribbon"
+        },
+        "aurora.spectrum": {
+          "t": "string",
+          "v": "470.9 nm First Negative Nitrogen Band"
+        },
+        "volumetric.channels": {
+          "t": "string",
+          "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
+        }
+      }
+    },
+    {
+      "id": "northern_veil.aurora.accent-violet-crest",
+      "origin": [
+        -10,
+        36,
+        85
+      ],
+      "scale": [
+        32,
+        10,
+        14
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.55,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 24,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 7,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -2,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "scale": 0.1,
+                                                                "shift": 0,
+                                                                "var": "x"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -1.5,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "scale": 0.2,
+                                                            "shift": 0,
+                                                            "var": "x"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 2.2,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.65,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.35,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 1,
+                                        "scale": 0.8,
+                                        "shift": 0,
+                                        "var": "x"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.35,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.1,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.08,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.02,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.86,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.18,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.94,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumePhase": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 1,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeEmission": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.055,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.22,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.01,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.22,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.065,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.22,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Accent Violet-Magenta Celestial Crest"
+        },
+        "aurora.role": {
+          "t": "string",
+          "v": "Exospheric High-Altitude Corona"
+        },
+        "aurora.spectrum": {
+          "t": "string",
+          "v": "427.8 nm N2+ Molecular Violet/Magenta"
+        },
+        "volumetric.channels": {
+          "t": "string",
+          "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
+        }
+      }
+    },
+    {
+      "id": "northern_veil.aurora.deep-crimson-fringe",
+      "origin": [
+        4,
+        15,
+        55
+      ],
+      "scale": [
+        26,
+        6,
+        8
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.5,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 23,
+                                  "children": [
+                                    {
+                                      "op": 25,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "x"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 18,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "y"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 4,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 26,
+                              "children": [
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 1,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 23,
+                                      "children": [
+                                        {
+                                          "op": 25,
+                                          "children": [
+                                            {
+                                              "op": 4,
+                                              "children": [
+                                                {
+                                                  "op": 4,
+                                                  "children": [
+                                                    {
+                                                      "op": 1,
+                                                      "var": "z"
+                                                    },
+                                                    {
+                                                      "op": 0,
+                                                      "scalarForm": {
+                                                        "terms": [
+                                                          {
+                                                            "c": -1.8,
+                                                            "factors": {},
+                                                            "trans": [
+                                                              {
+                                                                "kind": 0,
+                                                                "scale": 0.15,
+                                                                "shift": 0,
+                                                                "var": "x"
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": 0,
+                                                  "scalarForm": {
+                                                    "terms": [
+                                                      {
+                                                        "c": -0.8,
+                                                        "factors": {},
+                                                        "trans": [
+                                                          {
+                                                            "kind": 1,
+                                                            "scale": 0.3,
+                                                            "shift": 0,
+                                                            "var": "x"
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 1.2,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.65,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.35,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 1,
+                                        "scale": 1.8,
+                                        "shift": 0,
+                                        "var": "x"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.35,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.65,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.18,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.08,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.02,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.95,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.15,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.28,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumePhase": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.8999999999999999,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "wi.x"
+                            },
+                            {
+                              "op": 1,
+                              "var": "wo.x"
+                            }
+                          ]
+                        },
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.y"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.y"
+                                }
+                              ]
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "wi.z"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "wo.z"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeEmission": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.06,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.4,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.012,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.4,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.02,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.85,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.15,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "scale": 0.4,
+                                    "shift": 0,
+                                    "var": "t"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Deep Crimson Aurora Fringe (630.0nm O-I)"
+        },
+        "aurora.role": {
+          "t": "string",
+          "v": "Lower Ray Fringe"
+        },
+        "aurora.spectrum": {
+          "t": "string",
+          "v": "630.0 nm Excited Atomic Oxygen Red"
+        },
+        "volumetric.channels": {
+          "t": "string",
+          "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
+        }
+      }
+    }
+  ],
+  "materials": {},
+  "world": {
+    "objects": [
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z-20",
+        "center": [
+          -30,
+          -0.6,
+          -20
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          -20,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=-20)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z-20",
+        "center": [
+          30,
+          -0.6,
+          -20
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          -20,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=-20)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z20",
+        "center": [
+          -30,
+          -0.6,
+          20
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          20,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=20)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z20",
+        "center": [
+          30,
+          -0.6,
+          20
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          20,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=20)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z60",
+        "center": [
+          -30,
+          -0.6,
+          60
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          60,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=60)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z60",
+        "center": [
+          30,
+          -0.6,
+          60
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          60,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=60)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z100",
+        "center": [
+          -30,
+          -0.6,
+          100
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          100,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=100)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z100",
+        "center": [
+          30,
+          -0.6,
+          100
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          100,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=100)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z140",
+        "center": [
+          -30,
+          -0.6,
+          140
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          140,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=140)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z140",
+        "center": [
+          30,
+          -0.6,
+          140
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          140,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=140)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x-30_z180",
+        "center": [
+          -30,
+          -0.6,
+          180
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
+          -0.6,
+          180,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=180)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.ice.plate_x30_z180",
+        "center": [
+          30,
+          -0.6,
+          180
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
+          -0.6,
+          180,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ],
+          [
+            0.02,
+            0.03,
+            0.05
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            30,
+            0.5,
+            20
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          30.15,
+          0.65,
+          20.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Obsidian Mirror Lake Plate (Z=180)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.88
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.12
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.dais.platform",
+        "center": [
+          0,
+          -0.4,
+          0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.4,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          -0.4,
+          0,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ],
+          [
+            0.08,
+            0.1,
+            0.14
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            8,
+            0.4,
+            8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          8.15,
+          0.55,
+          8.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Observation Dais (Spawn)"
+          },
+          "material.specular": {
+            "t": "float",
+            "v": 0.45
+          },
+          "material.diffuse": {
+            "t": "float",
+            "v": 0.55
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.west_0",
+        "center": [
+          -55,
+          12,
+          30
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          18,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          12,
+          30,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            18,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          18.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Western Ridge Silhouette 1"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.east_0",
+        "center": [
+          55,
+          18,
+          30
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          20,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          18,
+          30,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            20,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          20.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Eastern Ridge Silhouette 1"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.west_1",
+        "center": [
+          -55,
+          16,
+          70
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          24,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          16,
+          70,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            24,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          24.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Western Ridge Silhouette 2"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.east_1",
+        "center": [
+          55,
+          22,
+          70
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          24,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          22,
+          70,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            24,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          24.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Eastern Ridge Silhouette 2"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.west_2",
+        "center": [
+          -55,
+          20,
+          110
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          18,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          20,
+          110,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            18,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          18.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Western Ridge Silhouette 3"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.east_2",
+        "center": [
+          55,
+          14,
+          110
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          20,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          14,
+          110,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            20,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          20.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Eastern Ridge Silhouette 3"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.west_3",
+        "center": [
+          -55,
+          12,
+          150
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          24,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          12,
+          150,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            24,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          24.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Western Ridge Silhouette 4"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.east_3",
+        "center": [
+          55,
+          18,
+          150
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          24,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          18,
+          150,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            24,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          24.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Eastern Ridge Silhouette 4"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.west_4",
+        "center": [
+          -55,
+          16,
+          190
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          18,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          16,
+          190,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            18,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          18.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Western Ridge Silhouette 5"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.mountain.east_4",
+        "center": [
+          55,
+          22,
+          190
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          20,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          22,
+          190,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ],
+          [
+            0.015,
+            0.02,
+            0.03
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14,
+            20,
+            18
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          20.15,
+          18.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Eastern Ridge Silhouette 5"
+          }
+        }
+      },
+      {
+        "objectID": "northern_veil.stele.monolith",
+        "center": [
+          0,
+          1.6,
+          10
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          2.8,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1.6,
+          10,
+          1
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ],
+          [
+            0.14,
+            0.16,
+            0.22
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.4,
+            2.8,
+            0.6
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.5499999999999998,
+          2.9499999999999997,
+          0.75
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele of the Northern Veil (V0-V4 Sovereignty)"
+          },
+          "inscription.constitution": {
+            "t": "string",
+            "v": "rho_source != V_transport != D_medium; D != sigma_t != sigma_s != C_v != Phi != E_v"
+          },
+          "inscription.authors": {
+            "t": "string",
+            "v": "Zachary Zhang & Gemini Spark"
+          }
+        }
+      }
+    ]
+  },
+  "formationRelations": [],
+  "lexemes": []
+}
