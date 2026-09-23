@@ -1,0 +1,4575 @@
+{
+  "identifier": "Borealis Sanctuary",
+  "name": "Borealis Sanctuary",
+  "authors": [
+    "Zachary Zhang",
+    "Gemini Spark"
+  ],
+  "injected_by": "Gemini Spark",
+  "scope": "global",
+  "deletable": false,
+  "qualities": [
+    "sanctuary",
+    "observatory",
+    "volumetric",
+    "ontomath",
+    "aurora",
+    "participating_media"
+  ],
+  "parentZone": "",
+  "owner": "default",
+  "spatialRoot": {
+    "id": "borealis.primary-atmosphere-root",
+    "origin": [
+      0.0,
+      12.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "field": {
+      "mode": "AST",
+      "baseDensity": 1,
+      "frequency": 1,
+      "amplitude": 1,
+      "ast": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.0,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "vectorField": {
+      "mode": "Procedural",
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "amplitude": 0.0
+    },
+    "authoredProperties": {
+      "displayName": {
+        "t": "string",
+        "v": "Celestial Zenith Starlight"
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.ambient": {
+        "t": "float",
+        "v": 0.04
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 0.55
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 0.35
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 0.85
+      },
+      "light.color": {
+        "t": "vec3",
+        "v": [
+          0.14,
+          0.18,
+          0.32
+        ]
+      }
+    }
+  },
+  "spatialFields": [
+    {
+      "id": "borealis.v1.airy-transmitting-cloud",
+      "origin": [
+        -12.0,
+        5.0,
+        25.0
+      ],
+      "scale": [
+        4.5,
+        3.5,
+        4.5
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.6,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 5,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 11,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "p"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.7,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.9,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.4,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.16,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.16,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "V1 Airy Transmitting Cloud (sigma_t = 0.16)"
+        },
+        "borealis.station": {
+          "t": "string",
+          "v": "Station I: V1 Extinction Sovereignty"
+        },
+        "borealis.regime": {
+          "t": "string",
+          "v": "Low Extinction (Airy / Transmitting)"
+        }
+      }
+    },
+    {
+      "id": "borealis.v1.dense-absorbing-cloud",
+      "origin": [
+        12.0,
+        5.0,
+        25.0
+      ],
+      "scale": [
+        4.5,
+        3.5,
+        4.5
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.6,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 5,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 11,
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "p"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.7,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 29,
+                                      "children": [
+                                        {
+                                          "op": 6,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 0.9,
+                                                    "factors": {}
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.4,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 2.85,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.16,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "V1 Dense Absorbing Cloud (sigma_t = 2.85)"
+        },
+        "borealis.station": {
+          "t": "string",
+          "v": "Station I: V1 Extinction Sovereignty"
+        },
+        "borealis.regime": {
+          "t": "string",
+          "v": "High Extinction (Dense / Absorbing)"
+        }
+      }
+    },
+    {
+      "id": "borealis.v2.emerald-cyan-surge",
+      "origin": [
+        -12.0,
+        5.0,
+        60.0
+      ],
+      "scale": [
+        4.5,
+        3.5,
+        4.5
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.8,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 5,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 25,
+                                  "children": [
+                                    {
+                                      "op": 5,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "z"
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.8,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 0,
+                                                    "var": "x",
+                                                    "scale": 0.6,
+                                                    "shift": 0.0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.6,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 11,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.4,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 29,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.65,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 1.25,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.08,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.98,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.68,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "V2 Emerald-Cyan Surge (sigma_s = 1.25, emerald/cyan chroma)"
+        },
+        "borealis.station": {
+          "t": "string",
+          "v": "Station II: V2 Scattering & Chroma Sovereignty"
+        },
+        "borealis.albedo": {
+          "t": "string",
+          "v": "High Scattering Albedo (Luminous Emerald)"
+        }
+      }
+    },
+    {
+      "id": "borealis.v2.violet-magenta-whisper",
+      "origin": [
+        12.0,
+        5.0,
+        60.0
+      ],
+      "scale": [
+        4.5,
+        3.5,
+        4.5
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.8,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 5,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 23,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 25,
+                                  "children": [
+                                    {
+                                      "op": 5,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "z"
+                                        },
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.8,
+                                                "factors": {},
+                                                "trans": [
+                                                  {
+                                                    "kind": 0,
+                                                    "var": "x",
+                                                    "scale": 0.6,
+                                                    "shift": 0.0
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 5,
+                                  "children": [
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.6,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 11,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.4,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 29,
+                                          "children": [
+                                            {
+                                              "op": 1,
+                                              "var": "p"
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 2.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.65,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.28,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.78,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.16,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.92,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "V2 Violet-Magenta Whisper (sigma_s = 0.28, violet/magenta chroma)"
+        },
+        "borealis.station": {
+          "t": "string",
+          "v": "Station II: V2 Scattering & Chroma Sovereignty"
+        },
+        "borealis.albedo": {
+          "t": "string",
+          "v": "Low Scattering Albedo (Mystic Violet)"
+        }
+      }
+    },
+    {
+      "id": "borealis.hero.auroral-curtain",
+      "origin": [
+        0.0,
+        16.0,
+        105.0
+      ],
+      "scale": [
+        22.0,
+        12.0,
+        10.0
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 6,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 2.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 26,
+                      "children": [
+                        {
+                          "op": 5,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 23,
+                              "children": [
+                                {
+                                  "op": 25,
+                                  "children": [
+                                    {
+                                      "op": 5,
+                                      "children": [
+                                        {
+                                          "op": 1,
+                                          "var": "z"
+                                        },
+                                        {
+                                          "op": 4,
+                                          "children": [
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 2.6,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 0,
+                                                        "var": "x",
+                                                        "scale": 0.18,
+                                                        "shift": 0.0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            },
+                                            {
+                                              "op": 0,
+                                              "scalarForm": {
+                                                "terms": [
+                                                  {
+                                                    "c": 1.2,
+                                                    "factors": {},
+                                                    "trans": [
+                                                      {
+                                                        "kind": 1,
+                                                        "var": "x",
+                                                        "scale": 0.35,
+                                                        "shift": 0.0
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 1.8,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "op": 26,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.65,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.35,
+                                        "factors": {},
+                                        "trans": [
+                                          {
+                                            "kind": 0,
+                                            "var": "x",
+                                            "scale": 1.1,
+                                            "shift": 0.0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.4,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 29,
+                                  "children": [
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.14,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 1,
+                                          "var": "p"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.8,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.25,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 4,
+                  "children": [
+                    {
+                      "op": 6,
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.55,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 26,
+                          "children": [
+                            {
+                              "op": 5,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.45,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 6,
+                                  "children": [
+                                    {
+                                      "op": 0,
+                                      "scalarForm": {
+                                        "terms": [
+                                          {
+                                            "c": 0.07,
+                                            "factors": {}
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "op": 1,
+                                      "var": "y"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.0,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.12,
+                            "factors": {},
+                            "trans": [
+                              {
+                                "kind": 0,
+                                "var": "x",
+                                "scale": 0.22,
+                                "shift": 0.0
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 4,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.35,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 6,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.75,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 26,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 4,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.5,
+                                        "factors": {},
+                                        "trans": [
+                                          {
+                                            "kind": 1,
+                                            "var": "x",
+                                            "scale": 0.32,
+                                            "shift": 0.0
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.25,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 29,
+                                  "children": [
+                                    {
+                                      "op": 6,
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 0.18,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 1,
+                                          "var": "p"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.12,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.055,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "y"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.24,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 0,
+                                    "var": "x",
+                                    "scale": 0.22,
+                                    "shift": 0.0
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.05,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.92,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 5,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.85,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.18,
+                                    "factors": {},
+                                    "trans": [
+                                      {
+                                        "kind": 0,
+                                        "var": "x",
+                                        "scale": 0.16,
+                                        "shift": 0.0
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "op": 6,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.035,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 1,
+                              "var": "y"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.12,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.98,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "op": 26,
+                  "children": [
+                    {
+                      "op": 4,
+                      "children": [
+                        {
+                          "op": 4,
+                          "children": [
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 0.45,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "op": 6,
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.048,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "y"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.28,
+                                "factors": {},
+                                "trans": [
+                                  {
+                                    "kind": 1,
+                                    "var": "x",
+                                    "scale": 0.18,
+                                    "shift": 0.0
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.12,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.98,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "The Celestial Aurora Veil (Hero V1+V2 Curtain)"
+        },
+        "borealis.station": {
+          "t": "string",
+          "v": "Station III: The Celestial Aurora Veil"
+        },
+        "borealis.role": {
+          "t": "string",
+          "v": "hero_aurora_curtain"
+        }
+      }
+    }
+  ],
+  "materials": [],
+  "world": {
+    "objects": [
+      {
+        "objectID": "borealis.floor.seg_-10",
+        "center": [
+          0.0,
+          -0.6,
+          -10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          -10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=-10"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_10",
+        "center": [
+          0.0,
+          -0.6,
+          10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=10"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_30",
+        "center": [
+          0.0,
+          -0.6,
+          30.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          30.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=30"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_50",
+        "center": [
+          0.0,
+          -0.6,
+          50.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          50.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=50"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_70",
+        "center": [
+          0.0,
+          -0.6,
+          70.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          70.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=70"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_90",
+        "center": [
+          0.0,
+          -0.6,
+          90.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          90.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=90"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_110",
+        "center": [
+          0.0,
+          -0.6,
+          110.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          110.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=110"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.floor.seg_130",
+        "center": [
+          0.0,
+          -0.6,
+          130.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.6,
+          130.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ],
+          [
+            0.18,
+            0.2,
+            0.25
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            14.0,
+            0.5,
+            10.0
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          14.15,
+          0.65,
+          10.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Promenade Pavement Z=130"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station1.beacon-left",
+        "center": [
+          -12.0,
+          5.0,
+          35.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -12.0,
+          5.0,
+          35.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.2,
+            5.0,
+            1.2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3499999999999999,
+          5.15,
+          1.3499999999999999
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Station I Golden Beacon (Airy Cloud Reference)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station1.beacon-right",
+        "center": [
+          12.0,
+          5.0,
+          35.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          12.0,
+          5.0,
+          35.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ],
+          [
+            1.0,
+            0.85,
+            0.3
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.2,
+            5.0,
+            1.2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3499999999999999,
+          5.15,
+          1.3499999999999999
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Station I Golden Beacon (Dense Cloud Reference)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station2.pillar-left",
+        "center": [
+          -12.0,
+          5.0,
+          70.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -12.0,
+          5.0,
+          70.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.2,
+            5.0,
+            1.2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3499999999999999,
+          5.15,
+          1.3499999999999999
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Station II Astral Quartz Needle (Emerald Surge Reference)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station2.pillar-right",
+        "center": [
+          12.0,
+          5.0,
+          70.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          12.0,
+          5.0,
+          70.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ],
+          [
+            0.85,
+            1.0,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.2,
+            5.0,
+            1.2
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.3499999999999999,
+          5.15,
+          1.3499999999999999
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Station II Astral Quartz Needle (Violet Whisper Reference)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station3.needle_0",
+        "center": [
+          -16.0,
+          16.0,
+          125.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -16.0,
+          16.0,
+          125.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            16.0,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9500000000000001,
+          16.15,
+          0.9500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Spire 1 (Hero Curtain Background)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station3.needle_1",
+        "center": [
+          -8.0,
+          16.0,
+          125.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -8.0,
+          16.0,
+          125.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            16.0,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9500000000000001,
+          16.15,
+          0.9500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Spire 2 (Hero Curtain Background)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station3.needle_2",
+        "center": [
+          0.0,
+          16.0,
+          125.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          16.0,
+          125.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            16.0,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9500000000000001,
+          16.15,
+          0.9500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Spire 3 (Hero Curtain Background)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station3.needle_3",
+        "center": [
+          8.0,
+          16.0,
+          125.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          8.0,
+          16.0,
+          125.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            16.0,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9500000000000001,
+          16.15,
+          0.9500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Spire 4 (Hero Curtain Background)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.station3.needle_4",
+        "center": [
+          16.0,
+          16.0,
+          125.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          16.0,
+          16.0,
+          125.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ],
+          [
+            0.75,
+            0.85,
+            1.0
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            16.0,
+            0.8
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.9500000000000001,
+          16.15,
+          0.9500000000000001
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Celestial Spire 5 (Hero Curtain Background)"
+          }
+        }
+      },
+      {
+        "objectID": "borealis.stele.entrance",
+        "center": [
+          0.0,
+          1.5,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.5,
+            1.5,
+            0.4
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.65,
+          1.65,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele 0: The True Participating-Medium Substrate"
+          },
+          "stele.inscription": {
+            "t": "string",
+            "v": "THE CONSTITUTION OF VOLUMETRIC SOVEREIGNTY\n------------------------------------------\nrho_source != V_transport != D_medium\nD_medium   != sigma_t     != sigma_s != C_v\n\nHere in Borealis Sanctuary, light does not meet flat surfaces or fake alpha meshes.\nParticipating medium is continuous mathematical reality:\n1. volume.density.ast    D(p,t)        -> scalar existence & spatial shape\n2. volume.extinction.ast sigma_t(p,t)  -> scalar optical thickness & transmittance\n3. volume.scattering.ast sigma_s(p,t)  -> scalar scattering albedo & radiance\n4. volume.chroma.ast     C_v(p,t)      -> vec3 spectral medium color\n\nProceed down the promenade to witness the sovereignty of each channel."
+          }
+        }
+      },
+      {
+        "objectID": "borealis.stele.station1",
+        "center": [
+          0.0,
+          1.5,
+          25.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.5,
+          25.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.5,
+            1.5,
+            0.4
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.65,
+          1.65,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele I: Volumetric V1 Extinction Sovereignty"
+          },
+          "stele.inscription": {
+            "t": "string",
+            "v": "STATION I: V1 EXTINCTION SOVEREIGNTY (D != sigma_t)\n---------------------------------------------------\nBehold the two floating clouds flanking this dais:\n- Left Cloud:  volume.extinction.ast = 0.16 (Airy / Transmitting)\n- Right Cloud: volume.extinction.ast = 2.85 (Dense / Attenuating)\n\nTheir density mathematics D(p,t) are BYTE-IDENTICAL. Both clouds have the\nexact same geometric bounds, noise folds, and mass of medium.\n\nLook through them to the golden beacons placed behind at Z=35:\nThe Left Beacon shines through the airy cloud with high transmittance (T ~ 0.75).\nThe Right Beacon is severely darkened and extinguished (T ~ 0.02).\nExtinction governs optical attenuation independently from spatial density."
+          }
+        }
+      },
+      {
+        "objectID": "borealis.stele.station2",
+        "center": [
+          0.0,
+          1.5,
+          60.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.5,
+          60.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.5,
+            1.5,
+            0.4
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.65,
+          1.65,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele II: Volumetric V2 Scattering & Chroma Sovereignty"
+          },
+          "stele.inscription": {
+            "t": "string",
+            "v": "STATION II: V2 SCATTERING & CHROMA SOVEREIGNTY (sigma_s & C_v)\n--------------------------------------------------------------\nObserve the two serpentine clouds flanking this dais:\n- Left Cloud:  sigma_s = 1.25, C_v = vec3(0.08, 0.98, 0.68) (Emerald/Cyan)\n- Right Cloud: sigma_s = 0.28, C_v = vec3(0.78, 0.16, 0.92) (Violet/Magenta)\n\nBoth clouds share the EXACT SAME density D(p,t) AND the EXACT SAME\nextinction sigma_t(p,t) = 0.65.\n\nBecause sigma_t is identical, background quartz needles at Z=70 attenuate\nat the exact same physical rate e^(-sigma_t * ds) through both media.\nThe radiant emerald surge versus mystical violet glow is entirely authored\nby volume.scattering.ast and volume.chroma.ast without modifying D or sigma_t."
+          }
+        }
+      },
+      {
+        "objectID": "borealis.stele.station3",
+        "center": [
+          0.0,
+          1.5,
+          85.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.5,
+          85.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ],
+          [
+            0.3,
+            0.35,
+            0.45
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.5,
+            1.5,
+            0.4
+          ],
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "p0": 0,
+          "p1": 0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.65,
+          1.65,
+          0.55
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele III: The Celestial Aurora Veil (Hero V1+V2 Synthesis)"
+          },
+          "stele.inscription": {
+            "t": "string",
+            "v": "STATION III: THE CELESTIAL AURORA VEIL\n--------------------------------------\nAbove you rises the Hero Aurora Curtain (span: 44m wide, 24m tall, 20m deep).\nIt unites all four authored participating-medium channels into living harmony:\n\n1. D(p,t): Thin undulating ribbon sheet (z_fold = 2.6*sin(0.18*x) + 1.2*cos(0.35*x)),\n   striated by vertical ray harmonic waves and Perlin noise turbulence,\n   forming organic folds, wisps, and transparent gaps.\n2. sigma_t(p,t): Vertical altitude gradient (0.25 -> 0.80) that attenuates deeply\n   at the rooted base while fading to delicate gossamer transparency at the crest.\n3. sigma_s(p,t): Harmonic wave patches (0.35 -> 1.10) producing shimmering folds\n   where auroral rays catch intense scattering radiance.\n4. C_v(p,t): Continuous spectral shift from lower oxygen green (557.7 nm) to\n   mid turquoise/cyan, upper nitrogen violet, and high-altitude crimson fringes (630 nm).\n\nGaze past the curtain to see the 5 Celestial Needles at Z=125 truncated by opaque scene depth."
+          }
+        }
+      }
+    ]
+  },
+  "formationRelations": [],
+  "lexemes": []
+}
