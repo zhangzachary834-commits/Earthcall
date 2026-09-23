@@ -1,7 +1,6 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <cassert>
-#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <map>
@@ -19,30 +18,31 @@ using OntoMath::ScalarForm;
 
 enum class Channel { SourceRho, MediumDensity, MediumExtinction, MediumScattering, MediumChroma };
 
-std::shared_ptr<MathNode> scalar(double v) {
-    auto n = std::make_shared<MathNode>();
+std::unique_ptr<MathNode> scalarU(double v) {
+    auto n = std::make_unique<MathNode>();
     n->op = MathNode::Op::ScalarLeaf;
     n->scalarForm = ScalarForm::constant(v);
     return n;
 }
-std::shared_ptr<MathNode> variable(const std::string& name) {
-    auto n = std::make_shared<MathNode>();
+std::unique_ptr<MathNode> variableU(const std::string& name) {
+    auto n = std::make_unique<MathNode>();
     n->op = MathNode::Op::ValueLeaf;
     n->variableName = name;
     return n;
 }
-std::shared_ptr<MathNode> binary(MathNode::Op op, std::shared_ptr<MathNode> a,
-                                 std::shared_ptr<MathNode> b) {
-    auto n = std::make_shared<MathNode>();
+std::unique_ptr<MathNode> binaryU(MathNode::Op op, std::unique_ptr<MathNode> a,
+                                  std::unique_ptr<MathNode> b) {
+    auto n = std::make_unique<MathNode>();
     n->op = op;
     n->children.push_back(std::move(a));
     n->children.push_back(std::move(b));
     return n;
 }
 std::shared_ptr<MathNode> common(double scale) {
-    return binary(MathNode::Op::Scale,
-                  binary(MathNode::Op::Add, variable("x"), scalar(2.0)),
-                  scalar(scale));
+    return std::shared_ptr<MathNode>(
+        binaryU(MathNode::Op::Scale,
+                binaryU(MathNode::Op::Add, variableU("x"), scalarU(2.0)),
+                scalarU(scale)).release());
 }
 
 bool scalarOp(MathNode::Op op) {
@@ -107,8 +107,6 @@ struct PiecewiseAdapter {
         std::ostringstream topology;
         topology << "input=" << model.inputVariable << "|pieces=" << model.pieces.size();
         for (const auto& p : model.pieces) {
-            // Rung 1G is intentionally scalar-only. Guards/calls/folds and vec3
-            // are refused rather than borrowing another channel's fallback.
             if (!p.mathNode || p.guard || p.whereLEZero || p.call || p.fold ||
                 !scalarOp(p.mathNode->op)) {
                 ++refusals;
@@ -150,8 +148,6 @@ double scalarValue(const PropertyValue& v) {
 
 int main() {
     PiecewiseAdapter adapter;
-
-    // Four distinct rendered meanings intentionally share byte-identical math.
     auto rho = twoPiece(common(3.0), common(4.0));
     auto density = twoPiece(common(3.0), common(4.0));
     auto extinction = twoPiece(common(3.0), common(4.0));
@@ -162,9 +158,6 @@ int main() {
     assert(adapter.compile(Channel::MediumDensity, density, cD));
     assert(adapter.compile(Channel::MediumExtinction, extinction, cT));
     assert(adapter.compile(Channel::MediumScattering, scattering, cS));
-
-    // Piecewise topology belongs to the vessel identity, while exact child
-    // mathematics is canonicalized once and shared across semantic channels.
     assert(cRho.pieces.size() == 2 && cD.pieces.size() == 2);
     assert(cRho.pieces[0].math == cD.pieces[0].math);
     assert(cD.pieces[0].math == cT.pieces[0].math);
@@ -172,9 +165,6 @@ int main() {
     assert(cRho.pieces[1].math == cD.pieces[1].math);
     assert(cRho.channel != cD.channel);
 
-    // Runtime coordinates, including admitted Timeline t, evaluate without any
-    // semantic/topology rebuild. t is deliberately present in vars even though
-    // these first scalar fields do not consume it.
     const uint64_t buildsBeforeRuntime = adapter.topologyBuilds;
     for (double x : {-5.0, 5.0}) {
         for (double t : {0.0, 1.0, 42.0}) {
@@ -185,8 +175,6 @@ int main() {
     }
     assert(adapter.topologyBuilds == buildsBeforeRuntime);
 
-    // Numeric coefficient edit: only density's authored math changes. The
-    // other channel adapters and their compiled child IDs remain untouched.
     const uint32_t rhoLeftBefore = cRho.pieces[0].math;
     const uint32_t extinctionLeftBefore = cT.pieces[0].math;
     density.pieces[0].mathNode->children[1]->scalarForm = ScalarForm::constant(7.0);
@@ -197,8 +185,6 @@ int main() {
     assert(cRho.pieces[0].math == rhoLeftBefore);
     assert(cT.pieces[0].math == extinctionLeftBefore);
 
-    // Bound/topology edit: math IDs remain reusable, but Piecewise topology
-    // identity changes. No unrelated channel is recompiled.
     const std::string densityTopologyBefore = cDValueEdit.topologyKey;
     density.pieces[0].hi = -2.0;
     density.pieces[1].lo = -2.0;
@@ -208,13 +194,12 @@ int main() {
     assert(cDTopologyEdit.pieces[0].math == cDValueEdit.pieces[0].math);
     assert(cDTopologyEdit.pieces[1].math == cDValueEdit.pieces[1].math);
 
-    // C_v is vec3 truth. This scalar adapter MUST refuse it rather than flatten
-    // it, guess a scalar, or acquire D/sigma_t/sigma_s compatibility semantics.
-    Piecewise chroma = Piecewise::continuous(std::make_shared<MathNode>());
-    chroma.pieces[0].mathNode->op = MathNode::Op::VectorConstruct;
-    chroma.pieces[0].mathNode->children.push_back(std::unique_ptr<MathNode>(new MathNode(*scalar(1.0))));
-    chroma.pieces[0].mathNode->children.push_back(std::unique_ptr<MathNode>(new MathNode(*scalar(0.5))));
-    chroma.pieces[0].mathNode->children.push_back(std::unique_ptr<MathNode>(new MathNode(*scalar(0.25))));
+    auto vectorNode = std::make_shared<MathNode>();
+    vectorNode->op = MathNode::Op::VectorConstruct;
+    vectorNode->children.push_back(scalarU(1.0));
+    vectorNode->children.push_back(scalarU(0.5));
+    vectorNode->children.push_back(scalarU(0.25));
+    Piecewise chroma = Piecewise::continuous(vectorNode);
     CompiledPiecewise refusedChroma;
     assert(!adapter.compile(Channel::MediumChroma, chroma, refusedChroma));
     assert(adapter.refusals == 1);
