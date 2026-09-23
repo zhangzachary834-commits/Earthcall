@@ -376,6 +376,23 @@ private:
         const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
+    // V5 fused overlap cache. Membership/order and each member's six authored
+    // expression identities form the structural lane; content revisions decide
+    // whether numeric parameters must refresh. The shader itself sums media at
+    // each ray sample, so framebuffer draw order is no longer transport law.
+    using VolumeSetProgramKey = std::vector<VolumeProgramKey>;
+    struct VolumeSetProgramMemo {
+        uint64_t contentRevision = 0xffffffffffffffffULL;
+        std::string structure;
+        bool ok = false;
+        std::string error;
+        bool phaseReadsWi = false;
+        sdfwgsl::Program prog;
+        std::vector<uint32_t> paramOffsets;
+        const VolumePipeline* pipeline = nullptr;
+    };
+    std::map<VolumeSetProgramKey, VolumeSetProgramMemo> _volumeSetProgramCache;
+
     struct VolumeInstanceData {
         glm::vec4 origin;
         glm::vec4 halfExtent;
@@ -387,6 +404,10 @@ private:
     };
     std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
     std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
+    // Ordinary V0-V4 pipelines draw one proxy instance per medium. A V5 fused
+    // set stores one union-bounds header plus N medium records but draws only
+    // the header proxy once; this map records that explicit draw count.
+    std::map<const VolumePipeline*, uint32_t> _volumeDrawInstanceCounts;
     std::vector<const VolumePipeline*> _activeVolumePipelines;
     const VolumePipeline* volumePipeline(const std::string& wgsl);
     void flushVolumeComposite();
