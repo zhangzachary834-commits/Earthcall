@@ -40,8 +40,12 @@ All eleven §10 witness categories now have executable coverage in the branch.
 Focused CI is still the authority for whether this implementation is ready to
 leave draft status.
 
-V1+ remain intentionally unimplemented here: authored extinction, scattering,
-volumetric chroma, phase, emission, and full multiple-medium transport semantics.
+Historical V0 scope note: this original V0 plan intentionally stopped before
+extinction/scattering/chroma. Canonical Earthcall has since advanced beyond that
+historical boundary: V1 authored extinction and V2 authored scattering + medium
+chroma have landed. V3 phase, V4 volumetric emission, and later multiple-medium /
+richer transport work remain future rungs. The constitutional V0 reasoning below
+is preserved because it defines the sovereignty boundary those later rungs build on.
 
 ## 1. Why V0 exists
 
@@ -369,3 +373,144 @@ D(p,t)   = how much participating substance is here
 They may be mathematically equal by choice. They may diverge radically. A Law may rewrite one while leaving the other untouched.
 
 That separation is the doorway through which the later medium stack—extinction, scattering, chroma, phase, emission—can become authored physics rather than renderer folklore.
+
+
+---
+
+## 14. 2026-09-22 full-stack continuation after V0/V1/V2
+
+The original document above is the constitutional V0 density-separation plan. The renderer has since advanced through independent authored extinction and V2 scattering/chroma, so the continuation is now coordinated by:
+
+[`RENDERED_FIELD_SEMANTIC_SYNTHESIS_IMPLEMENTATION_PLAN_2026-09-22.md`](RENDERED_FIELD_SEMANTIC_SYNTHESIS_IMPLEMENTATION_PLAN_2026-09-22.md)
+
+The medium stack is now planned as one explicit sequence of independent authored meanings:
+
+```text
+V0  D(p,t)               density
+V1  sigma_t(p,t)         extinction
+V2  sigma_s(p,t)         scattering magnitude
+V2  C_v(p,t)             medium chroma
+V3  Phi(p,wi,wo,t)       phase / angular scattering
+V4  E_v(p,omega,t)       volumetric emission
+V5+ multiple media and richer transport composition
+```
+
+The full renderer plan also connects these medium channels to, without conflating them with:
+
+```text
+F(p,...)                  geometry / SDF
+rho(p,t)                  source radiance
+chi(p,t)                  source chroma
+alpha(p,omega,t)          source angular emission
+V(source,p,...)           visibility/shadows
+material response
+indirect transport / GI
+Screen presentation
+```
+
+### Prophetic / semantic-synthesis integration
+
+The post-V2 performance architecture is not “make density use the SDF proof cache.”
+
+Instead, the shared semantic compiler may provide common machinery:
+
+- canonical mathematical execution;
+- common-subexpression sharing;
+- authored-source provenance;
+- incremental repair;
+- runtime value caching;
+- reverse proof dependency indexes;
+- backend lowering identity.
+
+Each medium meaning keeps its own theorem algebra.
+
+Examples:
+
+```text
+D:
+    exact zero-density support
+    conservative density bounds
+    empty interval
+
+sigma_t:
+    exact zero extinction
+    optical-depth bounds
+    identity-transmittance interval
+
+sigma_s:
+    exact zero scattering
+    scattering support
+
+C_v:
+    exact zero component/support where composition permits it
+
+Phi:
+    angular support/exclusion
+
+E_v:
+    emission support / exact zero emission
+```
+
+An interval theorem for one channel has no authority over another.
+
+For example:
+
+```text
+D = 0 on [u0,u1]
+```
+
+may justify skipping medium occupancy work over that interval, but does not imply:
+
+```text
+rho = 0
+sigma_t = 0
+E_v = 0
+```
+
+unless those facts are independently proved.
+
+### First volumetric Prophetic target
+
+The safest first production volumetric optimization remains an **exact zero-density/support interval proof**.
+
+Conceptually:
+
+```text
+prove D(p(u),t) = 0 for every u in [u0,u1]
+        ↓
+skip density/medium sampling over [u0,u1]
+        ↓
+resume exact transport at u1
+```
+
+This must be conservative over the entire interval. A few zero point samples are not sufficient proof.
+
+The next targets are exact-zero extinction/scattering support and conservative optical-depth bounds, always with proof-disabled exact A/B parity.
+
+### Change law
+
+Runtime query state such as camera position, ray coordinate, and admitted Timeline value does not rebuild a theorem when that theorem already quantifies over the changing variable.
+
+Authored premise changes invalidate only the dependent medium proof frontier.
+
+Changing `sigma_s` must not invalidate a `D` theorem unless that theorem explicitly depends on `sigma_s`.
+
+Changing source `rho` must not invalidate medium density merely because the source and medium happen to share identical OntoMath calculation nodes.
+
+### Required cross-domain regression
+
+Before the shared compiler receives production optimization authority, retain a regression where geometry, source radiance, and medium density use identical mathematics.
+
+The expected result is:
+
+```text
+shared compiled mathematical identity
++
+separate semantic-channel proof authority
+```
+
+A density edit may split/rebuild the density execution mapping and invalidate density proofs while leaving geometry/radiance proof overlays valid.
+
+This is the bridge from V0's original sovereignty law to the broader semantic-synthesis architecture.
+
+— full-stack continuation directed by Zach, recorded by GPT-5.6 Sol, 2026-09-22
