@@ -12,9 +12,7 @@ This is the same post-#329 relevance-economics successor thread. Do not spawn an
 
 PR #329 has landed into canonical. PR #350 was reconciled after that landing and GitHub reports it mergeable with base `423cfd69...`.
 
-## Bounded audit performed
-
-I re-read the post-#329 handoff, current canonical, PR #350 metadata/commentary, the current exact code diff, and the live focused-CI job state.
+## Rung 1 implementation audited
 
 The first rung remains correctly scoped to the dormant-proof question. The implementation has three genuinely distinct shader/runtime arms:
 
@@ -22,52 +20,114 @@ The first rung remains correctly scoped to the dormant-proof question. The imple
 2. `PROOF-CAPABLE-OFF`: production proof-capable topology, traversal disabled.
 3. `PROOF-ON`: production proof-capable topology, traversal enabled.
 
-The benchmark seam is included in memo identity, so a renderer cannot silently reuse a program compiled for the opposite shader topology.
+The benchmark seam is included in memo identity. The native 2880x1800 witness balances all six arm permutations, and the semantic gate requires byte-identical NO-PROOF vs PROOF-CAPABLE-OFF RGBA/hit coverage. No new proof authority is granted.
 
-The native 2880x1800 witness now uses all six permutations of the three arms. Six warmups consume one complete order cycle; twelve measured rounds consume two. Every arm therefore occupies first/middle/last equally and each pair sees balanced order, avoiding the old sequential-order confound.
+## Exact native CI verdict — Rung 1 is settled
 
-The cost ledger now separately exposes:
+Focused workflow run `35923074892` / #2923 completed **SUCCESS** on code head `86b98fcb...` across all four jobs:
 
-- WGSL/source generation CPU time;
-- native pipeline creation CPU time;
-- `drawImplicit` gather CPU time;
-- SDF flush/bind/encode submission CPU time;
-- GPU main-pass timing where available;
-- wall time;
-- resident range-proof bytes;
-- recurring range-proof upload bytes.
+- SDF range-proxy verification: SUCCESS
+- Focused CPU: SUCCESS
+- SDF authored-Perlin A/B Release: SUCCESS
+- Slow Adapter independent clock: SUCCESS
 
-The semantic gate is stronger than the active traversal comparison: NO-PROOF vs PROOF-CAPABLE-OFF must be byte-identical RGBA and exact hit-coverage equivalent, because both use the same ordinary exact marcher. PROOF-ON retains the existing exact hit-coverage and CPU-root agreement contract. Disabled arms also fail if traversal draws or recurring proof uploads leak into them.
+The Release artifact `sdf-range-perf` supplies the decisive three-arm measurements.
 
-## Audit verdict before measurement
+### Shader topology
 
-No new rendering authority has been granted. Production `compile()` still defaults to proof-capable WGSL, production traversal remains independently gated/default-off, and the proof-free topology is a benchmark seam.
+- proof-capable WGSL: 45,590 bytes
+- no-proof WGSL: 39,635 bytes
+- structurally removed: 5,955 bytes
+- no-proof proof function/branch/symbol/binding checks: all absent as intended
+- instance stride remains reserved/equivalent
 
-I found no architectural reason to start Rung 2 before Rung 1 returns native evidence. In particular, the explicit bind-group layout can legally retain a binding unused by the proof-free shader, so preserving CPU/buffer ABI while deleting the WGSL declaration remains a valid structural comparator; the test also directly asserts that proof symbols/binding declarations are absent from generated no-proof WGSL.
+The current string-surgery benchmark compiler makes proof-free source generation slower in isolation (median 0.196875 ms vs 0.008958 ms proof-capable over 25 samples). This is cold/source-generation cost, not steady frame cost, and is not a reason to promote the benchmark seam into production.
 
-One important measurement interpretation is now pinned: `sdfRangeResidentBytes` is allocator/residency telemetry, not recurring-upload cost. A proof-capable OFF arm may legitimately retain resident range-buffer capacity even while `sdfRangeNodeBytesUploaded == 0`; the benchmark must report those separately rather than treating residency as proof execution.
+### Horizon, 2880x1800
 
-## Live CI state
+Dormant comparison:
 
-Focused workflow run `35923074892` / run #2923 is the current code-head gate for `86b98fcb...`.
+- NO-PROOF median wall: 54.094167 ms
+- PROOF-CAPABLE-OFF median wall: 55.374938 ms
+- raw median ratio: 1.0237
+- balanced paired median ratio: **1.0179**
+- balanced paired delta: **+0.940751 ms** for proof-capable OFF
+- GPU timestamp samples: unavailable on this runner; no GPU-only claim
+- NO-PROOF CPU gather median: 0.006542 ms
+- PROOF-OFF CPU gather median: 0.006416 ms
+- NO-PROOF CPU submission median: 0.160209 ms
+- PROOF-OFF CPU submission median: 0.143813 ms
+- resident range bytes: 256 vs 256
 
-At this audit:
+Active traversal remains clearly slower:
 
-- `SDF range-proxy verification (macOS)`: in progress, currently building proof/GPU parity witnesses;
-- `Slow Adapter independent clock (macOS)`: in progress, currently building its witnesses;
-- `Focused CPU tests (macOS)`: queued;
-- `SDF authored-Perlin A/B (macOS Release)`: dependency-gated on the SDF verification job and will become the decisive native three-arm measurement once that prerequisite settles.
+- PROOF-OFF median: 55.374938 ms
+- PROOF-ON median: 74.635250 ms
+- paired wall ratio: **1.3428**
+- paired delta: **+19.044000 ms**
+- recurring range-proof uploads: 0 bytes
 
-No CI failure is presently attributable to PR #350, and **no performance verdict is yet earned**.
+### 45-degree view, 2880x1800
 
-This Intercom commit is documentation-only and intentionally uses `[skip ci]`; treat run #2923 as the exact code-tree gate for `86b98fcb...` unless code changes after it.
+Dormant comparison:
+
+- NO-PROOF median wall: 45.776646 ms
+- PROOF-CAPABLE-OFF median wall: 45.584958 ms
+- raw median ratio: 0.9958
+- balanced paired median ratio: **0.9896**
+- balanced paired delta: **-0.497604 ms** for proof-capable OFF
+- GPU timestamp samples: unavailable; no GPU-only claim
+- NO-PROOF CPU gather median: 0.008333 ms
+- PROOF-OFF CPU gather median: 0.005937 ms
+- NO-PROOF CPU submission median: 0.234604 ms
+- PROOF-OFF CPU submission median: 0.136208 ms
+- resident range bytes: 256 vs 256
+
+Active traversal again remains clearly slower:
+
+- PROOF-OFF median: 45.584958 ms
+- PROOF-ON median: 62.748500 ms
+- paired wall ratio: **1.3775**
+- paired delta: **+17.246916 ms**
+- recurring range-proof uploads: 0 bytes
+
+## Rung 1 interpretation
+
+The dormant-proof question is now settled for this witness: **there is no stable, cross-view evidence of a material default-OFF tax.** Horizon shows a small +1.79% paired wall difference while the 45-degree view reverses sign to -1.04%. The CPU gather/submission counters do not explain a proof-OFF penalty, residency is identical, and the runner provided no GPU timestamps. Treat this as noise-scale / inconclusive-to-negligible dormant cost, not as evidence for a production shader split.
+
+Therefore: **reject a production NO-PROOF shader variant for now.** It adds topology/pipeline complexity without a reproducible benefit. Keep the benchmark seam as diagnostic evidence if useful.
+
+By contrast, PROOF-ON is reproducibly and dramatically slower (~34–38%) while performing zero recurring proof uploads. The remaining problem is relevance-discovery/execution economics, not upload churn and not a demonstrated dormant-branch tax.
+
+## Single-authored-Perlin economics — inherited ledger reconfirmed
+
+The same Release artifact re-emits the exact current single-field tax ledger with zero per-ray hit mismatches.
+
+Current generic traversal:
+
+- horizon: 83,649 candidate calls, 144 exact samples saved, 0.001721 saved/call (~581 calls per saved sample)
+- 45deg: inherited baseline 0.002102 saved/call (~476 calls per saved sample)
+
+The direct-run candidates still fail the explicit 10x graduation bar:
+
+- horizon best combined gain: 2.3578x -> **REJECT**
+- 45deg best combined gain: 2.7271x -> **REJECT**
+
+Representative hidden-cost example remains horizon Z/min-run-1: 16,015 top-level artifact queries conceal 144,135 record tests to save 139 samples. This is precisely why top-level query count alone is not an economic metric.
+
+These counters, together with the native PROOF-ON slowdown above, settle the existing range-grid/direct-run road negatively. They do **not** yet provide native wall/GPU timing for a new scene-DAG consumer, because no such consumer has rendering authority.
+
+## Rejected hypotheses this pass
+
+1. **Dormant proof WGSL is the main default renderer tax** — not supported across views; do not productionize a proof-free shader split from this evidence.
+2. **Zero recurring proof uploads imply active traversal should be cheap** — false; PROOF-ON remains ~34–38% slower.
+3. **A small top-level direct artifact query count is enough** — false; hidden record tests dominate the rejected direct-run candidates.
+4. **More theorem breadth is the next step** — rejected. The current proof already knows useful facts; the economic failure is delivering relevance cheaply enough to the ray.
 
 ## Exact next continuation point
 
-1. Re-read canonical and PR #350 head before mutation.
-2. Let run #2923 settle; do not infer performance from source.
-3. If SDF verification fails, diagnose the exact failing native gate before touching the comparator.
-4. If SDF verification passes, inspect the dependent Release A/B artifact/output and extract the three-arm measurements for both maintained camera views: dormant wall/GPU ratios and deltas, compile/pipeline/gather/submission CPU, WGSL byte delta, resident proof bytes, recurring upload bytes, and the historical PROOF-OFF/PROOF-ON ratio.
-5. Only after that evidence gives a Rung-1 verdict should this same PR/thread advance to the single-authored-Perlin relevance-cost ledger (queries + hidden record tests + exact samples saved/executed + CPU/GPU/artifact costs).
+Rung 1 is complete. Stay on PR #350 / this same successor thread.
 
-Do not grant proof state new pixel authority in this rung.
+The next bounded pass should **not** invent another spatial theorem or revive rejected direct-run/atlas structures. It should specify and test the smallest scene-DAG-derived consumer that can eliminate relevance discovery rather than merely accelerate it. Before granting pixel authority, the consumer must have an explicit O(1)-ish execution artifact keyed from already-admitted/rendered semantic structure, with full accounting for branch/record tests, exact samples saved, compile/repair cost, resident bytes, and native wall time. If no such consumer can be expressed without reintroducing search, record that negative result and stop the road.
+
+Preserve exact fail-open authority, local invalidation, rho/density theorem separation, and independent V1–V4 volumetric semantics. Do not grant proof state pixel authority merely because Rung 1 is green.
