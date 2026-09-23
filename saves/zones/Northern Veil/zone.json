@@ -24,14 +24,14 @@
   "spatialRoot": {
     "id": "northern_veil.celestial-vault-root",
     "origin": [
-      0.0,
-      30.0,
-      80.0
+      0,
+      30,
+      80
     ],
     "scale": [
-      1.0,
-      1.0,
-      1.0
+      1,
+      1,
+      1
     ],
     "field": {
       "mode": "AST",
@@ -49,7 +49,7 @@
               "scalarForm": {
                 "terms": [
                   {
-                    "c": 0.0,
+                    "c": 0,
                     "factors": {}
                   }
                 ]
@@ -61,11 +61,11 @@
     },
     "vectorField": {
       "mode": "Procedural",
-      "baseFlowX": 0.0,
-      "baseFlowY": 0.0,
-      "baseFlowZ": 0.0,
-      "frequency": 1.0,
-      "amplitude": 0.0
+      "baseFlowX": 0,
+      "baseFlowY": 0,
+      "baseFlowZ": 0,
+      "frequency": 1,
+      "amplitude": 0
     },
     "authoredProperties": {
       "displayName": {
@@ -106,28 +106,28 @@
     {
       "id": "northern_veil.aurora.primary-emerald-curtain",
       "origin": [
-        0.0,
-        22.0,
-        70.0
+        0,
+        22,
+        70
       ],
       "scale": [
-        36.0,
-        14.0,
-        12.0
+        36,
+        14,
+        12
       ],
       "field": {
         "mode": "Procedural",
-        "baseDensity": 1.0,
-        "frequency": 1.0,
-        "amplitude": 1.0
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
       },
       "vectorField": {
         "mode": "Procedural",
-        "baseFlowX": 0.0,
-        "baseFlowY": 0.0,
-        "baseFlowZ": 0.0,
-        "frequency": 1.0,
-        "amplitude": 0.0
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
       },
       "volumeDensity": {
         "input": "x",
@@ -150,10 +150,10 @@
                   }
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 26,
@@ -166,7 +166,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -189,7 +189,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 28.0,
+                                            "c": 28,
                                             "factors": {}
                                           }
                                         ]
@@ -204,7 +204,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -215,7 +215,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -224,7 +224,7 @@
                           ]
                         },
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 26,
@@ -237,7 +237,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -260,7 +260,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 10.0,
+                                                "c": 10,
                                                 "factors": {}
                                               }
                                             ]
@@ -275,7 +275,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -286,7 +286,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -305,7 +305,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -337,9 +337,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "var": "x",
+                                                                "variable": "x",
                                                                 "scale": 0.12,
-                                                                "shift": 0.0
+                                                                "shift": 0
                                                               }
                                                             ]
                                                           }
@@ -358,9 +358,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "var": "x",
+                                                            "variable": "x",
                                                             "scale": 0.24,
-                                                            "shift": 0.0
+                                                            "shift": 0
                                                           }
                                                         ]
                                                       }
@@ -391,7 +391,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -402,7 +402,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -415,7 +415,7 @@
                       ]
                     },
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 4,
@@ -441,9 +441,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "var": "x",
+                                        "variable": "x",
                                         "scale": 1.4,
-                                        "shift": 0.0
+                                        "shift": 0
                                       }
                                     ]
                                   }
@@ -517,7 +517,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -528,7 +528,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -646,7 +646,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.0,
+                        "c": 1,
                         "factors": {}
                       }
                     ]
@@ -670,15 +670,15 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 1,
-                              "var": "wi_x"
+                              "var": "wi.x"
                             },
                             {
                               "op": 1,
-                              "var": "wo_x"
+                              "var": "wo.x"
                             }
                           ]
                         },
@@ -686,28 +686,28 @@
                           "op": 4,
                           "children": [
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_y"
+                                  "var": "wi.y"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_y"
+                                  "var": "wo.y"
                                 }
                               ]
                             },
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_z"
+                                  "var": "wi.z"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_z"
+                                  "var": "wo.z"
                                 }
                               ]
                             }
@@ -732,7 +732,7 @@
               "op": 2,
               "children": [
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -769,9 +769,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -783,7 +783,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -820,9 +820,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -834,7 +834,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -871,9 +871,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.35,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -905,34 +905,38 @@
         "volumetric.channels": {
           "t": "string",
           "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
         }
       }
     },
     {
       "id": "northern_veil.aurora.secondary-cyan-ribbon",
       "origin": [
-        12.0,
-        28.0,
-        100.0
+        12,
+        28,
+        100
       ],
       "scale": [
-        30.0,
-        12.0,
-        10.0
+        30,
+        12,
+        10
       ],
       "field": {
         "mode": "Procedural",
-        "baseDensity": 1.0,
-        "frequency": 1.0,
-        "amplitude": 1.0
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
       },
       "vectorField": {
         "mode": "Procedural",
-        "baseFlowX": 0.0,
-        "baseFlowY": 0.0,
-        "baseFlowZ": 0.0,
-        "frequency": 1.0,
-        "amplitude": 0.0
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
       },
       "volumeDensity": {
         "input": "x",
@@ -955,10 +959,10 @@
                   }
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 26,
@@ -971,7 +975,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -994,7 +998,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 22.0,
+                                            "c": 22,
                                             "factors": {}
                                           }
                                         ]
@@ -1009,7 +1013,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -1020,7 +1024,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -1029,7 +1033,7 @@
                           ]
                         },
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 26,
@@ -1042,7 +1046,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -1080,7 +1084,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -1091,7 +1095,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -1110,7 +1114,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -1142,9 +1146,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "var": "x",
+                                                                "variable": "x",
                                                                 "scale": 0.14,
-                                                                "shift": 0.0
+                                                                "shift": 0
                                                               }
                                                             ]
                                                           }
@@ -1163,9 +1167,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "var": "x",
+                                                            "variable": "x",
                                                             "scale": 0.28,
-                                                            "shift": 0.0
+                                                            "shift": 0
                                                           }
                                                         ]
                                                       }
@@ -1196,7 +1200,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -1207,7 +1211,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -1220,7 +1224,7 @@
                       ]
                     },
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 4,
@@ -1246,9 +1250,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "var": "x",
+                                        "variable": "x",
                                         "scale": 1.6,
-                                        "shift": 0.0
+                                        "shift": 0
                                       }
                                     ]
                                   }
@@ -1322,7 +1326,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -1333,7 +1337,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -1451,7 +1455,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.0,
+                        "c": 1,
                         "factors": {}
                       }
                     ]
@@ -1475,15 +1479,15 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 1,
-                              "var": "wi_x"
+                              "var": "wi.x"
                             },
                             {
                               "op": 1,
-                              "var": "wo_x"
+                              "var": "wo.x"
                             }
                           ]
                         },
@@ -1491,28 +1495,28 @@
                           "op": 4,
                           "children": [
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_y"
+                                  "var": "wi.y"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_y"
+                                  "var": "wo.y"
                                 }
                               ]
                             },
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_z"
+                                  "var": "wi.z"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_z"
+                                  "var": "wo.z"
                                 }
                               ]
                             }
@@ -1537,7 +1541,7 @@
               "op": 2,
               "children": [
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -1574,9 +1578,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -1588,7 +1592,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -1625,9 +1629,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -1639,7 +1643,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -1676,9 +1680,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.28,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -1710,34 +1714,38 @@
         "volumetric.channels": {
           "t": "string",
           "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
         }
       }
     },
     {
       "id": "northern_veil.aurora.accent-violet-crest",
       "origin": [
-        -10.0,
-        36.0,
-        85.0
+        -10,
+        36,
+        85
       ],
       "scale": [
-        32.0,
-        10.0,
-        14.0
+        32,
+        10,
+        14
       ],
       "field": {
         "mode": "Procedural",
-        "baseDensity": 1.0,
-        "frequency": 1.0,
-        "amplitude": 1.0
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
       },
       "vectorField": {
         "mode": "Procedural",
-        "baseFlowX": 0.0,
-        "baseFlowY": 0.0,
-        "baseFlowZ": 0.0,
-        "frequency": 1.0,
-        "amplitude": 0.0
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
       },
       "volumeDensity": {
         "input": "x",
@@ -1760,10 +1768,10 @@
                   }
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 26,
@@ -1776,7 +1784,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -1799,7 +1807,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 24.0,
+                                            "c": 24,
                                             "factors": {}
                                           }
                                         ]
@@ -1814,7 +1822,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -1825,7 +1833,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -1834,7 +1842,7 @@
                           ]
                         },
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 26,
@@ -1847,7 +1855,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -1870,7 +1878,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 7.0,
+                                                "c": 7,
                                                 "factors": {}
                                               }
                                             ]
@@ -1885,7 +1893,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -1896,7 +1904,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -1915,7 +1923,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -1942,14 +1950,14 @@
                                                       "scalarForm": {
                                                         "terms": [
                                                           {
-                                                            "c": -2.0,
+                                                            "c": -2,
                                                             "factors": {},
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "var": "x",
+                                                                "variable": "x",
                                                                 "scale": 0.1,
-                                                                "shift": 0.0
+                                                                "shift": 0
                                                               }
                                                             ]
                                                           }
@@ -1968,9 +1976,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "var": "x",
+                                                            "variable": "x",
                                                             "scale": 0.2,
-                                                            "shift": 0.0
+                                                            "shift": 0
                                                           }
                                                         ]
                                                       }
@@ -2001,7 +2009,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -2012,7 +2020,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -2025,7 +2033,7 @@
                       ]
                     },
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 4,
@@ -2051,9 +2059,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "var": "x",
+                                        "variable": "x",
                                         "scale": 0.8,
-                                        "shift": 0.0
+                                        "shift": 0
                                       }
                                     ]
                                   }
@@ -2127,7 +2135,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -2138,7 +2146,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -2253,7 +2261,7 @@
               "scalarForm": {
                 "terms": [
                   {
-                    "c": 1.0,
+                    "c": 1,
                     "factors": {}
                   }
                 ]
@@ -2272,7 +2280,7 @@
               "op": 2,
               "children": [
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -2309,9 +2317,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -2323,7 +2331,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -2360,9 +2368,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -2374,7 +2382,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -2411,9 +2419,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.22,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -2445,34 +2453,38 @@
         "volumetric.channels": {
           "t": "string",
           "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
         }
       }
     },
     {
       "id": "northern_veil.aurora.deep-crimson-fringe",
       "origin": [
-        4.0,
-        15.0,
-        55.0
+        4,
+        15,
+        55
       ],
       "scale": [
-        26.0,
-        6.0,
-        8.0
+        26,
+        6,
+        8
       ],
       "field": {
         "mode": "Procedural",
-        "baseDensity": 1.0,
-        "frequency": 1.0,
-        "amplitude": 1.0
+        "baseDensity": 1,
+        "frequency": 1,
+        "amplitude": 1
       },
       "vectorField": {
         "mode": "Procedural",
-        "baseFlowX": 0.0,
-        "baseFlowY": 0.0,
-        "baseFlowZ": 0.0,
-        "frequency": 1.0,
-        "amplitude": 0.0
+        "baseFlowX": 0,
+        "baseFlowY": 0,
+        "baseFlowZ": 0,
+        "frequency": 1,
+        "amplitude": 0
       },
       "volumeDensity": {
         "input": "x",
@@ -2495,10 +2507,10 @@
                   }
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 26,
@@ -2511,7 +2523,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -2534,7 +2546,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 18.0,
+                                            "c": 18,
                                             "factors": {}
                                           }
                                         ]
@@ -2549,7 +2561,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -2560,7 +2572,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -2569,7 +2581,7 @@
                           ]
                         },
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 26,
@@ -2582,7 +2594,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -2605,7 +2617,7 @@
                                           "scalarForm": {
                                             "terms": [
                                               {
-                                                "c": 4.0,
+                                                "c": 4,
                                                 "factors": {}
                                               }
                                             ]
@@ -2620,7 +2632,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -2631,7 +2643,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -2650,7 +2662,7 @@
                                       "scalarForm": {
                                         "terms": [
                                           {
-                                            "c": 1.0,
+                                            "c": 1,
                                             "factors": {}
                                           }
                                         ]
@@ -2682,9 +2694,9 @@
                                                             "trans": [
                                                               {
                                                                 "kind": 0,
-                                                                "var": "x",
+                                                                "variable": "x",
                                                                 "scale": 0.15,
-                                                                "shift": 0.0
+                                                                "shift": 0
                                                               }
                                                             ]
                                                           }
@@ -2703,9 +2715,9 @@
                                                         "trans": [
                                                           {
                                                             "kind": 1,
-                                                            "var": "x",
+                                                            "variable": "x",
                                                             "scale": 0.3,
-                                                            "shift": 0.0
+                                                            "shift": 0
                                                           }
                                                         ]
                                                       }
@@ -2736,7 +2748,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 0.0,
+                                        "c": 0,
                                         "factors": {}
                                       }
                                     ]
@@ -2747,7 +2759,7 @@
                                   "scalarForm": {
                                     "terms": [
                                       {
-                                        "c": 1.0,
+                                        "c": 1,
                                         "factors": {}
                                       }
                                     ]
@@ -2760,7 +2772,7 @@
                       ]
                     },
                     {
-                      "op": 4,
+                      "op": 6,
                       "children": [
                         {
                           "op": 4,
@@ -2786,9 +2798,9 @@
                                     "trans": [
                                       {
                                         "kind": 1,
-                                        "var": "x",
+                                        "variable": "x",
                                         "scale": 1.8,
-                                        "shift": 0.0
+                                        "shift": 0
                                       }
                                     ]
                                   }
@@ -2862,7 +2874,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 0.0,
+                                    "c": 0,
                                     "factors": {}
                                   }
                                 ]
@@ -2873,7 +2885,7 @@
                               "scalarForm": {
                                 "terms": [
                                   {
-                                    "c": 1.0,
+                                    "c": 1,
                                     "factors": {}
                                   }
                                 ]
@@ -2991,7 +3003,7 @@
                   "scalarForm": {
                     "terms": [
                       {
-                        "c": 1.0,
+                        "c": 1,
                         "factors": {}
                       }
                     ]
@@ -3015,15 +3027,15 @@
                       "op": 4,
                       "children": [
                         {
-                          "op": 4,
+                          "op": 6,
                           "children": [
                             {
                               "op": 1,
-                              "var": "wi_x"
+                              "var": "wi.x"
                             },
                             {
                               "op": 1,
-                              "var": "wo_x"
+                              "var": "wo.x"
                             }
                           ]
                         },
@@ -3031,28 +3043,28 @@
                           "op": 4,
                           "children": [
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_y"
+                                  "var": "wi.y"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_y"
+                                  "var": "wo.y"
                                 }
                               ]
                             },
                             {
-                              "op": 4,
+                              "op": 6,
                               "children": [
                                 {
                                   "op": 1,
-                                  "var": "wi_z"
+                                  "var": "wi.z"
                                 },
                                 {
                                   "op": 1,
-                                  "var": "wo_z"
+                                  "var": "wo.z"
                                 }
                               ]
                             }
@@ -3077,7 +3089,7 @@
               "op": 2,
               "children": [
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -3114,9 +3126,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -3128,7 +3140,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -3165,9 +3177,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -3179,7 +3191,7 @@
                   ]
                 },
                 {
-                  "op": 4,
+                  "op": 6,
                   "children": [
                     {
                       "op": 0,
@@ -3216,9 +3228,9 @@
                                 "trans": [
                                   {
                                     "kind": 1,
-                                    "var": "t",
+                                    "variable": "t",
                                     "scale": 0.4,
-                                    "shift": 0.0
+                                    "shift": 0
                                   }
                                 ]
                               }
@@ -3250,6 +3262,10 @@
         "volumetric.channels": {
           "t": "string",
           "v": "V0 D + V1 sigma_t + V2 sigma_s/C_v + V3 Phi + V4 E_v"
+        },
+        "aurora.mathFix": {
+          "t": "string",
+          "v": "Scale(op=6) products; canonical wi.x/wo.x phase bindings"
         }
       }
     }
@@ -3260,9 +3276,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z-20",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          -20.0
+          -20
         ],
         "authoritativeAxis": [
           0,
@@ -3293,22 +3309,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          -20.0,
-          1.0
+          -20,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3349,9 +3365,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -3385,9 +3401,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z-20",
         "center": [
-          30.0,
+          30,
           -0.6,
-          -20.0
+          -20
         ],
         "authoritativeAxis": [
           0,
@@ -3418,22 +3434,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          -20.0,
-          1.0
+          -20,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3474,9 +3490,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -3510,9 +3526,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z20",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          20.0
+          20
         ],
         "authoritativeAxis": [
           0,
@@ -3543,22 +3559,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          20.0,
-          1.0
+          20,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3599,9 +3615,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -3635,9 +3651,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z20",
         "center": [
-          30.0,
+          30,
           -0.6,
-          20.0
+          20
         ],
         "authoritativeAxis": [
           0,
@@ -3668,22 +3684,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          20.0,
-          1.0
+          20,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3724,9 +3740,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -3760,9 +3776,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z60",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          60.0
+          60
         ],
         "authoritativeAxis": [
           0,
@@ -3793,22 +3809,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          60.0,
-          1.0
+          60,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3849,9 +3865,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -3885,9 +3901,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z60",
         "center": [
-          30.0,
+          30,
           -0.6,
-          60.0
+          60
         ],
         "authoritativeAxis": [
           0,
@@ -3918,22 +3934,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          60.0,
-          1.0
+          60,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -3974,9 +3990,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4010,9 +4026,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z100",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          100.0
+          100
         ],
         "authoritativeAxis": [
           0,
@@ -4043,22 +4059,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          100.0,
-          1.0
+          100,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4099,9 +4115,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4135,9 +4151,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z100",
         "center": [
-          30.0,
+          30,
           -0.6,
-          100.0
+          100
         ],
         "authoritativeAxis": [
           0,
@@ -4168,22 +4184,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          100.0,
-          1.0
+          100,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4224,9 +4240,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4260,9 +4276,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z140",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          140.0
+          140
         ],
         "authoritativeAxis": [
           0,
@@ -4293,22 +4309,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          140.0,
-          1.0
+          140,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4349,9 +4365,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4385,9 +4401,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z140",
         "center": [
-          30.0,
+          30,
           -0.6,
-          140.0
+          140
         ],
         "authoritativeAxis": [
           0,
@@ -4418,22 +4434,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          140.0,
-          1.0
+          140,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4474,9 +4490,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4510,9 +4526,9 @@
       {
         "objectID": "northern_veil.ice.plate_x-30_z180",
         "center": [
-          -30.0,
+          -30,
           -0.6,
-          180.0
+          180
         ],
         "authoritativeAxis": [
           0,
@@ -4543,22 +4559,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -30,
           -0.6,
-          180.0,
-          1.0
+          180,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4599,9 +4615,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4635,9 +4651,9 @@
       {
         "objectID": "northern_veil.ice.plate_x30_z180",
         "center": [
-          30.0,
+          30,
           -0.6,
-          180.0
+          180
         ],
         "authoritativeAxis": [
           0,
@@ -4668,22 +4684,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          30.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          30,
           -0.6,
-          180.0,
-          1.0
+          180,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4724,9 +4740,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            30.0,
+            30,
             0.5,
-            20.0
+            20
           ],
           "offset": [
             0,
@@ -4760,9 +4776,9 @@
       {
         "objectID": "northern_veil.dais.platform",
         "center": [
-          0.0,
+          0,
           -0.4,
-          0.0
+          0
         ],
         "authoritativeAxis": [
           0,
@@ -4793,22 +4809,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
           -0.4,
-          0.0,
-          1.0
+          0,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4849,9 +4865,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            8.0,
+            8,
             0.4,
-            8.0
+            8
           ],
           "offset": [
             0,
@@ -4885,9 +4901,9 @@
       {
         "objectID": "northern_veil.mountain.west_0",
         "center": [
-          -55.0,
-          12.0,
-          30.0
+          -55,
+          12,
+          30
         ],
         "authoritativeAxis": [
           0,
@@ -4903,7 +4919,7 @@
           1,
           1,
           1,
-          18.0,
+          18,
           0.35,
           0.15,
           2,
@@ -4918,22 +4934,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -55.0,
-          12.0,
-          30.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          12,
+          30,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -4974,9 +4990,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            18.0,
-            18.0
+            14,
+            18,
+            18
           ],
           "offset": [
             0,
@@ -5002,9 +5018,9 @@
       {
         "objectID": "northern_veil.mountain.east_0",
         "center": [
-          55.0,
-          18.0,
-          30.0
+          55,
+          18,
+          30
         ],
         "authoritativeAxis": [
           0,
@@ -5020,7 +5036,7 @@
           1,
           1,
           1,
-          20.0,
+          20,
           0.35,
           0.15,
           2,
@@ -5035,22 +5051,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          55.0,
-          18.0,
-          30.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          18,
+          30,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5091,9 +5107,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            20.0,
-            18.0
+            14,
+            20,
+            18
           ],
           "offset": [
             0,
@@ -5119,9 +5135,9 @@
       {
         "objectID": "northern_veil.mountain.west_1",
         "center": [
-          -55.0,
-          16.0,
-          70.0
+          -55,
+          16,
+          70
         ],
         "authoritativeAxis": [
           0,
@@ -5137,7 +5153,7 @@
           1,
           1,
           1,
-          24.0,
+          24,
           0.35,
           0.15,
           2,
@@ -5152,22 +5168,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -55.0,
-          16.0,
-          70.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          16,
+          70,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5208,9 +5224,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            24.0,
-            18.0
+            14,
+            24,
+            18
           ],
           "offset": [
             0,
@@ -5236,9 +5252,9 @@
       {
         "objectID": "northern_veil.mountain.east_1",
         "center": [
-          55.0,
-          22.0,
-          70.0
+          55,
+          22,
+          70
         ],
         "authoritativeAxis": [
           0,
@@ -5254,7 +5270,7 @@
           1,
           1,
           1,
-          24.0,
+          24,
           0.35,
           0.15,
           2,
@@ -5269,22 +5285,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          55.0,
-          22.0,
-          70.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          22,
+          70,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5325,9 +5341,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            24.0,
-            18.0
+            14,
+            24,
+            18
           ],
           "offset": [
             0,
@@ -5353,9 +5369,9 @@
       {
         "objectID": "northern_veil.mountain.west_2",
         "center": [
-          -55.0,
-          20.0,
-          110.0
+          -55,
+          20,
+          110
         ],
         "authoritativeAxis": [
           0,
@@ -5371,7 +5387,7 @@
           1,
           1,
           1,
-          18.0,
+          18,
           0.35,
           0.15,
           2,
@@ -5386,22 +5402,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -55.0,
-          20.0,
-          110.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          20,
+          110,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5442,9 +5458,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            18.0,
-            18.0
+            14,
+            18,
+            18
           ],
           "offset": [
             0,
@@ -5470,9 +5486,9 @@
       {
         "objectID": "northern_veil.mountain.east_2",
         "center": [
-          55.0,
-          14.0,
-          110.0
+          55,
+          14,
+          110
         ],
         "authoritativeAxis": [
           0,
@@ -5488,7 +5504,7 @@
           1,
           1,
           1,
-          20.0,
+          20,
           0.35,
           0.15,
           2,
@@ -5503,22 +5519,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          55.0,
-          14.0,
-          110.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          14,
+          110,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5559,9 +5575,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            20.0,
-            18.0
+            14,
+            20,
+            18
           ],
           "offset": [
             0,
@@ -5587,9 +5603,9 @@
       {
         "objectID": "northern_veil.mountain.west_3",
         "center": [
-          -55.0,
-          12.0,
-          150.0
+          -55,
+          12,
+          150
         ],
         "authoritativeAxis": [
           0,
@@ -5605,7 +5621,7 @@
           1,
           1,
           1,
-          24.0,
+          24,
           0.35,
           0.15,
           2,
@@ -5620,22 +5636,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -55.0,
-          12.0,
-          150.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          12,
+          150,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5676,9 +5692,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            24.0,
-            18.0
+            14,
+            24,
+            18
           ],
           "offset": [
             0,
@@ -5704,9 +5720,9 @@
       {
         "objectID": "northern_veil.mountain.east_3",
         "center": [
-          55.0,
-          18.0,
-          150.0
+          55,
+          18,
+          150
         ],
         "authoritativeAxis": [
           0,
@@ -5722,7 +5738,7 @@
           1,
           1,
           1,
-          24.0,
+          24,
           0.35,
           0.15,
           2,
@@ -5737,22 +5753,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          55.0,
-          18.0,
-          150.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          18,
+          150,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5793,9 +5809,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            24.0,
-            18.0
+            14,
+            24,
+            18
           ],
           "offset": [
             0,
@@ -5821,9 +5837,9 @@
       {
         "objectID": "northern_veil.mountain.west_4",
         "center": [
-          -55.0,
-          16.0,
-          190.0
+          -55,
+          16,
+          190
         ],
         "authoritativeAxis": [
           0,
@@ -5839,7 +5855,7 @@
           1,
           1,
           1,
-          18.0,
+          18,
           0.35,
           0.15,
           2,
@@ -5854,22 +5870,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          -55.0,
-          16.0,
-          190.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -55,
+          16,
+          190,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -5910,9 +5926,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            18.0,
-            18.0
+            14,
+            18,
+            18
           ],
           "offset": [
             0,
@@ -5938,9 +5954,9 @@
       {
         "objectID": "northern_veil.mountain.east_4",
         "center": [
-          55.0,
-          22.0,
-          190.0
+          55,
+          22,
+          190
         ],
         "authoritativeAxis": [
           0,
@@ -5956,7 +5972,7 @@
           1,
           1,
           1,
-          20.0,
+          20,
           0.35,
           0.15,
           2,
@@ -5971,22 +5987,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          55.0,
-          22.0,
-          190.0,
-          1.0
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          55,
+          22,
+          190,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
@@ -6027,9 +6043,9 @@
           "op": 0,
           "prim": 1,
           "dims": [
-            14.0,
-            20.0,
-            18.0
+            14,
+            20,
+            18
           ],
           "offset": [
             0,
@@ -6055,9 +6071,9 @@
       {
         "objectID": "northern_veil.stele.monolith",
         "center": [
-          0.0,
+          0,
           1.6,
-          10.0
+          10
         ],
         "authoritativeAxis": [
           0,
@@ -6088,22 +6104,22 @@
           0
         ],
         "transform": [
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          1.0,
-          0.0,
-          0.0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
           1.6,
-          10.0,
-          1.0
+          10,
+          1
         ],
         "x2D": 100,
         "y2D": 100,
