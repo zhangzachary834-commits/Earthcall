@@ -1045,10 +1045,12 @@ int main() {
         check(noPhase.ok &&
                   noPhase.wgsl.find("const HAS_AUTHORED_VOLUME_PHASE: bool = false") !=
                       std::string::npos &&
+                  noPhase.wgsl.find("var phase = 1.0") != std::string::npos &&
                   noPhase.wgsl.find(
-                      "mediumChroma * (scattering / extinction) * (oldT - transmittance)") !=
-                      std::string::npos,
-              "absent Phi keeps the literal V2 scattering accumulation path");
+                      "mediumChroma * incidentLi * (scattering / extinction) * phase *") !=
+                      std::string::npos &&
+                  noPhase.wgsl.find("hgPhase") == std::string::npos,
+              "absent Phi preserves exact isotropic identity inside reconciled incident-light transport");
 
         // Phi = 1 + g * wi.z. Scalar-by-scalar multiplication belongs inside
         // ScalarForm's exact algebra; MathNode::Scale is vector/scalar only and
