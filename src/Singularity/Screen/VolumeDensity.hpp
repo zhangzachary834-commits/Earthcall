@@ -61,6 +61,48 @@ struct VolumeDensityBinding {
     double temporalDelta = 0.0;
 };
 
+// V5 medium-set groundwork: one canonical six-channel content fingerprint.
+// World-level medium discovery and renderer memoization must agree on exactly
+// which authored truths make one participating medium's content distinct.
+// Keep this helper narrow: placement/time are runtime values, while the six
+// authored medium expressions are content identity.
+inline uint64_t volumeContentRevision(const VolumeDensityBinding& medium) {
+    uint64_t combined = medium.densityRevision;
+    auto combine = [&](uint64_t next) {
+        combined ^= next + 0x9e3779b97f4a7c15ULL +
+                    (combined << 6) + (combined >> 2);
+    };
+    combine(medium.extinctionRevision);
+    combine(medium.scatteringRevision);
+    combine(medium.volumeChromaRevision);
+    combine(medium.phaseRevision);
+    combine(medium.emissionRevision);
+    return combined;
+}
+
+// Stable ordered membership identity for the Zone-projected medium set. This is
+// deliberately textual at the EngineRender boundary so membership/order and all
+// six authored channel revisions remain inspectable. The renderer receives this
+// already-bounded world truth and never rescans the Zone to reconstruct it.
+inline void appendVolumeSetIdentity(std::string& identity,
+                                    const std::string& stableId,
+                                    const VolumeDensityBinding& medium) {
+    identity += stableId;
+    identity += ":";
+    identity += std::to_string(medium.densityRevision);
+    identity += ":";
+    identity += std::to_string(medium.extinctionRevision);
+    identity += ":";
+    identity += std::to_string(medium.scatteringRevision);
+    identity += ":";
+    identity += std::to_string(medium.volumeChromaRevision);
+    identity += ":";
+    identity += std::to_string(medium.phaseRevision);
+    identity += ":";
+    identity += std::to_string(medium.emissionRevision);
+    identity += "\\n";
+}
+
 // Resolve authored density from one FieldNode into the renderer-facing bounded
 // projection. Sourcehood is intentionally irrelevant: fog need not illuminate,
 // and a radiant source need not be participating medium.
