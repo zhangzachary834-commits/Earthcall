@@ -1181,6 +1181,63 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
+    // Cross-rung incident transport: a participating medium may consume one
+    // authored source, but it may not steal that source's Timeline or phase
+    // authority. V3's absent-Phi identity remains exactly 1.
+    // ---------------------------------------------------------------------
+    {
+        auto densityNode = std::shared_ptr<OntoMath::MathNode>(number(0.8).release());
+        auto extinctionNode = std::shared_ptr<OntoMath::MathNode>(number(0.4).release());
+        auto scatteringNode = std::shared_ptr<OntoMath::MathNode>(number(0.3).release());
+        auto chromaNode = std::shared_ptr<OntoMath::MathNode>(vector3(0.7, 0.8, 1.0).release());
+        OntoMath::Piecewise density = OntoMath::Piecewise::continuous(densityNode);
+        OntoMath::Piecewise extinction = OntoMath::Piecewise::continuous(extinctionNode);
+        OntoMath::Piecewise scattering = OntoMath::Piecewise::continuous(scatteringNode);
+        OntoMath::Piecewise volumeChroma = OntoMath::Piecewise::continuous(chromaNode);
+
+        auto sourceRoot = std::make_shared<OntoMath::MathNode>();
+        sourceRoot->op = OntoMath::MathNode::Op::Add;
+        auto sourceTime = std::make_unique<OntoMath::MathNode>();
+        sourceTime->op = OntoMath::MathNode::Op::ValueLeaf;
+        sourceTime->variableName = OntoMath::kTimeVar;
+        sourceRoot->children.push_back(std::move(sourceTime));
+        sourceRoot->children.push_back(number(0.25));
+        OntoMath::Piecewise sourceRho = OntoMath::Piecewise::continuous(sourceRoot);
+
+        const auto before = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma,
+            nullptr, nullptr, nullptr, &sourceRho);
+        check(before.ok, "volume transport accepts an authored incident-source rho");
+
+        const auto sourceFnStart = before.wgsl.find("fn lightRadianceEval");
+        const auto sourceFnEnd = before.wgsl.find("fn lightChromaEval", sourceFnStart);
+        const std::string sourceFn =
+            sourceFnStart != std::string::npos && sourceFnEnd != std::string::npos
+                ? before.wgsl.substr(sourceFnStart, sourceFnEnd - sourceFnStart)
+                : std::string{};
+        check(sourceFn.find("u.sourceTime.x") != std::string::npos &&
+                  sourceFn.find("instances[g_instIdx].time.x") == std::string::npos,
+              "incident source t remains source-owned inside volumetric transport");
+
+        check(before.wgsl.find("var phase = 1.0") != std::string::npos &&
+                  before.wgsl.find("hgPhase") == std::string::npos &&
+                  before.wgsl.find("volumeControl.z") == std::string::npos,
+              "absent authored Phi stays exact isotropic identity even under incident light");
+
+        sourceRoot->children[1]->scalarForm.terms[0].coefficient = 0.5;
+        const auto refreshed = sdfwgsl::collectVolumeParams(
+            &density, &extinction, &scattering, &volumeChroma,
+            nullptr, nullptr, nullptr, &sourceRho);
+        const auto after = sdfwgsl::compileVolume(
+            &density, &extinction, &scattering, &volumeChroma,
+            nullptr, nullptr, nullptr, &sourceRho);
+        check(refreshed.ok && after.ok && before.wgsl == after.wgsl &&
+                  sameFloats(refreshed.values, after.params) &&
+                  !sameFloats(before.params, after.params),
+              "numeric incident-source edit refreshes volume params without WGSL regeneration");
+    }
+
+    // ---------------------------------------------------------------------
     // V4. Emission sovereignty: E_v(p,omega,t) is independent medium truth.
     //     It emits vec3 radiance even when no external source illuminates it.
     // ---------------------------------------------------------------------
