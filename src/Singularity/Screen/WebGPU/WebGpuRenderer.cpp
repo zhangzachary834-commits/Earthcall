@@ -1039,6 +1039,7 @@ struct VolumeGlobalUniforms {
     // xyz = exactly one enabled admitted direct source; w=1 iff valid.
     glm::vec4 incidentSource;
     glm::vec4 incidentColor;
+    glm::vec4 sourceTime;
     glm::vec4 volumeControl;
 };
 } // namespace
@@ -2319,6 +2320,50 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
     if (enabledIncidentSources != 1) incidentSource = nullptr;
 
+    // Cross-rung transport may consume source rho/chi/alpha, but it must consume
+    // their revision/structure authority too. Pointer identity alone is not enough:
+    // an authored source can change value or structure in place.
+    //
+    // Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
+    // These revisions, layouts, memo keys, caches, and GPU projections are
+    // epistemic/execution machinery, not new world ontology. Let the machine's
+    // knowledge grow aggressively while keeping the authored semantic basis small:
+    // source emission remains source truth, medium response remains medium truth,
+    // and transport consumes both without redefining either. The cache may know
+    // more; it must never decide what a thing IS. This is the minimum–maximum
+    // principle at the renderer boundary.
+    auto combineRevision = [](uint64_t& seed, uint64_t value) {
+        seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+    };
+    uint64_t incidentSourceContentRevision = 0;
+    if (incidentSource) {
+        combineRevision(incidentSourceContentRevision, incidentSource->radianceRevision);
+        combineRevision(incidentSourceContentRevision, incidentSource->chromaRevision);
+        combineRevision(incidentSourceContentRevision, incidentSource->angularRevision);
+    }
+
+    const auto incidentRadianceLayout = sdfwgsl::inspectScalarExpression(
+        incidentSource ? incidentSource->radianceExpr : nullptr, true);
+    const auto incidentChromaLayout = sdfwgsl::inspectVectorExpression(
+        incidentSource ? incidentSource->chromaExpr : nullptr, true);
+    const auto incidentAngularLayout = sdfwgsl::inspectAngularExpression(
+        incidentSource ? incidentSource->angularExpr : nullptr);
+    const bool incidentSourceLayoutsOk =
+        incidentRadianceLayout.ok && incidentChromaLayout.ok && incidentAngularLayout.ok;
+    const std::string incidentSourceLayoutError =
+        !incidentRadianceLayout.ok
+            ? "incident source radiance: " + incidentRadianceLayout.error
+            : !incidentChromaLayout.ok
+                  ? "incident source chroma: " + incidentChromaLayout.error
+                  : !incidentAngularLayout.ok
+                        ? "incident source angular: " + incidentAngularLayout.error
+                        : std::string{};
+    const std::string incidentSourceStructure =
+        "\nincident-source-rho:\n" + incidentRadianceLayout.structure +
+        "\nincident-source-chi:\n" + incidentChromaLayout.structure +
+        "\nincident-source-alpha:\n" + incidentAngularLayout.structure +
+        (incidentAngularLayout.readsOmega ? ":reads-omega" : ":no-omega");
+
     // V5 chooses the production path by the number of valid bounded media, not
     // merely by vector size. One valid medium remains on the exact V4 path.
     std::vector<const Rendering::VolumeDensityBinding*> activeMedia;
@@ -2357,17 +2402,19 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
 
         auto& setMemo = _volumeSetProgramCache[setKey];
-        const uint64_t setContentRevision = volumeDensitySourcesRevision();
+        uint64_t setContentRevision = volumeDensitySourcesRevision();
+        combineRevision(setContentRevision, incidentSourceContentRevision);
         if (setMemo.contentRevision != setContentRevision) {
             setMemo.contentRevision = setContentRevision;
             setMemo.phaseReadsWi = false;
 
-            bool layoutsOk = true;
-            std::string layoutError;
+            bool layoutsOk = incidentSourceLayoutsOk;
+            std::string layoutError = incidentSourceLayoutError;
             std::string structure =
-                "medium-count:" + std::to_string(activeMedia.size()) + "\n";
+                "medium-count:" + std::to_string(activeMedia.size()) + "\n" +
+                incidentSourceStructure + "\n";
 
-            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+            for (std::size_t i = 0; layoutsOk && i < activeMedia.size(); ++i) {
                 const auto& medium = *activeMedia[i];
                 const auto densityLayout =
                     sdfwgsl::inspectDensityExpression(medium.densityExpr);
@@ -2578,8 +2625,8 @@ void WebGpuRenderer::flushVolumeComposite() {
             incidentSource ? incidentSource->chromaExpr : nullptr,
             incidentSource ? incidentSource->angularExpr : nullptr};
         auto& memo = _volumeProgramCache[programKey];
-        const uint64_t mediumContentRevision =
-            Rendering::volumeContentRevision(medium);
+        uint64_t mediumContentRevision = Rendering::volumeContentRevision(medium);
+        combineRevision(mediumContentRevision, incidentSourceContentRevision);
         if (memo.contentRevision != mediumContentRevision) {
             const auto densityLayout =
                 sdfwgsl::inspectDensityExpression(medium.densityExpr);
@@ -2600,11 +2647,14 @@ void WebGpuRenderer::flushVolumeComposite() {
             memo.phaseReadsWo = phaseLayout.readsWo;
             memo.emissionReadsOmega = emissionLayout.readsOmega;
 
-            if (!densityLayout.ok || !extinctionLayout.ok ||
+            if (!incidentSourceLayoutsOk ||
+                !densityLayout.ok || !extinctionLayout.ok ||
                 !scatteringLayout.ok || !volumeChromaLayout.ok ||
                 !phaseLayout.ok || !emissionLayout.ok || !occluderLayout.ok) {
                 memo.ok = false;
-                memo.error = !densityLayout.ok
+                memo.error = !incidentSourceLayoutsOk
+                    ? incidentSourceLayoutError
+                    : !densityLayout.ok
                     ? "density: " + densityLayout.error
                     : !extinctionLayout.ok
                         ? "extinction: " + extinctionLayout.error
@@ -2633,7 +2683,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
                 "\nvolume-emission:\n" + emissionLayout.structure +
                 (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
-                "\noccluder:\n" + occluderLayout.structure;
+                "\noccluder:\n" + occluderLayout.structure +
+                incidentSourceStructure;
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
                     sdfwgsl::compileVolume(
@@ -2749,10 +2800,15 @@ void WebGpuRenderer::flushVolumeComposite() {
     if (incidentSource) {
         globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
         globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);
-        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.55f, 0.0f);
+        globals.sourceTime = glm::vec4(
+            static_cast<float>(incidentSource->temporalCoordinate),
+            static_cast<float>(incidentSource->temporalDelta), 0.0f, 0.0f);
+        // V3 compatibility remains isotropic unless Phi is explicitly authored.
+        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.0f, 0.0f);
     } else {
         globals.incidentSource = glm::vec4(0.0f);
         globals.incidentColor = glm::vec4(1.0f);
+        globals.sourceTime = glm::vec4(0.0f);
         globals.volumeControl = glm::vec4(0.0f);
     }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
