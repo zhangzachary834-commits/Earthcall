@@ -156,7 +156,8 @@ jobs:
             webgpu_sdf_distance_test \
             webgpu_sdf_color_expr_test \
             webgpu_perlin_exact_gradient_test \
-            webgpu_object_test
+            webgpu_object_test \
+            webgpu_v5_overlap_physics_test
 
       - name: Run CPU SDF proof witnesses
         shell: bash
@@ -187,12 +188,20 @@ jobs:
           set -o pipefail
           ./build/webgpu_object_test 2>&1 | tee webgpu-object-parity.log
 
+      - name: Verify V5 fused overlap physics
+        shell: bash
+        run: |
+          set -o pipefail
+          ./build/webgpu_v5_overlap_physics_test 2>&1 | tee webgpu-v5-overlap-physics.log
+
       - name: Upload WebGPU object/radiance diagnostic
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: webgpu-object-parity-log
-          path: webgpu-object-parity.log
+          path: |
+            webgpu-object-parity.log
+            webgpu-v5-overlap-physics.log
           if-no-files-found: error
           retention-days: 7
 
