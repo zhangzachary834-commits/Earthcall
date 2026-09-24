@@ -2323,6 +2323,15 @@ void WebGpuRenderer::flushVolumeComposite() {
     // Cross-rung transport may consume source rho/chi/alpha, but it must consume
     // their revision/structure authority too. Pointer identity alone is not enough:
     // an authored source can change value or structure in place.
+    //
+    // Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
+    // These revisions, layouts, memo keys, caches, and GPU projections are
+    // epistemic/execution machinery, not new world ontology. Let the machine's
+    // knowledge grow aggressively while keeping the authored semantic basis small:
+    // source emission remains source truth, medium response remains medium truth,
+    // and transport consumes both without redefining either. The cache may know
+    // more; it must never decide what a thing IS. This is the minimum–maximum
+    // principle at the renderer boundary.
     auto combineRevision = [](uint64_t& seed, uint64_t value) {
         seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
     };
