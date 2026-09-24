@@ -2,6 +2,7 @@
 // Person a first-class session serialization root.
 
 #include "Person/Person.hpp"
+#include "Person/PersonDatabase.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
@@ -148,6 +149,25 @@ int main() {
         updatePriorPersonSerializations(renamedPerson, "StalePerson");
 
         assert(!std::filesystem::exists(oldProfileEcform));
+    }
+
+    // Test sanitize collision rename (e.g. "A/B" -> "A:B") via Person::rename
+    {
+        Person person = makePerson("A/B");
+        PersonDatabase::getInstance().savePerson(person);
+
+        std::string personFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+        std::string expectedProfilePath = personFolder + "/A_B.ecform";
+        assert(std::filesystem::exists(expectedProfilePath));
+
+        // Rename from "A/B" to "A:B". Both sanitize to "A_B".
+        person.rename("A:B");
+
+        // The canonical profile file must STILL exist and contain the updated display name "A:B"
+        assert(std::filesystem::exists(expectedProfilePath));
+        nlohmann::json jProfile = SaveSystem::readSaveData(expectedProfilePath);
+        assert(jProfile.is_object());
+        assert(jProfile["displayName"] == "A:B");
     }
 
     // Test that updatePriorPersonSerializations with empty oldName does NOT overwrite unkeyed legacy save records of other Persons
