@@ -16,6 +16,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -44,6 +45,23 @@ std::shared_ptr<OntoMath::MathNode> vectorNode(double x, double y, double z) {
     node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(x)));
     node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(y)));
     node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(z)));
+    return node;
+}
+
+std::shared_ptr<OntoMath::MathNode> valueNode(const char* name) {
+    auto node = std::make_shared<OntoMath::MathNode>();
+    node->op = OntoMath::MathNode::Op::ValueLeaf;
+    node->variableName = name;
+    return node;
+}
+
+std::shared_ptr<OntoMath::MathNode> powNode(
+    const std::shared_ptr<OntoMath::MathNode>& base,
+    double exponent) {
+    auto node = std::make_shared<OntoMath::MathNode>();
+    node->op = OntoMath::MathNode::Op::Pow;
+    node->children.push_back(std::make_unique<OntoMath::MathNode>(*base));
+    node->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(exponent)));
     return node;
 }
 
@@ -118,8 +136,6 @@ int main() {
         eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
     renderer.setCamera(view3d, proj, eye);
 
-    // Both media occupy exactly z=[-1,+1] on the centre ray. D=1 means the
-    // authored sigma_t values below are the actual extinction coefficients.
     auto densityNode = scalarNode(1.0);
     auto extinctionANode = scalarNode(0.35);
     auto extinctionBNode = scalarNode(0.90);
@@ -159,10 +175,6 @@ int main() {
     unsigned char fused[4];
     readCentre(fused);
 
-    // Closed form for constant overlap over L=2:
-    //   C = (S_A + S_B) * (1-exp(-(sigmaA+sigmaB)L))/(sigmaA+sigmaB)
-    // This is the exact continuous law implemented by the shared interval gain;
-    // the 96 equal steps telescope to the same answer for constant coefficients.
     constexpr double L = 2.0;
     constexpr double sigmaA = 0.35;
     constexpr double sigmaB = 0.90;
@@ -179,9 +191,6 @@ int main() {
            nearByte(fused[2], expectedB) &&
            "V5 overlap does not match the shared-extinction closed form");
 
-    // Counterfactual old architecture: integrate each medium independently,
-    // then composite the two whole-medium premultiplied answers.  The two
-    // possible orders are both physically different from the fused result.
     const double alphaA = 1.0 - std::exp(-sigmaA * L);
     const double alphaB = 1.0 - std::exp(-sigmaB * L);
     const double radA = sourceA * alphaA / sigmaA;
@@ -199,10 +208,6 @@ int main() {
     assert(distAB >= 25 && distBA >= 25 &&
            "V5 native overlap is not strongly distinguished from sequential whole-medium alpha");
 
-    // Independent-source overlap: keep A's red E_v, but replace B's blue E_v
-    // with authored blue scattering/chroma.  Both channels must survive the
-    // same shared transport integral; this proves overlap is not merely summing
-    // two self-emission vectors while silently dropping V2/V3 source structure.
     auto scatterBNode = scalarNode(0.30);
     auto chromaBNode = vectorNode(0.0, 0.0, 1.0);
     OntoMath::Piecewise scatterB = OntoMath::Piecewise::continuous(scatterBNode);
@@ -227,10 +232,77 @@ int main() {
            nearByte(mixed[2], expectedB) &&
            "V5 overlap dropped an independent emission or scattering/chroma contribution");
 
+    // POST-V5 NULL-PARTICIPANT STABILITY TRIBUNAL ---------------------------
+    auto z = valueNode("z");
+    auto z8 = powNode(z, 8.0);
+    auto varyingEmissionNode = std::make_shared<OntoMath::MathNode>();
+    varyingEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+    varyingEmissionNode->children.push_back(std::make_unique<OntoMath::MathNode>(*z8));
+    varyingEmissionNode->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+    varyingEmissionNode->children.push_back(std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+    OntoMath::Piecewise varyingEmission = OntoMath::Piecewise::continuous(varyingEmissionNode);
+    auto zeroDensityNode = scalarNode(0.0);
+    auto zeroExtinctionNode = scalarNode(0.0);
+    auto zeroEmissionNode = vectorNode(0.0, 0.0, 0.0);
+    OntoMath::Piecewise zeroDensity = OntoMath::Piecewise::continuous(zeroDensityNode);
+    OntoMath::Piecewise zeroExtinction = OntoMath::Piecewise::continuous(zeroExtinctionNode);
+    OntoMath::Piecewise zeroEmission = OntoMath::Piecewise::continuous(zeroEmissionNode);
+
+    Rendering::VolumeDensityBinding varyingA = a;
+    varyingA.extinctionExpr = &zeroExtinction;
+    varyingA.extinctionRevision = 5901;
+    varyingA.emissionExpr = &varyingEmission;
+    varyingA.emissionRevision = 5902;
+    varyingA.scatteringExpr = &zeroScatter;
+    varyingA.scatteringRevision = 5903;
+    varyingA.volumeChromaExpr = nullptr;
+    varyingA.volumeChromaRevision = 0;
+
+    renderer.setVolumeDensitySources({varyingA}, 5904);
+    renderer.setModel(glm::mat4(1.0f));
+    renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+    renderer.composeVolumes();
+    renderer.endFrame();
+    unsigned char baseline[4];
+    readCentre(baseline);
+
+    Rendering::VolumeDensityBinding nullB = varyingA;
+    nullB.scale = glm::vec3(0.45f);
+    nullB.densityExpr = &zeroDensity;
+    nullB.densityRevision = 5910;
+    nullB.extinctionExpr = &zeroExtinction;
+    nullB.extinctionRevision = 5911;
+    nullB.emissionExpr = &zeroEmission;
+    nullB.emissionRevision = 5912;
+
+    int maxNullDrift = 0;
+    const float nullPositions[] = {-0.45f, -0.20f, 0.0f, 0.25f, 0.45f};
+    for (size_t i = 0; i < sizeof(nullPositions) / sizeof(nullPositions[0]); ++i) {
+        nullB.origin = glm::vec3(0.0f, 0.0f, nullPositions[i]);
+        renderer.setVolumeDensitySources({varyingA, nullB}, 5920u + static_cast<uint32_t>(i));
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char withNull[4];
+        readCentre(withNull);
+        const int drift = std::max({
+            std::abs(int(withNull[0]) - int(baseline[0])),
+            std::abs(int(withNull[1]) - int(baseline[1])),
+            std::abs(int(withNull[2]) - int(baseline[2]))});
+        maxNullDrift = std::max(maxNullDrift, drift);
+        std::printf("post-V5 null B z=%+.2f baseline=(%d,%d,%d) withNull=(%d,%d,%d) drift=%d\n",
+                    nullPositions[i], baseline[0], baseline[1], baseline[2],
+                    withNull[0], withNull[1], withNull[2], drift);
+    }
+    std::printf("post-V5 null-participant max RGB byte drift=%d\n", maxNullDrift);
+    assert(maxNullDrift <= 1 &&
+           "semantically null member materially changed another medium solely by repartitioning samples");
+
     wgpuBufferRelease(readback);
     wgpuTextureViewRelease(view);
     wgpuTextureRelease(target);
     setCurrentRenderer(nullptr);
-    std::printf("PASS: V5 fused overlap physics tribunal\n");
+    std::printf("PASS: V5 fused overlap physics + post-V5 null-participant stability tribunal\n");
     return 0;
 }
