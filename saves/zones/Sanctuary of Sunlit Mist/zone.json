@@ -1,0 +1,1758 @@
+{
+  "identifier": "Sanctuary of Sunlit Mist",
+  "name": "Sanctuary of Sunlit Mist",
+  "authors": [
+    "Zachary Zhang",
+    "Antigravity"
+  ],
+  "injected_by": "Antigravity",
+  "scope": "global",
+  "deletable": false,
+  "qualities": [
+    "sanctuary",
+    "volumetric",
+    "mist",
+    "light_beams",
+    "ontomath",
+    "participating_media"
+  ],
+  "parentZone": "",
+  "owner": "default",
+  "spatialRoot": {
+    "id": "mist.sanctuary-sun",
+    "origin": [
+      0.0,
+      16.0,
+      -14.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "field": {
+      "mode": "Procedural",
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "amplitude": 1.0
+    },
+    "vectorField": {
+      "mode": "Procedural",
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "amplitude": 0.0
+    },
+    "authoredProperties": {
+      "displayName": {
+        "t": "string",
+        "v": "Sanctuary Celestial Sun"
+      },
+      "light.source": {
+        "t": "bool",
+        "v": true
+      },
+      "light.enabled": {
+        "t": "bool",
+        "v": true
+      },
+      "light.ambient": {
+        "t": "float",
+        "v": 0.08
+      },
+      "light.diffuse": {
+        "t": "float",
+        "v": 3.8
+      },
+      "light.specular": {
+        "t": "float",
+        "v": 2.5
+      },
+      "light.intensity": {
+        "t": "float",
+        "v": 3.0
+      },
+      "light.color": {
+        "t": "vec3",
+        "v": [
+          1.0,
+          0.88,
+          0.65
+        ]
+      }
+    }
+  },
+  "spatialFields": [
+    {
+      "id": "mist.sanctuary.sunlit-mist-volume",
+      "origin": [
+        0.0,
+        4.0,
+        0.0
+      ],
+      "scale": [
+        12.0,
+        6.0,
+        16.0
+      ],
+      "field": {
+        "mode": "Procedural",
+        "baseDensity": 1.0,
+        "frequency": 1.0,
+        "amplitude": 1.0
+      },
+      "vectorField": {
+        "mode": "Procedural",
+        "baseFlowX": 0.0,
+        "baseFlowY": 0.0,
+        "baseFlowZ": 0.0,
+        "frequency": 1.0,
+        "amplitude": 0.0
+      },
+      "volumeDensity": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 1.0,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeExtinction": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.28,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeScattering": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 0.25,
+                    "factors": {}
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "volumeChroma": {
+        "input": "x",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.95,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.97,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1.0,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "volumeOccluder": {
+        "op": 4,
+        "prim": 0,
+        "dims": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "offset": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "p0": 0.0,
+        "p1": 0.0,
+        "t": 0.5,
+        "children": [
+          {
+            "op": 0,
+            "prim": 1,
+            "dims": [
+              10.0,
+              3.0,
+              0.8
+            ],
+            "offset": [
+              0.0,
+              4.0,
+              -7.0
+            ],
+            "p0": 0.0,
+            "p1": 0.0,
+            "t": 0.5
+          },
+          {
+            "op": 2,
+            "prim": 0,
+            "dims": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "offset": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "p0": 0.0,
+            "p1": 0.0,
+            "t": 0.5,
+            "children": [
+              {
+                "op": 0,
+                "prim": 1,
+                "dims": [
+                  1.2,
+                  2.2,
+                  1.2
+                ],
+                "offset": [
+                  -4.0,
+                  4.0,
+                  -7.0
+                ],
+                "p0": 0.0,
+                "p1": 0.0,
+                "t": 0.5
+              },
+              {
+                "op": 2,
+                "prim": 0,
+                "dims": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "offset": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "p0": 0.0,
+                "p1": 0.0,
+                "t": 0.5,
+                "children": [
+                  {
+                    "op": 0,
+                    "prim": 1,
+                    "dims": [
+                      1.4,
+                      2.4,
+                      1.2
+                    ],
+                    "offset": [
+                      0.0,
+                      4.0,
+                      -7.0
+                    ],
+                    "p0": 0.0,
+                    "p1": 0.0,
+                    "t": 0.5
+                  },
+                  {
+                    "op": 0,
+                    "prim": 1,
+                    "dims": [
+                      1.2,
+                      2.2,
+                      1.2
+                    ],
+                    "offset": [
+                      4.0,
+                      4.0,
+                      -7.0
+                    ],
+                    "p0": 0.0,
+                    "p1": 0.0,
+                    "t": 0.5
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "authoredProperties": {
+        "displayName": {
+          "t": "string",
+          "v": "Sanctuary Sunlit Mist Volume"
+        }
+      }
+    }
+  ],
+  "world": {
+    "objects": [
+      {
+        "objectID": "mist.sanctuary.floor",
+        "center": [
+          0.0,
+          -0.2,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          -0.2,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.14,
+            0.16,
+            0.20
+          ],
+          [
+            0.14,
+            0.16,
+            0.20
+          ],
+          [
+            0.14,
+            0.16,
+            0.20
+          ],
+          [
+            0.14,
+            0.16,
+            0.20
+          ],
+          [
+            0.14,
+            0.16,
+            0.20
+          ],
+          [
+            0.14,
+            0.16,
+            0.20
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            10.0,
+            0.2,
+            14.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          10.15,
+          0.35,
+          14.15
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Sanctuary Flagstone Floor"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.altar_base",
+        "center": [
+          0.0,
+          0.1,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.22,
+            0.25,
+            0.30
+          ],
+          [
+            0.22,
+            0.25,
+            0.30
+          ],
+          [
+            0.22,
+            0.25,
+            0.30
+          ],
+          [
+            0.22,
+            0.25,
+            0.30
+          ],
+          [
+            0.22,
+            0.25,
+            0.30
+          ],
+          [
+            0.22,
+            0.25,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 2,
+          "dims": [
+            2.5,
+            0.1,
+            2.5
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.05,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          2.65,
+          0.25,
+          2.65
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Sanctuary Altar Dais"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.altar_table",
+        "center": [
+          0.0,
+          0.6,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.35,
+            0.38,
+            0.44
+          ],
+          [
+            0.35,
+            0.38,
+            0.44
+          ],
+          [
+            0.35,
+            0.38,
+            0.44
+          ],
+          [
+            0.35,
+            0.38,
+            0.44
+          ],
+          [
+            0.35,
+            0.38,
+            0.44
+          ],
+          [
+            0.35,
+            0.38,
+            0.44
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            1.6,
+            0.4,
+            0.9
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          1.75,
+          0.55,
+          1.05
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Sanctuary Altar Table"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_L_m10",
+        "center": [
+          -5.0,
+          3.5,
+          -10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -5.0,
+          3.5,
+          -10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar L-1"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_R_m10",
+        "center": [
+          5.0,
+          3.5,
+          -10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          5.0,
+          3.5,
+          -10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar R-1"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_L_0",
+        "center": [
+          -5.0,
+          3.5,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -5.0,
+          3.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar L-2"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_R_0",
+        "center": [
+          5.0,
+          3.5,
+          0.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          5.0,
+          3.5,
+          0.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar R-2"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_L_10",
+        "center": [
+          -5.0,
+          3.5,
+          10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -5.0,
+          3.5,
+          10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar L-3"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.pillar_R_10",
+        "center": [
+          5.0,
+          3.5,
+          10.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          5.0,
+          3.5,
+          10.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ],
+          [
+            0.24,
+            0.26,
+            0.30
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 4,
+          "dims": [
+            0.45,
+            3.5,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.6,
+          3.65,
+          0.6
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Colonnade Pillar R-3"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.clerestory_lintel",
+        "center": [
+          0.0,
+          8.0,
+          -7.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          8.0,
+          -7.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.20,
+            0.22,
+            0.26
+          ],
+          [
+            0.20,
+            0.22,
+            0.26
+          ],
+          [
+            0.20,
+            0.22,
+            0.26
+          ],
+          [
+            0.20,
+            0.22,
+            0.26
+          ],
+          [
+            0.20,
+            0.22,
+            0.26
+          ],
+          [
+            0.20,
+            0.22,
+            0.26
+          ]
+        ],
+        "field": {
+          "op": 4,
+          "prim": 0,
+          "dims": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5,
+          "children": [
+            {
+              "op": 0,
+              "prim": 1,
+              "dims": [
+                10.0,
+                3.0,
+                0.8
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "p0": 0.0,
+              "p1": 0.0,
+              "t": 0.5
+            },
+            {
+              "op": 2,
+              "prim": 0,
+              "dims": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "offset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "p0": 0.0,
+              "p1": 0.0,
+              "t": 0.5,
+              "children": [
+                {
+                  "op": 0,
+                  "prim": 1,
+                  "dims": [
+                    1.2,
+                    2.2,
+                    1.2
+                  ],
+                  "offset": [
+                    -4.0,
+                    0.0,
+                    0.0
+                  ],
+                  "p0": 0.0,
+                  "p1": 0.0,
+                  "t": 0.5
+                },
+                {
+                  "op": 2,
+                  "prim": 0,
+                  "dims": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "offset": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "p0": 0.0,
+                  "p1": 0.0,
+                  "t": 0.5,
+                  "children": [
+                    {
+                      "op": 0,
+                      "prim": 1,
+                      "dims": [
+                        1.4,
+                        2.4,
+                        1.2
+                      ],
+                      "offset": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "p0": 0.0,
+                      "p1": 0.0,
+                      "t": 0.5
+                    },
+                    {
+                      "op": 0,
+                      "prim": 1,
+                      "dims": [
+                        1.2,
+                        2.2,
+                        1.2
+                      ],
+                      "offset": [
+                        4.0,
+                        0.0,
+                        0.0
+                      ],
+                      "p0": 0.0,
+                      "p1": 0.0,
+                      "t": 0.5
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "fieldExtent": [
+          10.15,
+          3.15,
+          0.95
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Sanctuary Clerestory Aperture Screen"
+          }
+        }
+      },
+      {
+        "objectID": "mist.sanctuary.stele",
+        "center": [
+          0.0,
+          1.0,
+          7.0
+        ],
+        "authoritativeAxis": [
+          0,
+          1,
+          0
+        ],
+        "geometryType": 10,
+        "shapeKind": 10,
+        "materialId": "material.cathedral_basalt",
+        "renderMode": 0,
+        "rotationResponsiveness": 10,
+        "shapeParams": [
+          1,
+          1,
+          1,
+          0.5,
+          0.35,
+          0.15,
+          2,
+          0.25,
+          0.12,
+          100,
+          100
+        ],
+        "targetRotation": [
+          0,
+          0,
+          0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          1.0,
+          7.0,
+          1.0
+        ],
+        "x2D": 100,
+        "y2D": 100,
+        "zOrder2D": 0,
+        "faceColors": [
+          [
+            0.28,
+            0.32,
+            0.40
+          ],
+          [
+            0.28,
+            0.32,
+            0.40
+          ],
+          [
+            0.28,
+            0.32,
+            0.40
+          ],
+          [
+            0.28,
+            0.32,
+            0.40
+          ],
+          [
+            0.28,
+            0.32,
+            0.40
+          ],
+          [
+            0.28,
+            0.32,
+            0.40
+          ]
+        ],
+        "field": {
+          "op": 0,
+          "prim": 1,
+          "dims": [
+            0.8,
+            1.0,
+            0.25
+          ],
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "p0": 0.0,
+          "p1": 0.0,
+          "t": 0.5
+        },
+        "fieldExtent": [
+          0.95,
+          1.15,
+          0.40
+        ],
+        "authoredProperties": {
+          "displayName": {
+            "t": "string",
+            "v": "Stele: The Physics of Sunlit Mist"
+          },
+          "stele.inscription": {
+            "t": "string",
+            "v": "SANCTUARY OF SUNLIT MIST\n--------------------------------------\nBefore you unfolds the living synthesis of Volumetric Light Beams shining through atmospheric mist:\n\n1. LIGHT: A warm celestial source (diffuse 3.8, intensity 3.0, gold tint [1.0, 0.88, 0.65]) positioned at the zenith.\n2. MEDIUM: Suspended participating mist governed by OntoMath fields:\n   - Extinction (sigma_t = 0.28): Gradual exponential attenuation along the view and light rays.\n   - Scattering (sigma_s = 0.25): High single-scattering albedo (~0.89) imparting radiant luminosity.\n   - Chroma (C_v = [0.95, 0.97, 1.0]): Pristine atmospheric particulate tone.\n3. SPACE & OCCLUSION: An authored SDF clerestory aperture wall (SDF CSG subtraction)\n   carves three high window openings, casting distinct volumetric shafts into the hall.\n4. SHADOW & PENUMBRA: Bounded sphere-tracing evaluates source visibility (V = 1 inside the beams,\n   V = 0 in deep colonnade shadow), with soft penumbra transitions at the beam boundaries.\n5. PHASE FUNCTION: Henyey-Greenstein forward-scattering (g ~ 0.55) intensifies radiance\n   when looking toward the sunlit aperture.\n\nAuthor: Zachary Zhang & Antigravity (First Mover)"
+          }
+        }
+      }
+    ]
+  },
+  "formationRelations": [],
+  "lexemes": []
+}

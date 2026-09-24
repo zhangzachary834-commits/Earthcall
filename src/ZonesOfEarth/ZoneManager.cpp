@@ -1847,23 +1847,24 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     // things the session snapshot still holds — most
                     // critically the formation relation graph, which used
                     // to have no load path of its own. Merge rather than
-                    // discard `zj` whole; replaceObjects=false keeps the
-                    // store's objects authoritative.
-                    applyZoneJson(*z, zj, /*replaceObjects=*/false);
-                    // The store wins per-FIELD, not per-object: a field the
-                    // World authors after this identity snapshot was taken —
-                    // faceColors added to an object the snapshot predates,
-                    // say — must not regress to a hardcoded default just
-                    // because the snapshot never recorded it. See
-                    // mergeZoneObjectsFromJson's own comment for the mechanism.
-                    if (zj.contains("world")) {
-                        mergeZoneObjectsFromJson(zj["world"], *z);
-                    } else if (zj.contains("objects")) {
-                        mergeZoneObjectsFromJson(zj, *z);
+                    if (zj.is_object()) {
+                        applyZoneJson(*z, zj, /*replaceObjects=*/false);
+                        // The store wins per-FIELD, not per-object: a field the
+                        // World authors after this identity snapshot was taken —
+                        // faceColors added to an object the snapshot predates,
+                        // say — must not regress to a hardcoded default just
+                        // because the snapshot never recorded it. See
+                        // mergeZoneObjectsFromJson's own comment for the mechanism.
+                        if (zj.contains("world")) {
+                            mergeZoneObjectsFromJson(zj["world"], *z);
+                        } else if (zj.contains("objects")) {
+                            mergeZoneObjectsFromJson(zj, *z);
+                        }
                     }
                     return;
                 }
             }
+            if (!zj.is_object()) return;
             auto z = makeZoneFromJson(zj);
             addZone(z);
             if (!snapshotRestore && !isObservationZone(*z)) {

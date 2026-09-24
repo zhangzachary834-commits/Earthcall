@@ -223,6 +223,9 @@ PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 // radiance. omega is world-space sample -> eye in an emission-owned context.
 EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr);
 
+// Inspect participating-medium occluder geometry S(p) -> signed distance.
+ScalarExpressionLayout inspectOccluderLayout(const geom::SdfNode* root);
+
 // Volumetric V0c: compile one authored density structure into a dedicated
 // depth-aware volume-composite shader. This is intentionally separate from
 // drawImplicit: a participating medium is not a hard surface and must not own
@@ -232,11 +235,15 @@ Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* scatteringExpr = nullptr,
                       const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                       const OntoMath::Piecewise* phaseExpr = nullptr,
-                      const OntoMath::Piecewise* emissionExpr = nullptr);
+                      const OntoMath::Piecewise* emissionExpr = nullptr,
+                      const geom::SdfNode* occluderSdf = nullptr,
+                      const OntoMath::Piecewise* lightRadianceExpr = nullptr,
+                      const OntoMath::Piecewise* lightChromaExpr = nullptr,
+                      const OntoMath::Piecewise* lightAngularExpr = nullptr);
 
 // V5 world-medium program input. This is compiler transport data only; it does
-// not create a Medium ontology. Each entry preserves the six independent V0-V4
-// authored channels of one projected FieldNode.
+// not create a Medium ontology. Each entry preserves the independent authored
+// channels of one projected FieldNode.
 struct VolumeProgramInput {
     const OntoMath::Piecewise* densityExpr = nullptr;
     const OntoMath::Piecewise* extinctionExpr = nullptr;
@@ -244,6 +251,10 @@ struct VolumeProgramInput {
     const OntoMath::Piecewise* volumeChromaExpr = nullptr;
     const OntoMath::Piecewise* phaseExpr = nullptr;
     const OntoMath::Piecewise* emissionExpr = nullptr;
+    const geom::SdfNode* occluderSdf = nullptr;
+    const OntoMath::Piecewise* lightRadianceExpr = nullptr;
+    const OntoMath::Piecewise* lightChromaExpr = nullptr;
+    const OntoMath::Piecewise* lightAngularExpr = nullptr;
 };
 
 // V5 exact overlap baseline. Reuses compileVolume() for every member's evaluator
@@ -252,14 +263,17 @@ struct VolumeProgramInput {
 // header record; each medium's paramOffset points at its own parameter segment.
 Program compileVolumeSet(const std::vector<VolumeProgramInput>& media);
 
-// Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s,
-// C_v, Phi and E_v numeric parameter slots without regenerating shader source
-// when structure is unchanged.
+// Value-only companion to compileVolume(). Recollects numeric parameter slots
+// without regenerating shader source when structure is unchanged.
 ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
                                    const OntoMath::Piecewise* extinctionExpr = nullptr,
                                    const OntoMath::Piecewise* scatteringExpr = nullptr,
                                    const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                                    const OntoMath::Piecewise* phaseExpr = nullptr,
-                                   const OntoMath::Piecewise* emissionExpr = nullptr);
+                                   const OntoMath::Piecewise* emissionExpr = nullptr,
+                                   const geom::SdfNode* occluderSdf = nullptr,
+                                   const OntoMath::Piecewise* lightRadianceExpr = nullptr,
+                                   const OntoMath::Piecewise* lightChromaExpr = nullptr,
+                                   const OntoMath::Piecewise* lightAngularExpr = nullptr);
 
 } // namespace sdfwgsl

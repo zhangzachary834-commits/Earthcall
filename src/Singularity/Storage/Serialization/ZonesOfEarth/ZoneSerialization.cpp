@@ -18,6 +18,8 @@
 extern MaterialManager materials;
 
 std::string zoneIdFromJson(const nlohmann::json& zj) {
+    if (zj.is_string()) return zj.get<std::string>();
+    if (!zj.is_object()) return std::string{};
     return zj.value("identifier", zj.value("name", std::string{}));
 }
 
@@ -336,6 +338,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
 }
 
 void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+    if (!zj.is_object()) return;
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
     }

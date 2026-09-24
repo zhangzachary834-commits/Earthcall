@@ -1,4 +1,5 @@
 #include "FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 namespace geom {
@@ -27,6 +28,9 @@ nlohmann::json FieldNode::toJson() const {
     }
     if (volumeEmission && !volumeEmission->pieces.empty()) {
         j["volumeEmission"] = volumeEmission->toJson();
+    }
+    if (geom::isSdfActive(volumeOccluder.get())) {
+        j["volumeOccluder"] = geom::sdfToJson(*volumeOccluder);
     }
     if (lightChroma && !lightChroma->pieces.empty()) {
         j["lightChroma"] = lightChroma->toJson();
@@ -129,6 +133,14 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             *volumeEmission = OntoMath::Piecewise::fromJson(j["volumeEmission"]);
         } else {
             *volumeEmission = OntoMath::Piecewise{};
+        }
+    }
+    if (volumeOccluder) {
+        if (j.contains("volumeOccluder")) {
+            *volumeOccluder = geom::sdfFromJson(j["volumeOccluder"]);
+        } else {
+            *volumeOccluder = geom::SdfNode{};
+            volumeOccluder->dims = glm::vec3(0.0f);
         }
     }
 

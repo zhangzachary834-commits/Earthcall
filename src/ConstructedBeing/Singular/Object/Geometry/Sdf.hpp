@@ -133,6 +133,13 @@ float evalSdf(const SdfNode& n, const glm::vec3& p);
 // Evaluate the conservative interval of the tree over a local-space AABB.
 OntoMath::Interval evalRange(const SdfNode& n, const glm::vec3& boxMin, const glm::vec3& boxMax);
 
+// True when the SDF represents active, non-empty geometry.
+inline bool isSdfActive(const SdfNode* node) {
+    if (!node) return false;
+    return (node->dims.x > 0.0f || node->dims.y > 0.0f || node->dims.z > 0.0f ||
+            !node->children.empty() || !node->rpn.empty() || node->mathNode != nullptr);
+}
+
 // ---------------------------------------------------------------------------
 // Conservative zero-set hierarchy.
 //

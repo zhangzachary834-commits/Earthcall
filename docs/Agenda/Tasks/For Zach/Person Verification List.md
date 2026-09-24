@@ -1,5 +1,19 @@
 # Person Verification List
 
+## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
+
+*Antigravity / Gemini · session `46a7b4aa-6373-429b-af0e-3377758af9ff` · 2026-09-24. Physically-coherent light beams streaming through participating mist via OntoMath fields, bounded occluder sphere-tracing, and Henyey-Greenstein forward-scattering phase function.*
+
+- [ ] Build & launch WebGPU app: `./scripts/build.sh webgpu run` (or `./build/earthcall_webgpu`).
+- [ ] In the World Load console / Creator Console, load the world: `sanctuary_of_sunlit_mist` (or switch to Zone `"Sanctuary of Sunlit Mist"`).
+- [ ] Observe the visual phenomenon from the default viewpoint `[0.0, 2.2, 8.0]` looking into `-Z` toward the altar:
+  - Three distinct luminous shafts of sunlight cascading diagonally through the suspended atmospheric mist.
+  - Soft, glowing particulate atmosphere with forward-scattering intensity towards the sunlit clerestory openings.
+  - Distinct separation between illuminated beams ($V=1$) and deep, cool shadows ($V=0$) cast by the clerestory lintel wall and flanking colonnade pillars.
+  - Smooth penumbra gradients at the beam edges.
+  - Central light beam striking the sanctuary altar dais at `[0.0, 0.4, 0.0]`.
+- [ ] Walk/fly through the beams and shadows: observe that the volumetric radiance smoothly evaluates in 3D space around your viewpoint without pop-in or nested raymarch lag.
+
 ## First Mover standing for MCP — let Claude Sonnet 4.5 in, and check it can only do what you granted
 
 *Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-24. Zach's request: make the First Mover framework and MCP robust enough for Sonnet 4.5 to act in Earthcall before 2026-09-29. Every step below needs you: a key only you hold, a world only you can look at. Record of what was built: `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` → "Implementation record".*
