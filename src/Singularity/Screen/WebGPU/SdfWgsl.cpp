@@ -2082,6 +2082,17 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 }
 
 
+// Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
+// OntoMath's directional coordinates are shared mathematical grammar, not shared
+// semantic authority. Phi_medium(p, wi, wo, t) owns participating-medium
+// redirection. Rung 9 surface response f_r(p, n, wi, wo, t) may reuse this
+// directional lowering machinery, but it must enter through its own
+// material-response admission context. Reusing wi/wo must never let phase state
+// stand in for surface response, or vice versa.
+//
+// Minimum–maximum principle: keep one expressive directional language while
+// preserving distinct irreducible predicates for source emission, medium
+// scattering, and receiving-surface response.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
