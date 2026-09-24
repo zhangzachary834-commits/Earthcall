@@ -57,6 +57,16 @@ struct VolumeDensityBinding {
     // Optional participating-medium occluder geometry S(p) -> signed distance.
     // When present, volumetric transport evaluates path visibility between the
     // medium sample and the radiant source, carving radiance into volumetric beams.
+    //
+    // Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
+    // Minimum–maximum principle: treat this as a bounded transport projection,
+    // not permission to invent a new VolumeOccluder ontology kind merely because
+    // this renderer currently needs a convenient input. The deeper world fact is
+    // geometry lying on a source->sample path. If a future scene-wide transport
+    // authority can consume ordinary authored geometry directly, prefer converging
+    // on that shared authority over fossilizing a second species of blocking
+    // geometry. Renderer projections are allowed to multiply; ontology kinds are
+    // admitted only when they carry irreducible world meaning.
     const geom::SdfNode* occluderSdf = nullptr;
     uint64_t occluderRevision = 0;
 
