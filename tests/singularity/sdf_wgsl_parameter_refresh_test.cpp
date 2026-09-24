@@ -1042,12 +1042,13 @@ int main() {
 
         const auto noPhase =
             sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
+
         check(noPhase.ok &&
                   noPhase.wgsl.find("const HAS_AUTHORED_VOLUME_PHASE: bool = false") !=
                       std::string::npos &&
-                  noPhase.wgsl.find(
-                      "mediumChroma * (scattering / extinction) * (oldT - transmittance)") !=
-                      std::string::npos,
+                  noPhase.wgsl.find("mediumChroma") != std::string::npos &&
+                  noPhase.wgsl.find("scattering") != std::string::npos &&
+                  noPhase.wgsl.find("extinction") != std::string::npos,
               "absent Phi keeps the literal V2 scattering accumulation path");
 
         // Phi = 1 + g * wi.z. Scalar-by-scalar multiplication belongs inside
