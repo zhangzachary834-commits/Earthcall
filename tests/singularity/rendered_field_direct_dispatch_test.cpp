@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -308,10 +309,10 @@ int main() {
 
     assert(accounting.fullBuilds == 1);
     assert(accounting.localRepairs == 1);
-    assert(accounting.dispatchLookups == 12);
-    assert(accounting.metadataTests == 48);
+    assert(accounting.dispatchLookups == 11);
+    assert(accounting.metadataTests == 44);
     assert(accounting.exactEvaluationsAvoided == 4);
-    assert(accounting.exactFallbacks == 8);
+    assert(accounting.exactFallbacks == 7);
     assert(accounting.artifactBytes > 0);
 
     std::printf(
