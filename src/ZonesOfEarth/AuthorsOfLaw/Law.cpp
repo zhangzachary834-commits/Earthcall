@@ -1435,8 +1435,10 @@ std::size_t ReteNetwork::addAlphaNode(const std::string& description, AlphaPredi
     node.description = description;
     node.predicate = std::move(predicate);
     node.source = source;
+    const std::size_t id = node.id;
     _alphaNodes.push_back(std::move(node));
-    return _alphaNodes.back().id;
+    _alphaIndexById[id] = _alphaNodes.size() - 1;
+    return id;
 }
 
 std::size_t ReteNetwork::addBetaNode(const std::string& description,
@@ -1656,6 +1658,10 @@ void ReteNetwork::dropUnboundAlphaNodes() {
                                   doomed.end();
                        }),
         _alphaNodes.end());
+    _alphaIndexById.clear();
+    for (std::size_t i = 0; i < _alphaNodes.size(); ++i) {
+        _alphaIndexById[_alphaNodes[i].id] = i;
+    }
 }
 
 std::vector<ReteActivation> ReteNetwork::drainAgenda() {
@@ -1718,15 +1724,19 @@ nlohmann::json ReteNetwork::toJson() const {
 }
 
 const ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) const {
-    for (const auto& alpha : _alphaNodes) {
-        if (alpha.id == id) return &alpha;
+    auto it = _alphaIndexById.find(id);
+    if (it != _alphaIndexById.end() && it->second < _alphaNodes.size()) {
+        const auto& node = _alphaNodes[it->second];
+        if (node.id == id) return &node;
     }
     return nullptr;
 }
 
 ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
-    for (auto& alpha : _alphaNodes) {
-        if (alpha.id == id) return &alpha;
+    auto it = _alphaIndexById.find(id);
+    if (it != _alphaIndexById.end() && it->second < _alphaNodes.size()) {
+        auto& node = _alphaNodes[it->second];
+        if (node.id == id) return &node;
     }
     return nullptr;
 }
