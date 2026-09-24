@@ -291,6 +291,25 @@ int main() {
               !manifest["fileHashes"].contains(".unpack_manifest.json"),
           "Manifest deliberately has no stale self-hash");
 
+    // Test 16: a malformed prior ownership manifest is not treated as
+    // "no manifest"; the transaction refuses rather than guessing ownership.
+    std::filesystem::path malformedManifestDir =
+        sandbox / "malformed_manifest_unpack";
+    check(SaveSystem::unpackSaveToDirectory(
+              fullSave, malformedManifestDir.string()),
+          "Fixture unpack for malformed manifest succeeds");
+    {
+        std::ofstream out(malformedManifestDir / ".unpack_manifest.json");
+        out << "{ malformed manifest";
+    }
+    const std::string malformedBefore =
+        treeFingerprint(malformedManifestDir);
+    check(!SaveSystem::unpackSaveToDirectory(
+              fullSave, malformedManifestDir.string()),
+          "Malformed prior manifest refuses re-unpack");
+    check(treeFingerprint(malformedManifestDir) == malformedBefore,
+          "Malformed manifest refusal leaves live tree unchanged");
+
     // Verify no staging/backup/leaf temporary artifacts remain.
     bool hasTempFiles = false;
     std::error_code ec;
