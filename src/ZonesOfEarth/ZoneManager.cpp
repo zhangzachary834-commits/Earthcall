@@ -374,7 +374,11 @@ namespace {
 ZoneManager* g_liveZones = nullptr;
 } // namespace
 
-void ZoneManager::bindLive() { g_liveZones = this; }
+void ZoneManager::bindLive() {
+    g_liveZones = this;
+    // Where a being IS, as law-readable facts (ZoneBounds.cpp).
+    installZoneReadings();
+}
 
 ZoneManager* ZoneManager::live() { return g_liveZones; }
 

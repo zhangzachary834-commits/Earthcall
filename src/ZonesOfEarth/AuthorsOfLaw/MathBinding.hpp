@@ -85,8 +85,13 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         const std::vector<Singular*> beings = Universe::instance().beings();
         for (Singular* being : beings) {
             if (being) {
-                Earthcall::StringId key = Earthcall::StringInterner::intern("@" + being->getIdentifier());
+                const std::string ident = being->getIdentifier();
+                Earthcall::StringId key = Earthcall::StringInterner::intern("@" + ident);
                 s_beingMap[key] = being;
+                if (ident == "Person" || ident == "person") {
+                    s_beingMap[Earthcall::StringInterner::intern("@player")] = being;
+                    s_beingMap[Earthcall::StringInterner::intern("@Player")] = being;
+                }
             }
         }
         s_lastRevision = currentRevision;

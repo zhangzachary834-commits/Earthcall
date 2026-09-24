@@ -54,11 +54,15 @@ On modern macOS (10.15 Catalina through 15+ Sequoia):
    - Diagnostics: `recorder.hasScreenCapturePermission`, `recorder.hasAccessibilityPermission`, `recorder.permissionStatus`, `recorder.accessibilityDetails`.
 
 6. **ScreenChannel Integration**:
-   - `ScreenChannel` also exposes `@screen-channel.recording`, `@screen-channel.snapshot`, `@screen-channel.hasScreenCapturePermission`, and `@screen-channel.hasAccessibilityPermission`.
+   - `ScreenChannel` exposes `@screen-channel.recording`, `@screen-channel.snapshot`, `@screen-channel.hasScreenCapturePermission`, and `@screen-channel.hasAccessibilityPermission`.
+   - Wired bidirectional property delegation: setting `@screen-channel.recording` or `@screen-channel.snapshot` dynamically triggers and reflects `@screen-recorder`'s active state.
 
-7. **Renderer Readback Support**:
+7. **Renderer Readback Support & WebGPU Parity**:
    - Added `virtual bool readPixels(uint8_t* outRgba, uint32_t width, uint32_t height)` to `Renderer.hpp`.
    - Implemented in `OpenGLRenderer` with vertical coordinate flip.
+   - Implemented in `WebGpuRenderer`: added `WGPUTextureUsage_CopySrc` to surface configurations, 256-byte aligned row staging buffer readback, asynchronous mapping polling, and BGRA-to-RGBA conversion without coordinate flip.
+   - Added frame-boundary `checkPendingSnapshot()` in `EngineRender.cpp` so snapshots requested between frames execute synchronously before surface presentation.
+   - Added streaming pipe (`format: "pipe"`) and direct H.264 video encoding (`format: "mp4"` via lightweight `popen` pipe to `ffmpeg`).
 
 ## Verification
 - Headless test suite `tests/singularity/screen_recorder_test.cpp`:
@@ -69,6 +73,17 @@ On modern macOS (10.15 Catalina through 15+ Sequoia):
   - Verified Case 5: Pause and resume states and triggers.
   - Verified Case 6: Snapshot capture and disk file creation.
   - Verified Case 7: Display mode fallback to viewport when OS screen capture is unpermitted.
-  - Verified Case 8: Property delegation between `ScreenChannel` and `ScreenRecorder`.
-  - Result: 8/8 tests passed (100%).
-- Verified `file_channel_test`: 13/13 tests passed (100%).
+  - Verified Case 8: Dynamic property delegation between `ScreenChannel` and `ScreenRecorder` (`recording`, `snapshot`, permissions).
+  - Verified Case 9: Stream pipe execution (`format: "pipe"`) and pending snapshot latch clearing.
+  - Verified Case 10: Authored Law condition evaluation (premise false -> `ConditionsFailed` and snapshot stays false; premise true -> `Applied` and `screen-recorder.snapshot` changes to true, verified on all alias forms `snapshot`, `recorder.snapshot`, `screen-recorder.snapshot`). Verified Law resetting snapshot back to false.
+  - Verified Case 11: Event-triggered Law firing via `EventBus` (`"user-snapshot-requested"`) + `laws.tick()` with condition gating (misfire when premise false; fires and mutates `screen-recorder.snapshot` to true when premise true; frame-boundary `checkPendingSnapshot` saves snapshot and clears trigger).
+  - Verified Case 12: Continuous recording control via Law (starts recording when premise is true, stops recording via reset Law).
+  - Verified Case 13: Round-trip JSON persistence and serialization (`toJson()` / `fromJson()`), verifying that deserialized Laws evaluate conditions and execute property mutations.
+  - Result: 13/13 tests passed (100%).
+- Verified `tests/singularity/channel_paths_test.cpp`:
+  - Added `recorderPrototype` probe to `Rendering::knownPathOptions()` under group `"Channel — Screen Recorder"`.
+  - Probed all ScreenRecorder properties in Creator Console's Law Authoring Window dropdown.
+  - Result: 524/524 advertised channel paths resolved (100% passed).
+- Verified `earthcall_webgpu`: compiled and linked cleanly.
+- Verified test suite: `webgpu_heightfield_sweep_test`, `audio_channel_test`, `audio_recorder_test`, `audio_system_test`, `file_channel_test` all passed (100%).
+

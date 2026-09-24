@@ -115,6 +115,10 @@ public:
     bool getHasScreenCapturePermission() const;
     bool getHasAccessibilityPermission() const;
     bool getRendersImplicitExactly() const;
+    bool getRecording() const;
+    void setRecording(const bool& v);
+    bool getSnapshotTrigger() const;
+    void setSnapshotTrigger(const bool& v);
 
 private:
     void buildProperties() override;

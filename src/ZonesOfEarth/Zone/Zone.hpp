@@ -7,6 +7,7 @@
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <glm/glm.hpp>
+#include <map>
 
 namespace OntoMath {
     class ScalarField;
@@ -136,6 +137,42 @@ public:
     const std::string& getParentZone() const { return _parentZoneName; }
     void setParentZone(const std::string& pZone) { _parentZoneName = pZone; }
 
+    // ------------------------------------------------------------
+    // Zones as mathematical bounds (docs/plans/ZONES_AS_MATHEMATICAL_BOUNDS_PLAN_2026-09-23.md).
+    // Zach, 2026-09-23: a Zone is not "one 3D world here, another there" but
+    // a bound in a continuum, and the continuum is itself a Zone — "a
+    // Dimensional Zone which basically represents an entire continuum of a
+    // dimension upon which values could be had (like 1D, 2D, 3D space)."
+    //
+    // All of it is authored data on the Zone, not C++ kinds:
+    //   within             the containing Zone (the historical parentZone)
+    //   dimension.<axis>   text: the property path a being's coordinate on
+    //                      that axis is read from ("position.x"). Any axis ⇒
+    //                      this Zone is Dimensional. No enum of dimensions.
+    //   placement.<axis>   number: this Zone's frame origin in its parent's
+    //                      frame (translation; rotation/scale are Rung 5)
+    //   extent             ScalarField (OntoMath Piecewise over axis names)
+    //   extent.lo / .hi    optional numbers. Inside ⇔ f defined ∧ lo ≤ f ≤ hi,
+    //                      absent side open — ConditionNode::Kind::Zone's own
+    //                      semantics. Signed-distance extents set hi = 0.
+    // Where a being IS is derived from these (ZoneManager::locate), never
+    // stored: ownership stays a Relation and residence stays the store.
+    static constexpr const char* kDimensionPrefix = "dimension.";
+    static constexpr const char* kPlacementPrefix = "placement.";
+    static constexpr const char* kExtentLo = "extent.lo";
+    static constexpr const char* kExtentHi = "extent.hi";
+
+    // Axis name -> property path, sorted by axis name.
+    std::vector<std::pair<std::string, std::string>> dimensionAxes() const;
+    bool isDimensional() const { return !dimensionAxes().empty(); }
+    // Placement along an axis of the parent's frame; 0 when unauthored.
+    double placementAlong(const std::string& axis) const;
+    const std::shared_ptr<OntoMath::ScalarField>& extent() const { return _extent; }
+    void setExtent(std::shared_ptr<OntoMath::ScalarField> field) { _extent = std::move(field); }
+    // Does the authored extent hold at `coords` (axis -> value, this Zone's
+    // own frame)? No extent = unbounded = true. Undefined math = false.
+    bool extentHolds(const std::map<std::string, PropertyValue>& coords) const;
+
     void setScope(Scope scope) { _scope = scope; }
     Scope scope() const { return _scope; }
 
@@ -177,6 +214,14 @@ private:
     // "identifier"/"name" fields differ (makeZoneFromJson via setName()).
     std::string _identifier;
     std::string _parentZoneName;
+    std::shared_ptr<OntoMath::ScalarField> _extent;
+    std::string propWithin() const { return _parentZoneName; }
+    void propSetWithin(const std::string& id) { _parentZoneName = id; }
+    bool propDimensional() const { return isDimensional(); }
+    // The bound fields above live partly in dynamic properties, which
+    // Zone's hand-written copy does not inherit (Singular base is
+    // default-constructed there). Copied explicitly.
+    void copyBoundsFrom(const Zone& other);
     Scope _scope;
     Qualities _qualities;
     Deletability _deletable;

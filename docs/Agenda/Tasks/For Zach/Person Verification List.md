@@ -1,6 +1,24 @@
 # Person Verification List
 
-## Sun — authored OntoMath radiance field
+## Screen Recorder — Law-Authored Snapshot & Recording Controls
+
+*Antigravity · 2026-09-23. Verification for user-authored Laws targeting `@screen-recorder.snapshot` and `@screen-recorder.recording`.*
+
+- [ ] Boot Earthcall (`earthcall_webgpu`).
+- [ ] Open Creator Console -> Law Authoring Window (`Law Graph / Author Law`).
+- [ ] Verify that the Property Picker now lists properties under **"Channel — Screen Recorder"** (`snapshot`, `recording`, `format`, `status`, etc.).
+- [ ] In the Law Authoring window, author an ECA Law:
+  - **Name**: `Snapshot On Demand`
+  - **Target**: `@screen-recorder`
+  - **Action**: `Set` -> `@screen-recorder.snapshot` (or `snapshot`) := `true`
+  - **Activation / Trigger**: on a custom event (e.g. `user-snapshot-requested`) or condition.
+- [ ] Fire the trigger (or satisfy premise) and confirm:
+  - `screen-recorder.snapshot` is set to `true`.
+  - Next frame boundary executes `checkPendingSnapshot` and writes a timestamped snapshot image (`snapshot_YYYYMMDD_HHMMSS.png`) to `saves/recordings/`.
+  - `screen-recorder.snapshot` resets to `false`.
+- [ ] Open `saves/recordings/` and verify the snapshot image is valid.
+
+
 
 *GPT-5.6 Sol · 2026-09-19. Phase 2 continues Zach's instruction that light be an authored continuous FieldNode/OntoMath function rather than a shader-only noun.*
 
@@ -258,11 +276,12 @@ what a hand feels. → [full task](../Specific%20Tasks/Law%20and%20Reasoning/For
 
 ## Screen Recorder in the Singularity (@screen-recorder)
 
-*Landed 2026-09-08, Gemini Spark. Added `@screen-recorder` Sense-Act first mover with in-engine viewport, host display, and window modes, PPM/PNG/raw stream output, and automatic fallback to viewport when OS screen capture is unpermitted. → [full task](../Specific%20Tasks/Channels%20and%20Language/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)*
+*Landed 2026-09-08 (Gemini Spark), hardened and completed 2026-09-23 (Antigravity). Added `@screen-recorder` Sense-Act first mover with in-engine viewport, host display, and window modes, PPM/PNG/raw/mp4/pipe stream output, automatic fallback to viewport when OS screen capture is unpermitted, real WebGPU GPU buffer readback (`WebGpuRenderer::readPixels`), and seamless `@screen-channel` property delegation. → [full task](../Specific%20Tasks/Channels%20and%20Language/Screen_Recorder_in_Singularity/Screen_Recorder_in_Singularity.md)*
 
-- [ ] **Record In-Engine Frame Sequence or Snapshot.** In the Creator Console, inspect `@screen-recorder`:
-  - Set `@screen-recorder.recording := true` to capture live rendering frames to `saves/recordings/`.
-  - Set `@screen-recorder.snapshot := true` to capture an instant screenshot.
+- [ ] **Record In-Engine Frame Sequence or Snapshot in WebGPU.** Launch `earthcall_webgpu` (`Earthcall.command` or `scripts/build.sh webgpu run`):
+  - In Creator Console or via MCP (`earthcall_screen_record`), set `@screen-recorder.snapshot := true` (or `@screen-channel.snapshot := true`). Inspect the resulting image in `saves/recordings/` and verify it captures the actual 3D rendered world (not a fallback test pattern).
+  - Set `@screen-channel.recording := true` (delegates to `@screen-recorder`), let it run for a couple seconds, then set `@screen-channel.recording := false`. Check `saves/recordings/rec_...` to verify real scene frames are stored.
+  - Set `@screen-recorder.format := "mp4"` and record a session to test direct H.264 video pipeline encoding (requires `ffmpeg` in PATH).
 
 ## Streaming Pipes and Process Pipelines (@stream-channel)
 

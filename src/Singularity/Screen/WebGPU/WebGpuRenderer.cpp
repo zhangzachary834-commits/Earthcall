@@ -630,8 +630,12 @@ void WebGpuRenderer::shutdown() {
     if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
-    if (_sdfInstanceBgl) { wgpuBindGroupLayoutRelease(_sdfInstanceBgl); _sdfInstanceBgl = nullptr; }
     _meshBatches.clear();
+    if (_readbackBuffer) {
+        wgpuBufferRelease(_readbackBuffer);
+        _readbackBuffer = nullptr;
+        _readbackBufferSize = 0;
+    }
 }
 
 bool WebGpuRenderer::initGpuTimestampQueries(bool deviceCapability) {
@@ -2836,3 +2840,100 @@ void WebGpuRenderer::releaseTexture(TextureHandle handle) {
     wgpuTextureRelease(it->second.tex);
     _textures.erase(it);
 }
+
+bool WebGpuRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) {
+    if (!outRgba || width == 0 || height == 0) return false;
+    if (!_device || !_queue || !_surfaceTex) return false;
+
+    // WebGPU requires bytesPerRow to be 256-byte aligned
+    const uint32_t bytesPerRow = (width * 4 + 255) & ~255;
+    const uint64_t bufferSize = static_cast<uint64_t>(bytesPerRow) * height;
+
+    if (!_readbackBuffer || _readbackBufferSize < bufferSize) {
+        if (_readbackBuffer) {
+            wgpuBufferRelease(_readbackBuffer);
+            _readbackBuffer = nullptr;
+        }
+        WGPUBufferDescriptor desc = {};
+        desc.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+        desc.size = bufferSize;
+        _readbackBuffer = wgpuDeviceCreateBuffer(_device, &desc);
+        _readbackBufferSize = bufferSize;
+    }
+
+    if (!_readbackBuffer) return false;
+
+    WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(_device, nullptr);
+
+    WGPUTexelCopyTextureInfo src = {};
+    src.texture = _surfaceTex;
+    src.mipLevel = 0;
+    src.origin = { 0, 0, 0 };
+    src.aspect = WGPUTextureAspect_All;
+
+    WGPUTexelCopyBufferInfo dst = {};
+    dst.buffer = _readbackBuffer;
+    dst.layout.offset = 0;
+    dst.layout.bytesPerRow = bytesPerRow;
+    dst.layout.rowsPerImage = height;
+
+    WGPUExtent3D copySize = { width, height, 1 };
+    wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &copySize);
+
+    WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+    wgpuQueueSubmit(_queue, 1, &cmd);
+    wgpuCommandBufferRelease(cmd);
+    wgpuCommandEncoderRelease(enc);
+
+    struct MapResult {
+        bool done = false;
+        bool ok = false;
+    };
+    MapResult mr;
+    auto onMap = [](WGPUMapAsyncStatus status, WGPUStringView, void* ud, void*) {
+        auto* r = static_cast<MapResult*>(ud);
+        r->ok = (status == WGPUMapAsyncStatus_Success);
+        r->done = true;
+    };
+
+    WGPUBufferMapCallbackInfo ci = {};
+    ci.mode = WGPUCallbackMode_AllowProcessEvents;
+    ci.callback = onMap;
+    ci.userdata1 = &mr;
+
+    wgpuBufferMapAsync(_readbackBuffer, WGPUMapMode_Read, 0, bufferSize, ci);
+    while (!mr.done) {
+        wgpuDevicePoll(_device, true, nullptr);
+    }
+
+    if (!mr.ok) {
+        return false;
+    }
+
+    const uint8_t* mapped = static_cast<const uint8_t*>(
+        wgpuBufferGetConstMappedRange(_readbackBuffer, 0, bufferSize));
+    if (!mapped) {
+        wgpuBufferUnmap(_readbackBuffer);
+        return false;
+    }
+
+    const bool isBgra = (_colorFormat == WGPUTextureFormat_BGRA8Unorm);
+    for (uint32_t y = 0; y < height; ++y) {
+        const uint8_t* srcRow = mapped + y * bytesPerRow;
+        uint8_t* dstRow = outRgba + y * (width * 4);
+        if (isBgra) {
+            for (uint32_t x = 0; x < width; ++x) {
+                dstRow[x * 4 + 0] = srcRow[x * 4 + 2]; // R
+                dstRow[x * 4 + 1] = srcRow[x * 4 + 1]; // G
+                dstRow[x * 4 + 2] = srcRow[x * 4 + 0]; // B
+                dstRow[x * 4 + 3] = srcRow[x * 4 + 3]; // A
+            }
+        } else {
+            std::memcpy(dstRow, srcRow, width * 4);
+        }
+    }
+
+    wgpuBufferUnmap(_readbackBuffer);
+    return true;
+}
+

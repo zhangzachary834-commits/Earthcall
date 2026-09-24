@@ -138,7 +138,7 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     WGPUSurfaceConfiguration cfg = {};
     cfg.device = ctx.device;
     cfg.format = kSurfaceFormat;
-    cfg.usage = WGPUTextureUsage_RenderAttachment;
+    cfg.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     cfg.width = width;
     cfg.height = height;
     // FIFO is the compositor-safe WebGPU presentation mode. It prevents an
