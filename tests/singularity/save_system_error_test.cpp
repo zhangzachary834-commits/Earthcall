@@ -286,6 +286,35 @@ int main() {
     check(snapshotTree(copyFailureDir) == beforeCopyFailure,
           "Preservation-copy failure leaves the live authoring tree exactly unchanged");
 
+    // Test 14: deleting a previously generated file is also Person authorship.
+    // Re-unpacking the same monolith must not silently resurrect it.
+    std::filesystem::path personDeletedDir = sandbox / "person_deleted_unpack";
+    check(SaveSystem::unpackSaveToDirectory(fullSave, personDeletedDir.string()),
+          "Initial unpack for Person-deletion witness succeeds");
+    const auto deletedZonePath = personDeletedDir / "zones" / "zone_zone_1.json";
+    check(std::filesystem::remove(deletedZonePath),
+          "Person deletion removes the previously generated canonical Zone file");
+    check(SaveSystem::unpackSaveToDirectory(fullSave, personDeletedDir.string()),
+          "Re-unpack after Person deletion succeeds without resurrecting the file");
+    check(!std::filesystem::exists(deletedZonePath),
+          "Person-deleted canonical Zone file stays absent after re-unpack");
+
+    nlohmann::json deletedManifest;
+    {
+        std::ifstream in(personDeletedDir / ".unpack_manifest.json");
+        in >> deletedManifest;
+    }
+    bool claimsDeletedZone = false;
+    if (deletedManifest.contains("ownedFiles")) {
+        for (const auto& item : deletedManifest["ownedFiles"]) {
+            if (item.is_string() && item.get<std::string>() == "zones/zone_zone_1.json") {
+                claimsDeletedZone = true;
+            }
+        }
+    }
+    check(!claimsDeletedZone,
+          "Manifest relinquishes ownership of a Person-deleted canonical file");
+
     // Verify no stray .tmp- files remain in sandbox
     bool hasTempFiles = false;
     std::error_code ec;
