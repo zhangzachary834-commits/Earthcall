@@ -3,3 +3,5 @@
 This directory contains synthesized addendums that tie together various architectural and ontological concepts within Earthcall. These documents are generated to ensure the documentation acts as a fluid, continuous conversation rather than isolated technical specifications.
 
 *   [Integrating Person Identity, Law Authoring, and the Hierarchy of Joys](person_and_law_integration_addendum.md)
+*   [Integrating Prophetic Rete and Per-Singular Durable Logging](prophetic_rete_and_durable_logging_addendum.md)
+*   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
