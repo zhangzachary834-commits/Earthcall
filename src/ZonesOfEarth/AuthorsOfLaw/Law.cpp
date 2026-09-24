@@ -1,4 +1,5 @@
 #include "Law.hpp"
+#include "Identity/FirstMoverRegister.hpp"
 #include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -3410,7 +3411,9 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         for (Singular* being : Universe::instance().beings()) {
             if (being && being->getIdentifier() == id) return being;
         }
-        return nullptr;
+        // A Law authored by a foreign First Mover (MCP) names that mover's
+        // cryptographic id. It reattaches only while the mover stands.
+        return Identity::FirstMoverRegister::instance().authorFor(id);
     };
 
     if (j.contains("laws")) {

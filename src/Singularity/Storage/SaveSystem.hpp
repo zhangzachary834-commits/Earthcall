@@ -158,6 +158,21 @@ bool lawIdentityExists(const std::string& identifier);
 bool writeLawIdentity(const std::string& identifier, const nlohmann::json& j);
 nlohmann::json readLawIdentity(const std::string& identifier);
 
+// Where an identity WOULD live, computed without touching the filesystem.
+// The *Directory/*IdentityPath builders above create their folder as a side
+// effect; foreign actuation resolves a resource BEFORE deciding whether the
+// act is permitted, and a refused request must not leave an empty directory
+// behind. Same sanitizing, same root. Empty when the identifier sanitizes
+// to nothing.
+std::string resolveZoneIdentityPath(const std::string& identifier);
+std::string resolveHomeIdentityPath(const std::string& identifier);
+std::string resolveLawIdentityPath(const std::string& identifier);
+
+// The First Mover Register's durable home: saves/identity/first-movers.json.
+// Written only by the Person (earthcall_first_mover grant/revoke); no mover
+// scope can reach it (FirstMoverRegister::kRegisterDirectory).
+std::string firstMoverRegisterPath();
+
 std::string homeDirectory(const std::string& identifier);
 std::string homeIdentityPath(const std::string& identifier);
 bool homeIdentityExists(const std::string& identifier);

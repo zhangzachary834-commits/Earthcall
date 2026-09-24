@@ -1,4 +1,5 @@
 #include "ZoneManager.hpp"
+#include "Identity/FirstMoverRegister.hpp"
 #include "HomesOfEarth/Home.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Relation/Relation.hpp"
@@ -121,6 +122,12 @@ bool ZoneManager::switchTo(size_t index)
                 }
                 if (people.size() == 1) return people.front();
                 if (people.size() > 1) return nullptr;
+
+                // A recognized First Mover by cryptographic id (a Law an MCP
+                // mover authored). Only a mover that stands NOW resolves.
+                if (Singular* mover = Identity::FirstMoverRegister::instance().authorFor(id)) {
+                    return mover;
+                }
             }
 
             // The Law roots named by targetZone->lawRefs belong to the closure
@@ -197,6 +204,13 @@ bool ZoneManager::switchTo(size_t index)
                     // identity merely to make a shared Law root load.
                     Singular* author = resolveReference(authorJson.get<std::string>(), true);
                     if (!author) {
+                        const auto moverId = Identity::SingularId::parse(authorJson.get<std::string>());
+                        auto& reg = Identity::FirstMoverRegister::instance();
+                        if (moverId.canAuthenticate() && reg.find(moverId)) {
+                            throw std::runtime_error("Law '" + ref + "' names First Mover author " +
+                                                     moverId.abbreviated() + " who does not stand: " +
+                                                     reg.explainStanding(moverId));
+                        }
                         throw std::runtime_error("Law '" + ref + "' cannot resolve author '" +
                                                  authorJson.get<std::string>() + "'");
                     }

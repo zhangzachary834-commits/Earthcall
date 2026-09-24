@@ -32,6 +32,7 @@ static void testModelWritesOnlyInsideItsScope() {
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
 
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
                          {"fixtures/**", "worlds/test_*.ecsave"}, 1000));
@@ -102,6 +103,7 @@ static void testScopeWideningIsDetected() {
 
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {"fixtures/**"}, 1000));
 
@@ -133,6 +135,7 @@ static void testInvalidGrantGracefulRejection() {
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
 
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {"fixtures/**"}, 1000));
 
@@ -172,6 +175,7 @@ static void testForgedGrantRefused() {
     PrivateKey mallory = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
 
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {"fixtures/**"}, 1000));
 
@@ -206,6 +210,7 @@ static void testCannotEscapeSaveRoot() {
 
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {"**"}, 1000));
 
@@ -228,6 +233,7 @@ static void testEmptyScopeGrantsNothing() {
 
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "m", {}, 1000));
 
@@ -255,15 +261,19 @@ static void testRoundTripPreservesGrants() {
 
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude", {"fixtures/**"}, 1000));
 
     FirstMoverRegister reloaded;
     reloaded.setSaveRoot(root);
     reloaded.loadFromJson(reg.toJson());
+    // Trusted Person roots are runtime-only; the Person re-authenticates.
+    assert(reloaded.standing(model.id()) == Standing::GrantorNotAuthenticated);
+    assert(reloaded.trustAuthenticatedPerson(zach));
 
     assert(reloaded.movers().size() == 1);
-    assert(reloaded.movers()[0].displayName == "claude");
+    assert(reloaded.movers()[0]->displayName == "claude");
     assert(!reloaded.isQuarantined(model.id()));
     assert(reloaded.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
     assert(!reloaded.mayWrite(model.id(), root / "worlds" / "x.ecsave"));
@@ -287,6 +297,7 @@ static void testModelSignedGrantRefusedOnLoad() {
     // Zach legitimately recognises modelA.
     FirstMoverRegister built;
     built.setSaveRoot(root);
+    assert(built.trustAuthenticatedPerson(zach));
     assert(built.recognize(zach, FirstMover::Kind::Person, modelA.id(),
                            FirstMover::Kind::Model, "a", {"fixtures/**"}, 1000));
 
@@ -308,6 +319,10 @@ static void testModelSignedGrantRefusedOnLoad() {
     FirstMoverRegister reloaded;
     reloaded.setSaveRoot(root);
     reloaded.loadFromJson(saved);
+    assert(reloaded.trustAuthenticatedPerson(zach));
+    // Even if modelA's key were somehow trusted as a root, its model entry in
+    // the register keeps it from granting.
+    assert(reloaded.trustAuthenticatedPerson(modelA));
 
     // ... and still refused, because modelA is a model.
     assert(!reloaded.mayWrite(modelB.id(), root / "fixtures" / "seed.ecsave"));
@@ -349,6 +364,7 @@ static void testSaveSystemEnforcesTheRegister() {
 
     PrivateKey zach = PrivateKey::generate();
     PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
                          FirstMover::Kind::Model, "claude-fable-5",
                          {"worlds/test_*.ecform"}, 1000));
@@ -416,6 +432,179 @@ static void testUnregisteredAgentCannotWriteAtAll() {
     std::cout << "  unregistered agent refused every write OK\n";
 }
 
+
+// --- 2026-09-24: trust root, stable movers, covenant floor -----------------
+// Phase 0/1/2 of docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md.
+
+static void testAbsentGrantorIsNotATrustRoot() {
+    // The 2026-08-20 finding: a valid signature from a grantor ABSENT from the
+    // register was never proven to terminate in a Person. It verified, so it
+    // stood. It must not.
+    const auto root = scratchRoot();
+    PrivateKey zach = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+
+    FirstMoverRegister built;
+    built.setSaveRoot(root);
+    assert(built.trustAuthenticatedPerson(zach));
+    assert(built.recognize(zach, FirstMover::Kind::Person, model.id(),
+                           FirstMover::Kind::Model, "m", {"fixtures/**"}, 1000));
+
+    FirstMoverRegister loaded;   // a fresh process: nobody has authenticated
+    loaded.setSaveRoot(root);
+    loaded.loadFromJson(built.toJson());
+    assert(loaded.standing(model.id()) == Standing::GrantorNotAuthenticated);
+    assert(!loaded.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
+    // Inert, but not quarantined: nothing about the data is wrong.
+    assert(!loaded.isQuarantined(model.id()));
+    assert(loaded.explain(model.id(), root / "fixtures" / "seed.ecsave")
+               .find("has not authenticated") != std::string::npos);
+
+    // The hostile save: mallory mints her own key, writes herself in as
+    // `kind: person`, and signs a grant. Every signature verifies.
+    PrivateKey mallory = PrivateKey::generate();
+    PrivateKey puppet = PrivateKey::generate();
+    FirstMover fakePerson;
+    fakePerson.id = mallory.id();
+    fakePerson.kind = FirstMover::Kind::Person;
+    fakePerson.displayName = "Zach";          // a label, not a root
+    fakePerson.grantedBy = zach.id();
+    FirstMover forged;
+    forged.id = puppet.id();
+    forged.kind = FirstMover::Kind::Model;
+    forged.grantedBy = mallory.id();
+    forged.scopes = {"**"};
+    forged.grant = Claim::issue(mallory, puppet.id(), forged.grantPredicate(), mallory.id(), 3000);
+    assert(forged.grant.verify());
+
+    nlohmann::json hostile = built.toJson();
+    hostile["movers"].push_back(fakePerson.toJson());
+    hostile["movers"].push_back(forged.toJson());
+    hostile["authenticatedPersons"] = nlohmann::json::array({mallory.id().toString()});
+
+    FirstMoverRegister victim;
+    victim.setSaveRoot(root);
+    assert(victim.trustAuthenticatedPerson(zach));   // the real Person is present
+    victim.loadFromJson(hostile);
+    assert(!victim.isAuthenticatedPerson(mallory.id()));   // the file cannot seed a root
+    assert(victim.standing(puppet.id()) == Standing::GrantorNotAuthenticated);
+    assert(!victim.mayWrite(puppet.id(), root / "worlds" / "real.ecsave"));
+    // Zach's genuine grant still stands.
+    assert(victim.mayWrite(model.id(), root / "fixtures" / "seed.ecsave"));
+
+    std::cout << "  absent / self-minted grantor is not a trust root OK\n";
+}
+
+static void testRecognizeRequiresAuthenticatedGrantor() {
+    FirstMoverRegister reg;
+    reg.setSaveRoot(scratchRoot());
+    PrivateKey someone = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+    // Holding a key and saying "Person" is not enough.
+    assert(!reg.recognize(someone, FirstMover::Kind::Person, model.id(),
+                          FirstMover::Kind::Model, "m", {"**"}, 1000));
+    assert(reg.movers().empty());
+    // An invalid key can never be a root.
+    assert(!reg.trustAuthenticatedPerson(PrivateKey{}));
+    assert(reg.authenticatedPersons().empty());
+
+    // Roots are never in the serialized register.
+    assert(reg.trustAuthenticatedPerson(someone));
+    assert(reg.toJson().dump().find(someone.id().toString()) == std::string::npos);
+    std::cout << "  recognize requires an authenticated grantor; roots never serialize OK\n";
+}
+
+static void testMoverPointersAreStable() {
+    // A Law's author Formation holds a Singular*. If a mover moved when the
+    // register grew, re-granted, reloaded, or revoked, that author would dangle.
+    FirstMoverRegister reg;
+    const auto root = scratchRoot();
+    reg.setSaveRoot(root);
+    PrivateKey zach = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
+    assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
+                         FirstMover::Kind::Model, "sonnet", {"laws/**"}, 1000));
+    const FirstMover* author = reg.find(model.id());
+    assert(author);
+
+    for (int i = 0; i < 64; ++i) {
+        PrivateKey other = PrivateKey::generate();
+        assert(reg.recognize(zach, FirstMover::Kind::Person, other.id(),
+                             FirstMover::Kind::Model, "m" + std::to_string(i), {}, 1000 + i));
+    }
+    assert(reg.find(model.id()) == author);
+
+    // Re-grant with wider scope: same object, new scope.
+    assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
+                         FirstMover::Kind::Model, "sonnet", {"laws/**", "zones/**"}, 2000));
+    assert(reg.find(model.id()) == author);
+    assert(author->scopes.size() == 2);
+
+    // Reload: same object.
+    reg.loadFromJson(reg.toJson());
+    assert(reg.find(model.id()) == author);
+    assert(reg.standing(model.id()) == Standing::Recognized);
+
+    // Revoke: gone from the register, but the object survives (retired).
+    PrivateKey stranger = PrivateKey::generate();
+    assert(!reg.revoke(stranger, model.id()));     // not an authenticated grantor
+    assert(reg.trustAuthenticatedPerson(stranger));
+    assert(!reg.revoke(stranger, model.id()));     // authenticated, but not THE grantor
+    assert(reg.revoke(zach, model.id()));
+    assert(reg.find(model.id()) == nullptr);
+    assert(author->id == model.id());              // still a valid Singular
+    assert(reg.standing(model.id()) == Standing::NotRegistered);
+    std::cout << "  mover pointers survive growth, re-grant, reload and revoke OK\n";
+}
+
+static void testRegisterIsNotWritableByInjection() {
+    // 8d: "The register is not writable by injection." Even a '**' mover.
+    FirstMoverRegister reg;
+    const auto root = scratchRoot();
+    reg.setSaveRoot(root);
+    PrivateKey zach = PrivateKey::generate();
+    PrivateKey model = PrivateKey::generate();
+    assert(reg.trustAuthenticatedPerson(zach));
+    assert(reg.recognize(zach, FirstMover::Kind::Person, model.id(),
+                         FirstMover::Kind::Model, "m", {"**"}, 1000));
+    assert(reg.mayWrite(model.id(), root / "laws" / "x" / "law.json"));
+    assert(!reg.mayWrite(model.id(), root / FirstMoverRegister::kRegisterFile));
+    assert(!reg.mayWrite(model.id(), root / "identity" / "anything.json"));
+    assert(reg.explain(model.id(), root / FirstMoverRegister::kRegisterFile)
+               .find("covenant") != std::string::npos);
+    std::cout << "  register directory refuses even a '**' mover OK\n";
+}
+
+static void testNestedSessionsRestore() {
+    FirstMoverRegister reg;
+    PrivateKey a = PrivateKey::generate();
+    PrivateKey b = PrivateKey::generate();
+    assert(!reg.hasActiveMover());
+    {
+        FirstMoverSession sa(reg, a.id());
+        assert(reg.activeMover() == a.id());
+        {
+            FirstMoverSession sb(reg, b.id());
+            assert(reg.activeMover() == b.id());
+        }
+        assert(reg.activeMover() == a.id());
+    }
+    assert(!reg.hasActiveMover());
+    std::cout << "  nested sessions restore the previous mover OK\n";
+}
+
+static void testSessionTranscriptIsUnambiguous() {
+    PrivateKey m = PrivateKey::generate();
+    const auto t1 = foreignSessionTranscript("ab", "c", "conn", m.id());
+    const auto t2 = foreignSessionTranscript("a", "bc", "conn", m.id());
+    assert(t1 != t2);   // length-prefixing: no field can bleed into the next
+    assert(foreignSessionTranscript("ab", "c", "conn", m.id()) == t1);
+    const std::string head(t1.begin(), t1.begin() + 35);
+    assert(head.find("earthcall-first-mover-session-v1") != std::string::npos);
+    std::cout << "  session transcript is length-prefixed and domain-separated OK\n";
+}
+
 int main() {
     std::cout << "first_mover_test:\n";
     testGlobSemantics();
@@ -432,6 +621,12 @@ int main() {
     testModelSignedGrantRefusedOnLoad();
     testSaveSystemEnforcesTheRegister();
     testUnregisteredAgentCannotWriteAtAll();
+    testAbsentGrantorIsNotATrustRoot();
+    testRecognizeRequiresAuthenticatedGrantor();
+    testMoverPointersAreStable();
+    testRegisterIsNotWritableByInjection();
+    testNestedSessionsRestore();
+    testSessionTranscriptIsUnambiguous();
     std::filesystem::remove_all(std::filesystem::temp_directory_path() / "earthcall_fm_saves");
     std::cout << "first_mover_test: ALL OK\n";
     return 0;

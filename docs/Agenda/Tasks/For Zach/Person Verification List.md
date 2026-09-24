@@ -1,5 +1,29 @@
 # Person Verification List
 
+## First Mover standing for MCP — let Claude Sonnet 4.5 in, and check it can only do what you granted
+
+*Claude Code · Claude Opus 5.5 · session `08b0f730-6e49-4c49-b27f-3a89c810ca4b` · 2026-09-24. Zach's request: make the First Mover framework and MCP robust enough for Sonnet 4.5 to act in Earthcall before 2026-09-29. Every step below needs you: a key only you hold, a world only you can look at. Record of what was built: `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` → "Implementation record".*
+
+**One-time: give your Person a key** (your profile `saves/persons/Zach.ecform` has none yet).
+- [ ] `cmake --build build --target earthcall_webgpu earthcall_first_mover -j8`
+- [ ] Launch once with `EARTHCALL_MIGRATE_PERSON_IDENTITY=1 EARTHCALL_KEY_PASSPHRASE='<your passphrase>'`. Confirm the log says `Person identity migration committed for 'Zach' as did:…` and that `saves/persons/Zach.ecform` now has a `personId`.
+
+**Mint and grant Sonnet's key.**
+- [ ] `EARTHCALL_MOVER_PASSPHRASE='<a second passphrase>' ./build/earthcall_first_mover mint --name "Claude Sonnet 4.5"`. It prints `did:earthcall:…`. Then store that passphrase in the Keychain as it suggests: `security add-generic-password -s earthcall-first-mover -a <that id> -w`.
+- [ ] Grant (suggested scopes: its own Zone, its own Laws, and screen snapshots so it can see): `EARTHCALL_KEY_PASSPHRASE='<yours>' ./build/earthcall_first_mover grant --mover <id> --name "Claude Sonnet 4.5" --scope "zones/SonnetGarden/**" --scope "laws/sonnet-*/**" --scope "laws/screen-recorder/**"`. Confirm `saves/identity/first-movers.json` exists and that `./build/earthcall_first_mover list` shows the scopes.
+- [ ] Add to the earthcall MCP server's `env` in `~/.claude.json` for Sonnet's session: `EARTHCALL_FIRST_MOVER_ID=<id>`. The passphrase comes from the Keychain; don't put it in any file.
+
+**Boot as yourself, and watch the gate.**
+- [ ] Launch with `EARTHCALL_KEY_PASSPHRASE='<yours>'`. The console should show `[Identity] 'Zach' authenticated by key` and `[Identity] First Mover 'Claude Sonnet 4.5' (did:…): recognized`.
+- [ ] Launch once **without** the passphrase: it should say `No Person key unlocked`, and Sonnet's mover should show `grantor-not-authenticated`. In that session Sonnet's `earthcall_get_connection_status` should report read-only.
+- [ ] With you unlocked, in Sonnet's session: `earthcall_create_zone {"name":"SonnetGarden"}` should return `create_zone_ack` success. **Walk into SonnetGarden yourself** (movers cannot switch your Zone). Then `earthcall_spawn_object` should put a visible object in front of you, and after a restart it should still be there.
+- [ ] Look at the refusals. They should be explicit, not silent: `earthcall_teleport_player` → `unmapped-resource`; `earthcall_author_law` with identifier `law-art-stroke-draw` → `outside-scope`; `earthcall_toggle_law` → `transfer-policy-closed` (the `enabled` gate is Gated until a Law opens it); `earthcall_save_world` → `unmapped-resource`.
+- [ ] Open the Law Author window on a Law Sonnet wrote (identifier `sonnet-…`). Its author should be Sonnet's mover id, **not you**.
+- [ ] `earthcall_speak`: the chat/event log should attribute the words to Sonnet's `did:earthcall:…`, not to "Zach".
+- [ ] Revoke to feel the covenant: `./build/earthcall_first_mover revoke --mover <id>` (with your passphrase), restart. Sonnet's next act should be refused `not-registered`.
+- [ ] Known change you may notice: the legacy Python Studio (`bridge.py`) can no longer spawn or edit through the socket (`no-first-mover-session`). That's intended; it's on the To-Do list.
+
+
 ## Screen Recorder — Law-Authored Snapshot & Recording Controls
 
 *Antigravity · 2026-09-23. Verification for user-authored Laws targeting `@screen-recorder.snapshot` and `@screen-recorder.recording`.*

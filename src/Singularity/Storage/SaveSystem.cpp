@@ -1064,6 +1064,28 @@ nlohmann::json readLawIdentity(const std::string& identifier) {
     return readSaveData((sharedIdentityRoot("laws") / safe / "law.json").string());
 }
 
+std::string resolveZoneIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("zones") / safe / "zone.json").string();
+}
+
+std::string resolveHomeIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("homes") / safe / "home.json").string();
+}
+
+std::string resolveLawIdentityPath(const std::string& identifier) {
+    const std::string safe = sanitizeLabel(identifier);
+    if (safe.empty()) return "";
+    return (sharedIdentityRoot("laws") / safe / "law.json").string();
+}
+
+std::string firstMoverRegisterPath() {
+    return (sharedIdentityRoot("identity") / "first-movers.json").string();
+}
+
 std::string homeDirectory(const std::string& identifier) {
     std::string folder = ensureSaveTypeFolder(SaveType::HOME);
     if (folder.empty()) return "";

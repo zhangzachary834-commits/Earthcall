@@ -10,6 +10,19 @@
  * Refusal #1 & Refusal #6 compliant:
  * Communicates through Earthcall's first-class property paths, First-Mover laws,
  * and live world events.
+ *
+ * FIRST MOVER STANDING (2026-09-24, Claude Opus 5.5, implementing Sol's
+ * docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md §11/§14):
+ *   Reads (state, saves, status) work for anyone. Changing the world requires
+ *   this bridge to prove it holds a First Mover key that a Person granted:
+ *     EARTHCALL_FIRST_MOVER_ID      the mover id (`earthcall_first_mover mint`)
+ *     EARTHCALL_MOVER_PASSPHRASE    unlocks it -- or, on macOS, the Keychain item
+ *                                   service "earthcall-first-mover", account <id>
+ *     EARTHCALL_FIRST_MOVER_SIGNER  path to earthcall_first_mover (default build/)
+ *   The private key never enters this process: the native signer builds the
+ *   session transcript itself and returns only a signature. The engine decides
+ *   every act; this bridge never widens scope, never names an author, and
+ *   never reports success the engine did not confirm.
  */
 
 const { Server } = require("@modelcontextprotocol/sdk/server/index.js");
@@ -27,11 +40,37 @@ const {
 
 const fs = require("fs");
 const path = require("path");
+const { execFile } = require("child_process");
 
 // Configuration
 const DEFAULT_WS_URL = process.env.EARTHCALL_WS_URL || "ws://localhost:8080";
 const PROJECT_ROOT = path.resolve(__dirname, "../../../../");
 const SAVES_DIR = path.join(PROJECT_ROOT, "saves");
+const MOVER_ID = process.env.EARTHCALL_FIRST_MOVER_ID || "";
+const SIGNER = process.env.EARTHCALL_FIRST_MOVER_SIGNER ||
+  path.join(PROJECT_ROOT, "build", "earthcall_first_mover");
+
+function execFileText(cmd, args, env) {
+  return new Promise((resolve, reject) => {
+    execFile(cmd, args, { env, timeout: 10000 }, (err, stdout, stderr) => {
+      if (err) return reject(new Error((stderr || err.message || "").trim()));
+      resolve(String(stdout).trim());
+    });
+  });
+}
+
+// The mover's passphrase: explicit env first, then the macOS Keychain (the
+// platform secret store), never a file in the repo.
+async function moverPassphrase() {
+  if (process.env.EARTHCALL_MOVER_PASSPHRASE) return process.env.EARTHCALL_MOVER_PASSPHRASE;
+  if (process.platform !== "darwin" || !MOVER_ID) return "";
+  try {
+    return await execFileText("security",
+      ["find-generic-password", "-s", "earthcall-first-mover", "-a", MOVER_ID, "-w"], process.env);
+  } catch (_) {
+    return "";
+  }
+}
 
 // ============================================================================
 // Earthcall WebSocket Bridge Client
@@ -46,6 +85,10 @@ class EarthcallBridgeClient {
     this.requestIdCounter = 1;
     this.reconnectInterval = 3000;
     this.reconnectTimer = null;
+    // First Mover standing on THIS connection. Reset on every reconnect:
+    // the engine forgets authentication when a connection closes.
+    this.firstMover = { configured: Boolean(MOVER_ID), authenticated: false, moverId: MOVER_ID || null };
+    this.authPromise = null;
     this.connect();
   }
 
@@ -62,9 +105,12 @@ class EarthcallBridgeClient {
 
       this.ws.onopen = () => {
         this.connected = true;
+        this.firstMover = { configured: Boolean(MOVER_ID), authenticated: false, moverId: MOVER_ID || null };
+        this.authPromise = null;
         console.error(`[Earthcall MCP] Connected to live engine at ${this.url}`);
         // Request initial state snapshot
         this.send({ type: "get_state" });
+        if (MOVER_ID) this.ensureAuthenticated().catch(() => {});
       };
 
       this.ws.onmessage = (event) => {
@@ -91,6 +137,8 @@ class EarthcallBridgeClient {
 
       this.ws.onclose = () => {
         this.connected = false;
+        this.firstMover.authenticated = false;
+        this.authPromise = null;
         this.scheduleReconnect();
       };
 
@@ -120,7 +168,11 @@ class EarthcallBridgeClient {
     return false;
   }
 
-  sendWithAck(payload, ackType, timeoutMs = 4000) {
+  // Resolves with the engine's own answer -- success OR a structured refusal
+  // ({status:"refused", reasonCode, reason, ...}). A timeout is reported as
+  // exactly that: never as success. Before 2026-09-24 a timeout resolved as
+  // "sent_without_ack", which callers read as done.
+  sendWithAck(payload, ackType, timeoutMs = 4000, matcher = null) {
     return new Promise((resolve, reject) => {
       if (!this.connected) {
         return reject(new Error("Earthcall engine is offline (ws://localhost:8080 unreachable)."));
@@ -129,15 +181,18 @@ class EarthcallBridgeClient {
       const reqId = this.requestIdCounter++;
       const timer = setTimeout(() => {
         this.pendingRequests.delete(reqId);
-        // If timed out waiting for ack, resolve with optimistic acknowledgement if send succeeded
-        resolve({ status: "sent_without_ack", payload });
+        resolve({
+          status: "unconfirmed",
+          note: `Earthcall did not answer within ${timeoutMs} ms. Treat this act as NOT done; check earthcall_get_state.`,
+          request: payload.type
+        });
       }, timeoutMs);
 
       this.pendingRequests.set(reqId, {
-        matches: (data) => data.type === ackType || data.type === `${payload.type}_ack` ||
+        matches: matcher || ((data) => data.type === ackType || data.type === `${payload.type}_ack` ||
                            (payload.type === "quick_save" && data.type === "save_ack") ||
                            (payload.type === "save_world" && data.type === "save_ack") ||
-                           (payload.type === "spawn_field" && data.type === "spawn_field_ack"),
+                           (payload.type === "spawn_field" && data.type === "spawn_field_ack")),
         resolve: (res) => {
           clearTimeout(timer);
           resolve(res);
@@ -146,6 +201,59 @@ class EarthcallBridgeClient {
 
       this.ws.send(JSON.stringify(payload));
     });
+  }
+
+  // Prove possession of the First Mover key for this connection:
+  //   engine challenge -> native signer -> engine verifies + checks standing.
+  ensureAuthenticated() {
+    if (this.firstMover.authenticated) return Promise.resolve(this.firstMover);
+    if (!MOVER_ID) {
+      this.firstMover = {
+        configured: false, authenticated: false, moverId: null,
+        reasonCode: "no-first-mover-configured",
+        reason: "EARTHCALL_FIRST_MOVER_ID is not set; this bridge can read Earthcall but not change it. " +
+                "A Person grants a mover with `earthcall_first_mover grant`."
+      };
+      return Promise.resolve(this.firstMover);
+    }
+    if (this.authPromise) return this.authPromise;
+    this.authPromise = (async () => {
+      try {
+        const challenge = await this.sendWithAck({ type: "first_mover_challenge" }, "first_mover_challenge");
+        if (!challenge.challengeId) throw new Error("engine did not issue a challenge (older build?)");
+        const pass = await moverPassphrase();
+        if (!pass) throw new Error("no mover passphrase (set EARTHCALL_MOVER_PASSPHRASE or add the Keychain item)");
+        const signature = await execFileText(SIGNER, [
+          "sign-challenge", "--mover", MOVER_ID,
+          "--challenge-id", challenge.challengeId, "--nonce", challenge.nonce,
+          "--connection", challenge.connection
+        ], { ...process.env, EARTHCALL_MOVER_PASSPHRASE: pass });
+        const ack = await this.sendWithAck({
+          type: "first_mover_authenticate", challengeId: challenge.challengeId,
+          moverId: MOVER_ID, signature
+        }, "first_mover_authenticate_ack");
+        this.firstMover = {
+          configured: true,
+          authenticated: ack.status === "authenticated",
+          moverId: MOVER_ID,
+          displayName: ack.displayName,
+          scopes: ack.scopes,
+          grantedBy: ack.grantedBy,
+          reasonCode: ack.reasonCode,
+          reason: ack.reason
+        };
+      } catch (e) {
+        this.firstMover = {
+          configured: true, authenticated: false, moverId: MOVER_ID,
+          reasonCode: "authentication-failed", reason: String(e.message || e)
+        };
+      }
+      console.error(`[Earthcall MCP] First Mover ${this.firstMover.authenticated ? "authenticated" : "NOT authenticated"}` +
+                    (this.firstMover.reasonCode ? ` (${this.firstMover.reasonCode})` : ""));
+      this.authPromise = null;
+      return this.firstMover;
+    })();
+    return this.authPromise;
   }
 
   getOfflineSnapshot() {
@@ -612,6 +720,16 @@ const TOOLS = [
   }
 ];
 
+const MUTATING_TOOLS = new Set([
+  "earthcall_spawn_object", "earthcall_spawn_field", "earthcall_transform_object",
+  "earthcall_delete_object", "earthcall_write_property", "earthcall_author_law",
+  "earthcall_toggle_law", "earthcall_delete_law", "earthcall_switch_zone",
+  "earthcall_create_zone", "earthcall_teleport_player", "earthcall_speak",
+  "earthcall_save_world", "earthcall_screen_record"
+]);
+
+const asText = (obj) => ({ content: [{ type: "text", text: JSON.stringify(obj, null, 2) }] });
+
 // ============================================================================
 // MCP Server Initialization
 // ============================================================================
@@ -638,9 +756,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args = {} } = request.params;
 
+  // Every tool that changes the world first makes sure this connection has
+  // tried to authenticate. The ENGINE still decides; its refusal comes back
+  // verbatim in the tool result.
+  if (MUTATING_TOOLS.has(name) && client.connected) {
+    await client.ensureAuthenticated();
+  }
+
   try {
     switch (name) {
       case "earthcall_get_connection_status": {
+        let engineView = null;
+        if (client.connected) {
+          if (!client.firstMover.authenticated) await client.ensureAuthenticated();
+          engineView = await client.sendWithAck({ type: "first_mover_status" }, "first_mover_status", 2000);
+        }
         return {
           content: [
             {
@@ -649,8 +779,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 connected: client.connected,
                 websocket_url: client.url,
                 status: client.connected ? "connected" : "offline",
+                first_mover: client.firstMover,
+                engine_first_mover_status: engineView,
                 hint: client.connected
-                  ? "Earthcall live C++ engine is connected and ready."
+                  ? (client.firstMover.authenticated
+                      ? "Connected as a Person-granted First Mover: you may act within the scopes listed."
+                      : "Connected read-only: you can perceive Earthcall, but changes will be refused until this bridge authenticates as a granted First Mover.")
                   : "Earthcall engine is offline. Start the engine via 'Run Earthcall.command' or 'scripts/build.sh webgpu run'."
               }, null, 2)
             }
@@ -898,15 +1032,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           name: args.name,
           index: args.index
         };
-        client.send(payload);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ status: "success", action: "switch_zone", target: args.name || args.index }, null, 2)
-            }
-          ]
-        };
+        // The engine answers a refusal with switch_zone_ack; success is the
+        // state broadcast. Report only what came back.
+        return asText(await client.sendWithAck(payload, "switch_zone_ack", 1500, (d) =>
+          d.type === "switch_zone_ack" || Boolean(d.active_zone)));
       }
 
       case "earthcall_create_zone": {
@@ -918,15 +1047,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           name: args.name,
           kind: args.kind || "zone"
         };
-        client.send(payload);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ status: "success", action: "create_zone", name: args.name }, null, 2)
-            }
-          ]
-        };
+        return asText(await client.sendWithAck(payload, "create_zone_ack"));
       }
 
       case "earthcall_teleport_player": {
@@ -937,15 +1058,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           type: "teleport_player",
           position: args.position
         };
-        client.send(payload);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ status: "success", teleport_to: args.position }, null, 2)
-            }
-          ]
-        };
+        return asText(await client.sendWithAck(payload, "teleport_ack", 1500, (d) =>
+          d.type === "teleport_ack" || Boolean(d.active_zone)));
       }
 
       case "earthcall_speak": {
@@ -957,15 +1071,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           payload: args.utterance,
           targetSingularId: args.targetSingularId || ""
         };
-        client.send(payload);
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ status: "spoken", message: args.utterance }, null, 2)
-            }
-          ]
-        };
+        // Heard when the engine re-broadcasts it; `source` says who Earthcall
+        // attributes the words to (your mover id once authenticated).
+        const heard = await client.sendWithAck(payload, "engine_event", 2000, (d) =>
+          d.type === "engine_event" && d.event === "utterance" && d.payload === args.utterance);
+        return asText(heard.status === "unconfirmed" ? heard
+          : { status: "spoken", message: args.utterance, attributed_to: heard.source });
       }
 
       case "earthcall_save_world": {
@@ -994,33 +1105,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const action = args.action;
         const target = "@screen-recorder";
 
-        if (args.format) {
-          client.send({ type: "property_write", target, property: "recorder.format", value: args.format });
+        const writes = [];
+        if (args.format) writes.push(["recorder.format", args.format]);
+        if (args.mode) writes.push(["recorder.mode", args.mode]);
+        if (["start", "stop", "pause", "resume", "snapshot"].includes(action)) {
+          writes.push([`recorder.${action}`, true]);
         }
-        if (args.mode) {
-          client.send({ type: "property_write", target, property: "recorder.mode", value: args.mode });
+        const results = [];
+        for (const [property, value] of writes) {
+          const r = await client.sendWithAck({ type: "property_write", target, property, value },
+                                             "property_write_ack");
+          results.push({ property, ...r });
+          if (r.status !== "success") break;   // do not start after a refused format
         }
-
-        if (action === "start") {
-          client.send({ type: "property_write", target, property: "recorder.start", value: true });
-        } else if (action === "stop") {
-          client.send({ type: "property_write", target, property: "recorder.stop", value: true });
-        } else if (action === "pause") {
-          client.send({ type: "property_write", target, property: "recorder.pause", value: true });
-        } else if (action === "resume") {
-          client.send({ type: "property_write", target, property: "recorder.resume", value: true });
-        } else if (action === "snapshot") {
-          client.send({ type: "property_write", target, property: "recorder.snapshot", value: true });
-        }
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ status: "success", screen_recorder_action: action }, null, 2)
-            }
-          ]
-        };
+        const ok = results.length > 0 && results.every(r => r.status === "success");
+        return asText({ status: ok ? "success" : "not_done", screen_recorder_action: action, results });
       }
 
       case "earthcall_list_saves": {
