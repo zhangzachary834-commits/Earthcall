@@ -196,6 +196,25 @@ int main() {
         check(std::fabs(projected.temporalCoordinate - 3.25) < 1e-9 &&
                   std::fabs(projected.temporalDelta - 0.125) < 1e-9,
               "volume projection carries its own admitted temporal coordinate");
+        // V5 medium-set groundwork: the world/set fingerprint must include
+        // every authored medium channel through V4. This specifically guards
+        // against E_v being structurally present in WebGPU while absent from
+        // EngineRender's set revision identity.
+        const uint64_t preEmissionFingerprint =
+            Rendering::volumeContentRevision(projected);
+        Rendering::VolumeDensityBinding emissionIdentityProbe = projected;
+        emissionIdentityProbe.emissionRevision = 0x9e3779b97f4a7c15ULL;
+        check(Rendering::volumeContentRevision(emissionIdentityProbe) !=
+                  preEmissionFingerprint,
+              "V5 medium content fingerprint includes V4 emission revision");
+        std::string preEmissionSetIdentity;
+        std::string postEmissionSetIdentity;
+        Rendering::appendVolumeSetIdentity(
+            preEmissionSetIdentity, fogOnly.getIdentifier(), projected);
+        Rendering::appendVolumeSetIdentity(
+            postEmissionSetIdentity, fogOnly.getIdentifier(), emissionIdentityProbe);
+        check(preEmissionSetIdentity != postEmissionSetIdentity,
+              "V5 world medium-set identity changes when only E_v changes");
         PropertyValue lightSource;
         check(!fogOnly.getDynamicProperty("light.source", lightSource),
               "participating medium projection does not fabricate sourcehood");

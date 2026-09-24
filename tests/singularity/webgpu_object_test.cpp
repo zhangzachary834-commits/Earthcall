@@ -462,10 +462,357 @@ int main() {
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.composeVolumes();
         renderer.endFrame();
+        unsigned char sharedOrderAB[4];
+        readCentre(sharedOrderAB);
         const Renderer::FrameStats sharedDensitySecondStats = renderer.frameStats();
         assert(sharedDensitySecondStats.volumeProgramCompiles == 0 &&
                sharedDensitySecondStats.volumeProgramCacheHits >= 2 &&
                "media sharing D but differing in sigma_t thrashed the volume program cache");
+
+        // V5 NATIVE PERMUTATION WITNESS: these two bounded media overlap the
+        // centre ray. Reversing the projected world-set order must not change
+        // the integrated framebuffer answer. The old V0-V4 sequential
+        // whole-medium blending path made ordering an accidental transport law.
+        renderer.setVolumeDensitySources({sharedDensityB, sharedDensityA}, 5604);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char sharedOrderBA[4];
+        readCentre(sharedOrderBA);
+        const Renderer::FrameStats sharedDensityReverseStats = renderer.frameStats();
+        const auto channelNear = [](unsigned char a, unsigned char b) {
+            return std::abs(static_cast<int>(a) - static_cast<int>(b)) <= 1;
+        };
+        std::printf(
+            "V5 overlap order AB=(%d,%d,%d) BA=(%d,%d,%d) compiles=%u\n",
+            sharedOrderAB[0], sharedOrderAB[1], sharedOrderAB[2],
+            sharedOrderBA[0], sharedOrderBA[1], sharedOrderBA[2],
+            sharedDensityReverseStats.volumeProgramCompiles);
+        assert(channelNear(sharedOrderAB[0], sharedOrderBA[0]) &&
+               channelNear(sharedOrderAB[1], sharedOrderBA[1]) &&
+               channelNear(sharedOrderAB[2], sharedOrderBA[2]) &&
+               "V5 overlapping medium transport changed when world-set order reversed");
+        assert(sharedDensityReverseStats.volumeProgramCompiles >= 1 &&
+               "V5 reversed set order did not establish its fused structural program");
+
+        // V5 LOCAL-QUALITY WITNESS: adding a distant, disjoint medium that
+        // contributes exactly zero transport must not change the already-existing
+        // local answer of medium A. A carries spatially varying self-emission so
+        // undersampling is visible; B exists only to enlarge the fused union span.
+        auto localDensityNode = scalarNode(1.0);
+        OntoMath::Piecewise localDensity =
+            OntoMath::Piecewise::continuous(localDensityNode);
+        auto localExtinctionNode = scalarNode(0.05);
+        OntoMath::Piecewise localExtinction =
+            OntoMath::Piecewise::continuous(localExtinctionNode);
+        auto localZeroScatteringNode = scalarNode(0.0);
+        OntoMath::Piecewise localZeroScattering =
+            OntoMath::Piecewise::continuous(localZeroScatteringNode);
+
+        auto localEmissionX = std::make_unique<OntoMath::MathNode>();
+        localEmissionX->op = OntoMath::MathNode::Op::ScalarLeaf;
+        localEmissionX->scalarForm =
+            OntoMath::ScalarForm::transcendental(
+                OntoMath::TransFactor::Kind::Exp, "z",
+                /*scale=*/3.0, /*shift=*/0.0, /*coefficient=*/0.05);
+        auto localEmissionNode = std::make_shared<OntoMath::MathNode>();
+        localEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        localEmissionNode->children.push_back(std::move(localEmissionX));
+        localEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        localEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        OntoMath::Piecewise localEmission =
+            OntoMath::Piecewise::continuous(localEmissionNode);
+
+        Rendering::VolumeDensityBinding localA = medium;
+        localA.origin = glm::vec3(0.0f);
+        localA.scale = glm::vec3(1.0f);
+        localA.densityExpr = &localDensity;
+        localA.densityRevision = 5651;
+        localA.extinctionExpr = &localExtinction;
+        localA.extinctionRevision = 5652;
+        localA.scatteringExpr = &localZeroScattering;
+        localA.scatteringRevision = 5653;
+        localA.volumeChromaExpr = nullptr;
+        localA.volumeChromaRevision = 0;
+        localA.phaseExpr = nullptr;
+        localA.phaseRevision = 0;
+        localA.emissionExpr = &localEmission;
+        localA.emissionRevision = 5654;
+
+        renderer.setVolumeDensitySources({localA}, 5655);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localAAlone[4];
+        readCentre(localAAlone);
+
+        auto zeroDensityNode = scalarNode(0.0);
+        OntoMath::Piecewise zeroDensity =
+            OntoMath::Piecewise::continuous(zeroDensityNode);
+        Rendering::VolumeDensityBinding farZeroB = localA;
+        farZeroB.origin = glm::vec3(0.0f, 0.0f, -90.0f);
+        farZeroB.densityExpr = &zeroDensity;
+        farZeroB.densityRevision = 5656;
+        farZeroB.extinctionExpr = nullptr;
+        farZeroB.extinctionRevision = 0;
+        farZeroB.scatteringExpr = nullptr;
+        farZeroB.scatteringRevision = 0;
+        farZeroB.emissionExpr = nullptr;
+        farZeroB.emissionRevision = 0;
+
+        renderer.setVolumeDensitySources({localA, farZeroB}, 5657);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localAWithFarZeroB[4];
+        readCentre(localAWithFarZeroB);
+
+        const int localQualityDelta =
+            std::abs(static_cast<int>(localAAlone[0]) -
+                     static_cast<int>(localAWithFarZeroB[0]));
+        std::printf(
+            "V5 local quality A-alone=(%d,%d,%d) A+far-zero-B=(%d,%d,%d) delta=%d\n",
+            localAAlone[0], localAAlone[1], localAAlone[2],
+            localAWithFarZeroB[0], localAWithFarZeroB[1], localAWithFarZeroB[2],
+            localQualityDelta);
+        assert(localAAlone[0] > 20 &&
+               "V5 local-quality witness did not produce a measurable A baseline");
+        assert(localQualityDelta <= 2 &&
+               "V5 distant zero-contribution medium degraded A's local sampling quality");
+
+        // V5 NUMERIC-ONLY FUSED-SET WITNESS: mutate only one numeric
+        // coefficient inside member A's already-admitted E_v tree. Membership,
+        // expression identities, operator topology, and B remain unchanged.
+        // The native answer must change through parameter refresh without
+        // regenerating the fused set WGSL/pipeline structure.
+        localEmissionNode->children[0]->scalarForm.terms[0].coefficient = 0.0;
+        localA.emissionRevision = 5658;
+        renderer.setVolumeDensitySources({localA, farZeroB}, 5658);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char localNumericDim[4];
+        readCentre(localNumericDim);
+        const Renderer::FrameStats localNumericStats = renderer.frameStats();
+        std::printf(
+            "V5 numeric fused E_v baseline=%d edited=%d compiles=%u\n",
+            localAWithFarZeroB[0], localNumericDim[0],
+            localNumericStats.volumeProgramCompiles);
+        assert(localAWithFarZeroB[0] > localNumericDim[0] + 15 &&
+               "V5 numeric member edit did not visibly refresh fused-set parameters");
+        assert(localNumericStats.volumeProgramCompiles == 0 &&
+               "V5 numeric member edit regenerated fused-set WGSL structure");
+
+        // V5 TIME-ONLY FUSED-SET WITNESS: E_v=(t,0,0) belongs to member A,
+        // while a second admitted member keeps this on the fused V5 path.
+        // Advancing only A's relative Timeline coordinate must change native
+        // pixels while reusing the already-compiled set program. Time remains
+        // per-medium runtime instance data, never authored structural identity.
+        auto timedSetEmissionT = std::make_unique<OntoMath::MathNode>();
+        timedSetEmissionT->op = OntoMath::MathNode::Op::ValueLeaf;
+        timedSetEmissionT->variableName = OntoMath::kTimeVar;
+        auto timedSetEmissionNode = std::make_shared<OntoMath::MathNode>();
+        timedSetEmissionNode->op = OntoMath::MathNode::Op::VectorConstruct;
+        timedSetEmissionNode->children.push_back(std::move(timedSetEmissionT));
+        timedSetEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        timedSetEmissionNode->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        OntoMath::Piecewise timedSetEmission =
+            OntoMath::Piecewise::continuous(timedSetEmissionNode);
+
+        Rendering::VolumeDensityBinding timedSetA = localA;
+        timedSetA.emissionExpr = &timedSetEmission;
+        timedSetA.emissionRevision = 5660;
+        timedSetA.temporalCoordinate = 0.05;
+        timedSetA.temporalDelta = 0.05;
+
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5661);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char fusedTimeDim[4];
+        readCentre(fusedTimeDim);
+        const Renderer::FrameStats fusedTimeCompileStats = renderer.frameStats();
+        assert(fusedTimeCompileStats.volumeProgramCompiles == 1 &&
+               "introducing V5 E_v(t) did not compile its fused structure exactly once");
+
+        timedSetA.temporalCoordinate = 1.0;
+        timedSetA.temporalDelta = 0.95;
+        // Keep membership and authored content revisions fixed: only runtime
+        // Timeline data changes between these two frames.
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5661);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char fusedTimeBright[4];
+        readCentre(fusedTimeBright);
+        const Renderer::FrameStats fusedTimeAdvanceStats = renderer.frameStats();
+        std::printf(
+            "V5 fused timeline t=.05:%d t=1:%d compiles=%u cacheHits=%u\n",
+            fusedTimeDim[0], fusedTimeBright[0],
+            fusedTimeAdvanceStats.volumeProgramCompiles,
+            fusedTimeAdvanceStats.volumeProgramCacheHits);
+        assert(fusedTimeBright[0] > fusedTimeDim[0] + 80 &&
+               "advancing one fused member Timeline did not visibly change E_v(p,t)");
+        assert(fusedTimeAdvanceStats.volumeProgramCompiles == 0 &&
+               "advancing one fused member Timeline regenerated set WGSL");
+        assert(fusedTimeAdvanceStats.volumeProgramCacheHits >= 2 &&
+               "advancing fused member time failed to reuse the admitted set program");
+
+        // V5 MEMBERSHIP INVALIDATION: the already-memoized {A,B} set above
+        // is the baseline. Add a third admitted medium C with independent
+        // expression identities and a visible blue self-emission contribution.
+        // This new membership must compile exactly one new fused structure.
+        auto memberCDensityNode = scalarNode(1.0);
+        OntoMath::Piecewise memberCDensity =
+            OntoMath::Piecewise::continuous(memberCDensityNode);
+        auto memberCExtinctionNode = scalarNode(0.05);
+        OntoMath::Piecewise memberCExtinction =
+            OntoMath::Piecewise::continuous(memberCExtinctionNode);
+        auto memberCZeroScatteringNode = scalarNode(0.0);
+        OntoMath::Piecewise memberCZeroScattering =
+            OntoMath::Piecewise::continuous(memberCZeroScatteringNode);
+        auto memberCEmissionNode = vectorNode(0.0, 0.0, 1.0);
+        OntoMath::Piecewise memberCEmission =
+            OntoMath::Piecewise::continuous(memberCEmissionNode);
+
+        Rendering::VolumeDensityBinding memberC = timedSetA;
+        memberC.origin = glm::vec3(0.0f);
+        memberC.scale = glm::vec3(1.0f);
+        memberC.densityExpr = &memberCDensity;
+        memberC.densityRevision = 5670;
+        memberC.extinctionExpr = &memberCExtinction;
+        memberC.extinctionRevision = 5671;
+        memberC.scatteringExpr = &memberCZeroScattering;
+        memberC.scatteringRevision = 5672;
+        memberC.volumeChromaExpr = nullptr;
+        memberC.volumeChromaRevision = 0;
+        memberC.phaseExpr = nullptr;
+        memberC.phaseRevision = 0;
+        memberC.emissionExpr = &memberCEmission;
+        memberC.emissionRevision = 5673;
+        memberC.temporalCoordinate = 0.0;
+        memberC.temporalDelta = 0.0;
+
+        renderer.setVolumeDensitySources({timedSetA, farZeroB, memberC}, 5674);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char membershipABC[4];
+        readCentre(membershipABC);
+        const Renderer::FrameStats membershipAddStats = renderer.frameStats();
+        std::printf(
+            "V5 membership AB=(%d,%d,%d) ABC=(%d,%d,%d) addCompiles=%u\n",
+            fusedTimeBright[0], fusedTimeBright[1], fusedTimeBright[2],
+            membershipABC[0], membershipABC[1], membershipABC[2],
+            membershipAddStats.volumeProgramCompiles);
+        assert(membershipABC[2] > fusedTimeBright[2] + 30 &&
+               "adding visible medium C did not change the fused native answer");
+        assert(membershipAddStats.volumeProgramCompiles == 1 &&
+               "adding one V5 set member did not compile exactly one new fused structure");
+
+        // Remove C and return to the already-established {A,B} structural key.
+        // The projected set revision changes, so this first restoration is a
+        // value/content refresh, not a historical cache-hit counter event. The
+        // structural proof is zero compiles plus restoration of the old pixels.
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5675);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char membershipABRestored[4];
+        readCentre(membershipABRestored);
+        const Renderer::FrameStats membershipRemoveStats = renderer.frameStats();
+        assert(channelNear(membershipABRestored[0], fusedTimeBright[0]) &&
+               channelNear(membershipABRestored[1], fusedTimeBright[1]) &&
+               channelNear(membershipABRestored[2], fusedTimeBright[2]) &&
+               "removing C failed to restore the previously memoized {A,B} answer");
+        assert(membershipRemoveStats.volumeProgramCompiles == 0 &&
+               "removing C recompiled the already-established {A,B} fused structure");
+
+        // An identical follow-up frame on the restored revision gives the
+        // telemetry counter its strict historical meaning: unchanged content
+        // reuses the admitted two-member memo directly.
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5675);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        const Renderer::FrameStats membershipReuseStats = renderer.frameStats();
+        assert(membershipReuseStats.volumeProgramCompiles == 0 &&
+               membershipReuseStats.volumeProgramCacheHits >= 2 &&
+               "restored {A,B} did not directly reuse its fused program memo");
+
+        // V5 REFUSED-MEMBER / NO-STALE-OUTPUT: poison only member B's E_v
+        // structure with unsupported Raycast. Even though B's density is zero,
+        // the admitted member is invalid authored truth, so the WHOLE current
+        // fused answer must fail closed. The previously valid bright {A,B}
+        // pipeline may stay cached as an artifact but must not be scheduled.
+        auto refusedMemberEmissionNode = std::make_shared<OntoMath::MathNode>();
+        refusedMemberEmissionNode->op = OntoMath::MathNode::Op::Raycast;
+        OntoMath::Piecewise refusedMemberEmission =
+            OntoMath::Piecewise::continuous(refusedMemberEmissionNode);
+        Rendering::VolumeDensityBinding refusedB = farZeroB;
+        refusedB.emissionExpr = &refusedMemberEmission;
+        refusedB.emissionRevision = 5676;
+
+        renderer.setVolumeDensitySources({timedSetA, refusedB}, 5677);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char refusedSetPixel[4];
+        readCentre(refusedSetPixel);
+        const Renderer::FrameStats refusedSetStats = renderer.frameStats();
+        std::printf(
+            "V5 refused member pixel=(%d,%d,%d) refusals=%u reason=%s\n",
+            refusedSetPixel[0], refusedSetPixel[1], refusedSetPixel[2],
+            refusedSetStats.volumeProgramRefusals,
+            refusedSetStats.volumeLastProgramRefusal.c_str());
+        assert(refusedSetStats.volumeProgramRefusals >= 1 &&
+               refusedSetStats.volumeLastProgramRefusal.find("volume set member 1") !=
+                   std::string::npos &&
+               refusedSetStats.volumeLastProgramRefusal.find("emission") !=
+                   std::string::npos &&
+               refusedSetStats.volumeLastProgramRefusal.find("Raycast") !=
+                   std::string::npos &&
+               "unsupported fused member did not produce a named member/emission refusal");
+        assert(refusedSetPixel[0] < 12 &&
+               refusedSetPixel[1] < 12 &&
+               refusedSetPixel[2] < 12 &&
+               "refused V5 member replayed stale integrated radiance");
+
+        // Restore lawful B. Returning to the already-memoized {A,B} key must
+        // recover the visible answer with no structural compile. A refusal in a
+        // different set memo may not poison future lawful reuse.
+        renderer.setVolumeDensitySources({timedSetA, farZeroB}, 5678);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
+        unsigned char postRefusalRestored[4];
+        readCentre(postRefusalRestored);
+        const Renderer::FrameStats postRefusalStats = renderer.frameStats();
+        assert(channelNear(postRefusalRestored[0], fusedTimeBright[0]) &&
+               channelNear(postRefusalRestored[1], fusedTimeBright[1]) &&
+               channelNear(postRefusalRestored[2], fusedTimeBright[2]) &&
+               "lawful {A,B} did not recover after a refused sibling set");
+        assert(postRefusalStats.volumeProgramCompiles == 0 &&
+               "restoring lawful {A,B} recompiled a previously memoized fused structure");
+
+        // Restore the original order for the remaining single-medium V1/V2/V3/V4
+        // witnesses below; they replace the collection before rendering anyway.
+        renderer.setVolumeDensitySources({sharedDensityA, sharedDensityB}, 5603);
 
         // Structural sigma_t edit must compile even though the resulting value
         // stays 3.0 and D is unchanged.
