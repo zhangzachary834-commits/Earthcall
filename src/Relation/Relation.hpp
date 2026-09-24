@@ -219,13 +219,17 @@ public:
     void bind(Singular* aBeing, Singular* bBeing) {
         _endpointA.bind(aBeing);
         _endpointB.bind(bBeing);
+        updatePersonEndpointFlag();
     }
 
     void forgetEndpoint(const Singular* being) {
         if (!being) return;
         _endpointA.forget(being);
         _endpointB.forget(being);
+        updatePersonEndpointFlag();
     }
+
+    void updatePersonEndpointFlag();
 
 
 
@@ -298,6 +302,7 @@ private:
     Endpoint _endpointA;
     Endpoint _endpointB;
     Singularity::Language::Lexeme* _typeLexeme = nullptr;
+    bool _hasPersonEndpoint = false;
 
     void buildProperties() override;
     std::string propEntityA() const { return aId(); }
