@@ -1,7 +1,20 @@
 #include "FieldNode.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Storage/Serialization/Common/SingularPropertySerialization.hpp"
 
 namespace geom {
+namespace {
+
+bool fieldNodeRegisteredPropertyNeedsEnvelope(const std::string& name) {
+    if (name == "origin" || name == "scale") return false;
+    if (name.rfind("field.", 0) == 0) return false;
+    if (name.rfind("vectorField.", 0) == 0) return false;
+    if (name.rfind("volume.", 0) == 0) return false;
+    if (name.rfind("light.", 0) == 0) return false;
+    return true;
+}
+
+} // namespace
 
 nlohmann::json FieldNode::toJson() const {
     nlohmann::json j;
@@ -35,19 +48,11 @@ nlohmann::json FieldNode::toJson() const {
         j["lightAngular"] = lightAngular->toJson();
     }
 
-    // A FieldNode is a Singular, so properties a Person/Law grants it are
-    // first-order authored state just like authored Object properties. Keep
-    // them beside the mathematical ASTs instead of silently dropping them at
-    // the save boundary (the temporal form of Refusal #6's black box).
-    if (!dynamicProperties().empty()) {
-        nlohmann::json dyn = nlohmann::json::object();
-        for (const auto& entry : dynamicProperties()) {
-            PropertyValue live = entry.second;
-            getDynamicProperty(entry.first, live);
-            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(live);
-        }
-        j["authoredProperties"] = std::move(dyn);
-    }
+    // Canonical mathematical payloads above remain the only authority for
+    // FieldNode's mapped PropertyPaths. The universal envelope carries authored
+    // state and only registered state with no stronger canonical home.
+    Singularity::Storage::writeSingularProperties(
+        j, *this, fieldNodeRegisteredPropertyNeedsEnvelope);
     return j;
 }
 
@@ -147,12 +152,8 @@ void FieldNode::applyJson(const nlohmann::json& j) {
         }
     }
 
-    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
-        for (auto it = j["authoredProperties"].begin();
-             it != j["authoredProperties"].end(); ++it) {
-            setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
-        }
-    }
+    Singularity::Storage::readSingularProperties(
+        j, *this, {}, fieldNodeRegisteredPropertyNeedsEnvelope);
 }
 
 std::shared_ptr<FieldNode> FieldNode::fromJson(const nlohmann::json& j) {

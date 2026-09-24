@@ -57,6 +57,12 @@ public:
     virtual PropertyValue value() const = 0;
     virtual bool setValue(const PropertyValue& v) = 0;
 
+    // Persistence backstop: true only when a serialized semantic value can be
+    // written back into this property. Read-only/derived properties stay out
+    // of the generic Singular property envelope; their concrete root may still
+    // serialize whatever source state derives them.
+    virtual bool isSemanticallyWritable() const { return false; }
+
     // Non-null when this property's value is itself a Singular — the
     // recursion point PropertyPath descends through for nested addresses.
     virtual Singular* asSingular() const { return nullptr; }

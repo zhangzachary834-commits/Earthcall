@@ -1,6 +1,7 @@
 #pragma once
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
+#include "json.hpp"
 
 #include <ctime>
 #include <memory>
@@ -9,6 +10,7 @@
 #include <map>
 #include <algorithm>
 #include <functional>
+#include <unordered_map>
 #include <ctime>
 
 class Formation;
@@ -116,6 +118,26 @@ public:
     const std::unordered_map<Earthcall::StringId, PropertyValue>& dynamicProperties() const {
         return _dynamicProperties;
     }
+
+    // Storage-phase continuity for authored/registered property values whose
+    // JSON names another Singular that is not live yet. Raw semantic truth is
+    // preserved until a load-scoped resolver can bind it.
+    void deferAuthoredPropertyJson(Earthcall::StringId id, nlohmann::json value) {
+        _pendingAuthoredPropertyJson[id] = std::move(value);
+    }
+    void deferRegisteredPropertyJson(Earthcall::StringId id, nlohmann::json value) {
+        _pendingRegisteredPropertyJson[id] = std::move(value);
+    }
+    void clearDeferredAuthoredProperty(Earthcall::StringId id) {
+        _pendingAuthoredPropertyJson.erase(id);
+    }
+    void clearDeferredRegisteredProperty(Earthcall::StringId id) {
+        _pendingRegisteredPropertyJson.erase(id);
+    }
+    const std::unordered_map<Earthcall::StringId, nlohmann::json>&
+    pendingAuthoredPropertyJson() const { return _pendingAuthoredPropertyJson; }
+    const std::unordered_map<Earthcall::StringId, nlohmann::json>&
+    pendingRegisteredPropertyJson() const { return _pendingRegisteredPropertyJson; }
     PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id);
     const PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id) const;
     bool removeDynamicProperty(const std::string& name);
@@ -199,6 +221,11 @@ protected:
     // Dynamic properties (Person-authored via AddProperty). Keys are StringIds
     // for fast lookup. String overloads kept for backward compatibility.
     std::unordered_map<Earthcall::StringId, PropertyValue> _dynamicProperties;
+
+    // Hydration-only raw semantic values. They are not Law-addressable world
+    // state; they exist to preserve references until identity resolution.
+    std::unordered_map<Earthcall::StringId, nlohmann::json> _pendingAuthoredPropertyJson;
+    std::unordered_map<Earthcall::StringId, nlohmann::json> _pendingRegisteredPropertyJson;
     
     // Authored data structures and bounds (manifesto property framework)
     std::map<std::string, class DataStructure> _dataStructures;
