@@ -1,7 +1,8 @@
 # SUN RECONCILIATION — Sparkly volumetric light vs. established radiance / volume invariants
 **Date:** 2026-09-24
 **Repository:** `zhangzachary834-commits/Earthcall`
-**Canonical inspected:** `sync-from-earthcall-main@1d84821fde1b27cacf1fb885c9bc3b1de52547a2`
+**Canonical Sparkly landing inspected:** `sync-from-earthcall-main@1d84821fde1b27cacf1fb885c9bc3b1de52547a2`  
+**Reconciled through current canonical:** `55974af259ebb9f27a29341ff77fa780b23baeb4` via two-parent merge `ae6128b66b90764f787761763a1ca5263eba47af`
 **Sparkly / Antigravity commit:** `1d84821fde1b27cacf1fb885c9bc3b1de52547a2`
 **Reconciliation branch:** `sol/rung9-sparkly-overlap-reconciliation-20260924`
 
