@@ -41,6 +41,7 @@
 #include <set>
 #include <functional>
 #include <chrono>
+#include <utility>
 #ifndef __EMSCRIPTEN__
 #include <openssl/sha.h>
 #endif
@@ -1411,10 +1412,11 @@ bool atomicWriteFile(const std::filesystem::path& finalPath, const std::string& 
 // "matterGeneration" (if any and if different) — cleanup happens only
 // after the new root's atomic rename has already succeeded, per Sol's
 // "keep the prior generation until the new pointer commits."
-void commitMatterGeneration(const std::filesystem::path& ecformPath,
-                             const std::vector<uint8_t>& matterBytes,
-                             nlohmann::json& j) {
-    if (matterBytes.empty()) return;
+std::pair<bool, std::string> commitMatterGeneration(
+    const std::filesystem::path& ecformPath,
+    const std::vector<uint8_t>& matterBytes,
+    nlohmann::json& j) {
+    if (matterBytes.empty()) return {true, ""};
 
     const std::string hash = sha256Hex(matterBytes);
     const std::string snapshotId = hash.substr(0, 16);
@@ -1423,32 +1425,42 @@ void commitMatterGeneration(const std::filesystem::path& ecformPath,
         ecformPath.parent_path() / (stem + "." + snapshotId + ".ecmatter");
 
     std::error_code ec;
-    if (!std::filesystem::exists(matterPath, ec)) {
+    const bool matterExists = std::filesystem::exists(matterPath, ec);
+    if (ec) {
+        std::cerr << "[ZoneManager] commitMatterGeneration: could not inspect "
+                  << matterPath << ": " << ec.message() << "\n";
+        return {false, ""};
+    }
+    if (!matterExists) {
         // Content-addressed: if a prior save already produced byte-identical
         // matter, its generation file is already correct and untouched.
         if (!atomicWriteFile(matterPath, matterBytes)) {
             std::cerr << "[ZoneManager] commitMatterGeneration: failed to write "
-                      << matterPath << " — leaving prior generation as the "
-                      << "semantic root's committed reference.\n";
-            return;
+                      << matterPath << " — leaving the prior semantic root and "
+                      << "its generation untouched.\n";
+            return {false, ""};
         }
     }
 
-    // Read the CURRENT on-disk root's prior generation (not `j`, which for
-    // saveStateWithLog is built fresh each call and never carries one) so
-    // cleanup targets the actual predecessor, not this call's own value.
+    // Read the CURRENT on-disk root's prior generation (not the fresh JSON
+    // value, which may be rebuilt each save). Return that predecessor path;
+    // it is not retired until AFTER the semantic root commits.
     std::string previousGenerationId;
-    {
-        std::error_code readEc;
-        if (std::filesystem::exists(ecformPath, readEc)) {
-            std::ifstream in(ecformPath);
-            if (in.is_open()) {
-                try {
-                    nlohmann::json prior = nlohmann::json::parse(in, nullptr, false);
-                    if (!prior.is_discarded() && prior.contains("matterGeneration")) {
-                        previousGenerationId = prior["matterGeneration"].value("snapshotId", std::string{});
-                    }
-                } catch (...) { /* malformed prior root: nothing to clean up */ }
+    std::error_code rootEc;
+    const bool rootExists = std::filesystem::exists(ecformPath, rootEc);
+    if (rootEc) {
+        std::cerr << "[ZoneManager] commitMatterGeneration: could not inspect prior root "
+                  << ecformPath << ": " << rootEc.message() << "\n";
+        return {false, ""};
+    }
+    if (rootExists && std::filesystem::is_regular_file(ecformPath, rootEc)) {
+        if (rootEc) return {false, ""};
+        std::ifstream in(ecformPath);
+        if (in.is_open()) {
+            nlohmann::json prior = nlohmann::json::parse(in, nullptr, false);
+            if (!prior.is_discarded() && prior.contains("matterGeneration")) {
+                previousGenerationId =
+                    prior["matterGeneration"].value("snapshotId", std::string{});
             }
         }
     }
@@ -1461,17 +1473,22 @@ void commitMatterGeneration(const std::filesystem::path& ecformPath,
     };
 
     if (!previousGenerationId.empty() && previousGenerationId != snapshotId) {
-        std::filesystem::path oldMatterPath =
-            ecformPath.parent_path() / (stem + "." + previousGenerationId + ".ecmatter");
-        std::error_code rmEc;
-        std::filesystem::remove(oldMatterPath, rmEc);
-        // Not finding it is fine (already cleaned, or the root predates
-        // generation coupling); a real removal failure is logged, not fatal —
-        // an orphaned old generation is disk waste, not a correctness bug.
-        if (rmEc && std::filesystem::exists(oldMatterPath)) {
-            std::cerr << "[ZoneManager] commitMatterGeneration: could not remove "
-                      << "superseded generation " << oldMatterPath << ": " << rmEc.message() << "\n";
-        }
+        const std::filesystem::path predecessor =
+            ecformPath.parent_path() /
+            (stem + "." + previousGenerationId + ".ecmatter");
+        return {true, predecessor.string()};
+    }
+    return {true, ""};
+}
+
+void cleanupPredecessorMatter(const std::string& oldMatterPathString) {
+    if (oldMatterPathString.empty()) return;
+    const std::filesystem::path oldMatterPath(oldMatterPathString);
+    std::error_code ec;
+    std::filesystem::remove(oldMatterPath, ec);
+    if (ec && std::filesystem::exists(oldMatterPath)) {
+        std::cerr << "[ZoneManager] Could not remove superseded matter generation "
+                  << oldMatterPath << ": " << ec.message() << "\n";
     }
 }
 
@@ -1557,15 +1574,23 @@ void ZoneManager::saveState(const std::string& filename, SaveContext& ctx) {
     // content-addressed name BEFORE the semantic root commits, and the
     // root's own commit is the atomic rename below — never a plain
     // ofstream that a crash mid-write can leave truncated in place.
+    std::string predecessorMatter;
     if (!isBeforeLoadSnapshot(filename)) {
         std::vector<uint8_t> matter = buildMatterFlatBuffer();
-        commitMatterGeneration(p, matter, j);
+        auto matterCommit = commitMatterGeneration(p, matter, j);
+        if (!matterCommit.first) {
+            std::cerr << "[ZoneManager] saveState: matter generation failed; semantic root "
+                      << p << " remains unchanged.\n";
+            return;
+        }
+        predecessorMatter = std::move(matterCommit.second);
     }
 
     if (!atomicWriteFile(p, j.dump(2))) {
         std::cerr << "[ZoneManager] saveState: failed to commit " << p << "\n";
         return;
     }
+    cleanupPredecessorMatter(predecessorMatter);
 
     logIo("SAVE " + p.string() + ": " +
           std::to_string(ctx.lawManager->getAll().size()) + " law(s), " +
@@ -1605,27 +1630,42 @@ void ZoneManager::saveStateWithLog(const std::string& customName, SaveContext& c
     // will (same helper, same sanitized label/folder) so the matter file
     // lands beside it under the correct stem.
     const std::string ecformPath = SaveSystem::makeFilename(actualName, SaveSystem::SaveType::WORLD, ".ecform");
+    std::string predecessorMatter;
     if (!ecformPath.empty()) {
         std::vector<uint8_t> matterBuffer = buildMatterFlatBuffer();
-        commitMatterGeneration(std::filesystem::path(ecformPath), matterBuffer, j);
+        auto matterCommit =
+            commitMatterGeneration(std::filesystem::path(ecformPath), matterBuffer, j);
+        if (!matterCommit.first) {
+            _saveLoad.lastSaveReport =
+                "Save refused: physical matter generation failed for '" + actualName + "'.";
+            logIo("SAVE FAILED matter generation '" + actualName + "'");
+            return;
+        }
+        predecessorMatter = std::move(matterCommit.second);
     }
 
     // Semantic Text Substrate (.ecform), now carrying matterGeneration
-    // metadata for whatever matter was committed above.
+    // metadata for the already-staged physical generation.
     const std::string path = SaveSystem::writeSaveData(j, actualName, SaveSystem::SaveType::WORLD);
     if (path.empty()) {
         _saveLoad.lastSaveReport = "Save refused or failed for '" + actualName + "'.";
         logIo("SAVE FAILED '" + actualName + "'");
         return;
     }
+    cleanupPredecessorMatter(predecessorMatter);
 
     _saveLoad.lastSaveReport = "Wrote " + path;
     _saveLoad.loadedSaveName = actualName;
     if (ctx.unpackForAuthoring) {
         std::string gameFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::WORLD);
         std::string unpackedPath = gameFolder + "/" + actualName + "_unpacked";
-        SaveSystem::unpackSaveToDirectory(j, unpackedPath);
-        _saveLoad.lastSaveReport += " (unpacked " + unpackedPath + ")";
+        if (SaveSystem::unpackSaveToDirectory(j, unpackedPath)) {
+            _saveLoad.lastSaveReport += " (unpacked " + unpackedPath + ")";
+        } else {
+            _saveLoad.lastSaveReport += " (unpack FAILED for " + unpackedPath + ")";
+            std::cerr << "[SaveSystem] unpackSaveToDirectory FAILED for "
+                      << unpackedPath << "\n";
+        }
     }
     
     ECA::Logger::instance().setActiveWorld(actualName);
@@ -2262,12 +2302,26 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     ? std::vector<uint8_t>{}
                     : buildMatterFlatBuffer(scopeIds);
                 if (!newMatter.empty()) {
-                    SaveSystem::writeMatterData(newMatter, stem, SaveSystem::SaveType::WORLD);
                     std::filesystem::path formPath(filename);
                     formPath.replace_extension(".ecform");
-                    std::ofstream formOut(formPath);
-                    if (formOut) formOut << j.dump(2);
-                    logIo("Migrated legacy save '" + filename + "' to split substrate (.ecform + .ecmatter).");
+                    auto matterCommit = commitMatterGeneration(formPath, newMatter, j);
+                    if (!matterCommit.first) {
+                        failures += "legacy-migration-write: matter generation failed for " +
+                                    filename + "  ";
+                        std::cerr << "[ZoneManager] Legacy migration matter write FAILED for "
+                                  << filename << "\n";
+                    } else if (!atomicWriteFile(formPath, j.dump(2))) {
+                        // A newly staged generation may remain orphaned, but the
+                        // prior root and the generation it names remain intact.
+                        failures += "legacy-migration-write: semantic root failed for " +
+                                    filename + "  ";
+                        std::cerr << "[ZoneManager] Legacy migration root write FAILED for "
+                                  << filename << "\n";
+                    } else {
+                        cleanupPredecessorMatter(matterCommit.second);
+                        logIo("Migrated legacy save '" + filename +
+                              "' to generation-coupled split substrate.");
+                    }
                 }
             }
         });
