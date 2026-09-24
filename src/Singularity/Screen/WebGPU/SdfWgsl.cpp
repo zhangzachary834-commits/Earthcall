@@ -2901,6 +2901,8 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         (void)emitNode(*occluderSdf, e);
     }
 
+    const std::string mediumTimeExpression = e.timeExpression;
+    e.timeExpression = "u.sourceTime.x";
     if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
         emitPiecewise(*lightRadianceExpr, e, "p", "f32", throwaway);
     }
@@ -2917,6 +2919,7 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
         emitPiecewise(*lightAngularExpr, e, "p", "f32", throwaway);
         e.bindOmega = false;
     }
+    e.timeExpression = mediumTimeExpression;
 
     ParameterBlock block;
     block.ok = !e.refused;
@@ -3087,7 +3090,10 @@ struct VolumeGlobals {
     incidentSource: vec4<f32>,
     // xyz = source color / diffuse radiance; w = source intensity / multiplier.
     incidentColor: vec4<f32>,
-    // x = max shadow steps, y = shadow enable flag (1.0 or 0.0), z = phase anisotropy g, w = reserved
+    // xy = the admitted source's own relative Timeline coordinate/delta.
+    // Source t must never borrow a participating medium's instance time.
+    sourceTime: vec4<f32>,
+    // x = max shadow steps, y = local volumetric visibility enabled, z/w reserved.
     volumeControl: vec4<f32>,
 };
 
@@ -3248,6 +3254,12 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
     prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
 
+    // Source rho/chi/alpha retain the admitted source's own Timeline even while
+    // they are consumed by participating-medium transport. The surrounding
+    // medium evaluators continue to use instances[g_instIdx].time.x.
+    const std::string mediumTimeExpression = e.timeExpression;
+    e.timeExpression = "u.sourceTime.x";
+
     std::string lightRadianceBody;
     if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
         emitPiecewise(*lightRadianceExpr, e, "p", "f32", lightRadianceBody);
@@ -3285,6 +3297,7 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     prog.wgsl += "\nfn lightAngularEval(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" + lightAngularBody + "}\n";
     prog.wgsl += "const HAS_AUTHORED_LIGHT_ANGULAR: bool = ";
     prog.wgsl += (lightAngularExpr && !lightAngularExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    e.timeExpression = mediumTimeExpression;
 
     const bool hasOccluder = geom::isSdfActive(occluderSdf);
     if (hasOccluder) {
@@ -3425,14 +3438,6 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                     if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
                         phase = max(volumePhaseEval(p, wi, wo), 0.0);
                     }
-                } else {
-                    // Physical mist forward-scattering Henyey-Greenstein approximation
-                    let cosTheta = clamp(dot(normalize(u.incidentSource.xyz - worldP), rd), -1.0, 1.0);
-                    let g = u.volumeControl.z;
-                    let g2 = g * g;
-                    let hgDenom = pow(max(1.0 + g2 - 2.0 * g * cosTheta, 1e-4), 1.5);
-                    let hgPhase = (1.0 - g2) / max(4.0 * 3.14159265 * hgDenom, 1e-4);
-                    phase = mix(1.0, hgPhase * 4.0 * 3.14159265, select(0.0, 1.0, g > 0.01));
                 }
             } else {
                 if (HAS_AUTHORED_VOLUME_PHASE) {
@@ -3792,13 +3797,6 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                            phase" + n + " = max(volumePhaseEval_" + n +
                 "(p" + n + ", wi, wo), 0.0);\n"
             "                        }\n"
-            "                    } else if (u.incidentSource.w > 0.5) {\n"
-            "                        let cosTheta = clamp(dot(normalize(u.incidentSource.xyz - worldP), rd), -1.0, 1.0);\n"
-            "                        let g = u.volumeControl.z;\n"
-            "                        let g2 = g * g;\n"
-            "                        let hgDenom = pow(max(1.0 + g2 - 2.0 * g * cosTheta, 1e-4), 1.5);\n"
-            "                        let hgPhase = (1.0 - g2) / max(4.0 * 3.14159265 * hgDenom, 1e-4);\n"
-            "                        phase" + n + " = mix(1.0, hgPhase * 4.0 * 3.14159265, select(0.0, 1.0, g > 0.01));\n"
             "                    }\n"
             "                    var emitted" + n + " = vec3<f32>(0.0);\n"
             "                    if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
