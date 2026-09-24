@@ -793,7 +793,28 @@ The floor, mirroring `LAW_MIGRATION_FRAMEWORK.md` §6's kernel floor:
 5. [BUILT] Enforcement at the save path, scoped to an active mover session.
            SaveSystem::writeSaveData refuses a write the register does not
            permit, and says why on stderr.
+6. [BUILT 2026-09-24] Trust root. A grant stands only while its Person has
+           proved possession of their key IN THIS PROCESS
+           (trustAuthenticatedPerson takes the PrivateKey; roots are never
+           serialized). A valid signature from an absent or self-minted
+           "person" is inert (Standing::GrantorNotAuthenticated). No mover
+           scope, even "**", may write saves/identity/ (the register).
+7. [BUILT 2026-09-24] Foreign actuation. Every WebSocket/MCP mutation
+           passes Singularity/Foreign/ForeignActuationGuard: the connection
+           proves a mover key (challenge -> signature), and each act is held
+           to that mover's scope over the act's durable resource + the
+           TransferPolicy gate. Laws a mover writes are authored by the
+           mover, never by the Person at the screen. Reads stay open.
 ```
+
+**How a Person grants a model standing (2026-09-24).** The Person's profile must be keyed
+once (`EARTHCALL_MIGRATE_PERSON_IDENTITY=1`). Then `build/earthcall_first_mover mint`
+seals a mover key in `~/.earthcall/identity`, `earthcall_first_mover grant --mover <id>
+--scope <glob>...` signs the grant into `saves/identity/first-movers.json` (Person's key
+unlocked by `EARTHCALL_KEY_PASSPHRASE`), and the engine honours it in any session where
+that same Person unlocks at boot. The MCP bridge authenticates with
+`EARTHCALL_FIRST_MOVER_ID` and signs through the same tool; it never holds the key. Full
+plan and what remains: `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md`.
 
 **How enforcement is scoped.** `FirstMoverRegister` carries an *active mover*, set
 only for the duration of a `FirstMoverSession` (RAII, so a session cannot leak past

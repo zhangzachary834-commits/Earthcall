@@ -318,3 +318,6 @@ Testing/
 # Merge-conflict leftovers (Object.hpp.orig was tracked-adjacent for three days).
 *.orig
 *.rej
+
+# First Mover Register staging file (earthcall_first_mover writes then renames atomically)
+saves/identity/*.staged

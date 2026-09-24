@@ -1038,6 +1038,8 @@ struct VolumeGlobalUniforms {
     glm::vec4 viewport;
     // xyz = exactly one enabled admitted direct source; w=1 iff valid.
     glm::vec4 incidentSource;
+    glm::vec4 incidentColor;
+    glm::vec4 volumeControl;
 };
 } // namespace
 
@@ -2339,11 +2341,19 @@ void WebGpuRenderer::flushVolumeComposite() {
             setKey.emplace_back(
                 medium->densityExpr, medium->extinctionExpr,
                 medium->scatteringExpr, medium->volumeChromaExpr,
-                medium->phaseExpr, medium->emissionExpr);
+                medium->phaseExpr, medium->emissionExpr,
+                medium->occluderSdf,
+                incidentSource ? incidentSource->radianceExpr : nullptr,
+                incidentSource ? incidentSource->chromaExpr : nullptr,
+                incidentSource ? incidentSource->angularExpr : nullptr);
             compilerInputs.push_back({
                 medium->densityExpr, medium->extinctionExpr,
                 medium->scatteringExpr, medium->volumeChromaExpr,
-                medium->phaseExpr, medium->emissionExpr});
+                medium->phaseExpr, medium->emissionExpr,
+                medium->occluderSdf,
+                incidentSource ? incidentSource->radianceExpr : nullptr,
+                incidentSource ? incidentSource->chromaExpr : nullptr,
+                incidentSource ? incidentSource->angularExpr : nullptr});
         }
 
         auto& setMemo = _volumeSetProgramCache[setKey];
@@ -2371,11 +2381,13 @@ void WebGpuRenderer::flushVolumeComposite() {
                     sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
                 const auto emissionLayout =
                     sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
+                const auto occluderLayout =
+                    sdfwgsl::inspectOccluderLayout(medium.occluderSdf);
 
                 setMemo.phaseReadsWi = setMemo.phaseReadsWi || phaseLayout.readsWi;
                 if (!densityLayout.ok || !extinctionLayout.ok ||
                     !scatteringLayout.ok || !chromaLayout.ok ||
-                    !phaseLayout.ok || !emissionLayout.ok) {
+                    !phaseLayout.ok || !emissionLayout.ok || !occluderLayout.ok) {
                     layoutsOk = false;
                     layoutError =
                         "volume set member " + std::to_string(i) + ": " +
@@ -2389,8 +2401,11 @@ void WebGpuRenderer::flushVolumeComposite() {
                                                ? "volume chroma: " + chromaLayout.error
                                                : !phaseLayout.ok
                                                      ? "volume phase: " + phaseLayout.error
-                                                     : "volume emission: " +
-                                                           emissionLayout.error);
+                                                     : !emissionLayout.ok
+                                                           ? "volume emission: " +
+                                                                 emissionLayout.error
+                                                           : "volume occluder: " +
+                                                                 occluderLayout.error);
                     break;
                 }
 
@@ -2405,6 +2420,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
                     "\nvolume-emission:\n" + emissionLayout.structure +
                     (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
+                    "\noccluder:\n" + occluderLayout.structure +
                     "\n";
             }
 
@@ -2444,7 +2460,11 @@ void WebGpuRenderer::flushVolumeComposite() {
                         const auto params = sdfwgsl::collectVolumeParams(
                             medium.densityExpr, medium.extinctionExpr,
                             medium.scatteringExpr, medium.volumeChromaExpr,
-                            medium.phaseExpr, medium.emissionExpr);
+                            medium.phaseExpr, medium.emissionExpr,
+                            medium.occluderSdf,
+                            incidentSource ? incidentSource->radianceExpr : nullptr,
+                            incidentSource ? incidentSource->chromaExpr : nullptr,
+                            incidentSource ? incidentSource->angularExpr : nullptr);
                         if (!params.ok) {
                             setMemo.ok = false;
                             setMemo.error =
@@ -2552,7 +2572,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         const VolumeProgramKey programKey{
             medium.densityExpr, medium.extinctionExpr,
             medium.scatteringExpr, medium.volumeChromaExpr, medium.phaseExpr,
-            medium.emissionExpr};
+            medium.emissionExpr,
+            medium.occluderSdf,
+            incidentSource ? incidentSource->radianceExpr : nullptr,
+            incidentSource ? incidentSource->chromaExpr : nullptr,
+            incidentSource ? incidentSource->angularExpr : nullptr};
         auto& memo = _volumeProgramCache[programKey];
         const uint64_t mediumContentRevision =
             Rendering::volumeContentRevision(medium);
@@ -2569,6 +2593,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
             const auto emissionLayout =
                 sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
+            const auto occluderLayout =
+                sdfwgsl::inspectOccluderLayout(medium.occluderSdf);
             memo.contentRevision = mediumContentRevision;
             memo.phaseReadsWi = phaseLayout.readsWi;
             memo.phaseReadsWo = phaseLayout.readsWo;
@@ -2576,7 +2602,7 @@ void WebGpuRenderer::flushVolumeComposite() {
 
             if (!densityLayout.ok || !extinctionLayout.ok ||
                 !scatteringLayout.ok || !volumeChromaLayout.ok ||
-                !phaseLayout.ok || !emissionLayout.ok) {
+                !phaseLayout.ok || !emissionLayout.ok || !occluderLayout.ok) {
                 memo.ok = false;
                 memo.error = !densityLayout.ok
                     ? "density: " + densityLayout.error
@@ -2588,7 +2614,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                                 ? "volume chroma: " + volumeChromaLayout.error
                                 : !phaseLayout.ok
                                     ? "volume phase: " + phaseLayout.error
-                                    : "volume emission: " + emissionLayout.error;
+                                    : !emissionLayout.ok
+                                        ? "volume emission: " + emissionLayout.error
+                                        : "volume occluder: " + occluderLayout.error;
                 memo.pipeline = nullptr;
                 ++mutableFrameStats().volumeProgramRefusals;
                 mutableFrameStats().volumeLastProgramRefusal = memo.error;
@@ -2604,13 +2632,18 @@ void WebGpuRenderer::flushVolumeComposite() {
                 (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
                 (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
                 "\nvolume-emission:\n" + emissionLayout.structure +
-                (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega");
+                (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega") +
+                "\noccluder:\n" + occluderLayout.structure;
             if (!memo.ok || memo.structure != structure || !memo.pipeline) {
                 memo.prog =
                     sdfwgsl::compileVolume(
                         medium.densityExpr, medium.extinctionExpr,
                         medium.scatteringExpr, medium.volumeChromaExpr,
-                        medium.phaseExpr, medium.emissionExpr);
+                        medium.phaseExpr, medium.emissionExpr,
+                        medium.occluderSdf,
+                        incidentSource ? incidentSource->radianceExpr : nullptr,
+                        incidentSource ? incidentSource->chromaExpr : nullptr,
+                        incidentSource ? incidentSource->angularExpr : nullptr);
                 ++mutableFrameStats().volumeProgramCompiles;
                 mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
                 memo.structure = structure;
@@ -2623,7 +2656,11 @@ void WebGpuRenderer::flushVolumeComposite() {
                     sdfwgsl::collectVolumeParams(
                         medium.densityExpr, medium.extinctionExpr,
                         medium.scatteringExpr, medium.volumeChromaExpr,
-                        medium.phaseExpr, medium.emissionExpr);
+                        medium.phaseExpr, medium.emissionExpr,
+                        medium.occluderSdf,
+                        incidentSource ? incidentSource->radianceExpr : nullptr,
+                        incidentSource ? incidentSource->chromaExpr : nullptr,
+                        incidentSource ? incidentSource->angularExpr : nullptr);
                 memo.ok = params.ok;
                 memo.error = params.error;
                 if (params.ok) memo.prog.params = params.values;
@@ -2709,9 +2746,15 @@ void WebGpuRenderer::flushVolumeComposite() {
     globals.eyePos = glm::vec4(_eyePos, 1.0f);
     globals.viewport = glm::vec4(static_cast<float>(_depthW),
                                  static_cast<float>(_depthH), 0.0f, 0.0f);
-    globals.incidentSource =
-        incidentSource ? glm::vec4(incidentSource->position, 1.0f)
-                       : glm::vec4(0.0f);
+    if (incidentSource) {
+        globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
+        globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);
+        globals.volumeControl = glm::vec4(24.0f, 1.0f, 0.55f, 0.0f);
+    } else {
+        globals.incidentSource = glm::vec4(0.0f);
+        globals.incidentColor = glm::vec4(1.0f);
+        globals.volumeControl = glm::vec4(0.0f);
+    }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {

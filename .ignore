@@ -74,3 +74,4 @@ third_party/httplib/httplib.h
 /update_task.py
 *.orig
 *.rej
+saves/identity/*.staged

@@ -2133,6 +2133,20 @@ EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* ex
     return layout;
 }
 
+ScalarExpressionLayout inspectOccluderLayout(const geom::SdfNode* root) {
+    if (!geom::isSdfActive(root)) {
+        return ScalarExpressionLayout{"<volume-occluder:absent>", 0, true, ""};
+    }
+    Emit e;
+    (void)emitNode(*root, e);
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(e.body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
@@ -2833,7 +2847,11 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
                                    const OntoMath::Piecewise* scatteringExpr,
                                    const OntoMath::Piecewise* volumeChromaExpr,
                                    const OntoMath::Piecewise* phaseExpr,
-                                   const OntoMath::Piecewise* emissionExpr) {
+                                   const OntoMath::Piecewise* emissionExpr,
+                                   const geom::SdfNode* occluderSdf,
+                                   const OntoMath::Piecewise* lightRadianceExpr,
+                                   const OntoMath::Piecewise* lightChromaExpr,
+                                   const OntoMath::Piecewise* lightAngularExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
@@ -2877,6 +2895,27 @@ ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
             emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", throwaway);
             e.bindEmissionOmega = false;
         }
+    }
+
+    if (geom::isSdfActive(occluderSdf)) {
+        (void)emitNode(*occluderSdf, e);
+    }
+
+    if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
+        emitPiecewise(*lightRadianceExpr, e, "p", "f32", throwaway);
+    }
+    if (lightChromaExpr && !lightChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*lightChromaExpr, true, validationError)) {
+            e.refuse("light chroma: " + validationError);
+        } else {
+            emitPiecewise(*lightChromaExpr, e, "p", "vec3<f32>", throwaway);
+        }
+    }
+    if (lightAngularExpr && !lightAngularExpr->pieces.empty()) {
+        e.bindOmega = true;
+        emitPiecewise(*lightAngularExpr, e, "p", "f32", throwaway);
+        e.bindOmega = false;
     }
 
     ParameterBlock block;
@@ -2969,6 +3008,56 @@ fn cnoise3(P: vec3<f32>) -> f32 {
     return 2.2 * n_xyz;
 }
 )WGSL";
+
+const char* kSdfPrimitivesMath = R"WGSL(
+fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
+
+fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
+
+fn sdBox(p: vec3<f32>, b: vec3<f32>) -> f32 {
+    let q = abs(p) - b;
+    return length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+fn sdRoundBox(p: vec3<f32>, b: vec3<f32>, r: f32) -> f32 {
+    return sdBox(p, max(b - vec3<f32>(r), vec3<f32>(0.0))) - r;
+}
+
+fn sdEllipsoid(p: vec3<f32>, r: vec3<f32>) -> f32 {
+    let rr = max(r, vec3<f32>(1e-4));
+    let k0 = length(p / rr);
+    let k1 = length(p / (rr * rr));
+    if (k1 < 1e-8) { return -min(rr.x, min(rr.y, rr.z)); }
+    return k0 * (k0 - 1.0) / k1;
+}
+
+fn sdCylinder(p: vec3<f32>, r: f32, h: f32) -> f32 {
+    let d = abs(vec2<f32>(length(p.xy), p.z)) - vec2<f32>(r, h);
+    return min(max(d.x, d.y), 0.0) + length(max(d, vec2<f32>(0.0)));
+}
+
+fn sdCone(p: vec3<f32>, r1: f32, h: f32) -> f32 {
+    let r2 = 0.0;
+    let q = vec2<f32>(length(p.xy), p.z);
+    let k1 = vec2<f32>(r2, h);
+    let k2 = vec2<f32>(r2 - r1, 2.0 * h);
+    let ca = vec2<f32>(q.x - min(q.x, select(r2, r1, q.y < 0.0)), abs(q.y) - h);
+    let cb = q - k1 + k2 * clamp(dot(k1 - q, k2) / dot2(k2), 0.0, 1.0);
+    let s = select(1.0, -1.0, cb.x < 0.0 && ca.y < 0.0);
+    return s * sqrt(min(dot2(ca), dot2(cb)));
+}
+
+fn sdTorus(p: vec3<f32>, R: f32, r: f32) -> f32 {
+    let q = vec2<f32>(length(p.xy) - R, p.z);
+    return length(q) - r;
+}
+
+fn sminK(a: f32, b: f32, k: f32) -> f32 {
+    if (k <= 1e-5) { return min(a, b); }
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+)WGSL";
 } // namespace
 
 Program compileVolume(const OntoMath::Piecewise* densityExpr,
@@ -2976,13 +3065,18 @@ Program compileVolume(const OntoMath::Piecewise* densityExpr,
                       const OntoMath::Piecewise* scatteringExpr,
                       const OntoMath::Piecewise* volumeChromaExpr,
                       const OntoMath::Piecewise* phaseExpr,
-                      const OntoMath::Piecewise* emissionExpr) {
+                      const OntoMath::Piecewise* emissionExpr,
+                      const geom::SdfNode* occluderSdf,
+                      const OntoMath::Piecewise* lightRadianceExpr,
+                      const OntoMath::Piecewise* lightChromaExpr,
+                      const OntoMath::Piecewise* lightAngularExpr) {
     Emit e;
     e.bindTime = true;
     e.timeExpression = "instances[g_instIdx].time.x";
 
     Program prog;
     prog.wgsl = kVolumePerlinNoise;
+    prog.wgsl += kSdfPrimitivesMath;
     prog.wgsl += R"WGSL(
 struct VolumeGlobals {
     viewProj: mat4x4<f32>,
@@ -2991,6 +3085,10 @@ struct VolumeGlobals {
     viewport: vec4<f32>,
     // xyz = the one admitted direct source position; w=1 iff such a source exists.
     incidentSource: vec4<f32>,
+    // xyz = source color / diffuse radiance; w = source intensity / multiplier.
+    incidentColor: vec4<f32>,
+    // x = max shadow steps, y = shadow enable flag (1.0 or 0.0), z = phase anisotropy g, w = reserved
+    volumeControl: vec4<f32>,
 };
 
 struct VolumeInstanceData {
@@ -3150,6 +3248,83 @@ fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
     prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
     prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
 
+    std::string lightRadianceBody;
+    if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
+        emitPiecewise(*lightRadianceExpr, e, "p", "f32", lightRadianceBody);
+    } else {
+        lightRadianceBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightRadianceEval(p: vec3<f32>) -> f32 {\n" + lightRadianceBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_RADIANCE: bool = ";
+    prog.wgsl += (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) ? "true;\n" : "false;\n";
+
+    std::string lightChromaBody;
+    if (lightChromaExpr && !lightChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*lightChromaExpr, true, validationError)) {
+            e.refuse("light chroma: " + validationError);
+            lightChromaBody = "    return vec3<f32>(1.0);\n";
+        } else {
+            emitPiecewise(*lightChromaExpr, e, "p", "vec3<f32>", lightChromaBody);
+        }
+    } else {
+        lightChromaBody = "    return u.incidentColor.xyz;\n";
+    }
+    prog.wgsl += "\nfn lightChromaEval(p: vec3<f32>) -> vec3<f32> {\n" + lightChromaBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_CHROMA: bool = ";
+    prog.wgsl += (lightChromaExpr && !lightChromaExpr->pieces.empty()) ? "true;\n" : "false;\n";
+
+    std::string lightAngularBody;
+    if (lightAngularExpr && !lightAngularExpr->pieces.empty()) {
+        e.bindOmega = true;
+        emitPiecewise(*lightAngularExpr, e, "p", "f32", lightAngularBody);
+        e.bindOmega = false;
+    } else {
+        lightAngularBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightAngularEval(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" + lightAngularBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_ANGULAR: bool = ";
+    prog.wgsl += (lightAngularExpr && !lightAngularExpr->pieces.empty()) ? "true;\n" : "false;\n";
+
+    const bool hasOccluder = geom::isSdfActive(occluderSdf);
+    if (hasOccluder) {
+        std::string occluderResult = emitNode(*occluderSdf, e);
+        prog.wgsl += "\nfn volumeSdfEval(p: vec3<f32>) -> f32 {\n" + e.body + "    return " + occluderResult + ";\n}\n";
+        e.body.clear();
+        prog.wgsl += R"WGSL(
+fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.volumeControl.y < 0.5) { return 1.0; }
+    let toLight = sourceWorld - worldP;
+    let distToLight = length(toLight);
+    if (distToLight <= 1e-4) { return 1.0; }
+    let lightDir = toLight / distToLight;
+    let inst = instances[g_instIdx];
+    var t = 0.05;
+    var vis = 1.0;
+    let maxT = distToLight - 0.05;
+    let maxSteps = i32(u.volumeControl.x);
+    let penumbraK = 16.0;
+    for (var shadowStep = 0; shadowStep < 24; shadowStep = shadowStep + 1) {
+        if (shadowStep >= maxSteps || t >= maxT) { break; }
+        let curWorld = worldP + lightDir * t;
+        let curLocal = curWorld - inst.origin.xyz;
+        let d = volumeSdfEval(curLocal);
+        if (d < 0.001) { return 0.0; }
+        vis = min(vis, penumbraK * d / t);
+        t += max(d, 0.02);
+    }
+    return clamp(vis, 0.0, 1.0);
+}
+const HAS_OCCLUDER_SDF: bool = true;
+)WGSL";
+    } else {
+        prog.wgsl += R"WGSL(
+fn volumeSdfEval(p: vec3<f32>) -> f32 { return 1e9; }
+fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 { return 1.0; }
+const HAS_OCCLUDER_SDF: bool = false;
+)WGSL";
+    }
+
     prog.wgsl += R"WGSL(
 @fragment
 fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
@@ -3212,29 +3387,68 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
             let scattering = max(volumeScatteringEval(p, density), 0.0);
             let mediumChroma = volumeChromaEval(p);
-            if (HAS_AUTHORED_VOLUME_PHASE) {
-                let wiDelta = worldP - u.incidentSource.xyz;
-                let woDelta = ro - worldP;
-                let wiLen = length(wiDelta);
-                let woLen = length(woDelta);
-                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
-                                u.incidentSource.w > 0.5 && wiLen > 1e-8);
-                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
-                                woLen > 1e-8);
-                var phase = 0.0;
-                if ((!VOLUME_PHASE_READS_WI ||
-                     (u.incidentSource.w > 0.5 && wiLen > 1e-8)) &&
-                    woLen > 1e-8) {
-                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
+
+            var incidentLi = vec3<f32>(1.0);
+            var phase = 1.0;
+
+            if (u.incidentSource.w > 0.5) {
+                let sourceDelta = worldP - u.incidentSource.xyz;
+                let sourceDist = length(sourceDelta);
+                let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);
+
+                var radialRad = 1.0;
+                if (HAS_AUTHORED_LIGHT_RADIANCE) {
+                    radialRad = max(lightRadianceEval(sourceDelta), 0.0);
                 }
-                volumetricScatter +=
-                    mediumChroma * (scattering / extinction) * phase *
-                    (oldT - transmittance);
+
+                var chroma = vec3<f32>(1.0);
+                if (HAS_AUTHORED_LIGHT_CHROMA) {
+                    chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
+                }
+
+                var angular = 1.0;
+                if (HAS_AUTHORED_LIGHT_ANGULAR) {
+                    angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
+                }
+
+                let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
+                incidentLi = chroma * (radialRad * angular * vis);
+
+                if (HAS_AUTHORED_VOLUME_PHASE) {
+                    let wiDelta = worldP - u.incidentSource.xyz;
+                    let woDelta = ro - worldP;
+                    let wiLen = length(wiDelta);
+                    let woLen = length(woDelta);
+                    let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
+                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                    phase = 0.0;
+                    if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
+                        phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                    }
+                } else {
+                    // Physical mist forward-scattering Henyey-Greenstein approximation
+                    let cosTheta = clamp(dot(normalize(u.incidentSource.xyz - worldP), rd), -1.0, 1.0);
+                    let g = u.volumeControl.z;
+                    let g2 = g * g;
+                    let hgDenom = pow(max(1.0 + g2 - 2.0 * g * cosTheta, 1e-4), 1.5);
+                    let hgPhase = (1.0 - g2) / max(4.0 * 3.14159265 * hgDenom, 1e-4);
+                    phase = mix(1.0, hgPhase * 4.0 * 3.14159265, select(0.0, 1.0, g > 0.01));
+                }
             } else {
-                // Exact V2 compatibility arithmetic: preserve the old expression.
-                volumetricScatter +=
-                    mediumChroma * (scattering / extinction) * (oldT - transmittance);
+                if (HAS_AUTHORED_VOLUME_PHASE) {
+                    let woDelta = ro - worldP;
+                    let woLen = length(woDelta);
+                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                    phase = 0.0;
+                    if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
+                        phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+                    }
+                }
             }
+
+            volumetricScatter +=
+                mediumChroma * incidentLi * (scattering / extinction) * phase *
+                (oldT - transmittance);
 
             if (HAS_AUTHORED_VOLUME_EMISSION) {
                 let emissionDelta = ro - worldP;
@@ -3292,7 +3506,9 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
     if (media.size() == 1) {
         const auto& m = media.front();
         return compileVolume(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
-                             m.volumeChromaExpr, m.phaseExpr, m.emissionExpr);
+                             m.volumeChromaExpr, m.phaseExpr, m.emissionExpr,
+                             m.occluderSdf, m.lightRadianceExpr, m.lightChromaExpr,
+                             m.lightAngularExpr);
     }
 
     auto replaceAll = [](std::string& text,
@@ -3313,7 +3529,9 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
         const auto& m = media[i];
         Program member =
             compileVolume(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
-                          m.volumeChromaExpr, m.phaseExpr, m.emissionExpr);
+                          m.volumeChromaExpr, m.phaseExpr, m.emissionExpr,
+                          m.occluderSdf, m.lightRadianceExpr, m.lightChromaExpr,
+                          m.lightAngularExpr);
         if (!member.ok) {
             out.ok = false;
             out.error = "volume set member " + std::to_string(i) + ": " + member.error;
@@ -3357,6 +3575,15 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media) {
                    "HAS_AUTHORED_VOLUME_EMISSION" + suffix);
         replaceAll(evalBlock, "VOLUME_EMISSION_READS_OMEGA",
                    "VOLUME_EMISSION_READS_OMEGA" + suffix);
+        replaceAll(evalBlock, "volumeSdfEval", "volumeSdfEval" + suffix);
+        replaceAll(evalBlock, "volumeSourceVisibility", "volumeSourceVisibility" + suffix);
+        replaceAll(evalBlock, "HAS_OCCLUDER_SDF", "HAS_OCCLUDER_SDF" + suffix);
+        replaceAll(evalBlock, "lightRadianceEval", "lightRadianceEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_RADIANCE", "HAS_AUTHORED_LIGHT_RADIANCE" + suffix);
+        replaceAll(evalBlock, "lightChromaEval", "lightChromaEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_CHROMA", "HAS_AUTHORED_LIGHT_CHROMA" + suffix);
+        replaceAll(evalBlock, "lightAngularEval", "lightAngularEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_ANGULAR", "HAS_AUTHORED_LIGHT_ANGULAR" + suffix);
 
         out.wgsl += evalBlock;
         members.push_back(std::move(member));
@@ -3537,6 +3764,26 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 "), 0.0);\n"
             "                    let mediumChroma" + n + " = volumeChromaEval_" + n +
                 "(p" + n + ");\n"
+            "                    var incidentLi" + n + " = vec3<f32>(1.0);\n"
+            "                    if (u.incidentSource.w > 0.5) {\n"
+            "                        let sourceDelta = worldP - u.incidentSource.xyz;\n"
+            "                        let sourceDist = length(sourceDelta);\n"
+            "                        let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
+            "                        var radialRad = 1.0;\n"
+            "                        if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
+            "                            radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
+            "                        }\n"
+            "                        var chroma = vec3<f32>(1.0);\n"
+            "                        if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
+            "                            chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
+            "                        }\n"
+            "                        var angular = 1.0;\n"
+            "                        if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
+            "                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
+            "                        }\n"
+            "                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
+            "                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
+            "                    }\n"
             "                    var phase" + n + " = 1.0;\n"
             "                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
             "                        phase" + n + " = 0.0;\n"
@@ -3545,6 +3792,13 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                            phase" + n + " = max(volumePhaseEval_" + n +
                 "(p" + n + ", wi, wo), 0.0);\n"
             "                        }\n"
+            "                    } else if (u.incidentSource.w > 0.5) {\n"
+            "                        let cosTheta = clamp(dot(normalize(u.incidentSource.xyz - worldP), rd), -1.0, 1.0);\n"
+            "                        let g = u.volumeControl.z;\n"
+            "                        let g2 = g * g;\n"
+            "                        let hgDenom = pow(max(1.0 + g2 - 2.0 * g * cosTheta, 1e-4), 1.5);\n"
+            "                        let hgPhase = (1.0 - g2) / max(4.0 * 3.14159265 * hgDenom, 1e-4);\n"
+            "                        phase" + n + " = mix(1.0, hgPhase * 4.0 * 3.14159265, select(0.0, 1.0, g > 0.01));\n"
             "                    }\n"
             "                    var emitted" + n + " = vec3<f32>(0.0);\n"
             "                    if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
@@ -3554,7 +3808,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 "(p" + n + ", wo), vec3<f32>(0.0));\n"
             "                        }\n"
             "                    }\n"
-            "                    totalSource += mediumChroma" + n + " * scattering" + n +
+            "                    totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
                 " * phase" + n + " + emitted" + n + ";\n"
             "                }\n"
             "            }\n"

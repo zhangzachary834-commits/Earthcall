@@ -2,6 +2,8 @@
 #include "Person/PersonDatabase.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Identity/KeyStore.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include <fstream>
 #include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
@@ -68,6 +70,119 @@ extern ZoneManager mgr;
 extern MaterialManager materials;   // global Material beings (globals.cpp)
 extern CategoryManager categories;
 
+
+#ifndef __EMSCRIPTEN__
+namespace {
+
+// ---------------------------------------------------------------------------
+// The present Person proves possession of their key.
+//
+// Until 2026-09-24 a keyed profile was never loaded at all ("requires the
+// future login/signature path"). This is that path, headless for now: the
+// Person supplies EARTHCALL_KEY_PASSPHRASE, the KeyStore entry for the
+// profile's personId must unlock, and the unlocked key's id must equal that
+// personId. Only then is the profile loaded and the Person seeded as the
+// First Mover Register's trusted root -- the root every grant to a model must
+// terminate in (docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_
+// 2026-09-18.md section 5.3). An env var holding only a public id proves
+// nothing and is never enough; EARTHCALL_PERSON_ID only CHOOSES among
+// several keyed profiles, it does not authenticate one.
+// ---------------------------------------------------------------------------
+const char* keyPassphrase() {
+    const char* p = std::getenv("EARTHCALL_KEY_PASSPHRASE");
+    return (p && *p) ? p : nullptr;
+}
+
+void loadKeyedPersonProfile(Person& person) {
+    if (person.hasIdentity()) return;
+    const char* passphrase = keyPassphrase();
+    if (!passphrase) return;
+
+    const char* chosen = std::getenv("EARTHCALL_PERSON_ID");
+    std::vector<std::pair<Identity::SingularId, nlohmann::json>> keyed;
+    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+        nlohmann::json profile = SaveSystem::readSaveData(info.path);
+        if (!profile.is_object() || !profile.contains("personId") ||
+            !profile["personId"].is_string()) continue;
+        const auto id = Identity::SingularId::parse(profile["personId"].get<std::string>());
+        if (!id.canAuthenticate()) continue;
+        if (chosen && *chosen && id.toString() != chosen) continue;
+        keyed.emplace_back(id, std::move(profile));
+    }
+    if (keyed.empty()) return;
+    if (keyed.size() > 1) {
+        std::cerr << "[Identity] Several keyed Person profiles exist; set EARTHCALL_PERSON_ID "
+                     "to say which Person is present. Refusing to guess.\n";
+        return;
+    }
+
+    Identity::KeyStore keys;
+    auto key = keys.load(keyed.front().first, passphrase);
+    if (!key || key->id() != keyed.front().first) {
+        std::cerr << "[Identity] REFUSED Person unlock: the key for "
+                  << keyed.front().first.abbreviated()
+                  << " did not open with EARTHCALL_KEY_PASSPHRASE.\n";
+        return;
+    }
+    personFromJson(keyed.front().second, person);
+    if (person.personId() != keyed.front().first) {
+        std::cerr << "[Identity] REFUSED Person unlock: profile did not restore the "
+                     "identity its key proves.\n";
+        return;
+    }
+    std::cout << "[Identity] Restored keyed Person profile '" << person.getDisplayName()
+              << "' (" << person.personId().abbreviated() << ").\n";
+}
+
+void seedTrustedPersonRoot(Person& person) {
+    auto& reg = Identity::FirstMoverRegister::instance();
+    const char* passphrase = keyPassphrase();
+    if (!person.hasIdentity() || !passphrase) {
+        std::cout << "[Identity] No Person key unlocked this session; First Movers a "
+                     "Person granted stay inert (reads still work).\n";
+        return;
+    }
+    Identity::KeyStore keys;
+    auto key = keys.load(person.personId(), passphrase);
+    if (!key || key->id() != person.personId()) {
+        std::cerr << "[Identity] REFUSED Person unlock for '" << person.getDisplayName()
+                  << "': KeyStore entry did not open or did not match.\n";
+        return;
+    }
+    if (reg.trustAuthenticatedPerson(*key)) {
+        person.login("key-" + person.personId().abbreviated());
+        std::cout << "[Identity] '" << person.getDisplayName()
+                  << "' authenticated by key; their First Mover grants may stand.\n";
+    }
+}
+
+void loadFirstMoverRegister() {
+    auto& reg = Identity::FirstMoverRegister::instance();
+    const std::string root = SaveSystem::saveRoot();
+    reg.setSaveRoot(root.empty() ? std::filesystem::path("saves") : std::filesystem::path(root));
+
+    const std::string path = SaveSystem::firstMoverRegisterPath();
+    std::error_code ec;
+    if (!std::filesystem::exists(path, ec)) return;
+    std::ifstream in(path);
+    nlohmann::json j = nlohmann::json::parse(in, nullptr, /*allow_exceptions=*/false);
+    if (j.is_discarded()) {
+        std::cerr << "[Identity] First Mover Register at " << path
+                  << " is not valid JSON; no mover stands this session.\n";
+        return;
+    }
+    reg.loadFromJson(j);
+    // 8c: visible, never silent. Every mover and why it does or does not stand.
+    for (const auto& m : reg.movers()) {
+        std::cout << "[Identity] First Mover '" << m->displayName << "' ("
+                  << m->id.abbreviated() << "): "
+                  << Identity::standingCode(reg.standing(m->id)) << "\n";
+    }
+}
+
+} // namespace
+#endif
+
 namespace Core {
 
 bool Engine::initLogic() {
@@ -93,9 +208,9 @@ bool Engine::initLogic() {
         // selection. When exactly one local profile exists, restoring it is
         // unambiguous and lets authored-by references resolve to that actual
         // Person. Multiple profiles are never guessed between, and a profile
-        // claiming a cryptographic personId still requires the future login /
-        // signature path rather than being trusted merely because it is a
-        // file on disk.
+        // claiming a cryptographic personId is never trusted merely because it
+        // is a file on disk: loadKeyedPersonProfile below admits it only when
+        // its key unlocks.
         const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
         if (profiles.size() == 1) {
             const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
@@ -108,6 +223,10 @@ bool Engine::initLogic() {
             std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
                          "Person is present.\n";
         }
+#ifndef __EMSCRIPTEN__
+        // Before migration, so a keyed Person is never re-minted as a stranger.
+        loadKeyedPersonProfile(*_person);
+#endif
     }
 #ifndef __EMSCRIPTEN__
     // Identity migration is an explicit trust act, never an ordinary-load side
@@ -139,6 +258,8 @@ bool Engine::initLogic() {
             }
         }
     }
+    seedTrustedPersonRoot(*_person);
+    loadFirstMoverRegister();
 #endif
 
     if (!_chat) _chat = std::make_unique<Chat>();

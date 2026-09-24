@@ -2,6 +2,8 @@
 
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 #include <glm/glm.hpp>
 #include "json.hpp"
@@ -83,6 +85,35 @@ private:
     OntoMath::Piecewise* _expr;
 };
 
+class SdfNodeBridge : public Property {
+public:
+    SdfNodeBridge(std::string name, geom::SdfNode* node)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _node(node) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_node || !geom::isSdfActive(_node)) return PropertyValue(std::string("{}"));
+        return PropertyValue(geom::sdfToJson(*_node).dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_node) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded() || !parsed.is_object()) return false;
+        *_node = geom::sdfFromJson(parsed);
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    geom::SdfNode* _node;
+};
+
 // A FieldNode represents the spatial placement of an OntoMath Field within the scene.
 // By inheriting from Singular, it maps the field's mathematical variables into the 
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
@@ -101,8 +132,11 @@ public:
           volumeChroma(std::make_shared<OntoMath::Piecewise>()),
           volumePhase(std::make_shared<OntoMath::Piecewise>()),
           volumeEmission(std::make_shared<OntoMath::Piecewise>()),
+          volumeOccluder(std::make_shared<geom::SdfNode>()),
           lightChroma(std::make_shared<OntoMath::Piecewise>()),
-          lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
+          lightAngular(std::make_shared<OntoMath::Piecewise>()) {
+        volumeOccluder->dims = glm::vec3(0.0f);
+    }
 
     std::string getIdentifier() const override { return _id; }
 
@@ -145,6 +179,11 @@ public:
     // radiance. This is independent from D, sigma_t, sigma_s, C_v, Phi and
     // every source-side rho/chi/alpha channel.
     const std::shared_ptr<OntoMath::Piecewise> volumeEmission;
+
+    // Optional participating-medium occluder geometry S(p) -> signed distance.
+    // When present, volumetric transport evaluates path visibility between the
+    // medium sample and the radiant source, carving radiance into volumetric beams.
+    const std::shared_ptr<geom::SdfNode> volumeOccluder;
 
     // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
     // case the historical authored light.color remains the constant chroma.
@@ -220,6 +259,10 @@ protected:
         if (volumeEmission) {
             registerProperty(std::make_unique<PiecewiseAstBridge>(
                 "volume.emission.ast", volumeEmission.get()));
+        }
+        if (volumeOccluder) {
+            registerProperty(std::make_unique<SdfNodeBridge>(
+                "volume.occluder.sdf", volumeOccluder.get()));
         }
 
         if (lightChroma) {

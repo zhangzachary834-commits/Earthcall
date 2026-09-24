@@ -6,6 +6,8 @@
 #include "json.hpp"
 
 #include <filesystem>
+#include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -68,6 +70,7 @@ public:
     std::string propId() const { return id.toString(); }
     std::string propKind() const { return kind == Kind::Person ? "person" : "model"; }
     std::string propGrantedBy() const { return grantedBy.toString(); }
+    std::string propScopes() const;
 
     // Rebuilds the exact subject bytes the grant must cover, so a scope cannot
     // be widened after the fact without invalidating the signature.
@@ -80,6 +83,28 @@ protected:
     void buildProperties() override;
 };
 
+// Why a mover does or does not currently stand. Path-independent: this is
+// the answer to "may this mover act at all right now?", and mayWrite() is
+// that answer plus a path. explain()/isQuarantined()/foreign actuation all
+// read this one value so diagnostics can never drift from enforcement.
+enum class Standing {
+    Recognized,
+    NotRegistered,
+    SelfAttested,
+    GrantorNotPerson,
+    // The grant verifies, but its grantor has not proved possession of their
+    // Person key in THIS process. A serialized `kind: person` is not proof;
+    // neither is a Person record on disk. Not quarantine -- nothing is
+    // tampered -- but inert until the Person is present.
+    GrantorNotAuthenticated,
+    GrantInvalid,
+    GrantSubjectMismatch,
+    ScopeTampered,
+    CryptoUnavailable,
+};
+
+const char* standingCode(Standing s);
+
 class FirstMoverRegister {
 public:
     // Constructible, not only a singleton: 8a specifies the register as a
@@ -89,8 +114,32 @@ public:
 
     static FirstMoverRegister& instance();
 
-    // Mint a grant. Refuses self-attestation and refuses to let a model attest
-    // anyone. Returns false without recording anything if either is attempted.
+    // ------------------------------------------------------------------
+    // Trusted Person roots.
+    //
+    // The grant chain must terminate in a Person who is PRESENT, meaning they
+    // proved possession of their private key to this process. These roots
+    // are never serialized and loadFromJson() cannot create them: a hostile
+    // save can mint its own keypair, label it `kind: person`, and sign a
+    // model grant, and every signature in that file would verify.
+    //
+    // The API takes the private key, not an id, so no caller can seed a root
+    // from a public identifier alone. Production seeds exactly one: the
+    // Person whose KeyStore entry unlocked and matched the loaded profile at
+    // boot (EngineInit). See docs/plans/MCP_FIRST_MOVER_GOVERNANCE_
+    // IMPLEMENTATION_PLAN_2026-09-18.md section 5.2-5.3.
+    // ------------------------------------------------------------------
+    bool trustAuthenticatedPerson(const PrivateKey& personKey);
+    void revokeAuthenticatedPerson(const SingularId& person) { _authenticatedPersons.erase(person); }
+    void clearAuthenticatedPersons() { _authenticatedPersons.clear(); }
+    bool isAuthenticatedPerson(const SingularId& person) const {
+        return _authenticatedPersons.count(person) != 0;
+    }
+    const std::set<SingularId>& authenticatedPersons() const { return _authenticatedPersons; }
+
+    // Mint a grant. Refuses self-attestation, refuses to let a model attest
+    // anyone, and refuses a grantor who is not an authenticated Person root.
+    // Returns false without recording anything if any is attempted.
     bool recognize(const PrivateKey& grantorKey,
                    FirstMover::Kind grantorKind,
                    const SingularId& mover,
@@ -99,9 +148,20 @@ public:
                    const std::vector<std::string>& scopes,
                    int64_t at);
 
+    // Recognition is a covenant, so ending it is too: only the Person who
+    // granted it (holding their key, and authenticated) may withdraw it.
+    // The FirstMover object itself is retired, not destroyed -- Laws it
+    // authored keep a valid pointer to who authored them.
+    bool revoke(const PrivateKey& grantorKey, const SingularId& mover);
+
+    // Path-independent standing (see Standing).
+    Standing standing(const SingularId& mover) const;
+    std::string explainStanding(const SingularId& mover) const;
+
     // True only if the mover is registered, its grant verifies, its grantor is
-    // a Person other than itself, and path falls inside both the save root and
-    // one of its scopes. Every failure is a refusal; there is no default-allow.
+    // an authenticated Person other than itself, and path falls inside both
+    // the save root and one of its scopes. Every failure is a refusal; there
+    // is no default-allow.
     bool mayWrite(const SingularId& mover, const std::filesystem::path& path) const;
 
     // Why a mayWrite() answer came out the way it did. For the audit surface --
@@ -112,8 +172,20 @@ public:
     // nor honoured: they load, they are listed, and they cannot write.
     bool isQuarantined(const SingularId& mover) const;
 
+    // Stable for the life of the process: movers are heap-owned and never
+    // freed while the register lives (revoke/reload retire them instead), so
+    // a Law's author Formation may hold this pointer.
     const FirstMover* find(const SingularId& mover) const;
-    const std::vector<FirstMover>& movers() const { return _movers; }
+    FirstMover* findMutable(const SingularId& mover);
+
+    // Law-author rehydration: the mover a serialized author identifier names,
+    // ONLY if it stands right now. A forged or unrooted mover claim in a save
+    // must never satisfy Law::isAuthored(); such a Law stays Unauthored
+    // (LawManager) or its Zone refuses activation (ZoneManager), loudly.
+    // Non-cryptographic identifiers (slugs, legacy model-author Objects)
+    // return nullptr and fall through to the ordinary resolvers.
+    Singular* authorFor(const std::string& identifier);
+    const std::vector<std::unique_ptr<FirstMover>>& movers() const { return _movers; }
 
     // The directory writes are confined to, whatever a scope pattern claims.
     void setSaveRoot(std::filesystem::path root) { _saveRoot = std::move(root); }
@@ -157,13 +229,34 @@ public:
     // verify lands quarantined rather than recognised.
     void loadFromJson(const nlohmann::json& j);
 
-    void clear() { _movers.clear(); }
+    void clear();
+
+    // The register's own durable path, relative to the save root. 8d: "the
+    // register is not writable by injection" -- no mover scope, however
+    // wide, may write anything under this directory.
+    static constexpr const char* kRegisterDirectory = "identity";
+    static constexpr const char* kRegisterFile = "identity/first-movers.json";
 
 private:
-    std::vector<FirstMover> _movers;
+    // Retire rather than free: a Law authored by a mover keeps pointing at it.
+    void retire(std::unique_ptr<FirstMover> m);
+
+    std::vector<std::unique_ptr<FirstMover>> _movers;
+    std::vector<std::unique_ptr<FirstMover>> _retired;
+    std::set<SingularId> _authenticatedPersons;   // runtime only, never serialized
     std::filesystem::path _saveRoot = "saves";
     SingularId _activeMover;
 };
+
+// The canonical bytes a foreign caller signs to prove it holds a mover's key
+// for one transport session. Length-prefixed, domain-separated: shared by the
+// engine (verifier) and the earthcall_first_mover signer so the two cannot
+// disagree, and so a mover key asked to sign this can never be tricked into
+// signing a Claim.
+std::vector<uint8_t> foreignSessionTranscript(const std::string& challengeId,
+                                              const std::string& nonce,
+                                              const std::string& connection,
+                                              const SingularId& mover);
 
 // RAII window during which a First Mover is acting. Scoped rather than a bare
 // setter because an agent session that forgets to clear would leave every

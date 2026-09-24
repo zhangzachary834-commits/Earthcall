@@ -21,6 +21,9 @@
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Singularity/Foreign/ForeignActuationGuard.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "json.hpp"
 
 #include <websocketpp/config/asio_no_tls.hpp>
@@ -32,6 +35,8 @@
 #include <vector>
 #include <ctime>
 #include <cmath>
+#include <chrono>
+#include <optional>
 
 extern ZoneManager mgr;
 extern MaterialManager materials;
@@ -259,6 +264,65 @@ struct WebSocketServer::Impl {
         server.send(hdl, jsonPayload, websocketpp::frame::opcode::text, ec);
     }
 
+    // ------------------------------------------------------------------
+    // First Mover standing for foreign mutation (2026-09-24).
+    //
+    // Reads (get_state, first_mover_status) stay open to every connection.
+    // Every branch that changes the world asks admit() first: the connection
+    // must have proved possession of a Person-granted mover's key, the mover
+    // must still stand, and the act's durable resource must lie in its
+    // scope. Only the main thread touches `auth`.
+    // ------------------------------------------------------------------
+    Foreign::ForeignSessionAuthenticator auth;
+
+    static int64_t nowMs() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                   std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
+    // Where the active Zone (or Home) persists, without creating anything.
+    // Empty (-> refused as unmapped) when no Zone is live yet: mgr.active()
+    // does not bounds-check.
+    static std::string activeContainerResource() {
+        if (mgr.zones().empty() || mgr.currentIndex() >= mgr.zones().size() ||
+            !mgr.zones()[mgr.currentIndex()]) {
+            return "";
+        }
+        Zone& z = mgr.active();
+        return z.isHome() ? SaveSystem::resolveHomeIdentityPath(z.getIdentifier())
+                          : SaveSystem::resolveZoneIdentityPath(z.getIdentifier());
+    }
+
+    static std::string containerResourceFor(const Zone& z) {
+        return z.isHome() ? SaveSystem::resolveHomeIdentityPath(z.getIdentifier())
+                          : SaveSystem::resolveZoneIdentityPath(z.getIdentifier());
+    }
+
+    // Decide, and on refusal answer the caller with a structured ACK. The ACK
+    // keeps the handler's own ack type so existing clients see a status they
+    // already parse ("refused") instead of silence.
+    std::optional<Identity::SingularId> admit(websocketpp::connection_hdl hdl,
+                                              const std::string& connection,
+                                              const std::string& ackType,
+                                              const std::string& resource,
+                                              const std::string& property = "",
+                                              const std::string& unmappedReason = "",
+                                              const nlohmann::json& context = nlohmann::json::object()) {
+        auto& reg = Identity::FirstMoverRegister::instance();
+        const Identity::SingularId* mover = auth.moverFor(connection);
+        const auto decision = Foreign::authorizeForeignActuation(
+            reg, mover, resource, property, "websocket", unmappedReason);
+        if (decision.allowed) return *mover;
+
+        nlohmann::json reply = decision.toJson();
+        reply["type"] = ackType;
+        for (auto it = context.begin(); it != context.end(); ++it) reply[it.key()] = it.value();
+        sendTo(hdl, reply.dump());
+        std::cerr << "[WebSocketServer] REFUSED " << ackType << " ("
+                  << decision.reasonCode << "): " << decision.reason << "\n";
+        return std::nullopt;
+    }
+
     std::vector<std::function<void()>> mainThreadTasks;
     std::mutex mainThreadTasksMutex;
 
@@ -301,6 +365,58 @@ struct WebSocketServer::Impl {
             std::string type = j.value("type", "");
             std::string clientId = std::to_string(reinterpret_cast<uintptr_t>(hdl.lock().get()));
 
+            // 0. First Mover handshake and status (read-only toward the world).
+            if (type == "first_mover_challenge") {
+                nlohmann::json reply = auth.issueChallenge(clientId, nowMs()).toJson();
+                reply["type"] = "first_mover_challenge";
+                sendTo(hdl, reply.dump());
+                return;
+            }
+            if (type == "first_mover_authenticate") {
+                auto result = auth.authenticate(clientId,
+                                                j.value("challengeId", ""),
+                                                j.value("moverId", ""),
+                                                j.value("signature", ""),
+                                                Identity::FirstMoverRegister::instance(),
+                                                nowMs());
+                nlohmann::json reply = result.toJson();
+                reply["type"] = "first_mover_authenticate_ack";
+                if (result.ok) {
+                    if (const auto* m = Identity::FirstMoverRegister::instance().find(result.mover)) {
+                        reply["displayName"] = m->displayName;
+                        reply["scopes"] = m->scopes;
+                        reply["grantedBy"] = m->grantedBy.toString();
+                    }
+                    std::cout << "[WebSocketServer] Connection authenticated as First Mover "
+                              << result.mover.abbreviated() << "\n";
+                } else {
+                    std::cerr << "[WebSocketServer] First Mover authentication refused ("
+                              << result.reasonCode << "): " << result.reason << "\n";
+                }
+                sendTo(hdl, reply.dump());
+                return;
+            }
+            if (type == "first_mover_status") {
+                auto& reg = Identity::FirstMoverRegister::instance();
+                nlohmann::json reply{{"type", "first_mover_status"}};
+                const Identity::SingularId* mover = auth.moverFor(clientId);
+                reply["authenticated"] = mover != nullptr;
+                reply["authenticatedPersonPresent"] = !reg.authenticatedPersons().empty();
+                if (mover) {
+                    const Identity::Standing st = reg.standing(*mover);
+                    reply["moverId"] = mover->toString();
+                    reply["standing"] = Identity::standingCode(st);
+                    reply["reason"] = reg.explainStanding(*mover);
+                    if (const auto* m = reg.find(*mover)) {
+                        reply["displayName"] = m->displayName;
+                        reply["scopes"] = m->scopes;
+                        reply["grantedBy"] = m->grantedBy.toString();
+                    }
+                }
+                sendTo(hdl, reply.dump());
+                return;
+            }
+
             // 1. Query State / Get State
             if (type == "get_state" || type == "query_state") {
                 nlohmann::json snapshot = buildWorldSnapshotJson();
@@ -316,6 +432,21 @@ struct WebSocketServer::Impl {
                     evt.payload = it->get<std::string>();
                     evt.sourceClient = j.value("sourceClient", clientId);
                     evt.targetSingularId = j.value("targetSingularId", "");
+                    // Speech is sensed, not written: authored Laws decide what
+                    // it causes (and their authority is clamped), so hearing
+                    // stays open. What must be true is WHO spoke. An
+                    // authenticated mover's words are attributed to the mover,
+                    // whatever the payload claims; an unauthenticated peer may
+                    // not claim a cryptographic identity or the present Person.
+                    if (const Identity::SingularId* mover = auth.moverFor(clientId)) {
+                        evt.sourceClient = mover->toString();
+                    } else {
+                        Person* present = ::Core::Engine::instance().getPerson();
+                        if (Identity::SingularId::parse(evt.sourceClient).canAuthenticate() ||
+                            (present && present->matchesIdentifier(evt.sourceClient))) {
+                            evt.sourceClient = "foreign-unauthenticated:" + clientId;
+                        }
+                    }
 
                     ::Core::EventBus::instance().publish(evt);
                     std::cout << "[WebSocketServer] Received utterance: \"" << evt.payload << "\" from " << evt.sourceClient << std::endl;
@@ -387,6 +518,39 @@ struct WebSocketServer::Impl {
                         }
                     }
 
+                    // The durable resource this write lands in. A Person is
+                    // never a foreign resource: Kernel guards on the body.
+                    std::string resource;
+                    std::string unmapped;
+                    if (targetBeing) {
+                        if (dynamic_cast<Person*>(targetBeing)) {
+                            unmapped = "a Person's body and state are guarded in C++; no foreign "
+                                       "First Mover may write them";
+                        } else if (auto* law = dynamic_cast<Law*>(targetBeing)) {
+                            resource = SaveSystem::resolveLawIdentityPath(law->getIdentifier());
+                        } else if (auto* zone = dynamic_cast<Zone*>(targetBeing)) {
+                            resource = containerResourceFor(*zone);
+                        } else if (auto* asObj = dynamic_cast<Object*>(targetBeing)) {
+                            for (const auto& z : mgr.zones()) {
+                                if (!z) continue;
+                                for (const auto& owned : z->getOwnedObjects()) {
+                                    if (owned.get() == asObj) { resource = containerResourceFor(*z); break; }
+                                }
+                                if (!resource.empty()) break;
+                            }
+                            if (resource.empty()) unmapped = "this Object has no owning Zone or Home to scope the write by";
+                        } else {
+                            unmapped = "this being has no durable owner Earthcall can scope a write by yet";
+                        }
+                    }
+                    std::optional<Identity::FirstMoverSession> moverSession;
+                    if (targetBeing) {
+                        auto mover = admit(hdl, clientId, "property_write_ack", resource, prop, unmapped,
+                                           {{"target", target}});
+                        if (!mover) return;
+                        moverSession.emplace(Identity::FirstMoverRegister::instance(), *mover);
+                    }
+
                     if (targetBeing) {
                         PropertyValue val = propertyValueFromJson(*valIt);
                         bool ok = false;
@@ -440,6 +604,12 @@ struct WebSocketServer::Impl {
 
             // 4. Spawn / Create Object            // 4. Spawn / Create Object or Field
             if (type == "spawn_object" || type == "create_object" || type == "spawn_field" || type == "create_field") {
+                const std::string ackType = (type.find("field") != std::string::npos) ? "spawn_field_ack" : "spawn_object_ack";
+                auto mover = admit(hdl, clientId, ackType, activeContainerResource(), "",
+                                   "no Zone or Home is active yet to place the being in");
+                if (!mover) return;
+                std::optional<Identity::FirstMoverSession> moverSession;
+                moverSession.emplace(Identity::FirstMoverRegister::instance(), *mover);
                 std::string shapeStr = j.value("shape", j.value("shapeKind", (type.find("field") != std::string::npos ? "Field" : "Cube")));
                 int shapeInt = j.value("shapeKindInt", -1);
                 Object::ShapeKind shape = parseShapeKind(shapeStr, shapeInt);
@@ -519,6 +689,9 @@ struct WebSocketServer::Impl {
                 obj->addZoneDesignation(mgr.active().getIdentifier());
                 mgr.active().addObject(obj);
                 mgr.getGlobalObjects().push_back(obj);
+                // The act is the mover's; persisting every Zone afterwards is
+                // the engine's ordinary save, so the session ends first.
+                moverSession.reset();
                 mgr.persistZones();
 
                 std::cout << "[WebSocketServer] Spawned object " << obj->getObjectID() << " (" << shapeStr << ") in " << mgr.active().name() << std::endl;
@@ -539,6 +712,10 @@ struct WebSocketServer::Impl {
             if (type == "delete_object" || type == "destroy_object") {
                 std::string id = j.value("id", j.value("target", ""));
                 if (!id.empty()) {
+                    auto mover = admit(hdl, clientId, "delete_object_ack", activeContainerResource(), "", "",
+                                       {{"id", id}});
+                    if (!mover) return;
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                     bool removed = mgr.active().removeObjectById(id);
                     nlohmann::json reply;
                     reply["type"] = "delete_object_ack";
@@ -566,6 +743,10 @@ struct WebSocketServer::Impl {
                     }
 
                     if (targetObj) {
+                        auto mover = admit(hdl, clientId, "transform_object_ack", activeContainerResource(), "", "",
+                                           {{"id", id}});
+                        if (!mover) return;
+                        Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                         if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
                             float px = j["position"][0].get<float>();
                             float py = j["position"][1].get<float>();
@@ -624,6 +805,17 @@ struct WebSocketServer::Impl {
                 bool enabled = j.value("enabled", true);
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
+                    std::string lawId = identifier;
+                    for (auto& law : lm->getAll()) {
+                        if (law && (law->getIdentifier() == identifier || law->name() == identifier)) {
+                            lawId = law->getIdentifier();
+                            break;
+                        }
+                    }
+                    auto mover = admit(hdl, clientId, "toggle_law_ack", SaveSystem::resolveLawIdentityPath(lawId),
+                                       "enabled", "", {{"identifier", identifier}});
+                    if (!mover) return;
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                     bool found = false;
                     for (auto& law : lm->getAll()) {
                         if (law && (law->getIdentifier() == identifier || law->name() == identifier)) {
@@ -651,9 +843,19 @@ struct WebSocketServer::Impl {
             if (type == "update_law_nodes" || type == "update_law" || type == "modify_law_nodes") {
                 std::string identifier = j.value("identifier", j.value("id", ""));
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
-                Person* p = ::Core::Engine::instance().getPerson();
 
                 if (lm && !identifier.empty()) {
+                    std::string touchedId = identifier;   // see create_law: name matches too
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == identifier)) {
+                            touchedId = l->getIdentifier();
+                            break;
+                        }
+                    }
+                    auto mover = admit(hdl, clientId, "update_law_ack", SaveSystem::resolveLawIdentityPath(touchedId),
+                                       j.contains("enabled") ? "enabled" : "", "", {{"identifier", identifier}});
+                    if (!mover) return;
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                     Law* law = nullptr;
                     for (auto& l : lm->getAll()) {
                         if (l && (l->getIdentifier() == identifier || l->name() == identifier)) {
@@ -663,8 +865,10 @@ struct WebSocketServer::Impl {
                     }
 
                     if (!law) {
-                        // Create if not found
-                        auto newLaw = lm->createLaw(j.value("name", "Authored Law"), p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
+                        // Create if not found. The author is the mover who wrote
+                        // it -- never the Person merely present at the screen.
+                        auto newLaw = lm->createLaw(j.value("name", "Authored Law"),
+                                                    Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover));
                         newLaw->setLawIdentifier(identifier);
                         law = newLaw.get();
                     }
@@ -783,7 +987,37 @@ struct WebSocketServer::Impl {
                 std::string trigger = j.value("trigger", "");
 
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
-                Person* p = ::Core::Engine::instance().getPerson();
+
+                // Re-authoring an existing Law re-enables it; that is a write
+                // of `enabled`, which TransferPolicy gates like any other.
+                // Authorize against the Law that will ACTUALLY be touched: the
+                // lookup below matches by name too, and a name must never
+                // carry a mover's scope onto someone else's Law.
+                bool reenables = false;
+                std::string touchedId = identifier;
+                if (lm) {
+                    for (auto& l : lm->getAll()) {
+                        if (l && (l->getIdentifier() == identifier || l->name() == name)) {
+                            reenables = true;
+                            touchedId = l->getIdentifier();
+                            break;
+                        }
+                    }
+                }
+                auto mover = admit(hdl, clientId, "create_law_ack", SaveSystem::resolveLawIdentityPath(touchedId),
+                                   reenables ? "enabled" : "", "", {{"identifier", identifier}});
+                if (!mover) return;
+                // The Zero-G preset also switches physics-gravity off: that is
+                // an act on a second Law, and it needs its own standing.
+                const bool zeroGPreset = identifier == "law-zero-g" ||
+                                         name.find("Zero-G") != std::string::npos ||
+                                         name.find("Zero Gravity") != std::string::npos;
+                if (zeroGPreset &&
+                    !admit(hdl, clientId, "create_law_ack", SaveSystem::resolveLawIdentityPath("physics-gravity"),
+                           "enabled", "", {{"identifier", identifier}})) {
+                    return;
+                }
+                Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
 
                 if (lm) {
                     Law* existing = nullptr;
@@ -804,7 +1038,10 @@ struct WebSocketServer::Impl {
                             }
                         }
                     } else {
-                        law = lm->createLaw(name, p ? std::vector<Singular*>{p} : std::vector<Singular*>{});
+                        // Truthful authorship (plan section 13.1): the mover
+                        // wrote this Law. Before 2026-09-24 this line recorded
+                        // the present Person as author of text a model emitted.
+                        law = lm->createLaw(name, Foreign::foreignLawAuthors(Identity::FirstMoverRegister::instance(), *mover));
                         if (!identifier.empty()) {
                             law->setLawIdentifier(identifier);
                         }
@@ -1002,6 +1239,10 @@ struct WebSocketServer::Impl {
                 }
                 LawManager* lm = ::Core::Engine::instance().getLawManager();
                 if (lm && !identifier.empty()) {
+                    auto mover = admit(hdl, clientId, "delete_law_ack", SaveSystem::resolveLawIdentityPath(identifier),
+                                       "", "", {{"identifier", identifier}});
+                    if (!mover) return;
+                    Identity::FirstMoverSession moverSession(Identity::FirstMoverRegister::instance(), *mover);
                     bool removed = lm->remove(identifier);
                     nlohmann::json reply;
                     reply["type"] = "delete_law_ack";
@@ -1022,6 +1263,13 @@ struct WebSocketServer::Impl {
                 return;
             }            // 11. Switch Zone
             if (type == "switch_zone" || type == "change_zone") {
+                // The active Zone is where the Person is present. Moving it
+                // moves them; no mover scope names a Person's presence yet.
+                if (!admit(hdl, clientId, "switch_zone_ack", "", "",
+                           "switching the active Zone moves where the Person is present; there is no "
+                           "Person-presence resource a First Mover can be granted yet")) {
+                    return;
+                }
                 if (j.contains("index")) {
                     size_t idx = j["index"].get<size_t>();
                     if (idx < mgr.zones().size()) {
@@ -1045,15 +1293,35 @@ struct WebSocketServer::Impl {
             if (type == "create_zone") {
                 std::string zname = j.value("name", "New Zone");
                 std::string kind = j.value("kind", "zone");
+                const bool dwelling = kind.find("home") != std::string::npos;
+                auto mover = admit(hdl, clientId, "create_zone_ack",
+                                   dwelling ? SaveSystem::resolveHomeIdentityPath(zname)
+                                            : SaveSystem::resolveZoneIdentityPath(zname),
+                                   "", "", {{"name", zname}});
+                if (!mover) return;
                 Person* p = ::Core::Engine::instance().getPerson();
                 std::string owner = p ? p->getIdentifier() : "Person";
-                mgr.authorZone(zname, owner, kind);
+                // Authorized above against this exact new Zone's path. No
+                // session around the call: authorZone ends in persistZones(),
+                // the engine's rewrite of EVERY Zone, which under this mover's
+                // scope would half-succeed and log a refusal per other Zone
+                // (same reasoning as spawn's moverSession.reset()).
+                std::shared_ptr<Zone> made = mgr.authorZone(zname, owner, kind);
+                nlohmann::json reply{{"type", "create_zone_ack"},
+                                     {"status", made ? "success" : "failed"},
+                                     {"name", zname}};
+                if (made) reply["identifier"] = made->getIdentifier();
+                sendTo(hdl, reply.dump());
                 broadcast(buildWorldSnapshotJson().dump());
                 return;
             }
 
             // 13. Teleport Player
             if (type == "teleport_player" || type == "teleport") {
+                if (!admit(hdl, clientId, "teleport_ack", "", "",
+                           "a Person's body is guarded in C++; no foreign First Mover may move it")) {
+                    return;
+                }
                 if (j.contains("position") && j["position"].is_array() && j["position"].size() >= 3) {
                     float px = j["position"][0].get<float>();
                     float py = j["position"][1].get<float>();
@@ -1072,6 +1340,11 @@ struct WebSocketServer::Impl {
 
             // 14. Physics Controls
             if (type == "set_physics") {
+                if (!admit(hdl, clientId, "set_physics_ack", "", "",
+                           "flying and gravity visualization are process-global Person locomotion "
+                           "settings with no durable resource a mover can be scoped to yet")) {
+                    return;
+                }
                 if (j.contains("flying")) {
                     Physics::setFlying(j["flying"].get<bool>());
                 }
@@ -1082,6 +1355,15 @@ struct WebSocketServer::Impl {
                 return;
             }            // 15. Quick Save / Save World
             if (type == "quick_save" || type == "save_world") {
+                // A world save writes the Person's profile and every Zone at
+                // once; under a mover's scope it could only half-succeed.
+                // Foreign acts that persist (spawn, create_zone) persist their
+                // own Zone; everything else is saved by the Person's engine.
+                if (!admit(hdl, clientId, "save_ack", "", "",
+                           "a world save writes the Person's profile and every Zone at once and "
+                           "cannot be scoped to one mover's grant")) {
+                    return;
+                }
                 try {
                     SaveContext ctx;
                     ::Core::Engine& eng = ::Core::Engine::instance();
@@ -1145,6 +1427,11 @@ struct WebSocketServer::Impl {
         if (it != connections.end()) {
             connections.erase(it);
         }
+        // Authentication ends with the connection. Queued, not immediate:
+        // `auth` belongs to the main thread, and queue order guarantees this
+        // runs before any message from a later connection at the same address.
+        const std::string connection = std::to_string(reinterpret_cast<uintptr_t>(hdl.lock().get()));
+        enqueueMainThread([this, connection]() { auth.drop(connection); });
         std::cout << "[WebSocketServer] Client disconnected." << std::endl;
     }
 };

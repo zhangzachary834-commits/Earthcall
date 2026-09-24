@@ -374,7 +374,9 @@ private:
     using VolumeProgramKey = std::tuple<
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        const geom::SdfNode*,
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     // V5 fused overlap cache. Membership/order and each member's six authored

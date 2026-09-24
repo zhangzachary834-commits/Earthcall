@@ -2,6 +2,7 @@
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 
 #include <cstdint>
 #include <functional>
@@ -53,6 +54,12 @@ struct VolumeDensityBinding {
     const OntoMath::Piecewise* emissionExpr = nullptr;
     uint64_t emissionRevision = 0;
 
+    // Optional participating-medium occluder geometry S(p) -> signed distance.
+    // When present, volumetric transport evaluates path visibility between the
+    // medium sample and the radiant source, carving radiance into volumetric beams.
+    const geom::SdfNode* occluderSdf = nullptr;
+    uint64_t occluderRevision = 0;
+
     // Relative medium time is data beside THIS medium. EngineRender currently
     // supplies the broad compatibility Timeline to each binding until authored
     // Timeline ownership selection has a production resolver. WebGPU never
@@ -77,6 +84,7 @@ inline uint64_t volumeContentRevision(const VolumeDensityBinding& medium) {
     combine(medium.volumeChromaRevision);
     combine(medium.phaseRevision);
     combine(medium.emissionRevision);
+    combine(medium.occluderRevision);
     return combined;
 }
 
@@ -100,6 +108,8 @@ inline void appendVolumeSetIdentity(std::string& identity,
     identity += std::to_string(medium.phaseRevision);
     identity += ":";
     identity += std::to_string(medium.emissionRevision);
+    identity += ":";
+    identity += std::to_string(medium.occluderRevision);
     identity += "\\n";
 }
 
@@ -148,6 +158,12 @@ inline bool readVolumeDensity(const geom::FieldNode& field,
         const std::string emissionJson = field.volumeEmission->toJson().dump();
         next.emissionRevision =
             static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
+    }
+    if (geom::isSdfActive(field.volumeOccluder.get())) {
+        next.occluderSdf = field.volumeOccluder.get();
+        const std::string occluderJson = geom::sdfToJson(*field.volumeOccluder).dump();
+        next.occluderRevision =
+            static_cast<uint64_t>(std::hash<std::string>{}(occluderJson));
     }
     next.temporalCoordinate = temporalCoordinate;
     next.temporalDelta = temporalDelta;

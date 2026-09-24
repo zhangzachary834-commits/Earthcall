@@ -161,6 +161,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "src/main.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Storage/MigrateSaves.cpp")
 # Standalone tools carry their own main(); they must not enter the core lib.
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/MigrateIdentitiesTool.cpp")
+list(FILTER SRC_FILES EXCLUDE REGEX "src/Identity/FirstMoverTool.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/Singularity/Screen/WebGPU/.*")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/entry.cpp")
 list(FILTER SRC_FILES EXCLUDE REGEX "src/terminal_entry.cpp")
@@ -313,6 +314,9 @@ if(NOT EMSCRIPTEN)
     # --- Tools ---
     add_executable(migrate_identities src/Identity/MigrateIdentitiesTool.cpp)
     target_link_libraries(migrate_identities PRIVATE earthcall_core)
+    # A Person grants a First Mover standing; the MCP bridge signs with it.
+    add_executable(earthcall_first_mover src/Identity/FirstMoverTool.cpp)
+    target_link_libraries(earthcall_first_mover PRIVATE earthcall_core)
 
     # --- Tests ---
     enable_testing()

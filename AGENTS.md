@@ -57,7 +57,7 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | move existing hard-coded behavior into law | `law/LAW_MIGRATION_FRAMEWORK.md` §2 | six rungs, in order; never skip |
 | write or edit a save file / seed a world | `law/FIRST_MOVER_AUTHORING.md` §4, §7 | you are acting as a First Mover; §7 is not optional |
 | add a directory | `ontology/DIRECTORY_ORDERING.md` §7 | the tree is the ontology |
-| connect hardware, a device, or a foreign process | `ontology/NEW_KIND_FRAMEWORK.md` §7b | it is a *modality channel* under `Singularity/`, never a domain folder |
+| connect hardware, a device, or a foreign process — or let a model change the world (MCP, socket) | `ontology/NEW_KIND_FRAMEWORK.md` §7b; `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md` | a *modality channel* under `Singularity/`, never a domain folder; every foreign mutation passes `Singularity/Foreign/ForeignActuationGuard` as a Person-granted First Mover — reads stay open |
 | understand what a Law is at all | `law/LAW_AND_CREATION_SYSTEM.md` | the foundation the rest assumes |
 | undo a change, rewind, or ask whether something *can* be undone | `mathematics/ONTOMATH_FRAMEWORK.md` §6 | the past is integrated in closed form, never replayed from a log |
 | render an authored expression to a channel (sound, shader, physics) | `mathematics/ONTOMATH_FRAMEWORK.md` §1, §7 | a channel reads OntoMath; it never decides what the thing is |
@@ -116,7 +116,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 232 registered (2026-09-23) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 235 registered (2026-09-24) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
