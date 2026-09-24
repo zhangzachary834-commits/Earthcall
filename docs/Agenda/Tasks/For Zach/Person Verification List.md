@@ -695,3 +695,10 @@ BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING
 *Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-24 00:18 PDT. Zach has already seen Rungs 3–8 and V0; this asks only for the new four-curtain V5 experience after #343 lands. [Audit](../../../audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md).*
 
 - [ ] In **Northern Veil**, look where the emerald, cyan, violet, and crimson curtains overlap after V5. Say whether their hierarchy stays legible, the overlap looks coherent as the camera moves, and the Zone remains responsive. A before/after capture and timing should come from the agent's preserved-save witness; no need to recheck the old Rung 3–8/V0 list.
+
+## Orphaned laws are re-authored onto you at load (added 2026-09-24)
+
+*Claude Code / Claude Fable 5.1 (Mythos) · session `session_01EbAdb1nuGQ8XorGsEHHAkv` · 2026-09-24 23:28 UTC. [Audit](../../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) §2–3. Nothing was changed in the engine; this asks you to witness a mechanism I only read.*
+
+- [ ] Load `saves/worlds/test the hills.json` and read the load report (the line ending "law(s) added"). It should carry the clause **"(1 re-authored onto this Person so they can fire)"**. Then open the Law Author window: the law whose file says `"authors": ["Zach"]` should now list *you* (your key or display name) as author, with no trace that it was re-authored. Say whether that is what you want a load to do silently.
+- [ ] If you have a keyed identity: load any world whose laws are authored `"Zach"` by display name and count how many the report re-authors. Each one is a law that detached from you and was handed back to you under a different name.
