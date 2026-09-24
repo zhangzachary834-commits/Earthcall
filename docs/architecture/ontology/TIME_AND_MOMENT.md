@@ -1,309 +1,181 @@
-# Time, Timeline, and Moment
+# Time and the Moment
 
-**Status:** Timeline first rung implemented on the OntoMath Radiance Rung 4 branch.
-The future Law <-> Timeline <-> Moment ontology is intentionally not decided by
-this implementation pass.
+**What a *when* is, before any clock is unified.**
 
-## 0. The distinction
+**Status:** First rung specified and named. Two beings already exist and already do
+the job — `Universe`'s world clock and `Moment` — but nothing had written down that
+they are two different answers to two different questions, so `src/Time/` sat as an
+empty placeholder class with no doctrine behind it while the real answer had already
+shipped around it.
+**Companion docs:** `ONTOMATH_FRAMEWORK.md` §6 (closed-form reversal — the world-clock
+half of this story), `HIERARCHY_OF_JOYS.md` (the sibling "first rung" precedent this
+follows), `NEW_KIND_FRAMEWORK.md` (why `Moment` is admissible C++ and `Duration` is not),
+`AGENTS.md` / `CLAUDE.md` Non-negotiables (event-transitions must be edges, not levels —
+the reason `Moment` stamps events rather than the engine polling a level every frame).
 
-Earthcall now has three different temporal ideas that must not collapse into one:
+---
 
-1. **Timeline** — a first-class temporal domain. It is a `Singular`.
-2. **Moment** — an instant or closed interval that may inhabit a Timeline. It is
-   also a `Singular`.
-3. **Event** — a distinguished Moment carrying a transition edge, participants,
-   and authorship. `Event : public Moment`.
+## 0. What this is not
 
-`Universe` is none of those. It remains kernel working context. It may borrow a
-Timeline as the currently authoritative temporal domain for legacy Law execution,
-but it is not itself Time and it is not a temporal being.
+It is not one clock. The 2026-08-18 external audit that opened this to-do item found
+several competing sources of truth for time (`deltaTime`, `world-clock`, physics
+`integrate`) and the standing direction since has been: **do not start by unifying
+clocks — write what a *when* is first.** Unifying prematurely would have picked one of
+the two questions below and quietly answered the other one wrong.
 
-There is no `class Time` anymore. The old empty `src/Time/Time.h/.cpp` placeholder
-was replaced by `src/Time/timeline.hpp/.cpp`.
+It is not a `class Duration`. `src/Time/Duration/` sat empty since 2026-08-20 waiting
+for a shape that never needed to exist — `Moment::Kind::Interval` already *is* a
+duration (a closed span with a start and an end); a second class would be the same
+being with a different name, which is the thing Refusal #1 refuses. The empty
+directory is removed by this pass, not filled.
 
-There is still no `class Duration`: a duration is represented by
-`Moment::interval(start,end)` or by a difference between coordinates when only
-the scalar measure is needed.
+It is not a C++ `class Time` carrying state. The placeholder in `Time.h` stays a
+placeholder — Refusal #1 forbids a domain-noun class, and neither being below needs
+one. `Time/` earns its place on the tree as the directory that holds `Moment` (an
+ontological structure, admissible the way `BodyPart` is) and, if ever authored, further
+first-order vessels of *when* — not as a class that models time itself.
 
-## 1. Timeline — a relative temporal domain
+---
 
-`Timeline` inherits `Singular`.
+## 1. Two questions, two beings
 
-A Timeline is not intrinsically global. **Any Singular may own its own Timeline.**
-Ownership is expressed with ordinary Relation truth (for example
-`Timeline --owned-by--> Singular`), not by inventing subclasses such as
-`ObjectTimeline`, by adding a timeline field to every kind of being, or by
-inferring ownership from whichever C++ object stores the pointer.
+| Question | Answer | Being |
+|---|---|---|
+| "How long has this law held for its subject, right now, mid-tick?" | a `double` the engine sets once a frame, read through reserved property paths | `Universe`'s world clock |
+| "When, in wall time, did this specific thing happen — an event, a relation, a click?" | an exact, authored, comparable stamp carried on the record itself | `Moment` |
 
-A lamp may own a Timeline. A Field may own one. A Material, Relation, Person,
-Zone, or any other Singular may own one. The broad clock shared across the
-Ourverse/Zones is merely a Timeline at the broadest scope; it is not the
-definition of Timeline.
+Neither is a replacement for the other. The world clock is a *rate* concern — it exists
+so `Flow` can integrate dp/dt and so `time.sinceApplied` can drive a `WhileTrue` bound.
+`Moment` is a *record* concern — it exists so an event, once it has happened, carries
+when it happened as part of what it is, the same way it carries who authored it.
+Collapsing them into one type would make the record depend on which frame the engine
+happened to be ticking when it was stamped, which is not what "when did this happen"
+means to a Person reading history back.
 
-A Timeline contains Moments and may also carry a currently advancing temporal
-coordinate:
+---
 
-```
-Timeline
-  identity
-  moments[]
-  now
-  delta
-  hasClock
-```
+## 2. The world clock (already unified — this is the existing answer, named)
 
-Those are ordinary legible properties. A Law or First Mover can inspect Timeline
-state through the same property system used by every other Singular.
+`Universe` (`ZonesOfEarth/AuthorsOfLaw/Universe.hpp`) is the one place simulation time
+lives:
 
-Timeline deliberately has **no enum of kinds**. Earthcall must never need:
+- `setClock(now, dt)` — the engine calls this once per frame with accumulated seconds
+  since the world began and that frame's delta. Tests set it by hand. Nothing else
+  writes it.
+- Laws read it only through the reserved paths `time`, `time.delta`, `time.sinceApplied`
+  (`MathBinding.hpp`) — never as a raw C++ read of the engine's clock. **No law writes
+  time.**
+- `time.sinceApplied` is `now − onset`, where onset is per-law-per-subject
+  (`Law::applyTo`'s `OnsetScope`, RAII, save/restore not clear-on-exit — a nested
+  arming hands back exactly what it found). This is what lets `WhileTrue` and a
+  `Drive` action know how long *this* application has been standing without a second
+  clock of their own.
+- The past of a rate authored against this clock is read backwards in exact closed
+  form, not replayed from a log — `ONTOMATH_FRAMEWORK.md` §6. That is the reversal
+  half of "what a *when* is": a `Flow`'s history is recoverable *because* the clock
+  it integrates against is one number everyone agrees on, not because anything was
+  recorded.
 
-```
-WorldTimeline
-RenderTimeline
-PhysicsTimeline
-AnimationTimeline
-AdapterTimeline
-GlowTimeline
-ColorTimeline
-...
-```
+This was already the unified answer to "what time is it in the simulation" before this
+document existed. What was missing was the sentence connecting it to the other
+question below, and the tree entry saying where it lives.
 
-as C++ types or enum members.
+**Under load, the world's clock may run slower than the Person's (2026-08-26).**
+`Zone::update` (`ZONE_UPDATE_SCALING_PLAN.md` Phase 3) accumulates real elapsed `dt`
+into a fixed-timestep accumulator and drains it in `1/60s` substeps, capped at
+`MAX_STEPS_PER_FRAME`. Before this, a slow frame meant more substeps of a *smaller*
+size (`stepDt = dt/steps`) — the world always caught up, at the cost of a positive
+feedback loop: crossing the step threshold instantly doubled that frame's physics
+cost, which made the next frame slower too, a spiral with no floor until the old
+`maxFrameTime` clamp. The fix drops the excess time instead of spending it once the
+cap is hit. This is a real ontological choice, not an implementation detail: **the
+world's clock (`Universe::setClock`, above) can now advance more slowly than the
+Person's own wall-clock time under sustained load**, rather than the frame simply
+taking longer while both clocks stay in lockstep. A Law reading `time`/`time.delta`
+sees the *simulated* elapsed time, which is the honest one to expose — but it means
+"how long has the Person actually been sitting here" is no longer recoverable from
+`time` alone once a session has dropped substeps. Nothing today reads wall-clock time
+alongside `Universe`'s clock to detect or report that gap; if a future Law or First
+Mover ever needs "how far behind is the simulation," that comparison — Person-side
+wall time versus `Universe`'s accumulated `now` — is unbuilt.
 
-Instead, those are ordinary Timeline beings distinguished by identity, Relations,
-authorship, Laws, and whatever future temporal ontology Zach and Opus establish.
+## 3. `Moment` — the authored, comparable *when* on a record
 
-Creating another temporal domain therefore means creating another Timeline being,
-not editing a switch statement.
+`Moment` (`src/Time/Moment/Moment.hpp`) is a `Singular` whose substance is time itself:
+a discrete instant or a closed interval, exact by construction.
 
-The implementation keeps a process-local live registry
-(`Timeline::all()`) for lifecycle/identity bookkeeping. **That registry is not
-temporal scope, ownership, authority, or Law reachability.** In particular, the
-Universe provider does not sweep every Timeline into its global working set:
-doing so would make a local Singular-owned clock globally visible merely because
-it exists. Future Law/Timeline architecture must derive lawful reachability from
-authored ownership, Zone context, and the temporal relations Zach + Opus define.
+- `Kind { Instant = 0, Interval = 1 }` — append-only, serialized as an int, per Refusal #3.
+- Each bound is an `OntoMath::ScalarForm` (`_start`, `_end`) — the exact authored form,
+  not a float that has already lost precision. A `double` cache (`_startCache`,
+  `_endCache`) sits beside it for the comparisons and orderings that don't need the
+  exact form, the same "exact form + cheap numeric view" split OntoMath uses
+  everywhere else (`ONTOMATH_FRAMEWORK.md` §2).
+- `getIdentifier()` is stable and content-derived (`moment.<start>` or
+  `moment.<start>-<end>`) — not a generated `law-N`-style id, per the Non-negotiables.
+- Registered properties: `kind`, `start`, `end` (`buildProperties()`) — a `Moment` is
+  readable and writable by law like anything else on the tree, per Refusal #6.
+- `Moment::now()` stamps wall-clock time (`std::time(nullptr)`), independent of
+  whether the simulation is even ticking.
 
-## 2. A Timeline contains Moments
+**Where it is already carrying weight**, all without a line of doctrine until now:
+`RelationManager`'s per-relation `timestamp`, `Person`'s zone-entered / zone-left /
+session events (`PersonEvents.hpp`), `Object`'s hover-entered / hover-exited events
+(`ObjectEvents.hpp`), and the base ECA event record (`AuthorsOfLaw/ECA.hpp`) all carry
+a `Moment timestamp` stamped at construction. Every one of these is a past-tense,
+edge-fired event per the Non-negotiables — `Moment` is what lets "this happened" also
+say *when*, without inventing a second per-event clock.
 
-A Timeline owns `std::shared_ptr<Moment>` members.
+A duration between two `Moment`s is not a new being to construct — it is
+`Moment::interval(a, b)`, or simply `b.asSeconds() − a.asSeconds()` when only the
+number is wanted. This is the reason `src/Time/Duration/` is removed rather than filled.
 
-This is intentional because `Event : Moment`: an Event can inhabit a Timeline
-without a second event-log ontology and without slicing away its distinction.
+---
 
-Insertion order is not temporal truth. `orderedMoments()` derives chronological
-order from each Moment's own coordinates.
+## 4. What is still unwritten
 
-The current reflected Timeline vocabulary is:
+- Kernel-tick enforcement of the Hierarchy of Joys bound (`HIERARCHY_OF_JOYS.md`
+  remaining work) will need to schedule against *a* when — almost certainly the world
+  clock in §2, since it is a standing per-tick bound, not a one-time record. Not
+  decided yet; noted here so the next pass doesn't have to rediscover the question.
+- `Moment` has no reversal story of its own the way a `Flow` does. It doesn't need
+  one to be a record of the past — a stamp doesn't change — but if Earthcall ever
+  authors a law over a *sequence* of Moments (a Zone's history, an Object's hover
+  log), that law's own reversibility is a fresh question, not answered by §6.
+- Nothing here schedules a future event or authors a calendar/appointment concept.
+  That would be a Person-authored being over `Moment`s (a `Formation` of them, most
+  likely), not a new C++ type — same shape as `HIERARCHY_OF_JOYS.md` §1.
 
-- `hasClock`
-- `now`
-- `delta`
-- `momentCount`
-- `moments`
-- `latestMoment`
+---
 
-Future work may enrich the Relations among Timeline and Moment beings. That is
-not part of this rung.
+## 5. `Event` — the distinguished Moment
 
-## 3. Independent Timelines
+**"My definition of Event would be 'distinguished Moment'"** — Zach (2026-09-13).
 
-Two Timeline beings are temporally independent unless authored structure relates
-them.
+An `Event` (`src/Time/Event/Event.hpp`) inherits directly from `Moment`:
+`class Event : public Moment`. An Event does not *wrap* a Moment or carry a private
+timestamp member; it **is** a Moment elevated by distinction:
 
-An occurrence in Timeline A does not, merely because it occurred, constitute an
-occurrence in Timeline B.
-
-That distinction is what the Slow Adapter analysis was reaching for when it
-described independent clocks. A display frame, maintenance opportunity, audio
-sample domain, authored animation, or Zone-local temporal process need not all be
-reducible to one universal frame counter.
-
-The current implementation proves the substrate can hold multiple independently
-advancing Timeline beings. It does **not** define the final Laws that relate,
-synchronize, fork, pause, scale, or derive one Timeline from another.
-
-## 4. The broad world Timeline is one relative Timeline
-
-The current compatibility implementation stores one broad Timeline instance:
-
-```
-world-timeline
-```
-
-It replaces Engine's former raw `_worldTime` scalar as the primary live world
-clock state, but **its C++ storage location is not ontological ownership**.
-Timeline ownership belongs in Relations among Singulars.
-
-This compatibility First Mover now makes the broad ownership claim explicit:
-
-```
-world-timeline --owned-by--> Ourverse
-```
-
-The Relation is the ontological ownership claim. Engine merely retains the
-Timeline and Relation in memory so their lifetimes span the process.
-
-That broad Timeline is therefore available across the ordinary Ourverse/Zone
-scope without implying that every Timeline is global. Any Singular inside that
-scope may own an independent Timeline of its own through the same Relation
-shape.
-
-`Universe` borrows that broad Timeline during normal legacy execution:
-
-```
-world-timeline : Timeline : Singular
-        |
-        v
-Universe temporal context
-        |
-        +--> legacy Law paths: time / time.delta / time.sinceApplied
-        |
-        +--> current default Screen temporal binding
-```
-
-`Universe::now()`, `Universe::dt()`, and `Universe::setClock()` remain as
-compatibility projections so the existing Law machinery and isolated tests do
-not all need to migrate in the same commit.
-
-When no Timeline is bound, Universe retains a scalar fallback for isolated tests
-and tools. That fallback is compatibility state, not a second temporal ontology.
-
-## 5. Moment
-
-`Moment` (`src/Time/Moment/Moment.hpp`) is a Singular whose temporal substance
-is an instant or a closed interval.
-
-Its serialized kind is append-only:
+1. **The transition edge:** A state or relational boundary was crossed (`noun-verbed`:
+   `jump-started`, `zone-entered`, `collision`).
+2. **The participants:** The beings (`subject`, optional `object`/relatum) present at the edge.
+3. **The author:** Who intended or authorized it ("Nothing enters the world without an author").
 
 ```
-Kind::Instant
-Kind::Interval
+Rate           Continuous rate (dp/dt, world clock)          Universe::setClock
+Coordinate     Temporal extension (Instant or Interval)       Moment
+Distinction    Transition edge with participants and author  Event : public Moment
 ```
 
-Its bounds are authored OntoMath `ScalarForm` values with cached doubles for
-cheap ordering and comparison.
+### Ontological and Architectural Standing
+- **Subordination of ECA:** `ECA::Event` is no longer a private, raw C++ trigger struct
+  in `AuthorsOfLaw/ECA.hpp`. ECA aliases `::Event` from the `Time` ontology. Laws listen
+  to events that occur in Time, rather than inventing a private trigger packet.
+- **No Black Box (Refusal #6):** Every property (`verb`, `type`, `subject`, `object`, `author`,
+  `start`, `end`, `kind`) is registered via `buildProperties()`. Laws and First Movers
+  can address and query past events directly through property paths.
+- **No Domain Classes (Refusal #1):** Ad-hoc C++ event structs (`ObjectHoverEnterEvent`,
+  `PersonJoinedEvent`) are superseded by `Event` with semantic past-tense verb slugs.
+- **Preserved Destructor Performance:** Inheriting from `Moment` (and thus `Singular`),
+  transient stack events take advantage of `LawManager::_factParticipants` for $O(1)$ fact
+  retraction, eliminating any destructor quadratic under load.
 
-Its registered properties are:
-
-- `kind`
-- `start`
-- `end`
-
-`Moment::now()` currently stamps wall-clock seconds using `std::time`. That is
-a convenience constructor for records; it is not the same thing as advancing a
-Timeline and should not be mistaken for the future answer to Timeline-relative
-authorship.
-
-## 6. Event is a distinguished Moment
-
-Zach's definition remains:
-
-> **Event is a distinguished Moment.**
-
-`Event : public Moment`.
-
-An Event does not wrap a hidden timestamp object. It is a Moment elevated by:
-
-- a transition verb;
-- subject/object participants;
-- an author.
-
-Its temporal properties remain the Moment properties, while `verb`, `type`,
-`subject`, `object`, and `author` add the distinction.
-
-This preserves the no-black-box rule and keeps Event inside the Time ontology
-rather than recreating private callback timestamp structs.
-
-## 7. Legacy Law temporal execution is pre-Timeline machinery
-
-This is the most important compatibility note for future architects.
-
-The current Law action framework — including `Drive`, `Flow`,
-`time.sinceApplied`, and the existing authored `f(t)` patterns — was created
-before Timeline became first-class.
-
-Today it still effectively treats temporal execution through hard-coded reserved
-paths and Universe application onset:
-
-```
-t <- time.sinceApplied
-dt <- Universe::dt()
-```
-
-and the action engine performs the corresponding continuous/drive behavior.
-
-That machinery remains operational and is deliberately **not redesigned in this
-pass**.
-
-Its present implementation must therefore not be interpreted as the final
-ontology of temporal Law.
-
-The future questions belong to the Law/Timeline architecture pass, including:
-
-- how a Law names or selects a Timeline;
-- whether a Law creates a Timeline for a conditional process;
-- how a Law's conditional process relates its start/end Moments;
-- what `WhileTrue`, Drive, Flow, and OnEvent mean once temporal domains are
-  explicitly first-class;
-- how one Timeline lawfully depends on, scales, pauses, or derives from another;
-- how authored processes such as animation, changing glow, changing field,
-  changing color, maintenance, and similar continuous changes create/use their
-  own Timelines rather than borrowing a hard-coded global clock.
-
-Zach and Opus own those ontological decisions. Rendering work must leave that
-space open.
-
-## 8. Rung 4 rendering boundary
-
-OntoMath names the temporal coordinate `t` through
-`OntoMath::kTimeVar == "t"`.
-
-OntoMath does not choose a Timeline.
-
-WebGPU does not choose a Timeline.
-
-The Renderer boundary accepts only an admitted temporal coordinate:
-
-```
-Renderer::setTemporalCoordinate(t, delta)
-```
-
-The current production first mover supplies that coordinate from the
-Universe-selected world Timeline as a compatibility/default binding.
-
-The native Rung 4 GPU witness intentionally does something stronger: the radiant
-Object owns an ordinary, anonymously generated Timeline through the existing
-`owned-by` Relation. The witness advances that Object-owned Timeline, projects
-its coordinate through the Renderer boundary, and proves `rho(p,t)` changes
-pixels without changing the authored AST, parameter buffer, or WGSL program.
-
-There is no special "radiance Timeline" class, enum, identifier, or framework.
-The same substrate proves "I own my own clock" for any Singular.
-
-## 9. Author direction for temporal change
-
-The intended direction is now explicit:
-
-A changing glow, changing field, changing color, animation, or other process over
-time should ultimately be represented through a Timeline and Laws, because a Law
-is Earthcall's Singular of conditional process.
-
-This branch does not decide the exact Law-to-Timeline semantics. It only removes
-the rendering and clock assumptions that would prevent that architecture from
-being authored later.
-
-## 10. Invariants this rung establishes
-
-1. Timeline is a Singular.
-2. Timeline is relative: any Singular may own one through ordinary Relations.
-3. Timeline contains Moments.
-4. Event remains a distinguished Moment.
-5. There is no enum/class proliferation for timeline kinds or owners.
-6. Multiple Singular-owned Timelines can advance independently.
-7. The broad world clock is one Timeline at broad scope, not the definition of Time.
-8. Universe may borrow a Timeline but is not itself temporal ontology.
-9. Renderer/OntoMath accept a temporal coordinate without knowing which Timeline
-   or owner supplied it.
-10. Legacy Drive/Flow/`f(t)` semantics remain compatibility machinery pending
-    the future Law/Timeline ontology.

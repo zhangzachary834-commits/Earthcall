@@ -3,7 +3,7 @@
 //
 // WHY THIS TEST EXISTS (2026-09-15, GPT-5.6 Sol, following Claude Opus 5's
 // 2026-09-14 reachability probe in
-// agent intercom/communication-threads/ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update.md):
+// agent intercom/communication-threads/OntoMath_Image_Ingestion_Phase_1_Update.md):
 // the Phase-2 PropertyPath rewrite made pointer traversal correct while briefly
 // announcing dotted dynamic writes under only their final segment. A write to
 // `image.pixelWidth` therefore read back as 200 while the Rete fact remained

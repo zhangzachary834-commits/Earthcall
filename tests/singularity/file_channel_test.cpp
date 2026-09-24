@@ -469,84 +469,10 @@ int main() {
     lawGetValue(*channel, PropertyPath::parse("file.directory"), val);
     check(std::get<std::string>(val) == "", "propDirectory gracefully handles exceptions");
 
-    lawGetValue(*channel, PropertyPath::parse("file.mimeType"), val);
-    check(std::get<std::string>(val) == "text/plain" || std::get<std::string>(val) == "application/octet-stream", "propMimeType gracefully handles exceptions");
-
-    lawGetValue(*channel, PropertyPath::parse("file.fileType"), val);
-    check(std::get<std::string>(val) == "binary" || std::get<std::string>(val) == "text", "propFileType gracefully handles exceptions");
-
     // isPathSafe / checkOSPermissions will catch the exception and prevent the operation
     lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
     lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
     check(std::get<bool>(val) == false, "file read gracefully fails on invalid paths");
-
-    // -----------------------------------------------------------------------
-    // Case 15: I/O Failures (Permissions)
-    // -----------------------------------------------------------------------
-    fs::path ioFailDir = testDir / "io_fail";
-    fs::create_directories(ioFailDir, ec);
-
-    // 15a. Read open_failed
-    fs::path noReadFile = ioFailDir / "no_read.txt";
-    {
-        std::ofstream out(noReadFile);
-        out << "secret";
-    }
-    // Revoke read permission
-    fs::permissions(noReadFile, fs::perms::none, ec);
-
-    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(noReadFile.string()));
-    lawSetValue(*channel, PropertyPath::parse("file.read"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
-
-    // Skip assertion if running as root (where permissions are bypassed and read succeeds)
-    if (std::get<bool>(val) == false) {
-        lawGetValue(*channel, PropertyPath::parse("file.errorCode"), val);
-        check(std::get<std::string>(val) == "permission_denied", "Read fails with permission_denied when permissions revoked");
-    }
-
-    // Restore permission to allow deletion
-    fs::permissions(noReadFile, fs::perms::all, ec);
-
-    // 15b. Write & Append permission_denied
-    fs::path noWriteDir = ioFailDir / "no_write_dir";
-    fs::create_directories(noWriteDir, ec);
-    fs::path noWriteFile = noWriteDir / "target.txt";
-
-    // Revoke write permission on directory so file cannot be created
-    fs::permissions(noWriteDir, fs::perms::owner_read | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec | fs::perms::others_read | fs::perms::others_exec, fs::perm_options::replace, ec);
-
-    lawSetValue(*channel, PropertyPath::parse("file.path"), PropertyValue(noWriteFile.string()));
-    lawSetValue(*channel, PropertyPath::parse("file.content"), PropertyValue(std::string("data")));
-
-    // Normal write
-    lawSetValue(*channel, PropertyPath::parse("file.atomicWrite"), PropertyValue(false));
-    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
-    if (std::get<bool>(val) == false) {
-        lawGetValue(*channel, PropertyPath::parse("file.errorCode"), val);
-        check(std::get<std::string>(val) == "permission_denied", "Write fails with permission_denied when permissions revoked");
-    }
-
-    // Append write
-    lawSetValue(*channel, PropertyPath::parse("file.append"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
-    if (std::get<bool>(val) == false) {
-        lawGetValue(*channel, PropertyPath::parse("file.errorCode"), val);
-        check(std::get<std::string>(val) == "permission_denied", "Append fails with permission_denied when permissions revoked");
-    }
-
-    // Atomic write (temp file open failure)
-    lawSetValue(*channel, PropertyPath::parse("file.atomicWrite"), PropertyValue(true));
-    lawSetValue(*channel, PropertyPath::parse("file.write"), PropertyValue(true));
-    lawGetValue(*channel, PropertyPath::parse("file.lastOperationSuccess"), val);
-    if (std::get<bool>(val) == false) {
-        lawGetValue(*channel, PropertyPath::parse("file.errorCode"), val);
-        check(std::get<std::string>(val) == "permission_denied", "Atomic write fails with permission_denied when permissions revoked");
-    }
-
-    // Restore permission to allow deletion
-    fs::permissions(noWriteDir, fs::perms::all, ec);
 
     // Clean up test files
     fs::remove_all(testDir, ec);
@@ -556,6 +482,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_channel_test: ALL OK (all 15 cases passed)\n");
+    std::printf("file_channel_test: ALL OK (all 14 cases passed)\n");
     return 0;
 }

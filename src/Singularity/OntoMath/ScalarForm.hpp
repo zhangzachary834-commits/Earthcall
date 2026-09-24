@@ -368,33 +368,13 @@ struct TypeResult {
 
 using TypeEnv = std::map<std::string, ValueKind>;
 
-// Canonical ambient names available to authored mathematics. A spatial field
-// is evaluated at p/x/y/z. Channels that explicitly admit world time may also
-// bind t; OntoMath itself never invents a clock value. Radiance Rung 4 is the
-// first Screen binding of t. CPU callers bind the same name in their variable
-// map, preserving one authored tree across execution channels.
+// The ambient point a field expression is evaluated AT. A field AST is a
+// pointwise expression: the CPU evaluator binds these variables in its
+// variable map, and the WGSL emitter binds them to the shader's point. They
+// are the ONE convention that makes CPU and GPU evaluate the same tree.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
-//   "t"          a scalar temporal coordinate whose meaning the channel binds
-//   "omega.x/y/z" components of an explicitly admitted normalized direction.
-//                  Rung 6 Screen radiance binds them as world-space source ->
-//                  receiver direction; OntoMath itself does not invent a frame.
-//   "wi.x/y/z"    V3 participating-medium incoming propagation direction,
-//                  world-space normalized source -> sample.
-//   "wo.x/y/z"    V3 participating-medium outgoing propagation direction,
-//                  world-space normalized sample -> receiver/eye.
 inline constexpr const char* kAmbientPointVar = "p";
-inline constexpr const char* kTimeVar = "t";
-inline constexpr const char* kOmegaXVar = "omega.x";
-inline constexpr const char* kOmegaYVar = "omega.y";
-inline constexpr const char* kOmegaZVar = "omega.z";
-inline constexpr const char* kWiXVar = "wi.x";
-inline constexpr const char* kWiYVar = "wi.y";
-inline constexpr const char* kWiZVar = "wi.z";
-inline constexpr const char* kWoXVar = "wo.x";
-inline constexpr const char* kWoYVar = "wo.y";
-inline constexpr const char* kWoZVar = "wo.z";
-inline constexpr float kDirectionEpsilon = 1e-8f;
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a

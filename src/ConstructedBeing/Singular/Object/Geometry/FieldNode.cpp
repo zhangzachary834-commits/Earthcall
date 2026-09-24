@@ -10,30 +10,6 @@ nlohmann::json FieldNode::toJson() const {
     j["scale"] = {scale.x, scale.y, scale.z};
     j["field"] = field->toJson();
     j["vectorField"] = vectorField->toJson();
-    if (volumeDensity && !volumeDensity->pieces.empty()) {
-        j["volumeDensity"] = volumeDensity->toJson();
-    }
-    if (volumeExtinction && !volumeExtinction->pieces.empty()) {
-        j["volumeExtinction"] = volumeExtinction->toJson();
-    }
-    if (volumeScattering && !volumeScattering->pieces.empty()) {
-        j["volumeScattering"] = volumeScattering->toJson();
-    }
-    if (volumeChroma && !volumeChroma->pieces.empty()) {
-        j["volumeChroma"] = volumeChroma->toJson();
-    }
-    if (volumePhase && !volumePhase->pieces.empty()) {
-        j["volumePhase"] = volumePhase->toJson();
-    }
-    if (volumeEmission && !volumeEmission->pieces.empty()) {
-        j["volumeEmission"] = volumeEmission->toJson();
-    }
-    if (lightChroma && !lightChroma->pieces.empty()) {
-        j["lightChroma"] = lightChroma->toJson();
-    }
-    if (lightAngular && !lightAngular->pieces.empty()) {
-        j["lightAngular"] = lightAngular->toJson();
-    }
 
     // A FieldNode is a Singular, so properties a Person/Law grants it are
     // first-order authored state just like authored Object properties. Keep
@@ -84,66 +60,6 @@ void FieldNode::applyJson(const nlohmann::json& j) {
             mutVec->frequency = newVec->frequency;
             mutVec->amplitude = newVec->amplitude;
             mutVec->astDefinition = newVec->astDefinition;
-        }
-    }
-
-    if (volumeDensity) {
-        if (j.contains("volumeDensity")) {
-            *volumeDensity = OntoMath::Piecewise::fromJson(j["volumeDensity"]);
-        } else {
-            *volumeDensity = OntoMath::Piecewise{};
-        }
-    }
-
-    if (volumeExtinction) {
-        if (j.contains("volumeExtinction")) {
-            *volumeExtinction = OntoMath::Piecewise::fromJson(j["volumeExtinction"]);
-        } else {
-            *volumeExtinction = OntoMath::Piecewise{};
-        }
-    }
-
-    if (volumeScattering) {
-        if (j.contains("volumeScattering")) {
-            *volumeScattering = OntoMath::Piecewise::fromJson(j["volumeScattering"]);
-        } else {
-            *volumeScattering = OntoMath::Piecewise{};
-        }
-    }
-    if (volumeChroma) {
-        if (j.contains("volumeChroma")) {
-            *volumeChroma = OntoMath::Piecewise::fromJson(j["volumeChroma"]);
-        } else {
-            *volumeChroma = OntoMath::Piecewise{};
-        }
-    }
-    if (volumePhase) {
-        if (j.contains("volumePhase")) {
-            *volumePhase = OntoMath::Piecewise::fromJson(j["volumePhase"]);
-        } else {
-            *volumePhase = OntoMath::Piecewise{};
-        }
-    }
-    if (volumeEmission) {
-        if (j.contains("volumeEmission")) {
-            *volumeEmission = OntoMath::Piecewise::fromJson(j["volumeEmission"]);
-        } else {
-            *volumeEmission = OntoMath::Piecewise{};
-        }
-    }
-
-    if (lightChroma) {
-        if (j.contains("lightChroma")) {
-            *lightChroma = OntoMath::Piecewise::fromJson(j["lightChroma"]);
-        } else {
-            *lightChroma = OntoMath::Piecewise{};
-        }
-    }
-    if (lightAngular) {
-        if (j.contains("lightAngular")) {
-            *lightAngular = OntoMath::Piecewise::fromJson(j["lightAngular"]);
-        } else {
-            *lightAngular = OntoMath::Piecewise{};
         }
     }
 

@@ -50,39 +50,6 @@ private:
     FieldT* _field;
 };
 
-// An authored Piecewise that is semantically its own channel rather than a
-// ScalarField/VectorField container. Rung 5 uses this for source chroma chi(p,t):
-// vec3. The bridge keeps the recursive mathematics reachable by Law without
-// pretending RGB is the existing flow/force VectorField merely because both are vec3.
-class PiecewiseAstBridge : public Property {
-public:
-    PiecewiseAstBridge(std::string name, OntoMath::Piecewise* expr)
-        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _expr(expr) {}
-
-    std::string name() const override { return _name; }
-    Earthcall::StringId nameId() const override { return _nameId; }
-    std::string typeName() const override { return "string"; }
-
-    PropertyValue value() const override {
-        if (!_expr) return PropertyValue(std::string("{}"));
-        return PropertyValue(_expr->toJson().dump());
-    }
-    bool setValue(const PropertyValue& v) override {
-        if (!_expr) return false;
-        const std::string* src = std::get_if<std::string>(&v);
-        if (!src) return false;
-        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
-        if (parsed.is_discarded()) return false;
-        *_expr = OntoMath::Piecewise::fromJson(parsed);
-        return true;
-    }
-
-private:
-    std::string _name;
-    Earthcall::StringId _nameId;
-    OntoMath::Piecewise* _expr;
-};
-
 // A FieldNode represents the spatial placement of an OntoMath Field within the scene.
 // By inheriting from Singular, it maps the field's mathematical variables into the 
 // PropertyPath system, allowing the Law system to modulate the field dynamically.
@@ -94,15 +61,7 @@ public:
     FieldNode(std::string id = "field_node") 
         : _id(std::move(id)), 
           field(std::make_shared<OntoMath::ScalarField>()),
-          vectorField(std::make_shared<OntoMath::VectorField>()),
-          volumeDensity(std::make_shared<OntoMath::Piecewise>()),
-          volumeExtinction(std::make_shared<OntoMath::Piecewise>()),
-          volumeScattering(std::make_shared<OntoMath::Piecewise>()),
-          volumeChroma(std::make_shared<OntoMath::Piecewise>()),
-          volumePhase(std::make_shared<OntoMath::Piecewise>()),
-          volumeEmission(std::make_shared<OntoMath::Piecewise>()),
-          lightChroma(std::make_shared<OntoMath::Piecewise>()),
-          lightAngular(std::make_shared<OntoMath::Piecewise>()) {}
+          vectorField(std::make_shared<OntoMath::VectorField>()) {}
 
     std::string getIdentifier() const override { return _id; }
 
@@ -114,47 +73,6 @@ public:
     // Const pointer ensures the property registry doesn't dangle
     const std::shared_ptr<OntoMath::ScalarField> field;
     const std::shared_ptr<OntoMath::VectorField> vectorField;
-
-    // V0 participating-medium density D(p,t) -> scalar. This is deliberately
-    // independent from the generic scalar field and from source radiance rho.
-    // Empty means no explicitly authored volume-density channel; compatibility
-    // migration, where required, is resolved outside this storage boundary.
-    const std::shared_ptr<OntoMath::Piecewise> volumeDensity;
-
-    // V1 participating-medium extinction sigma_t(p,t) -> scalar. Empty means
-    // compatibility extinction (0.5 * D) rather than absence of the medium.
-    // This channel is authored independently from D: equal density fields may
-    // intentionally transmit light very differently.
-    const std::shared_ptr<OntoMath::Piecewise> volumeExtinction;
-
-    // V2 participating-medium scattering sigma_s(p,t) -> scalar. Empty means
-    // exact compatibility sigma_s=D; presence is sole scattering authority.
-    const std::shared_ptr<OntoMath::Piecewise> volumeScattering;
-
-    // V2 participating-medium chroma C_v(p,t) -> vec3. Empty means neutral
-    // white compatibility. This is medium truth, not source/light chroma.
-    const std::shared_ptr<OntoMath::Piecewise> volumeChroma;
-
-    // V3 participating-medium phase Phi(p,wi,wo,t) -> scalar. Empty means the
-    // exact V2 compatibility identity Phi=1. This is medium angular-scattering
-    // truth and never aliases source angular emission.
-    const std::shared_ptr<OntoMath::Piecewise> volumePhase;
-
-    // V4 participating-medium emission E_v(p,omega,t) -> vec3. Empty means
-    // exact pre-V4 compatibility: the medium contributes no self-emitted
-    // radiance. This is independent from D, sigma_t, sigma_s, C_v, Phi and
-    // every source-side rho/chi/alpha channel.
-    const std::shared_ptr<OntoMath::Piecewise> volumeEmission;
-
-    // Optional source-side chroma chi(p,t) -> vec3. Empty means ABSENT, in which
-    // case the historical authored light.color remains the constant chroma.
-    // This is deliberately not VectorField: that existing vessel means flow/force.
-    const std::shared_ptr<OntoMath::Piecewise> lightChroma;
-
-    // Optional source-side angular factor alpha(p,omega,t) -> scalar. Empty is
-    // exactly the multiplicative identity alpha=1. Direction is bound by the
-    // consuming radiance channel, never stored here as a renderer preset.
-    const std::shared_ptr<OntoMath::Piecewise> lightAngular;
 
     nlohmann::json toJson() const;
     void applyJson(const nlohmann::json& j);
@@ -195,40 +113,6 @@ protected:
             registerProperty(std::make_unique<PropertyRef<OntoMath::VectorField, float>>("vectorField.amplitude", vectorField.get(), &OntoMath::VectorField::amplitude));
             registerProperty(std::make_unique<AstBridge<OntoMath::VectorField>>(
                 "vectorField.ast", vectorField.get()));
-        }
-
-        if (volumeDensity) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.density.ast", volumeDensity.get()));
-        }
-        if (volumeExtinction) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.extinction.ast", volumeExtinction.get()));
-        }
-        if (volumeScattering) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.scattering.ast", volumeScattering.get()));
-        }
-        if (volumeChroma) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.chroma.ast", volumeChroma.get()));
-        }
-        if (volumePhase) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.phase.ast", volumePhase.get()));
-        }
-        if (volumeEmission) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "volume.emission.ast", volumeEmission.get()));
-        }
-
-        if (lightChroma) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "light.chroma.ast", lightChroma.get()));
-        }
-        if (lightAngular) {
-            registerProperty(std::make_unique<PiecewiseAstBridge>(
-                "light.angular.ast", lightAngular.get()));
         }
     }
 };

@@ -500,8 +500,17 @@ int main() {
         auto frame2 = look(0.0f, 0.0f);
         frame2.left = channel.liveLeftDown(); // true
         
-        // The REAL replay, not a copy of it (observePending is what step() calls).
-        channel.observePending(frame2, reachable);
+        // Emulate step() logic for pending left edges
+        if (!channel.pendingLeftEdges().empty()) {
+            for (size_t i = 0; i < channel.pendingLeftEdges().size() - 1; ++i) {
+                InteractionChannel::Sense edgeSense = frame2;
+                edgeSense.left = channel.pendingLeftEdges()[i];
+                channel.observe(edgeSense, reachable);
+            }
+            channel.clearPendingLeftEdges();
+        }
+
+        channel.observe(frame2, reachable);
         
         // The release MUST have been published!
         check(g_recorder.count("object-released", "control-a") >= 1,

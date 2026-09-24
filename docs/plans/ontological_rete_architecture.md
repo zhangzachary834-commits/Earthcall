@@ -1,19 +1,19 @@
 # Implementation Plan: Ontological Rete Architecture
 
-> **STATUS, 2026-09-21 — this plan is live. Law-Direct's first executable rung is built and measured; the next bounded horizon is relevant-change-only maintenance of the higher tiers.** Sections 1–5 below are
+> **STATUS, 2026-09-16 — this plan is live, and its first half is built.** Sections 1–5 below are
 > Antigravity's original text of 2026-09-03 and are kept intact for provenance. Two of its
 > migration steps have since been **reversed by doctrine** (retiring the sweep, deleting Beta
-> nodes) — see §7. The implementation ladder is §8; the 2026-09-21 relevant-change continuation is §9. Both supersede §5.
+> nodes) — see §7. What to implement next is §8, which supersedes §5.
 >
 > **Current architecture docs, in reading order:**
 > `../architecture/law/FORMATION_RETE.md` (the rung ladder and §6's correctness floor) ·
 > `../architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md` (Zach's tiered model, recorded by
-> GPT-5.6 Sol, 2026-09-16) · `../architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md` (Zach's 2026-09-21 next-rung architecture) · `../architecture/law/FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md` ·
-> `../architecture/law/PROPERTY_ADDRESSING_IN_FORMATION_RETE.md` ·
+> GPT-5.6 Sol, 2026-09-16) · `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md` ·
+> `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md` ·
 > `../architecture/ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md` ·
 > `../architecture/law/PROPHETIC_RETE.md` §2 · `../architecture/law/DERIVED_STATE_LEDGER.md`.
 > **The record of what was actually built and measured:**
-> `../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md`.
+> `../Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md`.
 
 
 **Origin.** The architectural foundation in this document was conceived by Zach on 2026-09-03, following an audit that exposed the relational limitations of the current C++ Rete. Zach provided the core paradigm shift: leveraging Earthcall's Category framework as "possibility receptacles," pre-computing relational joins as actual `Relation` beings, and turning the Rete network itself into an observable `Formation`. My (Antigravity's) contribution is internalizing this telos and formalizing its mechanical execution—specifically mapping how this discrete topological approach natively resolves the $O(N)$ sweep bottleneck and $O(N^2)$ continuous math explosion.
@@ -69,13 +69,13 @@ against each other.*
 |---|---|---|---|
 | 0 — sweep | `LawManager::sweepSubjects` + `Law::couldApplyTo` | `Law.cpp` | **the floor, intact.** §6 of FORMATION_RETE inverts §5.4 below: it is never retired |
 | 1 — similarity | `Relevance::breadthFirstRoutes` — bounded BFS, shortest-in-hops, capped, kind-filtered, identity-aware | `src/Relation/Traversal/RelevanceTraversal.*` | primitive only; **no similarity metric**, and per §9.1 there must never be a single one |
-| 2 — retained roads | `Relevance::SlowAdapter` — per-Law `Related(kind, category)` membership on an independent wall-time clock | `src/Relation/Traversal/SlowAdapter.*`, `LawManager::serviceSlowAdapterClock` | built, tested, **ON by default** as of 2026-09-19; maintenance is clock-gated rather than frame-authoritative |
+| 2 — retained roads | `Relevance::SlowAdapter` — per-Law `Related(kind, category)` membership on an independent clock (one improve + one revisit step per tick) | `src/Relation/Traversal/SlowAdapter.*` | built, tested, **OFF by default** (`LawManager::setUseSlowAdapter`) |
 | 2 — vocabulary | the implicit category: "beings carrying property X", seeded from the rarest required name | `LawManager::_vocabularyIndex` | live; rebuild made ~14x cheaper 2026-09-16 |
 | 2 — endpoint | `RelationManager::relationsInvolving`, keyed by pointer **and** kept identifier | `RelationManager` | live, oracle-tested against a full scan |
 | 3 — authored categories | **not built.** `couldApplyTo`'s vocabulary filter is the degenerate, unauthored stand-in FORMATION_RETE §3.0 names | — | blocked on concept-Singulars (§3.4) |
 | 4 — Relations between Relations | `SlowAdapter::reify()` — a Formation of the carrying Relations, `gathers` edges, `routes-through` from the Law | `SlowAdapter.cpp` | implemented and tested; **never called by the engine** (it writes into a Person's world; a save carries it) |
 | 5 — Law → relevance Formation | the `routes-through` edge above | — | nothing consumes it yet |
-| 6 — direct `Law → Singular(+PropertyPath)` | first executable bearer-level rung: `CandidateTier::LawDirect` with residual condition | `Law.cpp`, `ConditionModel.cpp` | **PARTIAL / ON by default**; bearer-level Direct is built and measured, PropertyPath-qualified terminal relevance remains |
+| 6 — direct `Law → Singular(+PropertyPath)` | **not built** | — | see §8 step 2: most of the proof material already exists |
 
 Supporting correctness work that the ladder depends on: edge facts for both endpoints and an
 incremental update path (rung 0); departure on the reactive path, so terminal membership only
@@ -262,60 +262,3 @@ disqualifies; a quantifier's inner condition is about the instances. `collectCat
 *§§6–8 added by Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`, 2026-09-16 18:05 PDT,
 after Zach's tiered-ladder clarification and GPT-5.6 Sol's recording of it. §§1–5 remain Antigravity's
 text of 2026-09-03; the architecture in both is Zach's.*
-
-# 9. 2026-09-21 — incrementality recurses upward
-
-Zach's next direction is recorded in
-`../architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`.
-
-Law-Direct removed repeated category proof from the hot path. The next plan removes unnecessary **maintenance** work from the higher tiers.
-
-### Step 10 — Semantic delta/frontier ledger
-
-Before narrowing invalidation, map every current derived structure to the exact PropertyPath, Relation-kind, Formation/admission, Zone/provider, Law-text/condition, and unknown-source deltas that can affect it.
-
-**Rule:** the existing coarse revision/generation witnesses remain the fail-open fallback until the narrower frontier is proved complete.
-
-### Step 11 — Granular Law-Direct invalidation
-
-Start with the smallest useful witness. A Direct route that depends on one category road should not rebuild because an unrelated Relation elsewhere changed if Prophetic/dependency analysis can prove that mutation cannot affect its carrying road, bearer eligibility, or residual structure.
-
-**Adversarial test:** mutate an unrelated Relation repeatedly and count zero Direct rebuilds; then mutate the carrying Relation and require immediate safe fallback/repair; inject an unknown source and require coarse invalidation.
-
-### Step 12 — Incremental Category / Formation maintenance
-
-Map authored Category predicates to their read frontier. Re-evaluate only changed bearers whose deltas can affect membership. Propagate membership changes into dependent Relation/Formations rather than rebuilding every higher structure.
-
-### Step 13 — Incremental retained-route / shortest-path repair
-
-Preserve route provenance. Under sparse graph/cost changes, repair only the affected path frontier. Benchmark full BFS/Dijkstra recomputation against a dynamic SSSP family (LPA*, D* Lite, or another measured fit); do not choose the algorithm before the route-cost semantics are settled.
-
-### Step 14 — Incremental route priority
-
-Retain multiple sound candidates with dependency and cost certificates. Update only paths/comparisons whose ordering can change. If abstract cost intervals still prove the winner, do not exact-recompute or globally re-rank.
-
-### Step 15 — Self-refining EventBus
-
-Use Prophetic read/write relevance to compile narrow subscription channels from the complete broad feed. The broad feed remains the bootstrap/correctness floor. Opacity or incomplete analysis must restore it immediately.
-
-### Step 16 — OntoMath delta synthesis
-
-Compile one stable Relation/Formation subsystem into an equivalent delta-transfer function with explicit inputs, outputs, dependency frontier, proof currency, interpreter fallback, and parity tests.
-
-### Step 17 — First-Mover bootstrap
-
-Tie the whole optimization ladder to Zach's fundamental human-facing opcode framework around `PropertyPath`. Do not invent a parallel hidden command ontology merely to bootstrap the optimizer.
-
-### Step 18 — PropertyPath-qualified Direct
-
-Continue the terminal rung from Law -> bearer to Law/branch -> bearer + relevant PropertyPath so irrelevant value writes can be excluded from the residual wake-up frontier when proof permits.
-
-**Task record:** `../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete_Incremental_Maintenance/Formation_Rete_Incremental_Maintenance.md`.
-
-**Complexity target:** maintenance should tend toward work proportional to the changed dependency cone:
-
-```text
-O(Delta + affected frontier + affected path repair + changed route comparisons + actual consequences)
-```
-
-rather than global re-evaluation merely because a coarse clock/revision moved. Worst-case whole-graph repair remains legitimate when the change genuinely affects the whole graph.

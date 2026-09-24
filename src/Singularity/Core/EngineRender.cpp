@@ -3,7 +3,6 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
-#include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -13,7 +12,6 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -25,7 +23,6 @@
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <functional>
-#include <vector>
 
 extern ZoneManager mgr;
 
@@ -105,174 +102,36 @@ namespace Core {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
 
-        const Universe& universe = Universe::instance();
-        const double sourceTime = universe.hasClock() ? universe.now() : 0.0;
-        const double sourceDelta = universe.hasClock() ? universe.dt() : 0.0;
-
-        // Rung 7 source discovery is over the Zone's direct FieldNode ownership
-        // index, not over every Object. The canonical spatialRoot is first so a
-        // one-source Zone remains byte-for-byte ordered like the historical path.
-        std::vector<geom::FieldNode*> candidateFields;
-        if (auto* root = zone.spatialRoot()) candidateFields.push_back(root);
-        for (const auto& field : zone.additionalSpatialFields()) {
-            if (field) candidateFields.push_back(field.get());
-        }
-
-        std::vector<Rendering::RadianceSourceBinding> radiantSources;
-        radiantSources.reserve(candidateFields.size());
-        std::string sourceSetIdentity;
-
-        std::vector<Rendering::VolumeDensityBinding> volumeDensities;
-        volumeDensities.reserve(candidateFields.size());
-        std::string volumeSetIdentity;
-
-        for (geom::FieldNode* field : candidateFields) {
-            if (!field) continue;
-
-            // Volumetric truth is independent from source truth. A FieldNode may
-            // be fog without being a light, a light without being fog, or both.
-            // Therefore density discovery MUST happen before the light.source
-            // compatibility reader below.
-            Rendering::VolumeDensityBinding medium;
-            if (Rendering::readVolumeDensity(
-                    *field, sourceTime, sourceDelta, medium)) {
-                volumeSetIdentity += field->getIdentifier();
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.densityRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.extinctionRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.scatteringRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.volumeChromaRevision);
-                volumeSetIdentity += ":";
-                volumeSetIdentity += std::to_string(medium.phaseRevision);
-                volumeSetIdentity += "\n";
-                volumeDensities.push_back(medium);
-            }
-
+        bool persistentLightPlaced = false;
+        if (auto* root = zone.spatialRoot()) {
             Rendering::AuthorableLightState light;
-            if (!Rendering::readAuthorableLight(*field, light)) continue;
+            if (Rendering::readAuthorableLight(*root, light)) {
+                currentRenderer().setLight(light.position,
+                                           Rendering::lightAmbientRadiance(light),
+                                           Rendering::lightDiffuseRadiance(light),
+                                           Rendering::lightSpecularRadiance(light));
+                currentRenderer().setLightingEnabled(light.enabled);
 
-            Rendering::RadianceSourceBinding source;
-            source.position = light.position;
-            source.ambientRadiance = Rendering::lightAmbientRadiance(light);
-            source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
-            source.specularRadiance = Rendering::lightSpecularRadiance(light);
-            source.coefficients =
-                glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
-            source.temporalCoordinate = sourceTime;
-            source.temporalDelta = sourceDelta;
-            source.enabled = light.enabled;
-
-            if (field->field &&
-                field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
-                !field->field->astDefinition.pieces.empty()) {
-                const std::string json = field->field->astDefinition.toJson().dump();
-                source.radianceExpr = &field->field->astDefinition;
-                source.radianceRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
+                // The radiant FieldNode's exact authored scalar AST is the
+                // spatial radiance function. Content identity, not pointer
+                // identity, governs invalidation when field.ast is edited.
+                if (root->field &&
+                    root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                    !root->field->astDefinition.pieces.empty()) {
+                    const std::string radianceJson = root->field->astDefinition.toJson().dump();
+                    const uint64_t radianceRevision =
+                        static_cast<uint64_t>(std::hash<std::string>{}(radianceJson));
+                    currentRenderer().setRadianceField(&root->field->astDefinition,
+                                                       radianceRevision);
+                } else {
+                    currentRenderer().setRadianceField(nullptr, 0);
+                }
+                persistentLightPlaced = true;
             }
-            if (field->lightChroma && !field->lightChroma->pieces.empty()) {
-                const std::string json = field->lightChroma->toJson().dump();
-                source.chromaExpr = field->lightChroma.get();
-                source.chromaRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
-            }
-            if (field->lightAngular && !field->lightAngular->pieces.empty()) {
-                const std::string json = field->lightAngular->toJson().dump();
-                source.angularExpr = field->lightAngular.get();
-                source.angularRevision =
-                    static_cast<uint64_t>(std::hash<std::string>{}(json));
-            }
-
-            // Rung 7 structural/value invalidation is intentionally bounded.
-            // Source membership/order plus authored rho/chi/alpha content is the
-            // parameter/compiler identity. Position, light coefficients,
-            // enablement and temporal coordinates live in the persistent source
-            // storage buffer and must NOT serialize an entire FieldNode merely
-            // to move/recolor/enable a source.
-            sourceSetIdentity += field->getIdentifier();
-            sourceSetIdentity += ":";
-            sourceSetIdentity += std::to_string(source.radianceRevision);
-            sourceSetIdentity += ":";
-            sourceSetIdentity += std::to_string(source.chromaRevision);
-            sourceSetIdentity += ":";
-            sourceSetIdentity += std::to_string(source.angularRevision);
-            sourceSetIdentity += "\n";
-            radiantSources.push_back(source);
-        }
-
-        if (volumeDensities.empty()) {
-            currentRenderer().setVolumeDensitySources({}, 0);
-        } else {
-            const uint64_t volumeSetRevision =
-                static_cast<uint64_t>(std::hash<std::string>{}(volumeSetIdentity));
-            currentRenderer().setVolumeDensitySources(
-                std::move(volumeDensities), volumeSetRevision);
-        }
-
-        const bool persistentLightPlaced = !radiantSources.empty();
-        if (radiantSources.size() == 1) {
-            // Exact Rungs 3-6 SDF compatibility still uses the historical
-            // one-source generated path (that path only switches when size>1).
-            // Keep the renderer-facing source projection populated as well so
-            // V3 participating-media transport can truthfully consume the same
-            // admitted source without reconstructing source state.
-            const auto& source = radiantSources.front();
-            const uint64_t sourceSetRevision =
-                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
-            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
-            currentRenderer().setLight(source.position, source.ambientRadiance,
-                                       source.diffuseRadiance, source.specularRadiance);
-            currentRenderer().setLightingEnabled(source.enabled);
-            currentRenderer().setRadianceSourceCoefficients(
-                source.coefficients.x, source.coefficients.y,
-                source.coefficients.z, source.coefficients.w);
-            currentRenderer().setRadianceTemporalCoordinate(
-                source.temporalCoordinate, source.temporalDelta);
-            currentRenderer().setRadianceField(source.radianceExpr, source.radianceRevision);
-            currentRenderer().setRadianceChroma(source.chromaExpr, source.chromaRevision);
-            currentRenderer().setRadianceAngular(source.angularExpr, source.angularRevision);
-        } else if (radiantSources.size() > 1) {
-            const uint64_t sourceSetRevision =
-                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
-            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
-
-            // Legacy fixed/mesh lighting has only one source-shaped slot. Keep
-            // it deterministic by projecting the first ENABLED source there;
-            // WebGPU SDF transport below receives and sums the complete set.
-            const auto it = std::find_if(
-                radiantSources.begin(), radiantSources.end(),
-                [](const Rendering::RadianceSourceBinding& source) {
-                    return source.enabled;
-                });
-            const auto& compatibility =
-                it != radiantSources.end() ? *it : radiantSources.front();
-            currentRenderer().setLight(
-                compatibility.position, compatibility.ambientRadiance,
-                compatibility.diffuseRadiance, compatibility.specularRadiance);
-            currentRenderer().setLightingEnabled(it != radiantSources.end());
-            currentRenderer().setRadianceSourceCoefficients(
-                compatibility.coefficients.x, compatibility.coefficients.y,
-                compatibility.coefficients.z, compatibility.coefficients.w);
-            currentRenderer().setRadianceTemporalCoordinate(
-                compatibility.temporalCoordinate, compatibility.temporalDelta);
-            currentRenderer().setRadianceField(
-                compatibility.radianceExpr, compatibility.radianceRevision);
-            currentRenderer().setRadianceChroma(
-                compatibility.chromaExpr, compatibility.chromaRevision);
-            currentRenderer().setRadianceAngular(
-                compatibility.angularExpr, compatibility.angularRevision);
         }
 
         if (!persistentLightPlaced) {
-            currentRenderer().setRadianceSources({}, 0);
             currentRenderer().setRadianceField(nullptr, 0);
-            currentRenderer().setRadianceChroma(nullptr, 0);
-            currentRenderer().setRadianceAngular(nullptr, 0);
-            currentRenderer().setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
-            currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
             // A previously active authored Zone may have disabled illumination.
             // No-source means the historical compatibility contract, so restore
             // enabled state even when no ScreenChannel happens to be present.
@@ -318,16 +177,9 @@ namespace Core {
             Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
         }
 
-        // Draw the embodied Person as world geometry before volumetric
-        // composition. Nametags/UI remain sensory overlays and are drawn only
-        // after the medium pass so fog never becomes a screen-space filter.
+        // Draw player avatar and nametag when not in first-person
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->draw();
-        }
-
-        currentRenderer().composeVolumes();
-
-        if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
         }
 
@@ -399,9 +251,7 @@ namespace Core {
                                   static_cast<double>(stats.sdfParameterBytesUploaded),
                                   static_cast<int>(stats.sdfRangeHierarchyBuilds),
                                   static_cast<int>(stats.sdfRangeProxyDraws),
-                                  static_cast<int>(stats.sdfRangeProxyCulledDraws),
-                                  static_cast<int>(stats.sdfRangeTraversalDraws),
-                                  static_cast<double>(stats.sdfRangeNodeBytesUploaded));
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 if (recorder->isRecording()) {

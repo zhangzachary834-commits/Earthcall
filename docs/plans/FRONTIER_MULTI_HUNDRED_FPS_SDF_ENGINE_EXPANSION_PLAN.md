@@ -199,7 +199,7 @@ it rests on nothing measured.
 The order of operations is the lesson, and it had already been given to this author in the
 intercom the same day: *"neither of us has measured the pipeline compile. We have both now
 used '~10ms' as though it were a number. It is not."*
-(`agent intercom/communication-threads/sdf-and-rendering/GPU AST Interpreter and WGSL Tiering 8-28-26.md`).
+(`agent intercom/communication-threads/GPU AST Interpreter and WGSL Tiering 8-28-26.md`).
 **Every phase should name the measurement that would falsify it, and that measurement
 should run before the phase is built.**
 

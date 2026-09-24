@@ -38,18 +38,10 @@ struct SdfInstanceData {
     heightGridOffset: u32,
     heightGridDimX: u32,
     heightGridDimZ: u32,
-    // Fixed-depth conservative positive-proof bit grid. A zero bit means
-    // "no GPU skip proof; exact authored marching owns this cell."
-    rangeProofWordOffset: u32,
-    rangeProofWordCount: u32,
-    rangeTraversalEnabled: u32,
-    rangeProofDepth: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
 @group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
-// Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
-@group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
 
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
@@ -313,18 +305,6 @@ struct Emit {
     std::vector<float> params;
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
-    bool               bindTime = false; // expression-context capability, not authored state
-    bool               bindOmega = false; // Rung-6 source angular radiance context
-    bool               readOmega = false; // structural witness for source singularity handling
-    bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
-    bool               readEmissionOmega = false;
-    bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
-    bool               readWi = false;
-    bool               readWo = false;
-    // Ambient temporal coordinate for the expression currently being emitted.
-    // Rungs 3-6 use the historical global uniform; Rung 7 temporarily points
-    // this at one source record while lowering that source's rho/chi/alpha.
-    std::string        timeExpression = "u.radianceTime.x";
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -393,59 +373,9 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
-    if (var == OntoMath::kTimeVar) {
-        if (e.bindTime) return e.timeExpression;
-        e.refuse("a field expression names temporal variable 't', but this shader "
-                 "expression context does not bind the temporal coordinate");
-        return "0.0";
-    }
-    if (var == OntoMath::kOmegaXVar ||
-        var == OntoMath::kOmegaYVar ||
-        var == OntoMath::kOmegaZVar) {
-        if (e.bindEmissionOmega) {
-            e.readEmissionOmega = true;
-            if (var == OntoMath::kOmegaXVar) return "omega.x";
-            if (var == OntoMath::kOmegaYVar) return "omega.y";
-            return "omega.z";
-        }
-        e.readOmega = true;
-        if (e.bindOmega) {
-            if (var == OntoMath::kOmegaXVar) return "omega.x";
-            if (var == OntoMath::kOmegaYVar) return "omega.y";
-            return "omega.z";
-        }
-        e.refuse("a field expression names angular coordinate '" + var +
-                 "', but this shader expression context does not bind omega");
-        return "0.0";
-    }
-    if (var == OntoMath::kWiXVar ||
-        var == OntoMath::kWiYVar ||
-        var == OntoMath::kWiZVar) {
-        e.readWi = true;
-        if (e.bindPhaseDirections) {
-            if (var == OntoMath::kWiXVar) return "wi.x";
-            if (var == OntoMath::kWiYVar) return "wi.y";
-            return "wi.z";
-        }
-        e.refuse("a field expression names phase incoming direction '" + var +
-                 "', but this shader expression context does not bind wi");
-        return "0.0";
-    }
-    if (var == OntoMath::kWoXVar ||
-        var == OntoMath::kWoYVar ||
-        var == OntoMath::kWoZVar) {
-        e.readWo = true;
-        if (e.bindPhaseDirections) {
-            if (var == OntoMath::kWoXVar) return "wo.x";
-            if (var == OntoMath::kWoYVar) return "wo.y";
-            return "wo.z";
-        }
-        e.refuse("a field expression names phase outgoing direction '" + var +
-                 "', but this shader expression context does not bind wo");
-        return "0.0";
-    }
     e.refuse("a field expression names the variable '" + var +
-             "', which has no binding in this shader expression context");
+             "', which has no binding in a shader; only the ambient point "
+             "(p, x, y, z) is bound here");
     return "0.0";
 }
 
@@ -648,11 +578,7 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
 }
 
 void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt, const std::string& outType, std::string& outBody) {
-    // Piecewise interval bounds live on the same authored coordinate vocabulary
-    // as the value expression itself. In particular, rho(p,t) may cut pieces
-    // along t. An unbound coordinate refuses through pointComponent(); it is
-    // never silently reinterpreted as the scalar zero.
-    std::string inVar = pointComponent(pw.inputVariable, e, pt);
+    std::string inVar = (pw.inputVariable == "x") ? (pt + ".x") : (pw.inputVariable == "y") ? (pt + ".y") : (pw.inputVariable == "z") ? (pt + ".z") : "0.0";
     
     for (size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
@@ -1005,192 +931,6 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
     return out;
 }
 
-// Validate the authored vector channel before lowering it. The generic emitter
-// can print vector syntax, but a chroma expression has a stronger contract than
-// "something that happens to parse": every authored piece must actually be a
-// Vector and every Piecewise feature must have a GPU realization. An absent chi
-// is handled outside this helper as the legacy light.color default.
-bool validateVectorPiecewise(const OntoMath::Piecewise& pw, bool bindTime,
-                             std::string& error) {
-    OntoMath::TypeEnv env{
-        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
-        {"x", OntoMath::ValueKind::Scalar},
-        {"y", OntoMath::ValueKind::Scalar},
-        {"z", OntoMath::ValueKind::Scalar}
-    };
-    if (bindTime) env[OntoMath::kTimeVar] = OntoMath::ValueKind::Scalar;
-
-    if (pw.pieces.empty()) {
-        error = "authored vector expression has no pieces";
-        return false;
-    }
-    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
-        const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
-            error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL expression channel does not implement";
-            return false;
-        }
-        if (!piece.mathNode) {
-            error = "piece " + std::to_string(i) + " has no authored value";
-            return false;
-        }
-        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        std::string typeError;
-        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
-            error = typeError;
-            return false;
-        }
-        if (kind != OntoMath::ValueKind::Vector) {
-            error = "piece " + std::to_string(i) + " must evaluate to Vector, got " +
-                    std::string(OntoMath::valueKindName(kind));
-            return false;
-        }
-    }
-    error.clear();
-    return true;
-}
-
-// Validate the authored angular source factor before lowering. Alpha is scalar
-// and is the only Screen-radiance expression context that admits omega.x/y/z.
-bool validateAngularPiecewise(const OntoMath::Piecewise& pw, std::string& error) {
-    OntoMath::TypeEnv env{
-        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
-        {"x", OntoMath::ValueKind::Scalar},
-        {"y", OntoMath::ValueKind::Scalar},
-        {"z", OntoMath::ValueKind::Scalar},
-        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaXVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaYVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaZVar, OntoMath::ValueKind::Scalar}
-    };
-
-    if (pw.pieces.empty()) {
-        error = "authored angular expression has no pieces";
-        return false;
-    }
-    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
-        const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
-            error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL expression channel does not implement";
-            return false;
-        }
-        if (!piece.mathNode) {
-            error = "piece " + std::to_string(i) + " has no authored value";
-            return false;
-        }
-        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        std::string typeError;
-        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
-            error = typeError;
-            return false;
-        }
-        if (kind != OntoMath::ValueKind::Scalar) {
-            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
-                    std::string(OntoMath::valueKindName(kind));
-            return false;
-        }
-    }
-    error.clear();
-    return true;
-}
-
-
-// V3 phase has its own directional vocabulary. It is scalar medium truth and
-// therefore must never gain source-alpha's omega binding by accident.
-bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
-    OntoMath::TypeEnv env{
-        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
-        {"x", OntoMath::ValueKind::Scalar},
-        {"y", OntoMath::ValueKind::Scalar},
-        {"z", OntoMath::ValueKind::Scalar},
-        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
-    };
-
-    if (pw.pieces.empty()) {
-        error = "authored phase expression has no pieces";
-        return false;
-    }
-    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
-        const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
-            error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL expression channel does not implement";
-            return false;
-        }
-        if (!piece.mathNode) {
-            error = "piece " + std::to_string(i) + " has no authored value";
-            return false;
-        }
-        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        std::string typeError;
-        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
-            error = typeError;
-            return false;
-        }
-        if (kind != OntoMath::ValueKind::Scalar) {
-            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
-                    std::string(OntoMath::valueKindName(kind));
-            return false;
-        }
-    }
-    error.clear();
-    return true;
-}
-
-// V4 self-emission is vector-valued medium truth with an emission-owned omega
-// context. Its physical omega is world-space sample -> eye; it is not source
-// alpha's source -> receiver authored invariant.
-bool validateEmissionPiecewise(const OntoMath::Piecewise& pw, std::string& error) {
-    OntoMath::TypeEnv env{
-        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
-        {"x", OntoMath::ValueKind::Scalar},
-        {"y", OntoMath::ValueKind::Scalar},
-        {"z", OntoMath::ValueKind::Scalar},
-        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaXVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaYVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kOmegaZVar, OntoMath::ValueKind::Scalar}
-    };
-
-    if (pw.pieces.empty()) {
-        error = "authored volume emission expression has no pieces";
-        return false;
-    }
-    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
-        const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
-            error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL expression channel does not implement";
-            return false;
-        }
-        if (!piece.mathNode) {
-            error = "piece " + std::to_string(i) + " has no authored value";
-            return false;
-        }
-        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        std::string typeError;
-        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
-            error = typeError;
-            return false;
-        }
-        if (kind != OntoMath::ValueKind::Vector) {
-            error = "piece " + std::to_string(i) + " must evaluate to Vector, got " +
-                    std::string(OntoMath::valueKindName(kind));
-            return false;
-        }
-    }
-    error.clear();
-    return true;
-}
-
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
@@ -1201,31 +941,19 @@ bool validateEmissionPiecewise(const OntoMath::Piecewise& pw, std::string& error
 // and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
-    viewProj:       mat4x4<f32>,
-    invViewProj:    mat4x4<f32>,
+    viewProj:    mat4x4<f32>,
+    invViewProj: mat4x4<f32>,
     lightPos:       vec4<f32>,
     eyePos:         vec4<f32>,
     lightAmbient:   vec4<f32>,
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
-    // x = lighting enabled; y = Rung-8 derived visibility enabled.
-    // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
-    // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
-    // only when authored chi is present; the no-chi branch keeps the exact
-    // pre-Rung-5 color-bearing light uniforms below.
-    radianceSourceCoefficients: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
     // w = authorable space distortion factor (e.g. Far Lands Zone).
     limits:      vec4<f32>,
-    // x = admitted radiance-source temporal coordinate; y = its delta.
-    // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
-    radianceTime: vec4<f32>,
-    // Independent participating-medium coordinate. D(p,t) never borrows
-    // radianceTime merely because both channels happen to read canonical t.
-    volumeTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -1263,7 +991,7 @@ struct FSOut {
 // Dual-Path WGSL Field Evaluator
 // This function is generated dynamically based on whether the Law system 
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
-// volumeDensityEval is emitted before this block.
+// fieldEval is emitted before this block.
 
 fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     // Slab method. A zero direction would NaN the inverse; nudge it.
@@ -1336,205 +1064,6 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
         if (tMaxX < tMaxZ) { ix = ix + stepX; } else { iz = iz + stepZ; }
     }
     return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
-}
-
-// Generic spatial-Prophetic traversal over a fixed-depth proof bitmap.
-// The CPU adaptive hierarchy is still the theorem. Its proved-positive cells
-// are conservatively expanded into regular depth-N cells before upload.
-// Therefore a set bit permits skipping exactly one regular cell; a clear bit
-// carries no negative information and hands that cell to the exact marcher.
-//
-// This removes root-to-leaf pointer chasing from every hierarchy query. The
-// only slab intersection is for the one regular cell containing the current
-// ray point. Exact split-plane ownership follows ray direction so a boundary
-// cannot repeatedly select the cell the ray just exited.
-fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
-                      dir: f32, dim: u32) -> u32 {
-    let e = abs(halfExtent);
-    let denom = max(2.0 * e, 1e-8);
-    let scaled = clamp(((coord + e) / denom) * f32(dim),
-                       0.0, f32(dim));
-    let floored = floor(scaled);
-    var idx = u32(min(floored, f32(dim - 1u)));
-    if (scaled == floored && dir < 0.0 && idx > 0u) {
-        idx = idx - 1u;
-    }
-    return idx;
-}
-
-fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
-                  tStart: f32, tMax: f32) -> vec3<f32> {
-    if (inst.rangeTraversalEnabled == 0u ||
-        inst.rangeProofWordCount == 0u ||
-        inst.rangeProofDepth == 0u ||
-        inst.rangeProofDepth > 10u) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-
-    let dim = 1u << inst.rangeProofDepth;
-    let cellCount = dim * dim * dim;
-    let neededWords = (cellCount + 31u) >> 5u;
-    if (inst.rangeProofWordCount < neededWords) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-
-    let extent = abs(inst.extents.xyz);
-    if (any(extent <= vec3<f32>(0.0))) {
-        return vec3<f32>(tStart, tMax, 1.0);
-    }
-    let cellSize = (2.0 * extent) / f32(dim);
-    var t = tStart;
-
-    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
-    // deeper proof grid exceeds this guard, the unvisited remainder fails open
-    // to exact marching rather than silently disappearing.
-    for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
-        if (t >= tMax) {
-            return vec3<f32>(tMax, tMax, 0.0);
-        }
-
-        let p = ro + rd * t;
-        if (any(p < -extent) || any(p > extent)) {
-            return vec3<f32>(t, tMax, 1.0);
-        }
-
-        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
-        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
-        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
-        let linear = ix + dim * (iy + dim * iz);
-        let localWord = linear >> 5u;
-        if (localWord >= inst.rangeProofWordCount) {
-            return vec3<f32>(t, tMax, 1.0);
-        }
-
-        let bit = 1u << (linear & 31u);
-        let provedPositive =
-            (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
-
-        let cellMin =
-            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
-        let cellMax = cellMin + cellSize;
-
-        // We need only the selected cell's EXIT. The old slab helper computed
-        // both entry and exit even though this ray point already owns the cell.
-        // Per axis, max((bmin-ro)/rd, (bmax-ro)/rd) is exactly the forward
-        // face: bmax for a positive safe direction, bmin for a negative one.
-        // Keep the same near-zero substitution and arithmetic order, but skip
-        // the unused entry-face work. This is not a DDA; one classified cell
-        // still hands a clear bit straight back to the exact authored marcher.
-        let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
-        let invRd = 1.0 / rds;
-        let exitFace = select(cellMin, cellMax, rds >= vec3<f32>(0.0));
-        let axisExit = (exitFace - ro) * invRd;
-        let cellExit = min(
-            min(min(axisExit.x, axisExit.y), axisExit.z),
-            tMax);
-        if (cellExit <= t) {
-            return vec3<f32>(t, tMax, 1.0);
-        }
-
-        if (!provedPositive) {
-            // A clear bit says only that the proof grid grants no skip here.
-            // Preserve the exact marcher's authority over this interval.
-            return vec3<f32>(t, cellExit, 1.0);
-        }
-
-        // The CPU theorem proved f>0 throughout this regular cell. Advance to
-        // its exact exit without evaluating the authored field.
-        t = cellExit;
-    }
-
-    return vec3<f32>(t, tMax, 1.0);
-}
-
-// Rung 8 exact baseline for the geometry this shader actually owns.
-//
-// This is deliberately DERIVED transport: it reads the already-authored SDF
-// between the receiver and source and never writes or reinterprets rho/chi/alpha.
-// lightControl.y=0 is the exact Rung-7 compatibility law V=1.
-//
-// Scope is intentionally honest. A generated SDF pipeline can evaluate its own
-// authored geometry; it cannot yet name arbitrary differently-structured SDF
-// pipelines elsewhere in the Zone. Scene-wide transport needs a shared scene
-// geometry representation rather than pretending those other beings are visible
-// here. Until that exists, this function is not enabled globally by EngineRender.
-fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
-    if (damping < 0.5) {
-        let s = sdfSampleStep(p);
-        var gradLen = s.gradLen;
-        if (gradLen <= 1e-6) {
-            let ge = 1e-3;
-            let raw = s.raw;
-            let g = vec3<f32>(
-                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
-            gradLen = length(g);
-        }
-        return select(s.raw, s.raw / gradLen, gradLen > 1e-6);
-    }
-    return sdfEval(p);
-}
-
-fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
-    if (u.lightControl.y < 0.5) { return 1.0; }
-
-    let inst = instances[g_instIdx];
-    let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
-    let toSource = sourceField - surfacePoint;
-    let sourceDistance = length(toSource);
-    let surfaceEps = max(inst.misc.y, 1e-4);
-    let bias = surfaceEps * 4.0;
-    if (sourceDistance <= bias * 2.0) { return 1.0; }
-
-    let initialDir = toSource / sourceDistance;
-    let damping = inst.misc.w;
-
-    // The primary marcher may terminate just inside the zero set (for example,
-    // over-relaxation followed by secant correction). A tiny ray-direction bias
-    // then begins the transport query inside its own receiver and manufactures a
-    // self-shadow. Escape only when the source ray points outward through the
-    // receiver's local SDF normal. Back-facing/inward rays remain inside real
-    // geometry and are therefore still blocked by the receiver itself.
-    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
-    var origin = surfacePoint + initialDir * bias;
-    if (dot(surfaceNormal, initialDir) > 0.0) {
-        let penetration = max(-surfaceSignedStep, 0.0);
-        origin = surfacePoint + surfaceNormal * (penetration + bias);
-    }
-
-    let remaining = sourceField - origin;
-    let rayLength = length(remaining);
-    if (rayLength <= bias) { return 1.0; }
-    let shadowDir = remaining / rayLength;
-
-    // Restrict the query to authored geometry inside this instance's domain.
-    // A source outside the box is fine: leaving the box unobstructed proves this
-    // instance contributes no blocker beyond that exit.
-    let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
-    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
-
-    var tShadow = max(bounds.x, 0.0);
-    let maxShadow = min(bounds.y, rayLength - bias);
-    if (maxShadow <= tShadow) { return 1.0; }
-
-    // Match the primary renderer's finite exact-march budget. This baseline uses
-    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
-    for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
-        if (tShadow >= maxShadow) { return 1.0; }
-
-        let pShadow = origin + shadowDir * tShadow;
-        let currentEps = max(surfaceEps, tShadow * 0.001);
-        let dShadow = sourceTransportSignedStep(pShadow, damping);
-
-        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
-        tShadow = tShadow + max(dShadow, currentEps);
-    }
-
-    // The primary marcher uses the same bounded iteration contract. If the
-    // budget is exhausted before the segment is decided, fail conservatively:
-    // never invent an unobstructed path that was not actually traversed.
-    return 0.0;
 }
 
 @fragment
@@ -1628,56 +1157,17 @@ fn fs(in: VSOut) -> FSOut {
 
     var hit = false;
     var transmittance = 1.0;
-    var volumetric_scatter = vec3<f32>(0.0);
-    var volumetric_emission = vec3<f32>(0.0);
-    // First ray coordinate at which the authored medium was actually sampled
-    // with positive density. This is NOT a hard-surface hit.
-    var first_density_t = -1.0;
+    var volumetric_scatter = 0.0;
+    var first_hit_t = -1.0;
     
     // Enhanced Sphere Tracing (Over-Relaxation) state:
     var omega = select(1.0, 1.4, damping > 0.5);
     var prev_d = 1e10;
     var candidate_step = 0.0;
-
-    // When range traversal is active, exact marching owns only the current
-    // ambiguous leaf. Crossing its exit asks the hierarchy for the next
-    // candidate interval; proved-empty cells between them are skipped without
-    // calling sdfEval/sdfSampleStep.
-    var rangeCellExit = t;
-    var rangeCandidateActive = false;
     
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
-
-        if (inst.rangeTraversalEnabled != 0u &&
-            (!rangeCandidateActive || t >= rangeCellExit)) {
-            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
-            if (candidate.z < 0.5) {
-                t = maxDist + 1.0;
-                break;
-            }
-            let oldT = t;
-            t = max(t, candidate.x);
-            if (t > oldT) {
-                // A proof-authorized spatial jump is not a marcher step. Any
-                // secant / over-relaxation history describes the old sample
-                // pair and must not be reused as though candidate_step bridged
-                // this larger distance.
-                prev_d = 1e10;
-                candidate_step = 0.0;
-                omega = select(1.0, 1.4, damping > 0.5);
-            }
-            rangeCellExit = max(t, candidate.y);
-            rangeCandidateActive = true;
-            if (t > maxDist) { break; }
-        }
-
-        // Keep the coordinate at which this iteration's medium sample is
-        // evaluated. Surface marching may advance t by a gradient-corrected,
-        // damped, or over-relaxed amount below; transport must integrate the
-        // interval that was ACTUALLY traversed, not reuse raw SDF magnitude.
-        let sample_t = t;
-        let p = ro + rd * sample_t;
+        let p = ro + rd * t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
         if (isHeightfield && rd.y > 1e-4 && p.y > inst.extents.y) {
@@ -1712,9 +1202,6 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             candidate_step = max(d, current_eps);
-            // Do not clamp the exact marcher's lawful step to octree-cell
-            // boundaries. The hierarchy may skip cells it proved zero-free,
-            // but ambiguous space must preserve the baseline march trajectory.
             prev_d = d;
             t = t + candidate_step;
         } else {
@@ -1739,92 +1226,43 @@ fn fs(in: VSOut) -> FSOut {
 
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
-            // Same rule for distance-field marching: cell boundaries are not
-            // authored geometry and may not perturb the exact baseline step.
             t = t + candidate_step;
         }
         
         // Volumetric Field Accumulation
-        let density = volumeDensityEval(p);
-        // t may advance beyond maxDist on the last surface-march step. Medium
-        // transport owns only the bounded interval [sample_t, maxDist].
-        let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
-        if (density > 0.0 && marched_field_distance > 0.0) {
-            if (first_density_t < 0.0) { first_density_t = sample_t; }
-            // V1: sigma_t is independently authored when present; otherwise
-            // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
-            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
+        let density = fieldEval(p);
+        if (density > 0.0) {
+            if (first_hit_t < 0.0) { first_hit_t = t; }
+            let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
+            let extinction = max(density * 0.5, 1e-6); // Tunable constant
             
             let old_t = transmittance;
-            transmittance *= exp(-extinction * marched_field_distance);
+            transmittance *= exp(-extinction * step_size);
             
-            // V2: sigma_s controls scattering magnitude while C_v controls medium
-            // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
-            // equivalent to the historical white term.
-            let scattering = max(volumeScatteringEval(p, density), 0.0);
-            let mediumChroma = volumeChromaEval(p);
-            if (HAS_AUTHORED_VOLUME_PHASE) {
-                let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
-                let wiDelta = mediumWorldP - u.lightPos.xyz;
-                let woDelta = u.eyePos.xyz - mediumWorldP;
-                let wiLen = length(wiDelta);
-                let woLen = length(woDelta);
-                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
-                                wiLen > SOURCE_DIRECTION_EPS);
-                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
-                                woLen > SOURCE_DIRECTION_EPS);
-                var phase = 0.0;
-                if ((!VOLUME_PHASE_READS_WI || wiLen > SOURCE_DIRECTION_EPS) &&
-                    woLen > SOURCE_DIRECTION_EPS) {
-                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
-                }
-                volumetric_scatter +=
-                    mediumChroma * (scattering / extinction) * phase *
-                    (old_t - transmittance);
-            } else {
-                // Exact V2 compatibility arithmetic: no extra multiply-by-one.
-                volumetric_scatter +=
-                    mediumChroma * (scattering / extinction) * (old_t - transmittance);
-            }
-
-            if (HAS_AUTHORED_VOLUME_EMISSION) {
-                let emissionWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
-                let emissionDelta = u.eyePos.xyz - emissionWorldP;
-                let emissionLen = length(emissionDelta);
-                let emissionOmega = select(
-                    vec3<f32>(0.0),
-                    emissionDelta / max(emissionLen, SOURCE_DIRECTION_EPS),
-                    emissionLen > SOURCE_DIRECTION_EPS);
-                var emitted = vec3<f32>(0.0);
-                if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > SOURCE_DIRECTION_EPS) {
-                    emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
-                }
-                volumetric_emission += emitted * ((old_t - transmittance) / extinction);
-            }
+            // Analytical integration prevents double attenuation across large steps
+            volumetric_scatter += (density / extinction) * (old_t - transmittance);
         }
         
         // Early exit if the field is fully opaque or ray exits the bounded volume
         if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }
     }
-    if (!hit && transmittance > 0.99 && !HAS_AUTHORED_VOLUME_EMISSION) { discard; }
+    if (!hit && transmittance > 0.99) { discard; }
 
     var out: FSOut;
     
     if (!hit) {
-        // Volumetric-only output still uses the legacy shared SDF pipeline.
-        // first_density_t records the sampled medium coordinate truthfully, but
-        // V0c MUST NOT activate this path in production until volume composition
-        // no longer treats a translucent sample as an opaque depth owner.
+        // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
+        // Set depth to the first volumetric hit so it occludes correctly
         let final_alpha = 1.0 - transmittance;
-        let c = volumetric_scatter + volumetric_emission;
+        let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
         if (final_alpha > 0.0) {
             out.color = vec4<f32>(c / final_alpha, final_alpha);
         } else {
             out.color = vec4<f32>(0.0);
         }
-        if (first_density_t >= 0.0) {
-            let hit_p = ro + rd * first_density_t;
+        if (first_hit_t >= 0.0) {
+            let hit_p = ro + rd * first_hit_t;
             let hit_w = (inst.model * vec4<f32>(hit_p, 1.0)).xyz;
             let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
             out.depth = hit_c.z / hit_c.w;
@@ -1845,68 +1283,32 @@ fn fs(in: VSOut) -> FSOut {
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
 
-    // Evaluate the Person-authored source invariants in source-relative world
-    // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
-    // scalar over the normalized WORLD-space source -> receiver direction.
-    let sourceDelta = pw - u.lightPos.xyz;
-    let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
-    var angularRadiance = 1.0;
-    if (HAS_AUTHORED_ANGULAR) {
-        if (ANGULAR_READS_OMEGA) {
-            let directionLength = length(sourceDelta);
-            if (directionLength > SOURCE_DIRECTION_EPS) {
-                let emissionOmega = sourceDelta / directionLength;
-                angularRadiance = max(lightAngular(sourceDelta, emissionOmega), 0.0);
-            } else {
-                // omega is undefined at the source singularity. Refuse this
-                // directional sample by contributing zero; never invent an axis.
-                angularRadiance = 0.0;
-            }
-        } else {
-            // A direction-independent authored alpha does not require omega.
-            angularRadiance = max(lightAngular(sourceDelta, vec3<f32>(0.0)), 0.0);
-        }
-    }
-    let shapedRadiance = radialRadiance * angularRadiance;
-    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
-    let directRadiance = shapedRadiance * pathVisibility;
+    // Evaluate the Person-authored radiance field in source-relative world
+    // coordinates. Negative radiance is clamped only at the rendering seam.
+    let radialRadiance = max(lightRadiance(pw - u.lightPos.xyz), 0.0);
     let diff = max(dot(nw, L), 0.0);
+
+    // Normalize the renderer's historical .2/.8/1 source defaults to an
+    // envelope of 1, preserving legacy SDF appearance when no custom source
+    // channels are authored instead of multiplying those coefficients twice.
+    let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
+    let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
+    let specularEnvelope = u.lightSpecular.rgb;
+
+    let ambientTerm = inst.shading.x * ambientEnvelope;
+    let diffuseTerm = inst.shading.y * diffuseEnvelope * diff * radialRadiance;
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
-
-    var ambientTerm: vec3<f32>;
-    var diffuseTerm: vec3<f32>;
-    var specTerm: vec3<f32>;
-    if (HAS_AUTHORED_CHROMA) {
-        let sourceChroma = lightChroma(pw - u.lightPos.xyz);
-        let c = u.radianceSourceCoefficients;
-        // Separate the legacy scalar coefficients from chroma only on this new
-        // path. This realizes rho * chi without multiplying legacy light.color
-        // a second time, including when one legacy color channel is exactly zero.
-        let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
-        let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
-        let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
-        ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-        specTerm = specularEnvelope * specShape * directRadiance;
-    } else {
-        // EXACT compatibility branch from Rung 4. No authored chi means
-        // constant legacy light.color, already carried by these uniforms.
-        let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
-        let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
-        let specularEnvelope = u.lightSpecular.rgb;
-        ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-        specTerm = specularEnvelope * specShape * directRadiance;
-    }
+    let specTerm = specularEnvelope * specShape * radialRadiance;
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
+    // Combine hard surface with accumulated volumetric scatter.
     let surfaceColor = sdfColor(pf);
     let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
-    let field_rgb = volumetric_scatter;
+    let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
     
     let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
     let final_rgb = base_rgb * transmittance + field_rgb;
@@ -1926,10 +1328,8 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
-                                               bool bindTime) {
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr) {
     Emit e;
-    e.bindTime = bindTime;
     std::string body;
 
     // No authored expression is a real structural state: compile() emits the
@@ -1949,204 +1349,10 @@ ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
     return layout;
 }
 
-ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return ScalarExpressionLayout{"<volume-density:none>", 0, true, ""};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "u.volumeTime.x";
-    std::string body;
-    emitPiecewise(*expr, e, "p", "f32", body);
-
-    ScalarExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return ScalarExpressionLayout{"<volume-extinction:compat-0.5-density>", 0, true, ""};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "u.volumeTime.x";
-    std::string body;
-    emitPiecewise(*expr, e, "p", "f32", body);
-
-    ScalarExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-ScalarExpressionLayout inspectScatteringExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return ScalarExpressionLayout{"<volume-scattering:compat-density>", 0, true, ""};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "u.volumeTime.x";
-    std::string body;
-    emitPiecewise(*expr, e, "p", "f32", body);
-
-    ScalarExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-VectorExpressionLayout inspectVolumeChromaExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return VectorExpressionLayout{"<volume-chroma:compat-white>", 0, true, ""};
-    }
-
-    std::string validationError;
-    if (!validateVectorPiecewise(*expr, true, validationError)) {
-        return VectorExpressionLayout{"", 0, false, validationError};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "u.volumeTime.x";
-    std::string body;
-    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
-
-    VectorExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
-                                               bool bindTime) {
-    // Absence is not refusal: it means the historical authored light.color is
-    // the constant chroma. Presence, however, must be honored or refused.
-    if (!expr || expr->pieces.empty()) {
-        return VectorExpressionLayout{"<legacy-chroma:light.color>", 0, true, ""};
-    }
-
-    std::string validationError;
-    if (!validateVectorPiecewise(*expr, bindTime, validationError)) {
-        return VectorExpressionLayout{"", 0, false, validationError};
-    }
-
-    Emit e;
-    e.bindTime = bindTime;
-    std::string body;
-    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
-
-    VectorExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
-    }
-
-    std::string validationError;
-    if (!validateAngularPiecewise(*expr, validationError)) {
-        return AngularExpressionLayout{"", 0, false, false, validationError};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.bindOmega = true;
-    std::string body;
-    emitPiecewise(*expr, e, "p", "f32", body);
-
-    AngularExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.readsOmega = e.readOmega;
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-
-PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
-    }
-
-    std::string validationError;
-    if (!validatePhasePiecewise(*expr, validationError)) {
-        return PhaseExpressionLayout{"", 0, false, false, false, validationError};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.bindPhaseDirections = true;
-    std::string body;
-    emitPiecewise(*expr, e, "p", "f32", body);
-
-    PhaseExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.readsWi = e.readWi;
-    layout.readsWo = e.readWo;
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
-EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr) {
-    if (!expr || expr->pieces.empty()) {
-        return EmissionExpressionLayout{"<volume-emission:absent>", 0, false, true, ""};
-    }
-
-    std::string validationError;
-    if (!validateEmissionPiecewise(*expr, validationError)) {
-        return EmissionExpressionLayout{"", 0, false, false, validationError};
-    }
-
-    Emit e;
-    e.bindTime = true;
-    e.bindEmissionOmega = true;
-    std::string body;
-    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
-
-    EmissionExpressionLayout layout;
-    layout.structure = std::move(body);
-    layout.parameterCount = e.params.size();
-    layout.readsOmega = e.readEmissionOmega;
-    layout.ok = !e.refused;
-    layout.error = e.refusal;
-    return layout;
-}
-
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode,
                              const OntoMath::Piecewise* colorExpr,
-                             const OntoMath::Piecewise* radianceExpr,
-                             const OntoMath::Piecewise* chromaExpr,
-                             const OntoMath::Piecewise* angularExpr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
-                             const OntoMath::Piecewise* densityExpr,
-                             DensityInputKind densityKind,
-                             const OntoMath::Piecewise* extinctionExpr,
-                             const OntoMath::Piecewise* scatteringExpr,
-                             const OntoMath::Piecewise* volumeChromaExpr,
-                             const OntoMath::Piecewise* phaseExpr,
-                             const OntoMath::Piecewise* emissionExpr) {
+                             const OntoMath::Piecewise* radianceExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2169,88 +1375,13 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     }
 
     std::string throwaway;
-    if (densityKind == DensityInputKind::Authored &&
-        densityExpr && !densityExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    } else if (densityKind == DensityInputKind::LegacyField &&
-               fieldNode && fieldNode->field) {
-        // LEGACY ONLY: old callers may still project generic ScalarField
-        // mathematics as density. Explicit None must never fall through here.
+    if (fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
         } else {
             (void)e.param(fieldNode->field->baseDensity);
             (void)e.param(fieldNode->field->frequency);
             (void)e.param(fieldNode->field->amplitude);
-        }
-    }
-
-    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    }
-
-    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    }
-
-    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
-            e.refuse("volume chroma: " + validationError);
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
-        }
-    }
-
-    if (phaseExpr && !phaseExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
-            e.refuse("volume phase: " + validationError);
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            e.bindPhaseDirections = true;
-            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
-            e.bindPhaseDirections = false;
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
-        }
-    }
-
-    if (emissionExpr && !emissionExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
-            e.refuse("volume emission: " + validationError);
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            e.bindEmissionOmega = true;
-            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", throwaway);
-            e.bindEmissionOmega = false;
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
         }
     }
 
@@ -2269,69 +1400,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     if (colorExpr && !colorExpr->pieces.empty()) {
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
-    const bool multiSource = radianceSources && radianceSources->size() > 1;
-    if (multiSource) {
-        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-            const auto& source = (*radianceSources)[i];
-            e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
-
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
-                e.bindTime = true;
-                emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
-                e.bindTime = false;
-            }
-            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
-                    e.refuse("source[" + std::to_string(i) + "] chroma: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", throwaway);
-                    e.bindTime = false;
-                }
-            }
-            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
-                    e.refuse("source[" + std::to_string(i) + "] angular: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    e.bindOmega = true;
-                    emitPiecewise(*source.angularExpr, e, "p", "f32", throwaway);
-                    e.bindOmega = false;
-                    e.bindTime = false;
-                }
-            }
-        }
-        e.timeExpression = "u.radianceTime.x";
-    } else {
-        if (radianceExpr && !radianceExpr->pieces.empty()) {
-            e.bindTime = true;
-            emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
-            e.bindTime = false;
-        }
-        if (chromaExpr && !chromaExpr->pieces.empty()) {
-            std::string validationError;
-            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
-                e.refuse("chroma: " + validationError);
-            } else {
-                e.bindTime = true;
-                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", throwaway);
-                e.bindTime = false;
-            }
-        }
-        if (angularExpr && !angularExpr->pieces.empty()) {
-            std::string validationError;
-            if (!validateAngularPiecewise(*angularExpr, validationError)) {
-                e.refuse("angular: " + validationError);
-            } else {
-                e.bindTime = true;
-                e.bindOmega = true;
-                emitPiecewise(*angularExpr, e, "p", "f32", throwaway);
-                e.bindOmega = false;
-                e.bindTime = false;
-            }
-        }
+    if (radianceExpr && !radianceExpr->pieces.empty()) {
+        emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
     }
 
     ParameterBlock block;
@@ -2345,17 +1415,7 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode,
                 const OntoMath::Piecewise* colorExpr,
-                const OntoMath::Piecewise* radianceExpr,
-                const OntoMath::Piecewise* chromaExpr,
-                const OntoMath::Piecewise* angularExpr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
-                const OntoMath::Piecewise* densityExpr,
-                DensityInputKind densityKind,
-                const OntoMath::Piecewise* extinctionExpr,
-                const OntoMath::Piecewise* scatteringExpr,
-                const OntoMath::Piecewise* volumeChromaExpr,
-                const OntoMath::Piecewise* phaseExpr,
-                const OntoMath::Piecewise* emissionExpr) {
+                const OntoMath::Piecewise* radianceExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2412,30 +1472,18 @@ Program compile(const geom::SdfNode& root,
                      "}\n";
     }
 
-    // --- Volumetric V0 Density Compiler ---
-    // Explicit volume.density.ast wins. The generic FieldNode scalar path below
-    // is retained only as named legacy compatibility until saves migrate.
-    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
-    if (densityKind == DensityInputKind::Authored &&
-        densityExpr && !densityExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        prog.wgsl += "    // V0: explicit authored D(p,t)\n";
-        emitPiecewise(*densityExpr, e, "p", "f32", prog.wgsl);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    } else if (densityKind == DensityInputKind::LegacyField &&
-               fieldNode && fieldNode->field) {
+    // --- Dual-Path Field Compiler ---
+    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
+    if (fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            prog.wgsl += "    // LEGACY density projection from generic field.ast\n";
+            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
             std::string amp = e.param(fieldNode->field->amplitude);
 
-            prog.wgsl += "    // LEGACY procedural density projection\n";
+            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
             prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
             prog.wgsl += "    return max(rawDensity, 0.0);\n";
         }
@@ -2443,119 +1491,6 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl += "    return 0.0;\n";
     }
     prog.wgsl += "}\n";
-
-    // --- Volumetric V1 Extinction Compiler ---
-    // Absence is the historical compatibility law; presence is sole sigma_t authority.
-    prog.wgsl += "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
-    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        prog.wgsl += "    // V1: explicit authored sigma_t(p,t)\n";
-        emitPiecewise(*extinctionExpr, e, "p", "f32", prog.wgsl);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    } else {
-        prog.wgsl += "    // V1 compatibility: preserve pre-V1 extinction exactly\n";
-        prog.wgsl += "    return compatibilityDensity * 0.5;\n";
-    }
-    prog.wgsl += "}\n";
-
-    // --- Volumetric V2 Scattering Compiler ---
-    // Absence preserves the historical sigma_s = D compatibility law.
-    prog.wgsl += "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
-    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
-        const std::string previousTimeExpression = e.timeExpression;
-        e.timeExpression = "u.volumeTime.x";
-        e.bindTime = true;
-        prog.wgsl += "    // V2: explicit authored sigma_s(p,t)\n";
-        emitPiecewise(*scatteringExpr, e, "p", "f32", prog.wgsl);
-        e.bindTime = false;
-        e.timeExpression = previousTimeExpression;
-    } else {
-        prog.wgsl += "    // V2 compatibility: preserve pre-V2 scattering exactly\n";
-        prog.wgsl += "    return compatibilityDensity;\n";
-    }
-    prog.wgsl += "}\n";
-
-    // --- Volumetric V2 Medium Chroma Compiler ---
-    // C_v is medium-owned chroma; it does not alias source/light chi.
-    prog.wgsl += "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n";
-    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
-            e.refuse("volume chroma: " + validationError);
-            prog.wgsl += "    return vec3<f32>(0.0);\n";
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            prog.wgsl += "    // V2: explicit authored C_v(p,t)\n";
-            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", prog.wgsl);
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
-        }
-    } else {
-        prog.wgsl += "    // V2 compatibility: neutral white medium chroma\n";
-        prog.wgsl += "    return vec3<f32>(1.0);\n";
-    }
-    prog.wgsl += "}\n";
-
-    // --- Volumetric V3 Phase Compiler ---
-    // Phi is medium-owned angular scattering. Absent phase is exact identity 1.
-    prog.wgsl += "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n";
-    if (phaseExpr && !phaseExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
-            e.refuse("volume phase: " + validationError);
-            prog.wgsl += "    return 0.0;\n";
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            e.bindPhaseDirections = true;
-            prog.wgsl += "    // V3: explicit authored Phi(p,wi,wo,t)\n";
-            emitPiecewise(*phaseExpr, e, "p", "f32", prog.wgsl);
-            e.bindPhaseDirections = false;
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
-        }
-    } else {
-        prog.wgsl += "    // V3 compatibility: exact isotropic identity\n";
-        prog.wgsl += "    return 1.0;\n";
-    }
-    prog.wgsl += "}\n";
-    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
-    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
-    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
-    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
-
-    // --- Volumetric V4 Self-Emission Compiler ---
-    prog.wgsl += "\nfn volumeEmissionEval(p: vec3<f32>, omega: vec3<f32>) -> vec3<f32> {\n";
-    if (emissionExpr && !emissionExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
-            e.refuse("volume emission: " + validationError);
-            prog.wgsl += "    return vec3<f32>(0.0);\n";
-        } else {
-            const std::string previousTimeExpression = e.timeExpression;
-            e.timeExpression = "u.volumeTime.x";
-            e.bindTime = true;
-            e.bindEmissionOmega = true;
-            prog.wgsl += "    // V4: explicit authored E_v(p,omega,t)\n";
-            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", prog.wgsl);
-            e.bindEmissionOmega = false;
-            e.bindTime = false;
-            e.timeExpression = previousTimeExpression;
-        }
-    } else {
-        prog.wgsl += "    return vec3<f32>(0.0);\n";
-    }
-    prog.wgsl += "}\n";
-    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_EMISSION: bool = ";
-    prog.wgsl += (emissionExpr && !emissionExpr->pieces.empty()) ? "true;\n" : "false;\n";
-    prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
-    prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
 
     // --- Dual-Path Vector Field Compiler ---
     prog.wgsl += "\nfn vectorFieldEval(p: vec3<f32>) -> vec3<f32> {\n";
@@ -2589,229 +1524,15 @@ Program compile(const geom::SdfNode& root,
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
-    const bool multiSource = radianceSources && radianceSources->size() > 1;
-    if (!multiSource) {
-        std::string radianceBody;
-        if (radianceExpr && !radianceExpr->pieces.empty()) {
-            e.bindTime = true;
-            emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
-            e.bindTime = false;
-        } else {
-            radianceBody = "    return 1.0;\n";
-        }
-        prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
-
-        std::string chromaBody;
-        if (chromaExpr && !chromaExpr->pieces.empty()) {
-            std::string validationError;
-            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
-                e.refuse("chroma: " + validationError);
-            } else {
-                e.bindTime = true;
-                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", chromaBody);
-                e.bindTime = false;
-            }
-        } else {
-            // Multiplicative identity. EngineRender preserves legacy light.color in
-            // the historical light uniforms when chi is absent.
-            chromaBody = "    return vec3<f32>(1.0);\n";
-        }
-        prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
-        prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
-                     ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
-
-        std::string angularBody;
-        bool angularReadsOmega = false;
-        if (angularExpr && !angularExpr->pieces.empty()) {
-            std::string validationError;
-            if (!validateAngularPiecewise(*angularExpr, validationError)) {
-                e.refuse("angular: " + validationError);
-            } else {
-                e.bindTime = true;
-                e.bindOmega = true;
-                e.readOmega = false;
-                emitPiecewise(*angularExpr, e, "p", "f32", angularBody);
-                angularReadsOmega = e.readOmega;
-                e.bindOmega = false;
-                e.bindTime = false;
-            }
-        } else {
-            angularBody = "    return 1.0;\n";
-        }
-        prog.wgsl += "\nfn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
-                     angularBody + "}\n";
-        prog.wgsl += std::string("\nconst HAS_AUTHORED_ANGULAR: bool = ") +
-                     ((angularExpr && !angularExpr->pieces.empty()) ? "true;\n" : "false;\n");
-        prog.wgsl += std::string("const ANGULAR_READS_OMEGA: bool = ") +
-                     (angularReadsOmega ? "true;\n" : "false;\n");
-        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
-                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
-
-        // Deliberately retain the historical marcher source verbatim in the
-        // zero/one-source case. Rung 7 is additive composition, not a rewrite
-        // of the already-proven Rungs 3-6 path.
-        prog.wgsl += kMarcher;
+    std::string radianceBody;
+    if (radianceExpr && !radianceExpr->pieces.empty()) {
+        emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
     } else {
-        prog.wgsl +=
-            "\nstruct RadianceSourceData {\n"
-            "    position: vec4<f32>,\n"
-            "    ambient: vec4<f32>,\n"
-            "    diffuse: vec4<f32>,\n"
-            "    specular: vec4<f32>,\n"
-            "    coefficients: vec4<f32>,\n"
-            "    time: vec4<f32>,\n"
-            "    control: vec4<f32>,\n"
-            "};\n"
-            "@group(0) @binding(2) var<storage, read> RS: array<RadianceSourceData>;\n";
-
-        std::vector<bool> angularReadsOmega;
-        angularReadsOmega.reserve(radianceSources->size());
-
-        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-            const auto& source = (*radianceSources)[i];
-            const std::string suffix = std::to_string(i);
-            e.timeExpression = "RS[" + suffix + "u].time.x";
-
-            std::string radianceBody;
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
-                e.bindTime = true;
-                emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
-                e.bindTime = false;
-            } else {
-                radianceBody = "    return 1.0;\n";
-            }
-            prog.wgsl += "\nfn lightRadiance_" + suffix +
-                         "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
-
-            std::string chromaBody;
-            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
-                    e.refuse("source[" + suffix + "] chroma: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", chromaBody);
-                    e.bindTime = false;
-                }
-            } else {
-                chromaBody = "    return vec3<f32>(1.0);\n";
-            }
-            prog.wgsl += "\nfn lightChroma_" + suffix +
-                         "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
-
-            std::string angularBody;
-            bool readsOmega = false;
-            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
-                    e.refuse("source[" + suffix + "] angular: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    e.bindOmega = true;
-                    e.readOmega = false;
-                    emitPiecewise(*source.angularExpr, e, "p", "f32", angularBody);
-                    readsOmega = e.readOmega;
-                    e.bindOmega = false;
-                    e.bindTime = false;
-                }
-            } else {
-                angularBody = "    return 1.0;\n";
-            }
-            angularReadsOmega.push_back(readsOmega);
-            prog.wgsl += "\nfn lightAngular_" + suffix +
-                         "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
-                         angularBody + "}\n";
-        }
-        e.timeExpression = "u.radianceTime.x";
-        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
-                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
-
-        std::string marcher = kMarcher;
-        const std::string lightingBegin =
-            "    let L = normalize(u.lightPos.xyz - pw);\n";
-        const std::string lightingEnd =
-            "    let clip = u.viewProj * vec4<f32>(pw, 1.0);\n";
-        const std::size_t lightAt = marcher.find(lightingBegin);
-        const std::size_t clipAt = marcher.find(lightingEnd, lightAt);
-        if (lightAt == std::string::npos || clipAt == std::string::npos) {
-            e.refuse("Rung 7 compiler could not find the historical lighting seam");
-        } else {
-            std::string sum;
-            sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
-            sum += "    var ambientTerm = vec3<f32>(0.0);\n";
-            sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
-            sum += "    var specTerm = vec3<f32>(0.0);\n";
-
-            for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-                const auto& source = (*radianceSources)[i];
-                const std::string s = std::to_string(i);
-                sum += "    {\n";
-                sum += "        let source = RS[" + s + "u];\n";
-                sum += "        if (source.control.x > 0.5) {\n";
-                sum += "            let sourceDelta = pw - source.position.xyz;\n";
-                sum += "            let sourceDistance = length(sourceDelta);\n";
-                sum += "            var Ls = vec3<f32>(0.0);\n";
-                sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { "
-                       "Ls = -sourceDelta / sourceDistance; }\n";
-                sum += "            var Hs = V;\n";
-                sum += "            let halfVector = Ls + V;\n";
-                sum += "            let halfLength = length(halfVector);\n";
-                sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { "
-                       "Hs = halfVector / halfLength; }\n";
-                sum += "            let radialRadiance = max(lightRadiance_" + s +
-                       "(sourceDelta), 0.0);\n";
-                sum += "            var angularRadiance = 1.0;\n";
-
-                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                    if (angularReadsOmega[i]) {
-                        sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
-                        sum += "                angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
-                        sum += "            } else { angularRadiance = 0.0; }\n";
-                    } else {
-                        sum += "            angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
-                    }
-                }
-
-                sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
-                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
-                sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
-                sum += "            let specShape = inst.shading.z * "
-                       "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
-                       "step(0.0001, diff);\n";
-
-                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let sourceChroma = lightChroma_" + s +
-                           "(sourceDelta);\n";
-                    sum += "            let c = source.coefficients;\n";
-                    sum += "            let ambientEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.y) / 0.2);\n";
-                    sum += "            let diffuseEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.z) / 0.8);\n";
-                    sum += "            let specularEnvelope = sourceChroma * "
-                           "vec3<f32>(c.x * c.w);\n";
-                } else {
-                    sum += "            let ambientEnvelope = source.ambient.rgb / "
-                           "vec3<f32>(0.2);\n";
-                    sum += "            let diffuseEnvelope = source.diffuse.rgb / "
-                           "vec3<f32>(0.8);\n";
-                    sum += "            let specularEnvelope = source.specular.rgb;\n";
-                }
-                sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
-                sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * directRadiance;\n";
-                sum += "            specTerm += specularEnvelope * specShape * "
-                       "directRadiance;\n";
-                sum += "        }\n";
-                sum += "    }\n";
-            }
-            marcher.replace(lightAt, clipAt - lightAt, sum);
-        }
-
-        prog.wgsl += marcher;
+        radianceBody = "    return 1.0;\n";
     }
+    prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+    prog.wgsl += kMarcher;
     prog.params = std::move(e.params);
     prog.needsGradientStep = e.sawExpr;
 
@@ -2827,458 +1548,5 @@ Program compile(const geom::SdfNode& root,
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
 }
-
-ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
-                                   const OntoMath::Piecewise* extinctionExpr,
-                                   const OntoMath::Piecewise* scatteringExpr,
-                                   const OntoMath::Piecewise* volumeChromaExpr,
-                                   const OntoMath::Piecewise* phaseExpr,
-                                   const OntoMath::Piecewise* emissionExpr) {
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "instances[g_instIdx].time.x";
-
-    std::string throwaway;
-    if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
-    }
-    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
-        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
-    }
-    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
-        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
-    }
-    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
-            e.refuse("volume chroma: " + validationError);
-        } else {
-            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
-        }
-    }
-
-    if (phaseExpr && !phaseExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
-            e.refuse("volume phase: " + validationError);
-        } else {
-            e.bindPhaseDirections = true;
-            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
-            e.bindPhaseDirections = false;
-        }
-    }
-
-    if (emissionExpr && !emissionExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
-            e.refuse("volume emission: " + validationError);
-        } else {
-            e.bindEmissionOmega = true;
-            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", throwaway);
-            e.bindEmissionOmega = false;
-        }
-    }
-
-    ParameterBlock block;
-    block.ok = !e.refused;
-    block.error = e.refusal;
-    block.values = std::move(e.params);
-    if (block.values.empty()) block.values.push_back(0.0f);
-    return block;
-}
-
-namespace {
-const char* kVolumePerlinNoise = R"WGSL(
-fn mod289(x: vec4<f32>) -> vec4<f32> {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-fn mod289_3(x: vec3<f32>) -> vec3<f32> {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-fn permute4(x: vec4<f32>) -> vec4<f32> {
-    return mod289(((x * 34.0) + 1.0) * x);
-}
-fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
-    return 1.79284291400159 - 0.85373472095314 * r;
-}
-fn cnoise3(P: vec3<f32>) -> f32 {
-    let Pi0 = floor(P);
-    let Pi1 = Pi0 + vec3<f32>(1.0);
-    let Pi0_mod = mod289_3(Pi0);
-    let Pi1_mod = mod289_3(Pi1);
-    let Pf0 = fract(P);
-    let Pf1 = Pf0 - vec3<f32>(1.0);
-    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
-    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
-    let iz0 = vec4<f32>(Pi0_mod.z);
-    let iz1 = vec4<f32>(Pi1_mod.z);
-
-    let ixy = permute4(permute4(ix) + iy);
-    let ixy0 = permute4(ixy + iz0);
-    let ixy1 = permute4(ixy + iz1);
-
-    var gx0 = ixy0 / 7.0;
-    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
-    gx0 = fract(gx0);
-    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
-    let sz0 = step(gz0, vec4<f32>(0.0));
-    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
-    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
-
-    var gx1 = ixy1 / 7.0;
-    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
-    gx1 = fract(gx1);
-    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
-    let sz1 = step(gz1, vec4<f32>(0.0));
-    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
-    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
-
-    var g000 = vec3<f32>(gx0.x,gy0.x,gz0.x);
-    var g100 = vec3<f32>(gx0.y,gy0.y,gz0.y);
-    var g010 = vec3<f32>(gx0.z,gy0.z,gz0.z);
-    var g110 = vec3<f32>(gx0.w,gy0.w,gz0.w);
-    var g001 = vec3<f32>(gx1.x,gy1.x,gz1.x);
-    var g101 = vec3<f32>(gx1.y,gy1.y,gz1.y);
-    var g011 = vec3<f32>(gx1.z,gy1.z,gz1.z);
-    var g111 = vec3<f32>(gx1.w,gy1.w,gz1.w);
-
-    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
-    g000 = g000 * norm0.x;
-    g010 = g010 * norm0.y;
-    g100 = g100 * norm0.z;
-    g110 = g110 * norm0.w;
-    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
-    g001 = g001 * norm1.x;
-    g011 = g011 * norm1.y;
-    g101 = g101 * norm1.z;
-    g111 = g111 * norm1.w;
-
-    let n000 = dot(g000, Pf0);
-    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
-    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
-    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
-    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
-    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
-    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
-    let n111 = dot(g111, Pf1);
-
-    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
-    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
-    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
-    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
-    return 2.2 * n_xyz;
-}
-)WGSL";
-} // namespace
-
-Program compileVolume(const OntoMath::Piecewise* densityExpr,
-                      const OntoMath::Piecewise* extinctionExpr,
-                      const OntoMath::Piecewise* scatteringExpr,
-                      const OntoMath::Piecewise* volumeChromaExpr,
-                      const OntoMath::Piecewise* phaseExpr,
-                      const OntoMath::Piecewise* emissionExpr) {
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "instances[g_instIdx].time.x";
-
-    Program prog;
-    prog.wgsl = kVolumePerlinNoise;
-    prog.wgsl += R"WGSL(
-struct VolumeGlobals {
-    viewProj: mat4x4<f32>,
-    invViewProj: mat4x4<f32>,
-    eyePos: vec4<f32>,
-    viewport: vec4<f32>,
-    // xyz = the one admitted direct source position; w=1 iff such a source exists.
-    incidentSource: vec4<f32>,
-};
-
-struct VolumeInstanceData {
-    origin: vec4<f32>,
-    halfExtent: vec4<f32>,
-    time: vec4<f32>,
-    paramOffset: u32,
-    _pad0: u32,
-    _pad1: u32,
-    _pad2: u32,
-};
-
-struct Params { v: array<f32> };
-
-@group(0) @binding(0) var<uniform> u: VolumeGlobals;
-@group(0) @binding(1) var<storage, read> P: Params;
-@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;
-@group(1) @binding(0) var<storage, read> instances: array<VolumeInstanceData>;
-
-var<private> g_instIdx: u32;
-
-struct VolumeVSOut {
-    @builtin(position) position: vec4<f32>,
-    @location(0) @interpolate(flat) instIdx: u32,
-};
-
-@vertex
-fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VolumeVSOut {
-    let inst = instances[instIdx];
-    let world = inst.origin.xyz + pos * inst.halfExtent.xyz;
-    var out: VolumeVSOut;
-    out.position = u.viewProj * vec4<f32>(world, 1.0);
-    if (out.position.w > 0.0) {
-        out.position.z = min(out.position.z, out.position.w * 0.999999);
-    }
-    out.instIdx = instIdx;
-    return out;
-}
-
-fn rayAabbWorld(ro: vec3<f32>, rd: vec3<f32>,
-                bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
-    let safeRd = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
-    let a = (bmin - ro) / safeRd;
-    let b = (bmax - ro) / safeRd;
-    let lo = min(a, b);
-    let hi = max(a, b);
-    return vec2<f32>(
-        max(max(lo.x, lo.y), lo.z),
-        min(min(hi.x, hi.y), hi.z));
-}
-
-fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
-    let ndc = vec4<f32>(
-        (pixel.x / u.viewport.x) * 2.0 - 1.0,
-        (1.0 - pixel.y / u.viewport.y) * 2.0 - 1.0,
-        depth,
-        1.0);
-    let h = u.invViewProj * ndc;
-    return h.xyz / h.w;
-}
-)WGSL";
-
-    std::string densityBody;
-    if (densityExpr && !densityExpr->pieces.empty()) {
-        emitPiecewise(*densityExpr, e, "p", "f32", densityBody);
-    } else {
-        densityBody = "    return 0.0;\n";
-    }
-    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
-                 densityBody + "}\n";
-
-    std::string extinctionBody;
-    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
-        emitPiecewise(*extinctionExpr, e, "p", "f32", extinctionBody);
-    } else {
-        extinctionBody =
-            "    // V1 compatibility: exact pre-V1 extinction law\n"
-            "    return compatibilityDensity * 0.5;\n";
-    }
-    prog.wgsl +=
-        "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
-        extinctionBody + "}\n";
-
-    std::string scatteringBody;
-    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
-        emitPiecewise(*scatteringExpr, e, "p", "f32", scatteringBody);
-    } else {
-        scatteringBody =
-            "    // V2 compatibility: exact pre-V2 scattering coefficient\n"
-            "    return compatibilityDensity;\n";
-    }
-    prog.wgsl +=
-        "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
-        scatteringBody + "}\n";
-
-    std::string volumeChromaBody;
-    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
-            e.refuse("volume chroma: " + validationError);
-            volumeChromaBody = "    return vec3<f32>(0.0);\n";
-        } else {
-            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", volumeChromaBody);
-        }
-    } else {
-        volumeChromaBody =
-            "    // V2 compatibility: neutral white medium chroma\n"
-            "    return vec3<f32>(1.0);\n";
-    }
-    prog.wgsl +=
-        "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n" +
-        volumeChromaBody + "}\n";
-
-    std::string phaseBody;
-    if (phaseExpr && !phaseExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
-            e.refuse("volume phase: " + validationError);
-            phaseBody = "    return 0.0;\n";
-        } else {
-            e.bindPhaseDirections = true;
-            emitPiecewise(*phaseExpr, e, "p", "f32", phaseBody);
-            e.bindPhaseDirections = false;
-        }
-    } else {
-        phaseBody =
-            "    // V3 compatibility: exact isotropic identity\n"
-            "    return 1.0;\n";
-    }
-    prog.wgsl +=
-        "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n" +
-        phaseBody + "}\n";
-    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
-    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
-    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
-    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
-
-    std::string emissionBody;
-    if (emissionExpr && !emissionExpr->pieces.empty()) {
-        std::string validationError;
-        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
-            e.refuse("volume emission: " + validationError);
-            emissionBody = "    return vec3<f32>(0.0);\n";
-        } else {
-            e.bindEmissionOmega = true;
-            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", emissionBody);
-            e.bindEmissionOmega = false;
-        }
-    } else {
-        emissionBody = "    return vec3<f32>(0.0);\n";
-    }
-    prog.wgsl +=
-        "\nfn volumeEmissionEval(p: vec3<f32>, omega: vec3<f32>) -> vec3<f32> {\n" +
-        emissionBody + "}\n";
-    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_EMISSION: bool = ";
-    prog.wgsl += (emissionExpr && !emissionExpr->pieces.empty()) ? "true;\n" : "false;\n";
-    prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
-    prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
-
-    prog.wgsl += R"WGSL(
-@fragment
-fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
-    g_instIdx = in.instIdx;
-    let inst = instances[in.instIdx];
-
-    let ro = u.eyePos.xyz;
-    let farNdc = vec4<f32>(
-        (in.position.x / u.viewport.x) * 2.0 - 1.0,
-        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
-        1.0,
-        1.0);
-    let farH = u.invViewProj * farNdc;
-    let farWorld = farH.xyz / farH.w;
-    let rd = normalize(farWorld - ro);
-
-    let bounds = rayAabbWorld(
-        ro, rd,
-        inst.origin.xyz - inst.halfExtent.xyz,
-        inst.origin.xyz + inst.halfExtent.xyz);
-
-    var t0 = max(bounds.x, 0.0);
-    var t1 = bounds.y;
-    if (t1 <= t0) { discard; }
-
-    let maxX = max(i32(u.viewport.x), 1) - 1;
-    let maxY = max(i32(u.viewport.y), 1) - 1;
-    let px = vec2<i32>(
-        clamp(i32(floor(in.position.x)), 0, maxX),
-        clamp(i32(floor(in.position.y)), 0, maxY));
-    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
-
-    if (sceneDepth < 0.999999) {
-        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
-        let opaqueT = dot(opaqueWorld - ro, rd);
-        t1 = min(t1, max(opaqueT, 0.0));
-    }
-    if (t1 <= t0) { discard; }
-
-    let span = t1 - t0;
-    let stepLength = span / 96.0;
-    if (stepLength <= 0.0) { discard; }
-
-    var transmittance = 1.0;
-    var volumetricScatter = vec3<f32>(0.0);
-    var volumetricEmission = vec3<f32>(0.0);
-
-    for (var i = 0; i < 96; i = i + 1) {
-        let sampleT = t0 + (f32(i) + 0.5) * stepLength;
-        let worldP = ro + rd * sampleT;
-        let p = worldP - inst.origin.xyz;
-        let density = max(volumeDensityEval(p), 0.0);
-
-        if (density > 0.0) {
-            // V1: authored sigma_t(p,t) is independent from D. If absent,
-            // the evaluator preserves the exact pre-V1 compatibility law.
-            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
-            let oldT = transmittance;
-            transmittance *= exp(-extinction * stepLength);
-
-            let scattering = max(volumeScatteringEval(p, density), 0.0);
-            let mediumChroma = volumeChromaEval(p);
-            if (HAS_AUTHORED_VOLUME_PHASE) {
-                let wiDelta = worldP - u.incidentSource.xyz;
-                let woDelta = ro - worldP;
-                let wiLen = length(wiDelta);
-                let woLen = length(woDelta);
-                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),
-                                u.incidentSource.w > 0.5 && wiLen > 1e-8);
-                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),
-                                woLen > 1e-8);
-                var phase = 0.0;
-                if ((!VOLUME_PHASE_READS_WI ||
-                     (u.incidentSource.w > 0.5 && wiLen > 1e-8)) &&
-                    woLen > 1e-8) {
-                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
-                }
-                volumetricScatter +=
-                    mediumChroma * (scattering / extinction) * phase *
-                    (oldT - transmittance);
-            } else {
-                // Exact V2 compatibility arithmetic: preserve the old expression.
-                volumetricScatter +=
-                    mediumChroma * (scattering / extinction) * (oldT - transmittance);
-            }
-
-            if (HAS_AUTHORED_VOLUME_EMISSION) {
-                let emissionDelta = ro - worldP;
-                let emissionLen = length(emissionDelta);
-                let emissionOmega = select(
-                    vec3<f32>(0.0),
-                    emissionDelta / max(emissionLen, 1e-8),
-                    emissionLen > 1e-8);
-                var emitted = vec3<f32>(0.0);
-                if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > 1e-8) {
-                    emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
-                }
-                volumetricEmission += emitted * ((oldT - transmittance) / extinction);
-            }
-        }
-
-        if (transmittance < 0.01) { break; }
-    }
-
-    let alpha = 1.0 - transmittance;
-    let integratedRgb = volumetricScatter + volumetricEmission;
-    let emittedMagnitude = max(max(abs(volumetricEmission.x), abs(volumetricEmission.y)),
-                               abs(volumetricEmission.z));
-    if (alpha <= 1e-5 && emittedMagnitude <= 1e-6) { discard; }
-
-    // Keep the analytically integrated medium contribution premultiplied.
-    // The volume pipeline blends (ONE, ONE_MINUS_SRC_ALPHA), yielding exactly:
-    // C_out = C_medium + T * C_scene.
-    return vec4<f32>(integratedRgb, alpha);
-}
-)WGSL";
-
-    prog.params = std::move(e.params);
-    prog.needsGradientStep = false;
-
-    if (e.refused) {
-        prog.ok = false;
-        prog.error = e.refusal;
-        prog.wgsl = "// REFUSED: " + e.refusal + "\n";
-    }
-
-    if (prog.params.empty()) prog.params.push_back(0.0f);
-    return prog;
-}
-
 
 } // namespace sdfwgsl

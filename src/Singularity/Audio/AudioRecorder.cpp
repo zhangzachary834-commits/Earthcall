@@ -205,9 +205,7 @@ AudioRecorder::AudioRecorder() : Law("microphone") {
     _outputPath = "saves/recordings";
     _fallbackToSimulated = true;
     _forceSimulated = false;
-    // buildProperties is NOT called here: Singular builds the registry lazily
-    // behind _propertiesBuilt. Calling it from the constructor registers all
-    // properties twice when lazy initialization runs.
+    buildProperties();
 }
 
 AudioRecorder::~AudioRecorder() {

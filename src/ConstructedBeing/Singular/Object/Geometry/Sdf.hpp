@@ -158,15 +158,6 @@ struct SdfRangeNode {
     bool provedNoZero = false;
 };
 
-// A zero-free range is sufficient for zero-set culling, but not every
-// zero-free cell is lawful to skip during outside-in ray marching. A wholly
-// negative cell is inside the solid; sampling d <= 0 is how the baseline
-// marcher registers that it crossed the surface. Only finite f>0 cells are
-// traversal-skippable outside space.
-inline bool rangeNodeProvesPositiveOutside(const SdfRangeNode& node) {
-    return node.boundFinite && node.rangeLo > 0.0f;
-}
-
 struct SdfRangeHierarchy {
     std::vector<SdfRangeNode> nodes;
     uint32_t provedEmptyNodes = 0;

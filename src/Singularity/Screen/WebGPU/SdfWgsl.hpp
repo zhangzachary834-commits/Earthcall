@@ -23,20 +23,10 @@
 #include <vector>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
-#include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
 
 namespace sdfwgsl {
-
-// Density input is a resolved compiler fact, not a null-pointer convention.
-// LegacyField preserves old generic FieldNode behavior; None is explicit absence;
-// Authored means densityExpr is the sole D(p,t) authority.
-enum class DensityInputKind {
-    LegacyField,
-    None,
-    Authored
-};
 
 struct ParameterBlock {
     std::vector<float> values;
@@ -52,48 +42,6 @@ struct ParameterBlock {
 struct ScalarExpressionLayout {
     std::string structure;
     std::size_t parameterCount = 0;
-    bool ok = true;
-    std::string error;
-};
-
-// Same structure/value identity for an authored vec3 expression. Kept distinct
-// from ScalarExpressionLayout so rho and chi remain independently observable.
-struct VectorExpressionLayout {
-    std::string structure;
-    std::size_t parameterCount = 0;
-    bool ok = true;
-    std::string error;
-};
-
-// Rung 6 source angular factor. It stays distinct from the generic scalar
-// layout so alpha can expose whether its authored structure actually reads
-// omega; the shader needs that fact to refuse the source singularity without
-// suppressing direction-independent alpha.
-struct AngularExpressionLayout {
-    std::string structure;
-    std::size_t parameterCount = 0;
-    bool readsOmega = false;
-    bool ok = true;
-    std::string error;
-};
-
-// V3 medium phase is deliberately not source angular alpha. It admits two
-// independently named directions with transport semantics:
-//   wi = world-space normalized source -> sample propagation direction
-//   wo = world-space normalized sample -> receiver/eye propagation direction.
-struct PhaseExpressionLayout {
-    std::string structure;
-    std::size_t parameterCount = 0;
-    bool readsWi = false;
-    bool readsWo = false;
-    bool ok = true;
-    std::string error;
-};
-
-struct EmissionExpressionLayout {
-    std::string structure;
-    std::size_t parameterCount = 0;
-    bool readsOmega = false;
     bool ok = true;
     std::string error;
 };
@@ -136,29 +84,15 @@ struct Program {
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
 // the fragment output convention lives with the pipeline, not the codegen.
 //
-// An empty/degenerate tree still yields valid WGSL that reports "no surface".
-// fieldNode remains only as a LEGACY generic-field compatibility input. New
-// participating-medium authorship enters through densityExpr so density never
-// needs to borrow source-radiance or generic-field identity by accident.
+// An empty/degenerate tree still yields valid WGSL that reports "no surface", so
+// fieldNode is optional (needed if the tree uses VolumetricField and needs to sample
+// the 3D texture).
 // colorExpr is optional; if provided, it replaces the uniform base color.
 // radianceExpr is optional; if provided, it supplies authored spatial light radiance.
-// densityKind is the authority for interpreting this input: LegacyField admits
-// the old generic FieldNode fallback, None means no participating medium, and
-// Authored makes densityExpr the sole V0 D(p,t) authority.
 Program compile(const geom::SdfNode& root,
                 const geom::FieldNode* fieldNode = nullptr,
                 const OntoMath::Piecewise* colorExpr = nullptr,
-                const OntoMath::Piecewise* radianceExpr = nullptr,
-                const OntoMath::Piecewise* chromaExpr = nullptr,
-                const OntoMath::Piecewise* angularExpr = nullptr,
-                const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
-                const OntoMath::Piecewise* densityExpr = nullptr,
-                DensityInputKind densityKind = DensityInputKind::LegacyField,
-                const OntoMath::Piecewise* extinctionExpr = nullptr,
-                const OntoMath::Piecewise* scatteringExpr = nullptr,
-                const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                const OntoMath::Piecewise* phaseExpr = nullptr,
-                const OntoMath::Piecewise* emissionExpr = nullptr);
+                const OntoMath::Piecewise* radianceExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -166,82 +100,13 @@ Program compile(const geom::SdfNode& root,
 ParameterBlock collectParams(const geom::SdfNode& root,
                              const geom::FieldNode* fieldNode = nullptr,
                              const OntoMath::Piecewise* colorExpr = nullptr,
-                             const OntoMath::Piecewise* radianceExpr = nullptr,
-                             const OntoMath::Piecewise* chromaExpr = nullptr,
-                             const OntoMath::Piecewise* angularExpr = nullptr,
-                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources = nullptr,
-                             const OntoMath::Piecewise* densityExpr = nullptr,
-                             DensityInputKind densityKind = DensityInputKind::LegacyField,
-                             const OntoMath::Piecewise* extinctionExpr = nullptr,
-                             const OntoMath::Piecewise* scatteringExpr = nullptr,
-                             const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                             const OntoMath::Piecewise* phaseExpr = nullptr,
-                             const OntoMath::Piecewise* emissionExpr = nullptr);
+                             const OntoMath::Piecewise* radianceExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
 // a value-only edit can refresh the shared parameter block without regenerating
 // WGSL; unequal structure means the shader source can have changed. Unsupported
 // mathematics refuses here for the same reason it refuses in compile().
-// bindTime admits the canonical temporal coordinate "t"; it says nothing
-// about which Timeline or Singular owner supplied that coordinate.
-ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
-                                               bool bindTime = false);
-
-// Inspect authored participating-medium density D(p,t)->scalar through the same
-// production emitter, but with its OWN temporal coordinate (u.volumeTime.x).
-// Absence is a real structural state and means no explicit V0 density channel.
-ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr);
-
-// V1 authored participating-medium extinction sigma_t(p,t). Absence is a
-// compatibility state, not a refusal: sigma_t falls back to 0.5 * D.
-ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr);
-
-// V2 authored scattering coefficient sigma_s(p,t). Absence preserves the
-// historical coefficient sigma_s = D.
-ScalarExpressionLayout inspectScatteringExpression(const OntoMath::Piecewise* expr);
-
-// V2 authored medium chroma C_v(p,t)->vec3. Absence preserves neutral white.
-// This is deliberately distinct from source/light chroma.
-VectorExpressionLayout inspectVolumeChromaExpression(const OntoMath::Piecewise* expr);
-
-// Inspect authored source chroma chi(p,t)->vec3 with the same production
-// emitter. Absent chi has a distinct legacy identity; an authored expression
-// must type-check as Vector and unsupported GPU semantics refuse.
-VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
-                                               bool bindTime = false);
-
-// Inspect alpha(p,omega,t)->scalar through the production emitter. This is the
-// only source-radiance scalar context that admits omega.x/y/z.
-AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
-
-// V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
-// wi/wo are transport bindings, never aliases of source alpha's omega.
-PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
-
-// V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
-// radiance. omega is world-space sample -> eye in an emission-owned context.
-EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr);
-
-// Volumetric V0c: compile one authored density structure into a dedicated
-// depth-aware volume-composite shader. This is intentionally separate from
-// drawImplicit: a participating medium is not a hard surface and must not own
-// frag_depth merely because both paths use OntoMath.
-Program compileVolume(const OntoMath::Piecewise* densityExpr,
-                      const OntoMath::Piecewise* extinctionExpr = nullptr,
-                      const OntoMath::Piecewise* scatteringExpr = nullptr,
-                      const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                      const OntoMath::Piecewise* phaseExpr = nullptr,
-                      const OntoMath::Piecewise* emissionExpr = nullptr);
-
-// Value-only companion to compileVolume(). Recollects D, sigma_t, sigma_s,
-// C_v, Phi and E_v numeric parameter slots without regenerating shader source
-// when structure is unchanged.
-ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
-                                   const OntoMath::Piecewise* extinctionExpr = nullptr,
-                                   const OntoMath::Piecewise* scatteringExpr = nullptr,
-                                   const OntoMath::Piecewise* volumeChromaExpr = nullptr,
-                                   const OntoMath::Piecewise* phaseExpr = nullptr,
-                                   const OntoMath::Piecewise* emissionExpr = nullptr);
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr);
 
 } // namespace sdfwgsl

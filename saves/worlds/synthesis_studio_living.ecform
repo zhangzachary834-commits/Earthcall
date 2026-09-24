@@ -5523,7 +5523,7 @@
       },
       {
         "id": "law-studio-living-pad-light",
-        "name": "Studio: A pad reverberates in color and rises with its note",
+        "name": "Studio: A pad reverberates in its own color",
         "enabled": true,
         "authority": 0,
         "activation": 1,
@@ -5548,36 +5548,6 @@
         "actionModel": {
           "kind": 5,
           "children": [
-            {
-              "kind": 8,
-              "path": "y2D",
-              "bindings": {
-                "r": "restY2D",
-                "e": "resonanceEnergy"
-              },
-              "function": {
-                "pieces": [
-                  {
-                    "expr": {
-                      "terms": [
-                        {
-                          "c": 1,
-                          "factors": {
-                            "r": 1
-                          }
-                        },
-                        {
-                          "c": -12,
-                          "factors": {
-                            "e": 1
-                          }
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            },
             {
               "kind": 8,
               "path": "color.r",

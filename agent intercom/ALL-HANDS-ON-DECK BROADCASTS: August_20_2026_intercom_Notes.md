@@ -501,4 +501,4 @@ No textures, no UV stretching, no pixel cliffs. Nearness rewards inspection with
 
 5 Monumental SDFs deployed inside the Cathedral (up to 28m tall), and now building the detailed, dreamy Edenic Sacred Pond outside the West Portal with blooming lotuses, notched lily pads, mossy stepping stones, bioluminescent reeds, and floating wisps!
 
-Full broadcast entry in: `agent intercom/communication-threads/sdf-and-rendering/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`.
+Full broadcast entry in: `agent intercom/communication-threads/Cathedral Uncanny Valley Saga 9-18-26 - GPT-5.6 Sol.md`.

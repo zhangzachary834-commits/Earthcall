@@ -22,6 +22,10 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
+# Apply CORS (Cross-Origin Resource Sharing)
+CORS(app)
+
+# Initialize SocketIO
 # Read allowed origins from environment variable, split by comma, fallback to None (same-origin)
 cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS')
 if cors_origins_env:
@@ -29,11 +33,6 @@ if cors_origins_env:
 else:
     allowed_origins = None
 
-# Apply CORS (Cross-Origin Resource Sharing)
-if allowed_origins:
-    CORS(app, origins=allowed_origins)
-
-# Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins=allowed_origins, async_mode='threading')
 
 # Initialize C++ Engine Bridge (WebSocket client to C++ Engine on port 8080)

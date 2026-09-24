@@ -154,18 +154,6 @@ public:
     geom::FieldNode* spatialRoot() { return _spatialRootObject.get(); }
     const geom::FieldNode* spatialRoot() const { return _spatialRootObject.get(); }
 
-    // Rung 7 world composition. The historical spatialRoot remains the Zone's
-    // canonical field and the exact one-source compatibility source. Additional
-    // FieldNodes are ordinary authored beings owned by the Zone, admitted to its
-    // Formation, persisted, and Law-reachable. Rendering can therefore discover
-    // potential radiant sources from this tiny direct index rather than scanning
-    // every Object in the world.
-    const std::vector<std::shared_ptr<geom::FieldNode>>& additionalSpatialFields() const {
-        return _additionalSpatialFields;
-    }
-    void addSpatialField(std::shared_ptr<geom::FieldNode> field);
-    void clearAdditionalSpatialFields();
-
 protected:
     void buildProperties() override;
 
@@ -192,7 +180,6 @@ private:
     std::shared_ptr<OntoMath::VectorField> _spatialVectorField;
     
     std::shared_ptr<geom::FieldNode> _spatialRootObject;
-    std::vector<std::shared_ptr<geom::FieldNode>> _additionalSpatialFields;
 
 public:
     Formation& formation() { return _formation; }

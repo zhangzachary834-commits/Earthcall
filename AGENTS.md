@@ -1,8 +1,10 @@
 # Earthcall — read this before writing code
 
-Earthcall is a Person-centered ontology that orders the engine attached to it. The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
+Earthcall is a Person-centered ontology that orders the engine attached to it.
+The engine here is not the order of truth in Earthcall—the ontology is, and the engine serves as the vessel for that.
 
-**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
+**You are almost certainly about to do the standard engineering thing, and it is usually wrong here** — not because
+it is bad engineering, but because it is engineering for a different kind of system. Spend the two minutes on the refusals and router below.
 Don't use subagents because they tend to take up an enormous amount of tokens (120k just for basic lookups, which kills my usage quotas).
 If you are using Github Connector, you can run tests and build using Github Actions. 
 
@@ -12,7 +14,7 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
 1. **No new C++ class for a domain noun.** Not `RobotEntity`, not `Vehicle`, not `Tree`,
    not `Category`. This principle also extends to hardcoded fields (e.g., `health` or `inventory` on a `Person`). Domain things and their state are *authored in-world* as data, never carved into the
    type system. → `ontology/NEW_KIND_FRAMEWORK.md`
-   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Moment`, time's own instant-or-interval structure, and `Timeline`, the first-class relative temporal domain that contains Moments, are admitted the same way — see `ontology/TIME_AND_MOMENT.md`; there is no `class Duration` and no enum of timeline kinds.)*
+   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Moment`, time's own instant-or-interval structure, is admitted the same way — see `ontology/TIME_AND_MOMENT.md`; there is no `class Duration`.)*
 2. **No new top-level directory for a subsystem.** The top level is the ontology
    (`ConstructedBeing`, `Person`, `Relation`, `Singularity`, `ZonesOfEarth`, `Identity`, `Time`).
    A channel to hardware or foreign software goes *inside* `Singularity/`. → `ontology/DIRECTORY_ORDERING.md`
@@ -40,8 +42,7 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
    all artifacts of human intention: a First Mover developer tool or irreducible Singularity Sense-Act substrate component. (Zach wrote Refusal 7 by hand, not Opus 5)
 
 The general form of all seven: **no subsystem may define what a thing IS.** Subsystems define how the machine senses and acts; Persons author what things are in-world from primitives every subsystem can see.
-Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look. It's what I currently call the "minimum-maximum principle": We want the minimum viable set of invariants/abstractions that allow the maximum generative, logical, and teleological expressability. 
-Take maximum expressive ceiling that one may ordinarily associate with many abstractions and find the minimum invariants necessary to achieve that same expressability without any loss. When it is mathematically impossible to express one particular thing without a certain abstraction on this particular Singularity/machine substrate, that abstraction is an invariant channel.
+Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look.
 
 ---
 
@@ -66,7 +67,7 @@ Take maximum expressive ceiling that one may ordinarily associate with many abst
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | remove, break, or dissolve a Relation — or decide what a stale one becomes | `ontology/PRIMARY_AND_SUB_RELATIONS.md` §2, §7 | the primary Relation between two Singulars never disappears; sub-Relations dissolve only on proved impossibility |
 | touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
-| ask what a *when* is — a timestamp, duration, Timeline, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | `Timeline` is a relative temporal domain any Singular may own; legacy Law time paths are compatibility semantics pending the Law/Timeline ontology |
+| ask what a *when* is — a timestamp, a duration, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | the world clock and `Moment` answer two different questions; no `class Duration` |
 | build a button, panel, control, menu, or any interface at all | `law/INTERACTION_AS_LAW.md` | Law + set-to-set aimed at the pointer; no widget, no `src/UI/` |
 | build a 2D/3D app, SDF, nuanced shape, pixel region, or visual style | `Design/Building 2D and 3D Apps with Earthcall Guide.md` | author form with OntoMath, CSG, Relations, and Law; never make `ShapeKind` the ontology |
 | build anything two Persons share — visibility, likeness, or conflicting law | `ourverse/SECOND_PERSON_FRAMEWORK.md` §5 | specified before needed; ⚑ AUTHOR decisions are Zach's |
@@ -86,7 +87,7 @@ src/
   ZonesOfEarth/   Zone · Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    the modality layer: Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · FirstMoverWindowTools
   Identity/       First Mover register, identity ledger, keys
-  Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
+  Time/           Moment · Event (distinguished Moment) — world clock lives on Universe
   Legacy/         not yet ontologically placed
 docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop
 third_party/ local_deps/ imgui/                     the foreign
@@ -117,7 +118,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 229 registered (2026-09-22) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 199 registered (2026-09-17) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -162,7 +163,7 @@ widening the baseline.
 - **Mention the things human developers told you that you're drawing from.** Don't just write a document; address what the Person said so authorial intent and progress toward the human telos remain traceable.
   You may write in a register as if the idea is your own—it is good to internalize and fulfill ideas—but make origination clear: what came from real people, what you originated, and where you extended the Person's idea.
   Leave room for independently re-derived work, which may originate with you while remaining within the human thread.
-- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons. **Patch, never regenerate:** every save generator and injection makes targeted edits to the file as it exists on disk. It stages a new file holding the old contents plus your edits, keeps the old file, verifies nothing in either was erased, then renames atomically. Scratch builds are allowed only for a first seed. → `law/FIRST_MOVER_AUTHORING.md` §7 rule 8.
+- **Save files are sacred.** They are Earthcall's flesh and blood, the reason for refusals #1 and #3; preserve their profound human meaning and relationships across architectural shifts, and modify them only with authorization from their owner/stakeholder Persons.
 
 ---
 
@@ -184,11 +185,11 @@ you read the source—run things**, and **after finishing, ask whether anything 
 - The To-Do List is `docs/Agenda/Tasks/To-do list.md`. Consult it whenever a prompt asks what Earthcall needs next, unless the prompt says otherwise.
 - Anything you work on that isn't listed goes in it — create categories as needed, and add tasks any other document implies but the list omits.
 - **The To-Do list is an index, not a record: one sentence per bullet.** Detail goes in that task's own folder, `docs/Agenda/Tasks/Specific Tasks/<Task_Slug>/<Task_Slug>.md`, and the bullet links to it. Never grow a bullet into a paragraph.
-- **If your work leaves anything only a Person can confirm — a control to click, a thing to look at, a feel to judge — write the check into `docs/Agenda/Tasks/For Zach/Person Verification List.md` before you finish.** Not the To-Do list, not an audit. This applies to every session, not just ones asked "what's next", and it is the rule agents miss most: that file has one commit in its life and Zach wrote it. A green suite is not a witness. — Zach's instruction, hoisted here 2026-09-02 because line 6 of the To-Do list was never being read.
+- **If your work leaves anything only a Person can confirm — a control to click, a thing to look at, a feel to judge — write the check into `docs/Agenda/Tasks/Person Verification List.md` before you finish.** Not the To-Do list, not an audit. This applies to every session, not just ones asked "what's next", and it is the rule agents miss most: that file has one commit in its life and Zach wrote it. A green suite is not a witness. — Zach's instruction, hoisted here 2026-09-02 because line 6 of the To-Do list was never being read.
 
 ## Document Conventions
 - Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`.
-- Always sign your harness name (e.g. Antigravity, Codex, etc.), model name (GPT-4o, Claude 5.5 Opus, etc.), session ID, date, and timestamp.
+- Always sign your name, session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
 - Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.
 

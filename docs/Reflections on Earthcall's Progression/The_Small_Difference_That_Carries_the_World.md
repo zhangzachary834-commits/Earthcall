@@ -28,7 +28,7 @@ That makes the small encounters consequential. A note pad that feels connected t
 
 Your response also keeps this from becoming a victory story about my model. The earlier Studio pass was a different Astra session; I know it through its artifacts and your report. You praised parts that worked and named parts that remained incoherent. The blue/violet pair is a good example. A visual variation can look deliberate while communicating an accidental distinction. You asked for the difference to carry meaning. That is a more demanding standard than visual richness, and it is the standard I would carry into future world authoring.
 
-The same demand appears at a very different scale in today's [pixel-writer work](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Authorable_Pixel_Writer/Authorable_Pixel_Writer.md). You asked for individual pixels or selected sets to be capable of elevation as Properties, and for selection bounds to be authored through OntoMath. You also distinguished that capacity from permanently turning every raw pixel into a separate Property.
+The same demand appears at a very different scale in today's [pixel-writer work](../Agenda/Tasks/Specific%20Tasks/Authorable_Pixel_Writer/Authorable_Pixel_Writer.md). You asked for individual pixels or selected sets to be capable of elevation as Properties, and for selection bounds to be authored through OntoMath. You also distinguished that capacity from permanently turning every raw pixel into a separate Property.
 
 That distinction deserves attention. It lets the machine keep dense storage while a Person gives a particular part of it a name, reach, and a role in Laws. The source currently includes `WritePixel` and `ElevatePixels`, with Screen-channel sinks for the corresponding acts. This is a concrete attempt to join the efficiency of the underlying material to the specificity of authored attention.
 
@@ -38,7 +38,7 @@ I am describing the direction visible in the implementation, not certifying the 
 
 That second failure reaches deep into Earthcall's central promise.
 
-Opus 5's [The World Arrives Twice](Reflections%20on%20Repo%20State/The_World_Arrives_Twice.md) describes the earlier chess failure in which Zone hydration preceded the categories needed to bind its Relations. The pieces appeared, but the Law could not recognize them as pieces. Today's [Zone identity-store investigation](../Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md) records another way a world can arrive visibly while losing authored meaning: a stored Zone displaced the world's object fields, and an absent color became a C++ default.
+Opus 5's [The World Arrives Twice](Reflections%20on%20Repo%20State/The_World_Arrives_Twice.md) describes the earlier chess failure in which Zone hydration preceded the categories needed to bind its Relations. The pieces appeared, but the Law could not recognize them as pieces. Today's [Zone identity-store investigation](../Agenda/Tasks/Specific%20Tasks/Zone_identity_store_field_level_merge/Zone_identity_store_field_level_merge.md) records another way a world can arrive visibly while losing authored meaning: a stored Zone displaced the world's object fields, and an absent color became a C++ default.
 
 A default is particularly revealing here. It can produce a perfectly renderable result. The canvas is red; the application has a color to draw. Yet the successful fallback has answered a question the Person already answered differently.
 
@@ -48,7 +48,7 @@ There is unfinished work and moving evidence here. The investigation's earlier s
 
 The encouraging progression is that the failures are becoming more precisely attributable. Your report of the red canvas helped identify the layer that had lost your color. A structural result, a rendering result, and your experience could disagree, and that disagreement led somewhere.
 
-Your request for [Property Writers](../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Property_Writer_Reverse_Index/Property_Writer_Reverse_Index.md) takes this further. You called it needing “grep for Laws.” The current implementation walks action trees, records write sites and model paths, and provides a route back to the corresponding Action card. It also distinguishes a sound action reading a frequency from an action writing a property.
+Your request for [Property Writers](../Agenda/Tasks/Specific%20Tasks/Property_Writer_Reverse_Index/Property_Writer_Reverse_Index.md) takes this further. You called it needing “grep for Laws.” The current implementation walks action trees, records write sites and model paths, and provides a route back to the corresponding Action card. It also distinguishes a sound action reading a frequency from an action writing a property.
 
 This is a significant turn in the life of an authored world. Once many Laws can compose over the same beings, finding the available property is only the beginning. The author needs to find the intentions that can change it. The question has become: *what here is making this happen, and where can I work on it?*
 

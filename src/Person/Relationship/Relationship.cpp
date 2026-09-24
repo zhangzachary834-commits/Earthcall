@@ -2,7 +2,10 @@
 #include <iostream>
 
 Relationship::Relationship(const std::string& type, const std::string& a, const std::string& b, bool directed, float initialWeight)
-    : Relation(type, a, b, directed, initialWeight) {
+    : Relation() {
+    this->type = type;
+    this->directed = directed;
+    this->setWeight(initialWeight);
 }
 
 Relationship::Relationship(const std::string& type, const Singular& aEntity, const Singular& bEntity, bool directed, float initialWeight)

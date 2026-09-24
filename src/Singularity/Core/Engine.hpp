@@ -1,6 +1,5 @@
 class ElementalToolHandler;
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
-#include "Time/timeline.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/Menu.hpp"
 #include <glm/glm.hpp>
 #pragma once
@@ -14,7 +13,6 @@ class KeyboardHandler;
 class MouseHandler;
 class CursorTools;
 class Chat;
-class Relation;
 
 namespace Core { class Camera; }
 
@@ -102,15 +100,9 @@ public:
     
         
     
-    double getWorldTime() const { return _worldTimeline.now(); }
-    void setWorldTime(double t) {
-        // Absolute repositioning is not a frame advance. Do not carry a stale
-        // prior-frame delta across a First Mover clock jump.
-        (void)_worldTimeline.setClock(t, 0.0);
-    }
-    double* worldTimePtr() { return _worldTimeline.nowPtr(); }
-    Timeline& worldTimeline() { return _worldTimeline; }
-    const Timeline& worldTimeline() const { return _worldTimeline; }
+    double getWorldTime() const { return _worldTime; }
+    void setWorldTime(double t) { _worldTime = t; }
+    double* worldTimePtr() { return &_worldTime; }
 
 private:
     Engine() = default;                       // use instance()
@@ -132,13 +124,7 @@ private:
     std::unique_ptr<CursorTools> _cursorTools;
     std::unique_ptr<Chat> _chat;
     std::unique_ptr<::ElementalToolHandler> _elementalToolHandler;
-
-    // Compatibility storage for the broad world Timeline. This member's C++
-    // location does NOT mean Engine ontologically owns it: Timeline ownership
-    // is relative and belongs in Relations among Singulars. Additional local
-    // clocks are ordinary Timeline beings owned by whatever Singular authors
-    // them; no new Engine enum/member kind is required.
-    Timeline _worldTimeline{"world-timeline"};
+    double _worldTime = 0.0;
 
     bool _mouseLeftPressedLast = false;
     bool _mouseLeftJustPressed = false;
@@ -204,12 +190,6 @@ public:
     const std::vector<glm::vec2>& get2DToolDragPoints() const { static std::vector<glm::vec2> v; return v; }
     
     Ourverse _ourverse;
-
-    // Compatibility First Mover relation witnessing the broad Timeline's
-    // actual ontological owner. Storage of _worldTimeline on Engine is merely
-    // storage; this Relation is the ownership claim.
-    std::shared_ptr<Relation> _worldTimelineOwnership;
-
     int _patchCtrlIndex = 0;
     float _currentColor[4] = {1,1,1,1};
     struct DummyBrush { bool showCursor=false; bool cursorVisible=false; float previewSize=1.0f; }; DummyBrush _brush;

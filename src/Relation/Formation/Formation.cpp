@@ -235,7 +235,7 @@ bool Formation::reachesDirected(const std::string& from, const std::string& to,
         out[rel->aId()].push_back(rel->bId());
     }
 
-    std::unordered_set<std::string> seen{from};
+    std::set<std::string> seen{from};
     std::vector<std::string> stack{from};
     while (!stack.empty()) {
         const std::string curr = stack.back();

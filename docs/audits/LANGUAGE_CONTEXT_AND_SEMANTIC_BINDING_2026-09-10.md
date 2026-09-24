@@ -5,7 +5,7 @@
 **Date / evidence timestamp:** 2026-09-10, 12:00:26 PDT  
 **Inspected revision:** `115b8e8b`, with pre-existing working edits to `src/terminal_entry.cpp`  
 **Status:** research complete; recommendations proposed, not implemented.  
-**Task:** [Contextual Language and Semantic Binding](../Agenda/Tasks/Specific%20Tasks/Channels%20and%20Language/Contextual_Language_and_Semantic_Binding/Contextual_Language_and_Semantic_Binding.md)
+**Task:** [Contextual Language and Semantic Binding](../Agenda/Tasks/Specific%20Tasks/Contextual_Language_and_Semantic_Binding/Contextual_Language_and_Semantic_Binding.md)
 
 ## 1. Why this branch
 
@@ -32,7 +32,7 @@ The following were checked before choosing recommendations:
 | [Logos plan](../plans/logos_architecture_plan.md) | Lexemes as beings, WebSocket ingress, multi-medium manifestation, AI-generated Laws, multiplayer graph updates | Preserve context and distinguish alternative readings before graph effects |
 | [Semantic network vision](../architecture/migration/SEMANTIC_NETWORK_VISION.md) and [audit](semantic_network_audit_report.md) | Decay, reinforcement, transitive inference, semantic-to-physics Laws | Represent the scope and force of a statement independently of an aggregate edge weight |
 | [Fable's feedback and Zach's response](../core/Earthcall%20Ourverse%20Manifesto/Discussion%20on%20Earthcall.md) | Meaning-as-use, provenance, performatives, mutable stakeholder-governed meanings, language as a self-hosting hinge | Concrete scoped linking, explicit binding editions, and controlled-language round-trip contracts |
-| [Existing Relation work](../Agenda/Tasks/Specific%20Tasks/Research%20and%20Reviews/PARTIAL_2026_08_23/PARTIAL_2026_08_23.md), `Utterance.hpp`, `relation_retry_lexeme_test` | Utterance/type distinction, `occurrence-of`, Lexeme-typed Relations | Repeated-position identity, live-ingress wiring, quotation/claim structure, and type identity through deduplication |
+| [Existing Relation work](../Agenda/Tasks/Specific%20Tasks/PARTIAL_2026_08_23/PARTIAL_2026_08_23.md), `Utterance.hpp`, `relation_retry_lexeme_test` | Utterance/type distinction, `occurrence-of`, Lexeme-typed Relations | Repeated-position identity, live-ingress wiring, quotation/claim structure, and type identity through deduplication |
 | [Sufficiency thesis](../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20the%20Substrate/The_Sufficiency_Thesis.md) | Model a conversation or another non-spatial domain | A specific language contract and falsifiable exercise, rather than another recommendation to model conversation |
 | [Second-Nature specification](../plans/SECOND_NATURE_LAW_AND_ZONE_FEATURES_SPECIFICATION.md) | Intent Lexemes selecting Law templates | A shared, editable text/graph projection with identity-preserving updates |
 | Recent analyses, Agenda, and relevant intercom searches | Rete optimization, persistence repair, provenance, semantic-decay incident | These remain dependencies and context; they are not presented as fresh recommendations |

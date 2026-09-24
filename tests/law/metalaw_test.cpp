@@ -212,13 +212,6 @@ int main() {
         const auto& heard = manager.triggersOf(bound->getIdentifier());
         assert(std::find(heard.begin(), heard.end(), "object-touched") != heard.end());
         assert(std::find(heard.begin(), heard.end(), "zone-entered") != heard.end());
-
-        // Verify native Law synthesis with ActionNode::drive actions directly
-        CurveModel swayCurve = CurveModel::sinusoid(0.05, 1.0, 0.0, 0.0);
-        Law driveLaw("native-drive-law", {&author});
-        driveLaw.setActionModel(ActionNode::drive("position.x", swayCurve, "time.sinceApplied"));
-        driveLaw.setDrives(true);
-        assert(driveLaw.drives());
     }
 
     glfwDestroyWindow(window);

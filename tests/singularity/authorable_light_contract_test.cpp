@@ -120,13 +120,12 @@ int main() {
         check(Rendering::readAuthorableLight(hydrated, hydratedLight) && hydratedLight.source,
               "hydrated Sun spatial root retains authored light.source");
 
-        auto eval = [&](double x, double y, double z, double t) -> double {
+        auto eval = [&](double x, double y, double z) -> double {
             if (!hydrated.field) return -1.0;
             std::map<std::string, PropertyValue> vars{
                 {"x", PropertyValue(x)},
                 {"y", PropertyValue(y)},
-                {"z", PropertyValue(z)},
-                {OntoMath::kTimeVar, PropertyValue(t)}
+                {"z", PropertyValue(z)}
             };
             const auto value = hydrated.field->astDefinition.evaluate(vars);
             if (!value) return -1.0;
@@ -135,27 +134,11 @@ int main() {
             return numeric;
         };
 
-        const double nearSource = eval(0.0, 0.0, 0.0, 0.0);
-        const double farther = eval(20.0, 0.0, 0.0, 0.0);
-        const double nearSourceLater = eval(0.0, 0.0, 0.0, 123.0);
+        const double nearSource = eval(0.0, 0.0, 0.0);
+        const double farther = eval(20.0, 0.0, 0.0);
         check(nearSource > 0.99, "Sun radiance is approximately unit strength at its source");
         check(farther >= 0.0 && farther < nearSource,
               "Sun authored radiance decreases with distance on the CPU");
-        check(std::fabs(nearSourceLater - nearSource) < 1e-9,
-              "pre-Rung-4 spatial rho remains identical when optional t changes");
-
-        auto timeNode = std::make_shared<OntoMath::MathNode>();
-        timeNode->op = OntoMath::MathNode::Op::ValueLeaf;
-        timeNode->variableName = OntoMath::kTimeVar;
-        OntoMath::Piecewise timed = OntoMath::Piecewise::continuous(timeNode);
-        std::map<std::string, PropertyValue> timeVars{
-            {OntoMath::kTimeVar, PropertyValue(2.5)}
-        };
-        const auto timedValue = timed.evaluate(timeVars);
-        double timedNumeric = -1.0;
-        check(timedValue && propertyValueToNumber(*timedValue, timedNumeric) &&
-                  std::fabs(timedNumeric - 2.5) < 1e-9,
-              "CPU OntoMath evaluation resolves canonical t as authored world-time input");
 
         // Rung 3 persists two identical SDF witnesses at different
         // source-relative positions. This proves the saved world contains an
@@ -189,112 +172,13 @@ int main() {
             const glm::vec3 farPos = worldPosition(*farWitness);
             const glm::vec3 nearRel = nearPos - hydratedLight.position;
             const glm::vec3 farRel = farPos - hydratedLight.position;
-            const double nearWitnessRho = eval(nearRel.x, nearRel.y, nearRel.z, 0.0);
-            const double farWitnessRho = eval(farRel.x, farRel.y, farRel.z, 0.0);
+            const double nearWitnessRho = eval(nearRel.x, nearRel.y, nearRel.z);
+            const double farWitnessRho = eval(farRel.x, farRel.y, farRel.z);
             check(glm::length(nearRel) < glm::length(farRel),
                   "near SDF witness is geometrically closer to the authored source");
             check(nearWitnessRho > farWitnessRho,
                   "the same saved SDF surface receives stronger authored rho at the near position");
         }
-    }
-
-    // Rung 5: source chroma is a first-order authored Piecewise on the
-    // radiant FieldNode. It must be Law-reachable and survive save/load without
-    // being smuggled into vectorField (which remains physical flow/force).
-    {
-        auto vec = std::make_shared<OntoMath::MathNode>();
-        vec->op = OntoMath::MathNode::Op::VectorConstruct;
-        for (double c : {0.8, 0.2, 0.6}) {
-            auto component = std::make_unique<OntoMath::MathNode>();
-            component->op = OntoMath::MathNode::Op::ScalarLeaf;
-            component->scalarForm.terms.push_back(OntoMath::Term(c));
-            vec->children.push_back(std::move(component));
-        }
-        *field.lightChroma = OntoMath::Piecewise::continuous(vec);
-
-        Property* chromaProperty = field.findProperty("light.chroma.ast");
-        check(chromaProperty != nullptr,
-              "authored chi is registered as reachable property light.chroma.ast");
-        check(field.findProperty("vectorField.ast") != chromaProperty,
-              "source chroma is not aliased to the physical flow/force vector field");
-
-        const nlohmann::json saved = field.toJson();
-        check(saved.contains("lightChroma"),
-              "FieldNode serialization persists authored source chroma");
-
-        geom::FieldNode restored("sun.light-field.restored");
-        restored.applyJson(saved);
-        check(restored.lightChroma && !restored.lightChroma->pieces.empty(),
-              "FieldNode load restores authored source chroma");
-
-        std::map<std::string, PropertyValue> vars{
-            {"p", PropertyValue(glm::vec3(0.0f))},
-            {"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)}, {"z", PropertyValue(0.0)},
-            {OntoMath::kTimeVar, PropertyValue(7.0)}
-        };
-        const auto restoredValue = restored.lightChroma->evaluate(vars);
-        check(restoredValue && std::holds_alternative<glm::vec3>(*restoredValue) &&
-                  near3(std::get<glm::vec3>(*restoredValue), glm::vec3(0.8f, 0.2f, 0.6f)),
-              "restored chi evaluates as the authored RGB vector on the CPU");
-
-        PropertyValue propertyValue = chromaProperty ? chromaProperty->value() : PropertyValue(std::string());
-        check(chromaProperty && std::holds_alternative<std::string>(propertyValue) &&
-                  !std::get<std::string>(propertyValue).empty(),
-              "light.chroma.ast exposes the complete authored tree rather than a hidden renderer copy");
-    }
-
-
-    // Rung 6: angular emission is another first-order authored Piecewise on the
-    // radiant FieldNode. It owns mathematics, not a Spotlight/Beam kind.
-    {
-        auto omegaY = std::make_shared<OntoMath::MathNode>();
-        omegaY->op = OntoMath::MathNode::Op::ValueLeaf;
-        omegaY->variableName = OntoMath::kOmegaYVar;
-        *field.lightAngular = OntoMath::Piecewise::continuous(omegaY);
-
-        Property* angularProperty = field.findProperty("light.angular.ast");
-        check(angularProperty != nullptr,
-              "authored alpha is registered as reachable property light.angular.ast");
-        check(field.findProperty("light.chroma.ast") != angularProperty &&
-                  field.findProperty("vectorField.ast") != angularProperty,
-              "angular emission is independent from chroma and physical flow/force");
-
-        const nlohmann::json saved = field.toJson();
-        check(saved.contains("lightAngular"),
-              "FieldNode serialization persists authored angular emission");
-
-        geom::FieldNode restored("sun.light-field.angular-restored");
-        restored.applyJson(saved);
-        check(restored.lightAngular && !restored.lightAngular->pieces.empty(),
-              "FieldNode load restores authored angular emission");
-
-        // CPU witness of the exact Rung-6 coordinate convention. A receiver
-        // displaced by (3,4,0) from the source has normalized outgoing omega
-        // (0.6,0.8,0). The authored alpha=omega.y must therefore evaluate 0.8.
-        const glm::vec3 receiver = field.origin + glm::vec3(3.0f, 4.0f, 0.0f);
-        const glm::vec3 delta = receiver - field.origin;
-        const glm::vec3 omega = glm::normalize(delta);
-        std::map<std::string, PropertyValue> vars{
-            {"p", PropertyValue(delta)},
-            {"x", PropertyValue(static_cast<double>(delta.x))},
-            {"y", PropertyValue(static_cast<double>(delta.y))},
-            {"z", PropertyValue(static_cast<double>(delta.z))},
-            {OntoMath::kTimeVar, PropertyValue(0.0)},
-            {OntoMath::kOmegaXVar, PropertyValue(static_cast<double>(omega.x))},
-            {OntoMath::kOmegaYVar, PropertyValue(static_cast<double>(omega.y))},
-            {OntoMath::kOmegaZVar, PropertyValue(static_cast<double>(omega.z))}
-        };
-        const auto value = restored.lightAngular->evaluate(vars);
-        double numeric = -1.0;
-        check(value && propertyValueToNumber(*value, numeric) &&
-                  std::fabs(numeric - 0.8) < 1e-6,
-              "CPU alpha reads normalized world-space source-to-receiver omega");
-
-        PropertyValue propertyValue =
-            angularProperty ? angularProperty->value() : PropertyValue(std::string());
-        check(angularProperty && std::holds_alternative<std::string>(propertyValue) &&
-                  !std::get<std::string>(propertyValue).empty(),
-              "light.angular.ast exposes the complete authored tree to Law");
     }
 
     // Wrongly typed authored state is visible but not silently guessed into a

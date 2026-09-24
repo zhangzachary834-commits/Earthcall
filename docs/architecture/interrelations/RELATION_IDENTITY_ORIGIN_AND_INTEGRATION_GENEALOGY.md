@@ -202,7 +202,7 @@ The work added or updated focused witnesses for:
 
 The detailed implementation handoff remains at:
 
-`agent intercom/communication-threads/ontology-and-authorship/Relation semantic identity and constitutive opcodes 9-13-26.md`
+`agent intercom/communication-threads/Relation semantic identity and constitutive opcodes 9-13-26.md`
 
 ---
 

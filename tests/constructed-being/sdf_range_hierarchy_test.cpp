@@ -7,7 +7,6 @@
 // never suppress a sampled sign crossing.
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <algorithm>
@@ -158,20 +157,6 @@ int main() {
               proxy.halfExtent.y <= 2.0f &&
               proxy.halfExtent.z <= 2.0f,
               "sphere proxy never expands beyond authored coverage");
-        size_t positiveSkipSafe = 0;
-        size_t negativeZeroFree = 0;
-        for (const auto& node : h.nodes) {
-            if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipSafe;
-            if (node.boundFinite && node.rangeHi < 0.0f) {
-                ++negativeZeroFree;
-                check(!geom::rangeNodeProvesPositiveOutside(node),
-                      "proved-negative interior cell is never traversal-skippable");
-            }
-        }
-        check(positiveSkipSafe > 0,
-              "sphere hierarchy contains proved-positive outside cells to skip");
-        check(negativeZeroFree > 0,
-              "sphere hierarchy contains proved-negative interior cells to retain");
         verifyStructure(h);
         verifyProvedCellsBySampling(sphere, h);
     }
@@ -245,45 +230,6 @@ int main() {
         verifyProvedCellsBySampling(perlin, h);
     }
 
-    // Real Perlin-floor scale: this is the renderer's actual non-heightfield
-    // proxy extent (authored [1000,30,1000] grown by 5%). The old 8,192-node
-    // renderer budget could truncate a depth-5 tree before it reached useful
-    // small cells. A complete 65,536 budget plus lattice-aware Noise bounds must
-    // now prove genuine empty space while preserving an ambiguous terrain band.
-    {
-        const geom::SdfNode perlin =
-            geom::makeImplicit(perlinFloorMath(/*amplitude=*/40.0,
-                                               /*frequency=*/0.008));
-        const glm::vec3 realProxyExtent(1050.0f, 31.5f, 1050.0f);
-        const auto h = geom::buildRangeHierarchy(
-            perlin, realProxyExtent,
-            /*maxDepth=*/6, /*maxNodes=*/327680);
-
-        check(!h.nodes.empty(), "real-scale Perlin hierarchy builds");
-        check(h.provedEmptyNodes > 0,
-              "real-scale Perlin hierarchy proves zero-free cells");
-        check(h.ambiguousLeaves > 0,
-              "real-scale Perlin hierarchy preserves terrain ambiguity");
-        check(h.unknownLeaves == 0,
-              "real-scale supported Perlin expression stays finite");
-        check(h.nodes.size() <= 327680,
-              "real-scale Perlin hierarchy respects complete-tree budget");
-        check(h.nodes.size() <= 299593,
-              "depth-6 octree never exceeds mathematical node maximum");
-        size_t positiveSkipNodes = 0;
-        size_t negativeZeroFreeNodes = 0;
-        for (const auto& node : h.nodes) {
-            if (geom::rangeNodeProvesPositiveOutside(node)) ++positiveSkipNodes;
-            if (node.boundFinite && node.rangeHi < 0.0f) ++negativeZeroFreeNodes;
-        }
-        check(positiveSkipNodes > 0,
-              "real-scale Perlin hierarchy contains positive outside cells to skip");
-        check(negativeZeroFreeNodes > 0,
-              "real-scale Perlin hierarchy also preserves proved-negative interior cells");
-        verifyStructure(h);
-        verifyProvedCellsBySampling(perlin, h);
-    }
-
     // Budget exhaustion is a correctness mode, not a partial-tree authority:
     // construction stops with ambiguous leaves while preserving coverage.
     {
@@ -295,95 +241,6 @@ int main() {
         check(h.ambiguousLeaves > 0,
               "budget exhaustion remains explicit ambiguity");
         verifyStructure(h);
-    }
-
-    // Positive-proof coalescing is derived acceleration permission. It may
-    // discard theorem knowledge, but it must never create a skip across any
-    // negative, ambiguous, unknown, or structurally missing partition.
-    {
-        geom::SdfRangeHierarchy siblings;
-        siblings.nodes.resize(9);
-        auto& root = siblings.nodes[0];
-        root.depth = 0;
-        root.boundFinite = true;
-        root.rangeLo = -1.0f;
-        root.rangeHi = 1.0f;
-        root.firstChild = 1;
-        root.childCount = 8;
-
-        for (uint32_t i = 1; i <= 8; ++i) {
-            auto& child = siblings.nodes[i];
-            child.depth = 1;
-            child.boundFinite = true;
-            child.rangeLo = 1.0f;
-            child.rangeHi = 2.0f;
-            child.provedNoZero = true;
-        }
-
-        const auto coalescedRoot =
-            geom::derivePositiveRangeProofGrid(siblings, /*targetDepth=*/0);
-        check(coalescedRoot.positiveCells == 1,
-              "eight positive partition children coalesce into one parent proof");
-        check(coalescedRoot.words.size() == 1 &&
-                  (coalescedRoot.words[0] & 1u) != 0u,
-              "coalesced parent proof sets the regular-grid bit");
-
-        const auto directChildren =
-            geom::derivePositiveRangeProofGrid(siblings, /*targetDepth=*/1);
-        check(directChildren.positiveCells == 8,
-              "target-depth positive children remain eight independent proofs");
-
-        auto withNegative = siblings;
-        withNegative.nodes[8].rangeLo = -2.0f;
-        withNegative.nodes[8].rangeHi = -1.0f;
-        const auto negativeRefusal =
-            geom::derivePositiveRangeProofGrid(withNegative, /*targetDepth=*/0);
-        check(!negativeRefusal.hasPositiveCells() &&
-                  negativeRefusal.words.empty(),
-              "one proved-negative child refuses positive parent coalescing");
-
-        auto withAmbiguous = siblings;
-        withAmbiguous.nodes[8].rangeLo = -1.0f;
-        withAmbiguous.nodes[8].rangeHi = 1.0f;
-        withAmbiguous.nodes[8].provedNoZero = false;
-        const auto ambiguousRefusal =
-            geom::derivePositiveRangeProofGrid(withAmbiguous, /*targetDepth=*/0);
-        check(!ambiguousRefusal.hasPositiveCells(),
-              "one ambiguous child refuses positive parent coalescing");
-
-        auto withUnknown = siblings;
-        withUnknown.nodes[8].boundFinite = false;
-        withUnknown.nodes[8].rangeLo = 0.0f;
-        withUnknown.nodes[8].rangeHi = 0.0f;
-        withUnknown.nodes[8].provedNoZero = false;
-        const auto unknownRefusal =
-            geom::derivePositiveRangeProofGrid(withUnknown, /*targetDepth=*/0);
-        check(!unknownRefusal.hasPositiveCells(),
-              "one unknown child refuses positive parent coalescing");
-
-        auto malformed = siblings;
-        malformed.nodes.pop_back();
-        const auto missingChildRefusal =
-            geom::derivePositiveRangeProofGrid(malformed, /*targetDepth=*/0);
-        check(!missingChildRefusal.hasPositiveCells(),
-              "missing partition child fails open instead of inventing proof");
-
-        geom::SdfRangeHierarchy positiveAncestor;
-        positiveAncestor.nodes.resize(1);
-        positiveAncestor.nodes[0].depth = 0;
-        positiveAncestor.nodes[0].boundFinite = true;
-        positiveAncestor.nodes[0].rangeLo = 3.0f;
-        positiveAncestor.nodes[0].rangeHi = 4.0f;
-        positiveAncestor.nodes[0].provedNoZero = true;
-
-        const auto filled =
-            geom::derivePositiveRangeProofGrid(positiveAncestor, /*targetDepth=*/2);
-        check(filled.dim == 4 && filled.positiveCells == 64,
-              "positive ancestor authorizes every target-depth descendant");
-        check(filled.words.size() == 2 &&
-                  filled.words[0] == 0xFFFFFFFFu &&
-                  filled.words[1] == 0xFFFFFFFFu,
-              "positive ancestor fills the exact descendant bitmap");
     }
 
     if (failures) {

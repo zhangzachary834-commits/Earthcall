@@ -32,7 +32,6 @@
 #include "Person/Person.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
-#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
@@ -447,11 +446,6 @@ void Engine::tick(float dt) {
 }
 
 void Engine::shutdown() {
-    if (Universe::instance().timeline() == &_worldTimeline) {
-        Universe::instance().setTimeline(nullptr);
-    }
-    _worldTimelineOwnership.reset();
-
     if (_window) {
         glfwDestroyWindow(_window);
         _window = nullptr;

@@ -412,7 +412,7 @@ spirit of CLAUDE.md's rule against re-deriving solved problems, the same way Ret
 in the law engine.
 
 The GPU-side half of this problem — tiering the AST interpreter toward WGSL so the CPU path stops
-being the only path — is live in `agent intercom/communication-threads/sdf-and-rendering/GPU AST Interpreter and WGSL
+being the only path — is live in `agent intercom/communication-threads/GPU AST Interpreter and WGSL
 Tiering 8-28-26.md`. Phase 0 and Phase 3 are the CPU-side counterpart of that conversation, not a
 competitor to it: the authored path has to stay honest and evaluable on the CPU whatever the fast
 path does, which is exactly what the dual-path parity item under **Performance** is guarding.

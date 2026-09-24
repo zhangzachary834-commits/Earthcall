@@ -326,11 +326,6 @@ int main() {
     }
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
 
-    const char* testMode = std::getenv("EARTHCALL_PERLIN_TEST_MODE");
-    const bool runCore = !(testMode && std::string(testMode) == "D");
-    const bool runGateD = !(testMode && std::string(testMode) == "ABC");
-
-    if (runCore) {
     // =========================================================================
     // Gate A: Fused Value vs Reference cnoise3 & Analytical Gradient Verification
     // =========================================================================
@@ -418,14 +413,6 @@ int main() {
             uint32_t  heightGridOffset = 0;
             uint32_t  heightGridDimX = 0;
             uint32_t  heightGridDimZ = 0;
-            // Keep this compute-only fixture ABI-identical to the renderer's
-            // SdfInstanceData. The gradient probe never traverses the hierarchy,
-            // so these remain zero, but WebGPU validates the full storage-struct
-            // minimum binding size before dispatch.
-            uint32_t  rangeNodeOffset = 0;
-            uint32_t  rangeNodeCount = 0;
-            uint32_t  rangeTraversalEnabled = 0;
-            uint32_t  rangeReserved = 0;
         } inst0;
 
         WGPUBufferDescriptor instDesc = {};
@@ -483,13 +470,6 @@ int main() {
         WGPUBindGroup bg0 = wgpuDeviceCreateBindGroup(gpu.device, &bg0Desc);
         assert(bg0 != nullptr);
 
-        // Auto-layout is entry-point-specific. cs_eval_grad reaches
-        // instances[g_instIdx] through sdfEvalGrad, but it never reaches the
-        // marcher's optional heightCells or rangeNodes resources. Therefore
-        // group(1) for THIS compute pipeline contains binding 0 only. Keep
-        // SimpleInstance ABI-identical to the renderer's SdfInstanceData so the
-        // minimum storage binding size is correct, but do not invent bindings
-        // that are absent from the compute entry point's auto-layout.
         WGPUBindGroupLayout bgl1 = wgpuComputePipelineGetBindGroupLayout(cp, 1);
         WGPUBindGroupEntry bg1Entries[1] = {};
         bg1Entries[0].binding = 0; bg1Entries[0].buffer = instBuf; bg1Entries[0].offset = 0; bg1Entries[0].size = sizeof(SimpleInstance);
@@ -658,12 +638,10 @@ int main() {
         std::printf("[Gate C3] Falsification confirmed: native-f32 counterexample proves non-monotonicity in R^3.\n");
     }
 
-    } // runCore
-
     // =========================================================================
     // Gate D: Native WebGPU Analytic-Perlin Camera Corpus
     // =========================================================================
-    if (runGateD) {
+    {
         WebGpuRenderer r;
         if (!r.init(gpu)) {
             std::printf("FAIL: renderer init\n");
@@ -714,10 +692,6 @@ int main() {
         mat.ambient = 0.2f;
         mat.diffuse = 0.8f;
 
-        size_t traversalActiveCases = 0;
-        bool sawInitialRangeUpload = false;
-        const uint64_t terrainMemoId = 0x5045524c494eULL; // "PERLIN"
-
         for (const auto& c : cameraCorpus) {
             const glm::mat4 proj = glm::perspectiveZO(glm::radians(c.fovDeg), 1.0f, 0.1f, 3000.0f);
             const glm::mat4 viewM = glm::lookAt(c.eye, c.target, c.up);
@@ -725,54 +699,37 @@ int main() {
 
             r.setCamera(viewM, proj, c.eye);
             r.setModel(glm::mat4(1.0f));
+            r.beginFrameOffscreen(view, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
+            r.drawImplicit(perlinField, extent, mat, nullptr, 0, 0, nullptr);
+            r.endFrame();
+            wgpuDevicePoll(gpu.device, true, nullptr);
 
-            auto capture = [&](bool rangeEnabled, Renderer::FrameStats& statsOut) {
-                r.setSdfRangeProxyEnabled(rangeEnabled);
-                r.beginFrameOffscreen(view, W, H, glm::vec4(0.1f, 0.1f, 0.15f, 1.0f));
-                r.drawImplicit(perlinField, extent, mat, nullptr,
-                               terrainMemoId,
-                               /*memoRevision=*/1,
-                               nullptr,
-                               /*memoParameterRevision=*/1);
-                r.endFrame();
-                wgpuDevicePoll(gpu.device, true, nullptr);
-                statsOut = r.frameStats();
+            WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
+            WGPUTexelCopyTextureInfo src = {};
+            src.texture = tex;
+            src.aspect = WGPUTextureAspect_All;
+            src.origin = {0, 0, 0};
+            WGPUTexelCopyBufferInfo dst = {};
+            dst.buffer = readback;
+            dst.layout.bytesPerRow = rowStride;
+            dst.layout.rowsPerImage = H;
+            WGPUExtent3D ext = { W, H, 1 };
+            wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
+            WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
+            wgpuQueueSubmit(gpu.queue, 1, &cmd);
+            wgpuCommandBufferRelease(cmd);
+            wgpuCommandEncoderRelease(enc);
 
-                WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
-                WGPUTexelCopyTextureInfo src = {};
-                src.texture = tex;
-                src.aspect = WGPUTextureAspect_All;
-                src.origin = {0, 0, 0};
-                WGPUTexelCopyBufferInfo dst = {};
-                dst.buffer = readback;
-                dst.layout.bytesPerRow = rowStride;
-                dst.layout.rowsPerImage = H;
-                WGPUExtent3D ext = { W, H, 1 };
-                wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
-                WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
-                wgpuQueueSubmit(gpu.queue, 1, &cmd);
-                wgpuCommandBufferRelease(cmd);
-                wgpuCommandEncoderRelease(enc);
+            MapR m;
+            WGPUBufferMapCallbackInfo ci = {};
+            ci.mode = WGPUCallbackMode_AllowProcessEvents;
+            ci.callback = onMap;
+            ci.userdata1 = &m;
+            wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, rowStride * H, ci);
+            while (!m.done) wgpuDevicePoll(gpu.device, true, nullptr);
 
-                MapR m;
-                WGPUBufferMapCallbackInfo ci = {};
-                ci.mode = WGPUCallbackMode_AllowProcessEvents;
-                ci.callback = onMap;
-                ci.userdata1 = &m;
-                wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, rowStride * H, ci);
-                while (!m.done) wgpuDevicePoll(gpu.device, true, nullptr);
-
-                const auto* mapped = static_cast<const unsigned char*>(
-                    wgpuBufferGetConstMappedRange(readback, 0, rowStride * H));
-                std::vector<unsigned char> pixels(mapped, mapped + rowStride * H);
-                wgpuBufferUnmap(readback);
-                return pixels;
-            };
-
-            Renderer::FrameStats offStats;
-            Renderer::FrameStats onStats;
-            const auto baseline = capture(/*rangeEnabled=*/false, offStats);
-            const auto accelerated = capture(/*rangeEnabled=*/true, onStats);
+            const auto* px = static_cast<const unsigned char*>(
+                wgpuBufferGetConstMappedRange(readback, 0, rowStride * H));
 
             auto isBackground = [](unsigned char r, unsigned char g, unsigned char b) {
                 return (std::abs(static_cast<int>(r) - 25) <= 2 &&
@@ -780,57 +737,9 @@ int main() {
                         std::abs(static_cast<int>(b) - 38) <= 2);
             };
 
-            // The hierarchy is an accelerator, never a hit/miss authority.
-            // A lawful spatial jump necessarily changes the exact sequence of
-            // floating-point samples, so requiring byte-identical shaded RGBA
-            // would make "traversal actually did work" incompatible with the
-            // test. What the conservative theorem promises is stronger where
-            // it matters: it may not add or remove a surface hit.
-            size_t rgbaDiffBytes = 0;
-            size_t coverageDiffPixels = 0;
-            for (uint32_t py = 0; py < H; ++py) {
-                for (uint32_t pxIdx = 0; pxIdx < W; ++pxIdx) {
-                    const size_t p =
-                        static_cast<size_t>(py) * rowStride +
-                        static_cast<size_t>(pxIdx) * 4;
-                    for (size_t cidx = 0; cidx < 4; ++cidx) {
-                        if (baseline[p + cidx] != accelerated[p + cidx]) {
-                            ++rgbaDiffBytes;
-                        }
-                    }
-                    const bool offHit =
-                        !isBackground(baseline[p], baseline[p+1], baseline[p+2]);
-                    const bool onHit =
-                        !isBackground(accelerated[p], accelerated[p+1], accelerated[p+2]);
-                    if (offHit != onHit) ++coverageDiffPixels;
-                }
-            }
-            assert(coverageDiffPixels == 0);
-            if (onStats.sdfRangeTraversalDraws > 0) {
-                ++traversalActiveCases;
-                if (onStats.sdfRangeNodeBytesUploaded > 0) {
-                    // One upload is lawful when the persistent proof buffer is
-                    // first materialized. The same memo/pipeline is reused for
-                    // every later camera, so subsequent traversal frames must
-                    // not re-upload identical hierarchy bytes.
-                    assert(!sawInitialRangeUpload);
-                    sawInitialRangeUpload = true;
-                } else if (sawInitialRangeUpload) {
-                    // Expected steady-state path: persistent range nodes remain
-                    // resident while camera state changes.
-                }
-            }
-
-            const auto* px = baseline.data();
-
             size_t terrainHits = 0;
-            for (uint32_t py = 0; py < H; ++py) {
-                for (uint32_t pxIdx = 0; pxIdx < W; ++pxIdx) {
-                    const size_t p =
-                        static_cast<size_t>(py) * rowStride +
-                        static_cast<size_t>(pxIdx) * 4;
-                    if (!isBackground(px[p], px[p+1], px[p+2])) ++terrainHits;
-                }
+            for (size_t p = 0; p < rowStride * H; p += 4) {
+                if (!isBackground(px[p], px[p+1], px[p+2])) terrainHits++;
             }
 
             // Bidirectional verification of exact pixel centers against reference exactGenericRaycast
@@ -852,28 +761,20 @@ int main() {
                     bool refHit = exactGenericRaycast(c.eye, rayDir, extent, refTHit);
 
                     size_t offset = py * rowStride + pX * 4;
-                    bool gpuOffHit =
-                        !isBackground(baseline[offset], baseline[offset+1], baseline[offset+2]);
-                    bool gpuOnHit =
-                        !isBackground(accelerated[offset], accelerated[offset+1], accelerated[offset+2]);
+                    bool gpuHit = !isBackground(px[offset], px[offset+1], px[offset+2]);
 
-                    assert(refHit == gpuOffHit);
-                    assert(refHit == gpuOnHit);
+                    assert(refHit == gpuHit);
                     if (refHit) matchingHits++;
                     checkedPixels++;
                 }
             }
 
-            std::printf("[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels; rangeTraversal=%u; coverageDiff=%zu; rgbaDiffBytes=%zu\n",
-                        c.name, terrainHits, W * H, onStats.sdfRangeTraversalDraws,
-                        coverageDiffPixels, rgbaDiffBytes);
+            wgpuBufferUnmap(readback);
+
+            std::printf("[Gate D] Camera case \"%s\": %zu/%u terrain hit pixels (bidirectional CPU/GPU root agreement verified)\n",
+                        c.name, terrainHits, W * H);
             assert(terrainHits > 0);
         }
-
-        assert(traversalActiveCases > 0);
-        std::printf("[Gate D] Range hierarchy traversal activated in %zu/%zu authored-Perlin camera cases with exact OFF/ON hit coverage and CPU root agreement.\n",
-                    traversalActiveCases,
-                    sizeof(cameraCorpus) / sizeof(cameraCorpus[0]));
 
         wgpuBufferRelease(readback);
         wgpuTextureViewRelease(view);

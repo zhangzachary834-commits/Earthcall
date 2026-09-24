@@ -128,10 +128,9 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                             if (person.hasIdentity() && pj["personId"].get<std::string>() == person.personId().toString()) {
                                 match = true;
                             }
-                        } else if ((!oldName.empty() && (dName == oldName || sName == oldName)) ||
-                                   (oldName.empty() && (dName.empty() || sName.empty())) ||
-                                   dName == "Player" || dName == "player" || dName == "Person" ||
-                                   sName == "Player" || sName == "player" || sName == "Person") {
+                        } else if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
+                                   sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
+                                   oldName.empty()) {
                             // Fallback string matching ONLY for legacy records lacking a personId.
                             match = true;
                         }
@@ -171,10 +170,9 @@ void updatePriorPersonSerializations(const Person& person, const std::string& ol
                         if (person.hasIdentity() && pj["personId"].get<std::string>() == person.personId().toString()) {
                             match = true;
                         }
-                    } else if ((!oldName.empty() && (dName == oldName || sName == oldName)) ||
-                               (oldName.empty() && (dName.empty() || sName.empty())) ||
-                               dName == "Player" || dName == "player" || dName == "Person" ||
-                               sName == "Player" || sName == "player" || sName == "Person") {
+                    } else if (dName == oldName || dName == "Player" || dName == "player" || dName == "Person" ||
+                               sName == oldName || sName == "Player" || sName == "player" || sName == "Person" ||
+                               oldName.empty()) {
                         // Fallback string matching ONLY for legacy records lacking a personId.
                         match = true;
                     }

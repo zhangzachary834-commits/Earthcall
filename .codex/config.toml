@@ -1,4 +1,3 @@
-model_reasoning_summary = "detailed"
 [mcp_servers.clion]
 url = "http://127.0.0.1:64362/stream"
 

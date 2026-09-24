@@ -38,6 +38,8 @@
 using AudioSink = std::function<bool(Singular& subject, double frequency,
                                      double amplitude, const std::string& timbre,
                                      std::string& reason)>;
+using LegacyAudioSink = std::function<void(Singular& subject, double frequency,
+                                           double amplitude, const std::string& timbre)>;
 
 inline AudioSink& audioSink() {
     static AudioSink sink;
@@ -48,9 +50,22 @@ inline AudioSink& audioSink() {
 // the Law trace instead of publishing "audio-synthesized" for a sound that
 // never happened.
 inline void registerAudioSinkChecked(AudioSink sink) { audioSink() = std::move(sink); }
-inline void registerAudioSinkChecked(std::nullptr_t) { audioSink() = {}; }
 
-inline void registerAudioSink(AudioSink sink) { audioSink() = std::move(sink); }
+// Compatibility adapter for tests and older callers that only observe notes.
+// These sinks have no refusal vocabulary, so reaching them counts as success.
+inline void registerAudioSink(LegacyAudioSink sink) {
+    if (!sink) {
+        audioSink() = {};
+        return;
+    }
+    audioSink() = [sink = std::move(sink)](
+                      Singular& subject, double frequency, double amplitude,
+                      const std::string& timbre, std::string&) {
+        sink(subject, frequency, amplitude, timbre);
+        return true;
+    };
+}
+
 inline void registerAudioSink(std::nullptr_t) { audioSink() = {}; }
 
 // The Screen modality's smallest authored act: replace one sample on one

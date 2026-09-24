@@ -187,9 +187,7 @@ int main() {
                              11.0, 12.0,
                              /*rangeBuilds=*/13,
                              /*rangeProxyDraws=*/14,
-                             /*rangeProxyCulledDraws=*/15,
-                             /*rangeTraversalDraws=*/17,
-                             /*rangeNodeBytesUploaded=*/18.0);
+                             /*rangeProxyCulledDraws=*/15);
         const struct {
             const char* name;
             int expected;
@@ -197,8 +195,6 @@ int main() {
             {"sdfRangeHierarchyBuilds", 13},
             {"sdfRangeProxyDraws", 14},
             {"sdfRangeProxyCulledDraws", 15},
-            {"sdfRangeTraversalDraws", 17},
-            {"sdfRangeNodeBytesUploaded", 18},
         };
         for (const auto& counter : counters) {
             PropertyValue value;
@@ -211,11 +207,7 @@ int main() {
                 fail(counter.name, "Channel — Screen",
                      "must report the renderer-derived metric");
             }
-            const PropertyValue refusedWrite =
-                std::string(counter.name) == "sdfRangeNodeBytesUploaded"
-                    ? PropertyValue(999.0)
-                    : PropertyValue(999);
-            if (p.setValue(screen, refusedWrite) !=
+            if (p.setValue(screen, PropertyValue(999)) !=
                 PropertyPath::PathResult::ReadOnly) {
                 fail(counter.name, "Channel — Screen",
                      "derived renderer metric must remain read-only");

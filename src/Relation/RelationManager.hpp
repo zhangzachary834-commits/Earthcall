@@ -47,12 +47,6 @@ public:
     // ---------------------------------------------------------------------
     static void forgetBeingEverywhere(const Singular* being);
 
-    // Rare semantic-kind retirement path. Relation kind Lexemes are non-owning
-    // pointers just like endpoints, but must NOT share the per-Singular
-    // destruction scan: every transient Moment is a Singular. LanguageSystem
-    // calls this only when it intentionally releases a Lexeme owner.
-    static void forgetTypeLexemeEverywhere(const Singularity::Language::Lexeme* lexeme);
-
     RelationManager();
     RelationManager(const RelationManager& other);
     RelationManager(RelationManager&& other) noexcept;

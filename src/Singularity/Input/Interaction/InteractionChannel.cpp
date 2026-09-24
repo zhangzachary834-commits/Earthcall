@@ -56,77 +56,17 @@ Object* InteractionChannel::findReachable(const std::vector<Object*>& reachable,
     return nullptr;
 }
 
-Object* InteractionChannel::resolveBeing(const std::string& id) const {
-    if (id.empty()) return nullptr;
-    for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return dynamic_cast<Object*>(being);
+void InteractionChannel::publishEdge(const std::string& type, Object* object) const {
+    if (!object) {
+        return;
     }
-    return nullptr;
-}
-
-// A press always ENDS. The window losing focus mid-drag used to clear the held
-// state silently — so a law that lit a slider on drag-started never heard the
-// drag end, and the slider stayed lit forever. A press the Person did not
-// finish now closes with released (+ drag-ended if it travelled) and a
-// distinct press-cancelled, and never with a click.
-//
-// Who may cancel is NOT decided here beyond the one fact the machine owns: the
-// OS stopped telling us about the button (window focus lost). Every other
-// cancellation is authored — a law that writes `pressedId := ""` (e.g. on
-// object-left-reach) is heard by observe() and closed through this same
-// function. Zach, 2026-09-23: cancelling on a Zone switch is "good design if
-// authorable, but too absolute as hardcoded."
-void InteractionChannel::closePress(const std::string& heldId, bool& travelling,
-                                    float& totalX, float& totalY,
-                                    const std::string& button) {
-    if (!heldId.empty()) {
-        const std::string prefix = "object-" + button;
-        if (Object* subject = resolveBeing(heldId)) {
-            publishEdge(prefix + "released", subject);
-            if (travelling) publishEdge(prefix + "drag-ended", subject);
-            publishEdge(prefix + "press-cancelled", subject);
-            subject->endSurfaceStroke();
-        } else {
-            // The being is gone from the world entirely: nothing remains to be
-            // released. The Person's press still ended — say so, of them.
-            publishEdge(prefix + "press-cancelled", nullptr);
-        }
-    }
-    travelling = false;
-    totalX = 0.0f;
-    totalY = 0.0f;
-}
-
-// Every edge involves a Singular. Zach, 2026-09-23: "events semantically always
-// involve some Singular ... A key pressed without anything selected is still
-// pressed by a Person inside a Zone." So an edge addressed to no being is
-// addressed to — made by — the Person whose hand this channel senses, and
-// every edge carries that Person as its OBJECT (the agent) unless the Person is
-// already its subject. With no Person known there is no one who pointed, and
-// nothing is published.
-void InteractionChannel::publishEdge(const std::string& type, Singular* subject) const {
-    if (!subject) subject = _person;
-    if (!subject) return;
 
     if (!Universe::instance().anyoneHears(type)) {
         return;
     }
 
-    Singular* agent = (subject == _person) ? nullptr : _person;
     ::Core::EventBus::instance().publish(
-        ECA::Event{type, subject, agent, std::time(nullptr)});
-}
-
-void InteractionChannel::setPointingPerson(Singular* person) { _person = person; }
-
-std::string InteractionChannel::propPersonId() const {
-    return _person ? _person->getIdentifier() : std::string();
-}
-
-Object* InteractionChannel::heldBeing(const std::vector<Object*>& reachable,
-                                      const std::string& id) const {
-    if (Object* obj = findReachable(reachable, id)) return obj;
-    return resolveBeing(id);
+        ECA::Event{type, object, nullptr, std::time(nullptr)});
 }
 
 // ---------------------------------------------------------------------------
@@ -246,12 +186,7 @@ void InteractionChannel::observe(const Sense& sense,
                     sense.pointerY >= rect.y && sense.pointerY <= rect.w) {
                     const double priority = obj->pickPriority();
                     if (priority < 0.0) continue;
-                    // `>=`, not `>`: the 2D pass stable-sorts this same list
-                    // (Zone::objects) by zOrder2D and draws in order, so among
-                    // equals the LAST being is drawn on top. With `>` the
-                    // first won the pick, and a click on the visible control
-                    // landed on the one hidden beneath it.
-                    if (!hit2D || priority >= best2D) {
+                    if (!hit2D || priority > best2D) {
                         best2D = priority;
                         hit2D = obj;
                     }
@@ -326,68 +261,6 @@ void InteractionChannel::observe(const Sense& sense,
                               glm::vec2(sense.pointerX, sense.pointerY));
     }
 
-    // --- Authored writes to the held state -----------------------------------
-    // pressedId / focusedId are registered and writable. A law that writes
-    // them is authoring the gesture, and the channel reports what that means
-    // as edges: clearing a held press cancels it; moving focus unfocuses the
-    // old being and focuses the new. This is how "cancel the press when its
-    // being leaves reach" — and Tab-order focus — are authored rather than
-    // hard-coded.
-    if (pressedId != _heldSeen) {
-        closePress(_heldSeen, dragging, dragTotalX, dragTotalY, "");
-    }
-    if (rightPressedId != _rightHeldSeen) {
-        closePress(_rightHeldSeen, rightDragging, rightDragTotalX, rightDragTotalY, "right-");
-    }
-    if (middlePressedId != _middleHeldSeen) {
-        closePress(_middleHeldSeen, middleDragging, middleDragTotalX, middleDragTotalY,
-                   "middle-");
-    }
-    if (focusedId != _focusSeen) {
-        if (!_focusSeen.empty()) publishEdge("object-unfocused", resolveBeing(_focusSeen));
-        if (!focusedId.empty()) publishEdge("object-focused", resolveBeing(focusedId));
-    }
-
-    // --- Reach -----------------------------------------------------------------
-    // A held or focused being that leaves the reachable set (today: the active
-    // Zone's objects) is NOT cancelled here. A Zone the Person is not in may
-    // go on running, and what reach even means is moving to authored OntoMath
-    // bounds (Zach, 2026-09-23). The channel only SENSES the transition —
-    // object-left-reach / object-entered-reach, once each — and the press or
-    // focus persists until released or until a law ends it. A press whose
-    // being has left the world entirely has nothing left to hold; it ends.
-    {
-        std::vector<std::string> nowOut;
-        for (const std::string* id : {&pressedId, &rightPressedId, &middlePressedId, &focusedId}) {
-            if (id->empty() || findReachable(reachable, *id)) continue;
-            if (std::find(nowOut.begin(), nowOut.end(), *id) == nowOut.end()) {
-                nowOut.push_back(*id);
-            }
-        }
-        for (const std::string& id : nowOut) {
-            if (std::find(_outOfReach.begin(), _outOfReach.end(), id) == _outOfReach.end()) {
-                publishEdge("object-left-reach", resolveBeing(id));
-            }
-        }
-        for (const std::string& id : _outOfReach) {
-            if (std::find(nowOut.begin(), nowOut.end(), id) != nowOut.end()) continue;
-            if (Object* back = findReachable(reachable, id)) {
-                publishEdge("object-entered-reach", back);
-            }
-        }
-        _outOfReach = std::move(nowOut);
-    }
-    const auto endIfGone = [&](std::string& id, bool& travelling, float& tx, float& ty,
-                               const std::string& button) {
-        if (!id.empty() && !findReachable(reachable, id) && !resolveBeing(id)) {
-            closePress(id, travelling, tx, ty, button);
-            id.clear();
-        }
-    };
-    endIfGone(pressedId, dragging, dragTotalX, dragTotalY, "");
-    endIfGone(rightPressedId, rightDragging, rightDragTotalX, rightDragTotalY, "right-");
-    endIfGone(middlePressedId, middleDragging, middleDragTotalX, middleDragTotalY, "middle-");
-
     // --- Button edges -----------------------------------------------------
     const bool leftPressedNow = leftDown && !_prevLeft;
     const bool leftReleasedNow = !leftDown && _prevLeft;
@@ -411,7 +284,7 @@ void InteractionChannel::observe(const Sense& sense,
         const std::string nextFocus = hoveredId;
         if (nextFocus != focusedId) {
             if (!focusedId.empty()) {
-                publishEdge("object-unfocused", heldBeing(reachable, focusedId));
+                publishEdge("object-unfocused", findReachable(reachable, focusedId));
             }
             focusedId = nextFocus;
             if (hit) publishEdge("object-focused", hit);
@@ -425,14 +298,14 @@ void InteractionChannel::observe(const Sense& sense,
                                           dragTotalY * dragTotalY);
         if (!dragging && travelled > clickSlopPixels) {
             dragging = true;
-            publishEdge("object-drag-started", heldBeing(reachable, pressedId));
+            publishEdge("object-drag-started", findReachable(reachable, pressedId));
         } else if (dragging && (dragX != 0.0f || dragY != 0.0f)) {
-            publishEdge("object-dragged", heldBeing(reachable, pressedId));
+            publishEdge("object-dragged", findReachable(reachable, pressedId));
         }
     }
 
     if (leftReleasedNow) {
-        Object* pressed = heldBeing(reachable, pressedId);
+        Object* pressed = findReachable(reachable, pressedId);
         if (pressed) {
             publishEdge("object-released", pressed);
         }
@@ -476,14 +349,14 @@ void InteractionChannel::observe(const Sense& sense,
                                           rightDragTotalY * rightDragTotalY);
         if (!rightDragging && travelled > clickSlopPixels) {
             rightDragging = true;
-            publishEdge("object-right-drag-started", heldBeing(reachable, rightPressedId));
+            publishEdge("object-right-drag-started", findReachable(reachable, rightPressedId));
         } else if (rightDragging && (dragX != 0.0f || dragY != 0.0f)) {
-            publishEdge("object-right-dragged", heldBeing(reachable, rightPressedId));
+            publishEdge("object-right-dragged", findReachable(reachable, rightPressedId));
         }
     }
 
     if (rightReleasedNow) {
-        Object* pressed = heldBeing(reachable, rightPressedId);
+        Object* pressed = findReachable(reachable, rightPressedId);
         if (pressed) {
             publishEdge("object-right-released", pressed);
             pressed->endSurfaceStroke();
@@ -520,18 +393,32 @@ void InteractionChannel::observe(const Sense& sense,
                                           middleDragTotalY * middleDragTotalY);
         if (!middleDragging && travelled > clickSlopPixels) {
             middleDragging = true;
-            publishEdge("object-middle-drag-started", heldBeing(reachable, middlePressedId));
+            publishEdge("object-middle-drag-started", findReachable(reachable, middlePressedId));
         } else if (middleDragging && (dragX != 0.0f || dragY != 0.0f)) {
-            publishEdge("object-middle-dragged", heldBeing(reachable, middlePressedId));
+            publishEdge("object-middle-dragged", findReachable(reachable, middlePressedId));
         }
     }
 
     if (middleReleasedNow) {
-        Object* pressed = heldBeing(reachable, middlePressedId);
+        Object* pressed = findReachable(reachable, middlePressedId);
         if (pressed) {
             publishEdge("object-middle-released", pressed);
             pressed->endSurfaceStroke();
         }
+        if (middleDragging) {
+            publishEdge("object-middle-drag-ended", pressed);
+        } else if (pressed && pressed == hit) {
+            publishEdge("object-middle-clicked", pressed);
+        }
+        middlePressedId.clear();
+        middleDragging = false;
+        middleDragTotalX = 0.0f;
+        middleDragTotalY = 0.0f;
+    }
+
+    if (middleReleasedNow) {
+        Object* pressed = findReachable(reachable, middlePressedId);
+        if (pressed) publishEdge("object-middle-released", pressed);
         if (middleDragging) {
             publishEdge("object-middle-drag-ended", pressed);
         } else if (pressed && pressed == hit) {
@@ -557,10 +444,6 @@ void InteractionChannel::observe(const Sense& sense,
     _prevLeft = leftDown;
     _prevRight = rightDown;
     _prevMiddle = middleDown;
-    _heldSeen = pressedId;
-    _rightHeldSeen = rightPressedId;
-    _middleHeldSeen = middlePressedId;
-    _focusSeen = focusedId;
 }
 
 void InteractionChannel::noteKey(const std::string& keyName, int keyCode, bool down) {
@@ -574,9 +457,17 @@ void InteractionChannel::noteKey(const std::string& keyName, int keyCode, bool d
     lastKeyCode = keyCode;
     keyDown = down;
 
-    // The focused being hears the key. Nothing focused: the Person who pressed
-    // it is the subject (publishEdge) — the key still happened, by someone.
-    Object* subject = resolveBeing(focusedId);
+    // The focused being hears the key. Nothing focused = a null subject, which
+    // is honest: the key still happened, it just was not addressed to anyone.
+    Object* subject = nullptr;
+    if (!focusedId.empty()) {
+        for (Singular* being : Universe::instance().beings()) {
+            if (being && being->getIdentifier() == focusedId) {
+                subject = dynamic_cast<Object*>(being);
+                break;
+            }
+        }
+    }
     publishEdge(down ? "key-pressed" : "key-released", subject);
 }
 
@@ -613,7 +504,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     }
 
     // Left comes from noteMouseButton()'s callback-latched level, reconciled above.
-    // Right/middle are polled levels; observe() derives their edges from them.
+    // Right/middle stay polled: nothing in the tree publishes edges for them yet.
     sense.left = _liveLeftDown;
     sense.right = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     sense.middle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
@@ -627,7 +518,10 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     // The wheel is a callback, not a level: whatever accumulated since the
     // last step is this frame's delta, and the accumulator resets here so a
     // frame with no wheel reports none.
-    // (Drained by observePending below, not here.)
+    sense.scrollX = _pendingScrollX;
+    sense.scrollY = _pendingScrollY;
+    _pendingScrollX = 0.0f;
+    _pendingScrollY = 0.0f;
 
     // The pointer ray, from the same view/projection/viewport the renderer
     // used. Shared arithmetic with CursorTools::pickObjectAtCursor3D — kept
@@ -691,20 +585,6 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
         if (obj) reachable.push_back(obj.get());
     }
 
-    observePending(sense, reachable);
-}
-
-// Everything the GLFW callbacks latched since the last frame, folded into one
-// frame of observation. Split out of step() so tests drive the REAL replay:
-// interaction_channel_test once re-implemented this loop by hand, and the copy
-// hid the scroll double-count below for as long as it existed.
-void InteractionChannel::observePending(Sense sense,
-                                        const std::vector<Object*>& reachable) {
-    sense.scrollX += _pendingScrollX;
-    sense.scrollY += _pendingScrollY;
-    _pendingScrollX = 0.0f;
-    _pendingScrollY = 0.0f;
-
     // A rapid sequence of press/release callbacks that land inside one
     // glfwPollEvents() batch would otherwise vanish. We replay every edge
     // in order before observing the final frame state. Consumed here
@@ -714,11 +594,6 @@ void InteractionChannel::observePending(Sense sense,
         for (size_t i = 0; i < _pendingLeftEdges.size() - 1; ++i) {
             Sense edgeSense = sense;
             edgeSense.left = _pendingLeftEdges[i];
-            // The wheel belongs to the frame, not to each replayed button
-            // edge: copying it here counted one notch once per replay
-            // (scrollTotal inflated, object-scrolled published N+1 times).
-            edgeSense.scrollX = 0.0f;
-            edgeSense.scrollY = 0.0f;
             observe(edgeSense, reachable);
         }
         _pendingLeftEdges.clear();
@@ -747,18 +622,14 @@ void InteractionChannel::onWindowFocus(bool focused) {
         leftDown = false;
         rightDown = false;
         middleDown = false;
-        // Held presses end as edges, not silence (closePress). The one
-        // cancellation the machine owns: the OS no longer reports the button.
-        closePress(pressedId, dragging, dragTotalX, dragTotalY, "");
-        closePress(rightPressedId, rightDragging, rightDragTotalX, rightDragTotalY, "right-");
-        closePress(middlePressedId, middleDragging, middleDragTotalX, middleDragTotalY,
-                   "middle-");
         pressedId.clear();
         rightPressedId.clear();
         middlePressedId.clear();
-        _heldSeen.clear();
-        _rightHeldSeen.clear();
-        _middleHeldSeen.clear();
+        dragging = false;
+        rightDragging = false;
+        middleDragging = false;
+        dragTotalX = 0.0f;
+        dragTotalY = 0.0f;
         hoveredId.clear();
         for (Singular* being : Universe::instance().beings()) {
             if (auto* obj = dynamic_cast<Object*>(being)) {
@@ -813,11 +684,6 @@ void InteractionChannel::buildProperties() {
     flt("hoveredU", &InteractionChannel::hoveredU);
     flt("hoveredV", &InteractionChannel::hoveredV);
 
-    // Whose hand this is: the Person every edge names as its agent (or its
-    // subject, when the gesture addressed no being). Derived — set by the
-    // engine from the Person present — so read-only.
-    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, std::string>>(
-        "personId", this, &InteractionChannel::propPersonId, nullptr));
     text("pressedId", &InteractionChannel::pressedId);
     text("focusedId", &InteractionChannel::focusedId);
 

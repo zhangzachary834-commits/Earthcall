@@ -9,9 +9,10 @@
 #include <iomanip>
 #include <map>
 #include <unordered_set>
+#include <unordered_map>
 #include "Singularity/Storage/CloudStorage.hpp"
-#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 
 #include <zlib.h>
 #include <thread>
@@ -766,127 +767,80 @@ std::string mergeAndSaveFiles(const std::string& file1, const std::string& file2
     return writeSaveData(merged, label, type);
 }
 
-static std::string unpackFileFingerprint(const std::filesystem::path& path) {
-    std::ifstream in(path, std::ios::binary);
-    if (!in.is_open()) return "";
-
-    // Deterministic FNV-1a is sufficient here: this is a provenance/change
-    // witness for generated authoring files, not an authority or trust token.
+static std::string computeContentHash(const std::string& content) {
     uint64_t hash = 14695981039346656037ULL;
-    char buffer[8192];
-    while (in) {
-        in.read(buffer, sizeof(buffer));
-        const std::streamsize count = in.gcount();
-        for (std::streamsize i = 0; i < count; ++i) {
-            hash ^= static_cast<unsigned char>(buffer[i]);
-            hash *= 1099511628211ULL;
-        }
+    for (char c : content) {
+        hash ^= static_cast<uint8_t>(c);
+        hash *= 1099511628211ULL;
     }
-    if (!in.eof()) return "";
-
-    std::ostringstream out;
-    out << std::hex << std::setfill('0') << std::setw(16) << hash;
-    return out.str();
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%016llx", static_cast<unsigned long long>(hash));
+    return std::string(buf);
 }
 
-static nlohmann::json readPlainJsonFile(const std::filesystem::path& path) {
-    std::ifstream in(path);
-    if (!in.is_open()) return nlohmann::json();
-    return nlohmann::json::parse(in, nullptr, false);
+static std::string computeFileHash(const std::filesystem::path& p) {
+    std::ifstream in(p, std::ios::binary);
+    if (!in.is_open()) return "";
+    std::string content((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    return computeContentHash(content);
 }
 
 bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directoryPath) {
     if (directoryPath.empty()) return false;
-
     std::error_code ec;
-    const std::filesystem::path finalDir = std::filesystem::absolute(directoryPath, ec);
-    if (ec) {
-        std::cerr << "[SaveSystem] Could not resolve unpack directory '" << directoryPath
-                  << "': " << ec.message() << "\n";
-        return false;
-    }
+    std::filesystem::path finalDir = std::filesystem::absolute(directoryPath);
 
-    static std::atomic<uint64_t> unpackSequence{0};
-    const uint64_t seq = unpackSequence.fetch_add(1);
-    const std::string suffix = timestamp() + "_" + std::to_string(seq);
-    const std::filesystem::path stageDir =
-        finalDir.parent_path() / (finalDir.filename().string() + ".tmp_unpack_" + suffix);
-
-    auto discardStage = [&](const std::string& why) {
-        if (!why.empty()) std::cerr << "[SaveSystem] Unpack transaction refused: " << why << "\n";
-        std::error_code cleanupEc;
-        std::filesystem::remove_all(stageDir, cleanupEc);
-        return false;
-    };
+    std::string stamp = timestamp();
+    static std::atomic<uint64_t> counter{0};
+    uint64_t seq = counter.fetch_add(1);
+    std::string stageName = finalDir.filename().string() + ".tmp_unpack_" + stamp + "_" + std::to_string(seq);
+    std::filesystem::path stageDir = finalDir.parent_path() / stageName;
 
     std::filesystem::create_directories(stageDir, ec);
     if (ec) {
-        return discardStage("could not create staging directory " + stageDir.string() +
-                            ": " + ec.message());
+        std::cerr << "[SaveSystem] Failed to create staging directory " << stageDir << ": " << ec.message() << "\n";
+        return false;
     }
 
-    // The manifest is mechanism, not world ontology. It records exactly which
-    // files the unpacker generated and the bytes it generated last time.
-    // A path ceases to be disposable the moment its live bytes diverge.
-    std::map<std::string, std::string> newOwnedFileHashes;
-
-    auto writeOwnedJson = [&](const std::string& relPath, const nlohmann::json& value) -> bool {
-        const std::filesystem::path path = stageDir / std::filesystem::path(relPath);
-        std::error_code dirEc;
-        std::filesystem::create_directories(path.parent_path(), dirEc);
-        if (dirEc) {
-            std::cerr << "[SaveSystem] Could not create staging parent for " << relPath
-                      << ": " << dirEc.message() << "\n";
-            return false;
-        }
-        const bool wrote = atomicWriteFile(path.string(), [&](std::ostream& out) {
-            out << std::setw(2) << value << '\n';
-            return static_cast<bool>(out);
-        });
-        if (!wrote) return false;
-        const std::string fingerprint = unpackFileFingerprint(path);
-        if (fingerprint.empty()) return false;
-        newOwnedFileHashes[relPath] = fingerprint;
-        return true;
-    };
-
+    bool allOk = true;
+    std::unordered_map<std::string, std::string> newOwnedFileHashes;
     nlohmann::json meta = j;
-    bool testBlockMetaWrite = false;
-    std::string testFailPreserveCopy;
-    if (meta.is_object()) {
-        testBlockMetaWrite = meta.value("__test_block_meta_write", false);
-        testFailPreserveCopy = meta.value("__test_fail_preserve_copy", std::string{});
-        meta.erase("__test_block_meta_write");
-        meta.erase("__test_fail_preserve_copy");
-    }
 
     if (meta.contains("objects") && meta["objects"].is_array()) {
-        const auto objects = meta["objects"];
-        for (std::size_t i = 0; i < objects.size(); ++i) {
+        std::filesystem::create_directories(stageDir / "objects", ec);
+        const auto& objects = meta["objects"];
+        for (size_t i = 0; i < objects.size(); ++i) {
             const auto& obj = objects[i];
-            std::string objectId;
+            std::string objId;
             if (obj.contains("identifier") && obj["identifier"].is_string()) {
-                objectId = obj["identifier"].get<std::string>();
+                objId = obj["identifier"].get<std::string>();
             } else if (obj.contains("id") && obj["id"].is_string()) {
-                objectId = obj["id"].get<std::string>();
+                objId = obj["id"].get<std::string>();
             } else if (obj.contains("objectID") && obj["objectID"].is_string()) {
-                objectId = obj["objectID"].get<std::string>();
+                objId = obj["objectID"].get<std::string>();
             } else {
-                objectId = "object_" + std::to_string(i);
+                objId = "object_" + std::to_string(i);
             }
-            const std::string rel =
-                "objects/object_" + sanitizeLabel(objectId) + ".json";
-            if (!writeOwnedJson(rel, obj)) {
-                return discardStage("failed to stage generated Object " + rel);
-            }
+            std::string relPath = "objects/object_" + sanitizeLabel(objId) + ".json";
+            std::filesystem::path objPath = stageDir / relPath;
+            std::stringstream ss;
+            ss << std::setw(2) << obj;
+            std::string dumpStr = ss.str();
+            bool wrote = atomicWriteFile(objPath.string(), [&](std::ostream& out) {
+                out << dumpStr << std::endl;
+                return static_cast<bool>(out);
+            });
+            if (!wrote) allOk = false;
+            newOwnedFileHashes[relPath] = computeContentHash(dumpStr + "\n");
         }
         meta.erase("objects");
     }
 
     if (meta.contains("authoredLaws") && meta["authoredLaws"].is_object() &&
         meta["authoredLaws"].contains("laws") && meta["authoredLaws"]["laws"].is_array()) {
-        const auto laws = meta["authoredLaws"]["laws"];
-        for (std::size_t i = 0; i < laws.size(); ++i) {
+        std::filesystem::create_directories(stageDir / "authored_laws", ec);
+        const auto& laws = meta["authoredLaws"]["laws"];
+        for (size_t i = 0; i < laws.size(); ++i) {
             const auto& law = laws[i];
             std::string lawId;
             if (law.contains("identifier") && law["identifier"].is_string()) {
@@ -898,275 +852,239 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
             } else {
                 lawId = "law_" + std::to_string(i);
             }
-            const std::string rel =
-                "authored_laws/law_" + sanitizeLabel(lawId) + ".json";
-            if (!writeOwnedJson(rel, law)) {
-                return discardStage("failed to stage generated Law " + rel);
-            }
+            std::string relPath = "authored_laws/law_" + sanitizeLabel(lawId) + ".json";
+            std::filesystem::path lawPath = stageDir / relPath;
+            std::stringstream ss;
+            ss << std::setw(2) << law;
+            std::string dumpStr = ss.str();
+            bool wrote = atomicWriteFile(lawPath.string(), [&](std::ostream& out) {
+                out << dumpStr << std::endl;
+                return static_cast<bool>(out);
+            });
+            if (!wrote) allOk = false;
+            newOwnedFileHashes[relPath] = computeContentHash(dumpStr + "\n");
         }
         meta["authoredLaws"].erase("laws");
     }
 
     if (meta.contains("zones") && meta["zones"].is_array()) {
-        const auto zones = meta["zones"];
-        for (std::size_t i = 0; i < zones.size(); ++i) {
+        std::filesystem::create_directories(stageDir / "zones", ec);
+        const auto& zones = meta["zones"];
+        for (size_t i = 0; i < zones.size(); ++i) {
             const auto& zone = zones[i];
             std::string zoneId = zoneIdFromJson(zone);
             if (zoneId.empty()) zoneId = "zone_" + std::to_string(i);
-            const std::string rel =
-                "zones/zone_" + sanitizeLabel(zoneId) + ".json";
-            if (!writeOwnedJson(rel, zone)) {
-                return discardStage("failed to stage generated Zone " + rel);
-            }
+            std::string relPath = "zones/zone_" + sanitizeLabel(zoneId) + ".json";
+            std::filesystem::path zonePath = stageDir / relPath;
+            std::stringstream ss;
+            ss << std::setw(2) << zone;
+            std::string dumpStr = ss.str();
+            bool wrote = atomicWriteFile(zonePath.string(), [&](std::ostream& out) {
+                out << dumpStr << std::endl;
+                return static_cast<bool>(out);
+            });
+            if (!wrote) allOk = false;
+            newOwnedFileHashes[relPath] = computeContentHash(dumpStr + "\n");
         }
         meta.erase("zones");
     }
 
-    if (testBlockMetaWrite) {
-        std::error_code faultEc;
-        std::filesystem::create_directories(stageDir / "world_meta.json", faultEc);
-        if (faultEc) return discardStage("could not install metadata fault injection");
+    if (j.is_object() && j.value("__test_block_meta_write", false)) {
+        std::filesystem::create_directories(stageDir / "world_meta.json", ec);
     }
-    if (!writeOwnedJson("world_meta.json", meta)) {
-        return discardStage("failed to stage world_meta.json");
+
+    std::filesystem::path metaPath = stageDir / "world_meta.json";
+    std::stringstream ssMeta;
+    ssMeta << std::setw(2) << meta;
+    std::string metaDumpStr = ssMeta.str();
+    bool wroteMeta = atomicWriteFile(metaPath.string(), [&](std::ostream& out) {
+        out << metaDumpStr << std::endl;
+        return static_cast<bool>(out);
+    });
+    if (!wroteMeta) allOk = false;
+    newOwnedFileHashes["world_meta.json"] = computeContentHash(metaDumpStr + "\n");
+
+    nlohmann::json manifestJson;
+    std::vector<std::string> ownedList;
+    nlohmann::json hashesJson = nlohmann::json::object();
+    for (const auto& [rel, h] : newOwnedFileHashes) {
+        ownedList.push_back(rel);
+        hashesJson[rel] = h;
+    }
+    ownedList.push_back(".unpack_manifest.json");
+
+    manifestJson["ownedFiles"] = ownedList;
+    manifestJson["fileHashes"] = hashesJson;
+
+    std::filesystem::path manifestPath = stageDir / ".unpack_manifest.json";
+    std::stringstream ssManifest;
+    ssManifest << std::setw(2) << manifestJson;
+    std::string manifestDumpStr = ssManifest.str();
+    bool wroteManifest = atomicWriteFile(manifestPath.string(), [&](std::ostream& out) {
+        out << manifestDumpStr << std::endl;
+        return static_cast<bool>(out);
+    });
+    if (!wroteManifest) allOk = false;
+    newOwnedFileHashes[".unpack_manifest.json"] = computeContentHash(manifestDumpStr + "\n");
+    hashesJson[".unpack_manifest.json"] = newOwnedFileHashes[".unpack_manifest.json"];
+    manifestJson["fileHashes"] = hashesJson;
+
+    std::stringstream ssManifestFinal;
+    ssManifestFinal << std::setw(2) << manifestJson;
+    atomicWriteFile(manifestPath.string(), [&](std::ostream& out) {
+        out << ssManifestFinal.str() << std::endl;
+        return static_cast<bool>(out);
+    });
+
+    if (!allOk) {
+        std::filesystem::remove_all(stageDir, ec);
+        return false;
     }
 
     std::unordered_set<std::string> previousOwnedFiles;
-    std::map<std::string, std::string> previousFileHashes;
+    std::unordered_map<std::string, std::string> previousFileHashes;
     bool hasPreviousManifest = false;
-    const std::filesystem::path previousManifestPath = finalDir / ".unpack_manifest.json";
-
-    const bool manifestExists = std::filesystem::exists(previousManifestPath, ec);
-    if (ec) return discardStage("could not inspect previous unpack manifest: " + ec.message());
-    if (manifestExists) {
-        const nlohmann::json manifest = readPlainJsonFile(previousManifestPath);
-        if (!manifest.is_object() ||
-            !manifest.contains("ownedFiles") || !manifest["ownedFiles"].is_array() ||
-            !manifest.contains("fileHashes") || !manifest["fileHashes"].is_object()) {
-            return discardStage("previous .unpack_manifest.json is malformed; ownership is unknown");
-        }
-        hasPreviousManifest = true;
-        for (const auto& item : manifest["ownedFiles"]) {
-            if (!item.is_string()) {
-                return discardStage("previous manifest contains a non-string owned path");
+    std::filesystem::path prevManifestPath = finalDir / ".unpack_manifest.json";
+    if (std::filesystem::exists(prevManifestPath, ec)) {
+        nlohmann::json prevManifestJson = readSaveData(prevManifestPath.string());
+        if (prevManifestJson.is_object() && prevManifestJson.contains("ownedFiles") && prevManifestJson["ownedFiles"].is_array()) {
+            hasPreviousManifest = true;
+            for (const auto& f : prevManifestJson["ownedFiles"]) {
+                if (f.is_string()) previousOwnedFiles.insert(f.get<std::string>());
             }
-            previousOwnedFiles.insert(item.get<std::string>());
-        }
-        for (auto it = manifest["fileHashes"].begin(); it != manifest["fileHashes"].end(); ++it) {
-            if (!it.value().is_string()) {
-                return discardStage("previous manifest contains a non-string file fingerprint");
+            if (prevManifestJson.contains("fileHashes") && prevManifestJson["fileHashes"].is_object()) {
+                for (auto it = prevManifestJson["fileHashes"].begin(); it != prevManifestJson["fileHashes"].end(); ++it) {
+                    if (it.value().is_string()) {
+                        previousFileHashes[it.key()] = it.value().get<std::string>();
+                    }
+                }
             }
-            previousFileHashes[it.key()] = it.value().get<std::string>();
         }
     }
 
-    // Preserve every path that the prior generation cannot prove it still owns.
-    // Generated files whose bytes still equal the prior manifest may be replaced
-    // or removed. Person-modified or never-owned files survive byte-for-byte.
-    const bool finalExists = std::filesystem::exists(finalDir, ec);
-    if (ec) return discardStage("could not inspect current unpack directory: " + ec.message());
-
-    std::unordered_set<std::string> existingRegularFiles;
-    if (finalExists) {
-        std::filesystem::recursive_directory_iterator it(finalDir, ec), endIt;
-        if (ec) return discardStage("could not enumerate current unpack directory: " + ec.message());
-
-        for (; it != endIt; it.increment(ec)) {
-            if (ec) return discardStage("failed while enumerating current unpack directory: " + ec.message());
-            const auto& entry = *it;
-
-            std::error_code relEc;
-            const std::filesystem::path relObj = std::filesystem::relative(entry.path(), finalDir, relEc);
-            if (relEc) return discardStage("could not relativize " + entry.path().string());
-            const std::string rel = relObj.generic_string();
-            if (rel.empty() || rel == ".") continue;
-            if (rel == ".unpack_manifest.json") continue; // reserved mechanism path
-
-            std::error_code typeEc;
-            if (entry.is_symlink(typeEc)) {
-                return discardStage("symbolic links are not supported in unpack authoring trees: " + rel);
+    if (std::filesystem::exists(finalDir, ec)) {
+        ec.clear();
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(finalDir, ec)) {
+            if (ec) {
+                allOk = false;
+                std::cerr << "[SaveSystem] Preservation traversal error: " << ec.message() << "\n";
+                break;
             }
-            if (typeEc) return discardStage("could not inspect path type for " + rel);
+            ec.clear();
+            std::filesystem::path relPathObj = std::filesystem::relative(entry.path(), finalDir, ec);
+            if (ec) {
+                allOk = false;
+                std::cerr << "[SaveSystem] Preservation path resolution error: " << ec.message() << "\n";
+                break;
+            }
+            std::string relPath = relPathObj.string();
+            if (relPath == ".unpack_manifest.json") continue;
 
-            if (entry.is_directory(typeEc)) {
-                if (typeEc) return discardStage("could not inspect directory " + rel);
-                std::error_code mkdirEc;
-                std::filesystem::create_directories(stageDir / relObj, mkdirEc);
-                if (mkdirEc) {
-                    return discardStage("could not preserve directory " + rel + ": " + mkdirEc.message());
+            ec.clear();
+            bool isDir = entry.is_directory(ec);
+            if (ec) {
+                allOk = false;
+                std::cerr << "[SaveSystem] Preservation entry type check error: " << ec.message() << "\n";
+                break;
+            }
+
+            if (isDir) {
+                ec.clear();
+                std::filesystem::create_directories(stageDir / relPath, ec);
+                if (ec) {
+                    allOk = false;
+                    std::cerr << "[SaveSystem] Preservation directory creation error for " << (stageDir / relPath) << ": " << ec.message() << "\n";
+                    break;
                 }
                 continue;
             }
-            if (typeEc) return discardStage("could not inspect path " + rel);
 
-            if (!entry.is_regular_file(typeEc)) {
-                return discardStage("unsupported authoring-tree entry would be lost: " + rel);
-            }
-            if (typeEc) return discardStage("could not inspect file " + rel);
+            ec.clear();
+            bool isReg = entry.is_regular_file(ec);
+            if (ec || !isReg) continue;
 
-            existingRegularFiles.insert(rel);
-            const std::string liveHash = unpackFileFingerprint(entry.path());
-            if (liveHash.empty()) {
-                return discardStage("could not fingerprint existing authoring file " + rel);
-            }
+            std::string liveHash = computeFileHash(entry.path());
 
-            bool preserve = true;
-            if (hasPreviousManifest && previousOwnedFiles.count(rel) != 0) {
-                const auto expected = previousFileHashes.find(rel);
-                if (expected == previousFileHashes.end()) {
-                    return discardStage("manifest owns " + rel + " but has no fingerprint for it");
-                }
-                // Exact prior generated bytes remain disposable. If the incoming
-                // generation omitted this path, omission is an intentional delete.
-                preserve = (liveHash != expected->second);
-            } else if (!hasPreviousManifest) {
-                // First manifest adoption: an existing canonical file can be
-                // claimed only when its bytes already exactly equal what this
-                // generation would have produced.
-                const auto generated = newOwnedFileHashes.find(rel);
-                if (generated != newOwnedFileHashes.end() && liveHash == generated->second) {
-                    preserve = false;
-                }
+            bool isTrackedInPrevManifest = (hasPreviousManifest && previousOwnedFiles.count(relPath) > 0);
+            std::string expectedPrevHash = isTrackedInPrevManifest && previousFileHashes.count(relPath) ? previousFileHashes[relPath] : "";
+            bool isModifiedByUser = isTrackedInPrevManifest && (!expectedPrevHash.empty() && liveHash != expectedPrevHash);
+            bool isUntrackedUserFile = !isTrackedInPrevManifest;
 
-                // Compatibility for the old Zone-name filename scheme. Only
-                // discard the alias when its parsed meaning exactly equals the
-                // incoming canonical Zone. Divergent content is a conflict, not
-                // "stale garbage" the unpacker may erase.
-                if (preserve && rel.rfind("zones/", 0) == 0 &&
-                    entry.path().extension() == ".json") {
-                    const nlohmann::json oldZone = readPlainJsonFile(entry.path());
-                    if (oldZone.is_object()) {
-                        const std::string zid = zoneIdFromJson(oldZone);
-                        if (!zid.empty()) {
-                            const std::string canonical =
-                                "zones/zone_" + sanitizeLabel(zid) + ".json";
-                            if (canonical != rel && newOwnedFileHashes.count(canonical) != 0) {
-                                const nlohmann::json incomingZone =
-                                    readPlainJsonFile(stageDir / canonical);
-                                if (!incomingZone.is_discarded() && oldZone == incomingZone) {
-                                    preserve = false;
-                                } else {
-                                    return discardStage(
-                                        "legacy Zone alias " + rel +
-                                        " diverges from incoming " + canonical +
-                                        "; refusing to guess which Person-authored bytes win");
-                                }
-                            }
-                        }
+            bool isLegacySupersededAlias = false;
+            if (!hasPreviousManifest && entry.path().extension() == ".json") {
+                nlohmann::json itemJson = readSaveData(entry.path().string());
+                if (itemJson.is_object()) {
+                    std::string canonicalRelPath;
+                    if (relPath.rfind("zones/", 0) == 0) {
+                        std::string zid = zoneIdFromJson(itemJson);
+                        if (!zid.empty()) canonicalRelPath = "zones/zone_" + sanitizeLabel(zid) + ".json";
+                    } else if (relPath.rfind("objects/", 0) == 0) {
+                        std::string oid = itemJson.value("identifier", itemJson.value("id", itemJson.value("objectID", "")));
+                        if (!oid.empty()) canonicalRelPath = "objects/object_" + sanitizeLabel(oid) + ".json";
+                    } else if (relPath.rfind("authored_laws/", 0) == 0) {
+                        std::string lid = itemJson.value("identifier", itemJson.value("id", itemJson.value("name", "")));
+                        if (!lid.empty()) canonicalRelPath = "authored_laws/law_" + sanitizeLabel(lid) + ".json";
+                    }
+                    if (!canonicalRelPath.empty() && canonicalRelPath != relPath && newOwnedFileHashes.count(canonicalRelPath) > 0) {
+                        isLegacySupersededAlias = true;
                     }
                 }
             }
 
-            if (!preserve) continue;
-
-            if (!testFailPreserveCopy.empty() && rel == testFailPreserveCopy) {
-                return discardStage("injected preservation-copy failure for " + rel);
-            }
-
-            const std::filesystem::path destination = stageDir / relObj;
-            std::error_code parentEc;
-            std::filesystem::create_directories(destination.parent_path(), parentEc);
-            if (parentEc) {
-                return discardStage("could not create preservation parent for " + rel +
-                                    ": " + parentEc.message());
-            }
-
-            std::error_code copyEc;
-            std::filesystem::copy_file(entry.path(), destination,
-                                       std::filesystem::copy_options::overwrite_existing, copyEc);
-            if (copyEc) {
-                return discardStage("could not preserve " + rel + ": " + copyEc.message());
-            }
-            if (unpackFileFingerprint(destination) != liveHash) {
-                return discardStage("preservation verification failed for " + rel);
-            }
-
-            // A preserved file is Person/untracked state now, even if its path
-            // collides with a generated canonical filename in this generation.
-            newOwnedFileHashes.erase(rel);
-        }
-    }
-
-    if (hasPreviousManifest) {
-        // Absence is also a Person-visible edit. A file that the previous
-        // generation owned but that is now missing must not be silently
-        // resurrected merely because the incoming monolith still contains it.
-        for (const auto& rel : previousOwnedFiles) {
-            if (existingRegularFiles.count(rel) != 0) continue;
-            const auto generated = newOwnedFileHashes.find(rel);
-            if (generated == newOwnedFileHashes.end()) continue;
-
-            const std::filesystem::path stagedPath = stageDir / std::filesystem::path(rel);
-            std::error_code removeEc;
-            const bool removed = std::filesystem::remove(stagedPath, removeEc);
-            if (removeEc) {
-                return discardStage("could not preserve Person deletion of " + rel +
-                                    ": " + removeEc.message());
-            }
-            if (!removed && std::filesystem::exists(stagedPath)) {
-                return discardStage("could not preserve Person deletion of " + rel);
-            }
-            newOwnedFileHashes.erase(generated);
-        }
-    }
-
-    nlohmann::json manifest;
-    manifest["format"] = "earthcall-unpack-manifest-v1";
-    manifest["ownedFiles"] = nlohmann::json::array();
-    manifest["fileHashes"] = nlohmann::json::object();
-    for (const auto& [rel, fingerprint] : newOwnedFileHashes) {
-        manifest["ownedFiles"].push_back(rel);
-        manifest["fileHashes"][rel] = fingerprint;
-    }
-    if (!atomicWriteFile((stageDir / ".unpack_manifest.json").string(),
-                         [&](std::ostream& out) {
-                             out << std::setw(2) << manifest << '\n';
-                             return static_cast<bool>(out);
-                         })) {
-        return discardStage("failed to stage ownership manifest");
-    }
-
-    const std::filesystem::path backupDir =
-        finalDir.parent_path() / (finalDir.filename().string() + ".tmp_backup_" + suffix);
-    const bool hadFinal = finalExists;
-
-    if (hadFinal) {
-        std::filesystem::rename(finalDir, backupDir, ec);
-        if (ec) {
-            return discardStage("could not move live authoring directory to transaction backup: " +
-                                ec.message());
-        }
-    }
-
-    ec.clear();
-    std::filesystem::rename(stageDir, finalDir, ec);
-    if (ec) {
-        const std::string promoteError = ec.message();
-        if (hadFinal) {
-            std::error_code rollbackEc;
-            std::filesystem::rename(backupDir, finalDir, rollbackEc);
-            if (rollbackEc) {
-                std::cerr << "[SaveSystem] CRITICAL: staged unpack promotion failed and rollback "
-                          << "also failed. Prior generation remains at " << backupDir
-                          << ": " << rollbackEc.message() << "\n";
+            if ((isUntrackedUserFile || isModifiedByUser) && !isLegacySupersededAlias) {
+                std::filesystem::path dstPath = stageDir / relPath;
+                ec.clear();
+                std::filesystem::create_directories(dstPath.parent_path(), ec);
+                if (ec) {
+                    allOk = false;
+                    std::cerr << "[SaveSystem] Preservation error creating parent directory " << dstPath.parent_path() << ": " << ec.message() << "\n";
+                    break;
+                }
+                ec.clear();
+                if (j.is_object() && j.value("__test_block_preservation_copy", false) && relPath == "blocked_user_file.txt") {
+                    ec = std::make_error_code(std::errc::permission_denied);
+                } else {
+                    std::filesystem::copy_file(entry.path(), dstPath, std::filesystem::copy_options::overwrite_existing, ec);
+                }
+                if (ec) {
+                    allOk = false;
+                    std::cerr << "[SaveSystem] Preservation error copying " << entry.path() << " to " << dstPath << ": " << ec.message() << "\n";
+                    break;
+                }
             }
         }
-        std::error_code cleanupEc;
-        std::filesystem::remove_all(stageDir, cleanupEc);
-        std::cerr << "[SaveSystem] Failed to promote staged unpack generation: "
-                  << promoteError << "\n";
+    }
+
+    if (!allOk) {
+        std::filesystem::remove_all(stageDir, ec);
         return false;
     }
 
-    if (hadFinal) {
-        std::error_code cleanupEc;
-        std::filesystem::remove_all(backupDir, cleanupEc);
-        if (cleanupEc) {
-            // The new live generation is already committed. Retaining a backup
-            // is safe and preferable to treating a successful save as failed.
-            std::cerr << "[SaveSystem] Unpack committed, but old transaction backup "
-                      << backupDir << " could not be removed: " << cleanupEc.message() << "\n";
+    std::filesystem::path backupDir = finalDir.parent_path() / (finalDir.filename().string() + ".tmp_backup_" + stamp + "_" + std::to_string(seq));
+    bool hadFinalDir = std::filesystem::exists(finalDir, ec);
+
+    if (hadFinalDir) {
+        std::filesystem::rename(finalDir, backupDir, ec);
+        if (ec) {
+            std::cerr << "[SaveSystem] Failed to move final directory to backup: " << ec.message() << "\n";
+            std::filesystem::remove_all(stageDir, ec);
+            return false;
         }
+    }
+
+    std::filesystem::rename(stageDir, finalDir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Failed to promote staged directory: " << ec.message() << "\n";
+        if (hadFinalDir) {
+            std::error_code rollEc;
+            std::filesystem::rename(backupDir, finalDir, rollEc);
+        }
+        std::filesystem::remove_all(stageDir, ec);
+        return false;
+    }
+
+    if (hadFinalDir) {
+        std::filesystem::remove_all(backupDir, ec);
     }
 
     return true;

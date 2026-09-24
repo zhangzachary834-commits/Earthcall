@@ -96,7 +96,7 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     std::string filepath = filepathOverride;
     if (filepath.empty()) {
         std::filesystem::path root = SaveSystem::saveRoot().empty()
-            ? (std::filesystem::temp_directory_path() / "earthcall_test_dumps")
+            ? std::filesystem::path("saves")
             : std::filesystem::path(SaveSystem::saveRoot());
         std::filesystem::path testsFolder = root / "tests";
         std::filesystem::create_directories(testsFolder);

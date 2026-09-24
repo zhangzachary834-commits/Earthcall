@@ -10,7 +10,7 @@ A **framework name is not a directory name.** `Integration/` stays
 
 | Folder | Holds |
 |---|---|
-| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys, primary and sub-Relations, the [`Property as Predication`](ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md) boundary between beings and their attributes, and the proposed [`Property Storage and OntoMath Binding`](ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) semantics |
+| [`ontology/`](ontology/) | What things ARE: kinds, categories, black box, the tree, substrate, micro-mastery, Joys, primary and sub-Relations, and the [`Property as Predication`](ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md) boundary between beings and their attributes |
 | [`law/`](law/) | What a Law is, migration, algorithms-as-law, First Mover authoring, interaction-as-law, Prophetic Rete, derived-state ledger, Formation Rete and its [`tiered relevance ladder`](law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md), [`direct-relevance`](law/FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md), and [`Property-addressing`](law/PROPERTY_ADDRESSING_IN_FORMATION_RETE.md) companions |
 | [`events/`](events/) | Event bus vs handler, hover / person / relation / physics & collision events ([`events/PHYSICS_AND_COLLISION.md`](events/PHYSICS_AND_COLLISION.md)) |
 | [`mathematics/`](mathematics/) | OntoMath, geometry unification, SDF/Bézier law replication, and the [`Geometry Execution Substrate Manifesto`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md) separating authored meaning from geometry IR/backend execution |
@@ -20,8 +20,6 @@ A **framework name is not a directory name.** `Integration/` stays
 | [`interrelations/`](interrelations/) | Cross-checks between architectural systems (e.g. Rete + Semantics, UI + Multiplayer, Substrate + IR); the human-origin chain and Git genealogy behind grounded Relation-kind identity are recorded in [`RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md`](interrelations/RELATION_IDENTITY_ORIGIN_AND_INTEGRATION_GENEALOGY.md). Other intersections include the [`Formation Rete and HTML Bridge`](interrelations/FORMATION_RETE_AND_HTML_BRIDGE.md), [`Prophetic Rete and TransferPolicy`](interrelations/PROPHETIC_RETE_AND_TRANSFER_POLICY.md), and [`No Black Box and Geometry Substrate`](interrelations/NO_BLACK_BOX_AND_GEOMETRY_SUBSTRATE.md) |
 | [`Design/`](Design/) | 2D/3D visual grammar, OntoMath raster formations, granular pixel mastery ([`Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`](Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)), Lexeme-Relation serialization ([`Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md`](Design/LEXEME_RELATION_FORMATION_SERIALIZATION.md)), and foundational design specifications |
 
-Cross-cutting historical observability is governed by [`PER_SINGULAR_DURABLE_LOGGING.md`](PER_SINGULAR_DURABLE_LOGGING.md): the console is an immediate observation surface, while meaningful history is routed toward durable subsystem chronicles and per-Singular histories that survive process shutdown.
-
 Bare filenames in older notes (`NEW_KIND_FRAMEWORK.md`) mean the file in the
 folder above. Prefer the folder-qualified path from now on.
 
@@ -30,4 +28,4 @@ The 2026-08-17 geometry-vs-OntoMath audit is historical; current math record is
 (executed), the governing representation/execution boundary is
 [`mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md`](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md),
 and the remaining work is tracked in
-[`../Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).
+[`../Agenda/Tasks/Specific Tasks/Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).

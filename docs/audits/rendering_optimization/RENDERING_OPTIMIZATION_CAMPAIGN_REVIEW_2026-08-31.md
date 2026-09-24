@@ -33,7 +33,7 @@ I did not touch the Ourverse laws, as asked.
 |---|---|
 | **Instanced SDF drawing** (`SdfInstanceData` SSBO on `@group(1)`, one draw per pipeline) | Structurally right. Per-object model/colour/extents moved off the uniform and into an instance array; costs nothing in truth. |
 | **Mesh batching with `baseColor` per instance** | `MeshBatchKey` no longer keys on colour, so identically-shaped, differently-coloured objects batch. Right fix, right place. |
-| **Program memoization on `(memoId, fieldRevision)`** | Exactly the pattern Opus 5 prescribed to Gemini in `agent intercom/communication-threads/sdf-and-rendering/GPU AST Interpreter and WGSL Tiering 8-28-26.md` — a revision counter, not a topology hash. The revision counter argument was taken and implemented correctly. |
+| **Program memoization on `(memoId, fieldRevision)`** | Exactly the pattern Opus 5 prescribed to Gemini in `agent intercom/communication-threads/GPU AST Interpreter and WGSL Tiering 8-28-26.md` — a revision counter, not a topology hash. The revision counter argument was taken and implemented correctly. |
 | **`_fieldRevision++` in `rebuildGeometryCaches()`** | The mutation point every path already calls. |
 | **Lazy `_fieldMesh`** (`_fieldMeshDirty` + `rebuildFieldMesh()`) | Kills the 30–100 ms blocking marching-tets on construction under a backend that never reads it. The To-do list asked for this. Demand-forcing is wired at all four readers (`getSupportCloud`, `raycastFace`, `drawHighlightOutline`, the mesh draw path). |
 | **`updateCollisionZone` memo + 8-corner local AABB** | Was transforming the whole support cloud on every call. Now 8 corners, skipped entirely when transform and revision are unchanged. |

@@ -42,15 +42,10 @@ THREADS_DIR = Path(__file__).with_name("communication-threads")
 THREAD_SUFFIXES = (".txt", ".md")
 
 
-# Since 2026-09-22 threads live in channel subdirectories too (Discord-style:
-# communication-threads/<channel>/<thread>), with megathreads left at the top.
-# The scan recurses for the same reason the suffix list exists: a thread this
-# function cannot see is also a thread the ambiguity check cannot see.
 def thread_files() -> list:
     return sorted(
-        p for p in THREADS_DIR.rglob("*")
+        p for p in THREADS_DIR.iterdir()
         if p.is_file() and p.suffix in THREAD_SUFFIXES
-        and not any(part.startswith(".") for part in p.relative_to(THREADS_DIR).parts)
     )
 
 
@@ -383,10 +378,10 @@ def cmd_threads(args: argparse.Namespace) -> int:
         try:
             messages = read_messages(path)
         except ValueError as error:
-            print(f"   ?  unparsed        {path.relative_to(THREADS_DIR)}  ({error})")
+            print(f"   ?  unparsed        {path.name}  ({error})")
             continue
         last = messages[-1]["at"] if messages else "-"
-        print(f"{len(messages):4d} msg  last {last}  {path.relative_to(THREADS_DIR)}")
+        print(f"{len(messages):4d} msg  last {last}  {path.name}")
     return 0
 
 

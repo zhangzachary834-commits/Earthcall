@@ -423,25 +423,6 @@ int main() {
         std::printf("  material reference survives by identifier OK\n");
     }
 
-    // ------------------------------------------------------------------
-    // 9. Relational element composition (Formation-backed) verification
-    // ------------------------------------------------------------------
-    {
-        Object container("container_obj");
-        Object elem("elem_obj");
-        assert(container.elementCount() == 0);
-        assert(!container.hasElement(&elem));
-
-        container.addElement(&elem);
-        assert(container.elementCount() == 1);
-        assert(container.hasElement(&elem));
-
-        container.removeElement(&elem);
-        assert(container.elementCount() == 0);
-        assert(!container.hasElement(&elem));
-        std::printf("  relational element composition via Formation works OK\n");
-    }
-
     std::printf("object_roundtrip_test: ALL OK\n");
     return 0;
 }

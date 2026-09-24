@@ -9,7 +9,7 @@ Person-facing creation path.
 (`MathNode`, `ScalarForm`, `Piecewise`). `geom::` still *names* shapes and
 tessellates them; it does not own a second algebra. Start at
 [`ONTOMATH_FRAMEWORK.md`](../architecture/mathematics/ONTOMATH_FRAMEWORK.md) and
-[`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).
+[`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
 The 2026-08-17 audit that said otherwise is historical.
 
 **Making a shape.** The Person-facing path is the `shape-generator-3d-law`

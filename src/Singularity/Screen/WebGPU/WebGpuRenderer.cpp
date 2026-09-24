@@ -2,9 +2,7 @@
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
-#include "Singularity/Screen/AuthorableLight.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
-#include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,7 +10,6 @@
 #include <cstdio>
 #include <cstring>
 #include <limits>
-#include <functional>
 #include <set>
 #include <string>
 #include <utility>
@@ -254,21 +251,18 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): SDF instances plus two derived acceleration buffers:
-    // binding 1 is the proven-heightfield min/max grid; binding 2 is the
-    // conservative zero-set hierarchy. Both are read-only Kernel substrate.
-    WGPUBindGroupLayoutEntry sdfInstEntry[3] = {};
+    // group(2): the SDF per-instance storage array, plus (binding 1) the
+    // shared min/max heightfield-grid cells buffer (Phase C) -- fragment-only,
+    // since only the marcher's DDA skip (fs) ever reads it.
+    WGPUBindGroupLayoutEntry sdfInstEntry[2] = {};
     sdfInstEntry[0].binding = 0;
     sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     sdfInstEntry[0].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     sdfInstEntry[1].binding = 1;
     sdfInstEntry[1].visibility = WGPUShaderStage_Fragment;
     sdfInstEntry[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-    sdfInstEntry[2].binding = 2;
-    sdfInstEntry[2].visibility = WGPUShaderStage_Fragment;
-    sdfInstEntry[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor sdfInstBglDesc = {};
-    sdfInstBglDesc.entryCount = 3;
+    sdfInstBglDesc.entryCount = 2;
     sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
 
@@ -514,30 +508,10 @@ void WebGpuRenderer::releasePersistentSdfParams() {
     _persistentSdfParamVramBytes = 0;
 }
 
-void WebGpuRenderer::releasePersistentSdfRangeNodes() {
-    for (auto& kv : _persistentSdfRangeNodes) {
-        if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
-    }
-    _persistentSdfRangeNodes.clear();
-    _persistentSdfRangeNodeVramBytes = 0;
-}
-
-void WebGpuRenderer::releasePersistentRadianceSources() {
-    if (_persistentRadianceSources.buffer) {
-        wgpuBufferRelease(_persistentRadianceSources.buffer);
-        _persistentRadianceSources.buffer = nullptr;
-    }
-    _persistentRadianceSources.capacityBytes = 0;
-    _persistentRadianceSources.mirror.clear();
-    _persistentRadianceSourceVramBytes = 0;
-}
-
 void WebGpuRenderer::reloadShaders() {
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
-    releasePersistentSdfRangeNodes();
-    releasePersistentRadianceSources();
     for (auto& kv : _sdfPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
@@ -546,20 +520,8 @@ void WebGpuRenderer::reloadShaders() {
     _sdfBatches.clear();
     _sdfParamsBatches.clear();
     _sdfHeightGridBatches.clear();
-    _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
     _programCache.clear();
-
-    for (auto& kv : _volumePipes) {
-        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
-        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
-        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
-    }
-    _volumePipes.clear();
-    _volumeProgramCache.clear();
-    _volumeBatches.clear();
-    _volumeParamBatches.clear();
-    _activeVolumePipelines.clear();
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -586,8 +548,6 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 void WebGpuRenderer::shutdown() {
     releaseGpuTimestampQueries();
     releasePersistentSdfParams();
-    releasePersistentSdfRangeNodes();
-    releasePersistentRadianceSources();
     _meshCache.shutdown();
     _bufferPool.shutdown();
     releaseFrameResources();
@@ -602,16 +562,6 @@ void WebGpuRenderer::shutdown() {
         if (kv.second.bgl)  wgpuBindGroupLayoutRelease(kv.second.bgl);
     }
     _sdfPipes.clear();
-    for (auto& kv : _volumePipes) {
-        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
-        if (kv.second.globalBgl) wgpuBindGroupLayoutRelease(kv.second.globalBgl);
-        if (kv.second.instanceBgl) wgpuBindGroupLayoutRelease(kv.second.instanceBgl);
-    }
-    _volumePipes.clear();
-    _volumeProgramCache.clear();
-    _volumeBatches.clear();
-    _volumeParamBatches.clear();
-    _activeVolumePipelines.clear();
     if (_sdfCubeVerts) { wgpuBufferRelease(_sdfCubeVerts); _sdfCubeVerts = nullptr; }
     for (auto& kv : _textures) {
         wgpuTextureViewRelease(kv.second.view);
@@ -754,10 +704,7 @@ void WebGpuRenderer::ensureDepth(uint32_t w, uint32_t h) {
     if (_depthView) { wgpuTextureViewRelease(_depthView); _depthView = nullptr; }
     if (_depthTex)  { wgpuTextureRelease(_depthTex); _depthTex = nullptr; }
     WGPUTextureDescriptor td = {};
-    // V0c composites participating media in a second pass that samples the
-    // finished opaque depth. One texture serves both roles across distinct
-    // passes on the same command encoder; it is never sampled while attached.
-    td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_TextureBinding;
+    td.usage = WGPUTextureUsage_RenderAttachment;
     td.dimension = WGPUTextureDimension_2D;
     td.size = { w, h, 1 };
     td.format = WGPUTextureFormat_Depth24Plus;
@@ -836,7 +783,6 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     _meshCache.beginFrame(_frameCount);
     ensureDepth(width, height);
     _encoder = wgpuDeviceCreateCommandEncoder(_device, nullptr);
-    _frameColorView = target;
     beginGpuTimestampFrame();
     WGPURenderPassColorAttachment ca = {};
     ca.view = target;
@@ -1006,54 +952,10 @@ struct SdfGlobalUniforms {
     glm::vec4 lightAmbient;
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
-    glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
-    glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
+    glm::vec4 lightControl; // x = lighting enabled (0 or 1)
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
-    glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
-    glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
-};
-
-struct RadianceSourceGpuData {
-    glm::vec4 position;
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-    glm::vec4 coefficients;
-    glm::vec4 time;
-    glm::vec4 control;
-};
-
-struct VolumeGlobalUniforms {
-    glm::mat4 viewProj;
-    glm::mat4 invViewProj;
-    glm::vec4 eyePos;
-    glm::vec4 viewport;
-    // xyz = exactly one enabled admitted direct source; w=1 iff valid.
-    glm::vec4 incidentSource;
 };
 } // namespace
-
-void WebGpuRenderer::ensureSdfCubeVerts() {
-    if (_sdfCubeVerts) return;
-
-    const float h = 1.0f;
-    const glm::vec3 corners[8] = {
-        {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
-        {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
-    const int indices[36] = {
-        0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
-        3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
-    std::vector<glm::vec3> tris(36);
-    for (int i = 0; i < 36; ++i) tris[i] = corners[indices[i]];
-
-    WGPUBufferDescriptor bd = {};
-    bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
-    bd.size = tris.size() * sizeof(glm::vec3);
-    _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
-    if (_sdfCubeVerts) {
-        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
-    }
-}
 
 // Build (or fetch) the pipeline for one field SHAPE. The generated WGSL is the
 // cache key: two spheres of different radii generate identical source and share
@@ -1073,9 +975,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
         return nullptr;
     }
 
-    const bool usesRadianceSources =
-        wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
-    WGPUBindGroupLayoutEntry be[3] = {};
+    WGPUBindGroupLayoutEntry be[2] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1083,17 +983,10 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-    if (usesRadianceSources) {
-        be[2].binding = 2;
-        be[2].visibility = WGPUShaderStage_Fragment;
-        be[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-    }
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = usesRadianceSources ? 3 : 2;
-    bgld.entries = be;
+    bgld.entryCount = 2; bgld.entries = be;
 
     SdfPipeline out;
-    out.usesRadianceSources = usesRadianceSources;
     out.bgl = wgpuDeviceCreateBindGroupLayout(_device, &bgld);
     WGPUBindGroupLayout meshLayouts[2] = { out.bgl, _sdfInstanceBgl };
     WGPUPipelineLayoutDescriptor pld = {};
@@ -1151,129 +1044,6 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     return &(_sdfPipes[wgsl] = out);
 }
 
-const WebGpuRenderer::VolumePipeline*
-WebGpuRenderer::volumePipeline(const std::string& wgsl) {
-    auto it = _volumePipes.find(wgsl);
-    if (it != _volumePipes.end()) return &it->second;
-
-    WGPUShaderSourceWGSL src = {};
-    src.chain.sType = WGPUSType_ShaderSourceWGSL;
-    src.code = wgpu::Device::str(wgsl.c_str());
-    WGPUShaderModuleDescriptor smd = {};
-    smd.nextInChain = &src.chain;
-    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smd);
-    if (!shader) {
-        std::fprintf(stderr, "[WebGpuRenderer] volume shader failed to compile\n");
-        return nullptr;
-    }
-
-    WGPUBindGroupLayoutEntry globalEntries[3] = {};
-    globalEntries[0].binding = 0;
-    globalEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    globalEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
-    globalEntries[0].buffer.minBindingSize = sizeof(VolumeGlobalUniforms);
-
-    globalEntries[1].binding = 1;
-    globalEntries[1].visibility = WGPUShaderStage_Fragment;
-    globalEntries[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-
-    globalEntries[2].binding = 2;
-    globalEntries[2].visibility = WGPUShaderStage_Fragment;
-    globalEntries[2].texture.sampleType = WGPUTextureSampleType_Depth;
-    globalEntries[2].texture.viewDimension = WGPUTextureViewDimension_2D;
-    globalEntries[2].texture.multisampled = false;
-
-    WGPUBindGroupLayoutDescriptor globalDesc = {};
-    globalDesc.entryCount = 3;
-    globalDesc.entries = globalEntries;
-
-    WGPUBindGroupLayoutEntry instanceEntry = {};
-    instanceEntry.binding = 0;
-    instanceEntry.visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
-    instanceEntry.buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
-    instanceEntry.buffer.minBindingSize = sizeof(VolumeInstanceData);
-    WGPUBindGroupLayoutDescriptor instanceDesc = {};
-    instanceDesc.entryCount = 1;
-    instanceDesc.entries = &instanceEntry;
-
-    VolumePipeline out;
-    out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
-    out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
-    if (!out.globalBgl || !out.instanceBgl) {
-        if (out.globalBgl) wgpuBindGroupLayoutRelease(out.globalBgl);
-        if (out.instanceBgl) wgpuBindGroupLayoutRelease(out.instanceBgl);
-        wgpuShaderModuleRelease(shader);
-        return nullptr;
-    }
-
-    WGPUBindGroupLayout layouts[2] = {out.globalBgl, out.instanceBgl};
-    WGPUPipelineLayoutDescriptor pld = {};
-    pld.bindGroupLayoutCount = 2;
-    pld.bindGroupLayouts = layouts;
-    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
-
-    WGPUVertexAttribute attr = {};
-    attr.format = WGPUVertexFormat_Float32x3;
-    attr.offset = 0;
-    attr.shaderLocation = 0;
-    WGPUVertexBufferLayout vbl = {};
-    vbl.arrayStride = sizeof(glm::vec3);
-    vbl.stepMode = WGPUVertexStepMode_Vertex;
-    vbl.attributeCount = 1;
-    vbl.attributes = &attr;
-
-    WGPUBlendState blend = {};
-    blend.color.operation = WGPUBlendOperation_Add;
-    // V0 returns analytically integrated medium radiance in premultiplied form.
-    // Preserve it directly so blending computes C_out = C_medium + T * C_scene.
-    blend.color.srcFactor = WGPUBlendFactor_One;
-    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    blend.alpha.operation = WGPUBlendOperation_Add;
-    blend.alpha.srcFactor = WGPUBlendFactor_One;
-    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-
-    WGPUColorTargetState target = {};
-    target.format = _colorFormat;
-    target.writeMask = WGPUColorWriteMask_All;
-    target.blend = &blend;
-
-    WGPUFragmentState frag = {};
-    frag.module = shader;
-    frag.entryPoint = wgpu::Device::str("fs");
-    frag.targetCount = 1;
-    frag.targets = &target;
-
-    WGPURenderPipelineDescriptor pd = {};
-    pd.layout = layout;
-    pd.vertex.module = shader;
-    pd.vertex.entryPoint = wgpu::Device::str("vs");
-    pd.vertex.bufferCount = 1;
-    pd.vertex.buffers = &vbl;
-    pd.fragment = &frag;
-    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    // Same inward-wound unit cube used by the SDF proxy. Back-face culling
-    // leaves one covering face for inside and outside camera positions without
-    // double-compositing the same medium ray.
-    pd.primitive.cullMode = WGPUCullMode_Back;
-    pd.multisample.count = 1;
-    pd.multisample.mask = 0xFFFFFFFFu;
-    // Deliberately NO depthStencil attachment/state. The shader samples the
-    // completed opaque depth texture and never claims frag_depth itself.
-
-    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
-
-    wgpuPipelineLayoutRelease(layout);
-    wgpuShaderModuleRelease(shader);
-
-    if (!out.pipe) {
-        wgpuBindGroupLayoutRelease(out.globalBgl);
-        wgpuBindGroupLayoutRelease(out.instanceBgl);
-        return nullptr;
-    }
-
-    return &(_volumePipes[wgsl] = out);
-}
-
 void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& extent,
                                   const RenderMaterial& mat,
                                   const geom::FieldNode* fieldNode,
@@ -1292,207 +1062,24 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     bool isProvenHeightfield = false;
     bool needsCompile = true;
 
-    // Radiance has the same structure/value split as geometry. Rung 7 keeps
-    // that rule for a COLLECTION: source membership/count and emitted AST shape
-    // are shader structure; source positions, colors, enablement, temporal
-    // coordinates and numeric AST coefficients are values.
-    const bool multiSource = radianceSources().size() > 1;
-    const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
-
-    // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
-    // seam. Production Zone media are projected separately and are NOT consumed
-    // here until depth-aware volume composition exists. When this explicit seam
-    // is used, volume.density.ast outranks the legacy generic ScalarField inside
-    // sdfwgsl::compile/collectParams.
-    const OntoMath::Piecewise* densityExpr =
-        (fieldNode && fieldNode->volumeDensity &&
-         !fieldNode->volumeDensity->pieces.empty())
-            ? fieldNode->volumeDensity.get()
-            : nullptr;
-    const OntoMath::Piecewise* extinctionExpr =
-        (fieldNode && fieldNode->volumeExtinction &&
-         !fieldNode->volumeExtinction->pieces.empty())
-            ? fieldNode->volumeExtinction.get()
-            : nullptr;
-    const OntoMath::Piecewise* scatteringExpr =
-        (fieldNode && fieldNode->volumeScattering &&
-         !fieldNode->volumeScattering->pieces.empty())
-            ? fieldNode->volumeScattering.get()
-            : nullptr;
-    const OntoMath::Piecewise* volumeChromaExpr =
-        (fieldNode && fieldNode->volumeChroma &&
-         !fieldNode->volumeChroma->pieces.empty())
-            ? fieldNode->volumeChroma.get()
-            : nullptr;
-    const OntoMath::Piecewise* phaseExpr =
-        (fieldNode && fieldNode->volumePhase &&
-         !fieldNode->volumePhase->pieces.empty())
-            ? fieldNode->volumePhase.get()
-            : nullptr;
-    const OntoMath::Piecewise* emissionExpr =
-        (fieldNode && fieldNode->volumeEmission &&
-         !fieldNode->volumeEmission->pieces.empty())
-            ? fieldNode->volumeEmission.get()
-            : nullptr;
-
-    sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
-    if (densityExpr) {
-        densityKind = sdfwgsl::DensityInputKind::Authored;
-    } else if (fieldNode) {
-        Rendering::AuthorableLightState authoredLight;
-        if (Rendering::readAuthorableLight(*fieldNode, authoredLight)) {
-            // rho is source truth, never an implicit participating-medium fallback.
-            densityKind = sdfwgsl::DensityInputKind::None;
-        }
+    // Radiance has the same structure/value split as geometry. The full content
+    // revision supplied by EngineRender tells us that authored rho changed, but
+    // only the production emitter can tell us whether that edit changes WGSL or
+    // merely the parameter buffer. Never infer structure from pointer identity.
+    if (_radianceLayoutRevision != radianceRevision() ||
+        _radianceLayoutExprPtr != radianceExpr()) {
+        sdfwgsl::ScalarExpressionLayout nextLayout =
+            sdfwgsl::inspectScalarExpression(radianceExpr());
+        const bool structureChanged =
+            _radianceLayoutRevision == 0xffffffffffffffffULL ||
+            nextLayout.ok != _radianceLayout.ok ||
+            nextLayout.structure != _radianceLayout.structure;
+        if (structureChanged) ++_radianceStructureRevision;
+        _radianceLayout = std::move(nextLayout);
+        _radianceLayoutRevision = radianceRevision();
+        _radianceLayoutExprPtr = radianceExpr();
     }
-
-    uint64_t densityRevision = 0;
-    sdfwgsl::ScalarExpressionLayout densityLayout;
-    std::string densityStructure =
-        densityKind == sdfwgsl::DensityInputKind::None
-            ? "<density:none>"
-            : "<density:legacy-field>";
-    if (densityKind == sdfwgsl::DensityInputKind::Authored) {
-        const std::string densityJson = densityExpr->toJson().dump();
-        densityRevision = static_cast<uint64_t>(std::hash<std::string>{}(densityJson));
-        densityLayout = sdfwgsl::inspectDensityExpression(densityExpr);
-        densityStructure = "<density:authored>\n" + densityLayout.structure;
-    }
-
-    uint64_t extinctionRevision = 0;
-    const auto extinctionLayout = sdfwgsl::inspectExtinctionExpression(extinctionExpr);
-    const std::string extinctionStructure = extinctionLayout.structure;
-    if (extinctionExpr) {
-        const std::string extinctionJson = extinctionExpr->toJson().dump();
-        extinctionRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(extinctionJson));
-    }
-
-    uint64_t scatteringRevision = 0;
-    const auto scatteringLayout = sdfwgsl::inspectScatteringExpression(scatteringExpr);
-    const std::string scatteringStructure = scatteringLayout.structure;
-    if (scatteringExpr) {
-        const std::string scatteringJson = scatteringExpr->toJson().dump();
-        scatteringRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(scatteringJson));
-    }
-
-    uint64_t volumeChromaRevision = 0;
-    const auto volumeChromaLayout =
-        sdfwgsl::inspectVolumeChromaExpression(volumeChromaExpr);
-    const std::string volumeChromaStructure = volumeChromaLayout.structure;
-    if (volumeChromaExpr) {
-        const std::string chromaJson = volumeChromaExpr->toJson().dump();
-        volumeChromaRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(chromaJson));
-    }
-
-    uint64_t phaseRevision = 0;
-    const auto phaseLayout = sdfwgsl::inspectPhaseExpression(phaseExpr);
-    const std::string phaseStructure = phaseLayout.structure;
-    if (phaseExpr) {
-        const std::string phaseJson = phaseExpr->toJson().dump();
-        phaseRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(phaseJson));
-    }
-
-    uint64_t emissionRevision = 0;
-    const auto emissionLayout = sdfwgsl::inspectEmissionExpression(emissionExpr);
-    const std::string emissionStructure = emissionLayout.structure;
-    if (emissionExpr) {
-        const std::string emissionJson = emissionExpr->toJson().dump();
-        emissionRevision =
-            static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
-    }
-
-    if (multiSource) {
-        if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
-            std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
-            bool ok = true;
-            std::string error;
-
-            for (std::size_t i = 0; i < radianceSources().size(); ++i) {
-                const auto& source = radianceSources()[i];
-                const auto rho = sdfwgsl::inspectScalarExpression(source.radianceExpr, true);
-                const auto chi = sdfwgsl::inspectVectorExpression(source.chromaExpr, true);
-                const auto alpha = sdfwgsl::inspectAngularExpression(source.angularExpr);
-
-                structure += "source[" + std::to_string(i) + "]\n";
-                structure += "rho:" + rho.structure + "\n";
-                structure += "chi:" + chi.structure + "\n";
-                structure += "alpha:" + alpha.structure +
-                             (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
-
-                if (!rho.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] radiance: " + rho.error;
-                }
-                if (!chi.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] chroma: " + chi.error;
-                }
-                if (!alpha.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] angular: " + alpha.error;
-                }
-            }
-
-            const bool structureChanged =
-                _radianceSourcesLayoutRevision == 0xffffffffffffffffULL ||
-                structure != _radianceSourcesLayoutStructure ||
-                ok != _radianceSourcesLayoutOk;
-            if (structureChanged) ++_radianceSourcesStructureRevision;
-            _radianceSourcesLayoutRevision = radianceSourcesRevision();
-            _radianceSourcesLayoutStructure = std::move(structure);
-            _radianceSourcesLayoutOk = ok;
-            _radianceSourcesLayoutError = std::move(error);
-        }
-    } else {
-        // Exact Rungs 3-6 layout inspection.
-        if (_radianceLayoutRevision != radianceRevision() ||
-            _radianceLayoutExprPtr != radianceExpr()) {
-            sdfwgsl::ScalarExpressionLayout nextLayout =
-                sdfwgsl::inspectScalarExpression(radianceExpr(), true);
-            const bool structureChanged =
-                _radianceLayoutRevision == 0xffffffffffffffffULL ||
-                nextLayout.ok != _radianceLayout.ok ||
-                nextLayout.structure != _radianceLayout.structure;
-            if (structureChanged) ++_radianceStructureRevision;
-            _radianceLayout = std::move(nextLayout);
-            _radianceLayoutRevision = radianceRevision();
-            _radianceLayoutExprPtr = radianceExpr();
-        }
-
-        if (_chromaLayoutRevision != radianceChromaRevision() ||
-            _chromaLayoutExprPtr != radianceChromaExpr()) {
-            sdfwgsl::VectorExpressionLayout nextLayout =
-                sdfwgsl::inspectVectorExpression(radianceChromaExpr(), true);
-            const bool structureChanged =
-                _chromaLayoutRevision == 0xffffffffffffffffULL ||
-                nextLayout.ok != _chromaLayout.ok ||
-                nextLayout.structure != _chromaLayout.structure;
-            if (structureChanged) ++_chromaStructureRevision;
-            _chromaLayout = std::move(nextLayout);
-            _chromaLayoutRevision = radianceChromaRevision();
-            _chromaLayoutExprPtr = radianceChromaExpr();
-        }
-
-        if (_angularLayoutRevision != radianceAngularRevision() ||
-            _angularLayoutExprPtr != radianceAngularExpr()) {
-            sdfwgsl::AngularExpressionLayout nextLayout =
-                sdfwgsl::inspectAngularExpression(radianceAngularExpr());
-            const bool structureChanged =
-                _angularLayoutRevision == 0xffffffffffffffffULL ||
-                nextLayout.ok != _angularLayout.ok ||
-                nextLayout.structure != _angularLayout.structure ||
-                nextLayout.readsOmega != _angularLayout.readsOmega;
-            if (structureChanged) ++_angularStructureRevision;
-            _angularLayout = std::move(nextLayout);
-            _angularLayoutRevision = radianceAngularRevision();
-            _angularLayoutExprPtr = radianceAngularExpr();
-        }
-    }
-
+    const sdfwgsl::ScalarExpressionLayout& radianceLayout = _radianceLayout;
     auto recordProgramRefusal = [&](const std::string& why) {
         auto& stats = mutableFrameStats();
         const bool firstOfReason =
@@ -1503,123 +1090,32 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             std::fprintf(stderr, "[WebGPU] SdfWgsl compile refused: %s\n", why.c_str());
         }
     };
-
-    if (densityKind == sdfwgsl::DensityInputKind::Authored && !densityLayout.ok) {
-        recordProgramRefusal("volume density: " + densityLayout.error);
+    if (!radianceLayout.ok) {
+        recordProgramRefusal("radiance: " + radianceLayout.error);
         return;
-    }
-    if (!extinctionLayout.ok) {
-        recordProgramRefusal("volume extinction: " + extinctionLayout.error);
-        return;
-    }
-    if (!scatteringLayout.ok) {
-        recordProgramRefusal("volume scattering: " + scatteringLayout.error);
-        return;
-    }
-    if (!volumeChromaLayout.ok) {
-        recordProgramRefusal("volume chroma: " + volumeChromaLayout.error);
-        return;
-    }
-    if (!phaseLayout.ok) {
-        recordProgramRefusal("volume phase: " + phaseLayout.error);
-        return;
-    }
-    if (!emissionLayout.ok) {
-        recordProgramRefusal("volume emission: " + emissionLayout.error);
-        return;
-    }
-
-    if (multiSource) {
-        if (!_radianceSourcesLayoutOk) {
-            recordProgramRefusal(_radianceSourcesLayoutError);
-            return;
-        }
-    } else {
-        if (!_radianceLayout.ok) {
-            recordProgramRefusal("radiance: " + _radianceLayout.error);
-            return;
-        }
-        if (!_chromaLayout.ok) {
-            recordProgramRefusal("chroma: " + _chromaLayout.error);
-            return;
-        }
-        if (!_angularLayout.ok) {
-            recordProgramRefusal("angular: " + _angularLayout.error);
-            return;
-        }
     }
 
     MemoizedProgram* memo = nullptr;
     if (memoId != 0) {
         memo = &_programCache[memoId];
-        const bool sourceStructureMatches =
-            memo->multiSource == multiSource &&
-            (multiSource
-                ? memo->sourceSetStructureRevision == _radianceSourcesStructureRevision
-                : (memo->radianceStructureRevision == _radianceStructureRevision &&
-                   memo->chromaStructureRevision == _chromaStructureRevision &&
-                   memo->angularStructureRevision == _angularStructureRevision));
-        const bool densityStructureMatches =
-            memo->densityKind == densityKind &&
-            memo->densityStructure == densityStructure;
-        const bool extinctionStructureMatches =
-            memo->extinctionStructure == extinctionStructure;
-        const bool scatteringStructureMatches =
-            memo->scatteringStructure == scatteringStructure;
-        const bool volumeChromaStructureMatches =
-            memo->volumeChromaStructure == volumeChromaStructure;
-        const bool phaseStructureMatches =
-            memo->phaseStructure == phaseStructure &&
-            memo->phaseReadsWi == phaseLayout.readsWi &&
-            memo->phaseReadsWo == phaseLayout.readsWo;
-        const bool emissionStructureMatches =
-            memo->emissionStructure == emissionStructure &&
-            memo->emissionReadsOmega == emissionLayout.readsOmega;
-
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
-            sourceStructureMatches &&
-            densityStructureMatches &&
-            extinctionStructureMatches &&
-            scatteringStructureMatches &&
-            volumeChromaStructureMatches &&
-            phaseStructureMatches &&
-            emissionStructureMatches &&
+            memo->radianceStructureRevision == _radianceStructureRevision &&
             memo->colorExprPtr == mat.colorExpr.get()) {
+            // We have a structural hit unless parameter recollection proves that
+            // the claimed structure identity is stale. Start on the cheap path;
+            // only fall back to compile on a mismatched recollection.
             needsCompile = false;
 
-            const bool sourceValuesChanged = multiSource
-                ? memo->sourceSetRevision != radianceSourcesRevision()
-                : (memo->radianceRevision != radianceRevision() ||
-                   memo->chromaRevision != radianceChromaRevision() ||
-                   memo->angularRevision != radianceAngularRevision());
-            const bool densityValuesChanged =
-                densityKind == sdfwgsl::DensityInputKind::Authored &&
-                memo->densityRevision != densityRevision;
-            const bool extinctionValuesChanged =
-                extinctionExpr && memo->extinctionRevision != extinctionRevision;
-            const bool scatteringValuesChanged =
-                scatteringExpr && memo->scatteringRevision != scatteringRevision;
-            const bool volumeChromaValuesChanged =
-                volumeChromaExpr && memo->volumeChromaRevision != volumeChromaRevision;
-            const bool phaseValuesChanged =
-                phaseExpr && memo->phaseRevision != phaseRevision;
-            const bool emissionValuesChanged =
-                emissionExpr && memo->emissionRevision != emissionRevision;
+            // Geometry parameters and radiance parameters share the same packed
+            // buffer. Either value-domain revision changing requires one exact
+            // recollection, but does NOT regenerate shader source.
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
-                sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
-                scatteringValuesChanged || volumeChromaValuesChanged ||
-                phaseValuesChanged || emissionValuesChanged;
-
+                memo->radianceRevision != radianceRevision();
             if (valuesChanged) {
                 sdfwgsl::ParameterBlock refreshed =
-                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(),
-                                           radianceExpr(), radianceChromaExpr(),
-                                           radianceAngularExpr(), sourceSet,
-                                           densityExpr, densityKind, extinctionExpr,
-                                           scatteringExpr, volumeChromaExpr, phaseExpr,
-                                           emissionExpr);
+                    sdfwgsl::collectParams(field, fieldNode, mat.colorExpr.get(), radianceExpr());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1628,37 +1124,25 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->prog.params = std::move(refreshed.values);
                     memo->parameterRevision = memoParameterRevision;
                     memo->radianceRevision = radianceRevision();
-                    memo->chromaRevision = radianceChromaRevision();
-                    memo->angularRevision = radianceAngularRevision();
-                    memo->sourceSetRevision = radianceSourcesRevision();
-                    memo->densityRevision = densityRevision;
-                    memo->extinctionRevision = extinctionRevision;
-                    memo->scatteringRevision = scatteringRevision;
-                    memo->volumeChromaRevision = volumeChromaRevision;
-                    memo->phaseRevision = phaseRevision;
-                    memo->emissionRevision = emissionRevision;
                 } else {
+                    // A parameter-count mismatch means our claimed structural
+                    // identity is stale. Fail open to a full compile rather than
+                    // pairing old WGSL with a differently-shaped buffer layout.
                     needsCompile = true;
                 }
             }
-
             if (!needsCompile) {
                 prog = &memo->prog;
                 sp = memo->sp;
                 isProvenHeightfield = memo->isProvenHeightfield;
                 mutableFrameStats().sdfProgramCacheHits++;
+                needsCompile = false;
             }
         }
     }
-
     if (needsCompile) {
         mutableFrameStats().sdfProgramCacheMisses++;
-        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(),
-                                     radianceExpr(), radianceChromaExpr(),
-                                     radianceAngularExpr(), sourceSet,
-                                     densityExpr, densityKind, extinctionExpr,
-                                     scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr);
+        localProg = sdfwgsl::compile(field, fieldNode, mat.colorExpr.get(), radianceExpr());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1668,47 +1152,28 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         sp = sdfPipeline(localProg.wgsl);
         if (!sp) return;
 
+        // Heightfield-ness is a theorem about tree structure, not frame state.
+        // Compute it at the same revision boundary as the compiled program.
         isProvenHeightfield = geom::isHeightfieldExpr(field, nullptr);
 
         if (memo) {
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
-            memo->multiSource = multiSource;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
-            memo->chromaRevision = radianceChromaRevision();
-            memo->chromaStructureRevision = _chromaStructureRevision;
-            memo->angularRevision = radianceAngularRevision();
-            memo->angularStructureRevision = _angularStructureRevision;
-            memo->sourceSetRevision = radianceSourcesRevision();
-            memo->sourceSetStructureRevision = _radianceSourcesStructureRevision;
-            memo->densityRevision = densityRevision;
-            memo->densityKind = densityKind;
-            memo->densityStructure = densityStructure;
-            memo->extinctionRevision = extinctionRevision;
-            memo->extinctionStructure = extinctionStructure;
-            memo->scatteringRevision = scatteringRevision;
-            memo->scatteringStructure = scatteringStructure;
-            memo->volumeChromaRevision = volumeChromaRevision;
-            memo->volumeChromaStructure = volumeChromaStructure;
-            memo->phaseRevision = phaseRevision;
-            memo->phaseStructure = phaseStructure;
-            memo->phaseReadsWi = phaseLayout.readsWi;
-            memo->phaseReadsWo = phaseLayout.readsWo;
-            memo->emissionRevision = emissionRevision;
-            memo->emissionStructure = emissionStructure;
-            memo->emissionReadsOmega = emissionLayout.readsOmega;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
             memo->isProvenHeightfield = isProvenHeightfield;
 
+            // A full compiler pass means the previous memo was not trusted
+            // enough for reuse (structure/color changed or parameter recollection
+            // refused). Spatial proof is cheaper to rebuild than to risk pairing
+            // a new program with an old theorem, so invalidate it unconditionally.
             memo->rangeReady = false;
             memo->rangeHierarchy = {};
             memo->rangeProxy = {};
-            memo->rangeProofWords.clear();
-            memo->rangeHasPositiveSkip = false;
             memo->rangeParameterRevision = 0xffffffff;
             prog = &memo->prog;
         } else {
@@ -1717,9 +1182,25 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (!sp || !prog) return;
 
-    // Surface and volumetric proxies share one immutable resident cube.
-    ensureSdfCubeVerts();
-    if (!_sdfCubeVerts) return;
+    // The bounding cube, shared by every field: the vertex shader scales it by the
+    // field extent, so one buffer serves all of them.
+    if (!_sdfCubeVerts) {
+        const float h = 1.0f;
+        const glm::vec3 c[8] = {
+            {-h,-h,-h},{ h,-h,-h},{ h, h,-h},{-h, h,-h},
+            {-h,-h, h},{ h,-h, h},{ h, h, h},{-h, h, h}};
+        const int idx[36] = {
+            0,1,2, 0,2,3,  4,6,5, 4,7,6,  0,4,5, 0,5,1,
+            3,2,6, 3,6,7,  0,3,7, 0,7,4,  1,5,6, 1,6,2};
+        std::vector<glm::vec3> tris(36);
+        for (int i = 0; i < 36; ++i) tris[i] = c[idx[i]];
+
+        WGPUBufferDescriptor bd = {};
+        bd.usage = WGPUBufferUsage_Vertex | WGPUBufferUsage_CopyDst;
+        bd.size = tris.size() * sizeof(glm::vec3);
+        _sdfCubeVerts = wgpuDeviceCreateBuffer(_device, &bd);
+        wgpuQueueWriteBuffer(_queue, _sdfCubeVerts, 0, tris.data(), bd.size);
+    }
 
     SdfInstanceData inst;
     inst.model = _model;
@@ -1782,19 +1263,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                 kSdfRangeProxyMaxDepth, kSdfRangeProxyMaxNodes);
             memo->rangeProxy =
                 geom::deriveZeroSetProxy(memo->rangeHierarchy, baselineProxyExtent);
-
-            // Derive only proved-positive OUTSIDE knowledge into a compact
-            // fixed-depth bit grid. The complete adaptive hierarchy remains the
-            // CPU theorem. A zero GPU bit is deliberately non-authoritative:
-            // exact authored marching owns that regular cell.
-            static_assert(
-                kSdfRangeGpuProofDepth <= kSdfRangeProxyMaxDepth,
-                "GPU proof depth cannot exceed the CPU theorem depth");
-            auto proofGrid = geom::derivePositiveRangeProofGrid(
-                memo->rangeHierarchy, kSdfRangeGpuProofDepth);
-            memo->rangeHasPositiveSkip = proofGrid.hasPositiveCells();
-            memo->rangeProofWords = std::move(proofGrid.words);
-
             memo->rangeParameterRevision = memoParameterRevision;
             memo->rangeAuthoredExtent = baselineProxyExtent;
             memo->rangeReady = true;
@@ -1802,19 +1270,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
 
         if (!memo->rangeProxy.hasPossibleZero) {
-            // Zero-free is not by itself permission to erase the draw. The
-            // existing marcher treats entry into negative space as an immediate
-            // hit, so an all-negative authored domain must fail open for parity.
-            // Only a root theorem f>0 everywhere is truly empty outside space.
-            const bool rootPositiveOutside =
-                !memo->rangeHierarchy.nodes.empty() &&
-                geom::rangeNodeProvesPositiveOutside(memo->rangeHierarchy.nodes.front());
-            if (rootPositiveOutside) {
-                mutableFrameStats().sdfRangeProxyCulledDraws++;
-                return;
-            }
+            // Every terminal cell in the complete authored render domain carries
+            // a finite proof excluding zero. There is no surface to rasterize.
+            mutableFrameStats().sdfRangeProxyCulledDraws++;
+            return;
         }
-        if (kSdfRangeRasterTighteningVerified && memo->rangeProxy.tightened) {
+        if (memo->rangeProxy.tightened) {
             // Preserve a one-ULP outward raster guard at the derived boundary.
             // This is not a guessed world-space tolerance: it is the next
             // representable float, clamped to the already-authoritative baseline
@@ -1829,35 +1290,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             mutableFrameStats().sdfRangeProxyDraws++;
         }
     }
-
-    // Upload/traverse the proof grid only when it contains at least one
-    // positive-outside theorem. Zero-bit cells are exact-march fallback space.
-    // FieldNode draws remain excluded because zero-set emptiness says nothing
-    // about volumetric density.
-    const bool rangeTraversalMarcherVerified =
-        prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
-    if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
-        rangeTraversalMarcherVerified &&
-        memo->rangeReady && memo->rangeHasPositiveSkip &&
-        !memo->rangeProofWords.empty()) {
-        auto& rangeBatch = _sdfRangeNodeBatches[sp];
-        const uint64_t base = static_cast<uint64_t>(rangeBatch.size());
-        const uint64_t count =
-            static_cast<uint64_t>(memo->rangeProofWords.size());
-        const uint64_t u32Max =
-            static_cast<uint64_t>(std::numeric_limits<uint32_t>::max());
-        if (base <= u32Max && count <= u32Max && base + count <= u32Max) {
-            inst.rangeProofWordOffset = static_cast<uint32_t>(base);
-            inst.rangeProofWordCount = static_cast<uint32_t>(count);
-            inst.rangeTraversalEnabled = 1u;
-            inst.rangeProofDepth = kSdfRangeGpuProofDepth;
-            rangeBatch.insert(rangeBatch.end(),
-                              memo->rangeProofWords.begin(),
-                              memo->rangeProofWords.end());
-            mutableFrameStats().sdfRangeTraversalDraws++;
-        }
-    }
-
     inst.extents = glm::vec4(proxyExtent, 0.0f);
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
@@ -2000,79 +1432,11 @@ void WebGpuRenderer::flushSdfDraws() {
             _sdfBatches[sp].clear();
             _sdfParamsBatches[sp].clear();
             _sdfHeightGridBatches[sp].clear();
-            _sdfRangeNodeBatches[sp].clear();
         }
         _activeSdfPipelines.clear();
         return;
     }
     
-    // Rung 7 source records are shared across every SDF pipeline in the frame.
-    // Upload only when their byte representation changes; source time and
-    // placement are values, not reasons to rebuild WGSL.
-    WGPUBuffer sourceBuffer = nullptr;
-    uint64_t sourceOffset = 0;
-    uint64_t sourceBindingSize = 0;
-
-    if (radianceSources().size() > 1) {
-        std::vector<RadianceSourceGpuData> gpuSources;
-        gpuSources.reserve(radianceSources().size());
-        for (const auto& source : radianceSources()) {
-            RadianceSourceGpuData data{};
-            data.position = glm::vec4(source.position, 1.0f);
-            data.ambient = glm::vec4(source.ambientRadiance, 1.0f);
-            data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
-            data.specular = glm::vec4(source.specularRadiance, 1.0f);
-            data.coefficients = source.coefficients;
-            data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
-                                  static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
-            data.control =
-                glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
-            gpuSources.push_back(data);
-        }
-
-        const uint64_t bytes =
-            static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
-        uint64_t capacity = 256;
-        while (capacity < bytes) capacity *= 2;
-
-        if (!_persistentRadianceSources.buffer ||
-            _persistentRadianceSources.capacityBytes < bytes) {
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (_persistentRadianceSources.buffer) {
-                    wgpuBufferRelease(_persistentRadianceSources.buffer);
-                }
-                _persistentRadianceSources.buffer = grown;
-                _persistentRadianceSources.capacityBytes = capacity;
-                _persistentRadianceSources.mirror.clear();
-                _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
-            }
-        }
-
-        const auto* raw =
-            reinterpret_cast<const unsigned char*>(gpuSources.data());
-        const std::vector<unsigned char> bytesNow(raw, raw + bytes);
-        if (_persistentRadianceSources.buffer &&
-            _persistentRadianceSources.capacityBytes >= bytes) {
-            if (_persistentRadianceSources.mirror != bytesNow) {
-                wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
-                                     gpuSources.data(), bytes);
-                _persistentRadianceSources.mirror = bytesNow;
-            }
-            sourceBuffer = _persistentRadianceSources.buffer;
-            sourceBindingSize = bytes;
-        } else {
-            auto fallback =
-                bufferPool().suballocateStorage(gpuSources.data(), bytes);
-            sourceBuffer = fallback.buffer;
-            sourceOffset = fallback.offset;
-            sourceBindingSize = fallback.size;
-        }
-    }
-
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
     u.viewProj = _viewProj;
@@ -2082,14 +1446,7 @@ void WebGpuRenderer::flushSdfDraws() {
     u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
-    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
-                               radianceVisibilityEnabled() ? 1.0f : 0.0f,
-                               0.0f, 0.0f);
-    u.radianceSourceCoefficients = radianceSourceCoefficients();
-    u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
-                               static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
-    u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
-                            static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
+    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
@@ -2168,111 +1525,32 @@ void WebGpuRenderer::flushSdfDraws() {
             mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
         }
 
-        // Keep the compact positive-proof words resident exactly like static
-        // SDF parameters. The CPU batch is rebuilt in instance order, but
-        // unchanged proof bytes are not re-uploaded after warmup.
-        const auto& rangeNodes = _sdfRangeNodeBatches[sp];
-        const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
-        auto& persistentRange = _persistentSdfRangeNodes[sp];
-        const uint64_t requiredRangeBytes =
-            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
-        if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
-            uint64_t capacity = 256;
-            while (capacity < requiredRangeBytes) capacity *= 2;
-
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (persistentRange.buffer) {
-                    _persistentSdfRangeNodeVramBytes -=
-                        static_cast<size_t>(persistentRange.capacityBytes);
-                    wgpuBufferRelease(persistentRange.buffer);
-                }
-                persistentRange.buffer = grown;
-                persistentRange.capacityBytes = capacity;
-                persistentRange.mirror.clear();
-                _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
-            }
-        }
-
-        bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
-        if (!rangeChanged && !rangeNodes.empty()) {
-            rangeChanged = std::memcmp(
-                persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
-        }
-
-        const bool persistentRangeUsable =
-            persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
-        WGPUBuffer rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
-        uint64_t rangeOffset = 0;
-        uint64_t rangeBindingSize = requiredRangeBytes;
-
-        if (rangeBuffer) {
-            if (rangeChanged && !rangeNodes.empty()) {
-                wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
-                persistentRange.mirror = rangeNodes;
-                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            } else if (rangeChanged) {
-                persistentRange.mirror.clear();
-            }
-        } else {
-            // Binding 2 must remain valid even for a batch with no proof grid.
-            // A zeroed dummy is never read because each such instance has count=0.
-            const uint32_t dummy = 0u;
-            const void* src = rangeNodes.empty()
-                ? static_cast<const void*>(&dummy)
-                : static_cast<const void*>(rangeNodes.data());
-            auto fallback = bufferPool().suballocateStorage(src, requiredRangeBytes);
-            rangeBuffer = fallback.buffer;
-            rangeOffset = fallback.offset;
-            rangeBindingSize = fallback.size;
-            if (!rangeNodes.empty()) {
-                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            }
-        }
-
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
-        // Group 0: globals + authored parameter values + optional Rung 7 sources.
-        WGPUBindGroupEntry bge[3] = {};
-        bge[0].binding = 0;
-        bge[0].buffer = uAlloc.buffer;
-        bge[0].offset = uAlloc.offset;
-        bge[0].size = uAlloc.size;
-        bge[1].binding = 1;
-        bge[1].buffer = paramBuffer;
-        bge[1].offset = paramOffset;
-        bge[1].size = paramBindingSize;
-        if (sp->usesRadianceSources) {
-            if (!sourceBuffer || sourceBindingSize == 0) continue;
-            bge[2].binding = 2;
-            bge[2].buffer = sourceBuffer;
-            bge[2].offset = sourceOffset;
-            bge[2].size = sourceBindingSize;
-        }
+        // Group 0: Globals and Parameters
+        WGPUBindGroupEntry bge[2] = {};
+        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
+        bge[1].binding = 1; bge[1].buffer = paramBuffer; bge[1].offset = paramOffset; bge[1].size = paramBindingSize;
         WGPUBindGroupDescriptor bgd = {};
-        bgd.layout = sp->bgl;
-        bgd.entryCount = sp->usesRadianceSources ? 3 : 2;
-        bgd.entries = bge;
+        bgd.layout = sp->bgl; bgd.entryCount = 2; bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
 
-        // Group 1: instances + heightfield cells + positive-proof bit words.
-        // Empty accelerators bind legal dummy storage but advertise zero count,
-        // so the shader cannot observe the dummy contents.
+        // Group 1: Instances (binding 0) + min/max heightfield-grid cells
+        // (binding 1, Phase C). A storage array of length zero is invalid, same
+        // as the params buffer above -- when nothing in this pipeline's batch
+        // built a grid, one unused cell keeps the binding legal without the
+        // shader having to know (every instance's heightGridDimX/Z stay 0, so
+        // it is never indexed).
         auto& hgCells = _sdfHeightGridBatches[sp];
         if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
-        auto hgAlloc = bufferPool().suballocateStorage(
-            hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+        auto hgAlloc = bufferPool().suballocateStorage(hgCells.data(), hgCells.size() * sizeof(glm::vec2));
 
-        WGPUBindGroupEntry ibge[3] = {};
+        WGPUBindGroupEntry ibge[2] = {};
         ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
         ibge[1].binding = 1; ibge[1].buffer = hgAlloc.buffer; ibge[1].offset = hgAlloc.offset; ibge[1].size = hgAlloc.size;
-        ibge[2].binding = 2; ibge[2].buffer = rangeBuffer; ibge[2].offset = rangeOffset; ibge[2].size = rangeBindingSize;
         WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 3; ibgDesc.entries = ibge;
+        ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 2; ibgDesc.entries = ibge;
         WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
@@ -2289,303 +1567,8 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfBatches[sp].clear();
         _sdfParamsBatches[sp].clear();
         _sdfHeightGridBatches[sp].clear();
-        _sdfRangeNodeBatches[sp].clear();
     }
     _activeSdfPipelines.clear();
-}
-
-void WebGpuRenderer::flushVolumeComposite() {
-    if (!_encoder || !_frameColorView || !_depthView) return;
-
-    // V3 does not invent incident direction. A wi-reading Phi can consume one
-    // and only one enabled admitted direct source. Position/enablement are
-    // runtime values, so changing them must not regenerate WGSL.
-    const Rendering::RadianceSourceBinding* incidentSource = nullptr;
-    std::size_t enabledIncidentSources = 0;
-    for (const auto& source : radianceSources()) {
-        if (!source.enabled) continue;
-        ++enabledIncidentSources;
-        if (enabledIncidentSources == 1) incidentSource = &source;
-    }
-    if (enabledIncidentSources != 1) incidentSource = nullptr;
-
-    // Build batches only from the bounded projection EngineRender handed to the
-    // renderer. No Zone/Object scan occurs here.
-    for (const auto& medium : volumeDensitySources()) {
-        if (!medium.densityExpr || medium.densityExpr->pieces.empty()) continue;
-
-        // FieldNode's existing spatial convention is origin ± scale (the
-        // particle modality samples local [-1,+1] and multiplies by scale).
-        // Do not reinterpret this shared authored property as a full span.
-        const glm::vec3 halfExtent = glm::abs(medium.scale);
-        if (halfExtent.x <= 1e-6f || halfExtent.y <= 1e-6f || halfExtent.z <= 1e-6f) {
-            continue;
-        }
-
-        const VolumeProgramKey programKey{
-            medium.densityExpr, medium.extinctionExpr,
-            medium.scatteringExpr, medium.volumeChromaExpr, medium.phaseExpr,
-            medium.emissionExpr};
-        auto& memo = _volumeProgramCache[programKey];
-        uint64_t mediumContentRevision = medium.densityRevision;
-        auto combineRevision = [&](uint64_t next) {
-            mediumContentRevision ^=
-                next + 0x9e3779b97f4a7c15ULL +
-                (mediumContentRevision << 6) + (mediumContentRevision >> 2);
-        };
-        combineRevision(medium.extinctionRevision);
-        combineRevision(medium.scatteringRevision);
-        combineRevision(medium.volumeChromaRevision);
-        combineRevision(medium.phaseRevision);
-        combineRevision(medium.emissionRevision);
-        if (memo.contentRevision != mediumContentRevision) {
-            const auto densityLayout =
-                sdfwgsl::inspectDensityExpression(medium.densityExpr);
-            const auto extinctionLayout =
-                sdfwgsl::inspectExtinctionExpression(medium.extinctionExpr);
-            const auto scatteringLayout =
-                sdfwgsl::inspectScatteringExpression(medium.scatteringExpr);
-            const auto volumeChromaLayout =
-                sdfwgsl::inspectVolumeChromaExpression(medium.volumeChromaExpr);
-            const auto phaseLayout =
-                sdfwgsl::inspectPhaseExpression(medium.phaseExpr);
-            const auto emissionLayout =
-                sdfwgsl::inspectEmissionExpression(medium.emissionExpr);
-            memo.contentRevision = mediumContentRevision;
-            memo.phaseReadsWi = phaseLayout.readsWi;
-            memo.phaseReadsWo = phaseLayout.readsWo;
-            memo.emissionReadsOmega = emissionLayout.readsOmega;
-
-            if (!densityLayout.ok || !extinctionLayout.ok ||
-                !scatteringLayout.ok || !volumeChromaLayout.ok ||
-                !phaseLayout.ok || !emissionLayout.ok) {
-                memo.ok = false;
-                memo.error = !densityLayout.ok
-                    ? "density: " + densityLayout.error
-                    : !extinctionLayout.ok
-                        ? "extinction: " + extinctionLayout.error
-                        : !scatteringLayout.ok
-                            ? "scattering: " + scatteringLayout.error
-                            : !volumeChromaLayout.ok
-                                ? "volume chroma: " + volumeChromaLayout.error
-                                : !phaseLayout.ok
-                                    ? "volume phase: " + phaseLayout.error
-                                    : "volume emission: " + emissionLayout.error;
-                memo.pipeline = nullptr;
-                ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal = memo.error;
-                continue;
-            }
-
-            const std::string structure =
-                "density:\n" + densityLayout.structure +
-                "\nextinction:\n" + extinctionLayout.structure +
-                "\nscattering:\n" + scatteringLayout.structure +
-                "\nvolume-chroma:\n" + volumeChromaLayout.structure +
-                "\nvolume-phase:\n" + phaseLayout.structure +
-                (phaseLayout.readsWi ? ":reads-wi" : ":no-wi") +
-                (phaseLayout.readsWo ? ":reads-wo" : ":no-wo") +
-                "\nvolume-emission:\n" + emissionLayout.structure +
-                (emissionLayout.readsOmega ? ":reads-omega" : ":no-omega");
-            if (!memo.ok || memo.structure != structure || !memo.pipeline) {
-                memo.prog =
-                    sdfwgsl::compileVolume(
-                        medium.densityExpr, medium.extinctionExpr,
-                        medium.scatteringExpr, medium.volumeChromaExpr,
-                        medium.phaseExpr, medium.emissionExpr);
-                ++mutableFrameStats().volumeProgramCompiles;
-                mutableFrameStats().volumeWgslBytesGenerated += memo.prog.wgsl.size();
-                memo.structure = structure;
-                memo.ok = memo.prog.ok;
-                memo.error = memo.prog.error;
-                memo.pipeline = memo.ok ? volumePipeline(memo.prog.wgsl) : nullptr;
-                if (!memo.pipeline) memo.ok = false;
-            } else {
-                const auto params =
-                    sdfwgsl::collectVolumeParams(
-                        medium.densityExpr, medium.extinctionExpr,
-                        medium.scatteringExpr, medium.volumeChromaExpr,
-                        medium.phaseExpr, medium.emissionExpr);
-                memo.ok = params.ok;
-                memo.error = params.error;
-                if (params.ok) memo.prog.params = params.values;
-            }
-        } else {
-            ++mutableFrameStats().volumeProgramCacheHits;
-        }
-
-        // Refusal never falls back to stale compiled medium state.
-        if (!memo.ok || !memo.pipeline) {
-            if (!memo.error.empty()) {
-                ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal = memo.error;
-            }
-            continue;
-        }
-
-        if (memo.phaseReadsWi && !incidentSource) {
-            const std::string why =
-                "volume phase: Phi reads wi but transport has " +
-                std::to_string(enabledIncidentSources) +
-                " enabled admitted direct sources; exactly one is required";
-            ++mutableFrameStats().volumeProgramRefusals;
-            mutableFrameStats().volumeLastProgramRefusal = why;
-            continue;
-        }
-
-        auto& instances = _volumeBatches[memo.pipeline];
-        auto& params = _volumeParamBatches[memo.pipeline];
-        if (instances.empty()) _activeVolumePipelines.push_back(memo.pipeline);
-
-        VolumeInstanceData instance;
-        instance.origin = glm::vec4(medium.origin, 1.0f);
-        instance.halfExtent = glm::vec4(halfExtent, 0.0f);
-        instance.time = glm::vec4(static_cast<float>(medium.temporalCoordinate),
-                                  static_cast<float>(medium.temporalDelta), 0.0f, 0.0f);
-        instance.paramOffset = static_cast<uint32_t>(params.size());
-
-        instances.push_back(instance);
-        params.insert(params.end(), memo.prog.params.begin(), memo.prog.params.end());
-    }
-
-    if (_activeVolumePipelines.empty()) return;
-
-    ensureSdfCubeVerts();
-    if (!_sdfCubeVerts) {
-        for (const VolumePipeline* pipeline : _activeVolumePipelines) {
-            _volumeBatches[pipeline].clear();
-            _volumeParamBatches[pipeline].clear();
-        }
-        _activeVolumePipelines.clear();
-        return;
-    }
-
-    // Opaque meshes/SDFs were deferred; make their depth authoritative before
-    // any medium samples it.
-    flushMeshDraws();
-    flushSdfDraws();
-
-    // Close the world pass. The color/depth attachments remain stored.
-    wgpuRenderPassEncoderEnd(_pass);
-    wgpuRenderPassEncoderRelease(_pass);
-    _pass = nullptr;
-    _boundPipeline = nullptr;
-
-    WGPURenderPassColorAttachment color = {};
-    color.view = _frameColorView;
-    color.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-    color.loadOp = WGPULoadOp_Load;
-    color.storeOp = WGPUStoreOp_Store;
-    WGPURenderPassDescriptor volumePassDesc = {};
-    volumePassDesc.colorAttachmentCount = 1;
-    volumePassDesc.colorAttachments = &color;
-    // No depth attachment: finished depth is read as a texture instead.
-    _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
-    _boundPipeline = nullptr;
-
-    VolumeGlobalUniforms globals;
-    globals.viewProj = _viewProj;
-    globals.invViewProj = glm::inverse(_viewProj);
-    globals.eyePos = glm::vec4(_eyePos, 1.0f);
-    globals.viewport = glm::vec4(static_cast<float>(_depthW),
-                                 static_cast<float>(_depthH), 0.0f, 0.0f);
-    globals.incidentSource =
-        incidentSource ? glm::vec4(incidentSource->position, 1.0f)
-                       : glm::vec4(0.0f);
-    auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
-
-    for (const VolumePipeline* pipeline : _activeVolumePipelines) {
-        const auto& instances = _volumeBatches[pipeline];
-        const auto& params = _volumeParamBatches[pipeline];
-        if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
-
-        auto paramAlloc =
-            bufferPool().suballocateStorage(params.data(), params.size() * sizeof(float));
-        auto instanceAlloc =
-            bufferPool().suballocateStorage(instances.data(),
-                                            instances.size() * sizeof(VolumeInstanceData));
-
-        WGPUBindGroupEntry globalEntries[3] = {};
-        globalEntries[0].binding = 0;
-        globalEntries[0].buffer = globalAlloc.buffer;
-        globalEntries[0].offset = globalAlloc.offset;
-        globalEntries[0].size = globalAlloc.size;
-        globalEntries[1].binding = 1;
-        globalEntries[1].buffer = paramAlloc.buffer;
-        globalEntries[1].offset = paramAlloc.offset;
-        globalEntries[1].size = paramAlloc.size;
-        globalEntries[2].binding = 2;
-        globalEntries[2].textureView = _depthView;
-
-        WGPUBindGroupDescriptor globalBgDesc = {};
-        globalBgDesc.layout = pipeline->globalBgl;
-        globalBgDesc.entryCount = 3;
-        globalBgDesc.entries = globalEntries;
-        WGPUBindGroup globalBg = wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
-        _frameBindGroups.push_back(globalBg);
-
-        WGPUBindGroupEntry instanceEntry = {};
-        instanceEntry.binding = 0;
-        instanceEntry.buffer = instanceAlloc.buffer;
-        instanceEntry.offset = instanceAlloc.offset;
-        instanceEntry.size = instanceAlloc.size;
-        WGPUBindGroupDescriptor instanceBgDesc = {};
-        instanceBgDesc.layout = pipeline->instanceBgl;
-        instanceBgDesc.entryCount = 1;
-        instanceBgDesc.entries = &instanceEntry;
-        WGPUBindGroup instanceBg = wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
-        _frameBindGroups.push_back(instanceBg);
-
-        bindPipeline(pipeline->pipe);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 0, globalBg, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(
-            _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
-        wgpuRenderPassEncoderDraw(
-            _pass, 36, static_cast<uint32_t>(instances.size()), 0, 0);
-
-        mutableFrameStats().drawCalls++;
-        mutableFrameStats().trianglesDrawn +=
-            static_cast<uint32_t>(12 * instances.size());
-    }
-
-    wgpuRenderPassEncoderEnd(_pass);
-    wgpuRenderPassEncoderRelease(_pass);
-    _pass = nullptr;
-    _boundPipeline = nullptr;
-
-    for (const VolumePipeline* pipeline : _activeVolumePipelines) {
-        _volumeBatches[pipeline].clear();
-        _volumeParamBatches[pipeline].clear();
-    }
-    _activeVolumePipelines.clear();
-
-    // Reopen the ordinary pass for nametags, menus and 2D authored overlays.
-    // Load both attachments exactly; volume color is now part of the world, while
-    // opaque depth remains available to any later world-space overlay.
-    WGPURenderPassColorAttachment continueColor = {};
-    continueColor.view = _frameColorView;
-    continueColor.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-    continueColor.loadOp = WGPULoadOp_Load;
-    continueColor.storeOp = WGPUStoreOp_Store;
-
-    WGPURenderPassDepthStencilAttachment continueDepth = {};
-    continueDepth.view = _depthView;
-    continueDepth.depthLoadOp = WGPULoadOp_Load;
-    continueDepth.depthStoreOp = WGPUStoreOp_Store;
-
-    WGPURenderPassDescriptor continueDesc = {};
-    continueDesc.colorAttachmentCount = 1;
-    continueDesc.colorAttachments = &continueColor;
-    continueDesc.depthStencilAttachment = &continueDepth;
-
-    _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &continueDesc);
-    _boundPipeline = nullptr;
-}
-
-void WebGpuRenderer::composeVolumes() {
-    if (!_pass || volumeDensitySources().empty()) return;
-    flushVolumeComposite();
 }
 
 void WebGpuRenderer::endFrame() {
@@ -2617,12 +1600,10 @@ void WebGpuRenderer::endFrame() {
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(_encoder);
     _encoder = nullptr;
-    _frameColorView = nullptr;
 
     auto& fs = mutableFrameStats();
     fs.vramAllocatedBytes = bufferPool().totalVramBytes() + _meshCache.totalCachedBytes() +
-                            _persistentSdfParamVramBytes + _persistentSdfRangeNodeVramBytes +
-                            _persistentRadianceSourceVramBytes;
+                            _persistentSdfParamVramBytes;
     fs.uniformBytesWritten = bufferPool().bytesWrittenThisFrame();
     fs.bufferSuballocations = bufferPool().suballocationsThisFrame();
     fs.cachedMeshesCount = static_cast<uint32_t>(_meshCache.cachedMeshCount());

@@ -101,22 +101,6 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
     }
 }
 
-void RelationManager::forgetTypeLexemeEverywhere(
-    const Singularity::Language::Lexeme* lexeme) {
-    if (!lexeme) return;
-
-    // Deliberately rare-path O(total live Relations): unlike endpoints, type
-    // Lexemes are released only by LanguageSystem removal/eviction/clear.
-    // Keeping this out of Singular::~Singular preserves the endpoint register's
-    // O(1) fast path for transient Moments and ordinary beings.
-    for (RelationManager* manager : liveManagers()) {
-        if (!manager) continue;
-        for (const auto& relation : manager->relations) {
-            if (relation) relation->forgetTypeLexeme(lexeme);
-        }
-    }
-}
-
 RelationManager::RelationManager() { liveManagers().insert(this); }
 
 RelationManager::RelationManager(const RelationManager& other)
@@ -461,16 +445,6 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
     if (!start || !target) return false;
     if (start == target) return true;
 
-    // Pre-build adjacency list to avoid O(E) scan per visited node
-    std::unordered_map<const Singular*, std::vector<const Singular*>> adj;
-    for (const auto& relPtr : relations) {
-        if (!relPtr) continue;
-        const Relation& rel = *relPtr;
-        if (rel.type == relationType && rel.a() && rel.b()) {
-            adj[rel.a()].push_back(rel.b());
-        }
-    }
-
     std::vector<const Singular*> queue = {target};
     std::unordered_set<const Singular*> visited = {target};
 
@@ -478,12 +452,13 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
         const Singular* current = queue.back();
         queue.pop_back();
 
-        auto it = adj.find(current);
-        if (it != adj.end()) {
-            for (const Singular* next : it->second) {
-                if (next == start) return true;
-                if (visited.insert(next).second) {
-                    queue.push_back(next);
+        for (const auto& relPtr : relations) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (rel.type == relationType && rel.a() == current) {
+                if (rel.b() == start) return true;
+                if (rel.b() && visited.insert(rel.b()).second) {
+                    queue.push_back(rel.b());
                 }
             }
         }
@@ -495,20 +470,6 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
     if (start.empty() || target.empty()) return false;
     if (start == target) return true;
     
-    // Pre-build adjacency list to avoid O(E) scan per visited node
-    std::unordered_map<std::string, std::vector<std::string>> adj;
-    for (const auto& relPtr : relations) {
-        if (!relPtr) continue;
-        const Relation& rel = *relPtr;
-        if (rel.type == relationType) {
-            std::string aId = rel.aId();
-            std::string bId = rel.bId();
-            if (!aId.empty() && !bId.empty()) {
-                adj[aId].push_back(bId);
-            }
-        }
-    }
-
     // Trace target's outgoing relations to see if we can reach start
     std::vector<std::string> queue = {target};
     std::unordered_set<std::string> visited = {target};
@@ -517,12 +478,13 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
         std::string current = queue.back();
         queue.pop_back();
         
-        auto it = adj.find(current);
-        if (it != adj.end()) {
-            for (const std::string& next : it->second) {
-                if (next == start) return true;
-                if (visited.insert(next).second) {
-                    queue.push_back(next);
+        for (const auto& relPtr : relations) {
+            if (!relPtr) continue;
+            const Relation& rel = *relPtr;
+            if (rel.type == relationType && rel.aId() == current) {
+                if (rel.bId() == start) return true;
+                if (visited.insert(rel.bId()).second) {
+                    queue.push_back(rel.bId());
                 }
             }
         }

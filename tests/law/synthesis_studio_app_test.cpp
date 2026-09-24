@@ -293,9 +293,8 @@ int main() {
         check(g_sounded.empty(), "with no audio channel bound, nothing is sounded");
 
         registerAudioSink([](Singular& subject, double frequency, double amplitude,
-                             const std::string& timbre, std::string&) {
+                             const std::string& timbre) {
             g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
-            return true;
         });
 
         struct ScaleNote {
@@ -578,9 +577,8 @@ int main() {
     }
 
     registerAudioSink([](Singular& subject, double frequency, double amplitude,
-                         const std::string& timbre, std::string&) {
+                         const std::string& timbre) {
         g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
-        return true;
     });
 
     // ------------------------------------------------------------------
@@ -950,9 +948,8 @@ int main() {
     // including reload, bounded repeated play, and the real Object serializer.
     {
         registerAudioSink([](Singular& subject, double frequency, double amplitude,
-                             const std::string& timbre, std::string&) {
+                             const std::string& timbre) {
             g_sounded.push_back({subject.getIdentifier(), frequency, amplitude, timbre});
-            return true;
         });
         laws.loadFromJson(world["authoredLaws"]);
         Object* resonator = findObject("studio.resonance.c5");

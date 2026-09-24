@@ -1,12 +1,12 @@
 # Formation Rete — Tiered Relevance Ladder and Law-Direct Traversal
 
-**Status:** Architectural addendum, 2026-09-16; **implementation/state updated 2026-09-21.** The first executable Law-Direct rung is now built and measured. Zach's 2026-09-21 next direction — relevant-change-only maintenance, incremental path repair, self-refining event subscriptions, and incremental route priority — is specified in `FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`.
+**Status:** Architectural addendum, 2026-09-16. This document refines the execution model in `FORMATION_RETE.md`, `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`, and `FORMATION_RETE_NEURAL_PLASTICITY_ADDENDUM.md`.
 
 **Origin and attribution.** The architecture in this note is Zach's, stated and clarified on 2026-09-16: Formation Rete is a **tiered relevance system with fallbacks**; similarity is a low-level worst-case discovery aid rather than the governing idea; the complete sweep remains available to over-approximate when stronger routes are ambiguous; Prophetic-Rete-style abstract interpretation can construct an ahead-of-time graph of relevance among Laws, Singulars, Properties, Relations, and Formations; and the **ultimate optimization target is a reified direct Law-to-relevant-Singular(+PropertyPath) route**. The higher layers exist to discover, prove, rank, retain, and repair those direct routes. The slow adapter builds those layers on its independent clock; the hot path consumes the highest sound/current layer that is ready.
 
 **Recorded and formalized by:** GPT-5.6 Sol (OpenAI), 2026-09-16. Sol's contribution here is the explicit ladder, invariants, complexity framing, and integration with the existing Prophetic, Derived-State, Property-predication, and Hierarchy-of-Joys documents. The originating design choices above are Zach's.
 
-**Companions:** `FORMATION_RETE.md`, `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`, `FORMATION_RETE_NEURAL_PLASTICITY_ADDENDUM.md`, `FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`, `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md`, `PROPHETIC_RETE.md`, `DERIVED_STATE_LEDGER.md`, `../ontology/HIERARCHY_OF_JOYS.md`, `../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`, `../../Analysis/LAW_DIRECT_TRAVERSAL_COMPLEXITY_AND_CI_RESULTS_2026-09-19.md`.
+**Companions:** `FORMATION_RETE.md`, `FORMATION_RETE_DIRECT_RELEVANCE_ADDENDUM.md`, `FORMATION_RETE_NEURAL_PLASTICITY_ADDENDUM.md`, `PROPERTY_ADDRESSING_IN_FORMATION_RETE.md`, `PROPHETIC_RETE.md`, `DERIVED_STATE_LEDGER.md`, `../ontology/HIERARCHY_OF_JOYS.md`, `../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`.
 
 ---
 
@@ -585,32 +585,6 @@ Where it says a graph may become or be represented as a Formation, read it conse
 Do not mutate a being's fundamental kind in C++ merely to satisfy this document. A future promotion framework must be authored separately.
 
 ---
-
-## 12A. 2026-09-21 — incrementality must recurse into maintenance
-
-Law-Direct has now validated the ladder's central premise in executable form: a proved category road can crystallize so the hot path no longer repeats its Relation proof. The next architecture applies the same principle to **maintenance of the ladder itself**.
-
-The new rule is:
-
-> **Only a relevant change should make a proof uncertain.**
-
-Coarse `structuralRevision()` / `relationGeneration()` witnesses remain valid fail-open currencies, but they are not the final granularity. A future direct route, Category membership proof, retained path, route-priority certificate, or compiled event subscription should carry a conservative semantic dependency frontier. Prophetic abstract interpretation may then prove an unrelated delta irrelevant and preserve the existing proof.
-
-This also changes the meaning of "repair downward." Downward repair is not merely "top tier stale -> choose a lower tier." It becomes:
-
-```text
-semantic delta
-  -> affected proof frontier
-  -> preserve every unaffected lower/higher proof
-  -> reopen only the stale route/path region
-  -> widen to broader provenance only where completeness is uncertain
-```
-
-Shortest-path maintenance should therefore evolve from repeated whole-search BFS/Dijkstra toward a dynamic repair algorithm over the affected subgraph. Multiple sound routes should keep incremental cost/order certificates; a changed route need not force global re-ranking when abstract bounds still prove the winner unchanged.
-
-The EventBus itself becomes eligible derived state: begin with a complete broad feed, compile narrower subscriptions only from proved Prophetic dependencies, and restore the broad feed immediately when opacity/incompleteness invalidates that proof.
-
-Full specification: `FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`.
 
 ## 13. Implementation sequence implied by this model
 

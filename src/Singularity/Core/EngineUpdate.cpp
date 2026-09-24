@@ -197,8 +197,6 @@ namespace Core {
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
             const bool shellCapturedPointer = ImGui::GetIO().WantCaptureMouse || menuOwnedThisFrame;
-            // Every pointer/key edge names the Person whose hand it is.
-            interaction->setPointingPerson(_person.get());
             interaction->step(_window, *_camera, mgr, shellCapturedPointer);
             static int frameCount = 0;
             frameCount++;
@@ -214,9 +212,9 @@ namespace Core {
         // Evict unreferenced smooth tessellation caches from destroyed or modified objects
         Object::gcSmoothTessellationCache();
 
-        // Advance the world's first-class Timeline. Universe borrows this
-        // being as temporal authority, so Laws and rendering read the same head.
-        (void)_worldTimeline.advanceBy(static_cast<double>(dt));
+        // Advance time
+        _worldTime += static_cast<double>(dt);
+        Universe::instance().setClock(_worldTime, static_cast<double>(dt));
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
 

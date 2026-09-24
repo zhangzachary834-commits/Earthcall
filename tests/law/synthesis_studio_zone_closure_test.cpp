@@ -143,9 +143,8 @@ int main() {
 
     std::vector<SoundedNote> sounded;
     registerAudioSink([&](Singular&, double frequency, double amplitude,
-                         const std::string& timbre, std::string&) {
+                         const std::string& timbre) {
         sounded.push_back({frequency, amplitude, timbre});
-        return true;
     });
 
     // Generic click/depression is already covered by InteractionChannel tests and

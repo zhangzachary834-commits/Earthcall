@@ -42,7 +42,7 @@ runs a bounded loop of 192 iterations, but the number alone is misleading. Each 
 
 The repository already records the key experiment in:
 
-- `docs/Agenda/Tasks/Specific Tasks/Performance and Runtime/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md`
+- `docs/Agenda/Tasks/Specific Tasks/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD/The_horizon_frame_is_now_the_ceiling_and_the_cost_is_FIELD.md`
 - `docs/plans/SDF_MANIFOLD_HIGH_FPS_ACCELERATION_PLAN.md`
 - `docs/plans/MULTI_HUNDRED_FPS_SDF_ENGINE_PLAN_2026-08-28.md`
 

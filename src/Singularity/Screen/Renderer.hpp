@@ -7,9 +7,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "Singularity/Screen/RadianceSource.hpp"
-#include "Singularity/Screen/VolumeDensity.hpp"
-#include "Singularity/Screen/RenderedFieldSemanticObserver.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -63,26 +60,12 @@ public:
         std::string sdfLastProgramRefusal;
         size_t   sdfWgslBytesGenerated = 0;
         size_t   sdfParameterBytesUploaded = 0;
-        // Volumetric V0 observability. Density time belongs to per-medium
-        // instance data, so advancing only t must hit the memo and never
-        // regenerate the authored density shader.
-        uint32_t volumeProgramCompiles = 0;
-        uint32_t volumeProgramCacheHits = 0;
-        uint32_t volumeProgramRefusals = 0;
-        std::string volumeLastProgramRefusal;
-        size_t volumeWgslBytesGenerated = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
         uint32_t sdfRangeHierarchyBuilds = 0;
         uint32_t sdfRangeProxyDraws = 0;
         uint32_t sdfRangeProxyCulledDraws = 0;
-        // Next spatial-Prophetic rung: draws that actually supplied a
-        // conservative hierarchy to the fragment marcher, plus proof-buffer
-        // bytes uploaded this frame. Stable scenes should upload zero after
-        // warmup while traversalDraws remains nonzero.
-        uint32_t sdfRangeTraversalDraws = 0;
-        size_t   sdfRangeNodeBytesUploaded = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
@@ -158,125 +141,6 @@ public:
     const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
     uint64_t radianceRevision() const { return _radianceRevision; }
 
-    // Optional authored source chroma chi(p,t)->vec3. Absence is semantically
-    // different from authored white: absence means the historical light.color
-    // remains the source's constant chroma. Keep chi's revision independent of
-    // rho so value/structure invalidation can remain independently observable.
-    void setRadianceChroma(const OntoMath::Piecewise* expr, uint64_t revision) {
-        _radianceChromaExpr = expr;
-        _radianceChromaRevision = revision;
-    }
-    const OntoMath::Piecewise* radianceChromaExpr() const { return _radianceChromaExpr; }
-    uint64_t radianceChromaRevision() const { return _radianceChromaRevision; }
-
-    // Optional authored angular source factor alpha(p,omega,t)->scalar. Absence
-    // is the exact multiplicative identity alpha=1. Keep its content revision
-    // independent from both rho and chi.
-    void setRadianceAngular(const OntoMath::Piecewise* expr, uint64_t revision) {
-        _radianceAngularExpr = expr;
-        _radianceAngularRevision = revision;
-    }
-    const OntoMath::Piecewise* radianceAngularExpr() const { return _radianceAngularExpr; }
-    uint64_t radianceAngularRevision() const { return _radianceAngularRevision; }
-
-    // Scalar source coefficients are the non-chromatic part of the historical
-    // light state. WebGPU uses them only when authored chi is present, so the
-    // no-chi path remains the exact pre-Rung-5 formula.
-    void setRadianceSourceCoefficients(float intensity, float ambient,
-                                       float diffuse, float specular) {
-        _radianceSourceCoefficients = glm::vec4(intensity, ambient, diffuse, specular);
-    }
-    const glm::vec4& radianceSourceCoefficients() const { return _radianceSourceCoefficients; }
-
-    // Temporal coordinate admitted by the active authored RADIANCE SOURCE.
-    // Renderer does not decide which Timeline supplies it and does not attach
-    // this coordinate to the surfaces being illuminated. Today EngineRender
-    // projects the broad compatibility Timeline for the active radiant FieldNode;
-    // a future Law/First Mover may select that source Singular's own Timeline
-    // without changing WebGPU or OntoMath. Other changing channels (material
-    // color, geometry, animation, etc.) require their own explicit bindings.
-    void setRadianceTemporalCoordinate(double t, double delta) {
-        _radianceTemporalCoordinate = t;
-        _radianceTemporalDelta = delta;
-    }
-    double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
-    double radianceTemporalDelta() const { return _radianceTemporalDelta; }
-
-    // Volumetric V0: participating-medium density owns a temporal coordinate
-    // independent from source radiance. Renderer does not decide which Timeline
-    // supplies it; it merely transports the coordinate admitted by D(p,t).
-    void setVolumeDensityTemporalCoordinate(double t, double delta) {
-        _volumeDensityTemporalCoordinate = t;
-        _volumeDensityTemporalDelta = delta;
-    }
-    double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
-    double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
-
-    // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
-    // them together instead of forcing one source AST to enumerate the world.
-    // One-source worlds intentionally keep using the historical scalar setters
-    // above, making the one-element sum an exact compatibility path.
-    void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
-                            uint64_t revision) {
-        _radianceSources = std::move(sources);
-        _radianceSourcesRevision = revision;
-        _renderedFieldObserver.observeRadianceSources(_radianceSources, revision);
-    }
-    const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
-        return _radianceSources;
-    }
-    uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
-
-    // Volumetric V0: authored participating media are projected as a collection
-    // above any individual density AST, exactly as Rung 7 composes light sources.
-    // Renderer receives world truth; it does not scan Zones or invent media.
-    void setVolumeDensitySources(std::vector<Rendering::VolumeDensityBinding> sources,
-                                 uint64_t revision) {
-        _volumeDensitySources = std::move(sources);
-        _volumeDensitySourcesRevision = revision;
-        _renderedFieldObserver.observeVolumeDensitySources(
-            _volumeDensitySources, revision);
-    }
-    const std::vector<Rendering::VolumeDensityBinding>& volumeDensitySources() const {
-        return _volumeDensitySources;
-    }
-    uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
-
-    // Scene-spatial synthesis Phase B: diagnostic only. The observer has no
-    // theorem-consumption API and therefore cannot alter rendered truth.
-    void setRenderedFieldSemanticObservationEnabled(bool on) {
-        const bool wasEnabled = _renderedFieldObserver.enabled();
-        if (wasEnabled == on) return;
-
-        _renderedFieldObserver.setEnabled(on);
-        if (!on) return;
-
-        // Phase-B observation must describe the scene already admitted to the
-        // Renderer, not only source-set traffic that happens after enablement.
-        // This replay is diagnostic-only: theorem state has no authority path
-        // back into pixels, marching, accumulation, visibility, or WGSL.
-        _renderedFieldObserver.observeRadianceSources(
-            _radianceSources, _radianceSourcesRevision);
-        _renderedFieldObserver.observeVolumeDensitySources(
-            _volumeDensitySources, _volumeDensitySourcesRevision);
-    }
-    bool renderedFieldSemanticObservationEnabled() const {
-        return _renderedFieldObserver.enabled();
-    }
-    const Rendering::RenderedFieldSemanticObserver::Stats&
-    renderedFieldSemanticObservationStats() const {
-        return _renderedFieldObserver.stats();
-    }
-
-    // Rung 8 execution seam: visibility is DERIVED transport truth, never an
-    // authored property of rho/chi/alpha. Keeping this as renderer state makes
-    // V=1 an exact compatibility mode and lets transport change at runtime
-    // without regenerating source WGSL or mutating any source AST. The default
-    // remains false until Screen can truthfully query the complete scene, not
-    // merely the SDF geometry owned by the currently executing pipeline.
-    void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
-    bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
-
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -332,12 +196,6 @@ public:
     // tessellates on EVERY call, so routing a cached-mesh caller through it would
     // be a large regression. Hence a query rather than always preferring one.
     virtual bool rendersImplicitExactly() const { return false; }
-
-    // Sensory staging seam for participating media. The default is a no-op:
-    // backends without authored volumetric transport simply continue rendering.
-    // WebGPU overrides this to finish opaque world depth, composite the current
-    // Zone's density fields, then reopen a load-preserving pass for HUD/2D.
-    virtual void composeVolumes() {}
 
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
@@ -464,21 +322,6 @@ private:
     bool      _lightingOn = true;
     const OntoMath::Piecewise* _radianceExpr = nullptr;
     uint64_t _radianceRevision = 0;
-    const OntoMath::Piecewise* _radianceChromaExpr = nullptr;
-    uint64_t _radianceChromaRevision = 0;
-    const OntoMath::Piecewise* _radianceAngularExpr = nullptr;
-    uint64_t _radianceAngularRevision = 0;
-    glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
-    double _radianceTemporalCoordinate = 0.0;
-    double _radianceTemporalDelta = 0.0;
-    double _volumeDensityTemporalCoordinate = 0.0;
-    double _volumeDensityTemporalDelta = 0.0;
-    std::vector<Rendering::RadianceSourceBinding> _radianceSources;
-    uint64_t _radianceSourcesRevision = 0;
-    bool _radianceVisibilityEnabled = false;
-    std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
-    uint64_t _volumeDensitySourcesRevision = 0;
-    Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;
     FrameStats _frameStats;
 };
 

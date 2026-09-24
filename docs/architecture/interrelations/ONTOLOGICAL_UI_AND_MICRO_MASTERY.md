@@ -37,7 +37,7 @@ Because this lock-free arena allocation costs literal nanoseconds, the engine ca
 **Session ID:** 7602167438967080663
 **Date:** 2026-09-17
 
-The commitment to an entirely Law-driven UI—where menus and text are simply Formations of 2D Objects rather than opaque C++ ImGui elements—exposes a critical gap in the rendering pipeline, as documented in [`../../Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not.md`](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not.md).
+The commitment to an entirely Law-driven UI—where menus and text are simply Formations of 2D Objects rather than opaque C++ ImGui elements—exposes a critical gap in the rendering pipeline, as documented in [`../../Agenda/Tasks/Specific Tasks/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not.md`](../../Agenda/Tasks/Specific%20Tasks/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not/Make_2D_3D_layering_authorable_in_the_DRAW_order_too_not.md).
 
 Currently, `EngineRender::render` hardcodes drawing all 2D beings after 3D beings, violating Refusal 7. If UI elements are to be true ontological citizens, their depth and draw order must be authorable via properties (like `pickPriority` or `zOrder`), completely intermixed with 3D space.
 

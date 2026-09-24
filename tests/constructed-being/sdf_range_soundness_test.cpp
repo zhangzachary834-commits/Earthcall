@@ -231,49 +231,6 @@ int main() {
         }
     }
 
-    // Lattice-aware classic Perlin proof: exercise boxes that cross ordinary,
-    // negative, and 289-period hash boundaries. The theorem is allowed to be
-    // loose; every exact sample must remain enclosed.
-    {
-        auto p = std::make_unique<OntoMath::MathNode>();
-        p->op = OntoMath::MathNode::Op::ValueLeaf;
-        p->variableName = OntoMath::kAmbientPointVar;
-
-        auto noise = std::make_shared<OntoMath::MathNode>();
-        noise->op = OntoMath::MathNode::Op::Noise;
-        noise->children.push_back(std::move(p));
-        const geom::SdfNode field = geom::makeImplicit(noise);
-
-        const struct BoxCase {
-            glm::vec3 lo;
-            glm::vec3 hi;
-            const char* name;
-        } boxes[] = {
-            {glm::vec3(-0.2f, -0.3f, -0.4f),
-             glm::vec3( 1.2f,  0.7f,  0.6f), "ordinary lattice crossing"},
-            {glm::vec3(-2.25f, -1.1f, -0.7f),
-             glm::vec3(-0.75f,  0.2f,  0.4f), "negative lattice crossing"},
-            {glm::vec3(288.4f, -0.2f, 0.1f),
-             glm::vec3(289.6f,  0.8f, 1.1f), "mod289 lattice crossing"},
-        };
-
-        for (const auto& box : boxes) {
-            const auto range = geom::evalRange(field, box.lo, box.hi);
-            check(std::isfinite(range.lo) && std::isfinite(range.hi),
-                  box.name);
-            for (int ix = 0; ix <= 8; ++ix) {
-                for (int iy = 0; iy <= 8; ++iy) {
-                    for (int iz = 0; iz <= 8; ++iz) {
-                        const glm::vec3 t(ix / 8.0f, iy / 8.0f, iz / 8.0f);
-                        const glm::vec3 q = box.lo + t * (box.hi - box.lo);
-                        check(contains(range, geom::evalSdf(field, q)),
-                              "lattice-aware Perlin range contains exact sample");
-                    }
-                }
-            }
-        }
-    }
-
     // CSG must preserve fail-open knowledge: an unknown child may loosen the
     // result, but it must never become a false exclusion. Sample the combined
     // field to ensure its propagated interval remains conservative.

@@ -1777,10 +1777,12 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
-    if (_lawById.find(id) != _lawById.end()) return;
+    auto existing = std::find_if(_laws.begin(), _laws.end(), [&](const std::shared_ptr<Law>& candidate) {
+        return candidate && candidate->getIdentifier() == id;
+    });
+    if (existing != _laws.end()) return;
 
     _laws.push_back(law);
-    _lawById[id] = law.get();
     _lawFormation.addMember(law.get());
     // The register changed, so every conclusion the Prophetic index drew
     // about it is now about a different set of laws.
@@ -2822,13 +2824,7 @@ void LawManager::releaseFromLaws(Singular* being) {
     _seededBeingPointers.erase(being);
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
-                       [&id, this](const DriveSession& s) {
-                           if (s.subjectId == id) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
-                               return true;
-                           }
-                           return false;
-                       }),
+                       [&id](const DriveSession& s) { return s.subjectId == id; }),
         _driveSessions.end());
 }
 
@@ -2892,7 +2888,6 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
             session.eventObjectId = o->getIdentifier();
         }
     }
-    _driveSessionKeys.insert({law.getIdentifier(), subjectId});
     _driveSessions.push_back(std::move(session));
 }
 
@@ -2926,7 +2921,6 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
             if (law && subject) law->forgetOnset(subject);
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2952,7 +2946,6 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
             it = _driveSessions.erase(it);
             continue;
         }
@@ -2989,22 +2982,9 @@ bool LawManager::remove(const std::string& lawId) {
     // half-destructed Law.
     std::shared_ptr<Law> removed = std::move(*it);
     _laws.erase(it);
-    _lawById.erase(lawId);
     removed.reset();
     _adapter.forgetLaw(lawId);
     Law::bumpTextRevision();
-
-    _driveSessions.erase(
-        std::remove_if(_driveSessions.begin(), _driveSessions.end(),
-                       [&lawId, this](const DriveSession& s) {
-                           if (s.lawId == lawId) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
-                               return true;
-                           }
-                           return false;
-                       }),
-        _driveSessions.end());
-
     return true;
 }
 
@@ -3143,11 +3123,7 @@ void LawManager::backSeedRelationStateFacts(const std::unordered_set<std::string
     if (relations.empty()) return;
     for (Singular* being : Universe::instance().beings()) {
         if (!being) continue;
-        std::vector<Relation*> edges;
-        if (!Universe::instance().relationsInvolving(*being, edges)) {
-            edges = relations;
-        }
-        for (Relation* relation : edges) {
+        for (Relation* relation : relations) {
             if (!relation) continue;
             if (relation->a() != being && relation->b() != being) continue;
             if (!types.count(relation->type)) continue;
@@ -3389,13 +3365,8 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     }
     std::vector<std::shared_ptr<Law>> oldLaws = std::move(_laws);
     _laws = std::move(firstMovers);
-    _lawById.clear();
-    for (const auto& law : _laws) {
-        if (law) _lawById[law->getIdentifier()] = law.get();
-    }
     oldLaws.clear();
     _driveSessions.clear();
-    _driveSessionKeys.clear();
     Law::bumpTextRevision();
     _reteTerminals.clear();
     _compiledConditionRevision.clear();
@@ -3473,8 +3444,9 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
 }
 
 Law* LawManager::find(const std::string& lawId) const {
-    auto it = _lawById.find(lawId);
-    if (it != _lawById.end()) return it->second;
+    for (const auto& law : _laws) {
+        if (law && law->getIdentifier() == lawId) return law.get();
+    }
     return nullptr;
 }
 

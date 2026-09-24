@@ -42,6 +42,18 @@ void Object::setDimensions(int d) {
     dimensions = static_cast<float>(d);
 }
 
+int Object::getCorners() const {
+    if (_shapeKind == ShapeKind::Polyhedron) {
+        return polyhedronData.getVertexCount();
+    }
+    return _composition.corners;
+}
+
+void Object::setCorners(int c) {
+    _composition.corners = c;
+    // For polyhedrons, this could trigger a regeneration of the polyhedron
+    // For now, we'll just store the value for compatibility
+}
 
 int Object::getFaces() const {
     if (_hasField)   return 1;
@@ -65,6 +77,21 @@ void Object::setFaces(int f) {
     // For now, we'll just store the value for compatibility
 }
 
+int Object::getMassQuantity() const {
+    return _composition.massQuantity;
+}
+
+void Object::setMassQuantity(int m) {
+    _composition.massQuantity = m;
+}
+
+int Object::getElements() const {
+    return _composition.elements;
+}
+
+void Object::setElements(int e) {
+    _composition.elements = e;
+}
 
 // Composition: element membership
 

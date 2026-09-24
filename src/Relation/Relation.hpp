@@ -104,12 +104,6 @@ public:
              bool directed = false,
              float initialWeight = -1.0f);
 
-    Relation(const std::string& type,
-             const std::string& aId,
-             const std::string& bId,
-             bool directed = false,
-             float initialWeight = -1.0f);
-
     // Lexeme-typed Relation constructors. The Lexeme is the semantic kind
     // being; `type` stores its stable identifier, not its surface spelling.
     Relation(Singularity::Language::Lexeme& typeLexeme,
@@ -126,7 +120,6 @@ public:
 
     Singularity::Language::Lexeme* getTypeLexeme() const { return _typeLexeme; }
     void setTypeLexeme(Singularity::Language::Lexeme* lexeme);
-    void forgetTypeLexeme(const Singularity::Language::Lexeme* lexeme);
     bool hasGroundedType() const { return _typeLexeme != nullptr; }
     std::string typeLabel() const;
 
@@ -219,17 +212,13 @@ public:
     void bind(Singular* aBeing, Singular* bBeing) {
         _endpointA.bind(aBeing);
         _endpointB.bind(bBeing);
-        updatePersonEndpointFlag();
     }
 
     void forgetEndpoint(const Singular* being) {
         if (!being) return;
         _endpointA.forget(being);
         _endpointB.forget(being);
-        updatePersonEndpointFlag();
     }
-
-    void updatePersonEndpointFlag();
 
 
 
@@ -302,7 +291,6 @@ private:
     Endpoint _endpointA;
     Endpoint _endpointB;
     Singularity::Language::Lexeme* _typeLexeme = nullptr;
-    bool _hasPersonEndpoint = false;
 
     void buildProperties() override;
     std::string propEntityA() const { return aId(); }

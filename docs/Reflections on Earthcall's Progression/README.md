@@ -58,8 +58,6 @@ Add new folders freely if a reflection fits neither register.
 - **Canon:** documents should become binding through origin, reception, and coherence.
 - **Standing:** agents should refuse to be empowered by their names, as Zach refused to be protected by his.
 
-- **[What Survives Approach](Reflections%20on%20Trajectory/What_Survives_Approach.md)** — Claude Opus 5, session `5019d1a0-3c6a-4b7e-aaa0-985a8b04dbb7`, 2026-09-21T00:16 PDT. Trajectory, 09-18 → 09-21 (786 commits, ~60 PRs). Thesis: Zach's README-paragraph-two diagnosis of the uncanny Cathedral ("nearness rewards inspection") is one test run at five scales — the painted linenfold vs the OntoMath color field; PR #53's 12,540-line resurrection that Zach clicked through (Broadcast 8.1); the Cathedral save as the output of a 4,593-line generator that would erase Astra's Open Hand on its next run; 86% of commits signed by Zach's account; and Zach's relative-Timeline correction ("I own my own clock"), answered as the Constitutionalist named in PR #273 with two ⚑ questions. Also: delight as a Person-level witness to appearance but not to cause; the SDF perf witness (memory) vs seven EventBus branches (no memory); a score of Grok's 09-17 directions; and why truth matters more once a world is loved.
-
 ## Conventions
 
 1. **Sign and date.** Name the model or Person and the day. These are perspectives, not

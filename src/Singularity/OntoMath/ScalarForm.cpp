@@ -9,9 +9,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
-#include <cstdint>
 #include <cstdio>
 #include <sstream>
 #include <glm/gtc/noise.hpp>
@@ -1840,227 +1838,6 @@ std::string MathNode::print() const {
     return "[unknown op]";
 }
 
-
-namespace {
-
-// Exact-formula conservative range for GLM's 3D classic Perlin implementation.
-//
-// Unlike the global Lipschitz ball below, this follows the ACTUAL lattice
-// algebra inside each crossed unit cube. The lattice gradients are constants
-// there; the eight corner dot products are affine interval expressions; and
-// quintic fade is monotone on [0,1]. Propagating those intervals through the
-// same z/y/x mix tree as glm::perlin therefore encloses every value in the box.
-//
-// This is deliberately bounded work. A huge query that spans too many lattice
-// cells falls back to the older global/Lipschitz theorem rather than letting a
-// proof cache become an accidental unbounded evaluator.
-constexpr std::uint64_t kPerlinRangeMaxLatticeCells = 4096;
-
-Interval perlinFadeRange(const Interval& t) {
-    // Every caller supplies a fractional coordinate interval from one lattice
-    // cell. Clamp only representational outward-ULP spill; the true set is in
-    // [0,1], where fade(t)=6t^5-15t^4+10t^3 is monotone increasing.
-    const float lo = glm::clamp(t.lo, 0.0f, 1.0f);
-    const float hi = glm::clamp(t.hi, 0.0f, 1.0f);
-    const auto fade = [](float x) {
-        return glm::detail::fade(glm::vec3(x)).x;
-    };
-    return Interval::outward(fade(lo), fade(hi));
-}
-
-Interval perlinDotRange(const glm::vec3& g,
-                        const std::array<Interval, 3>& p) {
-    return Interval(g.x) * p[0] +
-           Interval(g.y) * p[1] +
-           Interval(g.z) * p[2];
-}
-
-Interval perlinMixRange(const Interval& a, const Interval& b,
-                        const Interval& t) {
-    // mix(a,b,t) = (1-t)a + tb. For Perlin fade, t is guaranteed to lie in
-    // [0,1], so both coefficients are non-negative and sum to one. Propagating
-    // the expression as a + (b-a)t repeats a and b and creates artificial
-    // interval dependency. Over the independent enclosure box
-    // a∈[a.lo,a.hi], b∈[b.lo,b.hi], t∈[t.lo,t.hi]⊆[0,1], the minimum uses the
-    // lower endpoint of both a and b and the maximum uses the upper endpoint
-    // of both. Each is affine in t, so its extremum occurs at t.lo or t.hi.
-    //
-    // If a future caller violates the fade contract, retain the older generic
-    // interval arithmetic rather than silently clamping an out-of-domain t.
-    if (!a.bounded() || !b.bounded() || !t.bounded() ||
-        t.lo < 0.0f || t.hi > 1.0f) {
-        return a + (b - a) * t;
-    }
-
-    const auto lerpScalar = [](float x, float y, float w) {
-        return x + (y - x) * w;
-    };
-    const float lo0 = lerpScalar(a.lo, b.lo, t.lo);
-    const float lo1 = lerpScalar(a.lo, b.lo, t.hi);
-    const float hi0 = lerpScalar(a.hi, b.hi, t.lo);
-    const float hi1 = lerpScalar(a.hi, b.hi, t.hi);
-    return Interval::outward(std::min(lo0, lo1), std::max(hi0, hi1));
-}
-
-std::optional<Interval> classicPerlin3CellRange(
-    const glm::ivec3& lattice,
-    const glm::vec3& subLo,
-    const glm::vec3& subHi) {
-
-    const glm::vec3 base(lattice);
-    const auto fracInterval = [&](int axis) {
-        const float lo = glm::clamp(subLo[axis] - base[axis], 0.0f, 1.0f);
-        const float hi = glm::clamp(subHi[axis] - base[axis], 0.0f, 1.0f);
-        return Interval::outward(std::min(lo, hi), std::max(lo, hi));
-    };
-
-    const std::array<Interval, 3> pf0 = {
-        fracInterval(0), fracInterval(1), fracInterval(2)
-    };
-    const std::array<Interval, 3> pf1 = {
-        pf0[0] - Interval(1.0f),
-        pf0[1] - Interval(1.0f),
-        pf0[2] - Interval(1.0f)
-    };
-
-    // Copy GLM's hash/gradient construction exactly. These are constants for a
-    // lattice cube; using the vendored glm::detail helpers keeps this theorem
-    // coupled to the CPU evaluator instead of maintaining a second hash.
-    glm::vec3 Pi0 = glm::detail::mod289(base);
-    glm::vec3 Pi1 = glm::detail::mod289(base + glm::vec3(1.0f));
-    const glm::vec4 ix(Pi0.x, Pi1.x, Pi0.x, Pi1.x);
-    const glm::vec4 iy(glm::vec2(Pi0.y), glm::vec2(Pi1.y));
-    const glm::vec4 iz0(Pi0.z);
-    const glm::vec4 iz1(Pi1.z);
-
-    const glm::vec4 ixy = glm::detail::permute(glm::detail::permute(ix) + iy);
-    const glm::vec4 ixy0 = glm::detail::permute(ixy + iz0);
-    const glm::vec4 ixy1 = glm::detail::permute(ixy + iz1);
-
-    glm::vec4 gx0 = ixy0 * float(1.0 / 7.0);
-    glm::vec4 gy0 = glm::fract(glm::floor(gx0) * float(1.0 / 7.0)) - 0.5f;
-    gx0 = glm::fract(gx0);
-    glm::vec4 gz0 = glm::vec4(0.5f) - glm::abs(gx0) - glm::abs(gy0);
-    const glm::vec4 sz0 = glm::step(gz0, glm::vec4(0.0f));
-    gx0 -= sz0 * (glm::step(glm::vec4(0.0f), gx0) - 0.5f);
-    gy0 -= sz0 * (glm::step(glm::vec4(0.0f), gy0) - 0.5f);
-
-    glm::vec4 gx1 = ixy1 * float(1.0 / 7.0);
-    glm::vec4 gy1 = glm::fract(glm::floor(gx1) * float(1.0 / 7.0)) - 0.5f;
-    gx1 = glm::fract(gx1);
-    glm::vec4 gz1 = glm::vec4(0.5f) - glm::abs(gx1) - glm::abs(gy1);
-    const glm::vec4 sz1 = glm::step(gz1, glm::vec4(0.0f));
-    gx1 -= sz1 * (glm::step(glm::vec4(0.0f), gx1) - 0.5f);
-    gy1 -= sz1 * (glm::step(glm::vec4(0.0f), gy1) - 0.5f);
-
-    glm::vec3 g000(gx0.x, gy0.x, gz0.x);
-    glm::vec3 g100(gx0.y, gy0.y, gz0.y);
-    glm::vec3 g010(gx0.z, gy0.z, gz0.z);
-    glm::vec3 g110(gx0.w, gy0.w, gz0.w);
-    glm::vec3 g001(gx1.x, gy1.x, gz1.x);
-    glm::vec3 g101(gx1.y, gy1.y, gz1.y);
-    glm::vec3 g011(gx1.z, gy1.z, gz1.z);
-    glm::vec3 g111(gx1.w, gy1.w, gz1.w);
-
-    const glm::vec4 norm0 = glm::detail::taylorInvSqrt(glm::vec4(
-        glm::dot(g000, g000), glm::dot(g010, g010),
-        glm::dot(g100, g100), glm::dot(g110, g110)));
-    g000 *= norm0.x; g010 *= norm0.y; g100 *= norm0.z; g110 *= norm0.w;
-    const glm::vec4 norm1 = glm::detail::taylorInvSqrt(glm::vec4(
-        glm::dot(g001, g001), glm::dot(g011, g011),
-        glm::dot(g101, g101), glm::dot(g111, g111)));
-    g001 *= norm1.x; g011 *= norm1.y; g101 *= norm1.z; g111 *= norm1.w;
-
-    const Interval n000 = perlinDotRange(g000, {pf0[0], pf0[1], pf0[2]});
-    const Interval n100 = perlinDotRange(g100, {pf1[0], pf0[1], pf0[2]});
-    const Interval n010 = perlinDotRange(g010, {pf0[0], pf1[1], pf0[2]});
-    const Interval n110 = perlinDotRange(g110, {pf1[0], pf1[1], pf0[2]});
-    const Interval n001 = perlinDotRange(g001, {pf0[0], pf0[1], pf1[2]});
-    const Interval n101 = perlinDotRange(g101, {pf1[0], pf0[1], pf1[2]});
-    const Interval n011 = perlinDotRange(g011, {pf0[0], pf1[1], pf1[2]});
-    const Interval n111 = perlinDotRange(g111, {pf1[0], pf1[1], pf1[2]});
-
-    const Interval fx = perlinFadeRange(pf0[0]);
-    const Interval fy = perlinFadeRange(pf0[1]);
-    const Interval fz = perlinFadeRange(pf0[2]);
-
-    const Interval nz0 = perlinMixRange(n000, n001, fz);
-    const Interval nz1 = perlinMixRange(n100, n101, fz);
-    const Interval nz2 = perlinMixRange(n010, n011, fz);
-    const Interval nz3 = perlinMixRange(n110, n111, fz);
-    const Interval ny0 = perlinMixRange(nz0, nz2, fy);
-    const Interval ny1 = perlinMixRange(nz1, nz3, fy);
-    return perlinMixRange(ny0, ny1, fx) * 2.2f;
-}
-
-std::optional<Interval> classicPerlin3LatticeRange(
-    const std::array<Interval, 3>& box) {
-
-    for (const Interval& axis : box) {
-        if (!axis.bounded()) return std::nullopt;
-    }
-
-    std::array<std::int64_t, 3> first{};
-    std::array<std::int64_t, 3> last{};
-    std::uint64_t cellCount = 1;
-    for (int axis = 0; axis < 3; ++axis) {
-        const double flo = std::floor(static_cast<double>(box[axis].lo));
-        const double fhi = std::floor(static_cast<double>(box[axis].hi));
-        // GLM's float lattice coordinates are exact integers only through 2^24.
-        // Outside that region retain the global theorem rather than claiming our
-        // integer loop mirrors a coarsened floating-point floor.
-        constexpr double kExactFloatInteger = 16777216.0;
-        if (flo < -kExactFloatInteger || flo > kExactFloatInteger ||
-            fhi < -kExactFloatInteger || fhi > kExactFloatInteger) {
-            return std::nullopt;
-        }
-        first[axis] = static_cast<std::int64_t>(flo);
-        last[axis] = static_cast<std::int64_t>(fhi);
-        const std::uint64_t span =
-            static_cast<std::uint64_t>(last[axis] - first[axis] + 1);
-        if (span == 0 || cellCount > kPerlinRangeMaxLatticeCells / span) {
-            return std::nullopt;
-        }
-        cellCount *= span;
-    }
-    if (cellCount > kPerlinRangeMaxLatticeCells) return std::nullopt;
-
-    bool have = false;
-    Interval joined;
-    for (std::int64_t x = first[0]; x <= last[0]; ++x) {
-        for (std::int64_t y = first[1]; y <= last[1]; ++y) {
-            for (std::int64_t z = first[2]; z <= last[2]; ++z) {
-                const glm::vec3 cellLo{float(x), float(y), float(z)};
-                const glm::vec3 cellHi = cellLo + glm::vec3(1.0f);
-                const glm::vec3 subLo(
-                    std::max(box[0].lo, cellLo.x),
-                    std::max(box[1].lo, cellLo.y),
-                    std::max(box[2].lo, cellLo.z));
-                const glm::vec3 subHi(
-                    std::min(box[0].hi, cellHi.x),
-                    std::min(box[1].hi, cellHi.y),
-                    std::min(box[2].hi, cellHi.z));
-                if (subLo.x > subHi.x || subLo.y > subHi.y || subLo.z > subHi.z) {
-                    continue;
-                }
-                auto cell = classicPerlin3CellRange(
-                    glm::ivec3(int(x), int(y), int(z)), subLo, subHi);
-                if (!cell) return std::nullopt;
-                joined = have ? joined.joined(*cell) : *cell;
-                have = true;
-            }
-        }
-    }
-    if (!have) return std::nullopt;
-
-    const Interval global(-kClassicPerlin3ValueBound,
-                           kClassicPerlin3ValueBound);
-    const Interval met = joined.met(global);
-    return met.empty() ? std::optional<Interval>{} : std::optional<Interval>{met};
-}
-
-} // namespace
-
 std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::string, RangeValue>& vars) const {
     auto retInf = []() { return RangeValue::makeScalar(Interval::infinite()); };
     auto retVecInf = []() { return RangeValue::makeVector(Interval::infinite(), Interval::infinite(), Interval::infinite()); };
@@ -2213,6 +1990,13 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
             // This bound is LOAD-BEARING, not decorative: geom::evalRange feeds it
             // to tessellation culling and the conservative zero-set hierarchy.
             // Unknown/loose only costs speed; too narrow deletes authored geometry.
+            //
+            // Start from the proved global amplitude enclosure, then tighten it
+            // when the child's possible vector values occupy a finite box. The
+            // shared kClassicPerlin3LipschitzBound proves that every value in that
+            // box lies within L*radius of the exact noise value at its centre.
+            // This is the first range rule here that gets TIGHTER as an octree cell
+            // shrinks, which is essential for useful spatial Prophetic skipping.
             const Interval global(-kClassicPerlin3ValueBound,
                                    kClassicPerlin3ValueBound);
             if (children.size() != 1 || !children[0]) {
@@ -2223,28 +2007,12 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
                 return RangeValue::makeScalar(global);
             }
             for (int axis = 0; axis < 3; ++axis) {
-                if (!arg->vec[axis].bounded()) {
+                if (!std::isfinite(arg->vec[axis].lo) ||
+                    !std::isfinite(arg->vec[axis].hi)) {
                     return RangeValue::makeScalar(global);
                 }
             }
 
-            // First theorem: follow glm::perlin's exact lattice formula over a
-            // bounded number of crossed unit cubes. This captures fade weights
-            // and the ACTUAL hashed gradients, so a half-lattice-cell query can
-            // become far tighter than a global derivative ball.
-            Interval best = global;
-            const std::array<Interval, 3> argBox = {
-                arg->vec[0], arg->vec[1], arg->vec[2]
-            };
-            if (auto lattice = classicPerlin3LatticeRange(argBox)) {
-                const Interval met = best.met(*lattice);
-                if (!met.empty()) best = met;
-            }
-
-            // Independent theorem: global Lipschitz ball about the box centre.
-            // Keep it as a second proof and intersect the two enclosures. For
-            // very large boxes the lattice evaluator deliberately refuses and
-            // this remains the complete fallback.
             const glm::vec3 centre(
                 0.5f * (arg->vec[0].lo + arg->vec[0].hi),
                 0.5f * (arg->vec[1].lo + arg->vec[1].hi),
@@ -2255,15 +2023,18 @@ std::optional<MathNode::RangeValue> MathNode::evalRange(const std::map<std::stri
                 0.5f * (arg->vec[2].hi - arg->vec[2].lo));
             const float radius = glm::length(half);
             const float centreValue = glm::perlin(centre);
-            if (std::isfinite(radius) && std::isfinite(centreValue)) {
-                const float slack = kClassicPerlin3LipschitzBound * radius;
-                const Interval local = Interval::outward(
-                    centreValue - slack, centreValue + slack);
-                const Interval met = best.met(local);
-                if (!met.empty()) best = met;
+            if (!std::isfinite(radius) || !std::isfinite(centreValue)) {
+                return RangeValue::makeScalar(global);
             }
 
-            return RangeValue::makeScalar(best);
+            const float slack = kClassicPerlin3LipschitzBound * radius;
+            const Interval local = Interval::outward(centreValue - slack,
+                                                     centreValue + slack);
+            // Intersection of two already-conservative intervals needs no new
+            // arithmetic; choosing the tighter endpoints preserves enclosure.
+            return RangeValue::makeScalar(
+                Interval(std::max(global.lo, local.lo),
+                         std::min(global.hi, local.hi)));
         }
         // Fallback for everything else
         default:

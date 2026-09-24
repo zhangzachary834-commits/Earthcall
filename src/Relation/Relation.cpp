@@ -1,5 +1,4 @@
 #include "Relation.hpp"
-#include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
@@ -93,17 +92,6 @@ Relation::Relation(const std::string& type,
     if (initialWeight != -1.0f) setWeight(initialWeight);
 }
 
-Relation::Relation(const std::string& type,
-                   const std::string& aId,
-                   const std::string& bId,
-                   bool directed,
-                   float initialWeight)
-    : type(type), directed(directed) {
-    _endpointA.savedId = aId;
-    _endpointB.savedId = bId;
-    if (initialWeight != -1.0f) setWeight(initialWeight);
-}
-
 Relation::Relation(Singularity::Language::Lexeme& typeLexeme,
                    Singular& aBeing,
                    Singular& bBeing,
@@ -136,22 +124,8 @@ void Relation::setTypeLexeme(Singularity::Language::Lexeme* lexeme) {
     }
 }
 
-void Relation::forgetTypeLexeme(const Singularity::Language::Lexeme* lexeme) {
-    if (!lexeme || _typeLexeme != lexeme) return;
-
-    // `type` already carries the Lexeme's stable Singular identifier. The
-    // kind-being leaving memory therefore changes only pointer grounding, not
-    // Relation identity; do not announce a semantic type change.
-    _typeLexeme = nullptr;
-}
-
 std::string Relation::typeLabel() const {
     return _typeLexeme ? _typeLexeme->getSymbol() : type;
-}
-
-void Relation::updatePersonEndpointFlag() {
-    _hasPersonEndpoint = (dynamic_cast<const Person*>(a()) != nullptr) ||
-                         (dynamic_cast<const Person*>(b()) != nullptr);
 }
 
 Relation::ConstitutiveStatus Relation::evaluateConstitutive() const {
@@ -190,24 +164,11 @@ void Relation::describe() const {
 }
 
 bool Relation::involves(const Singular* being) const {
-    if (!being) return false;
-    if (a() == being || b() == being) return true;
-    if (!_hasPersonEndpoint) return false;
-
-    const auto* pA = dynamic_cast<const Person*>(a());
-    const auto* pB = dynamic_cast<const Person*>(b());
-    if ((pA && pA->hasIdentity()) || (pB && pB->hasIdentity())) {
-        const auto* pBeing = dynamic_cast<const Person*>(being);
-        if (pBeing && pBeing->hasIdentity()) {
-            if (pA && pA->hasIdentity() && pA->personId() == pBeing->personId()) return true;
-            if (pB && pB->hasIdentity() && pB->personId() == pBeing->personId()) return true;
-        }
-    }
-    return false;
+    return being && (a() == being || b() == being);
 }
 
 bool Relation::involves(const Singular& being) const {
-    return involves(&being);
+    return a() == &being || b() == &being;
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -217,27 +178,9 @@ bool Relation::involves(const std::string& identifier) const {
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
     if (directed) {
-        if (a() == &aBeing && b() == &bBeing) return true;
-    } else {
-        if ((a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing)) return true;
+        return a() == &aBeing && b() == &bBeing;
     }
-    if (!_hasPersonEndpoint) return false;
-
-    const auto matchEndpoint = [](Singular* ep, const Singular& target) {
-        if (ep == &target) return true;
-        const auto* pEp = dynamic_cast<const Person*>(ep);
-        if (pEp && pEp->hasIdentity()) {
-            const auto* pTarget = dynamic_cast<const Person*>(&target);
-            return pTarget && pTarget->hasIdentity() && pEp->personId() == pTarget->personId();
-        }
-        return false;
-    };
-
-    if (directed) {
-        return matchEndpoint(a(), aBeing) && matchEndpoint(b(), bBeing);
-    }
-    return (matchEndpoint(a(), aBeing) && matchEndpoint(b(), bBeing)) ||
-           (matchEndpoint(a(), bBeing) && matchEndpoint(b(), aBeing));
+    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {

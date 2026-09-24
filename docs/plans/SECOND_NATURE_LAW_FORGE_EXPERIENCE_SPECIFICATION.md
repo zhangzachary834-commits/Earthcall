@@ -5,7 +5,7 @@
 **Session:** `01a07eb3-8ee7-7aa3-8b34-65fea2f4cd44`  
 **Date / timestamp:** 2026-09-18 / 2026-09-18T12:47:50-07:00  
 **Implementation starting point:** [PR #198](https://github.com/zhangzachary834-commits/Earthcall/pull/198), merged as `c9be78e475bdc8faef5ce4f045ece6e992d6c73a`; local inspection at `441c65c4`.  
-**Agenda:** [Second-Nature task](../Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md).
+**Agenda:** [Second-Nature task](../Agenda/Tasks/Specific%20Tasks/Second_Nature_Law_and_Zone_Features/Second_Nature_Law_and_Zone_Features.md).
 
 ## 1. The human intention this must fulfill
 

@@ -128,7 +128,6 @@ public:
     void setWireframe(bool on) override { _wireframe = on; }
     bool zeroToOneDepth() const override { return true; }
     bool rendersImplicitExactly() const override { return true; }
-    void composeVolumes() override;
 
     // Persistent GPU textures for face paint. FaceTexture calls this only when the
     // paint actually changes, so holding the texture means a repainted surface
@@ -211,15 +210,7 @@ private:
     struct SdfPipeline {
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout bgl = nullptr;
-        bool usesRadianceSources = false;
     };
-
-    // GPU proof representation for conservative SDF range traversal.
-    // The complete adaptive hierarchy stays CPU-side as mathematical authority.
-    // GPU-side we rasterize only proved-positive OUTSIDE knowledge into a fixed
-    // depth bit grid. A zero bit never means "occupied" or "empty"; it means
-    // "no skip proof here, exact authored marching owns this cell."
-
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
@@ -230,29 +221,6 @@ private:
         // changed is decided by radianceStructure below.
         uint64_t radianceRevision = 0xffffffffffffffffULL;
         uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
-        uint64_t chromaRevision = 0xffffffffffffffffULL;
-        uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
-        uint64_t angularRevision = 0xffffffffffffffffULL;
-        uint64_t angularStructureRevision = 0xffffffffffffffffULL;
-        uint64_t densityRevision = 0xffffffffffffffffULL;
-        sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
-        std::string densityStructure;
-        uint64_t extinctionRevision = 0xffffffffffffffffULL;
-        std::string extinctionStructure;
-        uint64_t scatteringRevision = 0xffffffffffffffffULL;
-        std::string scatteringStructure;
-        uint64_t volumeChromaRevision = 0xffffffffffffffffULL;
-        std::string volumeChromaStructure;
-        uint64_t phaseRevision = 0xffffffffffffffffULL;
-        std::string phaseStructure;
-        bool phaseReadsWi = false;
-        bool phaseReadsWo = false;
-        uint64_t emissionRevision = 0xffffffffffffffffULL;
-        std::string emissionStructure;
-        bool emissionReadsOmega = false;
-        bool multiSource = false;
-        uint64_t sourceSetRevision = 0xffffffffffffffffULL;
-        uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
@@ -266,10 +234,6 @@ private:
         glm::vec3 rangeAuthoredExtent{0.0f};
         geom::SdfRangeHierarchy rangeHierarchy;
         geom::SdfZeroSetProxy rangeProxy;
-        // Fixed-depth positive-proof bit grid, rebuilt only when the range
-        // theorem invalidates. One bit corresponds to one depth-N regular cell.
-        std::vector<uint32_t> rangeProofWords;
-        bool rangeHasPositiveSkip = false;
         bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
@@ -282,30 +246,6 @@ private:
     const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
     sdfwgsl::ScalarExpressionLayout _radianceLayout;
     uint64_t _radianceStructureRevision = 0;
-
-    // chi(p,t) has its own structural identity and content revision. A numeric
-    // recolor must not pretend rho changed, and a structural chi edit must not
-    // invalidate rho's independently memoized identity.
-    uint64_t _chromaLayoutRevision = 0xffffffffffffffffULL;
-    const OntoMath::Piecewise* _chromaLayoutExprPtr = nullptr;
-    sdfwgsl::VectorExpressionLayout _chromaLayout;
-    uint64_t _chromaStructureRevision = 0;
-
-    // alpha(p,omega,t) is a third independent source invariant. Numeric angular
-    // edits refresh only packed values; structural edits advance this identity.
-    uint64_t _angularLayoutRevision = 0xffffffffffffffffULL;
-    const OntoMath::Piecewise* _angularLayoutExprPtr = nullptr;
-    sdfwgsl::AngularExpressionLayout _angularLayout;
-    uint64_t _angularStructureRevision = 0;
-
-    // Composite structural identity for Rung 7. Source positions, colors,
-    // enablement and numeric AST parameters are values; source count and each
-    // rho/chi/alpha emitted shape are structure.
-    uint64_t _radianceSourcesLayoutRevision = 0xffffffffffffffffULL;
-    std::string _radianceSourcesLayoutStructure;
-    bool _radianceSourcesLayoutOk = true;
-    std::string _radianceSourcesLayoutError;
-    uint64_t _radianceSourcesStructureRevision = 0;
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
@@ -320,76 +260,8 @@ private:
     size_t _persistentSdfParamVramBytes = 0;
     void releasePersistentSdfParams();
 
-    // The positive-proof bit grid is static between SDF value revisions. Keep
-    // it resident so spatial Prophetic traversal does not replace evaluation
-    // debt with per-frame uploads.
-    struct PersistentSdfRangeNodes {
-        WGPUBuffer buffer = nullptr;
-        uint64_t capacityBytes = 0;
-        std::vector<uint32_t> mirror;
-    };
-    std::unordered_map<const SdfPipeline*, PersistentSdfRangeNodes> _persistentSdfRangeNodes;
-    size_t _persistentSdfRangeNodeVramBytes = 0;
-    void releasePersistentSdfRangeNodes();
-
-    struct PersistentRadianceSources {
-        WGPUBuffer buffer = nullptr;
-        uint64_t capacityBytes = 0;
-        std::vector<unsigned char> mirror;
-    };
-    PersistentRadianceSources _persistentRadianceSources;
-    size_t _persistentRadianceSourceVramBytes = 0;
-    void releasePersistentRadianceSources();
-
-    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by SDF + volume proxies
-    void ensureSdfCubeVerts();
+    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
-
-    // ---- Volumetric V0c composite pass ----
-    // A participating medium is composited AFTER opaque world depth is final
-    // and BEFORE HUD/2D. It therefore has its own pipeline family and never
-    // borrows the hard-surface SDF depth-writing pipeline.
-    struct VolumePipeline {
-        WGPURenderPipeline pipe = nullptr;
-        WGPUBindGroupLayout globalBgl = nullptr;
-        WGPUBindGroupLayout instanceBgl = nullptr;
-    };
-    std::map<std::string, VolumePipeline> _volumePipes;
-
-    struct VolumeProgramMemo {
-        uint64_t contentRevision = 0xffffffffffffffffULL;
-        std::string structure;
-        bool ok = false;
-        std::string error;
-        bool phaseReadsWi = false;
-        bool phaseReadsWo = false;
-        bool emissionReadsOmega = false;
-        sdfwgsl::Program prog;
-        const VolumePipeline* pipeline = nullptr;
-    };
-    // V4 program identity spans all independently authored medium channels.
-    // Shared D/sigma_t/sigma_s/C_v/Phi with different E_v must never collide or
-    // evict one another's structure/value cache every frame.
-    using VolumeProgramKey = std::tuple<
-        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        const OntoMath::Piecewise*, const OntoMath::Piecewise*>;
-    std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
-
-    struct VolumeInstanceData {
-        glm::vec4 origin;
-        glm::vec4 halfExtent;
-        glm::vec4 time;
-        uint32_t paramOffset = 0;
-        uint32_t pad0 = 0;
-        uint32_t pad1 = 0;
-        uint32_t pad2 = 0;
-    };
-    std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
-    std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
-    std::vector<const VolumePipeline*> _activeVolumePipelines;
-    const VolumePipeline* volumePipeline(const std::string& wgsl);
-    void flushVolumeComposite();
 
     // setWireframe: meshes draw as edges instead of filled triangles.
     bool _wireframe = false;
@@ -403,39 +275,11 @@ private:
     // avoid building a grid that this build is forbidden to consume.
     static constexpr bool kHeightGridDdaTraversalVerified = false;
 
-    // Activation gate for the generic conservative range hierarchy. The first
-    // rung used it only to tighten the raster proxy; the next rung also uploads
-    // the same proof tree and skips proved-zero-free ray cells before exact SDF
-    // evaluation. OFF remains the fail-open baseline and parity oracle.
+    // First activation rung for the generic conservative range hierarchy.
+    // OFF by default until native on/off image/depth parity is witnessed.
     bool _sdfRangeProxyEnabled = false;
-    // Tightening the raster cube itself is independently quarantined after the
-    // native parity corpus found a one-pixel SmoothUnion@xform edge mismatch.
-    // The proof hierarchy may still build, cull a completely zero-free draw,
-    // and accelerate rays internally; only proxy-edge shrink is disabled.
-    static constexpr bool kSdfRangeRasterTighteningVerified = false;
-    // The generic range theorem is valid for distance fields too, but the
-    // over-relaxed marcher has a separate sample-history contract. Native
-    // parity still shows a one-pixel SmoothUnion@xform difference when spatial
-    // jumps perturb that path. Keep it quarantined for this rung: expensive
-    // authored Expr fields use the gradient-corrected marcher and remain the
-    // intended acceleration target.
-    static constexpr bool kSdfRangeDistanceTraversalVerified = false;
-    // The complete CPU theorem still refines to depth 6: convex Perlin
-    // interpolation now proves a small frontier at depth 5, but the overwhelming
-    // majority of useful sign proofs still appear one rung deeper.
-    static constexpr uint8_t kSdfRangeProxyMaxDepth = 6;
-    // GPU traversal intentionally consumes a coarser regular proof grid.
-    // A target cell is marked positive only when the corresponding CPU theorem
-    // subtree proves the ENTIRE region f>0: either an ancestor/node proves it
-    // directly, or every partitioning child recursively proves it. Omitted finer
-    // positive fragments simply fall back to exact authored marching.
-    static constexpr uint8_t kSdfRangeGpuProofDepth = 4;
-    // A complete depth-6 octree contains
-    // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
-    // Keep enough headroom for a complete proof tree; partial-tree budget
-    // exhaustion remains correct but can accidentally hide the useful positive
-    // cells this rung exists to discover.
-    static constexpr uint32_t kSdfRangeProxyMaxNodes = 327680;
+    static constexpr uint8_t kSdfRangeProxyMaxDepth = 5;
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 8192;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
@@ -463,11 +307,6 @@ private:
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
     WGPUTextureView _surfaceView = nullptr;
-
-    // Borrowed color target for the currently recorded frame. Offscreen callers
-    // own the view; live rendering aliases _surfaceView. Held only until
-    // endFrame() so composeVolumes() can open load-preserving secondary passes.
-    WGPUTextureView _frameColorView = nullptr;
 
     // Current frame state.
     WGPUCommandEncoder   _encoder = nullptr;
@@ -578,23 +417,15 @@ private:
         uint32_t heightGridOffset = 0;
         uint32_t heightGridDimX = 0;
         uint32_t heightGridDimZ = 0;
-        // Conservative positive-proof bit grid. count==0 is the exact
-        // baseline. offset/count are u32 words in the shared proof buffer;
-        // rangeProofDepth is the regular subdivision depth used by those bits.
-        uint32_t rangeProofWordOffset = 0;
-        uint32_t rangeProofWordCount = 0;
-        uint32_t rangeTraversalEnabled = 0;
-        uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
-    std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
     // Maps retain their vectors across frames so capacity is reused. This list
     // names only pipelines that actually received an instance this frame,
     // avoiding an ever-growing scan of historical pipeline keys.
     std::vector<const SdfPipeline*> _activeSdfPipelines;
-    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (0) + height cells (1) + range nodes (2)
+    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object
