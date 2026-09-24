@@ -789,6 +789,7 @@ private:
     std::unordered_set<std::string> _agendaFactIds;
     std::vector<FactPtr> _dirtyFacts;
     std::vector<AlphaNode> _alphaNodes;
+    std::unordered_map<std::size_t, std::size_t> _alphaIndexById;
     std::vector<BetaNode> _betaNodes;
     std::vector<ReteActivation> _agenda;
     void dropUnboundAlphaNodes();
