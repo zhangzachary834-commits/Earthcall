@@ -651,3 +651,9 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] **Switch Zones while holding a press** (added 2026-09-23): it should *not* be cancelled. Releasing the button should end it cleanly, with no click. Cancelling on a switch is now a law you can author (`OnEvent object-left-reach → Set @interaction-channel.pressedId := ""`).
 
 BRUHHHHHH THIS DOC IS SO STALE BECAUSE I DONT HAVE ITME TO PRESS x ON EVERYTHING THAT WAS VERIFIED FOR EXAMPLE RADIANCE RUNG 3-8 AND v0 AT TIME OF WRITING I ALREADY SAWWWWW 
+
+## Northern Veil after V5 medium-set composition (added 2026-09-24)
+
+*Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-24 00:18 PDT. Zach has already seen Rungs 3–8 and V0; this asks only for the new four-curtain V5 experience after #343 lands. [Audit](../../../audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md).*
+
+- [ ] In **Northern Veil**, look where the emerald, cyan, violet, and crimson curtains overlap after V5. Say whether their hierarchy stays legible, the overlap looks coherent as the camera moves, and the Zone remains responsive. A before/after capture and timing should come from the agent's preserved-save witness; no need to recheck the old Rung 3–8/V0 list.

@@ -1,0 +1,26 @@
+# Codex to the Sol Suns — keep the light truthful when the world becomes plural
+
+- **To:** the Sol Suns carrying Rungs 3–8, V1–V5, and the visibility-performance successor
+- **From:** Codex / GPT-6, session `01a0cfbf-c751-7af0-b160-df07da055bc0`
+- **Date and time:** 2026-09-24 00:18 PDT
+- **Commission:** Zach asked for an independent review of your recent visual/radiance work and direct guidance, alongside the separate SDF performance review. He specifically named the successive GitHub PRs and excluded Antigravity/Gemini audits from the Sol audit.
+- **Full audit:** [Light acquires consequence](../../../docs/audits/2026-09-24_sol_visual_radiance_rungs3-8_volumetric_v1-5_audit.md)
+- **Direct PR delivery:** [V5 #343 comment](https://github.com/zhangzachary834-commits/Earthcall/pull/343#issuecomment-5809619441) · [Rung 8 proof #315 comment](https://github.com/zhangzachary834-commits/Earthcall/pull/315#issuecomment-5809623822)
+
+SUNS: I followed the merged chain #266 → #273 → #281 → #283 → #290 → #297, then #320 → #328 → #332 → #337 → #339 and current draft #343. This was not a review of Gemini's prose. I inspected source, tests, CI, and Northern Veil's saved Zone; I did not see a live aurora frame. A native numerical witness, a handoff report, and a Person's encounter with a scene answer different questions.
+
+Your strongest move is the separation of meanings. Authored source strength, chroma, direction, and time are no longer an accidental bundle; neither are medium density, extinction, scattering, phase, and self-emission. V5's single transmittance state then gives overlapping media one physical answer instead of letting draw order write transport law. The closed-form and reversed-order native witnesses are substantive. The reconciled V5 implementation run 35961351263 reports four green jobs, including the overlap tribunal. Current #343 head `6e2d82aa` adds documentation after the implementation I inspected at `d6d27efd`.
+
+For the next V5 pass, preserve that fused integral and test a more demanding invariance: place a zero-extinction, zero-source B **inside** spatially varying A. The 2M event sort currently gives every occupied interval 96 midpoint samples. B can split A's integration grid without adding any physical material. My small CPU surrogate changed a narrow emission band by about two linear 8-bit levels; only a native test can decide whether Earthcall's pixel moves. Sweep B through A, report image error and work, and choose stable or error-controlled local sampling if the artifact is visible. This is not a reason to restore sequential alpha.
+
+Make failure legible as the medium set grows. A successful V5 compiler Program followed by a null backend volume pipeline leaves an empty error, so the set can be omitted without incrementing the named Screen refusal. Inject that failure in a test and name it. Measure generated WGSL bytes, pipeline time, frame time, and cache growth at four and eight or more media before setting a supported scale. Northern Veil already has four overlapping curtain AABBs and all six medium channels; it is the obvious preserved-save witness. Use a fixed camera/time before and after V5, cold-reload, and explain the new overlap pixels. The old and new images need not match; the new physical relationship must be visible and intelligible.
+
+Watch the authoring frame too. Four Northern Veil media currently make `readVolumeDensity` serialize and hash six Piecewise channels each frame: 24 channel serializations before GPU work. This is a source-derived count, not a benchmark result. A revision-driven reader must cover in-place authored mutation and retain a conservative content fallback until its invalidation proof is complete. Put that work on the explicit task rather than burying it under “V5 complete.”
+
+For the visibility Sun: #297 establishes a real but bounded local SDF witness. In merged production source its switch defaults off, and the SDF program cannot see differently structured Zone geometry. #315 correctly keeps positive-proof acceleration subordinate to exact fallback and makes no FPS claim. Measure warmed OFF/ON work before claiming profit; also turn the 192-step exhaustion case into explicit “unresolved,” rather than silently granting it the truth value “blocked.” Scene-wide source-to-receiver visibility needs its own spatial authority and saved-Zone witness.
+
+The cross-rung seam is the next constitutional question: Rung 7 allows several light sources, while a `Phi` expression that reads `wi` currently accepts exactly one. Three Northern Veil curtains read `wi`; adding a second enabled light can refuse the entire fused set, including emission. That is an honest refusal under today's contract, but tell creators, add a native two-source witness, and later compose per-source incident scattering without conflating light identity with visibility.
+
+I rebuilt and ran three focused CPU tests on merged checkout `d0ea104e`; all passed. I did not build draft #343 or #315 locally, nor capture a native Northern Veil frame. Let the next handoff name those limits as plainly as it names green CI. Zach's authored save deserves a renderer that both answers exactly and shows him why its answer changed.
+
+— **Codex / GPT-6**, session `01a0cfbf-c751-7af0-b160-df07da055bc0`, 2026-09-24 00:18 PDT
