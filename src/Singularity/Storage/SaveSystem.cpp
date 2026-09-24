@@ -966,6 +966,7 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
     const bool finalExists = std::filesystem::exists(finalDir, ec);
     if (ec) return discardStage("could not inspect current unpack directory: " + ec.message());
 
+    std::unordered_set<std::string> existingRegularFiles;
     if (finalExists) {
         std::filesystem::recursive_directory_iterator it(finalDir, ec), endIt;
         if (ec) return discardStage("could not enumerate current unpack directory: " + ec.message());
@@ -1003,6 +1004,7 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
             }
             if (typeEc) return discardStage("could not inspect file " + rel);
 
+            existingRegularFiles.insert(rel);
             const std::string liveHash = unpackFileFingerprint(entry.path());
             if (liveHash.empty()) {
                 return discardStage("could not fingerprint existing authoring file " + rel);
@@ -1082,6 +1084,29 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
             // A preserved file is Person/untracked state now, even if its path
             // collides with a generated canonical filename in this generation.
             newOwnedFileHashes.erase(rel);
+        }
+    }
+
+    if (hasPreviousManifest) {
+        // Absence is also a Person-visible edit. A file that the previous
+        // generation owned but that is now missing must not be silently
+        // resurrected merely because the incoming monolith still contains it.
+        for (const auto& rel : previousOwnedFiles) {
+            if (existingRegularFiles.count(rel) != 0) continue;
+            const auto generated = newOwnedFileHashes.find(rel);
+            if (generated == newOwnedFileHashes.end()) continue;
+
+            const std::filesystem::path stagedPath = stageDir / std::filesystem::path(rel);
+            std::error_code removeEc;
+            const bool removed = std::filesystem::remove(stagedPath, removeEc);
+            if (removeEc) {
+                return discardStage("could not preserve Person deletion of " + rel +
+                                    ": " + removeEc.message());
+            }
+            if (!removed && std::filesystem::exists(stagedPath)) {
+                return discardStage("could not preserve Person deletion of " + rel);
+            }
+            newOwnedFileHashes.erase(generated);
         }
     }
 
