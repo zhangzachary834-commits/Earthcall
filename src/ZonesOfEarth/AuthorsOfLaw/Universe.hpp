@@ -41,7 +41,10 @@ public:
 
     using Provider = std::function<void(std::vector<Singular*>&)>;
 
-    void setProvider(Provider provider) { _provider = std::move(provider); }
+    void setProvider(Provider provider) {
+        _provider = std::move(provider);
+        bumpStructuralRevision();
+    }
     bool hasProvider() const { return static_cast<bool>(_provider); }
 
     std::vector<Singular*> beings() const {

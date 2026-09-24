@@ -40,7 +40,7 @@ Zach: I had Opus 5 write these because they came up constantly. Learn them cold;
    all artifacts of human intention: a First Mover developer tool or irreducible Singularity Sense-Act substrate component. (Zach wrote Refusal 7 by hand, not Opus 5)
 
 The general form of all seven: **no subsystem may define what a thing IS.** Subsystems define how the machine senses and acts; Persons author what things are in-world from primitives every subsystem can see.
-Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look.
+Refusal 6 is the corollary: no subsystem may define what a thing's state *means* by keeping it where no law can look. Both refusals are instances of what I currently call the "minimum-maximum principle": We want the minimum viable set of invariants/abstractions that allow the maximum generative, logical, and teleological expressibility. Take the maximum expressive ceiling that one may ordinarily associate with many abstractions and find the minimum invariants necessary to achieve that same expressibility without any loss. When it is mathematically impossible to express one particular thing without a certain abstraction on this particular Singularity/machine substrate, that abstraction is an invariant channel.
 
 ---
 
@@ -64,7 +64,7 @@ Refusal 6 is the corollary: no subsystem may define what a thing's state *means*
 | ask "why is it like this?" | `core/EarthcallOurverse.md`, `ontology/SUBSTRATE_ORDERING.md` | the ends the architecture serves |
 | touch the Hierarchy of Joys, telos, or "joyOrdering" | `ontology/HIERARCHY_OF_JOYS.md` | Lexemes are telos; the hierarchy is a Formation |
 | remove, break, or dissolve a Relation — or decide what a stale one becomes | `ontology/PRIMARY_AND_SUB_RELATIONS.md` §2, §7 | the primary Relation between two Singulars never disappears; sub-Relations dissolve only on proved impossibility |
-| touch Ourverse, gathering Zones, or Zone filaments | `ourverse/OURVERSE.md` | vessel of unity in Christ; not the Engine object bag |
+| touch Ourverse, gathering Zones, or Zone filaments — or Zone bounds, Dimensional Zones, `within`, `mgr.active()`, where a being *is* | `ourverse/OURVERSE.md`; `docs/plans/ZONES_AS_MATHEMATICAL_BOUNDS_PLAN_2026-09-23.md` | Ourverse is the vessel of unity in Christ, not the Engine object bag. A Zone is a bound in a continuum, not "one world here, another there"; location is derived, ownership is a Relation |
 | ask what a *when* is — a timestamp, duration, Timeline, `time.sinceApplied` | `ontology/TIME_AND_MOMENT.md` | `Timeline` is a relative temporal domain any Singular may own; legacy Law time paths are compatibility semantics pending the Law/Timeline ontology |
 | build a button, panel, control, menu, or any interface at all | `law/INTERACTION_AS_LAW.md` | Law + set-to-set aimed at the pointer; no widget, no `src/UI/` |
 | build a 2D/3D app, SDF, nuanced shape, pixel region, or visual style | `Design/Building 2D and 3D Apps with Earthcall Guide.md` | author form with OntoMath, CSG, Relations, and Law; never make `ShapeKind` the ontology |
@@ -116,7 +116,7 @@ cmake --build build --target earthcall_webgpu -j8       # THE APP. `earthcall` i
                                                        # and scripts/build.sh webgpu run
                                                        # both use earthcall_webgpu.
 cmake --build build -j8                               # tests are NOT built by the line above
-ctest --test-dir build --output-on-failure -j4        # 229 registered (2026-09-22) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
+ctest --test-dir build --output-on-failure -j4        # 232 registered (2026-09-23) — WebGPU/GL tests need a desktop GPU/display session; frame_lag_test is machine-load-sensitive (see below)
 cmake --build build --target lag                      # frame-cost probe alone, with its report
 ```
 
@@ -187,7 +187,7 @@ you read the source—run things**, and **after finishing, ask whether anything 
 
 ## Document Conventions
 - Audits belong in `docs/audits/`. Implementation plans go to `docs/plans/`.
-- Always sign your name, session ID, date, and timestamp.
+- Always sign your harness name (e.g. Antigravity, Codex, etc.), model name (GPT-4o, Claude 5.5 Opus, etc.), session ID, date, and timestamp.
 - Use Agent Intercom (`agent intercom/`) to coordinate and crystallize with other agents, especially concurrent sessions.
 - Save files injected by an agent follows this convention: an "injected_by:" section with the agent name with the "authors: " being the Person by whose authority you injected. This convention applies to serialization, not docs. We use different attribution conventions for docs.
 

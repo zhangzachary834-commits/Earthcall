@@ -1,7 +1,12 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
+#include "Person/Body/Body.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -237,6 +242,199 @@ int main() {
     lawGetValue(*channel, PropertyPath::parse("hasAccessibilityPermission"), val);
     check(std::get<bool>(val) == hasAccessibility, "ScreenChannel delegates hasAccessibilityPermission");
 
+    // Dynamic recording control delegation
+    lawSetValue(*channel, PropertyPath::parse("recording"), PropertyValue(true));
+    lawGetValue(*recorder, PropertyPath::parse("recorder.recording"), val);
+    check(std::get<bool>(val) == true, "ScreenChannel.recording=true delegates to ScreenRecorder");
+    lawGetValue(*channel, PropertyPath::parse("recording"), val);
+    check(std::get<bool>(val) == true, "ScreenChannel.recording reports true when recorder is active");
+
+    lawSetValue(*channel, PropertyPath::parse("recording"), PropertyValue(false));
+    lawGetValue(*recorder, PropertyPath::parse("recorder.recording"), val);
+    check(std::get<bool>(val) == false, "ScreenChannel.recording=false stops ScreenRecorder");
+
+    // Dynamic snapshot delegation
+    lawSetValue(*channel, PropertyPath::parse("snapshot"), PropertyValue(true));
+    lawGetValue(*recorder, PropertyPath::parse("recorder.lastSnapshotPath"), val);
+    check(!std::get<std::string>(val).empty(), "ScreenChannel.snapshot delegates to ScreenRecorder snapshot");
+
+    // -----------------------------------------------------------------------
+    // Case 9: Stream Pipe and Pending Snapshot Handling
+    // -----------------------------------------------------------------------
+    recorder->checkPendingSnapshot(testW, testH, frameData.data());
+    check(!recorder->isSnapshotPending(), "checkPendingSnapshot clears pending snapshot state");
+
+    lawSetValue(*recorder, PropertyPath::parse("recorder.format"), PropertyValue(std::string("pipe")));
+    lawSetValue(*recorder, PropertyPath::parse("recorder.outputPath"), PropertyValue(std::string("cat > /dev/null")));
+    lawSetValue(*recorder, PropertyPath::parse("recorder.start"), PropertyValue(true));
+    stepped = recorder->stepFrame(testW, testH, frameData.data());
+    check(stepped == true, "stepFrame succeeded in pipe format");
+    lawSetValue(*recorder, PropertyPath::parse("recorder.stop"), PropertyValue(true));
+    lawSetValue(*recorder, PropertyPath::parse("recorder.format"), PropertyValue(std::string("png_sequence")));
+    lawSetValue(*recorder, PropertyPath::parse("recorder.outputPath"), PropertyValue(testDir.string()));
+
+    // -----------------------------------------------------------------------
+    // Case 10: Authored Law Condition Evaluation & Property Mutation
+    // -----------------------------------------------------------------------
+    std::printf("\n--- Starting Law Verification Cases ---\n");
+    Soul soul("Player");
+    Body body("humanoid", "default");
+    Person player(std::move(soul), std::move(body), "player");
+    player.setDynamicProperty("requestSnapshot", PropertyValue(false));
+    player.setDynamicProperty("triggerArmed", PropertyValue(false));
+    player.setDynamicProperty("recordArmed", PropertyValue(false));
+
+    Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+        beings.push_back(&player);
+        beings.push_back(recorder);
+        beings.push_back(channel);
+        for (const auto& l : laws.getAll()) {
+            if (l) beings.push_back(l.get());
+        }
+    });
+
+    // Author Law: WHEN premise @player.requestSnapshot == true THEN @screen-recorder.snapshot := true
+    ConditionNode snapshotCondition =
+        ConditionNode::compare("@player.requestSnapshot", ConditionNode::Op::Eq, PropertyValue(true));
+    ActionNode snapshotAction = ActionNode::set("@screen-recorder.snapshot", PropertyValue(true));
+
+    auto snapshotLaw = laws.createLaw("Law: Snapshot On Request", {&player});
+    snapshotLaw->setConditionModel(snapshotCondition);
+    snapshotLaw->setActionModel(snapshotAction);
+
+    // 10a: Premise is false -> condition evaluation must fail, action must NOT execute
+    player.setDynamicProperty("requestSnapshot", PropertyValue(false));
+    check(!snapshotLaw->conditionsSatisfied(*recorder), "Law condition is false when premise @player.requestSnapshot is false");
+    auto resFalse = snapshotLaw->applyTo(*recorder);
+    check(resFalse == Law::ApplicationResult::ConditionsFailed, "Law application returns ConditionsFailed when premise is false");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == false, "screen-recorder.snapshot remains false when condition fails");
+
+    // 10b: Premise is true -> condition must pass and law must execute, changing property to true
+    player.setDynamicProperty("requestSnapshot", PropertyValue(true));
+    check(snapshotLaw->conditionsSatisfied(*recorder), "Law condition is true when premise @player.requestSnapshot is true");
+    auto resTrue = snapshotLaw->applyTo(*recorder);
+    check(resTrue == Law::ApplicationResult::Applied, "Law application returns Applied when premise is true");
+    
+    // Verify all alias forms reflect the true property change
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == true, "Law successfully changed property 'screen-recorder.snapshot' to true");
+    lawGetValue(*recorder, PropertyPath::parse("snapshot"), val);
+    check(std::get<bool>(val) == true, "Property 'snapshot' reads true");
+    lawGetValue(*recorder, PropertyPath::parse("recorder.snapshot"), val);
+    check(std::get<bool>(val) == true, "Property 'recorder.snapshot' reads true");
+    check(recorder->isSnapshotPending(), "ScreenRecorder isSnapshotPending() reports true");
+
+    // 10c: Author Law to reset snapshot property to false
+    ActionNode resetSnapshotAction = ActionNode::set("@screen-recorder.snapshot", PropertyValue(false));
+    auto resetLaw = laws.createLaw("Law: Reset Snapshot", {&player});
+    resetLaw->setActionModel(resetSnapshotAction);
+    auto resReset = resetLaw->applyTo(*recorder);
+    check(resReset == Law::ApplicationResult::Applied, "Reset Law application returns Applied");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == false, "Law successfully changed property 'screen-recorder.snapshot' back to false");
+    check(!recorder->isSnapshotPending(), "isSnapshotPending() reports false after reset");
+
+    // -----------------------------------------------------------------------
+    // Case 11: Event-Triggered Law Firing via EventBus & Agenda
+    // -----------------------------------------------------------------------
+    laws.connectToEventBus();
+
+    ConditionNode eventCondition =
+        ConditionNode::compare("@player.triggerArmed", ConditionNode::Op::Eq, PropertyValue(true));
+    ActionNode eventAction = ActionNode::set("@screen-recorder.snapshot", PropertyValue(true));
+
+    auto eventLaw = laws.createLaw("Law: Snapshot On Event", {&player});
+    eventLaw->setConditionModel(eventCondition);
+    eventLaw->setActionModel(eventAction);
+    const std::string eventLawId = eventLaw->getIdentifier();
+    laws.bindTrigger(eventLawId, "user-snapshot-requested");
+
+    // 11a: Event published with triggerArmed = false -> Law must NOT fire
+    player.setDynamicProperty("triggerArmed", PropertyValue(false));
+    ECA::Event eventMisfire{"user-snapshot-requested", &player, nullptr, 0};
+    Core::EventBus::instance().publish(eventMisfire);
+    laws.tick();
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == false, "Event published while triggerArmed=false does not change snapshot property");
+
+    // 11b: Event published with triggerArmed = true -> Law must fire and mutate property to true
+    player.setDynamicProperty("triggerArmed", PropertyValue(true));
+    ECA::Event eventFire{"user-snapshot-requested", &player, nullptr, 0};
+    Core::EventBus::instance().publish(eventFire);
+    laws.tick();
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == true, "Event published while triggerArmed=true fires Law and changes snapshot to true");
+    check(recorder->isSnapshotPending(), "Snapshot is pending after event trigger");
+
+    // 11c: Frame boundary captures snapshot and automatically clears snapshot trigger
+    bool pendingCaptured = recorder->checkPendingSnapshot(testW, testH, frameData.data());
+    check(pendingCaptured, "checkPendingSnapshot successfully captured pending frame");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == false, "checkPendingSnapshot reset 'screen-recorder.snapshot' back to false");
+    check(!recorder->isSnapshotPending(), "isSnapshotPending() is false after capture");
+
+    // -----------------------------------------------------------------------
+    // Case 12: Recording Property Control via Authored Law
+    // -----------------------------------------------------------------------
+    ConditionNode recordCond =
+        ConditionNode::compare("@player.recordArmed", ConditionNode::Op::Eq, PropertyValue(true));
+    ActionNode startRecordAction = ActionNode::set("@screen-recorder.recording", PropertyValue(true));
+    ActionNode stopRecordAction = ActionNode::set("@screen-recorder.recording", PropertyValue(false));
+
+    auto startRecLaw = laws.createLaw("Law: Start Recording", {&player});
+    startRecLaw->setConditionModel(recordCond);
+    startRecLaw->setActionModel(startRecordAction);
+
+    auto stopRecLaw = laws.createLaw("Law: Stop Recording", {&player});
+    stopRecLaw->setActionModel(stopRecordAction);
+
+    // Premise false -> cannot start
+    player.setDynamicProperty("recordArmed", PropertyValue(false));
+    check(startRecLaw->applyTo(*recorder) == Law::ApplicationResult::ConditionsFailed, "Start recording law rejected when recordArmed is false");
+    check(!recorder->isRecording(), "Recorder is not recording");
+
+    // Premise true -> start recording via Law
+    player.setDynamicProperty("recordArmed", PropertyValue(true));
+    check(startRecLaw->applyTo(*recorder) == Law::ApplicationResult::Applied, "Start recording law applied when recordArmed is true");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.recording"), val);
+    check(std::get<bool>(val) == true, "Law changed 'screen-recorder.recording' to true");
+    check(recorder->isRecording(), "Recorder is actively recording");
+
+    // Stop recording via Law
+    check(stopRecLaw->applyTo(*recorder) == Law::ApplicationResult::Applied, "Stop recording law applied");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.recording"), val);
+    check(std::get<bool>(val) == false, "Law changed 'screen-recorder.recording' to false");
+    check(!recorder->isRecording(), "Recorder stopped recording");
+
+    // -----------------------------------------------------------------------
+    // Case 13: Law Round-Trip JSON Serialization & Execution
+    // -----------------------------------------------------------------------
+    nlohmann::json savedJson = snapshotLaw->toJson();
+    check(!savedJson.empty(), "Snapshot Law successfully serialized to JSON");
+    check(savedJson.contains("conditionModel"), "Serialized Law contains conditionModel");
+    check(savedJson.contains("actionModel"), "Serialized Law contains actionModel");
+
+    auto restoredLaw = Law::fromJson(savedJson);
+    check(restoredLaw != nullptr, "Law::fromJson successfully deserialized Law");
+    restoredLaw->addAuthor(player);
+    check(restoredLaw->isAuthored(), "Restored Law preserves author reference");
+    check(restoredLaw->conditionModel() != nullptr, "Restored Law preserves conditionModel");
+    check(restoredLaw->actionModel() != nullptr, "Restored Law preserves actionModel");
+
+    // Test execution of restored law
+    player.setDynamicProperty("requestSnapshot", PropertyValue(false));
+    check(restoredLaw->applyTo(*recorder) == Law::ApplicationResult::ConditionsFailed, "Restored Law evaluates false condition properly");
+
+    player.setDynamicProperty("requestSnapshot", PropertyValue(true));
+    check(restoredLaw->applyTo(*recorder) == Law::ApplicationResult::Applied, "Restored Law evaluates true condition and applies");
+    lawGetValue(*recorder, PropertyPath::parse("screen-recorder.snapshot"), val);
+    check(std::get<bool>(val) == true, "Restored Law changed 'screen-recorder.snapshot' to true");
+
+    // Clean up pending snapshot state and provider
+    recorder->checkPendingSnapshot(testW, testH, frameData.data());
+    Universe::instance().setProvider({});
+
     // Clean up test files
     fs::remove_all(testDir, ec);
 
@@ -245,6 +443,6 @@ int main() {
         return 1;
     }
 
-    std::printf("screen_recorder_test: ALL OK (all 8 cases passed)\n");
+    std::printf("screen_recorder_test: ALL OK (all 13 cases passed)\n");
     return 0;
 }

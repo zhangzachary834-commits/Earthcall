@@ -39,6 +39,7 @@ public:
 
     static void syncRegister(LawManager& laws);
     static ScreenRecorder* find(LawManager& laws);
+    static ScreenRecorder* activeInstance();
 
     // Recording session control
     bool startRecording();
@@ -51,7 +52,11 @@ public:
     bool stepFrame(int viewportW, int viewportH, const uint8_t* optionalPixels = nullptr);
 
     // Capture an instantaneous snapshot (PNG or PPM)
-    bool captureSnapshot(const std::string& customPath = "");
+    bool captureSnapshot(const std::string& customPath = "", int viewportW = 0, int viewportH = 0, const uint8_t* optionalPixels = nullptr);
+
+    // Frame-synchronized pending snapshot handling
+    bool checkPendingSnapshot(int viewportW, int viewportH, const uint8_t* optionalPixels = nullptr);
+    bool isSnapshotPending() const { return _pendingSnapshot; }
 
     // macOS permissions and accessibility helpers
     static bool hasScreenCapturePermission();
@@ -169,6 +174,10 @@ private:
     std::chrono::steady_clock::time_point _startTime;
     std::chrono::steady_clock::time_point _lastFrameTime;
     uint64_t _sessionFrameIndex = 0;
+
+    bool _pendingSnapshot = false;
+    std::string _pendingSnapshotPath;
+    FILE* _pipeProcess = nullptr;
 };
 
 } // namespace Screen

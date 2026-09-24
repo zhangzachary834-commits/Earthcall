@@ -397,6 +397,7 @@ namespace Core {
                                   static_cast<double>(stats.sdfRangeNodeBytesUploaded));
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                recorder->checkPendingSnapshot(fbW, fbH);
                 if (recorder->isRecording()) {
                     recorder->stepFrame(fbW, fbH);
                 }

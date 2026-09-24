@@ -172,10 +172,14 @@ void ScreenChannel::buildProperties() {
     doubleRef("fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
     doubleRef("screen.fieldMeshMaxCells", &ScreenChannel::fieldMeshMaxCells);
 
-    boolean("recording", &ScreenChannel::recording);
-    boolean("screen.recording", &ScreenChannel::recording);
-    boolean("snapshot", &ScreenChannel::snapshotTrigger);
-    boolean("screen.snapshot", &ScreenChannel::snapshotTrigger);
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, bool>>(
+        "recording", this, &ScreenChannel::getRecording, &ScreenChannel::setRecording));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, bool>>(
+        "screen.recording", this, &ScreenChannel::getRecording, &ScreenChannel::setRecording));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, bool>>(
+        "snapshot", this, &ScreenChannel::getSnapshotTrigger, &ScreenChannel::setSnapshotTrigger));
+    registerProperty(std::make_unique<ComputedProperty<ScreenChannel, bool>>(
+        "screen.snapshot", this, &ScreenChannel::getSnapshotTrigger, &ScreenChannel::setSnapshotTrigger));
     readOnlyBool("hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
     readOnlyBool("screen.hasScreenCapturePermission", &ScreenChannel::getHasScreenCapturePermission);
     readOnlyBool("hasAccessibilityPermission", &ScreenChannel::getHasAccessibilityPermission);
@@ -198,6 +202,37 @@ bool ScreenChannel::getHasScreenCapturePermission() const {
 
 bool ScreenChannel::getHasAccessibilityPermission() const {
     return ScreenRecorder::hasAccessibilityPermission();
+}
+
+bool ScreenChannel::getRecording() const {
+    if (auto* rec = ScreenRecorder::activeInstance()) {
+        return rec->isRecording();
+    }
+    return recording;
+}
+
+void ScreenChannel::setRecording(const bool& v) {
+    recording = v;
+    if (auto* rec = ScreenRecorder::activeInstance()) {
+        if (v) rec->startRecording();
+        else rec->stopRecording();
+    }
+}
+
+bool ScreenChannel::getSnapshotTrigger() const {
+    if (auto* rec = ScreenRecorder::activeInstance()) {
+        return rec->isSnapshotPending();
+    }
+    return snapshotTrigger;
+}
+
+void ScreenChannel::setSnapshotTrigger(const bool& v) {
+    snapshotTrigger = v;
+    if (v) {
+        if (auto* rec = ScreenRecorder::activeInstance()) {
+            rec->captureSnapshot();
+        }
+    }
 }
 
 } // namespace Screen

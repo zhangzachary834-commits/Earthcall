@@ -1,5 +1,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Zone.hpp"
+#include "Singularity/Core/StringId.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
@@ -58,6 +60,69 @@ void Zone::buildProperties() {
         "spatialField", this, &Zone::_spatialField));
     registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
         "spatialVectorField", this, &Zone::_spatialVectorField));
+
+    // Zones as mathematical bounds. `within` is the containing Zone (the
+    // historical parentZone, previously unregistered — Refusal 6). `extent`
+    // is the authored bound. `dimensional` is derived from the presence of
+    // dimension.* axes, so read-only. dimension.* / placement.* /
+    // extent.lo / extent.hi are dynamic properties: authored by AddProperty,
+    // resolved by the same PropertyPath fallback as any other.
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "within", this, &Zone::propWithin, &Zone::propSetWithin));
+    registerProperty(std::make_unique<ComputedProperty<Zone, bool>>(
+        "dimensional", this, &Zone::propDimensional, nullptr));
+    registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
+        "extent", this, &Zone::_extent));
+}
+
+std::vector<std::pair<std::string, std::string>> Zone::dimensionAxes() const {
+    std::vector<std::pair<std::string, std::string>> axes;
+    const std::string prefix = kDimensionPrefix;
+    for (const auto& [id, value] : dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.size() <= prefix.size() || name.compare(0, prefix.size(), prefix) != 0) continue;
+        if (const auto* path = std::get_if<std::string>(&value)) {
+            if (!path->empty()) axes.emplace_back(name.substr(prefix.size()), *path);
+        }
+    }
+    std::sort(axes.begin(), axes.end());
+    return axes;
+}
+
+double Zone::placementAlong(const std::string& axis) const {
+    PropertyValue v;
+    double n = 0.0;
+    if (getDynamicProperty(std::string(kPlacementPrefix) + axis, v) &&
+        propertyValueToNumber(v, n)) {
+        return n;
+    }
+    return 0.0;
+}
+
+bool Zone::extentHolds(const std::map<std::string, PropertyValue>& coords) const {
+    if (!_extent) return true;   // unbounded within its parent
+    const auto value = _extent->astDefinition.evaluate(coords);
+    double f = 0.0;
+    if (!value || !propertyValueToNumber(*value, f)) return false;   // undefined math: outside
+    PropertyValue bound;
+    double b = 0.0;
+    if (getDynamicProperty(kExtentLo, bound) && propertyValueToNumber(bound, b) && f < b) return false;
+    if (getDynamicProperty(kExtentHi, bound) && propertyValueToNumber(bound, b) && f > b) return false;
+    return true;
+}
+
+void Zone::copyBoundsFrom(const Zone& other) {
+    _parentZoneName = other._parentZoneName;
+    _extent = other._extent
+        ? OntoMath::ScalarField::fromJson(other._extent->toJson())
+        : nullptr;
+    for (const auto& [id, value] : other.dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.rfind(kDimensionPrefix, 0) == 0 || name.rfind(kPlacementPrefix, 0) == 0 ||
+            name == kExtentLo || name == kExtentHi) {
+            setDynamicProperty(name, value);
+        }
+    }
 }
 
 namespace {
@@ -320,6 +385,7 @@ Zone::Zone(const Zone& other)
     _spatialVectorField = _spatialRootObject->vectorField;
 
     _formation.addMember(_spatialRootObject.get());
+    copyBoundsFrom(other);
     for (const auto& field : other._additionalSpatialFields) {
         if (!field) continue;
         auto clone = geom::FieldNode::fromJson(field->toJson());
@@ -348,6 +414,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_spatialField, tmp._spatialField);
     std::swap(_spatialVectorField, tmp._spatialVectorField);
     std::swap(_lastUpdateTiming, tmp._lastUpdateTiming);
+    copyBoundsFrom(other);
     return *this;
 }
 

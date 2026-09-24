@@ -140,6 +140,7 @@ public:
                                 uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
     void reloadShaders() override;
+    bool readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) override;
 
     // CPU-GPU micro-mastery pool & persistent mesh cache
     Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }
@@ -484,6 +485,8 @@ private:
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
     WGPUTextureView _surfaceView = nullptr;
+    WGPUBuffer      _readbackBuffer = nullptr;
+    uint64_t        _readbackBufferSize = 0;
 
     // Borrowed color target for the currently recorded frame. Offscreen callers
     // own the view; live rendering aliases _surfaceView. Held only until

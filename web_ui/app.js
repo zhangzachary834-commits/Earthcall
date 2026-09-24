@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const emitBtn = document.getElementById('emit-btn');
     const statusText = document.getElementById('status-text');
     const statusContainer = document.getElementById('connection-status');
+    const form = document.getElementById('logos-interface');
     
     let ws = null;
     let clientId = "client_" + Math.random().toString(36).substr(2, 9);
@@ -72,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.log(`[Earthcall] Emitting: "${text}"`);
         
+        const announcer = document.getElementById('sr-announcer');
+
         if (isWasmMode) {
             // Path B: Embind directly to C++
             Module.Earthcall_EmitUtterance(text, clientId);
@@ -85,9 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ws.send(JSON.stringify(payload));
         } else {
             console.error("[Earthcall] Engine is not connected.");
+            form.classList.add('error-shake');
+            setTimeout(() => form.classList.remove('error-shake'), 400);
+            if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+            return;
         }
         
-        const announcer = document.getElementById('sr-announcer');
         if (announcer) {
             announcer.textContent = '';
             setTimeout(() => {
@@ -95,16 +101,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 50);
         }
 
+        emitBtn.classList.add('success-flash');
+        setTimeout(() => emitBtn.classList.remove('success-flash'), 1000);
+
         inputField.value = '';
         inputField.dispatchEvent(new Event('input'));
         inputField.focus();
     }
     
-    const form = document.getElementById('logos-interface');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (emitBtn.getAttribute('aria-disabled') === 'true') {
-            inputField.focus();
+            if (inputField.disabled) {
+                form.classList.add('error-shake');
+                setTimeout(() => form.classList.remove('error-shake'), 400);
+                const announcer = document.getElementById('sr-announcer');
+                if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+            } else {
+                inputField.focus();
+            }
             return;
         }
         emitUtterance();
@@ -122,7 +137,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') {
             if (document.activeElement === document.body || document.activeElement === document.getElementById('earthcall-canvas')) {
                 e.preventDefault();
-                inputField.focus();
+                if (!inputField.disabled) {
+                    inputField.focus();
+                } else {
+                    form.classList.add('error-shake');
+                    setTimeout(() => form.classList.remove('error-shake'), 400);
+                    const announcer = document.getElementById('sr-announcer');
+                    if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+                }
             }
         }
     });

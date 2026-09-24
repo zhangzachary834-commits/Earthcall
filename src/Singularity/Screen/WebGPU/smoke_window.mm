@@ -106,7 +106,7 @@ int main() {
     WGPUSurfaceConfiguration cfg = {};
     cfg.device = gpu.device;
     cfg.format = WGPUTextureFormat_BGRA8Unorm;
-    cfg.usage = WGPUTextureUsage_RenderAttachment;
+    cfg.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     cfg.width = (uint32_t)fbw; cfg.height = (uint32_t)fbh;
     cfg.presentMode = WGPUPresentMode_Fifo;
     cfg.alphaMode = WGPUCompositeAlphaMode_Auto;

@@ -1,4 +1,5 @@
 #include "Relation.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/Relation/RelationSerialization.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
@@ -148,6 +149,11 @@ std::string Relation::typeLabel() const {
     return _typeLexeme ? _typeLexeme->getSymbol() : type;
 }
 
+void Relation::updatePersonEndpointFlag() {
+    _hasPersonEndpoint = (dynamic_cast<const Person*>(a()) != nullptr) ||
+                         (dynamic_cast<const Person*>(b()) != nullptr);
+}
+
 Relation::ConstitutiveStatus Relation::evaluateConstitutive() const {
     if (!_typeLexeme) return ConstitutiveStatus::NotApplicable;
 
@@ -184,11 +190,24 @@ void Relation::describe() const {
 }
 
 bool Relation::involves(const Singular* being) const {
-    return being && (a() == being || b() == being);
+    if (!being) return false;
+    if (a() == being || b() == being) return true;
+    if (!_hasPersonEndpoint) return false;
+
+    const auto* pA = dynamic_cast<const Person*>(a());
+    const auto* pB = dynamic_cast<const Person*>(b());
+    if ((pA && pA->hasIdentity()) || (pB && pB->hasIdentity())) {
+        const auto* pBeing = dynamic_cast<const Person*>(being);
+        if (pBeing && pBeing->hasIdentity()) {
+            if (pA && pA->hasIdentity() && pA->personId() == pBeing->personId()) return true;
+            if (pB && pB->hasIdentity() && pB->personId() == pBeing->personId()) return true;
+        }
+    }
+    return false;
 }
 
 bool Relation::involves(const Singular& being) const {
-    return a() == &being || b() == &being;
+    return involves(&being);
 }
 
 bool Relation::involves(const std::string& identifier) const {
@@ -198,9 +217,27 @@ bool Relation::involves(const std::string& identifier) const {
 
 bool Relation::isBetween(const Singular& aBeing, const Singular& bBeing) const {
     if (directed) {
-        return a() == &aBeing && b() == &bBeing;
+        if (a() == &aBeing && b() == &bBeing) return true;
+    } else {
+        if ((a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing)) return true;
     }
-    return (a() == &aBeing && b() == &bBeing) || (a() == &bBeing && b() == &aBeing);
+    if (!_hasPersonEndpoint) return false;
+
+    const auto matchEndpoint = [](Singular* ep, const Singular& target) {
+        if (ep == &target) return true;
+        const auto* pEp = dynamic_cast<const Person*>(ep);
+        if (pEp && pEp->hasIdentity()) {
+            const auto* pTarget = dynamic_cast<const Person*>(&target);
+            return pTarget && pTarget->hasIdentity() && pEp->personId() == pTarget->personId();
+        }
+        return false;
+    };
+
+    if (directed) {
+        return matchEndpoint(a(), aBeing) && matchEndpoint(b(), bBeing);
+    }
+    return (matchEndpoint(a(), aBeing) && matchEndpoint(b(), bBeing)) ||
+           (matchEndpoint(a(), bBeing) && matchEndpoint(b(), aBeing));
 }
 
 bool Relation::isBetween(const std::string& a, const std::string& b) const {
