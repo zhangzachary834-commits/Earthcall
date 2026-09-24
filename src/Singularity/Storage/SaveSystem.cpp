@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <cstdio>
 #include <unordered_map>
 #include <unordered_set>
 #include "Singularity/Storage/CloudStorage.hpp"
@@ -930,20 +931,34 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
     bool hasPreviousManifest = false;
     const std::filesystem::path previousManifest = finalDir / ".unpack_manifest.json";
     ec.clear();
-    if (std::filesystem::exists(previousManifest, ec) && !ec) {
+    const bool previousManifestExists =
+        std::filesystem::exists(previousManifest, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Could not inspect prior unpack manifest "
+                  << previousManifest << ": " << ec.message() << "\n";
+        abandonStage();
+        return false;
+    }
+    if (previousManifestExists) {
         nlohmann::json manifest = readSaveData(previousManifest.string());
-        if (manifest.is_object() && manifest.contains("ownedFiles") &&
-            manifest["ownedFiles"].is_array()) {
-            hasPreviousManifest = true;
-            for (const auto& path : manifest["ownedFiles"]) {
-                if (path.is_string()) previousOwned.insert(path.get<std::string>());
-            }
-            if (manifest.contains("fileHashes") && manifest["fileHashes"].is_object()) {
-                for (auto it = manifest["fileHashes"].begin();
-                     it != manifest["fileHashes"].end(); ++it) {
-                    if (it.value().is_string()) {
-                        previousHashes[it.key()] = it.value().get<std::string>();
-                    }
+        if (!manifest.is_object() || !manifest.contains("ownedFiles") ||
+            !manifest["ownedFiles"].is_array()) {
+            std::cerr << "[SaveSystem] Refusing re-unpack because prior manifest "
+                      << previousManifest
+                      << " is malformed; ownership cannot be proven safely.\n";
+            abandonStage();
+            return false;
+        }
+
+        hasPreviousManifest = true;
+        for (const auto& path : manifest["ownedFiles"]) {
+            if (path.is_string()) previousOwned.insert(path.get<std::string>());
+        }
+        if (manifest.contains("fileHashes") && manifest["fileHashes"].is_object()) {
+            for (auto it = manifest["fileHashes"].begin();
+                 it != manifest["fileHashes"].end(); ++it) {
+                if (it.value().is_string()) {
+                    previousHashes[it.key()] = it.value().get<std::string>();
                 }
             }
         }
@@ -955,7 +970,14 @@ bool unpackSaveToDirectory(const nlohmann::json& j, const std::string& directory
     // only when both its exact old path shape and semantic JSON match the
     // incoming canonical Zone.
     ec.clear();
-    if (std::filesystem::exists(finalDir, ec) && !ec) {
+    const bool finalDirExists = std::filesystem::exists(finalDir, ec);
+    if (ec) {
+        std::cerr << "[SaveSystem] Could not inspect live unpack directory "
+                  << finalDir << ": " << ec.message() << "\n";
+        abandonStage();
+        return false;
+    }
+    if (finalDirExists) {
         std::filesystem::recursive_directory_iterator it(finalDir, ec), endIt;
         for (; it != endIt; it.increment(ec)) {
             if (ec) {
