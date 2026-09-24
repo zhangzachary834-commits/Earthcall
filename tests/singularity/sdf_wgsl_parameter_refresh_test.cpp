@@ -1046,7 +1046,7 @@ int main() {
                   noPhase.wgsl.find("const HAS_AUTHORED_VOLUME_PHASE: bool = false") !=
                       std::string::npos &&
                   noPhase.wgsl.find(
-                      "mediumChroma * (scattering / extinction) * (oldT - transmittance)") !=
+                      "mediumChroma * (scattering / extinction) * (old_t - transmittance)") !=
                       std::string::npos,
               "absent Phi keeps the literal V2 scattering accumulation path");
 
