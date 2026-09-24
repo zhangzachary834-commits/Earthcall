@@ -160,6 +160,7 @@ jobs:
             scene_spatial_synthesis_dag_test \
             scene_spatial_ontomath_synthesis_test \
             rendered_field_piecewise_synthesis_test \
+            rendered_field_direct_dispatch_test \
             channel_paths_test \
             webgpu_sdf_parity_test \
             webgpu_sdf_distance_test \
@@ -180,6 +181,7 @@ jobs:
           ./build/scene_spatial_synthesis_dag_test
           ./build/scene_spatial_ontomath_synthesis_test
           ./build/rendered_field_piecewise_synthesis_test
+          ./build/rendered_field_direct_dispatch_test
           ./build/channel_paths_test
 
       - name: Verify generic WebGPU SDF parity
