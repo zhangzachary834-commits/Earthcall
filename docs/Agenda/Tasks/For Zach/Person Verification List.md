@@ -2,13 +2,13 @@
 
 ## Volumetric Light Beams Shining Through Mist — Sanctuary of Sunlit Mist
 
-*Antigravity / Gemini · session `46a7b4aa-6373-429b-af0e-3377758af9ff` · 2026-09-24. Physically-coherent light beams streaming through participating mist via OntoMath fields, bounded occluder sphere-tracing, and Henyey-Greenstein forward-scattering phase function.*
+*Antigravity / Gemini · session `46a7b4aa-6373-429b-af0e-3377758af9ff` · 2026-09-24. Volumetric light beams through participating mist via authored fields and bounded local occluder sphere-tracing. Current Sanctuary phase is the V3 isotropic compatibility identity unless `volumePhase` is explicitly authored.*
 
 - [ ] Build & launch WebGPU app: `./scripts/build.sh webgpu run` (or `./build/earthcall_webgpu`).
 - [ ] In the World Load console / Creator Console, load the world: `sanctuary_of_sunlit_mist` (or switch to Zone `"Sanctuary of Sunlit Mist"`).
 - [ ] Observe the visual phenomenon from the default viewpoint `[0.0, 2.2, 8.0]` looking into `-Z` toward the altar:
   - Three distinct luminous shafts of sunlight cascading diagonally through the suspended atmospheric mist.
-  - Soft, glowing particulate atmosphere with forward-scattering intensity towards the sunlit clerestory openings.
+  - Soft, glowing particulate atmosphere with in-scattered source radiance through the sunlit clerestory openings.
   - Distinct separation between illuminated beams ($V=1$) and deep, cool shadows ($V=0$) cast by the clerestory lintel wall and flanking colonnade pillars.
   - Smooth penumbra gradients at the beam edges.
   - Central light beam striking the sanctuary altar dais at `[0.0, 0.4, 0.0]`.
