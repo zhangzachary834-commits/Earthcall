@@ -134,6 +134,22 @@ int main() {
 
     std::filesystem::remove_all(testIdentDir);
 
+    // Test that updatePriorPersonSerializations cleans up stale .ecform profile files upon rename
+    {
+        std::string personFolder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+        std::string oldProfileEcform = personFolder + "/StalePerson.ecform";
+        {
+            std::ofstream f(oldProfileEcform);
+            f << R"({"displayName": "StalePerson"})";
+        }
+        assert(std::filesystem::exists(oldProfileEcform));
+
+        Person renamedPerson = makePerson("FreshPerson");
+        updatePriorPersonSerializations(renamedPerson, "StalePerson");
+
+        assert(!std::filesystem::exists(oldProfileEcform));
+    }
+
     // Test that updatePriorPersonSerializations with empty oldName does NOT overwrite unkeyed legacy save records of other Persons
     std::filesystem::path testLegacyDir = tempSaveRoot.path / "test_legacy_empty_oldname";
     std::filesystem::create_directories(testLegacyDir);
