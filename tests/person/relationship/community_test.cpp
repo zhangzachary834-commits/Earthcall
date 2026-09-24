@@ -1,6 +1,7 @@
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "Identity/KeyPair.hpp"
 #include "Person/Body/Body.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 
@@ -70,6 +71,15 @@ static void testAddMemberAndInvolves() {
 
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
+
+    // Keyed person test: display name query must NOT match a keyed person's identity
+    Person keyedAlice = createDummyPerson("AliceKeyed");
+    Identity::PrivateKey priv = Identity::PrivateKey::generate();
+    keyedAlice.setPersonId(priv.publicKey().id());
+    comm.addMember(&keyedAlice);
+    check(comm.involves(keyedAlice), "Community involves keyedAlice by object reference");
+    check(comm.involves(keyedAlice.getIdentifier()), "Community involves keyedAlice by SingularId identifier");
+    check(!comm.involves(keyedAlice.getDisplayName()), "Community does not involve keyedAlice by display name string");
 
     // Add a non-Person member, it should be rejected and print a warning
     DummySingular dummy("NotAPerson");
