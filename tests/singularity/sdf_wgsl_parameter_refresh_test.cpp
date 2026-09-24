@@ -1,3 +1,5 @@
+#include <cctype>
+#include <iostream>
 #include <algorithm>
 // Regression witness for SDF WGSL structure/value separation.
 //
@@ -1043,16 +1045,16 @@ int main() {
 
         const auto noPhase =
             sdfwgsl::compileVolume(&density, &extinction, &scattering, &volumeChroma);
-        auto trim_spaces = [](std::string s) {
-            s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
-            return s;
+
+        auto contains_expr = [](const std::string& str) {
+            std::string s = str;
+            s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) { return std::isspace(c); }), s.end());
+            return s.find("mediumChroma*(scattering/extinction)*(oldT-transmittance)") != std::string::npos;
         };
         check(noPhase.ok &&
                   noPhase.wgsl.find("const HAS_AUTHORED_VOLUME_PHASE: bool = false") !=
                       std::string::npos &&
-                  trim_spaces(noPhase.wgsl).find(
-                      "mediumChroma*(scattering/extinction)*(oldT-transmittance)") !=
-                      std::string::npos,
+                  contains_expr(noPhase.wgsl),
               "absent Phi keeps the literal V2 scattering accumulation path");
 
         // Phi = 1 + g * wi.z. Scalar-by-scalar multiplication belongs inside
