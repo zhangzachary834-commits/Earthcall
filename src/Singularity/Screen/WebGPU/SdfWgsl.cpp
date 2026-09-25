@@ -1947,18 +1947,57 @@ fn fs(in: VSOut) -> FSOut {
         let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
-        ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-        specTerm = specularEnvelope * specShape * directRadiance;
+        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+            let responseDistance = length(sourceDelta);
+            var responseWi = vec3<f32>(0.0);
+            var responseDefined = true;
+            if (responseDistance > SOURCE_DIRECTION_EPS) {
+                // wi keeps the canonical transport convention: source -> receiver.
+                responseWi = sourceDelta / responseDistance;
+            } else if (MATERIAL_RESPONSE_READS_WI) {
+                responseDefined = false;
+            }
+            var receiverResponse = vec3<f32>(0.0);
+            if (responseDefined) {
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+            }
+            ambientTerm = vec3<f32>(0.0);
+            diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
+                          receiverResponse * directRadiance;
+            specTerm = vec3<f32>(0.0);
+        } else {
+            ambientTerm = inst.shading.x * ambientEnvelope;
+            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+            specTerm = specularEnvelope * specShape * directRadiance;
+        }
     } else {
         // EXACT compatibility branch from Rung 4. No authored chi means
         // constant legacy light.color, already carried by these uniforms.
         let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
-        ambientTerm = inst.shading.x * ambientEnvelope;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-        specTerm = specularEnvelope * specShape * directRadiance;
+        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+            let responseDistance = length(sourceDelta);
+            var responseWi = vec3<f32>(0.0);
+            var responseDefined = true;
+            if (responseDistance > SOURCE_DIRECTION_EPS) {
+                responseWi = sourceDelta / responseDistance;
+            } else if (MATERIAL_RESPONSE_READS_WI) {
+                responseDefined = false;
+            }
+            var receiverResponse = vec3<f32>(0.0);
+            if (responseDefined) {
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+            }
+            ambientTerm = vec3<f32>(0.0);
+            diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
+                          receiverResponse * directRadiance;
+            specTerm = vec3<f32>(0.0);
+        } else {
+            ambientTerm = inst.shading.x * ambientEnvelope;
+            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+            specTerm = specularEnvelope * specShape * directRadiance;
+        }
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -2273,7 +2312,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* scatteringExpr,
                              const OntoMath::Piecewise* volumeChromaExpr,
                              const OntoMath::Piecewise* phaseExpr,
-                             const OntoMath::Piecewise* emissionExpr) {
+                             const OntoMath::Piecewise* emissionExpr,
+                             const OntoMath::Piecewise* responseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2396,6 +2436,18 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     if (colorExpr && !colorExpr->pieces.empty()) {
         emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
     }
+
+    if (responseExpr && !responseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+            e.refuse("material response: " + validationError);
+        } else {
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindMaterialResponse = false;
+        }
+    }
+
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (multiSource) {
         for (std::size_t i = 0; i < radianceSources->size(); ++i) {
@@ -2482,7 +2534,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* scatteringExpr,
                 const OntoMath::Piecewise* volumeChromaExpr,
                 const OntoMath::Piecewise* phaseExpr,
-                const OntoMath::Piecewise* emissionExpr) {
+                const OntoMath::Piecewise* emissionExpr,
+                const OntoMath::Piecewise* responseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -2716,6 +2769,45 @@ Program compile(const geom::SdfNode& root,
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
+    // --- Rung 9 Material Response Compiler ---
+    // Receiver response is independent of source emission, visibility and volume
+    // truth. Absence preserves the exact historical Blinn-Phong compatibility
+    // path below; authored response is evaluated only after transport reaches
+    // the receiving surface.
+    bool responseReadsNormal = false;
+    bool responseReadsWi = false;
+    bool responseReadsWo = false;
+    prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                 "wi: vec3<f32>, wo: vec3<f32>) -> vec3<f32> {\n";
+    if (responseExpr && !responseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+            e.refuse("material response: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.bindMaterialResponse = false;
+            responseReadsNormal = e.readSurfaceNormal;
+            responseReadsWi = e.readWi;
+            responseReadsWo = e.readWo;
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = ";
+    prog.wgsl += (responseExpr && !responseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_NORMAL: bool = ";
+    prog.wgsl += responseReadsNormal ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_WI: bool = ";
+    prog.wgsl += responseReadsWi ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_WO: bool = ";
+    prog.wgsl += responseReadsWo ? "true;\n" : "false;\n";
+
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (!multiSource) {
         std::string radianceBody;
@@ -2919,18 +3011,38 @@ Program compile(const geom::SdfNode& root,
                            "vec3<f32>((c.x * c.z) / 0.8);\n";
                     sum += "            let specularEnvelope = sourceChroma * "
                            "vec3<f32>(c.x * c.w);\n";
+                    sum += "            let incidentEnvelope = sourceChroma * "
+                           "vec3<f32>(c.x);\n";
                 } else {
                     sum += "            let ambientEnvelope = source.ambient.rgb / "
                            "vec3<f32>(0.2);\n";
                     sum += "            let diffuseEnvelope = source.diffuse.rgb / "
                            "vec3<f32>(0.8);\n";
                     sum += "            let specularEnvelope = source.specular.rgb;\n";
+                    sum += "            let incidentEnvelope = source.diffuse.rgb / "
+                           "vec3<f32>(0.8);\n";
                 }
-                sum += "            ambientTerm += inst.shading.x * ambientEnvelope;\n";
-                sum += "            diffuseTerm += inst.shading.y * diffuseEnvelope * "
+                sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+                sum += "                var responseWi = vec3<f32>(0.0);\n";
+                sum += "                var responseDefined = true;\n";
+                sum += "                if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                sum += "                    responseWi = sourceDelta / sourceDistance;\n";
+                sum += "                } else if (MATERIAL_RESPONSE_READS_WI) {\n";
+                sum += "                    responseDefined = false;\n";
+                sum += "                }\n";
+                sum += "                if (responseDefined) {\n";
+                sum += "                    let receiverResponse = "
+                       "materialResponseEval(pf, nw, responseWi, V);\n";
+                sum += "                    diffuseTerm += incidentEnvelope * "
+                       "receiverResponse * directRadiance;\n";
+                sum += "                }\n";
+                sum += "            } else {\n";
+                sum += "                ambientTerm += inst.shading.x * ambientEnvelope;\n";
+                sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
                        "diff * directRadiance;\n";
-                sum += "            specTerm += specularEnvelope * specShape * "
+                sum += "                specTerm += specularEnvelope * specShape * "
                        "directRadiance;\n";
+                sum += "            }\n";
                 sum += "        }\n";
                 sum += "    }\n";
             }
