@@ -786,6 +786,15 @@ int main() {
     assert(firstRadianceSlotGeneration != 0);
     assert(firstDensitySlotGeneration != 0);
 
+    const auto firstRadianceHandle = observer.publishRadianceHandle(0);
+    const auto firstDensityHandle = observer.publishDensityHandle(0);
+    assert(firstRadianceHandle.has_value());
+    assert(firstDensityHandle.has_value());
+    assert(firstRadianceHandle->generation == firstRadianceSlotGeneration);
+    assert(firstDensityHandle->generation == firstDensitySlotGeneration);
+    assert(observer.validateRadianceHandle(*firstRadianceHandle, observedSource));
+    assert(observer.validateDensityHandle(*firstDensityHandle, observedMedium));
+
     // Stable set revisions are O(1) observer hits: runtime/frame movement does
     // not walk the vessels or rebuild the theorem artifacts.
     observer.observeRadianceSources({observedSource}, 10001);
@@ -813,6 +822,15 @@ int main() {
            firstRadianceSlotGeneration);
     assert(observer.alignedDensitySlotGeneration(0) ==
            firstDensitySlotGeneration);
+    assert(!observer.validateRadianceHandle(
+        *firstRadianceHandle, observedSource));
+    assert(observer.validateDensityHandle(
+        *firstDensityHandle, observedMedium));
+
+    const auto revisedRadianceHandle = observer.publishRadianceHandle(0);
+    assert(revisedRadianceHandle.has_value());
+    assert(observer.validateRadianceHandle(
+        *revisedRadianceHandle, observedSource));
 
     // Producer replacement in the same numeric slot is a provenance repair,
     // not a reuse. The unrelated medium slot keeps its generation.
@@ -826,6 +844,15 @@ int main() {
            radianceGenerationAfterRevision);
     assert(observer.alignedDensitySlotGeneration(0) ==
            firstDensitySlotGeneration);
+    assert(!observer.validateRadianceHandle(
+        *revisedRadianceHandle, observedSource));
+    assert(observer.validateDensityHandle(
+        *firstDensityHandle, observedMedium));
+
+    const auto replacedRadianceHandle = observer.publishRadianceHandle(0);
+    assert(replacedRadianceHandle.has_value());
+    assert(observer.validateRadianceHandle(
+        *replacedRadianceHandle, observedSource));
 
     // Removal drops the aligned artifact. Re-addition builds a fresh slot with
     // a fresh generation even if the binding's authored revision is unchanged.
@@ -834,12 +861,24 @@ int main() {
     observer.observeRadianceSources({}, 10004);
     assert(observer.alignedRadianceSlotCount() == 0);
     assert(observer.stats().alignedSlotDrops == 1);
+    assert(!observer.validateRadianceHandle(
+        *replacedRadianceHandle, observedSource));
     observer.observeRadianceSources({observedSource}, 10005);
     assert(observer.alignedRadianceSlotCount() == 1);
     assert(observer.alignedRadianceSlotGeneration(0) !=
            generationBeforeRemoval);
     assert(observer.stats().alignedSlotBuilds ==
            firstObserverStats.alignedSlotBuilds + 1);
+    const auto readdedRadianceHandle = observer.publishRadianceHandle(0);
+    assert(readdedRadianceHandle.has_value());
+    assert(readdedRadianceHandle->generation !=
+           replacedRadianceHandle->generation);
+    assert(observer.validateRadianceHandle(
+        *readdedRadianceHandle, observedSource));
+    assert(observer.stats().alignedHandlePublications == 5);
+    assert(observer.stats().alignedHandleValidations == 9);
+    assert(observer.stats().alignedHandleMetadataTests == 32);
+    assert(observer.stats().alignedHandleFallbacks == 3);
     assert(observer.stats().authorityBypassesApplied == 0);
 
     // Phase B renderer lifecycle: admit authoritative world truth while
@@ -961,6 +1000,10 @@ int main() {
                 "aligned_slot_builds=%llu aligned_slot_repairs=%llu "
                 "aligned_slot_reuses=%llu aligned_slot_drops=%llu "
                 "aligned_slot_logical_bytes=%zu "
+                "aligned_handle_publications=%llu "
+                "aligned_handle_validations=%llu "
+                "aligned_handle_metadata_tests=%llu "
+                "aligned_handle_fallbacks=%llu "
                 "observer_radiance_zero=%llu observer_density_zero=%llu "
                 "pretty_print_identity=0 full_scene_serialization_identity=0\n",
                 static_cast<unsigned long long>(adapter.proofBuilds),
@@ -980,6 +1023,14 @@ int main() {
                 static_cast<unsigned long long>(
                     observer.stats().alignedSlotDrops),
                 observer.stats().alignedSlotLogicalBytes,
+                static_cast<unsigned long long>(
+                    observer.stats().alignedHandlePublications),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedHandleValidations),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedHandleMetadataTests),
+                static_cast<unsigned long long>(
+                    observer.stats().alignedHandleFallbacks),
                 static_cast<unsigned long long>(
                     observer.stats().hypotheticalRadianceBypasses),
                 static_cast<unsigned long long>(
