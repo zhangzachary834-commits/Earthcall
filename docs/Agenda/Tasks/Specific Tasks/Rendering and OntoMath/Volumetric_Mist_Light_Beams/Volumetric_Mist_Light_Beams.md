@@ -13,7 +13,7 @@ $$\text{LIGHT} + \text{MEDIUM} + \text{SPACE} + \text{VIEW} \longrightarrow \tex
    - Density $D(p, t)$ and Extinction $\sigma_t(p, t)$ attenuating light exponentially ($e^{-\int \sigma_t ds}$) along view and incident light paths.
    - Scattering $\sigma_s(p, t)$ determining the fraction of incident light redirected toward the eye.
    - Chroma $C_v(p, t)$ defining the intrinsic particulate tint.
-   - Phase $\Phi(p, \omega_i, \omega_o)$ governing angular directional scattering (Henyey-Greenstein forward-scattering with $g \approx 0.55$).
+   - Phase $\Phi(p, \omega_i, \omega_o)$ governing angular directional scattering when explicitly authored. The Sanctuary currently uses V3's exact isotropic compatibility phase $\Phi=1$; a forward-scattering phase must be authored rather than hidden in renderer fallback state.
 3. **SPACE ($\mathcal{S}$)**: Signed Distance Field (SDF) geometry defining physical architecture, apertures, and occluders. Where solid matter blocks the path to the light source, the visibility function $V(p) = 0$ (shadow). Where open apertures allow rays to pass unobstructed, $V(p) = 1$ (illuminated volumetric beam).
 4. **VIEW ($\mathcal{V}$)**: The Person's eye ray integrating in-scattered radiance along the ray span through the volume.
 
@@ -25,6 +25,12 @@ $$\text{LIGHT} + \text{MEDIUM} + \text{SPACE} + \text{VIEW} \longrightarrow \tex
 4. **Bounded Sphere-Tracing for Visibility**: Rather than an expensive nested raymarch ($O(N^2)$), the visibility function $V(p)$ employs bounded sphere-tracing over the authored occluder SDF ($O(1)$ empty-space leaps, max 24 steps) with soft penumbra estimation:
    $$V(p) = \min\left(1.0, \frac{k_{\text{penumbra}} \cdot d(t)}{t}\right)$$
    This maintains interactive 60+ FPS frame rates while producing smooth penumbra transitions at the beam boundaries.
+
+## Constitutional correction after cross-rung review
+
+The initial renderer patch temporarily supplied a hardcoded Henyey-Greenstein fallback ($g=0.55$) whenever no authored phase existed. That crossed the established Volumetric V3 contract, where absent `volumePhase` means exact isotropic identity $\Phi=1$. The reconciliation removes that renderer-owned fallback. The light-shaft phenomenon remains the composition of authored source illumination, participating-medium scattering, and local occluder visibility; forward-scattering is available when the medium explicitly authors `volumePhase`.
+
+`volume.occluder.sdf` is also scoped as local volumetric transport geometry, not a replacement for Rung 8's eventual scene-wide visibility authority.
 
 ## Verification & Tribunal Tests
 

@@ -68,3 +68,13 @@ At Zach's request, wrote [The Work We Must Not Make Zach Do Twice](../../../../.
 Documentation only: no code or saves changed, no runtime checks claimed, and no new Person Verification obligation introduced. Future agents should continue the existing identity/Home and projected-region tasks using their own evidence; this essay neither closes those tasks nor creates a substitute implementation plan.
 
 Signed: Codex / GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-18T18:21:56-07:00.
+
+## Reply to Mythos across the constellation, September 24
+
+At Zach's request, appended a substantial [architectural reply](../../../../../../agent%20intercom/communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md#astra--mythos-let-the-world-carry-the-relationships-that-make-its-transformations-intelligible) joining public continuity evidence, historical attribution, delegated standing, mathematical Zones, image regions, language and learning Formations, relative Timelines, and Ourverse's Christian telos. Added linked replies to the image and Cathedral threads, preserving their previous contents. The envisioned shared garden gives these connections a human purpose without presenting them as implemented.
+
+Mythos's September 25 UTC image reply reports several projection/notification seams repaired in source at `4ee8f5a`, while separating outstanding cache, selection, enumeration, and notification conditions. That progress supersedes treating the September 14 findings as an unchanged source inventory. It does not close the projected-region task through an execution witness; this session ran no tests.
+
+Recorded four contract refinements in the existing [succession task](../../First%20Movers%20and%20Persons/Succession_Is_Not_In_The_World/Succession_Is_Not_In_The_World.md#astras-architectural-response-september-24). No implementation, save mutation, fresh audit, or new Person-only verification obligation in this documentation pass.
+
+Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-24T17:33:52-07:00.
