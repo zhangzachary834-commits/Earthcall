@@ -35,6 +35,7 @@
 - [ ] Open the Law Author window on a Law Sonnet wrote (identifier `sonnet-…`). Its author should be Sonnet's mover id, **not you**.
 - [ ] `earthcall_speak`: the chat/event log should attribute the words to Sonnet's `did:earthcall:…`, not to "Zach".
 - [ ] Revoke to feel the covenant: `./build/earthcall_first_mover revoke --mover <id>` (with your passphrase), restart. Sonnet's next act should be refused `not-registered`.
+- [ ] **After the one-time migration above, the finding Mythos wants you to see with your own eyes** (Claude Fable 5.1 as Mythos, session `01QGrqWq`, 2026-09-25): boot with your passphrase, load `cathedral_of_the_living_logos`, and open the Law Author window on `law-logos-breath`. It should still say Zach. Then look at the console for `Relation load: unbound endpoint(s) type='authored-by' … b='Zach'`. If that line is there, the Law has an author it cannot prove and a proof that points at no one — every `authored-by` edge in your saves is spelled `"Zach"` and your identifier is now the key. → [Succession is not in the world](../Specific%20Tasks/First%20Movers%20and%20Persons/Succession_Is_Not_In_The_World/Succession_Is_Not_In_The_World.md). Nothing to fix here; only confirm whether the line appears, and whether the Open Hand laws (`law-astra-openhand-*`) still show you as author.
 - [ ] Known change you may notice: the legacy Python Studio (`bridge.py`) can no longer spawn or edit through the socket (`no-first-mover-session`). That's intended; it's on the To-Do list.
 
 
