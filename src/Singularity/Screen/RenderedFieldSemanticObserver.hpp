@@ -55,6 +55,8 @@ public:
         uint64_t alignedHandleValidations = 0;
         uint64_t alignedHandleMetadataTests = 0;
         uint64_t alignedHandleFallbacks = 0;
+        uint64_t alignedProofReads = 0;
+        uint64_t alignedProofReadFallbacks = 0;
     };
 
     struct AlignedSlotHandle {
@@ -98,6 +100,25 @@ public:
         const AlignedSlotHandle& handle,
         const VolumeDensityBinding& binding) {
         return validateAlignedHandle(
+            _densitySlots, handle, Channel::MediumDensity,
+            binding.producerId, binding.densityRevision);
+    }
+
+    // Diagnostic-only theorem read. The proof is returned only after the same
+    // generation-bound provenance gate as handle validation. Renderer has no
+    // consumer for this API, so this still grants zero pixel authority.
+    std::optional<ProofKind> inspectRadianceProof(
+        const AlignedSlotHandle& handle,
+        const RadianceSourceBinding& binding) {
+        return inspectAlignedProof(
+            _radianceSlots, handle, Channel::SourceRho,
+            binding.producerId, binding.radianceRevision);
+    }
+
+    std::optional<ProofKind> inspectDensityProof(
+        const AlignedSlotHandle& handle,
+        const VolumeDensityBinding& binding) {
+        return inspectAlignedProof(
             _densitySlots, handle, Channel::MediumDensity,
             binding.producerId, binding.densityRevision);
     }
@@ -280,6 +301,27 @@ private:
             return false;
         }
         return true;
+    }
+
+    std::optional<ProofKind> inspectAlignedProof(
+        const std::vector<AlignedSlotArtifact>& slots,
+        const AlignedSlotHandle& handle,
+        Channel expectedChannel,
+        const std::string& producerId,
+        uint64_t authoredRevision) {
+        ++_stats.alignedProofReads;
+        if (!validateAlignedHandle(
+                slots, handle, expectedChannel, producerId, authoredRevision)) {
+            ++_stats.alignedProofReadFallbacks;
+            return std::nullopt;
+        }
+
+        const ProofKind proof = slots[handle.slot].proof;
+        if (proof == ProofKind::None) {
+            ++_stats.alignedProofReadFallbacks;
+            return std::nullopt;
+        }
+        return proof;
     }
 
     struct VesselKey {
