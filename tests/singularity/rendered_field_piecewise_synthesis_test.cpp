@@ -881,6 +881,57 @@ int main() {
     assert(observer.stats().alignedHandleFallbacks == 3);
     assert(observer.stats().authorityBypassesApplied == 0);
 
+    // Production aligned-slot incrementality witness: when one member of an
+    // already-admitted ordered source set changes, only that slot repairs.
+    // The neighboring slot keeps both generation and handle validity.
+    Rendering::RenderedFieldSemanticObserver alignedObserver;
+    alignedObserver.setEnabled(true);
+    auto alignedZeroA = Piecewise::continuous(scalarS(0.0));
+    auto alignedZeroB = Piecewise::continuous(scalarS(0.0));
+
+    Rendering::RadianceSourceBinding alignedA;
+    alignedA.producerId = "aligned/source-A";
+    alignedA.radianceExpr = &alignedZeroA;
+    alignedA.radianceRevision = 20001;
+
+    Rendering::RadianceSourceBinding alignedB;
+    alignedB.producerId = "aligned/source-B";
+    alignedB.radianceExpr = &alignedZeroB;
+    alignedB.radianceRevision = 21001;
+
+    alignedObserver.observeRadianceSources({alignedA, alignedB}, 22001);
+    assert(alignedObserver.alignedRadianceSlotCount() == 2);
+    const uint64_t alignedAGeneration =
+        alignedObserver.alignedRadianceSlotGeneration(0);
+    const uint64_t alignedBGeneration =
+        alignedObserver.alignedRadianceSlotGeneration(1);
+    const auto alignedAHandle = alignedObserver.publishRadianceHandle(0);
+    const auto alignedBHandle = alignedObserver.publishRadianceHandle(1);
+    assert(alignedAHandle.has_value());
+    assert(alignedBHandle.has_value());
+    assert(alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
+    assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+
+    alignedA.radianceRevision = 20002;
+    alignedObserver.observeRadianceSources({alignedA, alignedB}, 22002);
+    assert(alignedObserver.stats().alignedSlotRepairs == 1);
+    assert(alignedObserver.stats().alignedSlotReuses == 1);
+    assert(alignedObserver.alignedRadianceSlotGeneration(0) !=
+           alignedAGeneration);
+    assert(alignedObserver.alignedRadianceSlotGeneration(1) ==
+           alignedBGeneration);
+    assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
+    assert(alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+
+    // Ordered slot is an execution address, never lifetime identity. Reordering
+    // the two admitted producers repairs both slots; neither old handle can
+    // authorize the producer that moved into its numeric position.
+    alignedObserver.observeRadianceSources({alignedB, alignedA}, 22003);
+    assert(alignedObserver.stats().alignedSlotRepairs == 3);
+    assert(!alignedObserver.validateRadianceHandle(*alignedAHandle, alignedA));
+    assert(!alignedObserver.validateRadianceHandle(*alignedBHandle, alignedB));
+    assert(alignedObserver.stats().authorityBypassesApplied == 0);
+
     // Phase B renderer lifecycle: admit authoritative world truth while
     // observation is OFF, then enable diagnostics without waiting for another
     // authored mutation. V4 emission is present but intentionally outside this
@@ -997,6 +1048,7 @@ int main() {
                 "renderer_enable_idempotent=1 v4_emission_observer_inert=1 "
                 "observer_authority_bypasses=0 "
                 "aligned_slot_artifacts=1 aligned_slot_searches=0 "
+                "aligned_slot_local_repair=1 aligned_slot_reorder_refused=1 "
                 "aligned_slot_builds=%llu aligned_slot_repairs=%llu "
                 "aligned_slot_reuses=%llu aligned_slot_drops=%llu "
                 "aligned_slot_logical_bytes=%zu "
