@@ -23103,6 +23103,18 @@
               }
             },
             {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
+            },
+            {
               "kind": 4,
               "children": [
                 {
@@ -23280,6 +23292,18 @@
                 "t": "bool",
                 "v": true
               }
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
             },
             {
               "kind": 4,
@@ -23469,6 +23493,18 @@
               }
             },
             {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
+            },
+            {
               "kind": 4,
               "children": [
                 {
@@ -23630,6 +23666,18 @@
                 "t": "bool",
                 "v": true
               }
+            },
+            {
+              "kind": 0,
+              "path": "gridX",
+              "op": 0,
+              "operandPath": "@state.chess.targetX"
+            },
+            {
+              "kind": 0,
+              "path": "gridY",
+              "op": 0,
+              "operandPath": "@state.chess.targetY"
             },
             {
               "kind": 4,

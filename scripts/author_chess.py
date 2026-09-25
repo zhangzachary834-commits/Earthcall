@@ -1910,6 +1910,8 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("gridX", 0, operand_path="@state.chess.targetX"),
+            compare("gridY", 0, operand_path="@state.chess.targetY"),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -1943,6 +1945,8 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("gridX", 0, operand_path="@state.chess.targetX"),
+            compare("gridY", 0, operand_path="@state.chess.targetY"),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -1977,6 +1981,8 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("gridX", 0, operand_path="@state.chess.targetX"),
+            compare("gridY", 0, operand_path="@state.chess.targetY"),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
@@ -2008,6 +2014,8 @@ def build_laws():
         all_of(
             IS_PIECE,
             ON_BOARD,
+            compare("gridX", 0, operand_path="@state.chess.targetX"),
+            compare("gridY", 0, operand_path="@state.chess.targetY"),
             any_of(
                 compare("gridY", 0, pv("int", 7)),
                 compare("gridY", 0, pv("int", 0)),
