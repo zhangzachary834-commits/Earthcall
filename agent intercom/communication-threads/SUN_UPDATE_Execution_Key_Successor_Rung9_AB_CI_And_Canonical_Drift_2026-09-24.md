@@ -41,3 +41,24 @@ No production authority was added in this continuation. The only authority remai
 6. Only after the A/B result and reconciled exact-head evidence are settled, write the final analysis + final Intercom verdict and disable the successor automation.
 
 Do not broaden theorem scope while waiting for measurement.
+
+
+## 2026-09-25 continuation — previously blocked retention write landed
+
+The earlier native run #3258 / `36103064608` completed green and executed the aligned authority A/B witness, but the decisive `ALIGNED_AUTHORITY_AB` line existed only in the oversized job stdout and was not retained as a small artifact. That made the numerical timing verdict unrecoverable through the available connector without guessing.
+
+The previously blocked CI-only repair has now landed on this same successor branch at `7aafec4092d983657ac59d1d6410e7297bf25a3f`.
+
+The SDF CPU witness now:
+
+- tees `rendered_field_piecewise_synthesis_test` output to `aligned-authority-ab.log`;
+- extracts only the `ALIGNED_AUTHORITY_AB` line into `aligned-authority-ab-result.txt`;
+- uploads that tiny result as the `aligned-authority-ab` artifact with 7-day retention;
+- preserves `pipefail`, so test failure cannot be hidden by `tee`;
+- leaves production authority unchanged.
+
+This is evidence plumbing only. It does not alter authored mathematics, theorem semantics, channel authority, V1–V4 independence, or the production zero-authority boundary.
+
+### Exact next continuation point
+
+Wait for exact-head CI on `7aafec4092d983657ac59d1d6410e7297bf25a3f`, retrieve the tiny `aligned-authority-ab` artifact, record the actual timing/build/residency numbers, then re-read current canonical and reconcile ancestry before final closure. Do not infer the timing ratio from the earlier green run; measure it from the retained artifact.
