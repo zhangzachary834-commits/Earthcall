@@ -3,6 +3,7 @@
 #include "Singularity/Screen/Renderer.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -1072,6 +1073,102 @@ int main() {
     assert(reenabledBoundary.semanticBuilds == disabledBoundary.semanticBuilds);
     assert(reenabledBoundary.theoremBuilds == disabledBoundary.theoremBuilds);
     assert(reenabledBoundary.authorityBypassesApplied == 0);
+
+    // Successor native A/B: same already-known SourceRho execution identity,
+    // same authored literal-zero vessel, two execution modes in one native
+    // process. The aligned arm treats the generation-gated resident theorem as
+    // authoritative ONLY inside this benchmark harness; production Renderer
+    // control flow remains unchanged and authorityBypassesApplied stays zero.
+    Rendering::RenderedFieldSemanticObserver abObserver;
+    abObserver.setEnabled(true);
+    auto abZeroRho = Piecewise::continuous(scalarS(0.0));
+
+    Rendering::RadianceSourceBinding abSource;
+    abSource.producerId = "ab/source-zero";
+    abSource.radianceExpr = &abZeroRho;
+    abSource.radianceRevision = 31001;
+
+    const auto abBuildStart = std::chrono::steady_clock::now();
+    abObserver.observeRadianceSources({abSource}, 32001);
+    const auto abBuildEnd = std::chrono::steady_clock::now();
+    const auto abHandle = abObserver.publishRadianceHandle(0);
+    assert(abHandle.has_value());
+    assert(abObserver.validateRadianceHandle(*abHandle, abSource));
+
+    constexpr uint64_t kAbIterations = 200000;
+    volatile double abSink = 0.0;
+
+    const auto exactStart = std::chrono::steady_clock::now();
+    for (uint64_t i = 0; i < kAbIterations; ++i) {
+        const auto exact = abZeroRho.evaluate({{"x", 0.0}, {"t", 0.0}});
+        assert(exact.has_value());
+        const auto* scalar = std::get_if<double>(&*exact);
+        assert(scalar);
+        abSink = abSink + *scalar;
+    }
+    const auto exactEnd = std::chrono::steady_clock::now();
+
+    const auto proofReadsBeforeAb = abObserver.stats().alignedProofReads;
+    const auto metadataTestsBeforeAb = abObserver.stats().alignedHandleMetadataTests;
+    const auto fallbacksBeforeAb = abObserver.stats().alignedProofReadFallbacks;
+
+    uint64_t alignedAuthorityDecisions = 0;
+    const auto alignedStart = std::chrono::steady_clock::now();
+    for (uint64_t i = 0; i < kAbIterations; ++i) {
+        const auto proof = abObserver.inspectRadianceProof(*abHandle, abSource);
+        double value = 0.0;
+        if (proof.has_value() &&
+            *proof == Rendering::RenderedFieldSemanticObserver::ProofKind::
+                          RadianceZeroContribution) {
+            ++alignedAuthorityDecisions;
+            value = 0.0;
+        } else {
+            const auto exact = abZeroRho.evaluate({{"x", 0.0}, {"t", 0.0}});
+            assert(exact.has_value());
+            const auto* scalar = std::get_if<double>(&*exact);
+            assert(scalar);
+            value = *scalar;
+        }
+        abSink = abSink + value;
+    }
+    const auto alignedEnd = std::chrono::steady_clock::now();
+
+    const uint64_t exactNs = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            exactEnd - exactStart).count());
+    const uint64_t alignedNs = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            alignedEnd - alignedStart).count());
+    const uint64_t buildNs = static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            abBuildEnd - abBuildStart).count());
+
+    assert(alignedAuthorityDecisions == kAbIterations);
+    assert(abObserver.stats().alignedProofReads - proofReadsBeforeAb ==
+           kAbIterations);
+    assert(abObserver.stats().alignedHandleMetadataTests -
+               metadataTestsBeforeAb == 4 * kAbIterations);
+    assert(abObserver.stats().alignedProofReadFallbacks - fallbacksBeforeAb == 0);
+    assert(abObserver.stats().authorityBypassesApplied == 0);
+    assert(abObserver.stats().alignedSlotLogicalBytes > 0);
+    (void)abSink;
+
+    std::printf(
+        "ALIGNED_AUTHORITY_AB iterations=%llu exact_ns=%llu aligned_ns=%llu "
+        "ratio_exact_over_aligned=%.6f build_ns=%llu resident_bytes=%zu "
+        "proof_reads=%llu metadata_tests=%llu proof_fallbacks=0 "
+        "authority_decisions=%llu production_authority_bypasses=0\n",
+        static_cast<unsigned long long>(kAbIterations),
+        static_cast<unsigned long long>(exactNs),
+        static_cast<unsigned long long>(alignedNs),
+        alignedNs ? static_cast<double>(exactNs) /
+                        static_cast<double>(alignedNs)
+                  : 0.0,
+        static_cast<unsigned long long>(buildNs),
+        abObserver.stats().alignedSlotLogicalBytes,
+        static_cast<unsigned long long>(kAbIterations),
+        static_cast<unsigned long long>(4 * kAbIterations),
+        static_cast<unsigned long long>(alignedAuthorityDecisions));
 
     std::printf("RENDERED_FIELD_PIECEWISE_SYNTHESIS parity=1 channels=5 "
                 "piecewise_topology_identity=1 child_math_shared=1 "
